@@ -135,7 +135,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
 
 pub async fn build_connection(handle: u32) -> VcxResult<String> {
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    oob.build_connection(false).await?.to_string().map_err(|err| err.into())
+    Ok(oob.build_connection(false).await?.to_string())
 }
 
 pub fn get_thread_id_sender(handle: u32) -> VcxResult<String> {

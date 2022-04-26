@@ -731,7 +731,7 @@ pub mod tests {
         let vec: Vec<i8> = vec![-127, -89, 98, 117, 110, 100, 108, 101, 100, -111, -36, 5, -74];
 
         let buf = to_u8(&vec);
-        info!("new bundle: {:?}", buf);
+        debug!("new bundle: {:?}", buf);
     }
 
     #[test]
@@ -739,6 +739,6 @@ pub mod tests {
     fn test_to_i8() {
         let vec: Vec<u8> = vec![129, 167, 98, 117, 110, 100, 108, 101, 100, 145, 220, 19, 13];
         let buf = to_i8(&vec);
-        info!("new bundle: {:?}", buf);
+        debug!("new bundle: {:?}", buf);
     }
 }

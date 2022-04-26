@@ -39,7 +39,7 @@ use crate::api_lib::utils::runtime::execute_async;
 pub extern fn vcx_create_wallet(command_handle: CommandHandle,
                                 wallet_config: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_create_wallet >>>");
+    debug!("vcx_create_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
@@ -94,7 +94,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
 pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
                                           enterprise_seed: *const c_char,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, *const c_char)>) -> u32 {
-    info!("vcx_configure_issuer_wallet >>>");
+    debug!("vcx_configure_issuer_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(enterprise_seed, VcxErrorKind::InvalidOption);
@@ -137,7 +137,7 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
 pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
                                    wallet_config: *const c_char,
                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, wh: i32)>) -> u32 {
-    info!("vcx_open_main_wallet >>>");
+    debug!("vcx_open_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
@@ -182,7 +182,7 @@ pub extern fn vcx_open_main_wallet(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_close_main_wallet >>>");
+    debug!("vcx_close_main_wallet >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -240,7 +240,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
                                     value: *const c_char,
                                     tags_json: *const c_char,
                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_add_record >>>");
+    debug!("vcx_wallet_add_record >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -297,7 +297,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
                                              id: *const c_char,
                                              value: *const c_char,
                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_update_record_value >>>");
+    debug!("vcx_wallet_update_record_value >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -353,7 +353,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
                                             id: *const c_char,
                                             tags_json: *const c_char,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_update_record_tags >>>");
+    debug!("vcx_wallet_update_record_tags >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -409,7 +409,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
                                          id: *const c_char,
                                          tags_json: *const c_char,
                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_add_record_tags >>>");
+    debug!("vcx_wallet_add_record_tags >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -465,7 +465,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
                                             id: *const c_char,
                                             tag_names_json: *const c_char,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_delete_record_tags >>>");
+    debug!("vcx_wallet_delete_record_tags >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -520,7 +520,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
                                     id: *const c_char,
                                     options_json: *const c_char,
                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, record_json: *const c_char)>) -> u32 {
-    info!("vcx_wallet_get_record >>>");
+    debug!("vcx_wallet_get_record >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -577,7 +577,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
                                        type_: *const c_char,
                                        id: *const c_char,
                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_delete_record >>>");
+    debug!("vcx_wallet_delete_record >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(id, VcxErrorKind::InvalidOption);
@@ -644,7 +644,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
                                      options_json: *const c_char,
                                      cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
                                                           search_handle: SearchHandle)>) -> u32 {
-    info!("vcx_wallet_open_search >>>");
+    debug!("vcx_wallet_open_search >>>");
 
     check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
     check_useful_c_str!(query_json, VcxErrorKind::InvalidOption);
@@ -703,7 +703,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
                                              count: usize,
                                              cb: Option<extern fn(command_handle_: CommandHandle, err: u32,
                                                                   records_json: *const c_char)>) -> u32 {
-    info!("vcx_wallet_search_next_records >>>");
+    debug!("vcx_wallet_search_next_records >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -752,7 +752,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
 pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
                                       search_handle: SearchHandle,
                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_wallet_close_search >>>");
+    debug!("vcx_wallet_close_search >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -798,7 +798,7 @@ pub extern fn vcx_wallet_export(command_handle: CommandHandle,
                                 backup_key: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle,
                                                      err: u32)>) -> u32 {
-    info!("vcx_wallet_export >>>");
+    debug!("vcx_wallet_export >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(path,  VcxErrorKind::InvalidOption);
@@ -851,7 +851,7 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
                                 config: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle,
                                                      err: u32)>) -> u32 {
-    info!("vcx_wallet_import >>>");
+    debug!("vcx_wallet_import >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(config,  VcxErrorKind::InvalidOption);

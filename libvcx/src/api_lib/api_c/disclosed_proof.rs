@@ -75,7 +75,7 @@ pub extern fn vcx_disclosed_proof_create_with_request(command_handle: CommandHan
                                                       source_id: *const c_char,
                                                       proof_req: *const c_char,
                                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_create_with_request >>>");
+    debug!("vcx_disclosed_proof_create_with_request >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
@@ -128,7 +128,7 @@ pub extern fn vcx_disclosed_proof_create_with_msgid(command_handle: CommandHandl
                                                     connection_handle: u32,
                                                     msg_id: *const c_char,
                                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, proof_handle: u32, proof_req: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_create_with_msgid >>>");
+    debug!("vcx_disclosed_proof_create_with_msgid >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
@@ -175,7 +175,7 @@ pub extern fn vcx_disclosed_proof_send_proof(command_handle: CommandHandle,
                                              proof_handle: u32,
                                              connection_handle: u32,
                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_send_proof >>>");
+    debug!("vcx_disclosed_proof_send_proof >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -222,7 +222,7 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
                                                proof_handle: u32,
                                                connection_handle: u32,
                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_reject_proof >>>");
+    debug!("vcx_disclosed_proof_reject_proof >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -266,7 +266,7 @@ pub extern fn vcx_disclosed_proof_reject_proof(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
                                                 proof_handle: u32,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_proof_msg >>>");
+    debug!("vcx_disclosed_proof_get_proof_msg >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -311,7 +311,7 @@ pub extern fn vcx_disclosed_proof_get_proof_msg(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_get_reject_msg(command_handle: CommandHandle,
                                                  proof_handle: u32,
                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_reject_msg >>>");
+    debug!("vcx_disclosed_proof_get_reject_msg >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -357,7 +357,7 @@ pub extern fn vcx_disclosed_proof_get_reject_msg(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
                                                connection_handle: u32,
                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, requests: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_requests >>>");
+    debug!("vcx_disclosed_proof_get_requests >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -404,7 +404,7 @@ pub extern fn vcx_disclosed_proof_get_requests(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
                                             proof_handle: u32,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_get_state >>>");
+    debug!("vcx_disclosed_proof_get_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -437,7 +437,7 @@ pub extern fn vcx_disclosed_proof_get_state(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_get_proof_request_attachment(command_handle: CommandHandle,
                                                                proof_handle: u32,
                                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, attributes: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_attachment >>>");
+    debug!("vcx_disclosed_proof_get_attachment >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -472,7 +472,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state(command_handle: CommandHandle,
                                                   proof_handle: u32,
                                                   connection_handle: u32,
                                                   cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_v2_disclosed_proof_update_state >>>");
+    debug!("vcx_v2_disclosed_proof_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -521,7 +521,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: C
                                                                connection_handle: u32,
                                                                message: *const c_char,
                                                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_v2_disclosed_proof_update_state_with_message >>>");
+    debug!("vcx_v2_disclosed_proof_update_state_with_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message, VcxErrorKind::InvalidOption);
@@ -565,7 +565,7 @@ pub extern fn vcx_v2_disclosed_proof_update_state_with_message(command_handle: C
 pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
                                             proof_handle: u32,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, data: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_serialize >>>");
+    debug!("vcx_disclosed_proof_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -611,7 +611,7 @@ pub extern fn vcx_disclosed_proof_serialize(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
                                               proof_data: *const c_char,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_deserialize >>>");
+    debug!("vcx_disclosed_proof_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(proof_data, VcxErrorKind::InvalidOption);
@@ -659,7 +659,7 @@ pub extern fn vcx_disclosed_proof_deserialize(command_handle: CommandHandle,
 pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHandle,
                                                        proof_handle: u32,
                                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, data: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_retrieve_credentials >>>");
+    debug!("vcx_disclosed_proof_retrieve_credentials >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -736,7 +736,7 @@ pub extern fn vcx_disclosed_proof_generate_proof(command_handle: CommandHandle,
                                                  selected_credentials: *const c_char,
                                                  self_attested_attrs: *const c_char,
                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_generate_proof >>>");
+    debug!("vcx_disclosed_proof_generate_proof >>>");
 
     check_useful_c_str!(selected_credentials, VcxErrorKind::InvalidOption);
     check_useful_c_str!(self_attested_attrs, VcxErrorKind::InvalidOption);
@@ -835,7 +835,7 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
                                                                reason: *const c_char,
                                                                proposal: *const c_char,
                                                                cb: Option<extern fn(xcommand_handle: u32, err: u32)>) -> u32 {
-    info!("vcx_disclosed_proof_decline_presentation_request >>>");
+    debug!("vcx_disclosed_proof_decline_presentation_request >>>");
 
     check_useful_opt_c_str!(reason, VcxErrorKind::InvalidOption);
     check_useful_opt_c_str!(proposal, VcxErrorKind::InvalidOption);
@@ -870,7 +870,7 @@ pub extern fn vcx_disclosed_proof_decline_presentation_request(command_handle: u
 pub extern fn vcx_disclosed_proof_get_thread_id(command_handle: CommandHandle,
                                                 proof_handle: u32,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, thread_id: *const c_char)>) -> u32 {
-    info!("vcx_disclosed_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
+    debug!("vcx_disclosed_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     let source_id = disclosed_proof::get_source_id(proof_handle).unwrap_or_default();
@@ -907,7 +907,7 @@ pub extern fn vcx_disclosed_proof_get_thread_id(command_handle: CommandHandle,
 /// Success
 #[no_mangle]
 pub extern fn vcx_disclosed_proof_release(handle: u32) -> u32 {
-    info!("vcx_disclosed_proof_release >>>");
+    debug!("vcx_disclosed_proof_release >>>");
 
     let source_id = disclosed_proof::get_source_id(handle).unwrap_or_default();
     match disclosed_proof::release(handle) {

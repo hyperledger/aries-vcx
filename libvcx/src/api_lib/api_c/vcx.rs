@@ -29,7 +29,7 @@ use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_enable_mocks() -> u32 {
-    info!("vcx_enable_mocks >>>");
+    debug!("vcx_enable_mocks >>>");
     match enable_vcx_mocks() {
         Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
@@ -57,7 +57,7 @@ pub extern fn vcx_enable_mocks() -> u32 {
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_init_threadpool(config: *const c_char) -> u32 {
-    info!("vcx_init_threadpool >>>");
+    debug!("vcx_init_threadpool >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
 
@@ -91,7 +91,7 @@ pub extern fn vcx_init_threadpool(config: *const c_char) -> u32 {
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_create_agency_client_for_main_wallet >>>");
+    debug!("vcx_create_agency_client_for_main_wallet >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -110,7 +110,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
     execute(move || {
         match create_agency_client_for_main_wallet(&agency_config) {
             Ok(()) => {
-                info!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
+                debug!("vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(err) => {
@@ -143,7 +143,7 @@ pub extern fn vcx_create_agency_client_for_main_wallet(command_handle: CommandHa
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *const c_char, cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_init_issuer_config >>>");
+    debug!("vcx_init_issuer_config >>>");
 
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -162,7 +162,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
     execute(move || {
         match init_issuer_config(&issuer_config) {
             Ok(()) => {
-                info!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
+                debug!("vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}", command_handle, error::SUCCESS.code_num);
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(err) => {
@@ -210,7 +210,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 /// Error code as a u32
 #[no_mangle]
 pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
-    info!("vcx_open_main_pool >>>");
+    debug!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
     if is_pool_open() {
         error!("vcx_open_main_pool :: Pool connection is already open.");
@@ -229,7 +229,7 @@ pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *co
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match open_main_pool(&pool_config).await {
             Ok(()) => {
-                info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
+                debug!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(err) => {
@@ -264,7 +264,7 @@ pub extern fn vcx_version() -> *const c_char {
 /// Success
 #[no_mangle]
 pub extern fn vcx_shutdown(delete: bool) -> u32 {
-    info!("vcx_shutdown >>>");
+    debug!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
     match futures::executor::block_on(wallet::close_main_wallet()) {
@@ -336,7 +336,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
 /// Error message
 #[no_mangle]
 pub extern fn vcx_error_c_message(error_code: u32) -> *const c_char {
-    info!("vcx_error_c_message >>>");
+    debug!("vcx_error_c_message >>>");
     trace!("vcx_error_message(error_code: {})", error_code);
     error::error_c_message(&error_code).as_ptr()
 }
@@ -357,7 +357,7 @@ pub extern fn vcx_error_c_message(error_code: u32) -> *const c_char {
 pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
                                      notification_webhook_url: *const c_char,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_update_webhook {:?} >>>", notification_webhook_url);
+    debug!("vcx_update_webhook {:?} >>>", notification_webhook_url);
 
     check_useful_c_str!(notification_webhook_url, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -390,7 +390,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
 #[no_mangle]
 pub extern fn vcx_get_ledger_author_agreement(command_handle: CommandHandle,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, author_agreement: *const c_char)>) -> u32 {
-    info!("vcx_get_ledger_author_agreement >>>");
+    debug!("vcx_get_ledger_author_agreement >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -440,7 +440,7 @@ pub extern fn vcx_set_active_txn_author_agreement_meta(text: *const c_char,
                                                        hash: *const c_char,
                                                        acc_mech_type: *const c_char,
                                                        time_of_acceptance: u64) -> u32 {
-    info!("vcx_set_active_txn_author_agreement_meta >>>");
+    debug!("vcx_set_active_txn_author_agreement_meta >>>");
 
     check_useful_opt_c_str!(text, VcxErrorKind::InvalidOption);
     check_useful_opt_c_str!(version, VcxErrorKind::InvalidOption);
@@ -543,7 +543,7 @@ mod tests {
     }
 
     fn _vcx_init_full(config_threadpool: &str, config_pool: &str, config_wallet: &str) -> Result<(), u32> {
-        info!("_vcx_init_full >>>");
+        debug!("_vcx_init_full >>>");
         let rc = vcx_init_threadpool(CString::new(config_threadpool).unwrap().into_raw());
         if rc != error::SUCCESS.code_num {
             error!("vcx_init_threadpool failed");
@@ -551,7 +551,7 @@ mod tests {
         }
         settings::get_agency_client_mut()?.enable_test_mode();
 
-        info!("_vcx_init_full >>> going to open pool");
+        debug!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();
         let rc = vcx_open_main_pool(cb.command_handle, CString::new(config_pool).unwrap().into_raw(), cb.get_callback());
         if rc != error::SUCCESS.code_num {
@@ -560,7 +560,7 @@ mod tests {
         }
         cb.receive(TimeoutUtils::some_short()).unwrap();
 
-        info!("_vcx_init_full >>> going to open wallet");
+        debug!("_vcx_init_full >>> going to open wallet");
         let cb = return_types_u32::Return_U32_I32::new().unwrap();
         let rc = vcx_open_main_wallet(cb.command_handle, CString::new(config_wallet).unwrap().into_raw(), Some(cb.get_callback()));
         if rc != error::SUCCESS.code_num {
@@ -989,7 +989,7 @@ mod tests {
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
         configure_trustee_did().await;
 
-        info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
+        debug!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id, _cred_def, _rev_reg) =
             create_and_store_credential_def(&attrs_list).await;

@@ -34,19 +34,23 @@ pub async fn set_protocol_version() -> VcxResult<()> {
 }
 
 pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
+    info!("create_pool_ledger_config >>> creating pool ledger config, pool_name: {}, path: {}", pool_name, path);
     let pool_config = json!({"genesis_txn": path}).to_string();
 
     match pool::create_pool_ledger_config(pool_name, Some(&pool_config))
         .await {
-        Ok(()) => Ok(()),
+        Ok(()) => {
+            info!("create_pool_ledger_config >>> created pool ledger config, pool_name: {}, path: {}", pool_name, path);
+            Ok(())
+        },
         Err(err) => {
             match err.error_code.clone() {
                 ErrorCode::PoolLedgerConfigAlreadyExistsError => Ok(()),
                 ErrorCode::CommonIOError => {
-                    Err(err.to_vcx(VcxErrorKind::InvalidGenesisTxnPath, "Pool genesis file is invalid or does not exist"))
+                    Err(err.to_vcx(VcxErrorKind::InvalidGenesisTxnPath, format!("Pool genesis file {} is invalid or does not exist", path)))
                 }
-                _ => {
-                    Err(err.to_vcx(VcxErrorKind::CreatePoolConfig, "Indy error occurred"))
+                e @ _ => {
+                    Err(err.to_vcx(VcxErrorKind::CreatePoolConfig, format!("Error created pool ledger config pool_name: {}, path: {}, error_code: {:?}", pool_name, path, e)))
                 }
             }
         }
@@ -54,6 +58,7 @@ pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult
 }
 
 pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32> {
+    info!("open_pool_ledger >>> opening pool {}, config: {:?}", pool_name, config);
     set_protocol_version().await?;
 
     let handle = pool::open_pool_ledger(pool_name, config)
@@ -83,6 +88,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
             })?;
 
     set_pool_handle(Some(handle));
+    info!("open_pool_ledger >>> succesfully opened pool {}", pool_name);
     Ok(handle as u32)
 }
 

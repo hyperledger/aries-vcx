@@ -27,7 +27,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
                                                 requests: *const c_char,
                                                 match_name: *const c_char,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, requests: *const c_char)>) -> u32 {
-    info!("vcx_filter_proof_requests_by_name >>>");
+    debug!("vcx_filter_proof_requests_by_name >>>");
 
     check_useful_c_str!(requests, VcxErrorKind::InvalidOption);
     check_useful_c_str!(match_name, VcxErrorKind::InvalidOption);

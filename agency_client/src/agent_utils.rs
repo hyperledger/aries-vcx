@@ -223,7 +223,7 @@ pub async fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
 }
 
 async fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyClientResult<()> {
-    info!("> update_agent_webhook_v2");
+    debug!("update_agent_webhook_v2 >>>");
     if agency_mocks_enabled() {
         warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
         return Ok(());

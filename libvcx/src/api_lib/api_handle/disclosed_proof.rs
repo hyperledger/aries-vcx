@@ -36,11 +36,9 @@ fn handle_err(err: VcxError) -> VcxError {
 
 pub fn create_proof(source_id: &str, proof_req: &str) -> VcxResult<u32> {
     trace!("create_proof >>> source_id: {}, proof_req: {}", source_id, proof_req);
-    debug!("creating disclosed proof with id: {}", source_id);
-
     let presentation_request: PresentationRequest = serde_json::from_str(proof_req)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                          format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
+                                          format!("Can't parse message a aries presentation request. The message: {}\nError: {}", proof_req, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
@@ -51,13 +49,12 @@ pub async fn create_proof_with_msgid(source_id: &str, connection_handle: u32, ms
 
     let presentation_request: PresentationRequest = serde_json::from_str(&proof_request)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                          format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
+                                          format!("Can't parse message a aries presentation request. The message: {}\nError: {}", proof_request, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
     let handle = HANDLE_MAP.add(proof)?;
 
-    debug!("inserting disclosed proof {} into handle map", source_id);
     Ok((handle, proof_request))
 }
 
@@ -69,7 +66,7 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    trace!("disclosed_proof::update_state >>> connection_handle: {:?}, message: {:?}", connection_handle, message);
+    trace!("disclosed_proof::update_state >> connection_handle: {:?}, message: {:?}", connection_handle, message);
     if !proof.progressable_by_message() {
         trace!("disclosed_proof::update_state >> found no available transition");
         return Ok(proof.get_state().into());

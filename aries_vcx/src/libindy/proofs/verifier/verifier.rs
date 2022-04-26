@@ -25,12 +25,12 @@ pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxR
         .await
         .unwrap_or(json!({}).to_string());
 
-    debug!("*******\n{}\n********", credential_defs_json);
-    debug!("*******\n{}\n********", schemas_json);
-    debug!("*******\n{}\n********", proof_json);
-    debug!("*******\n{}\n********", proof_req_json);
-    debug!("*******\n{}\n********", rev_reg_defs_json);
-    debug!("*******\n{}\n********", rev_regs_json);
+    trace!("validate_indy_proof >>> credential_defs_json: {} ", credential_defs_json);
+    trace!("validate_indy_proof >>> schemas_json: {} ", schemas_json);
+    trace!("validate_indy_proof >>> proof_json: {} ", proof_json);
+    trace!("validate_indy_proof >>> proof_req_json: {} ", proof_req_json);
+    trace!("validate_indy_proof >>> rev_reg_defs_json: {} ", rev_reg_defs_json);
+    trace!("validate_indy_proof >>> rev_regs_json: {} ", rev_regs_json);
     anoncreds::libindy_verifier_verify_proof(proof_req_json,
                                              proof_json,
                                              &schemas_json,

@@ -1,10 +1,6 @@
-use serde_json;
-
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
+use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
-use aries_vcx::libindy::utils::anoncreds;
-use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 

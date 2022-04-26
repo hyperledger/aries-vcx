@@ -9,7 +9,10 @@ use crate::libindy::utils::ledger;
 use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
 
 pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
-    trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
+    debug!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}",
+        seed.map_or_else(|| "unspecified", |seed| secret!(&seed)),
+        method_name
+    );
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::DID.to_string(), utils::constants::VERKEY.to_string()));
     }

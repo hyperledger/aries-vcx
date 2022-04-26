@@ -47,7 +47,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Can not update state with message. The message {:?} could not be deserialized: {:?}", message, err)))?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof.handle_message(message.into(), Some(send_message)).await?;
     } else {

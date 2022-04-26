@@ -397,7 +397,7 @@ pub async fn libindy_parse_get_revoc_reg_delta_response(get_rev_reg_delta_respon
 }
 
 pub async fn create_schema(name: &str, version: &str, data: &str) -> VcxResult<(String, String)> {
-    trace!("create_schema >>> name: {}, version: {}, data: {}", name, version, data);
+    info!("create_schema >>> name: {}, version: {}, data: {}", name, version, data);
 
     if settings::indy_mocks_enabled() {
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
@@ -427,7 +427,7 @@ pub async fn build_schema_request(schema: &str) -> VcxResult<String> {
 }
 
 pub async fn publish_schema(schema: &str) -> VcxResult<()> {
-    trace!("publish_schema >>> schema: {}", schema);
+    info!("publish_schema >>> schema: {}", schema);
 
     if settings::indy_mocks_enabled() {
         return Ok(());
@@ -458,7 +458,7 @@ pub async fn generate_cred_def(issuer_did: &str,
                          tag: &str,
                          sig_type: Option<&str>,
                          support_revocation: Option<bool>) -> VcxResult<(String, String)> {
-    trace!("generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
+    info!("generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
            issuer_did, schema_json, tag, sig_type, support_revocation);
     if settings::indy_mocks_enabled() {
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
@@ -486,7 +486,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
 }
 
 pub async fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
-    trace!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
+    info!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
@@ -505,7 +505,7 @@ pub async fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)>
 
 pub async fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &str, max_creds: u32, tag: &str)
                         -> VcxResult<(String, RevocationRegistryDefinition, String)> {
-    trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_dir, max_creds, tag);
+    info!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_dir, max_creds, tag);
     if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
@@ -530,7 +530,7 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
 }
 
 pub async fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegistryDefinition) -> VcxResult<()> {
-    trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
+    info!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() { return Ok(()); }
 
     let rev_reg_def_json = serde_json::to_string(&rev_reg_def)

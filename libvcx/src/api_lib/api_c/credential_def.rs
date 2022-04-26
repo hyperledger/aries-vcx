@@ -77,7 +77,7 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
                                         credentialdef_handle: u32,
                                         _tails_url: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_credentialdef_publish >>>");
+    debug!("vcx_credentialdef_publish >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -124,7 +124,7 @@ pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_serialize(command_handle: CommandHandle,
                                           credentialdef_handle: u32,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_state: *const c_char)>) -> u32 {
-    info!("vcx_credentialdef_serialize >>>");
+    debug!("vcx_credentialdef_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -173,7 +173,7 @@ pub extern fn vcx_credentialdef_serialize(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_deserialize(command_handle: CommandHandle,
                                             credentialdef_data: *const c_char,
                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
-    info!("vcx_credentialdef_deserialize >>>");
+    debug!("vcx_credentialdef_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(credentialdef_data, VcxErrorKind::InvalidOption);
@@ -215,7 +215,7 @@ pub extern fn vcx_credentialdef_deserialize(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_get_cred_def_id(command_handle: CommandHandle,
                                                 cred_def_handle: u32,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, cred_def_id: *const c_char)>) -> u32 {
-    info!("vcx_credentialdef_get_cred_def_id >>>");
+    debug!("vcx_credentialdef_get_cred_def_id >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -256,7 +256,7 @@ pub extern fn vcx_credentialdef_get_cred_def_id(command_handle: CommandHandle,
 /// Success
 #[no_mangle]
 pub extern fn vcx_credentialdef_release(credentialdef_handle: u32) -> u32 {
-    info!("vcx_credentialdef_release >>>");
+    debug!("vcx_credentialdef_release >>>");
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     match credential_def::release(credentialdef_handle) {
@@ -293,7 +293,7 @@ pub extern fn vcx_credentialdef_release(credentialdef_handle: u32) -> u32 {
 pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
                                              credentialdef_handle: u32,
                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_credentialdef_update_state >>>");
+    debug!("vcx_credentialdef_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -344,7 +344,7 @@ pub extern fn vcx_credentialdef_update_state(command_handle: CommandHandle,
 pub extern fn vcx_credentialdef_get_state(command_handle: CommandHandle,
                                           credentialdef_handle: u32,
                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_credentialdef_get_state >>>");
+    debug!("vcx_credentialdef_get_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 

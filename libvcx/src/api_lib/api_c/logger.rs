@@ -21,7 +21,7 @@ use crate::api_lib::utils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogg
 /// u32 error code
 #[no_mangle]
 pub extern fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
-    info!("vcx_set_default_logger >>>");
+    debug!("vcx_set_default_logger >>>");
 
     check_useful_opt_c_str!(pattern, VcxErrorKind::InvalidConfiguration);
 
@@ -29,7 +29,7 @@ pub extern fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
 
     match LibvcxDefaultLogger::init(pattern.clone()) {
         Ok(()) => {
-            info!("Logger Successfully Initialized with pattern {:?}", &pattern);
+            debug!("Logger Successfully Initialized with pattern {:?}", &pattern);
             SUCCESS.code_num
         }
         Err(err) => {
@@ -57,7 +57,7 @@ pub extern fn vcx_set_logger(context: *const CVoid,
                              enabled: Option<EnabledCB>,
                              log: Option<LogCB>,
                              flush: Option<FlushCB>) -> u32 {
-    info!("vcx_set_logger >>>");
+    debug!("vcx_set_logger >>>");
 
     trace!("vcx_set_logger( context: {:?}, enabled: {:?}, log: {:?}, flush: {:?}",
            context, enabled, log, flush);
@@ -96,7 +96,7 @@ pub extern fn vcx_get_logger(context_p: *mut *const CVoid,
                              enabled_cb_p: *mut Option<EnabledCB>,
                              log_cb_p: *mut Option<LogCB>,
                              flush_cb_p: *mut Option<FlushCB>) -> u32 {
-    info!("vcx_get_logger >>>");
+    debug!("vcx_get_logger >>>");
 
     trace!("vcx_get_logger >>> context_p: {:?}, enabled_cb_p: {:?}, log_cb_p: {:?}, flush_cb_p: {:?}", context_p, enabled_cb_p, log_cb_p, flush_cb_p);
 

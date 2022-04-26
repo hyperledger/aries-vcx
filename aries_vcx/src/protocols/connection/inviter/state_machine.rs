@@ -82,7 +82,7 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
+    pub fn is_in_initial_state(&self) -> bool {
         return InviterState::from(self.state.clone()) == InviterState::Initial;
     }
 

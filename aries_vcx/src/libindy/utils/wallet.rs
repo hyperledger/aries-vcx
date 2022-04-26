@@ -124,7 +124,7 @@ pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, ke
 }
 
 pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
-    trace!("create_wallet >>> {}", &wallet_config.wallet_name);
+    info!("create_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
     let config = build_wallet_config(
         &wallet_config.wallet_name,
         wallet_config.wallet_type.as_deref(),
@@ -137,11 +137,12 @@ pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
         None,
     )?;
 
-    trace!("Credentials: {:?}", credentials);
-
     match wallet::create_wallet(&config, &credentials)
         .await {
-        Ok(()) => Ok(()),
+        Ok(()) => {
+            info!("create_wallet >>> created wallet {}", &wallet_config.wallet_name);
+            Ok(())
+        },
         Err(err) => {
             match err.error_code.clone() {
                 ErrorCode::WalletAlreadyExistsError => {
@@ -149,7 +150,7 @@ pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
                     Ok(())
                 }
                 _ => {
-                    warn!("could not create wallet {}: {:?}", wallet_config.wallet_name, err.message);
+                    error!("could not create wallet {}: {:?}", wallet_config.wallet_name, err.message);
                     Err(VcxError::from_msg(VcxErrorKind::WalletCreate, format!("could not create wallet {}: {:?}", wallet_config.wallet_name, err.message)))
                 }
             }

@@ -81,7 +81,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
+    pub fn is_in_initial_state(&self) -> bool {
         return InviteeState::from(self.state.clone()) == InviteeState::Initial;
     }
 

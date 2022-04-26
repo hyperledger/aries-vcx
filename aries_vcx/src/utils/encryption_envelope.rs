@@ -101,7 +101,7 @@ impl EncryptionEnvelope {
         trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk: {}", payload.len(), expected_vk);
 
         let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
-            trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
+            warn!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
             let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload).await?;

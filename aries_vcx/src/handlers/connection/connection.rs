@@ -15,7 +15,6 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
@@ -25,6 +24,7 @@ use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -79,7 +79,7 @@ pub enum Actor {
 
 impl Connection {
     pub async fn create(source_id: &str, autohop_enabled: bool) -> VcxResult<Self> {
-        trace!("Connection::create >>> source_id: {}", source_id);
+        info!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create().await?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         Ok(Self {
@@ -90,7 +90,7 @@ impl Connection {
     }
 
     pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
-        trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
+        info!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
         let pairwise_info = PairwiseInfo::create().await?;
         let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let mut connection = Self {
@@ -103,7 +103,7 @@ impl Connection {
     }
 
     pub async fn create_with_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Self> {
-        trace!("Connection::create_with_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
+        info!("Connection::create_with_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
         let pairwise_info: PairwiseInfo = public_agent.into();
         let mut connection = Self {
             cloud_agent_info: public_agent.cloud_agent_info(),
@@ -180,15 +180,6 @@ impl Connection {
         self.cloud_agent_info.clone()
     }
 
-    // pub fn bootstrap_agent_info(&self) -> Option<&PairwiseInfo> {
-    //     match &self.connection_sm {
-    //         SmConnection::Inviter(sm_inviter) => {
-    //             sm_inviter.prev_agent_info()
-    //         }
-    //         SmConnection::Invitee(_sm_invitee) => None
-    //     }
-    // }
-
     pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -255,13 +246,13 @@ impl Connection {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
+    pub fn is_in_initial_state(&self) -> bool {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.is_in_null_state()
+                sm_inviter.is_in_initial_state()
             }
             SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.is_in_null_state()
+                sm_invitee.is_in_initial_state()
             }
         }
     }
@@ -288,7 +279,7 @@ impl Connection {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Connection in inviter role can not process invitation"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -352,18 +343,6 @@ impl Connection {
         }
     }
 
-    // fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
-    //     let expected_sender_vk = match remote_vk {
-    //         Ok(vk) => vk,
-    //         Err(_) => return Ok(None)
-    //     };
-    //     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-    //         trace!("Connection::_get_bootstrap_agent_messages >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
-    //         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-    //         return Ok(Some((messages, bootstrap_agent_info.clone())));
-    //     }
-    //     Ok(None)
-    // }
 
     fn _update_state(&mut self, message: Option<A2AMessage>) -> BoxFuture<'_, VcxResult<()>> {
         Box::pin(async move {
@@ -386,7 +365,7 @@ impl Connection {
     }
 
     pub async fn update_state(&mut self) -> VcxResult<()> {
-        if self.is_in_null_state() {
+        if self.is_in_initial_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
@@ -396,35 +375,26 @@ impl Connection {
 
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
-                trace!("Connection::update_state >>> handling message uid: {:?}", uid);
+                info!("Connection::update_state >>> found message to progress protocol, uid: {:?} ", uid);
                 self._update_state(Some(message)).await?;
                 self.cloud_agent_info().clone().update_message_status(self.pairwise_info(), uid).await?;
             }
             None => {
-                // Todo: Restore lookup into bootstrap cloud agent
-                // self.bootstrap_agent_info()
-                // if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), )? {
-                //     if let Some((uid, message)) = self.find_message_to_handle(messages) {
-                //         trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                //         self._update_state(Some(message))?;
-                //         bootstrap_agent_info.update_message_status(uid)?;
-                //     }
-                // } else {
-                trace!("Connection::update_state >>> trying to update state without message");
+                info!("Connection::update_state >>> trying to progress protocol without an input message");
                 self._update_state(None).await?;
-                // }
             }
         }
         Ok(())
     }
 
     pub async fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
-        trace!("Connection: update_state_with_message: {:?}", message);
-        if self.is_in_null_state() {
-            warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
-            return Ok(());
+        info!("Connection::update_state_with_message: {}", message);
+        trace!("Connection::update_state_with_message: {:?}", message);
+        if self.is_in_initial_state() {
+            warn!("Connection::update_state_with_message :: update state on connection in initial state is ignored");
+        } else {
+            self._update_state(Some(message.clone())).await?;
         }
-        self._update_state(Some(message.clone())).await?;
         Ok(())
     }
 
@@ -484,8 +454,7 @@ impl Connection {
                 Ok((connection, can_autohop))
             }
             SmConnection::Invitee(_) => {
-                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called \
-                _step_inviter on Invitee connection."))
+                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called _step_inviter on Invitee connection."))
             }
         }
     }
@@ -541,14 +510,13 @@ impl Connection {
                 Ok((connection, can_autohop))
             }
             SmConnection::Inviter(_) => {
-                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called \
-                _step_invitee on Inviter connection."))
+                Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called _step_invitee on Inviter connection."))
             }
         }
     }
 
     pub async fn connect(&mut self) -> VcxResult<()> {
-        trace!("Connection::connect >>> source_id: {}", self.source_id());
+        info!("Connection::connect >>> building connection agent, source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 SmConnection::Inviter(sm_inviter.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
@@ -561,7 +529,7 @@ impl Connection {
     }
 
     pub async fn update_message_status(&self, uid: &str) -> VcxResult<()> {
-        trace!("Connection::update_message_status >>> uid: {:?}", uid);
+        debug!("Connection::update_message_status >>> uid: {:?}", uid);
         self.cloud_agent_info().update_message_status(self.pairwise_info(), uid.to_string()).await
     }
 
@@ -605,7 +573,6 @@ impl Connection {
     }
 
     pub fn send_message_closure(&self) -> VcxResult<SendClosure> {
-        trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
@@ -627,14 +594,14 @@ impl Connection {
     }
 
     pub async fn send_generic_message(&self, message: &str) -> VcxResult<String> {
-        trace!("Connection::send_generic_message >>> message: {:?}", message);
+        debug!("Connection::send_generic_message >>> message: {:?}", message);
         let message = Self::parse_generic_message(message);
         let send_message = self.send_message_closure()?;
         send_message(message).await.map(|_| String::new())
     }
 
     pub async fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {
-        trace!("Connection::send_ping >>> comment: {:?}", comment);
+        debug!("Connection::send_ping >>> comment: {:?}", comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 SmConnection::Inviter(sm_inviter.clone().handle_send_ping(comment, send_message).await?)
@@ -647,7 +614,7 @@ impl Connection {
     }
 
     pub async fn send_handshake_reuse(&self, oob_msg: &str) -> VcxResult<()> {
-        trace!("Connection::send_handshake_reuse >>>");
+        debug!("Connection::send_handshake_reuse >>>");
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
                 A2AMessage::OutOfBandInvitation(oob) => oob,
@@ -667,12 +634,12 @@ impl Connection {
     }
 
     pub async fn delete(&self) -> VcxResult<()> {
-        trace!("Connection: delete >>> {:?}", self.source_id());
+        info!("Connection::delete >>> {:?}", self.source_id());
         self.cloud_agent_info().destroy(self.pairwise_info()).await
     }
 
     pub async fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
-        trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
+        debug!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 SmConnection::Inviter(sm_inviter.clone().handle_discover_features(query, comment, send_message).await?)
@@ -685,8 +652,6 @@ impl Connection {
     }
 
     pub fn get_connection_info(&self) -> VcxResult<String> {
-        trace!("Connection::get_connection_info >>>");
-
         let agent_info = self.cloud_agent_info().clone();
         let pairwise_info = self.pairwise_info();
         let recipient_keys = vec!(pairwise_info.pw_vk.clone());
@@ -720,35 +685,37 @@ impl Connection {
     }
 
     pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<Message>> {
-        match self.get_state() {
+        debug!("Connection::download_messages >>> status_codes {:?}, uids: {:?}", status_codes, uids);
+        let msgs = match self.get_state() {
             ConnectionState::Invitee(InviteeState::Initial) |
             ConnectionState::Inviter(InviterState::Initial) |
             ConnectionState::Inviter(InviterState::Invited) => {
-                let msgs = futures::stream::iter(self.cloud_agent_info()
-                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-                    .await?)
+                futures::stream::iter(
+                    self.cloud_agent_info()
+                        .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                        .await?)
                     .then(|msg| async move { msg.decrypt_noauth().await })
                     .collect::<Vec<Message>>()
-                    .await;
-                Ok(msgs)
+                    .await
             }
             _ => {
                 let expected_sender_vk = self.remote_vk()?;
-                let msgs =futures::stream::iter(self.cloud_agent_info()
-                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
-                    .await?)
+                futures::stream::iter(
+                    self.cloud_agent_info()
+                        .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                        .await?)
                     .then(|msg| msg.decrypt_auth(&expected_sender_vk))
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<Message>>()
-                    .await;
-                Ok(msgs)
+                    .await
             }
-        }
+        };
+        debug!("Connection::download_messages >>> downloaded and successfully decrypted {} messages", msgs.len());
+        Ok(msgs)
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Connection: {:?}", err)))
+    pub fn to_string(&self) -> String {
+        json!(&self).to_string()
     }
 
     pub fn from_string(connection_data: &str) -> VcxResult<Self> {

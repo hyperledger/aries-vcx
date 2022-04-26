@@ -21,7 +21,6 @@ impl PresentationRequestSentState {
 
         let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
                                         &self.presentation_request.request_presentations_attach.content()?).await?;
-
         if !valid {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, "Presentation verification failed"));
         }

@@ -1,3 +1,4 @@
+use std::fmt;
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
@@ -252,6 +253,39 @@ fn set_a2a_message_type<T>(msg: T, family: MessageFamilies, name: &str) -> Resul
     let type_ = ::serde_json::to_value(MessageType::build(family, name))?;
     value.as_object_mut().unwrap().insert("@type".into(), type_);
     Ok(value)
+}
+
+impl fmt::Display for A2AMessage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            A2AMessage::Forward(_) => write!(f, "A2AMessage::Forward"),
+            A2AMessage::ConnectionInvitationPairwise(_) => write!(f, "A2AMessage::ConnectionInvitationPairwise"),
+            A2AMessage::ConnectionInvitationPublic(_) => write!(f, "A2AMessage::ConnectionInvitationPublic"),
+            A2AMessage::ConnectionRequest(_) => write!(f, "A2AMessage::ConnectionRequest"),
+            A2AMessage::ConnectionResponse(_) => write!(f, "A2AMessage::ConnectionResponse"),
+            A2AMessage::ConnectionProblemReport(_) => write!(f, "A2AMessage::ConnectionProblemReport"),
+            A2AMessage::Ping(_) => write!(f, "A2AMessage::Ping"),
+            A2AMessage::PingResponse(_) => write!(f, "A2AMessage::PingResponse"),
+            A2AMessage::Ack(_) => write!(f, "A2AMessage::Ack"),
+            A2AMessage::CommonProblemReport(_) => write!(f, "A2AMessage::CommonProblemReport"),
+            A2AMessage::CredentialProposal(_) => write!(f, "A2AMessage::CredentialProposal"),
+            A2AMessage::CredentialOffer(_) => write!(f, "A2AMessage::CredentialOffer"),
+            A2AMessage::CredentialRequest(_) => write!(f, "A2AMessage::CredentialRequest"),
+            A2AMessage::Credential(_) => write!(f, "A2AMessage::Credential"),
+            A2AMessage::CredentialAck(_) => write!(f, "A2AMessage::CredentialAck"),
+            A2AMessage::PresentationProposal(_) => write!(f, "A2AMessage::PresentationProposal"),
+            A2AMessage::PresentationRequest(_) => write!(f, "A2AMessage::PresentationRequest"),
+            A2AMessage::Presentation(_) => write!(f, "A2AMessage::Presentation"),
+            A2AMessage::PresentationAck(_) => write!(f, "A2AMessage::PresentationAck"),
+            A2AMessage::Query(_) => write!(f, "A2AMessage::Query"),
+            A2AMessage::Disclose(_) => write!(f, "A2AMessage::Disclose"),
+            A2AMessage::BasicMessage(_) => write!(f, "A2AMessage::BasicMessage"),
+            A2AMessage::OutOfBandInvitation(_) => write!(f, "A2AMessage::OutOfBandInvitation"),
+            A2AMessage::OutOfBandHandshakeReuse(_) => write!(f, "A2AMessage::OutOfBandHandshakeReuse"),
+            A2AMessage::OutOfBandHandshakeReuseAccepted(_) => write!(f, "A2AMessage::OutOfBandHandshakeReuseAccepted"),
+            A2AMessage::Generic(_) => write!(f, "A2AMessage::Generic"),
+        }
+    }
 }
 
 impl Serialize for A2AMessage {

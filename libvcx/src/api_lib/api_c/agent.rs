@@ -17,7 +17,7 @@ pub extern fn vcx_public_agent_create(command_handle: CommandHandle,
                                       source_id: *const c_char,
                                       institution_did: *const c_char,
                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, agent_handle: u32)>) -> u32 {
-    info!("vcx_public_agent_create >>>");
+    debug!("vcx_public_agent_create >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
@@ -50,7 +50,7 @@ pub extern fn vcx_public_agent_download_connection_requests(command_handle: Comm
                                                             agent_handle: u32,
                                                             uids: *const c_char,
                                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, requests: *const c_char)>) -> u32 {
-    info!("vcx_public_agent_download_connection_requests >>>");
+    debug!("vcx_public_agent_download_connection_requests >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -91,7 +91,7 @@ pub extern fn vcx_public_agent_download_message(command_handle: CommandHandle,
                                                 agent_handle: u32,
                                                 uid: *const c_char,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
-    info!("vcx_public_agent_download_message >>>");
+    debug!("vcx_public_agent_download_message >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(uid, VcxErrorKind::InvalidOption);
@@ -123,7 +123,7 @@ pub extern fn vcx_public_agent_download_message(command_handle: CommandHandle,
 pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
                                            agent_handle: u32,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>) -> u32 {
-    info!("vcx_public_agent_get_service >>>");
+    debug!("vcx_public_agent_get_service >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -154,7 +154,7 @@ pub extern fn vcx_public_agent_get_service(command_handle: CommandHandle,
 pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
                                          agent_handle: u32,
                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, agent_json: *const c_char)>) -> u32 {
-    info!("vcx_public_agent_serialize >>>");
+    debug!("vcx_public_agent_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -185,7 +185,7 @@ pub extern fn vcx_public_agent_serialize(command_handle: CommandHandle,
 pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
                                            agent_json: *const c_char,
                                            cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, agent_handle: u32)>) -> u32 {
-    info!("vcx_public_agent_deserialize >>>");
+    debug!("vcx_public_agent_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(agent_json, VcxErrorKind::InvalidOption);
@@ -214,7 +214,7 @@ pub extern fn vcx_public_agent_deserialize(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_public_agent_release(agent_handle: u32) -> u32 {
-    info!("vcx_public_agent_release >>>");
+    debug!("vcx_public_agent_release >>>");
 
     match agent::release(agent_handle) {
         Ok(()) => {

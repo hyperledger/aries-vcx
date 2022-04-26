@@ -48,7 +48,7 @@ pub async fn get_rev_reg_delta_cache(rev_reg_id: &str) -> Option<String> {
 /// `cache`: Cache object.
 ///
 pub async fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) -> VcxResult<()> {
-    debug!("Setting rev_reg_delta_cache for rev_reg_id {}, cache {}", rev_reg_id, cache);
+    info!("Setting rev_reg_delta_cache for rev_reg_id {}, cache {}", rev_reg_id, cache);
     match serde_json::to_string(cache) {
         Ok(json) => {
             let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
@@ -74,12 +74,12 @@ pub async fn set_rev_reg_delta_cache(rev_reg_id: &str, cache: &str) -> VcxResult
 /// `cache`: Cache object.
 ///
 pub async fn clear_rev_reg_delta_cache(rev_reg_id: &str) -> VcxResult<String> {
-    debug!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
+    info!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
     if let Some(last_delta) = get_rev_reg_delta_cache(rev_reg_id).await {
         debug!("Got last delta = {}", last_delta);
         let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
         delete_record(CACHE_TYPE, &wallet_id).await?;
-        debug!("Record with id {} deleted", wallet_id);
+        info!("Record with id {} deleted", wallet_id);
         Ok(last_delta)
     } else {
         Err(VcxError::from(VcxErrorKind::IOError))

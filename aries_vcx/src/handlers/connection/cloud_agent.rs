@@ -52,13 +52,13 @@ fn _log_messages_optionally(_a2a_messages: &HashMap<String, A2AMessage>) {
 
 impl CloudAgentInfo {
     pub async fn create(pairwise_info: &PairwiseInfo) -> VcxResult<CloudAgentInfo> {
-        trace!("CloudAgentInfo::create >>> pairwise_info: {:?}", pairwise_info);
+        debug!("CloudAgentInfo::create >>> pairwise_info: {:?}", pairwise_info);
         let (agent_did, agent_vk) = create_agent_keys("", &pairwise_info.pw_did, &pairwise_info.pw_vk).await?;
         Ok(CloudAgentInfo { agent_did, agent_vk })
     }
 
     pub async fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
-        trace!("CloudAgentInfo::delete >>>");
+        info!("CloudAgentInfo::delete >>> sending message to delete connection agent {} in agency", pairwise_info.pw_did);
         send_delete_connection_message(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
             .await
             .map_err(|err| err.into())
@@ -75,7 +75,7 @@ impl CloudAgentInfo {
     }
 
     pub async fn update_message_status(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
-        trace!("CloudAgentInfo::update_message_status >>> uid: {:?}", uid);
+        debug!("CloudAgentInfo::update_message_status >>> uid: {:?}", uid);
 
         let messages_to_update = vec![UIDsByConn {
             pairwise_did: pairwise_info.pw_did.clone(),
@@ -88,7 +88,7 @@ impl CloudAgentInfo {
     }
 
     pub async fn reject_message(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
-        trace!("CloudAgentInfo::reject_message >>> uid: {:?}", uid);
+        debug!("CloudAgentInfo::reject_message >>> uid: {:?}", uid);
 
         let messages_to_reject = vec![UIDsByConn {
             pairwise_did: pairwise_info.pw_did.clone(),

@@ -17,51 +17,46 @@ pub struct PoolConfig {
 }
 
 pub fn enable_vcx_mocks() -> VcxResult<()> {
-    info!("enable_vcx_mocks >>>");
+    warn!("enable_vcx_mocks >>>");
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
     Ok(())
 }
 
 pub fn enable_agency_mocks() -> VcxResult<()> {
-    info!("enable_agency_mocks >>>");
+    warn!("enable_agency_mocks >>>");
     settings::get_agency_client_mut()?.enable_test_mode();
     Ok(())
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
     let config = serde_json::to_string(config).unwrap();
-    // todo: remove unwrap
-    info!("init_agency_client >>> config = {}", config);
+    info!("create_agency_client_for_main_wallet >>> config = {}", config);
     settings::get_agency_client_mut()?.process_config_string(&config, false)?;
     Ok(())
 }
 
 pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
+    info!("init_issuer_config ::: institution_did: {}", config.institution_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &config.institution_did);
     Ok(())
 }
 
 pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-    trace!("open_pool >>> pool_name: {}, path: {}, pool_config: {:?}", pool_name, config.genesis_path, config.pool_config);
+    info!("open_main_pool >>> pool_name: {}, path: {}, pool_config: {:?}", pool_name, config.genesis_path, config.pool_config);
 
     create_pool_ledger_config(&pool_name, &config.genesis_path)
         .await
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
-    debug!("open_pool ::: Pool Config Created Successfully");
-
     open_pool_ledger(&pool_name, config.pool_config.as_deref())
         .await
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
-
-    info!("open_pool ::: Pool Opened Successfully");
-
     Ok(())
 }
 
 pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
-    trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
+    info!("open_as_main_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
     let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_deref(), wallet_config.storage_config.as_deref());
     let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
 

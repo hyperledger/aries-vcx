@@ -83,17 +83,16 @@ impl PublicAgent {
             .into_iter()
             .find(|(uid_, _)| uid == uid_)
             .map(|(_, message)| message)
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", uid)))
+            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found by uid: {}", uid)))
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize Agent: {:?}", err)))
+    pub fn to_string(&self) -> String {
+        json!(&self).to_string()
     }
 
     pub fn from_string(agent_data: &str) -> VcxResult<Self> {
         serde_json::from_str(agent_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize Agent: {:?}", err)))
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize as public agent object, input string: {}, err: {:?}", agent_data, err)))
     }
 }
 

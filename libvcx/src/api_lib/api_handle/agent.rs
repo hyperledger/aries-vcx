@@ -49,7 +49,7 @@ pub fn get_service(handle: u32) -> VcxResult<String> {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
-        agent.to_string().map_err(|err| err.into())
+        Ok(agent.to_string())
     })
 }
 

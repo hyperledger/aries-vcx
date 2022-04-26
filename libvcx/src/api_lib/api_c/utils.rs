@@ -51,7 +51,7 @@ use crate::api_lib::utils::runtime::execute_async;
 pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                                         agency_config: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>) -> u32 {
-    info!("vcx_provision_cloud_agent >>>");
+    debug!("vcx_provision_cloud_agent >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(agency_config, VcxErrorKind::InvalidOption);
@@ -90,7 +90,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_set_next_agency_response(message_index: u32) {
-    info!("vcx_set_next_agency_response >>>");
+    debug!("vcx_set_next_agency_response >>>");
 
     let message = match message_index {
         4 => UPDATE_CREDENTIAL_RESPONSE.to_vec(),
@@ -145,7 +145,7 @@ pub extern fn vcx_messages_download(command_handle: CommandHandle,
                                     uids: *const c_char,
                                     pw_dids: *const c_char,
                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
-    info!("vcx_messages_download >>>");
+    debug!("vcx_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -241,7 +241,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
                                        message_statuses: *const c_char,
                                        uids: *const c_char,
                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
-    info!("vcx_v2_messages_download >>>");
+    debug!("vcx_v2_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -346,7 +346,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
                                          message_status: *const c_char,
                                          msg_json: *const c_char,
                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_messages_update_status >>>");
+    debug!("vcx_messages_update_status >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message_status, VcxErrorKind::InvalidOption);
@@ -406,7 +406,7 @@ pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
 pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
                                       transaction: *const c_char,
                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_endorse_transaction >>>");
+    debug!("vcx_endorse_transaction >>>");
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -439,7 +439,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
                                 did: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_rotate_verkey >>>");
+    debug!("vcx_rotate_verkey >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -535,7 +535,7 @@ pub extern fn vcx_rotate_verkey_apply(command_handle: CommandHandle,
 pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
                                 did: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
-    info!("vcx_get_verkey_from_wallet >>>");
+    debug!("vcx_get_verkey_from_wallet >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -567,7 +567,7 @@ pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
 pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
                                 did: *const c_char,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
-    info!("vcx_get_verkey_from_ledger >>>");
+    debug!("vcx_get_verkey_from_ledger >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);

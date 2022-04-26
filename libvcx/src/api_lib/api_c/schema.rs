@@ -46,7 +46,7 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
                                 schema_data: *const c_char,
                                 _payment_handle: u32,
                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
-    info!("vcx_schema_create >>>");
+    debug!("vcx_schema_create >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(schema_name, VcxErrorKind::InvalidOption);
@@ -119,7 +119,7 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32,
                                                                    schema_handle: u32,
                                                                    schema_transaction: *const c_char)>) -> u32 {
-    info!("vcx_schema_prepare_for_endorser >>>");
+    debug!("vcx_schema_prepare_for_endorser >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(schema_name, VcxErrorKind::InvalidOption);
@@ -177,7 +177,7 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
 pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
                                    schema_handle: u32,
                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, schema_state: *const c_char)>) -> u32 {
-    info!("vcx_schema_serialize >>>");
+    debug!("vcx_schema_serialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -226,7 +226,7 @@ pub extern fn vcx_schema_serialize(command_handle: CommandHandle,
 pub extern fn vcx_schema_deserialize(command_handle: CommandHandle,
                                      schema_data: *const c_char,
                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, schema_handle: u32)>) -> u32 {
-    info!("vcx_schema_deserialize >>>");
+    debug!("vcx_schema_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(schema_data, VcxErrorKind::InvalidOption);
@@ -262,7 +262,7 @@ pub extern fn vcx_schema_deserialize(command_handle: CommandHandle,
 /// Success
 #[no_mangle]
 pub extern fn vcx_schema_release(schema_handle: u32) -> u32 {
-    info!("vcx_schema_release >>>");
+    debug!("vcx_schema_release >>>");
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
     match schema::release(schema_handle) {
@@ -293,7 +293,7 @@ pub extern fn vcx_schema_release(schema_handle: u32) -> u32 {
 pub extern fn vcx_schema_get_schema_id(command_handle: CommandHandle,
                                        schema_handle: u32,
                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, schema_id: *const c_char)>) -> u32 {
-    info!("vcx_schema_get_schema_id >>>");
+    debug!("vcx_schema_get_schema_id >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -345,7 +345,7 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
                                         source_id: *const c_char,
                                         schema_id: *const c_char,
                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, s_handle: u32, schema_attrs: *const c_char)>) -> u32 {
-    info!("vcx_schema_get_attributes >>>");
+    debug!("vcx_schema_get_attributes >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
@@ -395,7 +395,7 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
 pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
                                       schema_handle: u32,
                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_schema_update_state >>>");
+    debug!("vcx_schema_update_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
@@ -446,7 +446,7 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
 pub extern fn vcx_schema_get_state(command_handle: CommandHandle,
                                    schema_handle: u32,
                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, state: u32)>) -> u32 {
-    info!("vcx_schema_get_state >>>");
+    debug!("vcx_schema_get_state >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 

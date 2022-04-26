@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use indy::cache;
-use futures::executor::block_on;
 use futures::future::TryFutureExt;
 use indy::ledger;
 use serde_json;
@@ -30,7 +29,7 @@ pub async fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String>
 }
 
 pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &str) -> VcxResult<String> {
-    trace!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
+    info!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
     if settings::indy_mocks_enabled() { return Ok(r#"{"rc":"success"}"#.to_string()); }
     if PoolMocks::has_pool_mock_responses() {
         warn!("libindy_sign_and_submit_request >> retrieving pool mock response");
@@ -101,7 +100,7 @@ pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
 }
 
 pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxResult<String> {
-    trace!("append_txn_author_agreement_to_request >>> request_json: ...");
+    trace!("append_txn_author_agreement_to_request >>> request_json: {}", request_json);
     if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
         ledger::append_txn_author_agreement_acceptance_to_request(request_json,
                                                                   author_agreement.text.as_ref().map(String::as_str),
@@ -116,21 +115,8 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
     }
 }
 
-pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxResult<String> {
-    ledger::build_auth_rules_request(submitter_did, data)
-        .map_err(VcxError::from)
-        .await
-}
-
 pub async fn libindy_build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
     ledger::build_attrib_request(submitter_did, target_did, hash, raw, enc)
-        .map_err(VcxError::from)
-        .await
-}
-
-pub async fn libindy_build_get_auth_rule_request(submitter_did: Option<&str>, txn_type: Option<&str>, action: Option<&str>, field: Option<&str>,
-                                           old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
-    ledger::build_get_auth_rule_request(submitter_did, txn_type, action, field, old_value, new_value)
         .map_err(VcxError::from)
         .await
 }
@@ -149,193 +135,6 @@ pub async fn libindy_build_nym_request(submitter_did: &str, target_did: &str, ve
         ledger::build_nym_request(submitter_did, target_did, verkey, data, role)
             .map_err(VcxError::from)
             .await
-    }
-}
-
-pub mod auth_rule {
-    use std::sync::Mutex;
-    use std::sync::Once;
-
-    use crate::libindy;
-
-    use super::*;
-
-    /**
-    Structure for parsing GET_AUTH_RULE response
-    # parameters
-    result - the payload containing data relevant to the GET_AUTH_RULE transaction
-     */
-    #[derive(Serialize, Deserialize, Debug)]
-    #[serde(rename_all = "camelCase")]
-    pub struct GetAuthRuleResponse {
-        pub result: GetAuthRuleResult,
-    }
-
-    /**
-    Structure of the result value within the GAT_AUTH_RULE response
-     # parameters
-    identifier - The DID this request was submitted from
-    req_id - Unique ID number of the request with transaction
-    txn_type - the type of transaction that was submitted
-    data - A key:value map with the action id as the key and the auth rule as the value
-     */
-    #[derive(Serialize, Deserialize, Debug)]
-    #[serde(rename_all = "camelCase")]
-    pub struct GetAuthRuleResult {
-        pub identifier: String,
-        pub req_id: u64,
-        // This is to change the json key to adhear to the functionality on ledger
-        #[serde(rename = "type")]
-        pub txn_type: String,
-        pub data: Vec<AuthRule>,
-    }
-
-    /**
-    Enum of the constraint type within the GAT_AUTH_RULE result data
-     # parameters
-    Role - The final constraint
-    And - Combine multiple constraints all of them must be met
-    Or - Combine multiple constraints any of them must be met
-    Forbidden - action is forbidden
-     */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[serde(tag = "constraint_id")]
-    pub enum Constraint {
-        #[serde(rename = "OR")]
-        OrConstraint(CombinationConstraint),
-        #[serde(rename = "AND")]
-        AndConstraint(CombinationConstraint),
-        #[serde(rename = "ROLE")]
-        RoleConstraint(RoleConstraint),
-        #[serde(rename = "FORBIDDEN")]
-        ForbiddenConstraint(ForbiddenConstraint),
-    }
-
-    /**
-    The final constraint
-     # parameters
-    sig_count - The number of signatures required to execution action
-    role - The role which the user must have to execute the action.
-    metadata -  An additional parameters of the constraint (contains transaction FEE cost).
-    need_to_be_owner - The flag specifying if a user must be an owner of the transaction.
-     */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    pub struct RoleConstraint {
-        pub sig_count: Option<u32>,
-        pub role: Option<String>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        pub metadata: Option<Metadata>,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        pub need_to_be_owner: Option<bool>,
-    }
-
-    /**
-    The empty constraint means that action is forbidden
-     */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[serde(deny_unknown_fields)]
-    pub struct ForbiddenConstraint {}
-
-    /**
-    The constraint metadata
-     # parameters
-    fees - The action cost
-     */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    pub struct Metadata {
-        pub fees: Option<String>,
-    }
-
-    /**
-    Combine multiple constraints
-     # parameters
-    auth_constraints - The type of the combination
-     */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    pub struct CombinationConstraint {
-        pub auth_constraints: Vec<Constraint>,
-    }
-
-    /* Map contains default Auth Rules set on the Ledger*/
-    lazy_static! {
-        static ref AUTH_RULES: Mutex<Vec<AuthRule>> = Default::default();
-    }
-
-    /* Helper structure to store auth rule set on the Ledger */
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    pub struct AuthRule {
-        auth_action: String,
-        auth_type: String,
-        field: String,
-        old_value: Option<String>,
-        new_value: Option<String>,
-        constraint: Constraint,
-    }
-
-    #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-    pub struct Action {
-        pub auth_type: String,
-        pub auth_action: String,
-        pub field: String,
-        pub old_value: Option<String>,
-        pub new_value: Option<String>,
-    }
-
-    async fn _send_auth_rules(submitter_did: &str, data: &Vec<AuthRule>) -> VcxResult<()> {
-        let data = serde_json::to_string(&data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize auth rules: {:?}", err)))?;
-
-        let auth_rules_request = libindy_build_auth_rules_request(submitter_did, &data).await?;
-
-        let response = ledger::sign_and_submit_request(get_pool_handle()?, get_wallet_handle(), submitter_did, &auth_rules_request)
-            .await?;
-
-        let response: serde_json::Value = serde_json::from_str(&response)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-
-        match response["op"].as_str().unwrap_or_default() {
-            "REPLY" => Ok(()),
-            _ => Err(VcxError::from(VcxErrorKind::InvalidLedgerResponse))
-        }
-    }
-
-    async fn _get_default_ledger_auth_rules() {
-        lazy_static! {
-            static ref GET_DEFAULT_AUTH_CONSTRAINTS: Once = Once::new();
-
-        }
-
-        GET_DEFAULT_AUTH_CONSTRAINTS.call_once(|| {
-            let get_auth_rule_request = block_on(indy::ledger::build_get_auth_rule_request(None, None, None, None, None, None)).unwrap();
-            let get_auth_rule_response = block_on(libindy::utils::ledger::libindy_submit_request(&get_auth_rule_request)).unwrap();
-
-            let response: GetAuthRuleResponse = serde_json::from_str(&get_auth_rule_response)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, err)).unwrap();
-
-            let mut auth_rules = AUTH_RULES.lock().unwrap();
-            *auth_rules = response.result.data;
-        })
-    }
-
-    pub async fn get_action_auth_rule(action: (&str, &str, &str, Option<&str>, Option<&str>)) -> VcxResult<String> {
-        let (txn_type, action, field, old_value, new_value) = action;
-
-        if settings::indy_mocks_enabled() { return Ok(json!({"result":{"data":[{"new_value":"0","constraint":{"need_to_be_owner":false,"sig_count":1,"metadata":{"fees":txn_type},"role":"0","constraint_id":"ROLE"},"field":"role","auth_type":"1","auth_action":"ADD"}],"identifier":"LibindyDid111111111111","auth_action":"ADD","new_value":"0","reqId":15616,"auth_type":"1","type":"121","field":"role"},"op":"REPLY"}).to_string()); }
-
-        let did = generate_random_did();
-
-
-        let request = libindy_build_get_auth_rule_request(Some(&did), Some(txn_type), Some(action), Some(field), old_value, new_value).await?;
-
-        let response_json = libindy_submit_request(&request).await?;
-
-        let response: serde_json::Value = serde_json::from_str(&response_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-
-        match response["op"].as_str().unwrap_or_default() {
-            "REPLY" => Ok(response_json),
-            _ => Err(VcxError::from(VcxErrorKind::InvalidLedgerResponse))
-        }
     }
 }
 
@@ -617,7 +416,6 @@ pub struct ReplyDataV1 {
 }
 
 pub async fn publish_txn_on_ledger(req: &str) -> VcxResult<String> {
-    debug!("publish_txn_on_ledger(req: {}", req);
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
