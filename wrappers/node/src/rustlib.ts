@@ -155,6 +155,8 @@ export interface IFFIEntryPoint {
   vcx_pool_set_handle: (handle: number) => void;
   vcx_endorse_transaction: (commandId: number, transaction: string, cb: ICbRef) => number;
   vcx_rotate_verkey: (commandId: number, did: string, cb: ICbRef) => number;
+  vcx_get_verkey_from_wallet: (commandId: number, did: string, cb: ICbRef) => number;
+  vcx_get_verkey_from_ledger: (commandId: number, did: string, cb: ICbRef) => number;
 
   // connection
   vcx_connection_delete_connection: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -627,6 +629,14 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_rotate_verkey: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_get_verkey_from_wallet: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_get_verkey_from_ledger: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],

@@ -186,7 +186,53 @@ export async function rotateVerkey(did: string): Promise<void> {
   try {
     return await createFFICallbackPromise<void>(
       (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_endorse_transaction(0, did, cb);
+        const rc = rustAPI().vcx_rotate_verkey(0, did, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function getVerkeyFromWallet(did: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_get_verkey_from_wallet(0, did, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function getVerkeyFromLedger(did: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_get_verkey_from_ledger(0, did, cb);
         if (rc) {
           reject(rc);
         }

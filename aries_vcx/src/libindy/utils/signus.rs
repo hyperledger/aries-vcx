@@ -58,9 +58,9 @@ pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
     }
 }
 
-pub async fn key_for_local_did(did: &str) -> VcxResult<String> {
+pub async fn get_verkey_from_wallet(did: &str) -> VcxResult<String> {
     if PoolMocks::has_pool_mock_responses() {
-        warn!("key_for_local_did >> retrieving pool mock response");
+        warn!("get_verkey_from_wallet >> retrieving pool mock response");
         Ok(PoolMocks::get_next_pool_response())
     } else {
         did::key_for_local_did(get_wallet_handle(), did)
@@ -69,6 +69,20 @@ pub async fn key_for_local_did(did: &str) -> VcxResult<String> {
     }
 }
 
+pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
+    let nym_response: String = ledger::get_nym(did).await?;
+    let nym_json: Value = serde_json::from_str(&nym_response)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_response, err)))?;
+    let nym_data: String = nym_json["result"]["data"].as_str()
+        .ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into String", nym_json["result"]["data"])))?.to_string();
+    let nym_data: Value = serde_json::from_str(&nym_data)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_data, err)))?;
+    Ok(nym_data["verkey"].as_str()
+        .ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into String", nym_data["verkey"])))?
+        .to_string())
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -76,20 +90,13 @@ mod test {
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
 
-    async fn get_verkey_from_ledger(did: &str) -> String {
-        let nym_response: String = ledger::get_nym(did).await.unwrap();
-        let nym_json: Value = serde_json::from_str(&nym_response).unwrap();
-        let nym_data: Value = serde_json::from_str(nym_json["result"]["data"].as_str().unwrap()).unwrap();
-        nym_data["verkey"].as_str().unwrap().to_string()
-    }
-
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey() {
         let _setup = SetupWithWalletAndAgency::init().await;
         let (did, verkey) = ledger::add_new_did(None).await;
         rotate_verkey(&did).await.unwrap();
-        let local_verkey = key_for_local_did(&did).await.unwrap();
+        let local_verkey = get_verkey_from_wallet(&did).await.unwrap();
         let ledger_verkey = get_verkey_from_ledger(&did).await;
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
