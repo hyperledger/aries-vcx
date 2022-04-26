@@ -5,6 +5,7 @@ use crate::{libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::{init_issuer_config, open_as_main_wallet};
 use crate::init::PoolConfig;
+use crate::libindy::utils::mocks::{enable_pool_mocks, PoolMocks};
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
@@ -23,6 +24,8 @@ pub struct SetupDefaults; // set default settings
 pub struct SetupMocks; // set default settings and enable test mode
 
 pub struct SetupIndyMocks; // set default settings and enable indy mode
+
+pub struct SetupPoolMocks; // set default settings and enable pool mocks mode
 
 pub struct SetupWallet {
     pub wallet_config: WalletConfig,
@@ -65,6 +68,7 @@ fn tear_down() {
     reset_pool_handle();
     settings::get_agency_client_mut().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
+    PoolMocks::clear_mocks();
 }
 
 impl SetupEmpty {
@@ -210,6 +214,20 @@ impl Drop for SetupPoolConfig {
             futures::executor::block_on(delete_test_pool());
             reset_pool_handle();
         }
+    }
+}
+
+impl SetupPoolMocks {
+    pub async fn init() -> SetupPoolMocks {
+        setup();
+        enable_pool_mocks();
+        SetupPoolMocks {}
+    }
+}
+
+impl Drop for SetupPoolMocks {
+    fn drop(&mut self) {
+        tear_down()
     }
 }
 

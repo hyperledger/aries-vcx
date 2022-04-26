@@ -6,6 +6,7 @@ use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::libindy::utils::ledger;
+use crate::libindy::utils::mocks::{PoolMocks, pool_mocks_enabled};
 
 pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
@@ -24,7 +25,7 @@ pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&st
 pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
     let trustee_temp_verkey = libindy_replace_keys_start(did).await?;
     let nym_request = ledger::libindy_build_nym_request(&did, &did, Some(&trustee_temp_verkey), None, None).await?;
-    let nym_result = ledger::libindy_sign_and_submit_request(&did, &nym_request).await?; // TODO: Verify success
+    let nym_result = ledger::libindy_sign_and_submit_request(&did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err)))?;
     let response_type: String = nym_result_json["op"].as_str()
@@ -36,28 +37,43 @@ pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
 }
 
 pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
-    did::replace_keys_start(get_wallet_handle(), did, "{}")
-        .map_err(VcxError::from)
-        .await
+    if PoolMocks::has_pool_mock_responses() {
+        warn!("libindy_replace_keys_start >> retrieving pool mock response");
+        Ok(PoolMocks::get_next_pool_response())
+    } else {
+        did::replace_keys_start(get_wallet_handle(), did, "{}")
+            .map_err(VcxError::from)
+            .await
+    }
 }
 
 pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
-    did::replace_keys_apply(get_wallet_handle(), did)
-        .map_err(VcxError::from)
-        .await
+    if pool_mocks_enabled() {
+        warn!("libindy_replace_keys_apply >> retrieving pool mock response");
+        Ok(())
+    } else {
+        did::replace_keys_apply(get_wallet_handle(), did)
+            .map_err(VcxError::from)
+            .await
+    }
 }
 
 pub async fn key_for_local_did(did: &str) -> VcxResult<String> {
-    did::key_for_local_did(get_wallet_handle(), did)
-        .map_err(VcxError::from)
-        .await
+    if PoolMocks::has_pool_mock_responses() {
+        warn!("key_for_local_did >> retrieving pool mock response");
+        Ok(PoolMocks::get_next_pool_response())
+    } else {
+        did::key_for_local_did(get_wallet_handle(), did)
+            .map_err(VcxError::from)
+            .await
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
 
-    use crate::utils::devsetup::SetupWithWalletAndAgency;
+    use crate::utils::devsetup::*;
 
     async fn get_verkey_from_ledger(did: &str) -> String {
         let nym_response: String = ledger::get_nym(did).await.unwrap();
@@ -76,5 +92,13 @@ mod test {
         let ledger_verkey = get_verkey_from_ledger(&did).await;
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
+    }
+
+    #[cfg(feature = "general_test")]
+    #[tokio::test]
+    async fn test_rotate_verkey_fails() {
+        let _setup = SetupPool::init();
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
     }
 }

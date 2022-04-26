@@ -13,6 +13,7 @@ pub mod pool;
 pub mod crypto;
 pub mod cache;
 pub mod logger;
+pub mod mocks;
 
 pub mod error_codes;
 
