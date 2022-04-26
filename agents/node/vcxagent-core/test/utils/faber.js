@@ -3,6 +3,7 @@ const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
+const sleep = require('sleep-promise')
 
 module.exports.createFaber = async function createFaber () {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
@@ -134,6 +135,7 @@ module.exports.createFaber = async function createFaber () {
 
     logger.info('Faber writing schema on ledger')
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await sleep(500)
 
     logger.info('Faber writing credential definition on ledger')
     credDefId = getFaberCredDefName()
@@ -151,6 +153,7 @@ module.exports.createFaber = async function createFaber () {
 
     logger.info('Faber writing schema on ledger')
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await sleep(500)
 
     logger.info('Faber writing credential definition on ledger')
     revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
