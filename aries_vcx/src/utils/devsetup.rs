@@ -218,7 +218,7 @@ impl Drop for SetupPoolConfig {
 }
 
 impl SetupPoolMocks {
-    pub async fn init() -> SetupPoolMocks {
+    pub fn init() -> SetupPoolMocks {
         setup();
         enable_pool_mocks();
         SetupPoolMocks {}

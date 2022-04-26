@@ -74,6 +74,7 @@ mod test {
     use super::*;
 
     use crate::utils::devsetup::*;
+    use crate::utils::mockdata::mockdata_pool;
 
     async fn get_verkey_from_ledger(did: &str) -> String {
         let nym_response: String = ledger::get_nym(did).await.unwrap();
@@ -97,8 +98,11 @@ mod test {
     #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let _setup = SetupPool::init();
+        let _setup = SetupPoolMocks::init();
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
+        PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
+        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
         assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
     }
 }
