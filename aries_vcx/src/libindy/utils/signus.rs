@@ -103,7 +103,7 @@ mod test {
         assert_eq!(local_verkey, ledger_verkey);
     }
 
-    #[cfg(feature = "pool_test")]
+    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
         let _setup = SetupPoolMocks::init().await;

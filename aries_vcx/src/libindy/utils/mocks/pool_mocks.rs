@@ -1,10 +1,12 @@
 use std::sync::Mutex;
 
-use crate::settings;
+use crate::libindy::utils::mocks::ENABLED_MOCKS;
 
 lazy_static! {
     static ref POOL_MOCK_RESPONSES: Mutex<PoolMocks> = Mutex::new(PoolMocks::default());
 }
+
+pub const CONFIG_POOL_MOCKS: &str = "pool_mocks";
 
 #[derive(Default)]
 pub struct PoolMocks {
@@ -41,16 +43,19 @@ impl PoolMocks {
 }
 
 pub fn pool_mocks_enabled() -> bool {
-    match settings::get_config_value(settings::CONFIG_ENABLE_TEST_MODE).ok() {
-        None => false,
-        Some(value) => value == "pool"
-    }
+    ENABLED_MOCKS
+        .read().unwrap()
+        .contains(CONFIG_POOL_MOCKS)
 }
 
 pub fn enable_pool_mocks() {
-    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "pool");
+    ENABLED_MOCKS
+        .write().unwrap()
+        .insert(CONFIG_POOL_MOCKS.to_string());
 }
 
 pub fn disable_pool_mocks() {
-    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "pool");
+    ENABLED_MOCKS
+        .write().unwrap()
+        .remove(CONFIG_POOL_MOCKS);
 }
