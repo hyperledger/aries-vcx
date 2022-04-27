@@ -110,6 +110,11 @@ mod test {
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
         PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
+        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
+        let local_verkey_1 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
+        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
+        let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
+        assert_eq!(local_verkey_1, local_verkey_2);
     }
 }
