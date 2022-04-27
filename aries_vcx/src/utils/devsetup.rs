@@ -230,7 +230,6 @@ impl SetupPoolMocks {
 
 impl Drop for SetupPoolMocks {
     fn drop(&mut self) {
-        cleanup_indy_env();
         tear_down()
     }
 }
