@@ -28,7 +28,6 @@ pub struct WalletConfig {
 #[builder(setter(into, strip_option), default)]
 pub struct IssuerConfig {
     pub institution_did: String,
-    pub institution_verkey: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -98,10 +97,9 @@ pub async fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
 }
 
 pub async fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
-    let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None).await?;
+    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None).await?;
     Ok(IssuerConfig {
         institution_did,
-        institution_verkey,
     })
 }
 

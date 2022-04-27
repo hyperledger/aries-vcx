@@ -5,6 +5,8 @@ use crate::{libindy, settings, utils};
 use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::{init_issuer_config, open_as_main_wallet};
 use crate::init::PoolConfig;
+use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+use crate::libindy::utils::mocks::did_mocks::DidMocks;
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
@@ -23,6 +25,8 @@ pub struct SetupDefaults; // set default settings
 pub struct SetupMocks; // set default settings and enable test mode
 
 pub struct SetupIndyMocks; // set default settings and enable indy mode
+
+pub struct SetupPoolMocks; // set default settings and enable pool mocks mode
 
 pub struct SetupWallet {
     pub wallet_config: WalletConfig,
@@ -65,6 +69,8 @@ fn tear_down() {
     reset_pool_handle();
     settings::get_agency_client_mut().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
+    PoolMocks::clear_mocks();
+    DidMocks::clear_mocks();
 }
 
 impl SetupEmpty {
@@ -213,6 +219,21 @@ impl Drop for SetupPoolConfig {
     }
 }
 
+impl SetupPoolMocks {
+    pub async fn init() -> SetupPoolMocks {
+        setup();
+        setup_indy_env(false).await;
+        enable_pool_mocks();
+        SetupPoolMocks {}
+    }
+}
+
+impl Drop for SetupPoolMocks {
+    fn drop(&mut self) {
+        tear_down()
+    }
+}
+
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         setup();
@@ -231,7 +252,7 @@ impl Drop for SetupIndyMocks {
 impl SetupWithWalletAndAgency {
     pub async fn init() -> SetupWithWalletAndAgency {
         setup();
-        let institution_did = setup_indy_env().await;
+        let institution_did = setup_indy_env(true).await;
         SetupWithWalletAndAgency {
             institution_did
         }
@@ -336,7 +357,7 @@ pub async fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
-pub async fn setup_indy_env() -> String {
+pub async fn setup_indy_env(open_pool: bool) -> String {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     settings::get_agency_client_mut().unwrap().disable_test_mode();
 
@@ -366,8 +387,10 @@ pub async fn setup_indy_env() -> String {
 
     provision_cloud_agent(&config_provision_agent).await.unwrap();
 
-    settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
-    open_test_pool().await;
+    if open_pool {
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
+        open_test_pool().await;
+    }
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     institution_did

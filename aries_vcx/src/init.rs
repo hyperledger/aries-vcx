@@ -38,7 +38,6 @@ pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxR
 
 pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &config.institution_did);
-    settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &config.institution_verkey);
     Ok(())
 }
 

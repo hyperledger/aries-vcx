@@ -11,6 +11,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
+use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
@@ -31,6 +32,10 @@ pub async fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String>
 pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &str) -> VcxResult<String> {
     trace!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
     if settings::indy_mocks_enabled() { return Ok(r#"{"rc":"success"}"#.to_string()); }
+    if PoolMocks::has_pool_mock_responses() {
+        warn!("libindy_sign_and_submit_request >> retrieving pool mock response");
+        return Ok(PoolMocks::get_next_pool_response());
+    };
 
     let pool_handle = get_pool_handle()?;
     let wallet_handle = get_wallet_handle();
@@ -133,6 +138,17 @@ pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &st
     ledger::build_get_nym_request(submitter_did, did)
         .map_err(VcxError::from)
         .await
+}
+
+pub async fn libindy_build_nym_request(submitter_did: &str, target_did: &str, verkey: Option<&str>, data: Option<&str>, role: Option<&str>) -> VcxResult<String> {
+    if PoolMocks::has_pool_mock_responses() {
+        warn!("libindy_build_nym_request >> retrieving pool mock response");
+        Ok(PoolMocks::get_next_pool_response())
+    } else {
+        ledger::build_nym_request(submitter_did, target_did, verkey, data, role)
+            .map_err(VcxError::from)
+            .await
+    }
 }
 
 pub mod auth_rule {
@@ -507,8 +523,6 @@ mod test {
     #[tokio::test]
     async fn test_endorse_transaction() {
         let _setup = SetupWithWalletAndAgency::init().await;
-
-        use crate::libindy::utils::ledger::add_new_did;
 
         let (author_did, _) = add_new_did(None).await;
         let (endorser_did, _) = add_new_did(Some("ENDORSER")).await;
