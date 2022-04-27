@@ -6,7 +6,7 @@ use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::libindy::utils::ledger;
-use crate::libindy::utils::mocks::{PoolMocks, pool_mocks_enabled};
+use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
 
 pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
@@ -37,9 +37,9 @@ pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
 }
 
 pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
-    if PoolMocks::has_pool_mock_responses() {
-        warn!("libindy_replace_keys_start >> retrieving pool mock response");
-        Ok(PoolMocks::get_next_pool_response())
+    if DidMocks::has_did_mock_responses() {
+        warn!("libindy_replace_keys_start >> retrieving did mock response");
+        Ok(DidMocks::get_next_did_response())
     } else {
         did::replace_keys_start(get_wallet_handle(), did, "{}")
             .map_err(VcxError::from)
@@ -48,8 +48,8 @@ pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
 }
 
 pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
-    if pool_mocks_enabled() {
-        warn!("libindy_replace_keys_apply >> retrieving pool mock response");
+    if did_mocks_enabled() {
+        warn!("libindy_replace_keys_apply >> retrieving did mock response");
         Ok(())
     } else {
         did::replace_keys_apply(get_wallet_handle(), did)
@@ -59,9 +59,9 @@ pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
 }
 
 pub async fn get_verkey_from_wallet(did: &str) -> VcxResult<String> {
-    if PoolMocks::has_pool_mock_responses() {
-        warn!("get_verkey_from_wallet >> retrieving pool mock response");
-        Ok(PoolMocks::get_next_pool_response())
+    if DidMocks::has_did_mock_responses() {
+        warn!("get_verkey_from_wallet >> retrieving did mock response");
+        Ok(DidMocks::get_next_did_response())
     } else {
         did::key_for_local_did(get_wallet_handle(), did)
             .map_err(VcxError::from)
@@ -89,6 +89,7 @@ mod test {
 
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
+    use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
@@ -102,18 +103,15 @@ mod test {
         assert_eq!(local_verkey, ledger_verkey);
     }
 
-    #[cfg(feature = "general_test")]
+    #[cfg(feature = "pool_test")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let _setup = SetupPoolMocks::init();
+        let _setup = SetupPoolMocks::init().await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
-        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
-        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
         let local_verkey_1 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
-        PoolMocks::set_next_pool_response(mockdata_pool::TRUSTEE_VERKEY_VALID);
         let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
     }

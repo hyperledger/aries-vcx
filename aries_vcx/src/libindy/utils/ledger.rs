@@ -11,7 +11,7 @@ use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::libindy::utils::wallet::get_wallet_handle;
-use crate::libindy::utils::mocks::PoolMocks;
+use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
