@@ -159,7 +159,7 @@ impl ProverSM {
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                        match state.build_presentation(&credentials, &self_attested_attrs) {
+                        match state.build_presentation(&credentials, &self_attested_attrs).await {
                             Ok(presentation) => {
                                 let presentation = Presentation::create()
                                     .ask_for_ack()

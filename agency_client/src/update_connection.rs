@@ -1,4 +1,5 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use async_trait::async_trait;
 use serde_json::Value;
 
 use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, delete_connection, GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
@@ -78,17 +79,17 @@ impl DeleteConnectionBuilder {
     pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
         trace!("DeleteConnection::send >>>");
 
-        let data = self.prepare_request()?;
+        let data = self.prepare_request().await?;
 
         let response = post_to_agency(&data).await?;
 
-        self.parse_response(&response)
+        self.parse_response(&response).await
     }
 
-    fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
+    async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
         trace!("parse_response >>>");
 
-        let mut response = parse_response_from_agency(response)?;
+        let mut response = parse_response_from_agency(response).await?;
 
         match response.remove(0) {
             A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
@@ -111,6 +112,7 @@ pub async fn send_delete_connection_message(pw_did: &str, pw_verkey: &str, agent
 }
 
 //TODO Every GeneralMessage extension, duplicates code
+#[async_trait]
 impl GeneralMessage for DeleteConnectionBuilder {
     type Msg = DeleteConnectionBuilder;
 
@@ -125,7 +127,7 @@ impl GeneralMessage for DeleteConnectionBuilder {
         self.agent_vk = vk;
     }
 
-    fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
+    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         let message = A2AMessage::Version2(
             A2AMessageV2::UpdateConnection(
                 UpdateConnection {
@@ -135,7 +137,7 @@ impl GeneralMessage for DeleteConnectionBuilder {
             )
         );
 
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk)
+        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
     }
 }
 

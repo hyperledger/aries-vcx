@@ -1,7 +1,6 @@
 use std::sync::RwLock;
 
 use indy::{ErrorCode, pool};
-use indy::future::Future;
 
 use crate::error::prelude::*;
 use crate::settings;
@@ -27,18 +26,18 @@ pub fn is_pool_open() -> bool {
 
 pub fn reset_pool_handle() { set_pool_handle(None); }
 
-pub fn set_protocol_version() -> VcxResult<()> {
+pub async fn set_protocol_version() -> VcxResult<()> {
     pool::set_protocol_version(settings::get_protocol_version())
-        .wait()?;
+        .await?;
 
     Ok(())
 }
 
-pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
+pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
     let pool_config = json!({"genesis_txn": path}).to_string();
 
     match pool::create_pool_ledger_config(pool_name, Some(&pool_config))
-        .wait() {
+        .await {
         Ok(()) => Ok(()),
         Err(err) => {
             match err.error_code.clone() {
@@ -54,11 +53,11 @@ pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
     }
 }
 
-pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32> {
-    set_protocol_version()?;
+pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32> {
+    set_protocol_version().await?;
 
     let handle = pool::open_pool_ledger(pool_name, config)
-        .wait()
+        .await
         .map_err(|err|
             match err.error_code.clone() {
                 ErrorCode::PoolLedgerNotCreatedError => {
@@ -87,18 +86,18 @@ pub fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32>
     Ok(handle as u32)
 }
 
-pub fn close() -> VcxResult<()> {
+pub async fn close() -> VcxResult<()> {
     let handle = get_pool_handle()?;
 
     //TODO there was timeout here (before future-based Rust wrapper)
-    pool::close_pool_ledger(handle).wait()?;
+    pool::close_pool_ledger(handle).await?;
 
     reset_pool_handle();
 
     Ok(())
 }
 
-pub fn delete(pool_name: &str) -> VcxResult<()> {
+pub async fn delete(pool_name: &str) -> VcxResult<()> {
     trace!("delete >>> pool_name: {}", pool_name);
 
     if settings::indy_mocks_enabled() {
@@ -106,7 +105,7 @@ pub fn delete(pool_name: &str) -> VcxResult<()> {
         return Ok(());
     }
 
-    pool::delete_pool_ledger(pool_name).wait()?;
+    pool::delete_pool_ledger(pool_name).await?;
 
     Ok(())
 }
@@ -123,24 +122,24 @@ pub mod test_utils {
 
     use super::*;
 
-    pub fn create_test_ledger_config() {
+    pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
-        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).unwrap();
+        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap()).await.unwrap();
     }
 
-    pub fn delete_named_test_pool(pool_name: &str) {
-        close().ok();
-        delete(pool_name).unwrap();
+    pub async fn delete_named_test_pool(pool_name: &str) {
+        close().await.ok();
+        delete(pool_name).await.unwrap();
     }
 
-    pub fn delete_test_pool() {
-        close().ok();
-        delete(POOL).unwrap();
+    pub async fn delete_test_pool() {
+        close().await.ok();
+        delete(POOL).await.unwrap();
     }
 
-    pub fn open_test_pool() -> u32 {
-        create_test_ledger_config();
-        open_pool_ledger(POOL, None).unwrap()
+    pub async fn open_test_pool() -> u32 {
+        create_test_ledger_config().await;
+        open_pool_ledger(POOL, None).await.unwrap()
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {

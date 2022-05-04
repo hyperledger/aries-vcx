@@ -42,8 +42,8 @@ impl Schema {
             .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
     }
 
-    pub fn update_state(&mut self) -> VcxResult<u32> {
-        if anoncreds::get_schema_json(&self.schema_id).is_ok() {
+    pub async fn update_state(&mut self) -> VcxResult<u32> {
+        if anoncreds::get_schema_json(&self.schema_id).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

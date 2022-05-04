@@ -1,6 +1,5 @@
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
-use indy::future::Future;
 
 use crate::error::prelude::*;
 use crate::init::open_as_main_wallet;
@@ -29,7 +28,6 @@ pub struct WalletConfig {
 #[builder(setter(into, strip_option), default)]
 pub struct IssuerConfig {
     pub institution_did: String,
-    pub institution_verkey: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -87,22 +85,21 @@ pub fn reset_wallet_handle() -> VcxResult<()> {
     Ok(())
 }
 
-pub fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
-    let wh = create_and_open_as_main_wallet(&config)?;
+pub async fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
+    let wh = create_and_open_as_main_wallet(&config).await?;
     trace!("Created wallet with handle {:?}", wh);
 
     // If MS is already in wallet then just continue
-    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).ok();
+    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
 
-    close_main_wallet()?;
+    close_main_wallet().await?;
     Ok(())
 }
 
-pub fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
-    let (institution_did, institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None)?;
+pub async fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
+    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None).await?;
     Ok(IssuerConfig {
         institution_did,
-        institution_verkey,
     })
 }
 
@@ -126,7 +123,7 @@ pub fn build_wallet_credentials(key: &str, storage_credentials: Option<&str>, ke
     }).map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize WalletCredentials, err: {:?}", err)))
 }
 
-pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("create_wallet >>> {}", &wallet_config.wallet_name);
     let config = build_wallet_config(
         &wallet_config.wallet_name,
@@ -143,7 +140,7 @@ pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("Credentials: {:?}", credentials);
 
     match wallet::create_wallet(&config, &credentials)
-        .wait() {
+        .await {
         Ok(()) => Ok(()),
         Err(err) => {
             match err.error_code.clone() {
@@ -160,17 +157,17 @@ pub fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     }
 }
 
-pub fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     if settings::indy_mocks_enabled() {
         warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
         return Ok(set_wallet_handle(WalletHandle(1)));
     }
 
-    create_indy_wallet(&wallet_config)?;
-    open_as_main_wallet(&wallet_config)
+    create_indy_wallet(&wallet_config).await?;
+    open_as_main_wallet(&wallet_config).await
 }
 
-pub fn close_main_wallet() -> VcxResult<()> {
+pub async fn close_main_wallet() -> VcxResult<()> {
     trace!("close_main_wallet >>>");
     if settings::indy_mocks_enabled() {
         warn!("close_main_wallet >>> Indy mocks enabled, skipping closing wallet");
@@ -179,20 +176,20 @@ pub fn close_main_wallet() -> VcxResult<()> {
     }
 
     wallet::close_wallet(get_wallet_handle())
-        .wait()?;
+        .await?;
 
     reset_wallet_handle()?;
     Ok(())
 }
 
-pub fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
 
     let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_deref());
     let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
 
     wallet::delete_wallet(&config, &credentials)
-        .wait()
+        .await
         .map_err(|err|
             match err.error_code.clone() {
                 ErrorCode::WalletAccessFailed => {
@@ -211,17 +208,17 @@ pub fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn add_record(xtype: &str, id: &str, value: &str, tags: Option<&str>) -> VcxResult<()> {
+pub async fn add_record(xtype: &str, id: &str, value: &str, tags: Option<&str>) -> VcxResult<()> {
     trace!("add_record >>> xtype: {}, id: {}, value: {}, tags: {:?}", secret!(&xtype), secret!(&id), secret!(&value), secret!(&tags));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
     wallet::add_wallet_record(get_wallet_handle(), xtype, id, value, tags)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn get_record(xtype: &str, id: &str, options: &str) -> VcxResult<String> {
+pub async fn get_record(xtype: &str, id: &str, options: &str) -> VcxResult<String> {
     trace!("get_record >>> xtype: {}, id: {}, options: {}", secret!(&xtype), secret!(&id), options);
 
     if settings::indy_mocks_enabled() {
@@ -229,32 +226,32 @@ pub fn get_record(xtype: &str, id: &str, options: &str) -> VcxResult<String> {
     }
 
     wallet::get_wallet_record(get_wallet_handle(), xtype, id, options)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn delete_record(xtype: &str, id: &str) -> VcxResult<()> {
+pub async fn delete_record(xtype: &str, id: &str) -> VcxResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
     wallet::delete_wallet_record(get_wallet_handle(), xtype, id)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
 
-pub fn update_record_value(xtype: &str, id: &str, value: &str) -> VcxResult<()> {
+pub async fn update_record_value(xtype: &str, id: &str, value: &str) -> VcxResult<()> {
     trace!("update_record_value >>> xtype: {}, id: {}, value: {}", secret!(&xtype), secret!(&id), secret!(&value));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
     wallet::update_wallet_record_value(get_wallet_handle(), xtype, id, value)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub async fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("add_record_tags >>> xtype: {}, id: {}, tags: {:?}", secret!(&xtype), secret!(&id), secret!(&tags));
 
     if settings::indy_mocks_enabled() {
@@ -262,11 +259,11 @@ pub fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     }
 
     wallet::add_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub async fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("update_record_tags >>> xtype: {}, id: {}, tags: {}", secret!(&xtype), secret!(&id), secret!(&tags));
 
     if settings::indy_mocks_enabled() {
@@ -274,11 +271,11 @@ pub fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     }
 
     wallet::update_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxResult<()> {
+pub async fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxResult<()> {
     trace!("delete_record_tags >>> xtype: {}, id: {}, tag_names: {}", secret!(&xtype), secret!(&id), secret!(&tag_names));
 
     if settings::indy_mocks_enabled() {
@@ -286,11 +283,11 @@ pub fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxResult<(
     }
 
     wallet::delete_wallet_record_tags(get_wallet_handle(), xtype, id, tag_names)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<SearchHandle> {
+pub async fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<SearchHandle> {
     trace!("open_search >>> xtype: {}, query: {}, options: {}", secret!(&xtype), query, options);
 
     if settings::indy_mocks_enabled() {
@@ -298,11 +295,11 @@ pub fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<SearchH
     }
 
     wallet::open_wallet_search(get_wallet_handle(), xtype, query, options)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn fetch_next_records(search_handle: SearchHandle, count: usize) -> VcxResult<String> {
+pub async fn fetch_next_records(search_handle: SearchHandle, count: usize) -> VcxResult<String> {
     trace!("fetch_next_records >>> search_handle: {}, count: {}", search_handle, count);
 
     if settings::indy_mocks_enabled() {
@@ -310,11 +307,11 @@ pub fn fetch_next_records(search_handle: SearchHandle, count: usize) -> VcxResul
     }
 
     wallet::fetch_wallet_search_next_records(get_wallet_handle(), search_handle, count)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn close_search(search_handle: SearchHandle) -> VcxResult<()> {
+pub async fn close_search(search_handle: SearchHandle) -> VcxResult<()> {
     trace!("close_search >>> search_handle: {}", search_handle);
 
     if settings::indy_mocks_enabled() {
@@ -322,21 +319,21 @@ pub fn close_search(search_handle: SearchHandle) -> VcxResult<()> {
     }
 
     wallet::close_wallet_search(search_handle)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
+pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
     let wallet_handle = get_wallet_handle();
     trace!("export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****", wallet_handle, path);
 
     let export_config = json!({ "key": backup_key, "path": &path}).to_string();
     wallet::export_wallet(wallet_handle, &export_config)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
-pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
+pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
     trace!("import >>> wallet: {} exported_wallet_path: {}", restore_config.wallet_name, restore_config.exported_wallet_path);
     let new_wallet_name = restore_config.wallet_name.clone();
     let new_wallet_key = restore_config.wallet_key.clone();
@@ -350,7 +347,7 @@ pub fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
     }).to_string();
 
     wallet::import_wallet(&new_wallet_config, &new_wallet_credentials, &import_config)
-        .wait()
+        .await
         .map_err(VcxError::from)
 }
 
@@ -365,7 +362,7 @@ pub mod tests {
         ("type1", "id1", "value1")
     }
 
-    pub fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
+    pub async fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
 
         let export_file = TempFile::prepare_path(wallet_name);
@@ -380,9 +377,9 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
-        let _handle = create_and_open_as_main_wallet(&wallet_config).unwrap();
+        let _handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
-        let (my_did, my_vk) = create_and_store_my_did(None, None).unwrap();
+        let (my_did, my_vk) = create_and_store_my_did(None, None).await.unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
         settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
@@ -390,11 +387,11 @@ pub mod tests {
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 
         let (type_, id, value) = _record();
-        add_record(type_, id, value, None).unwrap();
+        add_record(type_, id, value, None).await.unwrap();
 
-        export_main_wallet(&export_file.path, &backup_key).unwrap();
+        export_main_wallet(&export_file.path, &backup_key).await.unwrap();
 
-        close_main_wallet().unwrap();
+        close_main_wallet().await.unwrap();
 
         (export_file, wallet_name.to_string(), wallet_config)
     }

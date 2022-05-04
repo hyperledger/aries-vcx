@@ -11,7 +11,6 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
     agentName,
     agencyUrl,
     seed,
-    usePostgresWallet: false,
     logger,
     rustLogLevel
   })

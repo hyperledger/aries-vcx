@@ -7,6 +7,9 @@ extern crate log;
 use std::env;
 use std::io::Write;
 
+use chrono::format::{DelayedFormat, StrftimeItems};
+
+use crate::chrono::Local;
 use crate::error::prelude::*;
 use crate::libindy;
 
@@ -14,9 +17,38 @@ use crate::libindy;
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 use self::env_logger::Builder as EnvLoggerBuilder;
-use self::log::LevelFilter;
+use self::env_logger::fmt::Formatter;
+use self::log::{LevelFilter, Record};
 
 pub struct LibvcxDefaultLogger;
+
+fn _get_timestamp<'a>() -> DelayedFormat<StrftimeItems<'a>> {
+    Local::now().format("%Y-%m-%d %H:%M:%S.%f")
+}
+
+fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    let level = buf.default_styled_level(record.level());
+    writeln!(buf, "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",
+             _get_timestamp(),
+             level,
+             record.target(),
+             record.file().get_or_insert(""),
+             record.line().get_or_insert(0),
+             record.args()
+    )
+}
+
+fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
+    let level = record.level();
+    writeln!(buf, "{}|{:>5}|{:<30}|{:>35}:{:<4}| {}",
+             _get_timestamp(),
+             level,
+             record.target(),
+             record.file().get_or_insert(""),
+             record.line().get_or_insert(0),
+             record.args()
+    )
+}
 
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
@@ -49,17 +81,19 @@ impl LibvcxDefaultLogger {
                 android_logger::init_once(log_filter);
             info!("Logging for Android");
         } else {
-            match EnvLoggerBuilder::new()
-                .format(|buf, record| writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args()))
-                .filter(None, LevelFilter::Off)
-                .parse(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
-                .try_init() {
-                Ok(()) => {}
-                Err(e) => {
-                    error!("Error in logging init: {:?}", e);
-                    return Err(VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", e)));
+            let formatter = match env::var("RUST_LOG_FORMATTER") {
+                Ok(val) => match val.as_str() {
+                    "text_no_color" => text_no_color_format,
+                    _ => text_format
                 }
-            }
+                _ => text_format
+            };
+            EnvLoggerBuilder::new()
+                .format(formatter)
+                .filter(None, LevelFilter::Off)
+                .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
+                .try_init()
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err)))?;
         }
         libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
     }

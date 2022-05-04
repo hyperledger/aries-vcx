@@ -1,4 +1,5 @@
 use url::Url;
+use futures::executor::block_on;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
@@ -279,7 +280,7 @@ impl From<Invitation> for DidDoc {
         let (service_endpoint, recipient_keys, routing_keys) = match invitation {
             Invitation::Public(invitation) => {
                 did_doc.set_id(invitation.did.to_string());
-                let service = ledger::get_service(&invitation.did).unwrap_or_else(|err| {
+                let service = block_on(ledger::get_service(&invitation.did)).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     FullService::default()                
                 });
@@ -291,7 +292,7 @@ impl From<Invitation> for DidDoc {
             }
             Invitation::OutOfBand(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
-                let service = invitation.services[0].resolve().unwrap_or_else(|err| {
+                let service = block_on(invitation.services[0].resolve()).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     FullService::default()
                 });

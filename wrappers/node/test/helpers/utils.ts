@@ -67,9 +67,7 @@ export async function initVcxTestMode(): Promise<void> {
   await vcx.openMainWallet(configWallet)
   const { institution_did, institution_verkey }  = JSON.parse(await vcx.configureIssuerWallet(issuerSeed))
   const issuerConfig = {
-    institution_name: 'default',
     institution_did,
-    institution_verkey
   }
   await vcx.initIssuerConfig(issuerConfig)
   await vcx.createAgencyClientForMainWallet(configAgency)

@@ -14,8 +14,8 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error_vcx};
-use crate::api_lib::utils::runtime::{execute, execute_async};
+use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::runtime::execute_async;
 
 /// Provision an agent in the agency.
 ///
@@ -413,8 +413,8 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
     trace!("vcx_endorse_transaction(command_handle: {}, transaction: {})",
            command_handle, transaction);
 
-    execute(move || {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction).await {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -430,7 +430,102 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
+                                did: *const c_char,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_rotate_verkey >>>");
+
+    check_useful_c_str!(did, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::signus::rotate_verkey(&did).await {
+            Ok(()) => {
+                trace!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                error!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
+                                did: *const c_char,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+    info!("vcx_get_verkey_from_wallet >>>");
+
+    check_useful_c_str!(did, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    trace!("vcx_get_verkey_from_wallet(command_handle: {}, did: {})", command_handle, did);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(&did).await {
+            Ok(verkey) => {
+                trace!("vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
+                       command_handle, error::SUCCESS.message, verkey);
+                let verkey = CStringUtils::string_to_cstring(verkey);
+                cb(command_handle, error::SUCCESS.code_num, verkey.as_ptr());
+            }
+            Err(err) => {
+                error!("vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
+                                did: *const c_char,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+    info!("vcx_get_verkey_from_ledger >>>");
+
+    check_useful_c_str!(did, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    trace!("vcx_get_verkey_from_ledger(command_handle: {}, did: {})", command_handle, did);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(&did).await {
+            Ok(verkey) => {
+                trace!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
+                       command_handle, error::SUCCESS.message, verkey);
+                let verkey = CStringUtils::string_to_cstring(verkey);
+                cb(command_handle, error::SUCCESS.code_num, verkey.as_ptr());
+            }
+            Err(err) => {
+                error!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    }));
 
     error::SUCCESS.code_num
 }

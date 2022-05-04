@@ -3,23 +3,6 @@ const {
   createWallet, openMainWallet, closeMainWallet,
   configureIssuerWallet
 } = require('@hyperledger/node-vcx-wrapper')
-const ffi = require('ffi-napi')
-const os = require('os')
-
-const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
-const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
-
-function getLibraryPath (libraryName) {
-  const platform = os.platform()
-  const postfix = extension[platform.toLowerCase()] || extension.linux
-  const libDir = libPath[platform.toLowerCase()] || libPath.linux
-  return `${libDir}${libraryName}${postfix}`
-}
-
-async function loadPostgresPlugin () {
-  const myffi = ffi.Library(getLibraryPath('libindystrgpostgres'), { postgresstorage_init: ['void', []] })
-  await myffi.postgresstorage_init()
-}
 
 async function initRustApiAndLogger (logLevel) {
   const rustApi = initRustAPI()
@@ -35,7 +18,7 @@ async function initRustapi (logLevel = 'vcx=error', num_threads = 4) {
   await initThreadpool({ num_threads })
 }
 
-async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger) {
+async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger) {
   logger.info('Provisioning cloud agent')
   if (!agentName) {
     throw Error('agentName not specified')
@@ -55,17 +38,16 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
     wallet_key: '8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY',
     wallet_key_derivation: 'RAW'
   }
-
-  if (usePostgresWallet) {
-    logger.info('Will use PostreSQL wallet. Initializing plugin.')
-    await loadPostgresPlugin()
-    walletConfig.wallet_type = 'postgres_storage'
-    walletConfig.storage_config = '{"url":"localhost:5432"}'
-    walletConfig.storage_credentials = '{"account":"postgres","password":"mysecretpassword","admin_account":"postgres","admin_password":"mysecretpassword"}'
-    logger.info(`Running with PostreSQL wallet enabled! Config = ${walletConfig.storage_config}`)
-  } else {
-    logger.info('Running with builtin wallet.')
+  walletExtraConfigs = walletExtraConfigs || { }
+  for (const key of Object.keys(walletExtraConfigs)) {
+    const value = walletExtraConfigs[key]
+    if (typeof value === 'object') {
+      walletConfig[key] = JSON.stringify(value)
+    } else {
+      walletConfig[key] = value
+    }
   }
+  logger.info(`Using wallet config ${JSON.stringify(walletConfig)}`)
 
   let agencyConfig = {
     agency_endpoint: agencyUrl,
@@ -89,7 +71,6 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   return { agencyConfig, issuerConfig, walletConfig }
 }
 
-module.exports.loadPostgresPlugin = loadPostgresPlugin
 module.exports.initRustApiAndLogger = initRustApiAndLogger
 module.exports.initVcxWithProvisionedAgentConfig = initVcxWithProvisionedAgentConfig
 module.exports.provisionAgentInAgency = provisionAgentInAgency

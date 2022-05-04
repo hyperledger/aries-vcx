@@ -149,9 +149,9 @@ mod tests {
 
     use super::*;
 
-    fn _verifier() -> Verifier {
+    async fn _verifier() -> Verifier {
         let presentation_request_data =
-            PresentationRequestData::create("1").unwrap()
+            PresentationRequestData::create("1").await.unwrap()
                 .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
                 .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
                 .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
@@ -179,7 +179,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let _mock_builder = MockBuilder::init().
             set_mock_result_for_validate_indy_proof(Ok(true));
-        let mut verifier = _verifier();
+        let mut verifier = _verifier().await;
         verifier.to_finished_state().await;
         let presentation = verifier.get_presentation_msg().unwrap();
         assert_eq!(presentation, json!(_presentation().to_a2a_message()).to_string());

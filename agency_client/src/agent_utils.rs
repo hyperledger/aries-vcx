@@ -238,13 +238,13 @@ async fn update_agent_webhook_v2(to_did: &str, com_method: ComMethod) -> AgencyC
 
 pub async fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyClientResult<Vec<A2AMessage>> {
     trace!("send_message_to_agency >>> message: ..., did: {}", did);
-    let data = prepare_message_for_agency(message, &did)?;
+    let data = prepare_message_for_agency(message, &did).await?;
 
     let response = post_to_agency(&data)
         .await
         .map_err(|err| err.map(AgencyClientErrorKind::InvalidHttpResponse, error_utils::INVALID_HTTP_RESPONSE.message))?;
 
-    parse_response_from_agency(&response)
+    parse_response_from_agency(&response).await
 }
 
 #[cfg(test)]
@@ -277,9 +277,9 @@ mod tests {
     }
 
     #[cfg(feature = "agency_pool_tests")]
-    #[test]
-    fn test_update_agent_webhook_real() {
-        let _setup = SetupLibraryAgencyV2::init();
+    #[tokio::test]
+    async fn test_update_agent_webhook_real() {
+        let _setup = SetupLibraryAgencyV2::init().await;
 
         ::utils::devsetup::set_consumer(None);
         update_agent_webhook("https://example.org").unwrap();

@@ -315,8 +315,8 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
         }
     };
 
-    execute(move || {
-        match out_of_band::connection_exists(handle, &conn_handles) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match out_of_band::connection_exists(handle, &conn_handles).await {
             Ok((conn_handle, found_one)) => {
                 trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})",
                        command_handle, error::SUCCESS.message, conn_handle, found_one);
@@ -330,7 +330,7 @@ pub extern fn vcx_out_of_band_receiver_connection_exists(command_handle: Command
             }
         }
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

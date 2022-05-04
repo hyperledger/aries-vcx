@@ -51,9 +51,9 @@ mod dbtests {
         let storage_config = json!({
             "read_host": "localhost",
             "write_host": "localhost",
-            "port": 3306,
+            "port": 3306 as u32,
             "db_name": db_name,
-            "default_connection_limit": 50
+            "default_connection_limit": 50 as u32
         }).to_string();
         let storage_credentials = json!({
             "user": "root",
@@ -75,11 +75,11 @@ mod dbtests {
             .agency_endpoint(AGENCY_ENDPOINT.to_string())
             .build()
             .unwrap();
-        create_wallet(&config_wallet).unwrap();
-        open_as_main_wallet(&config_wallet).unwrap();
-        let config_issuer = configure_issuer_wallet(enterprise_seed).unwrap();
+        create_wallet(&config_wallet).await.unwrap();
+        open_as_main_wallet(&config_wallet).await.unwrap();
+        let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
         provision_cloud_agent(&config_provision_agent).await.unwrap();
-        close_main_wallet().unwrap();
+        close_main_wallet().await.unwrap();
     }
 }

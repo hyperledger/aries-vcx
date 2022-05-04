@@ -11,6 +11,7 @@ const isPortReachable = require('is-port-reachable')
 const url = require('url')
 const { extractProofRequestAttachement } = require('../src/utils/proofs')
 const assert = require('assert')
+const { getStorageInfoMysql } = require('./wallet-common')
 
 const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
@@ -21,7 +22,7 @@ async function getInvitationString (fetchInviteUrl) {
     const fetchInviteTimeout = 1000
     let fetchInviteAttemps = 0
     while (!invitationString) {
-      if (await isPortReachable(url.parse(fetchInviteUrl).port, { host: url.parse(fetchInviteUrl).hostname })) { // eslint-disable-line
+      if (await isPortReachable(url.parse(fetchInviteUrl).port, {host: url.parse(fetchInviteUrl).hostname})) { // eslint-disable-line
         ({ data: { invitationString } } = await axios.get(fetchInviteUrl))
         logger.info(`Invitation ${invitationString} was loaded from ${fetchInviteUrl}.`)
       } else {
@@ -47,11 +48,15 @@ async function runAlice (options) {
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
   const disclosedProofId = 'alice-proof'
+  const walletExtraConfigs = (options['mysql'])
+    ? getStorageInfoMysql()
+    : {}
+
   const vcxAgent = await createVcxAgent({
     agentName,
     agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
     seed: '000000000000000000000000Trustee1',
-    usePostgresWallet: false,
+    walletExtraConfigs,
     logger
   })
   await vcxAgent.agentInitVcx()
@@ -116,9 +121,9 @@ const optionDefinitions = [
     description: 'Display this usage guide.'
   },
   {
-    name: 'postgresql',
+    name: 'mysql',
     type: Boolean,
-    description: 'If specified, postresql wallet will be used.',
+    description: 'If specified, mysql wallet will be used.',
     defaultValue: false
   },
   {

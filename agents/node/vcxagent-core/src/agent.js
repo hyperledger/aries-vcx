@@ -21,14 +21,14 @@ const {
 const { createStorageService } = require('./storage/storage-service')
 const { waitUntilAgencyIsReady } = require('./common')
 
-async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger }) {
+async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger }) {
   genesisPath = genesisPath || `${__dirname}/../resources/docker.txn`
 
   await waitUntilAgencyIsReady(agencyUrl, logger)
 
   const storageService = await createStorageService(agentName)
   if (!await storageService.agentProvisionExists()) {
-    const agentProvision = await provisionAgentInAgency(agentName, genesisPath, agencyUrl, seed, usePostgresWallet, logger)
+    const agentProvision = await provisionAgentInAgency(agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger)
     await storageService.saveAgentProvision(agentProvision)
   }
   const agentProvision = await storageService.loadAgentProvision()

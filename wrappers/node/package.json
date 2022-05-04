@@ -3,7 +3,7 @@
   "name": "@hyperledger/node-vcx-wrapper",
   "description": "NodeJS wrapper Aries Framework",
   "license": "Apache-2.0",
-  "version": "0.34.0",
+  "version": "0.35.0",
   "directories": {
     "test": "test",
     "build": "dist",
@@ -48,9 +48,7 @@
     "@types/node": "^8.10.66",
     "@types/ref-napi": "^1.4.0",
     "@types/ref-struct-di": "1.1.0",
-    "@types/sinon": "^5.0.1",
     "@types/uuid": "^8.3.3",
-    "@types/weak": "^1.0.0",
     "@types/weak-napi": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
@@ -59,11 +57,9 @@
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-prettier": "^3.4.1",
-    "jsdoc": "^3.6.7",
     "mocha": "9.0.3",
     "prettier": "^2.5.0",
     "ts-node": "^6.1.2",
-    "typedoc": "^0.22.10",
     "typescript": "^3.9.10"
   },
   "scripts": {
@@ -73,7 +69,6 @@
     "lint": "eslint '*/**/*.{js,ts,tsx}'",
     "lint-fix": "npm run lint -- --fix",
     "jslint:fix": "standard --fix",
-    "doc-gen": "./node_modules/.bin/typedoc --out doc --excludePrivate --excludeProtected --ignoreCompilerErrors src",
     "test": "npm run test:connection && npm run test:credentialDef && npm run test:credential && npm run test:disclosedProof && npm run test:issuerCredential && npm run test:proof && npm run test:oob && npm run test:schema && npm run test:utils && npm run test:wallet && npm run test:ffi && npm run test:logging",
     "test:connection": "      TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite1/ariesvcx-connection.test.ts",
     "test:credentialDef": "   TS_NODE_PROJECT=./test/tsconfig.json NODE_ENV=test RUST_BACKTRACE=full ./node_modules/.bin/mocha --timeout 10000 --expose-gc --recursive --use_strict --require ts-node/register ./test/suite1/ariesvcx-credential-def.test.ts",

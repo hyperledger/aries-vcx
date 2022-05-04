@@ -2,6 +2,7 @@ use std::ptr;
 
 use libc::c_char;
 use serde_json;
+use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
@@ -11,7 +12,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;
-use crate::api_lib::utils::runtime::execute;
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Create a new Schema object and publish corresponding record on the ledger
 ///
@@ -60,12 +61,12 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
     trace!(target: "vcx", "vcx_schema_create(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {})",
            command_handle, source_id, schema_name, schema_data);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match schema::create_and_publish_schema(&source_id,
                                                 issuer_did,
                                                 schema_name,
                                                 version,
-                                                schema_data) {
+                                                schema_data).await {
             Ok(err) => {
                 trace!(target: "vcx", "vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, err, source_id);
@@ -80,7 +81,7 @@ pub extern fn vcx_schema_create(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -134,13 +135,13 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
     trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, source_id: {}, schema_name: {},  schema_data: {},  endorser: {})",
            command_handle, source_id, schema_name, schema_data, endorser);
 
-    execute(move || {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match schema::prepare_schema_for_endorser(&source_id,
                                                   issuer_did,
                                                   schema_name,
                                                   version,
                                                   schema_data,
-                                                  endorser) {
+                                                  endorser).await {
             Ok((handle, transaction)) => {
                 trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, handle, transaction, source_id);
@@ -156,7 +157,7 @@ pub extern fn vcx_schema_prepare_for_endorser(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -352,8 +353,8 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
     trace!("vcx_schema_get_attributes(command_handle: {}, source_id: {}, schema_id: {})",
            command_handle, source_id, schema_id);
 
-    execute(move || {
-        match schema::get_schema_attrs(source_id, schema_id) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match schema::get_schema_attrs(source_id, schema_id).await {
             Ok((handle, data)) => {
                 let data: serde_json::Value = serde_json::from_str(&data).unwrap();
                 let data = data["data"].clone();
@@ -371,7 +372,7 @@ pub extern fn vcx_schema_get_attributes(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -406,8 +407,8 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
         return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
     };
 
-    execute(move || {
-        match schema::update_state(schema_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match schema::update_state(schema_handle).await {
             Ok(state) => {
                 trace!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
                        command_handle, error::SUCCESS.message, state);
@@ -422,7 +423,7 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -554,7 +555,7 @@ mod tests {
     async fn test_vcx_schema_get_attrs_with_pool() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS);
+        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,
@@ -669,13 +670,13 @@ mod tests {
         assert_eq!(expected_schema_transaction, schema_transaction);
     }
 
-    #[test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_schema_get_state() {
+    async fn test_vcx_schema_get_state() {
         let _setup = SetupMocks::init();
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (handle, _) = prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
+        let (handle, _) = prepare_schema_for_endorser("testid", did, "name".to_string(), "1.0".to_string(), "[\"name\":\"male\"]".to_string(), "V4SGRU86Z58d6TV7PBUe6f".to_string()).await.unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));

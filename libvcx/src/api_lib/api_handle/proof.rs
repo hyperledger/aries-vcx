@@ -26,7 +26,7 @@ pub async fn create_proof(source_id: String,
                           revocation_details: String,
                           name: String) -> VcxResult<u32> {
     let presentation_request =
-        PresentationRequestData::create(&name)?
+        PresentationRequestData::create(&name).await?
             .set_requested_attributes_as_string(requested_attrs)?
             .set_requested_predicates_as_string(requested_predicates)?
             .set_not_revoked_interval(revocation_details)?;

@@ -17,8 +17,8 @@ impl Default for PairwiseInfo {
 }
 
 impl PairwiseInfo {
-    pub fn create() -> VcxResult<PairwiseInfo> {
-        let (pw_did, pw_vk) = create_and_store_my_did(None, None)?;
+    pub async fn create() -> VcxResult<PairwiseInfo> {
+        let (pw_did, pw_vk) = create_and_store_my_did(None, None).await?;
         Ok(PairwiseInfo { pw_did, pw_vk })
     }
 }

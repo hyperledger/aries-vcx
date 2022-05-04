@@ -1,4 +1,3 @@
-const {filterOffersByCredentialName} = require('../utils/credentials')
 const { filterOffersByAttr } = require('../utils/credentials')
 const { filterOffersBySchema } = require('../utils/credentials')
 const {

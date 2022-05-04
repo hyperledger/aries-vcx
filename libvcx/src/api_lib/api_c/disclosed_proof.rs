@@ -667,8 +667,8 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
     trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, proof_handle: {}) source_id: {}",
            command_handle, proof_handle, source_id);
 
-    execute(move || {
-        match disclosed_proof::retrieve_credentials(proof_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match disclosed_proof::retrieve_credentials(proof_handle).await {
             Ok(err) => {
                 trace!("vcx_disclosed_proof_retrieve_credentials(command_handle: {}, rc: {}, data: {}) source_id: {}",
                        command_handle, error::SUCCESS.message, err, source_id);
@@ -684,7 +684,7 @@ pub extern fn vcx_disclosed_proof_retrieve_credentials(command_handle: CommandHa
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

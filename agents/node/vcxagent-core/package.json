@@ -32,8 +32,8 @@
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
     "demo:faber:rev": "node demo/faber.js --revocation",
-    "demo:alice:pg": "node demo/alice.js --postgresql",
-    "demo:faber:pg": "node demo/faber.js --postgresql",
+    "demo:alice:mysql": "node demo/alice.js --mysql",
+    "demo:faber:mysql": "node demo/faber.js --mysql",
     "demo:alice:sign": "node demo/alice-signature.js",
     "demo:faber:verify": "node demo/faber-verify-signature.js",
     "test:integration": "npm run test:integration:update-state && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery && npm run test:integration:public-invite && npm run test:integration:out-of-band",
@@ -69,6 +69,6 @@
     "winston": "^3.3.3"
   },
   "peerDependencies": {
-    "@hyperledger/node-vcx-wrapper": "^0.34.0"
+    "@hyperledger/node-vcx-wrapper": "^0.35.0"
   }
 }
