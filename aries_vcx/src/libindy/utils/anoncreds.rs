@@ -649,12 +649,44 @@ pub async fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
         .map_err(VcxError::from)
 }
 
+async fn libindy_build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {
+    ledger::build_get_txn_request(submitter_did, None, seq_no)
+        .await
+        .map_err(VcxError::from)
+}
+
+pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {
+    trace!("build_get_txn_request >>> submitter_did: {:?}, seq_no: {}", submitter_did, seq_no);
+    let request = libindy_build_get_txn_request(submitter_did, seq_no).await?;
+    let request = append_txn_author_agreement_to_request(&request).await?;
+    Ok(request)
+}
+
+pub async fn get_ledger_txn(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {
+    trace!("get_ledger_txn >>> submitter_did: {:?}, seq_no: {}", submitter_did, seq_no);
+    let req = build_get_txn_request(submitter_did, seq_no).await?;
+    let res = if let Some(submitter_did) = submitter_did {
+        libindy_sign_and_submit_request(submitter_did, &req).await?
+    } else {
+        libindy_submit_request(&req).await?
+    };
+    _check_response(&res)?;
+    Ok(res)
+}
+
 fn _check_schema_response(response: &str) -> VcxResult<()> {
     // TODO: saved backwardcampatibilyty but actually we can better handle response
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
         Response::Reject(reject) => Err(VcxError::from_msg(VcxErrorKind::DuplicationSchema, format!("{:?}", reject))),
         Response::ReqNACK(reqnack) => Err(VcxError::from_msg(VcxErrorKind::UnknownSchemaRejection, format!("{:?}", reqnack)))
+    }
+}
+
+fn _check_response(response: &str) -> VcxResult<()> {
+    match parse_response(response)? {
+        Response::Reply(_) => Ok(()),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", res))),
     }
 }
 
@@ -1167,5 +1199,19 @@ pub mod tests {
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None).await.unwrap();
 
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_get_txn() {
+        let _setup = SetupWithWalletAndAgency::init().await;
+        get_ledger_txn(None, 0).await.unwrap_err();
+        let txn = get_ledger_txn(None, 1).await;
+        assert!(txn.is_ok());
+
+        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        get_ledger_txn(Some(&did), 0).await.unwrap_err();
+        let txn = get_ledger_txn(Some(&did), 1).await;
+        assert!(txn.is_ok());
     }
 }

@@ -509,7 +509,7 @@ pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
     trace!("vcx_get_verkey_from_ledger(command_handle: {}, did: {})", command_handle, did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(&did).await {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(&did).await {
             Ok(verkey) => {
                 trace!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
                        command_handle, error::SUCCESS.message, verkey);
@@ -518,6 +518,39 @@ pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
             }
             Err(err) => {
                 error!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into(), ptr::null_mut());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
+                                submitter_did: *const c_char,
+                                seq_no: i32,
+                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
+    info!("vcx_get_ledger_txn >>>");
+
+    check_useful_opt_c_str!(submitter_did, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    trace!("vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})", command_handle, submitter_did);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(submitter_did.as_deref(), seq_no).await {
+            Ok(txn) => {
+                trace!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
+                       command_handle, error::SUCCESS.message, txn);
+                let txn = CStringUtils::string_to_cstring(txn);
+                cb(command_handle, error::SUCCESS.code_num, txn.as_ptr());
+            }
+            Err(err) => {
+                error!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {})",
                       command_handle, err);
 
                 cb(command_handle, err.into(), ptr::null_mut());

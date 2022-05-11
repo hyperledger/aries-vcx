@@ -251,6 +251,29 @@ export async function getVerkeyFromLedger(did: string): Promise<string> {
   }
 }
 
+export async function getLedgerTxn(did: string, seqNo: number): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_get_ledger_txn(0, did, seqNo, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (xhandle: number, err: number, txn: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(txn);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
 export async function downloadAllMessages({ status, uids, pwdids }: IConnectionDownloadAllMessages): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
