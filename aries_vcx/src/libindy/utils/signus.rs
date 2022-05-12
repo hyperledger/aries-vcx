@@ -25,6 +25,7 @@ pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&st
 pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
     let trustee_temp_verkey = libindy_replace_keys_start(did).await?;
     let nym_request = ledger::libindy_build_nym_request(&did, &did, Some(&trustee_temp_verkey), None, None).await?;
+    let nym_request = ledger::append_txn_author_agreement_to_request(&nym_request).await?;
     let nym_result = ledger::libindy_sign_and_submit_request(&did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err)))?;
