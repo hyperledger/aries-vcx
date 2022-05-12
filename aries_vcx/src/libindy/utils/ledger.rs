@@ -46,6 +46,7 @@ pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &st
 }
 
 pub async fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
+    trace!("libindy_submit_request >>> request_json: {}", request_json);
     let pool_handle = get_pool_handle()?;
 
     ledger::submit_request(pool_handle, request_json)
