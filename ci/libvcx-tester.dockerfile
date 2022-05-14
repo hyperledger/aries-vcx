@@ -30,7 +30,6 @@ COPY --chown=node ./agents/node ./agents/node
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
-        bash \
         curl \
         g++ \
         gcc \
