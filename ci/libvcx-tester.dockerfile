@@ -30,10 +30,11 @@ COPY --chown=node ./agents/node ./agents/node
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
-        curl \
+        bash \
         g++ \
         gcc \
         git \
+        curl \
         libsodium-dev \
         libzmq \
         npm \
