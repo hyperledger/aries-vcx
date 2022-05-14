@@ -569,7 +569,7 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(cd $HOME/agency_client && \
+                              sh -c '(cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
                                 cd $HOME/aries_vcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
@@ -634,7 +634,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(cd $HOME/libvcx && \
+                              sh -c '(cd $HOME/libvcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests" && \
                               cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
@@ -713,7 +713,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
+                              sh -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "mysql_test")'
 
       - name: Collect docker logs on failure
@@ -790,7 +790,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(cd $HOME/aries_vcx && \
+                              sh -c '(cd $HOME/aries_vcx && \
                               cargo --version && \
                               rustc --version && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
@@ -837,7 +837,7 @@ jobs:
           rm -rf /tmp/imgcache
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
-                              bash -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
+                              sh -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
 
   test-node-wrapper:
     runs-on: ubuntu-20.04
@@ -868,7 +868,7 @@ jobs:
           set -x
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(
+                              sh -c '(
                                 cd $HOME/wrappers/node && \
                                 npm install && \
                                 npm run tscversion && \
@@ -935,7 +935,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(
+                              sh -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo)'
 
@@ -943,7 +943,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(
+                              sh -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
 
@@ -951,7 +951,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(
+                              sh -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:legacy)'
 
@@ -959,7 +959,7 @@ jobs:
         run: |
           set -x
           docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              bash -c '(
+                              sh -c '(
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && \
                                 cd $HOME/agents/node/vcxagent-cli && npm install && \
@@ -1033,7 +1033,7 @@ jobs:
   #       run: |
   #         # docker run --name test-android-wrapper -v $PWD:/home/indy/aries-vcx:rw $DOCKER_IMG_NAME_ANDROID \
   #         docker run --name test-android-wrapper $DOCKER_IMG_NAME_ANDROID \
-  #                             bash -c '(cd $HOME/aries-vcx/libvcx && ./android.wrapper.test.sh x86)'
+  #                             sh -c '(cd $HOME/aries-vcx/libvcx && ./android.wrapper.test.sh x86)'
 
   publish-android-wrapper-device:
     runs-on: ubuntu-20.04
@@ -1203,7 +1203,7 @@ jobs:
             docker run --rm -i --name libvcx --network host \
                    -e NPMJS_TOKEN="$NPMJS_TOKEN" \
                    -e PUBLISH_VERSION="$PUBLISH_VERSION" \
-                    "$DOCKER_IMG_NAME_LIBVCX_TESTER" bash -c '$HOME/wrappers/node/publish.sh'
+                    "$DOCKER_IMG_NAME_LIBVCX_TESTER" sh -c '$HOME/wrappers/node/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi
@@ -1250,7 +1250,7 @@ jobs:
             docker run --rm -i --name libvcx --network host \
                    -e NPMJS_TOKEN="$NPMJS_TOKEN" \
                    -e PUBLISH_VERSION="$PUBLISH_VERSION" \
-                    "$DOCKER_IMG_NAME_LIBVCX_TESTER" bash -c '$HOME/agents/node/vcxagent-core/publish.sh'
+                    "$DOCKER_IMG_NAME_LIBVCX_TESTER" sh -c '$HOME/agents/node/vcxagent-core/publish.sh'
           else
              echo "New version was not defined, skipping release."
           fi

@@ -22,16 +22,9 @@ COPY --from=builder /usr/lib/libindy.so /home/indy/lib*.so /usr/lib/
 WORKDIR /home/node
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
-        bash \
-        g++ \
-        gcc \
-        git \
         libsodium-dev \
         libzmq \
-        npm \
-        make \
         openssl-dev \
-        python2 \
         zeromq-dev
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories
 RUN apk add --no-cache nodejs=12.22.12-r0
