@@ -37,6 +37,7 @@ export const FFI_PROOF_HANDLE = 'uint32';
 export const FFI_CREDENTIALDEF_HANDLE = 'uint32';
 export const FFI_SCHEMA_HANDLE = 'uint32';
 export const FFI_OOB_HANDLE = 'uint32';
+export const FFI_REV_REG_HANDLE = 'uint32';
 export const FFI_AGENT_HANDLE = 'uint32';
 export const FFI_PAYMENT_HANDLE = 'uint32';
 export const FFI_POINTER = 'pointer';
@@ -327,6 +328,15 @@ export interface IFFIEntryPoint {
       comment: string,
       cb: ICbRef,
   ) => number;
+  vcx_issuer_build_credential_offer_v2: (
+      commandId: number,
+      credentialHandle: number,
+      credentialDefHandle: number,
+      revRegHandle: number,
+      credentialData: string,
+      comment: string,
+      cb: ICbRef,
+  ) => number;
   vcx_issuer_get_credential_offer_msg: (
     commandId: number,
     credentialHandle: number,
@@ -521,6 +531,15 @@ export interface IFFIEntryPoint {
     revocationDetails: string,
     cb: ICbRef,
   ) => number;
+  vcx_credentialdef_create_v2: (
+    commandId: number,
+    sourceId: string,
+    schemaId: string,
+    issuerDid: string | null,
+    tag: string,
+    support_revocation: boolean,
+    cb: ICbRef,
+  ) => number;
   vcx_credentialdef_publish: (commandId: number, handle: number, tailsUrl: string | null, cb: ICbRef) => number;
   vcx_credentialdef_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_credentialdef_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -594,6 +613,12 @@ export interface IFFIEntryPoint {
   vcx_out_of_band_receiver_release: (handle: number) => number;
   vcx_out_of_band_receiver_connection_exists: (commandId: number, handle: number, handles: string, cb: ICbRef) => number;
   vcx_out_of_band_receiver_build_connection: (commandId: number, handle: number, cb: ICbRef) => number;
+
+  vcx_revocation_registry_create: (commandId: number, config: string, cb: ICbRef) => number;
+  vcx_revocation_registry_rotate: (commandId: number, maxCreds: number, cb: ICbRef) => number;
+  vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_release: (handle: number) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -887,6 +912,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_issuer_build_credential_offer_v2: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_issuer_get_credential_offer_msg: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
@@ -1122,6 +1151,18 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_CALLBACK_PTR,
     ],
   ],
+  vcx_credentialdef_create_v2: [
+    FFI_ERROR_CODE,
+    [
+      FFI_COMMAND_HANDLE,
+      FFI_SOURCE_ID,
+      FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_STRING_DATA,
+      FFI_BOOL,
+      FFI_CALLBACK_PTR,
+    ],
+  ],
   vcx_credentialdef_publish: [
     FFI_ERROR_CODE,
     [
@@ -1262,7 +1303,18 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_out_of_band_sender_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
   vcx_out_of_band_receiver_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
   vcx_out_of_band_receiver_connection_exists: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
-  vcx_out_of_band_receiver_build_connection: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]]
+  vcx_out_of_band_receiver_build_connection: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_create: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_rotate: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_UINT, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],
 };
 
 let _rustAPI: IFFIEntryPoint;

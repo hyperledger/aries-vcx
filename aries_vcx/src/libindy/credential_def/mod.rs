@@ -8,7 +8,7 @@ use crate::libindy::utils::anoncreds;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
-mod revocation_registry;
+pub mod revocation_registry;
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
@@ -18,6 +18,7 @@ pub struct CredentialDef {
     issuer_did: String,
     cred_def_json: String,
     rev_reg: Option<RevocationRegistry>,
+    support_revocation: bool,
     #[serde(default)]
     pub state: PublicEntityStateType,
 }
@@ -109,6 +110,29 @@ async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> V
 }
 
 impl CredentialDef {
+    pub async fn create(source_id: String, config: CredentialDefConfig, support_revocation: bool) -> VcxResult<Self>{
+        trace!("CredentialDef::create >>> source_id: {}, config: {:?}", source_id, config);
+        let CredentialDefConfig { issuer_did, schema_id, tag } = config;
+        let (_, schema_json) = anoncreds::get_schema_json(&schema_id).await?;
+        let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(&issuer_did,
+                                                                        &schema_json,
+                                                                        &tag,
+                                                                        None,
+                                                                        Some(support_revocation)).await?;
+        Ok(
+            Self {
+                source_id,
+                tag,
+                cred_def_id,
+                cred_def_json,
+                issuer_did,
+                rev_reg: None,
+                support_revocation,
+                state: PublicEntityStateType::Built,
+            }
+        )
+    }
+
     pub async fn create_and_store(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails) -> VcxResult<Self> {
         trace!("CredentialDef::create_and_store >>> source_id: {}, config: {:?}, revocation_details: {:?}", source_id, config, revocation_details);
         let CredentialDefConfig { issuer_did, schema_id, tag } = config;
@@ -139,6 +163,7 @@ impl CredentialDef {
                 cred_def_id,
                 cred_def_json,
                 issuer_did,
+                support_revocation: revocation_details.support_revocation.unwrap_or(false),
                 rev_reg,
                 state: PublicEntityStateType::Built,
             }
@@ -147,6 +172,10 @@ impl CredentialDef {
 
     pub fn was_published(&self) -> bool {
         self.state == PublicEntityStateType::Published
+    }
+
+    pub fn get_support_revocation(&self) -> bool {
+        self.support_revocation
     }
 
     pub async fn publish_cred_def(self) -> VcxResult<Self> {
@@ -187,8 +216,14 @@ impl CredentialDef {
 
     pub async fn publish_revocation_primitives(&mut self, tails_url: &str) -> VcxResult<()> {
         warn!("publish_revocation_primitives >>> tails_url: {}", tails_url);
-        self.publish_built_rev_reg_def(tails_url).await?;
-        self.publish_built_rev_reg_delta().await
+        match &mut self.rev_reg {
+            Some(rev_reg) => rev_reg.publish_revocation_primitives(tails_url).await,
+            None => {
+                Err(VcxError::from_msg(VcxErrorKind::NotReady,
+                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
+                ))
+            }
+        }
     }
 
     pub fn has_pending_revocations_primitives_to_be_published(&self) -> bool {
@@ -198,42 +233,6 @@ impl CredentialDef {
                 !rev_reg.was_rev_reg_def_published() || !rev_reg.was_rev_reg_delta_published()
             }
         }
-    }
-
-    pub async fn publish_built_rev_reg_def(&mut self, tails_url: &str) -> VcxResult<()> {
-        match &mut self.rev_reg {
-            Some(rev_reg) => {
-                if rev_reg.was_rev_reg_def_published() {
-                    info!("No unpublished revocation registry definition found, nothing to publish")
-                } else {
-                    rev_reg.publish_rev_reg_def(&self.issuer_did, tails_url).await?;
-                }
-            }
-            _ => return {
-                Err(VcxError::from_msg(VcxErrorKind::NotReady,
-                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
-                ))
-            }
-        }
-        Ok(())
-    }
-
-    pub async fn publish_built_rev_reg_delta(&mut self) -> VcxResult<()> {
-        match &mut self.rev_reg {
-            Some(rev_reg) => {
-                if rev_reg.was_rev_reg_delta_published() {
-                    info!("No unpublished revocation registry delta found, nothing to publish")
-                } else {
-                    rev_reg.publish_rev_reg_delta(&self.issuer_did).await?;
-                }
-            }
-            _ => return {
-                Err(VcxError::from_msg(VcxErrorKind::NotReady,
-                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
-                ))
-            }
-        }
-        Ok(())
     }
 
     pub fn from_string(data: &str) -> VcxResult<Self> {

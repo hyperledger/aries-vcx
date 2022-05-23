@@ -74,6 +74,65 @@ pub extern fn vcx_credentialdef_create_and_store(command_handle: CommandHandle,
 }
 
 #[no_mangle]
+pub extern fn vcx_credentialdef_create_v2(command_handle: CommandHandle,
+                                          source_id: *const c_char,
+                                          schema_id: *const c_char,
+                                          issuer_did: *const c_char,
+                                          tag: *const c_char,
+                                          support_revocation: bool,
+                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>) -> u32 {
+    info!("vcx_credentialdef_create_v2 >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(tag, VcxErrorKind::InvalidOption);
+
+    let issuer_did: String = if !issuer_did.is_null() {
+        check_useful_c_str!(issuer_did, VcxErrorKind::InvalidOption);
+        issuer_did.to_owned()
+    } else {
+        match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+            Ok(err) => err,
+            Err(err) => return err.into(),
+        }
+    };
+
+    trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, issuer_did: {}, tag: {}, support_revocation: {:?})",
+           command_handle,
+           source_id,
+           schema_id,
+           issuer_did,
+           tag,
+           support_revocation);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let (rc, handle) = match credential_def::create(source_id,
+                                                        schema_id,
+                                                        issuer_did,
+                                                        tag,
+                                                        support_revocation).await {
+            Ok(err) => {
+                trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                       command_handle, error::SUCCESS.message, err, credential_def::get_source_id(err).unwrap_or_default());
+                (error::SUCCESS.code_num, err)
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
+                      command_handle, err, 0, "");
+                (err.into(), 0)
+            }
+        };
+        cb(command_handle, rc, handle);
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
 pub extern fn vcx_credentialdef_publish(command_handle: CommandHandle,
                                         credentialdef_handle: u32,
                                         tails_url: *const c_char,

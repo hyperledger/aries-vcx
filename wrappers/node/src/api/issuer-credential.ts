@@ -5,6 +5,7 @@ import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, IssuerStateType } from './common';
 import { Connection } from './connection';
 import { CredentialDef } from './credential-def';
+import { RevocationRegistry } from './revocation-registry';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
 /**
@@ -79,6 +80,15 @@ export interface IIssuerCredentialOfferSendData {
 
 export interface IIssuerCredentialBuildOfferData {
     credDef: CredentialDef;
+    attr: {
+        [index: string]: string;
+    };
+    comment: string
+}
+
+export interface IIssuerCredentialBuildOfferDataV2 {
+    credDef: CredentialDef;
+    revReg: RevocationRegistry;
     attr: {
         [index: string]: string;
     };
@@ -345,6 +355,37 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         0,
                         this.handle,
                         credDef.handle,
+                        JSON.stringify(attr),
+                        comment,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    }),
+            );
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
+
+    public async buildCredentialOfferV2({ credDef, attr, revReg, comment }: IIssuerCredentialBuildOfferDataV2): Promise<void> {
+        try {
+            await createFFICallbackPromise<void>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_issuer_build_credential_offer_v2(
+                        0,
+                        this.handle,
+                        credDef.handle,
+                        revReg.handle,
                         JSON.stringify(attr),
                         comment,
                         cb,
