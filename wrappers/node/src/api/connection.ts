@@ -985,4 +985,31 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
       throw new VCXInternalError(err);
     }
   }
+
+  public async updateMessageStatus(uid: string): Promise<void> {
+    try {
+      return await createFFICallbackPromise<void>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_connection_update_message_status(0, this.handle, uid, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (xhandle: number, err: number) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
 }

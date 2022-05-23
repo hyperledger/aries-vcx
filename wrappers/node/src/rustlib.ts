@@ -186,6 +186,7 @@ export interface IFFIEntryPoint {
     message: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_update_message_status: (commandId: number, handle: number, uid: string, cb: ICbRef) => number;
   vcx_connection_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_invite_details: (
     commandId: number,
@@ -727,6 +728,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_connection_update_state_with_message: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_update_message_status: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],

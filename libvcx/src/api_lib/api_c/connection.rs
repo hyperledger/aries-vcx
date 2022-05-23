@@ -846,6 +846,40 @@ pub extern fn vcx_connection_send_handshake_reuse(command_handle: u32,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
+pub extern fn vcx_connection_update_message_status(command_handle: u32,
+                                                  connection_handle: u32,
+                                                  uid: *const c_char,
+                                                  cb: Option<extern fn(xcommand_handle: u32, err: u32)>) -> u32 {
+    info!("vcx_connection_update_message_status >>>");
+
+    check_useful_c_str!(uid, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_connection_update_message_status(command_handle: {}, connection_handle: {}, uid: {})",
+           command_handle, connection_handle, uid);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match update_message_status(connection_handle, &uid).await {
+            Ok(()) => {
+                trace!("vcx_connection_update_message_status_cb(command_handle: {}, rc: {})",
+                       command_handle, error::SUCCESS.message);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                error!("vcx_connection_update_message_status_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+
+                cb(command_handle, err.into());
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
 /// Generate a signature for the specified data using connection pairwise keys
 ///
 /// #params
