@@ -235,6 +235,23 @@ public class CredentialApi extends VcxJava.API {
         return future;
     }
 
+    public static CompletableFuture<Integer> credentialUpdateStateWithMessageV2(
+            int credentialHandle,
+            int connectionHandle,
+            String message
+    ) throws VcxException {
+        ParamGuard.notNull(credentialHandle, "credentialHandle");
+        ParamGuard.notNull(connectionHandle, "credentialHandle");
+        logger.debug("credentialUpdateStateWithMessageV2() called with: credentialHandle = [" + credentialHandle + "], connectionHandle = [" + connectionHandle + "]");
+        CompletableFuture<Integer> future = new CompletableFuture<Integer>();
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_v2_credential_update_state_with_message(commandHandle, credentialHandle, connectionHandle, message, vcxCredentialUpdateStateCB);
+        checkResult(result);
+
+        return future;
+    }
+
     private static Callback vcxCredentialGetStateCB = new Callback() {
         @SuppressWarnings({"unused", "unchecked"})
         public void callback(int command_handle, int err, int state) {
