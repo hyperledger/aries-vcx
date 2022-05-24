@@ -6,14 +6,7 @@ use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::libindy::utils::ledger;
-use crate::libindy::utils::wallet;
 use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
-
-#[derive(Deserialize, Serialize)]
-struct TemporaryDid {
-    did: String,
-    verkey: String
-}
 
 pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
@@ -49,13 +42,9 @@ pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
         warn!("libindy_replace_keys_start >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        match did::replace_keys_start(get_wallet_handle(), did, "{}")
+        did::replace_keys_start(get_wallet_handle(), did, "{}")
             .map_err(VcxError::from)
-            .await 
-        {
-            Ok(vk) => Ok(vk),
-            Err(err) => wallet::get_temp_verkey(did).await 
-        }
+            .await
     }
 }
 
@@ -81,13 +70,6 @@ pub async fn get_verkey_from_wallet(did: &str) -> VcxResult<String> {
     }
 }
 
-pub async fn get_temporary_did(did: &str) -> VcxResult<String> {
-    let options = json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string();
-    let xtype = "Indy::TemporaryDid";
-    wallet::delete_record(xtype, did).await?;
-    Ok(xtype.to_string())
-}
-
 pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
     let nym_response: String = ledger::get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response)
@@ -100,6 +82,7 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
         .ok_or(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into String", nym_data["verkey"])))?
         .to_string())
 }
+
 
 #[cfg(test)]
 mod test {
@@ -132,14 +115,5 @@ mod test {
         assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
         let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_libindy_replace_keys_start_is_idempotent() {
-        let setup = SetupWithWalletAndAgency::init().await;
-        let temp_verkey_1 = libindy_replace_keys_start(&setup.institution_did).await.unwrap();
-        let temp_verkey_2 = libindy_replace_keys_start(&setup.institution_did).await.unwrap();
-        assert_eq!(temp_verkey_1, temp_verkey_2);
     }
 }

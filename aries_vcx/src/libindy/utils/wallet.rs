@@ -1,4 +1,4 @@
-use indy::{ErrorCode, wallet, did};
+use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 
 use crate::error::prelude::*;
@@ -230,12 +230,6 @@ pub async fn get_record(xtype: &str, id: &str, options: &str) -> VcxResult<Strin
         .map_err(VcxError::from)
 }
 
-pub async fn get_temp_verkey(did: &str) -> VcxResult<String> {
-    did::get_temporary_verkey(get_wallet_handle(), did)
-        .await
-        .map_err(VcxError::from)
-}
-
 pub async fn delete_record(xtype: &str, id: &str) -> VcxResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
@@ -245,6 +239,7 @@ pub async fn delete_record(xtype: &str, id: &str) -> VcxResult<()> {
         .await
         .map_err(VcxError::from)
 }
+
 
 pub async fn update_record_value(xtype: &str, id: &str, value: &str) -> VcxResult<()> {
     trace!("update_record_value >>> xtype: {}, id: {}, value: {}", secret!(&xtype), secret!(&id), secret!(&value));

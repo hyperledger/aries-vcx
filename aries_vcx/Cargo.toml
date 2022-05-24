@@ -40,8 +40,8 @@ rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 num-traits = "0.2.0"
-indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "3798928603de1f4d5116a01c9bdeeca1c2554a67", version = "0.8.0"}
-indy-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "3798928603de1f4d5116a01c9bdeeca1c2554a67", version = "0.8.0" }
+indy = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d" }
+indy-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d" }
 futures = "0.3.15"
 libloading = "0.5.0"
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
