@@ -6,6 +6,7 @@ use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::libindy::utils::ledger;
+use crate::libindy::utils::wallet;
 use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
 
 pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
@@ -42,9 +43,13 @@ pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
         warn!("libindy_replace_keys_start >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        did::replace_keys_start(get_wallet_handle(), did, "{}")
+        match did::replace_keys_start(get_wallet_handle(), did, "{}")
             .map_err(VcxError::from)
-            .await
+            .await 
+        {
+            Ok(vk) => Ok(vk),
+            Err(err) => wallet::get_temp_verkey(did).await 
+        }
     }
 }
 
@@ -83,7 +88,6 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
         .to_string())
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -115,5 +119,14 @@ mod test {
         assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
         let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_libindy_replace_keys_start_is_idempotent() {
+        let setup = SetupWithWalletAndAgency::init().await;
+        let temp_verkey_1 = libindy_replace_keys_start(&setup.institution_did).await.unwrap();
+        let temp_verkey_2 = libindy_replace_keys_start(&setup.institution_did).await.unwrap();
+        assert_eq!(temp_verkey_1, temp_verkey_2);
     }
 }
