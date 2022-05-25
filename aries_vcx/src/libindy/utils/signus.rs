@@ -48,7 +48,10 @@ pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
             .await 
         {
             Ok(vk) => Ok(vk),
-            Err(err) => wallet::get_temp_verkey(did).await 
+            Err(err) => {
+                warn!("Error calling replace_keys_start {}\nWill try to obtain existing verkey", err);
+                wallet::get_temp_verkey(did).await 
+            }
         }
     }
 }
