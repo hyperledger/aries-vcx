@@ -954,7 +954,7 @@ pub mod tests {
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        // Failure because of duplicate
+        // No failure because of duplicate
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_wallet_add_record(cb.command_handle,
                                          xtype.as_ptr(),
@@ -964,7 +964,7 @@ pub mod tests {
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
 
-        assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::DUPLICATE_WALLET_RECORD.code_num));
+        cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
     #[tokio::test]

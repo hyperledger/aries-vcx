@@ -1050,6 +1050,7 @@ dependencies = [
 [[package]]
 name = "indy"
 version = "0.8.1"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=efde9dc6396e4e655264e1721c87a452fbb75057#efde9dc6396e4e655264e1721c87a452fbb75057"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1069,6 +1070,7 @@ dependencies = [
 [[package]]
 name = "indy-sys"
 version = "0.8.0"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=efde9dc6396e4e655264e1721c87a452fbb75057#efde9dc6396e4e655264e1721c87a452fbb75057"
 dependencies = [
  "libc",
  "pkg-config",
