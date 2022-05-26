@@ -205,6 +205,52 @@ export async function rotateVerkey(did: string): Promise<void> {
   }
 }
 
+export async function rotateVerkeyStart(did: string): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_rotate_verkey_start(0, did, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('string', ['uint32', 'uint32', 'string'], (xhandle: number, err: number, tempVk: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(tempVk);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function rotateVerkeyApply(did: string, tempVk: string): Promise<void> {
+  try {
+    return await createFFICallbackPromise<void>(
+      (resolve, reject, cb) => {
+        const rc = rustAPI().vcx_rotate_verkey_apply(0, did, tempVk, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('string', ['uint32', 'uint32'], (xhandle: number, err: number) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
 export async function getVerkeyFromWallet(did: string): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
