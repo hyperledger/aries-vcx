@@ -3,8 +3,8 @@ FROM ubuntu:18.04 as BASE
 ARG UID=1000
 
 ARG INDYSDK_PATH=/home/indy/vdr-tools
-ARG INDYSDK_REVISION=b5fd711a
-ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
+ARG INDYSDK_REVISION=efde9dc6396e4e655264e1721c87a452fbb75057
+ARG INDYSDK_REPO=https://gitlab.com/mirgee/vdr-tools.git
 ARG RUST_VER=nightly-2022-05-21
 
 # Install dependencies

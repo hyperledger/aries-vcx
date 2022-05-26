@@ -4,8 +4,8 @@ ARG UID=1000
 ARG GID=1000
 
 ARG INDYSDK_PATH=/home/indy/vdr-tools
-ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
-ARG INDYSDK_REVISION=b5fd711a
+ARG INDYSDK_REPO=https://gitlab.com/mirgee/vdr-tools.git
+ARG INDYSDK_REVISION=efde9dc6396e4e655264e1721c87a452fbb75057
 
 ENV RUST_LOG=warning
 

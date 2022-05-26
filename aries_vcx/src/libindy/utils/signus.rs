@@ -116,4 +116,12 @@ mod test {
         let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
     }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_libindy_replace_keys_works_twice() {
+        let setup = SetupWithWalletAndAgency::init().await;
+        libindy_replace_keys_start(&setup.institution_did).await.unwrap();
+        libindy_replace_keys_start(&setup.institution_did).await.unwrap();
+    }
 }
