@@ -328,7 +328,7 @@ export interface IFFIEntryPoint {
       comment: string,
       cb: ICbRef,
   ) => number;
-  vcx_issuer_build_credential_offer_v2: (
+  vcx_issuer_build_credential_offer_msg_v2: (
       commandId: number,
       credentialHandle: number,
       credentialDefHandle: number,
@@ -615,7 +615,9 @@ export interface IFFIEntryPoint {
   vcx_out_of_band_receiver_build_connection: (commandId: number, handle: number, cb: ICbRef) => number;
 
   vcx_revocation_registry_create: (commandId: number, config: string, cb: ICbRef) => number;
+  vcx_revocation_registry_publish: (commandId: number, handle: number, tailsUrl: string, cb: ICbRef) => number;
   vcx_revocation_registry_rotate: (commandId: number, maxCreds: number, cb: ICbRef) => number;
+  vcx_revocation_registry_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_release: (handle: number) => number;
@@ -912,7 +914,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_issuer_build_credential_offer_v2: [
+  vcx_issuer_build_credential_offer_msg_v2: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
@@ -1308,10 +1310,15 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_revocation_registry_publish: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_revocation_registry_rotate: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_UINT, FFI_CALLBACK_PTR],
   ],
+  vcx_revocation_registry_get_rev_reg_id: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],

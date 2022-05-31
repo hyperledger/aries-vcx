@@ -21,7 +21,7 @@ impl RevocationRegistry {
     pub async fn create(issuer_did: &str, cred_def_id: &str, tails_dir: &str, max_creds: u32, tag: u32) -> VcxResult<RevocationRegistry> {
         trace!("RevocationRegistry::create >>> issuer_did: {}, cred_def_id: {}, tails_dir: {}, max_creds: {}, tag_no: {}",  issuer_did, cred_def_id, tails_dir, max_creds, tag);
         let (rev_reg_id, rev_reg_def, rev_reg_entry) =
-            anoncreds::generate_rev_reg(&issuer_did, &cred_def_id, tails_dir, max_creds, &format!("{}", tag))
+            anoncreds::generate_rev_reg(&issuer_did, &cred_def_id, tails_dir, max_creds, &format!("tag{}", tag))
                 .await
                 .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create Revocation Registry"))?;
         Ok(RevocationRegistry {

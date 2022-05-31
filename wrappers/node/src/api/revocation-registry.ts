@@ -8,17 +8,25 @@ import { CredentialDef } from './credential-def';
 import { VCXBase } from './vcx-base';
 
 export interface IRevocationRegistryData {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  issuer_sm: Record<string, any>;
   source_id: string;
+  cred_def_id: string,
+  issuer_did: string,
+  rev_reg_id: string,
+  rev_reg_def: string,
+  rev_reg_entry: string,
+  tails_dir: string,
+  max_creds: number,
+  tag: number,
+  rev_reg_def_state: string,
+  rev_reg_delta_state: string,
 }
 
 export interface IRevocationRegistryConfig {
-  issuer_did: string;
-  cred_def_id: string;
+  issuerDid: string;
+  credDefId: string;
   tag: number;
-  tails_dir: string;
-  max_creds: number;
+  tailsDir: string;
+  maxCreds: number;
 }
 
 export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
@@ -26,8 +34,15 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     try {
       const revReg = new RevocationRegistry('');
       const commandHandle = 0;
+      const _config = {
+        issuer_did: config.issuerDid,
+        cred_def_id: config.credDefId,
+        tag: config.tag,
+        tails_dir: config.tailsDir,
+        max_creds: config.maxCreds
+      }
       await revReg._create((cb) =>
-        rustAPI().vcx_revocation_registry_create(commandHandle, JSON.stringify(config), cb),
+        rustAPI().vcx_revocation_registry_create(commandHandle, JSON.stringify(_config), cb),
       );
       return revReg;
     } catch (err) {
@@ -46,6 +61,68 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     } catch (err) {
       throw new VCXInternalError(err);
     }
+  }
+
+  public async publish(tailsUrl: string): Promise<void> {
+    try {
+      const revRegId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_revocation_registry_publish(0, this.handle, tailsUrl, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'uint32'],
+            (xcommandHandle: number, err: number, handle: number) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async getRevRegId(): Promise<string> {
+    try {
+      const revRegId = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_revocation_registry_get_rev_reg_id(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (xcommandHandle: number, err: number, _revRegId: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(_revRegId);
+            },
+          ),
+      );
+      return revRegId;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public static async deserialize(
+    data: ISerializedData<IRevocationRegistryData>,
+  ): Promise<RevocationRegistry> {
+    const newObj = { ...data, source_id: 'foo' };
+    return super._deserialize(RevocationRegistry, newObj);
   }
 
   protected _releaseFn = rustAPI().vcx_revocation_registry_release;

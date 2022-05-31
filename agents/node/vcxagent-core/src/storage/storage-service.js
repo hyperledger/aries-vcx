@@ -5,6 +5,7 @@ const {
   Credential,
   IssuerCredential,
   CredentialDef,
+  RevocationRegistry,
   Schema,
   DisclosedProof,
   Proof,
@@ -15,6 +16,7 @@ async function createStorageService (agentName) {
   mkdirp.sync('storage-agentProvisions/')
   mkdirp.sync('storage-connections/')
   mkdirp.sync('storage-credentialDefinitions/')
+  mkdirp.sync('storage-revocationRegistries/')
   mkdirp.sync('storage-schemas/')
 
   const storageAgentProvisions = await createFileStorage(`storage-agentProvisions/${agentName}`)
@@ -24,6 +26,7 @@ async function createStorageService (agentName) {
   const storageProof = await createFileStorage(`storage-proofs/${agentName}`)
   const storageDisclosedProof = await createFileStorage(`storage-dislosedProofs/${agentName}`)
   const storageCredentialDefinitons = await createFileStorage(`storage-credentialDefinitions/${agentName}`)
+  const storageRevocationRegistries = await createFileStorage(`storage-revocationRegistries/${agentName}`)
   const storageSchemas = await createFileStorage(`storage-schemas/${agentName}`)
   const storageAgents = await createFileStorage(`storage-agents/${agentName}`)
 
@@ -76,6 +79,19 @@ async function createStorageService (agentName) {
       throw Error(`CredentialDefinition ${name} was not found.`)
     }
     return CredentialDef.deserialize(serialized)
+  }
+
+  async function saveRevocationRegistry (name, revReg) {
+    const serialized = await revReg.serialize()
+    await storageRevocationRegistries.set(name, serialized)
+  }
+
+  async function loadRevocationRegistry (name) {
+    const serialized = await storageRevocationRegistries.get(name)
+    if (!serialized) {
+      throw Error(`RevocationRegistry ${name} was not found.`)
+    }
+    return RevocationRegistry.deserialize(serialized)
   }
 
   async function saveCredIssuer (name, credIssuer) {
@@ -155,6 +171,10 @@ async function createStorageService (agentName) {
     return storageCredentialDefinitons.keys()
   }
 
+  async function listRevocationRegistryKeys () {
+    return storageRevocationRegistries.keys()
+  }
+
   async function listCredIssuerKeys () {
     return storageCredIssuer.keys()
   }
@@ -185,6 +205,9 @@ async function createStorageService (agentName) {
     saveCredentialDefinition,
     loadCredentialDefinition,
 
+    saveRevocationRegistry,
+    loadRevocationRegistry,
+
     saveCredIssuer,
     loadCredIssuer,
 
@@ -203,6 +226,7 @@ async function createStorageService (agentName) {
     listConnectionKeys,
     listSchemaKeys,
     listCredentialDefinitionKeys,
+    listRevocationRegistryKeys,
     listCredIssuerKeys,
     listCredHolderKeys,
     listDisclosedProofKeys,

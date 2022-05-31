@@ -381,13 +381,13 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         try {
             await createFFICallbackPromise<void>(
                 (resolve, reject, cb) => {
-                    const rc = rustAPI().vcx_issuer_build_credential_offer_v2(
+                    const rc = rustAPI().vcx_issuer_build_credential_offer_msg_v2(
                         0,
                         this.handle,
                         credDef.handle,
                         revReg.handle,
                         JSON.stringify(attr),
-                        comment,
+                        comment || '',
                         cb,
                     );
                     if (rc) {

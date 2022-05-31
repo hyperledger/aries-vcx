@@ -16,6 +16,21 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
     return credDef
   }
 
+  async function createCredentialDefinitionV2 (schemaId, credDefId, supportRevocation, tag = 'tag1') {
+    const data = {
+      supportRevocation,
+      schemaId,
+      sourceId: credDefId,
+      tag
+    }
+    logger.info(`Creating a new credential definition on the ledger from input: ${JSON.stringify(data)}`)
+    const credDef = await CredentialDef.create(data)
+    await credDef.publish()
+    await saveCredDef(credDefId, credDef)
+    logger.info(`Created credentialDefinition ${credDefId}.`)
+    return credDef
+  }
+
   async function listIds () {
     return listCredDefIds()
   }
@@ -40,11 +55,19 @@ module.exports.createServiceLedgerCredDef = function createServiceLedgerCredDef 
     return credDef.getTailsHash()
   }
 
+  async function getCredDefId (credDefId) {
+    const credDef = await loadCredDef(credDefId)
+    logger.info(`Getting credDefId for credential definition ${credDefId}`)
+    return credDef.getCredDefId()
+  }
+
   return {
     createCredentialDefinition,
+    createCredentialDefinitionV2,
     listIds,
     printInfo,
     getTailsFile,
-    getTailsHash
+    getTailsHash,
+    getCredDefId
   }
 }
