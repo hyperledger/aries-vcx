@@ -50,12 +50,12 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     }
   }
 
-  public static async rotate(maxCreds: number): Promise<RevocationRegistry> {
+  public async rotate(maxCreds: number): Promise<RevocationRegistry> {
     try {
       const commandHandle = 0;
       const revReg = new RevocationRegistry('');
       await revReg._create((cb) =>
-        rustAPI().vcx_revocation_registry_rotate(commandHandle, maxCreds, cb),
+        rustAPI().vcx_revocation_registry_rotate(commandHandle, this.handle, maxCreds, cb),
       );
       return revReg;
     } catch (err) {

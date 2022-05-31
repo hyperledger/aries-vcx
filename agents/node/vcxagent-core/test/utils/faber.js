@@ -176,7 +176,6 @@ module.exports.createFaber = async function createFaber () {
 
     logger.info('Faber writing credential definition on ledger')
     const supportRevocation = !!revocationDetails
-    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
     await vcxAgent.serviceLedgerCredDef.createCredentialDefinitionV2(
       schemaId,
       getFaberCredDefName(),
@@ -184,12 +183,17 @@ module.exports.createFaber = async function createFaber () {
     )
     credDefId = getFaberCredDefName()
     const _credDefId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
-    if (supportRevocation && revocationDetails) {
+    if (supportRevocation) {
       const { tailsDir, maxCreds } = revocationDetails
       logger.info('Faber writing revocation registry');
       ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, _credDefId, 1, tailsDir, maxCreds))
     }
     await vcxAgent.agentShutdownVcx()
+  }
+
+  async function rotateRevReg (maxCreds) {
+      logger.info('Faber rotating revocation registry');
+      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
   }
 
   async function sendCredentialOffer () {
@@ -354,6 +358,7 @@ module.exports.createFaber = async function createFaber () {
   return {
     buildLedgerPrimitives,
     buildLedgerPrimitivesV2,
+    rotateRevReg,
     createCredDef,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,

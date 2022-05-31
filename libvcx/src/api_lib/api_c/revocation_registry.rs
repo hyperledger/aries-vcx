@@ -101,7 +101,7 @@ pub extern fn vcx_revocation_registry_rotate(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let (rc, handle) = match revocation_registry::rotate_rev_reg(rev_reg_handle, max_creds).await {
             Ok(handle) => {
-                trace!("vcx_revocation_registry_rotate_c (command_handle: {}, rc: {}, handle: {})",
+                trace!("vcx_revocation_registry_rotate_cb(command_handle: {}, rc: {}, handle: {})",
                            command_handle, error::SUCCESS.message, handle);
                 (error::SUCCESS.code_num, handle)
             }

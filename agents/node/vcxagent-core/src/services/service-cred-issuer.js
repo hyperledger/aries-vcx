@@ -40,20 +40,18 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
-  // TODO: Assumes revokable cred def
   async function sendOfferV2 (issuerCredId, revRegId, connectionId, credDefId, schemaAttrs) {
     assert(revRegId)
     const connection = await loadConnection(connectionId)
     const credDef = await loadCredDef(credDefId)
-    const revReg = await loadRevReg(revRegId)
+    const revReg = revRegId ? await loadRevReg(revRegId) : undefined
     logger.debug('Building issuer credential')
     const issuerCred = await IssuerCredential.create('alice_degree')
     logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
     await issuerCred.buildCredentialOfferV2({
       credDef,
       attr: schemaAttrs,
-      revReg,
-      comment: ''
+      revReg
     })
     const state1 = await issuerCred.getState()
     expect(state1).toBe(IssuerStateType.OfferSet)

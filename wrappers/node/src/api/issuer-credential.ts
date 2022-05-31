@@ -88,11 +88,11 @@ export interface IIssuerCredentialBuildOfferData {
 
 export interface IIssuerCredentialBuildOfferDataV2 {
     credDef: CredentialDef;
-    revReg: RevocationRegistry;
+    revReg?: RevocationRegistry;
     attr: {
         [index: string]: string;
     };
-    comment: string
+    comment?: string
 }
 
 export interface IIssuerCredentialVCXAttributes {
@@ -385,7 +385,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         0,
                         this.handle,
                         credDef.handle,
-                        revReg.handle,
+                        revReg?.handle || 0,
                         JSON.stringify(attr),
                         comment || '',
                         cb,
