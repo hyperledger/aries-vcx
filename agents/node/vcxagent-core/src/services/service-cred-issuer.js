@@ -48,7 +48,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     logger.debug('Building issuer credential')
     const issuerCred = await IssuerCredential.create('alice_degree')
     logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
-    await issuerCred.buildCredentialOfferV2({
+    await issuerCred.buildCredentialOfferMsgV2({
       credDef,
       attr: schemaAttrs,
       revReg

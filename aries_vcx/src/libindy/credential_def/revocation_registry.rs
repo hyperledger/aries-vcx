@@ -84,7 +84,7 @@ impl RevocationRegistry {
     }
 
     pub async fn publish_revocation_primitives(&mut self, tails_url: &str) -> VcxResult<()> {
-        warn!("RevocationRegistry::publish_revocation_primitives >>> tails_url: {}", tails_url);
+        trace!("RevocationRegistry::publish_revocation_primitives >>> tails_url: {}", tails_url);
         self.publish_built_rev_reg_def(tails_url).await?;
         self.publish_built_rev_reg_delta().await
     }

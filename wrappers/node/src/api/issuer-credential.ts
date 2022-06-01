@@ -377,7 +377,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         }
     }
 
-    public async buildCredentialOfferV2({ credDef, attr, revReg, comment }: IIssuerCredentialBuildOfferDataV2): Promise<void> {
+    public async buildCredentialOfferMsgV2({ credDef, attr, revReg, comment }: IIssuerCredentialBuildOfferDataV2): Promise<void> {
         try {
             await createFFICallbackPromise<void>(
                 (resolve, reject, cb) => {
