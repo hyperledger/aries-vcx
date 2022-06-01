@@ -90,6 +90,33 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     }
   }
 
+  public async publishRevocations(): Promise<void> {
+    try {
+      await createFFICallbackPromise<number>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_revocation_registry_publish_revocations(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'uint32'],
+            (handle: number, err: number) => {
+              if (err) {
+                reject(err);
+              }
+              resolve();
+            },
+          ),
+      );
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+
   public async getRevRegId(): Promise<string> {
     try {
       const revRegId = await createFFICallbackPromise<string>(

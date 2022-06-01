@@ -616,6 +616,7 @@ export interface IFFIEntryPoint {
 
   vcx_revocation_registry_create: (commandId: number, config: string, cb: ICbRef) => number;
   vcx_revocation_registry_publish: (commandId: number, handle: number, tailsUrl: string, cb: ICbRef) => number;
+  vcx_revocation_registry_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_rotate: (commandId: number, handle: number, maxCreds: number, cb: ICbRef) => number;
   vcx_revocation_registry_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -1314,6 +1315,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_revocation_registry_publish: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_publish_revocations: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_revocation_registry_rotate: [
     FFI_ERROR_CODE,

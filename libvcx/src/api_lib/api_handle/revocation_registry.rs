@@ -1,6 +1,7 @@
 use aries_vcx::error::prelude::*;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
+use aries_vcx::libindy::utils::anoncreds;
 
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> = ObjectCache::<RevocationRegistry>::new("revocation-registry-cache");
@@ -27,6 +28,14 @@ pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
     rev_reg.publish_revocation_primitives(tails_url).await?;
     let handle = REV_REG_MAP.add(rev_reg)?;
     Ok(handle)
+}
+
+pub async fn publish_revocations(handle: u32) -> VcxResult<()> {
+    let rev_reg = REV_REG_MAP.get_cloned(handle)?;
+    let rev_reg_id = rev_reg.get_rev_reg_id();
+    // TODO: Check result 
+    anoncreds::publish_local_revocations(&rev_reg_id).await?;
+    Ok(())
 }
 
 pub async fn rotate_rev_reg(handle: u32, max_creds: u32) -> VcxResult<u32> {

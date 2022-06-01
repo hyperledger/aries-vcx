@@ -87,6 +87,35 @@ pub extern fn vcx_revocation_registry_publish(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+pub extern fn vcx_revocation_registry_publish_revocations(command_handle: CommandHandle,
+                                                          rev_reg_handle: u32,
+                                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+    info!("vcx_revocation_registry_publish_revocations >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_revocation_registry_publish_revocations(command_handle: {}, rev_reg_handle: {})", command_handle, rev_reg_handle);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match revocation_registry::publish_revocations(rev_reg_handle).await {
+            Ok(()) => {
+                trace!("vcx_revocation_registry_publish_revocations_cb(command_handle: {}, rc: {})",
+                           command_handle, error::SUCCESS.message);
+                cb(command_handle, error::SUCCESS.code_num);
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_revocation_registry_publish_revocations_cb(command_handle: {}, rc: {})",
+                      command_handle, err);
+                cb(command_handle, err.into());
+            }
+        };
+        Ok(())
+    }));
+    
+    error::SUCCESS.code_num
+}
+
 #[no_mangle]
 pub extern fn vcx_revocation_registry_rotate(command_handle: CommandHandle,
                                              rev_reg_handle: u32,
