@@ -192,8 +192,12 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function rotateRevReg (maxCreds) {
-      logger.info('Faber rotating revocation registry');
-      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Faber rotating revocation registry');
+    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
+
+    await vcxAgent.agentShutdownVcx()
   }
 
   async function sendCredentialOffer () {

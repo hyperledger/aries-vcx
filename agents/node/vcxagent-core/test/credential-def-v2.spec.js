@@ -20,7 +20,7 @@ describe('test send credential', () => {
       const { alice, faber } = await createPairedAliceAndFaber()
       const tailsDir = `${__dirname}/tmp/faber/tails`
       await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
-      // await faber.rotateRevReg(5)
+      await faber.rotateRevReg(5)
       await faber.sendCredentialOfferV2()
       await alice.acceptCredentialOffer()
 

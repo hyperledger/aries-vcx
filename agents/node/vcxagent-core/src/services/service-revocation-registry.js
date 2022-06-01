@@ -16,18 +16,20 @@ module.exports.createServiceLedgerRevocationRegistry = function createServiceLed
     return { revReg, revRegId }
   }
 
-  async function rotateRevocationRegistry (revRegId, maxCreds) {
+  async function rotateRevocationRegistry (revRegId, maxCreds, tailsUrl = 'dummy.org') {
     logger.info(`Rotating revocation registry ${revRegId}, maxCreds ${maxCreds}`)
     const revReg = await loadRevReg(revRegId)
     let newRevReg
     try {
       newRevReg = await revReg.rotate(maxCreds)
+      await newRevReg.publish(tailsUrl)
     } catch (err) {
       throw Error(`Error rotating revocation registry ${revRegId}: ${err}`)
     }
     const newRevRegId = await newRevReg.getRevRegId()
+    await saveRevReg(newRevRegId, newRevReg)
     logger.info(`Revocation registry ${revRegId} rotated, new rev reg id ${newRevRegId}`)
-    return { newRevReg, newRevRegId }
+    return { revReg: newRevReg, revRegId: newRevRegId }
   }
 
   return {
