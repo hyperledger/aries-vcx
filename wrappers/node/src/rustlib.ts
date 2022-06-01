@@ -618,6 +618,7 @@ export interface IFFIEntryPoint {
   vcx_revocation_registry_publish: (commandId: number, handle: number, tailsUrl: string, cb: ICbRef) => number;
   vcx_revocation_registry_rotate: (commandId: number, handle: number, maxCreds: number, cb: ICbRef) => number;
   vcx_revocation_registry_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_release: (handle: number) => number;
@@ -1319,6 +1320,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE,  FFI_UINT, FFI_CALLBACK_PTR],
   ],
   vcx_revocation_registry_get_rev_reg_id: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_get_tails_hash: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],

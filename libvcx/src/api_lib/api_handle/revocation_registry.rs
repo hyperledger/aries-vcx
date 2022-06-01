@@ -57,3 +57,9 @@ pub fn release(handle: u32) -> VcxResult<()> {
     REV_REG_MAP.release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidHandle)))
 }
+
+pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
+    REV_REG_MAP.get(handle, |rev_reg| {
+        Ok(rev_reg.get_rev_reg_def().value.tails_hash)
+    })
+}

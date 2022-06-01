@@ -118,6 +118,34 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     }
   }
 
+  public async getTailsHash(): Promise<string> {
+    try {
+      const tailsHash = await createFFICallbackPromise<string>(
+        (resolve, reject, cb) => {
+          const rc = rustAPI().vcx_revocation_registry_get_tails_hash(0, this.handle, cb);
+          if (rc) {
+            reject(rc);
+          }
+        },
+        (resolve, reject) =>
+          ffi.Callback(
+            'void',
+            ['uint32', 'uint32', 'string'],
+            (xcommandHandle: number, err: number, tailsHash: string) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(tailsHash);
+            },
+          ),
+      );
+      return tailsHash;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public static async deserialize(
     data: ISerializedData<IRevocationRegistryData>,
   ): Promise<RevocationRegistry> {

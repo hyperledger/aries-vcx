@@ -153,6 +153,37 @@ pub extern fn vcx_revocation_registry_get_rev_reg_id(command_handle: CommandHand
 }
 
 #[no_mangle]
+pub extern fn vcx_revocation_registry_get_tails_hash(command_handle: CommandHandle,
+                                                     handle: u32,
+                                                     cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, tails_hash: *const c_char)>) -> u32 {
+    info!("vcx_revocation_registry_get_tails_hash >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_revocation_registry_get_tails_hash(command_handle: {}, handle: {})", command_handle, handle);
+
+    execute(move || {
+        match revocation_registry::get_tails_hash(handle) {
+            Ok(tails_hash) => {
+                trace!("vcx_revocation_registry_get_tails_hash_cb(command_handle: {}, rc: {}, tails_hash: {})",
+                       command_handle, error::SUCCESS.message, tails_hash);
+                let tails_hash = CStringUtils::string_to_cstring(tails_hash);
+                cb(command_handle, error::SUCCESS.code_num, tails_hash.as_ptr());
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_revocation_registry_get_tails_hash_cb(command_handle: {}, rc: {}, tails_hash: {})",
+                      command_handle, err, 0);
+                cb(command_handle, err.into(), ptr::null());
+            }
+        }
+        Ok(())
+    });
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
 pub extern fn vcx_revocation_registry_serialize(command_handle: CommandHandle,
                                                 handle: u32,
                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_json: *const c_char)>) -> u32 {
