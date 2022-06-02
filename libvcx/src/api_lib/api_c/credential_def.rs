@@ -112,10 +112,10 @@ pub extern fn vcx_credentialdef_create_v2(command_handle: CommandHandle,
                                                         issuer_did,
                                                         tag,
                                                         support_revocation).await {
-            Ok(err) => {
+            Ok(handle) => {
                 trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}",
-                       command_handle, error::SUCCESS.message, err, credential_def::get_source_id(err).unwrap_or_default());
-                (error::SUCCESS.code_num, err)
+                       command_handle, error::SUCCESS.message, handle, credential_def::get_source_id(handle).unwrap_or_default());
+                (error::SUCCESS.code_num, handle)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
