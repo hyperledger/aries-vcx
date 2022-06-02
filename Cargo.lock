@@ -38,6 +38,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "url 1.7.2",
+ "uuid 0.8.2",
 ]
 
 [[package]]
