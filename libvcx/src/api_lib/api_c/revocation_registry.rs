@@ -87,6 +87,7 @@ pub extern fn vcx_revocation_registry_publish(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
+#[no_mangle]
 pub extern fn vcx_revocation_registry_publish_revocations(command_handle: CommandHandle,
                                                           rev_reg_handle: u32,
                                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
@@ -275,27 +276,24 @@ pub extern fn vcx_revocation_registry_deserialize(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_revocation_registry_release(command_handle: CommandHandle,
-                                              handle: u32,
-                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+pub extern fn vcx_revocation_registry_release(handle: u32,
+                                              cb: Option<extern fn(err: u32)>) -> u32 {
     info!("vcx_revocation_registry_release >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_revocation_registry_release(command_handle: {}, handle: {})", command_handle, handle);
+    trace!("vcx_revocation_registry_release(handle: {})", handle);
 
     execute(move || {
         match revocation_registry::release(handle) {
             Ok(()) => {
-                trace!("vcx_revocation_registry_release_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
-                cb(command_handle, error::SUCCESS.code_num);
+                trace!("vcx_revocation_registry_release_cb(rc: {})", error::SUCCESS.message);
+                cb(error::SUCCESS.code_num);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_revocation_registry_release_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
-                cb(command_handle, err.into());
+                error!("vcx_revocation_registry_release_cb(rc: {})", err);
+                cb(err.into());
             }
         }
         Ok(())
