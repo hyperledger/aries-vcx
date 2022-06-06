@@ -852,8 +852,31 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
+- (void)credentialUpdateStateWithMessageV2:(NSNumber *)credentialHandle
+               connectionHandle:(NSNumber *)connectionHandle
+               message:(NSString *)message
+               completion:(void (^)(NSError *error, NSNumber *state))completion {
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *msg = [message cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_v2_credential_update_state_with_message(handle, 
+                                                      credentialHandle.unsignedIntValue, 
+                                                      connectionHandle.unsignedIntValue, 
+                                                      msg, 
+                                                      VcxWrapperCommonNumberCallback);
+
+    if( ret != 0 )
+    {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret], 0);
+       });
+    }
+}
+
 - (void)credentialGetOffers:(NSNumber *)connectionHandle
-                   completion:(void (^)(NSError *error, NSString *offers))completion{
+                completion:(void (^)(NSError *error, NSString *offers))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
@@ -1495,6 +1518,27 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
         [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
         dispatch_async(dispatch_get_main_queue(), ^{
             completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void)proofUpdateStateWithMessageV2:(NSNumber *) proofHandle
+               connectionHandle:(NSNumber *)connectionHandle
+               message:(NSString *)message
+               completion:(void (^)(NSError *error, NSNumber *state))completion {
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *msg = [message cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_v2_disclosed_proof_update_state_with_message(handle, 
+                                                           proofHandle.unsignedIntValue, 
+                                                           connectionHandle.unsignedIntValue, 
+                                                           msg, 
+                                                           VcxWrapperCommonNumberCallback);
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
         });
     }
 }

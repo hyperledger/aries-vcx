@@ -12,7 +12,7 @@ RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 USER root
 RUN mv /home/indy/target/release/libvcx.so .
 
-FROM alpine:3.12
+FROM alpine:3.15.4
 
 ARG UID=1000
 ARG GID=1000
@@ -28,24 +28,24 @@ COPY --chown=node ./aries_vcx ./aries_vcx
 COPY --chown=node ./wrappers/node ./wrappers/node
 COPY --chown=node ./agents/node ./agents/node
 
-RUN echo '@alpine38 http://dl-cdn.alpinelinux.org/alpine/v3.8/main' >> /etc/apk/repositories
-
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
         bash \
-        curl \
         g++ \
         gcc \
         git \
+        curl \
         libsodium-dev \
         libzmq \
-        nodejs \
         npm \
         make \
         openssl-dev \
         python3 \
         zeromq-dev
 RUN npm install -g npm@8.7.0
+
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories
+RUN apk add --no-cache nodejs=12.22.12-r0
 
 USER node
 

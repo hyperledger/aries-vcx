@@ -121,6 +121,11 @@
                 connectionHandle:(NSNumber *)connectionHandle
                 completion:(void (^)(NSError *error, NSNumber *state))completion;
 
+- (void)credentialUpdateStateWithMessageV2:(NSNumber *)credentialHandle
+                connectionHandle:(NSNumber *)connectionHandle
+                message:(NSString *)message
+                completion:(void (^)(NSError *error, NSNumber *state))completion;
+
 - (void)credentialGetOffers:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *error, NSString *offers))completion;
 
@@ -240,9 +245,14 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
               connectionHandle:(NSNumber *)connectionHandle
               completion:(void (^)(NSError *error, NSNumber *state))completion;
 
-- (void) proofReject:(NSNumber *)proof_handle
+- (void)proofUpdateStateWithMessageV2:(NSNumber *) proofHandle
+              connectionHandle:(NSNumber *)connectionHandle
+              message:(NSString *)message
+              completion:(void (^)(NSError *error, NSNumber *state))completion;
+
+- (void) proofReject: (NSNumber *)proof_handle
       withConnectionHandle:(NSNumber *)connection_handle
-      withCompletion:(void (^)(NSError *error))completion;
+      withCompletion: (void (^)(NSError *error))completion;
 
 - (void) getProofMsg:(NSNumber *) proofHandle
       withCompletion:(void (^)(NSError *error, NSString *proofMsg))completion;

@@ -393,6 +393,8 @@ public abstract class LibVcx {
 
         public int vcx_v2_disclosed_proof_update_state(int command_handle, int proof_handle, int connection_handle, Callback cb);
 
+        public int vcx_v2_disclosed_proof_update_state_with_message(int command_handle, int proof_handle, int connection_handle, String message, Callback cb);
+
         /**
          * Check for any proof requests from the connection.
          */
@@ -475,6 +477,8 @@ public abstract class LibVcx {
         public int vcx_credential_get_offers(int command_handle, int connection_handle, Callback cb);
 
         public int vcx_v2_credential_update_state(int command_handle, int credential_handle, int connection_handle, Callback cb);
+
+        public int vcx_v2_credential_update_state_with_message(int command_handle, int credential_handle, int connection_handle, String message, Callback cb);
 
         /** Retrieves the State of the credential - including storing the credential if it has been sent. */
         public int vcx_credential_get_state(int command_handle, int credential_handle, Callback cb);

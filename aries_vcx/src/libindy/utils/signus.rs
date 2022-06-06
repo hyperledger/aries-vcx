@@ -22,9 +22,20 @@ pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&st
     res
 }
 
-pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
-    let trustee_temp_verkey = libindy_replace_keys_start(did).await?;
-    let nym_request = ledger::libindy_build_nym_request(&did, &did, Some(&trustee_temp_verkey), None, None).await?;
+pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
+    if DidMocks::has_did_mock_responses() {
+        warn!("libindy_replace_keys_start >> retrieving did mock response");
+        Ok(DidMocks::get_next_did_response())
+    } else {
+        did::replace_keys_start(get_wallet_handle(), did, "{}")
+            .map_err(VcxError::from)
+            .await
+    }
+}
+
+pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> VcxResult<()> {
+    let nym_request = ledger::libindy_build_nym_request(&did, &did, Some(&temp_vk), None, None).await?;
+    let nym_request = ledger::append_txn_author_agreement_to_request(&nym_request).await?;
     let nym_result = ledger::libindy_sign_and_submit_request(&did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err)))?;
@@ -36,15 +47,9 @@ pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
     libindy_replace_keys_apply(&did).await
 }
 
-pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
-    if DidMocks::has_did_mock_responses() {
-        warn!("libindy_replace_keys_start >> retrieving did mock response");
-        Ok(DidMocks::get_next_did_response())
-    } else {
-        did::replace_keys_start(get_wallet_handle(), did, "{}")
-            .map_err(VcxError::from)
-            .await
-    }
+pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
+    let trustee_temp_verkey = libindy_replace_keys_start(did).await?;
+    rotate_verkey_apply(did, &trustee_temp_verkey).await
 }
 
 pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {

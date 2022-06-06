@@ -155,8 +155,11 @@ export interface IFFIEntryPoint {
   vcx_pool_set_handle: (handle: number) => void;
   vcx_endorse_transaction: (commandId: number, transaction: string, cb: ICbRef) => number;
   vcx_rotate_verkey: (commandId: number, did: string, cb: ICbRef) => number;
+  vcx_rotate_verkey_start: (commandId: number, did: string, cb: ICbRef) => number;
+  vcx_rotate_verkey_apply: (commandId: number, did: string, tempVk: string, cb: ICbRef) => number;
   vcx_get_verkey_from_wallet: (commandId: number, did: string, cb: ICbRef) => number;
   vcx_get_verkey_from_ledger: (commandId: number, did: string, cb: ICbRef) => number;
+  vcx_get_ledger_txn: (commandId: number, did: string, seq_no: number, cb: ICbRef) => number;
 
   // connection
   vcx_connection_delete_connection: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -632,6 +635,14 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_rotate_verkey_start: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_rotate_verkey_apply: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_get_verkey_from_wallet: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -639,6 +650,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_get_verkey_from_ledger: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_get_ledger_txn: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_INDY_NUMBER, FFI_CALLBACK_PTR],
   ],
 
   // wallet

@@ -32,7 +32,7 @@ impl MessageFamilies {
             MessageFamilies::TrustPing => "1.0",
             MessageFamilies::DiscoveryFeatures => "1.0",
             MessageFamilies::Basicmessage => "1.0",
-            MessageFamilies::OutOfBand => "1.0",
+            MessageFamilies::OutOfBand => "1.1",
             MessageFamilies::Unknown(_) => "1.0"
         }
     }

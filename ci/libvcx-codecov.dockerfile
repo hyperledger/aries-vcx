@@ -5,7 +5,7 @@ ARG UID=1000
 ARG INDYSDK_PATH=/home/indy/vdr-tools
 ARG INDYSDK_REVISION=b5fd711a
 ARG INDYSDK_REPO=https://gitlab.com/PatrikStas/vdr-tools.git
-ARG RUST_VER=nightly-2021-07-26
+ARG RUST_VER=nightly-2022-05-21
 
 # Install dependencies
 RUN apt-get update && \
@@ -62,4 +62,4 @@ RUN mv /usr/local/lib/libsodium.* \
 
 USER indy
 
-RUN cargo install grcov --version 0.8.4
+RUN cargo install grcov --version 0.8.9
