@@ -364,6 +364,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Credential Json: {}, err: {:?}", credential, err)))?;
 
     let rev_reg_id = parsed_credential["rev_reg_id"].as_str().map(String::from);
+    trace!("Holder::_parse_rev_reg_id_from_credential <<< {:?}", rev_reg_id);
 
     Ok(rev_reg_id)
 }

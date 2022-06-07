@@ -8,6 +8,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
+use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
@@ -101,6 +102,37 @@ pub async fn build_credential_offer_msg(handle: u32,
         cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
         rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
         tails_file: credential_def::get_tails_file(cred_def_handle)?,
+    };
+    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential)
+}
+
+pub async fn build_credential_offer_msg_v2(handle: u32,
+                                           cred_def_handle: u32,
+                                           rev_reg_handle: u32,
+                                           credential_json: &str,
+                                           comment: Option<&str>) -> VcxResult<()> {
+    if credential_def::has_pending_revocations_primitives_to_be_published(cred_def_handle)? {
+        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")));
+    };
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    let cred_def = credential_def::CREDENTIALDEF_MAP.get_cloned(cred_def_handle)?;
+    let offer_info = if cred_def.get_support_revocation() {
+        let rev_reg = REV_REG_MAP.get_cloned(rev_reg_handle)?;
+        OfferInfo {
+            credential_json: credential_json.to_string(),
+            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+            rev_reg_id: Some(rev_reg.get_rev_reg_id()),
+            tails_file: Some(rev_reg.get_tails_file())
+        }
+    } else {
+        OfferInfo {
+            credential_json: credential_json.to_string(),
+            cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
+            rev_reg_id: None,
+            tails_file: None
+        }
+
     };
     credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)
