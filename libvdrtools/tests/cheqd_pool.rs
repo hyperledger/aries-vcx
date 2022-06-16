@@ -234,7 +234,6 @@ mod high_cases {
         }
 
         #[test]
-//        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn test_abci_info_in_memory_config() {
             let setup = Setup::empty();
             let cheqd_test_pool_ip = environment::cheqd_test_pool_ip();

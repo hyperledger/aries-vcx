@@ -18,13 +18,26 @@ default = ["base58_bs58", "pair_amcl", "local_nodes_pool", "revocation_tests"]
 base58_bs58 = ["bs58"]
 pair_amcl = ["ursa"]
 local_nodes_pool = []
-local_nodes_cheqd_pool = []
 revocation_tests = []
 force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-cheqd = ["indy-api-types/cheqd", "vdrtools-sys/cheqd", "vdrtools/cheqd", "indy-utils/cheqd", "cosmrs", 'prost', 'prost-build', 'tonic', 'tonic-build']
+cheqd = [
+    "indy-api-types/cheqd",
+    "vdrtools-sys/cheqd",
+    "vdrtools/cheqd",
+    "indy-utils/cheqd",
+    "cosmrs",
+    "prost",
+    "prost-build",
+    "prost-types",
+    "tendermint-proto",
+    "walkdir",
+    "ics23",
+    "lexical-core",
+    "http-client"
+]
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -37,7 +50,7 @@ env_logger = "0.7"
 etcommon-rlp = "0.2.4"
 failure = { version = "0.1.8", features = ["backtrace"] }
 hex = "0.4.0"
-libc = "0.2.95"
+libc = "0.2.126"
 log = "0.4.8"
 log-derive = "0.3.0"
 num_cpus = "1.8.0"
@@ -51,8 +64,7 @@ serde_derive = "1.0.99"
 sha2 = "0.9"
 sha3 = "0.9"
 rmp-serde = "0.13.7"
-time = "0.1.42"
-threadpool = "1.7.1"
+time = "0.1.44"
 zmq = "0.9.1"
 lazy_static = "1.3"
 byteorder = "1.3.2"
@@ -62,28 +74,26 @@ regex = "1.2.1"
 indy-api-types = { path = "./indy-api-types"}
 indy-utils = { path = "./indy-utils"}
 indy-wallet = { path = "./indy-wallet"}
-quote = "=1.0.7"
 variant_count = "*"
 num-traits = "0.2"
 num-derive = "0.2"
 convert_case = "0.3.2"
 futures = "0.3.1"
-lru = "0.6.5"
-http-client = "6.4.1"
-ics23 = "0.6.5"
-lexical-core = "0.7.6"
+
 bip32 = { version = "0.2.2", features = ["alloc"] }
 bip39 = "1.0.1"
 pbkdf2 = "0.9.0"
-password-hash = { version = "0.3.2", features = ["alloc"] }
-rust_crypto = { version = "0.2.36", package="rust-crypto"}
 
+http-client = { version = "6.5.2", optional = true }
+ics23 = { version = "0.6.5", optional = true }
+lexical-core = { version = "0.7.6", optional = true }
 cosmrs = { version = "0.2.1", features = ["rpc", "bip32"], optional = true }
 k256 = { version = "0.9.6", features = ["ecdsa-core", "ecdsa"] }
 uuid = { version = "0.7.4", default-features = false, features = ["v4"] }
 ursa = { version = "0.3.7", optional = true}
-prost = "0.7.0"
-prost-types = "0.7.0"
+prost = { version = "0.7.0", optional = true}
+prost-types = { version = "0.7.0", optional = true}
+tendermint-proto = { version = "0.22", optional = true}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
@@ -145,12 +155,5 @@ assets = [
 
 [build-dependencies]
 regex = "1.2.1"
-prost = { version = "0.7", optional = true }
 prost-build = { version = "0.7", optional = true }
-tonic = { version = "0.4", optional = true }
-tonic-build = { version = "0.4", optional = true }
-tempdir = "0.3"
-walkdir = "2"
-
-[dependencies.tendermint-proto]
-version = "0.22"
+walkdir = { version = "2", optional = true }
