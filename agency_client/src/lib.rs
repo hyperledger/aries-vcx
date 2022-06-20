@@ -49,6 +49,7 @@ use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatus
 use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
 use self::mocking::AgencyMockDecrypted;
 use async_trait::async_trait;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -269,18 +270,20 @@ pub struct ForwardV2 {
     fwd: String,
     #[serde(rename = "@msg")]
     msg: Value,
+    #[serde(rename = "@id")]
+    id: String,
 }
 
 impl ForwardV2 {
     fn new(fwd: String, msg: Vec<u8>) -> AgencyClientResult<A2AMessage> {
         let msg = serde_json::from_slice(msg.as_slice())
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, err))?;
-
         Ok(A2AMessage::Version2(A2AMessageV2::Forward(
             ForwardV2 {
                 msg_type: MessageTypes::build_v2(A2AMessageKinds::Forward),
                 fwd,
                 msg,
+                id: Uuid::new_v4().to_string()
             }
         )))
     }
