@@ -8,6 +8,7 @@ const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
 const { createServicePublicAgents } = require('./services/service-public-agents')
 const { createServiceOutOfBand } = require('./services/service-out-of-band')
+const { createServiceLedgerRevocationRegistry } = require('./services/service-revocation-registry')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
   initThreadpool,
@@ -91,10 +92,17 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     loadCredDef: storageService.loadCredentialDefinition,
     listCredDefIds: storageService.listCredentialDefinitionKeys
   })
+  const serviceLedgerRevReg = createServiceLedgerRevocationRegistry({
+    logger,
+    saveRevReg: storageService.saveRevocationRegistry,
+    loadRevReg: storageService.loadRevocationRegistry,
+    listCredDefIds: storageService.listCredentialDefinitionKeys
+  })
   const serviceCredIssuer = createServiceCredIssuer({
     logger,
     loadConnection: storageService.loadConnection,
     loadCredDef: storageService.loadCredentialDefinition,
+    loadRevReg: storageService.loadRevocationRegistry,
     saveIssuerCredential: storageService.saveCredIssuer,
     loadIssuerCredential: storageService.loadCredIssuer,
     listIssuerCredentialIds: storageService.listCredIssuerKeys,
@@ -143,6 +151,7 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     // ledger
     serviceLedgerSchema,
     serviceLedgerCredDef,
+    serviceLedgerRevReg,
 
     // connections
     serviceConnections,

@@ -1,6 +1,7 @@
 pub mod connection;
 pub mod credential;
 pub mod credential_def;
+pub mod revocation_registry;
 pub mod disclosed_proof;
 pub mod issuer_credential;
 pub mod proof;

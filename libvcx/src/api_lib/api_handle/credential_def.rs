@@ -9,7 +9,23 @@ use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 
 lazy_static! {
-    static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
+    pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
+}
+
+pub async fn create(source_id: String,
+                    schema_id: String,
+                    issuer_did: String,
+                    tag: String,
+                    support_revocation: bool) -> VcxResult<u32> {
+    let config = CredentialDefConfigBuilder::default()
+        .issuer_did(issuer_did)
+        .schema_id(schema_id)
+        .tag(tag)
+        .build()
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
+    let cred_def = CredentialDef::create(source_id, config, support_revocation).await?;
+    let handle = CREDENTIALDEF_MAP.add(cred_def)?;
+    Ok(handle)
 }
 
 pub async fn create_and_store(source_id: String,

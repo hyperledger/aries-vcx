@@ -24,6 +24,13 @@ export interface ICredentialDefCreateData {
   tailsUrl?: string;
 }
 
+export interface ICredentialDefCreateDataV2 {
+  sourceId: string;
+  schemaId: string;
+  supportRevocation: boolean;
+  tag: string;
+}
+
 export interface ICredentialDefData {
   source_id: string;
   handle: number;
@@ -60,6 +67,33 @@ export enum CredentialDefState {
  * @class Class representing a credential Definition
  */
 export class CredentialDef extends VCXBase<ICredentialDefData> {
+  public static async create({
+    supportRevocation,
+    schemaId,
+    sourceId,
+    tag
+  }: ICredentialDefCreateDataV2): Promise<CredentialDef> {
+    const credentialDef = new CredentialDef(sourceId, { schemaId });
+    const commandHandle = 0;
+    const issuerDid = null;
+    try {
+      await credentialDef._create((cb) =>
+        rustAPI().vcx_credentialdef_create_v2(
+          commandHandle,
+          sourceId,
+          schemaId,
+          issuerDid,
+          tag,
+          supportRevocation,
+          cb,
+        ),
+      );
+      return credentialDef;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public static async createAndStore({
     revocationDetails,
     schemaId,

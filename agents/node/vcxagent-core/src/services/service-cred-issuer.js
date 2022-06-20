@@ -3,8 +3,9 @@ const {
   IssuerCredential
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
+const assert = require('assert')
 
-module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds, issuerDid }) {
+module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, loadRevReg, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds, issuerDid }) {
   async function buildOfferAndMarkAsSent (issuerCredId, credDefId, schemaAttrs) {
     const credDef = await loadCredDef(credDefId)
     logger.debug('Building issuer credential')
@@ -36,6 +37,27 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
       credDef,
       attr: schemaAttrs
     })
+    await saveIssuerCredential(issuerCredId, issuerCred)
+  }
+
+  async function sendOfferV2 (issuerCredId, revRegId, connectionId, credDefId, schemaAttrs) {
+    assert(revRegId)
+    const connection = await loadConnection(connectionId)
+    const credDef = await loadCredDef(credDefId)
+    const revReg = revRegId ? await loadRevReg(revRegId) : undefined
+    logger.debug('Building issuer credential')
+    const issuerCred = await IssuerCredential.create('alice_degree')
+    logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
+    await issuerCred.buildCredentialOfferMsgV2({
+      credDef,
+      attr: schemaAttrs,
+      revReg
+    })
+    const state1 = await issuerCred.getState()
+    expect(state1).toBe(IssuerStateType.OfferSet)
+    await issuerCred.sendOfferV2(connection)
+    const state2 = await issuerCred.getState()
+    expect(state2).toBe(IssuerStateType.OfferSent)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
@@ -139,6 +161,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
 
   return {
     sendOffer,
+    sendOfferV2,
     buildOfferAndMarkAsSent,
     sendOfferAndWaitForCredRequest,
     sendCredential,

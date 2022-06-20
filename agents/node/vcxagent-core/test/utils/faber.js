@@ -10,7 +10,7 @@ module.exports.createFaber = async function createFaber () {
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
   const agentId = 'faber-public-agent'
-  let credDefId
+  let credDefId, revRegId
   const proofId = 'proof-from-alice'
   const logger = require('../../demo/logger')('Faber')
 
@@ -167,6 +167,39 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function buildLedgerPrimitivesV2 (revocationDetails) {
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Faber writing schema on ledger')
+    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
+    await sleep(500)
+
+    logger.info('Faber writing credential definition on ledger')
+    const supportRevocation = !!revocationDetails
+    await vcxAgent.serviceLedgerCredDef.createCredentialDefinitionV2(
+      schemaId,
+      getFaberCredDefName(),
+      supportRevocation
+    )
+    credDefId = getFaberCredDefName()
+    const _credDefId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
+    if (supportRevocation) {
+      const { tailsDir, maxCreds } = revocationDetails
+      logger.info('Faber writing revocation registry');
+      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, _credDefId, 1, tailsDir, maxCreds))
+    }
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function rotateRevReg (maxCreds) {
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Faber rotating revocation registry');
+    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function sendCredentialOffer () {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
@@ -174,6 +207,16 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function sendCredentialOfferV2 () {
+    await vcxAgent.agentInitVcx()
+
+    logger.info('Issuer sending credential offer')
+    const schemaAttrs = getAliceSchemaAttrs()
+    await vcxAgent.serviceCredIssuer.sendOfferV2(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
+    logger.debug('Credential offer sent')
+
+    await vcxAgent.agentShutdownVcx()
+  }
   async function updateStateCredentialV2 (expectedState) {
     await vcxAgent.agentInitVcx()
 
@@ -318,6 +361,8 @@ module.exports.createFaber = async function createFaber () {
 
   return {
     buildLedgerPrimitives,
+    buildLedgerPrimitivesV2,
+    rotateRevReg,
     createCredDef,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
@@ -332,6 +377,7 @@ module.exports.createFaber = async function createFaber () {
     updateConnection,
     sendConnectionResponse,
     sendCredentialOffer,
+    sendCredentialOfferV2,
     createOobCredOffer,
     updateStateCredentialV2,
     sendCredential,
