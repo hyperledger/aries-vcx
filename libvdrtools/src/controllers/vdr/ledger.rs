@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use crate::domain::{
     vdr::{
         prepared_txn::EndorsementSpec,
-        ledger_types::LedgerTypes,
+        ledger_types::DidMethod,
         ping_status::PingStatus,
     }
 };
@@ -13,7 +13,7 @@ use crate::domain::{
 pub(crate) trait Ledger: Send + Sync {
     // meta
     fn name(&self) -> String;
-    fn ledger_type(&self) -> LedgerTypes;
+    fn ledger_type(&self) -> DidMethod;
 
     // general
     async fn ping(&self) -> IndyResult<PingStatus>;

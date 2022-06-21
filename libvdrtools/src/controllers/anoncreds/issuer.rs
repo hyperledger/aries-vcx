@@ -79,7 +79,7 @@ impl IssuerController {
 
         self.crypto_service.validate_did(&issuer_did)?;
 
-        let schema_id = SchemaId::new(&issuer_did, &name, &version);
+        let schema_id = SchemaId::new(&issuer_did, &name, &version)?;
 
         let schema = Schema::SchemaV1(SchemaV1 {
             id: schema_id.clone(),
@@ -128,7 +128,7 @@ impl IssuerController {
                 ));
             }
             (Some(prefix_), None) => {
-                schema.id = schema.id.qualify(&prefix_);
+                schema.id = schema.id.qualify(&prefix_)?;
             }
             _ => {}
         };
@@ -150,7 +150,7 @@ impl IssuerController {
             .unwrap_or_else(|| schema.id.clone());
 
         let cred_def_id =
-            CredentialDefinitionId::new(&issuer_did, &schema_id, signature_type.to_str(), &tag);
+            CredentialDefinitionId::new(&issuer_did, &schema_id, signature_type.to_str(), &tag)?;
 
         let cred_def = self
             .wallet_service
@@ -470,7 +470,7 @@ impl IssuerController {
         let max_cred_num = config.max_cred_num.unwrap_or(100000);
 
         let rev_reg_id =
-            RevocationRegistryId::new(&issuer_did, &cred_def_id, &rev_reg_type.to_str(), &tag);
+            RevocationRegistryId::new(&issuer_did, &cred_def_id, &rev_reg_type.to_str(), &tag)?;
 
         if let (Ok(rev_reg_def), Ok(rev_reg)) = (
             self.wallet_service
@@ -645,7 +645,7 @@ impl IssuerController {
         );
 
         let cred_def_id = match cred_offer.method_name {
-            Some(ref method_name) => cred_offer.cred_def_id.qualify(method_name),
+            Some(ref method_name) => cred_offer.cred_def_id.qualify(method_name)?,
             None => cred_offer.cred_def_id.clone(),
         };
 

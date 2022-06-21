@@ -1,4 +1,5 @@
 #![cfg(feature = "cheqd")]
+#![cfg(feature = "local_nodes_cheqd_pool")]
 
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
@@ -22,6 +23,7 @@ use serde_json::Value;
 
 #[cfg(feature = "cheqd")]
 mod high_cases {
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     use super::*;
 
     #[cfg(test)]

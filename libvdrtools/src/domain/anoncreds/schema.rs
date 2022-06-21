@@ -3,8 +3,11 @@ use super::DELIMITER;
 use super::super::crypto::did::DidValue;
 
 use std::collections::{HashMap, HashSet};
+use indy_api_types::errors::{IndyErrorKind, IndyResult};
+use indy_api_types::IndyError;
 
 use indy_api_types::validation::Validatable;
+use super::indy_identifiers;
 use crate::utils::qualifier;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
@@ -112,21 +115,35 @@ impl Validatable for AttributeNames {
     }
 }
 
-qualifiable_type!(SchemaId);
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SchemaId(pub String);
 
 impl SchemaId {
-    pub const PREFIX: &'static str = "schema";
-    pub const MARKER: &'static str = "2";
+    pub const PREFIX: &'static str = "/anoncreds/v0/SCHEMA/";
 
-    pub fn new(did: &DidValue, name: &str, version: &str) -> SchemaId {
-        let id = SchemaId(format!("{}{}{}{}{}{}{}", did.0, DELIMITER, Self::MARKER, DELIMITER, name, DELIMITER, version));
+    pub fn get_method(&self) -> Option<String> {
+        qualifier::method(&self.0)
+    }
+
+    pub fn new(did: &DidValue, name: &str, version: &str) -> IndyResult<SchemaId> {
+        const MARKER: &str = "2";
         match did.get_method() {
-            Some(method) => id.set_method(&method),
-            None => id
+            Some(method) if method.starts_with("indy") => {
+                Ok(SchemaId(format!("{}{}{}/{}", did.0, Self::PREFIX, name, version)))
+            },
+            Some(_method) => {
+                Err(IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unsupported DID method"))
+            }
+            None => Ok(SchemaId(format!("{}:{}:{}:{}", did.0, MARKER, name, version)))
         }
     }
 
     pub fn parts(&self) -> Option<(DidValue, String, String)> {
+        trace!("SchemaId::parts >> {:?}", self.0);
+        if let Some((did, name, ver)) = indy_identifiers::try_parse_indy_schema_id(&self.0) {
+            return Some((DidValue(did), name, ver));
+        }
+
         let parts = self.0.split_terminator(DELIMITER).collect::<Vec<&str>>();
 
         if parts.len() == 1 {
@@ -153,19 +170,22 @@ impl SchemaId {
         None
     }
 
-    pub fn qualify(&self, method: &str) -> SchemaId {
+    pub fn qualify(&self, method: &str) -> IndyResult<SchemaId> {
         match self.parts() {
             Some((did, name, version)) => {
                 SchemaId::new(&did.qualify(method), &name, &version)
             }
-            None => self.clone()
+            None => Ok(self.clone())
         }
     }
 
     pub fn to_unqualified(&self) -> SchemaId {
+        trace!("SchemaId::to_unqualified >> {}", &self.0);
         match self.parts() {
             Some((did, name, version)) => {
+                trace!("SchemaId::to_unqualified: parts {:?}", (&did, &name, &version));
                 SchemaId::new(&did.to_unqualified(), &name, &version)
+                    .expect("Can't create unqualified SchemaId")
             }
             None => self.clone()
         }
@@ -193,7 +213,7 @@ mod tests {
     }
 
     fn _did_qualified() -> DidValue {
-        DidValue("did:sov:NcYxiDXkpYi6ov5FcYDi1e".to_string())
+        DidValue("did:indy:NcYxiDXkpYi6ov5FcYDi1e".to_string())
     }
 
     fn _schema_id_seq_no() -> SchemaId {
@@ -205,7 +225,7 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0".to_string())
+        SchemaId("did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0".to_string())
     }
 
     fn _schema_id_invalid() -> SchemaId {

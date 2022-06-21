@@ -4,6 +4,7 @@ pub mod credential_definition;
 pub mod credential_for_proof_request;
 pub mod credential_offer;
 pub mod credential_request;
+pub mod indy_identifiers;
 pub mod proof;
 pub mod proof_request;
 pub mod requested_credential;

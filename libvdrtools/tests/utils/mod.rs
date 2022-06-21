@@ -80,6 +80,7 @@ pub struct Setup {
     pub pool_handle: PoolHandle,
     pub did: String,
     pub verkey: String,
+    pub attached_wallets: Vec<(String, WalletHandle)>,
 }
 
 impl Setup {
@@ -92,6 +93,7 @@ impl Setup {
             pool_handle: INVALID_POOL_HANDLE,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -105,6 +107,7 @@ impl Setup {
             pool_handle: INVALID_POOL_HANDLE,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -118,6 +121,7 @@ impl Setup {
             pool_handle: INVALID_POOL_HANDLE,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -132,6 +136,7 @@ impl Setup {
             pool_handle,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -147,6 +152,7 @@ impl Setup {
             pool_handle,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -162,6 +168,7 @@ impl Setup {
             pool_handle,
             did: String::new(),
             verkey: String::new(),
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -239,6 +246,7 @@ impl Setup {
             pool_handle: 0,
             did,
             verkey,
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -253,6 +261,7 @@ impl Setup {
             pool_handle: 0,
             did,
             verkey,
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -267,6 +276,7 @@ impl Setup {
             pool_handle: 0,
             did,
             verkey,
+            attached_wallets: Vec::new(),
         }
     }
 
@@ -281,7 +291,12 @@ impl Setup {
             pool_handle: INVALID_POOL_HANDLE,
             did: String::new(),
             verkey,
+            attached_wallets: Vec::new(),
         }
+    }
+
+    pub fn attach_wallet(&mut self, wallet_config: String, wallet_handle: WalletHandle) {
+        self.attached_wallets.push((wallet_config, wallet_handle));
     }
 
     //    pub fn payment() -> Setup {
@@ -302,6 +317,11 @@ impl Drop for Setup {
     fn drop(&mut self) {
         if self.wallet_handle != INVALID_WALLET_HANDLE {
             wallet::close_and_delete_wallet(self.wallet_handle, &self.wallet_config).unwrap();
+        }
+
+        let wallets = self.attached_wallets.drain(0..);
+        for (conf, handle) in wallets {
+            wallet::close_and_delete_wallet(handle, &conf).unwrap();
         }
 
         if self.pool_handle != INVALID_POOL_HANDLE {

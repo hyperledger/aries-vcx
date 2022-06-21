@@ -3,7 +3,9 @@
 use vdrtoolsrs::IndyError;
 use serde_json::Value;
 
-use crate::utils::{cheqd_keys, cheqd_ledger, cheqd_ledger::auth, cheqd_pool, environment};
+use crate::utils::{cheqd_keys, cheqd_pool, environment};
+#[cfg(feature = "local_nodes_cheqd_pool")]
+use crate::utils::{cheqd_ledger, cheqd_ledger::auth};
 
 use super::{logger, wallet, WalletHandle};
 use super::test;
@@ -83,6 +85,7 @@ impl CheqdSetup {
         Ok((account_id, pub_key))
     }
 
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     pub fn get_base_account_number_and_sequence(&self, account_id: &str) -> Result<(u64, u64), IndyError> {
         let req = auth::build_query_account(account_id).unwrap();
         let resp = cheqd_pool::abci_query(&self.pool_alias, &req).unwrap();
@@ -121,6 +124,7 @@ impl CheqdSetup {
         Ok((account_number, account_sequence))
     }
 
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     pub fn build_and_sign_and_broadcast_tx(&self, msg: &[u8]) -> Result<String, IndyError> {
         // Get account info
         let (account_number, account_sequence) = self.get_base_account_number_and_sequence(&self.account_id)?;
@@ -148,6 +152,7 @@ impl CheqdSetup {
         Ok(resp)
     }
 
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     pub fn get_timeout_height(&self) -> u64 {
         const TIMEOUT: u64 = 20;
         let info: String = cheqd_pool::abci_info(&self.pool_alias).unwrap();

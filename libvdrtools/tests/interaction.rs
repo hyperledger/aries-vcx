@@ -414,9 +414,15 @@ impl Issuer {
         rev_reg_delta_json
     }
 
-    pub fn close(&self) {
+    fn close(&self) {
         wallet::close_and_delete_wallet(self.issuer_wallet_handle, &self.issuer_wallet_config)
             .unwrap();
+    }
+}
+
+impl Drop for Issuer {
+    fn drop(&mut self) {
+        self.close();
     }
 }
 
@@ -628,6 +634,12 @@ impl Prover {
     }
 }
 
+impl Drop for Prover {
+    fn drop(&mut self) {
+        self.close();
+    }
+}
+
 impl Verifier {
     pub fn new(proof_request: &String) -> Verifier {
         Verifier {
@@ -823,8 +835,6 @@ fn anoncreds_revocation_interaction_test_one_prover(revocation_registry_config: 
     let valid = verifier.verify(&pool, &proof_json);
     assert!(!valid);
 
-    issuer.close();
-    prover.close();
     pool.close();
 }
 
@@ -933,10 +943,6 @@ fn anoncreds_revocation_interaction_test_issuance_by_demand_three_credentials_po
     let valid = verifier.verify(&pool, &proof_json);
     assert!(valid);
 
-    issuer.close();
-    prover1.close();
-    prover2.close();
-    prover3.close();
     pool.close();
 }
 
@@ -1057,10 +1063,6 @@ fn anoncreds_revocation_interaction_test_issuance_by_demand_three_credentials_po
     let valid = verifier.verify(&pool, &proof_json);
     assert!(valid);
 
-    issuer.close();
-    prover1.close();
-    prover2.close();
-    prover3.close();
     pool.close();
 }
 
@@ -1234,8 +1236,6 @@ fn anoncreds_revocation_interaction_test_issuance_by_demand_fully_qualified_did(
     let valid = verifier.verify(&pool, &proof_json);
     assert!(valid);
 
-    issuer.close();
-    prover.close();
     pool.close();
 }
 
@@ -1379,7 +1379,5 @@ fn anoncreds_revocation_interaction_test_issuance_by_demand_fully_qualified_issu
     let valid = verifier.verify(&pool, &proof_json);
     assert!(valid);
 
-    issuer.close();
-    prover.close();
     pool.close();
 }

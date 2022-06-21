@@ -2,31 +2,48 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^[a-z0-9]+:([a-z0-9]+):(.*)$").unwrap();
+    pub static ref REGEX: Regex = Regex::new("^[a-z0-9]+(:(indy|cheqd))?(:[a-z0-9]+)?:(.*)$").unwrap();
 }
 
 pub fn qualify(entity: &str, prefix: &str, method: &str) -> String {
     format!("{}:{}:{}", prefix, method, entity)
 }
 
-pub fn qualify_with_ledger(entity: &str, prefix: &str, ledger_type: &str, method: &str) -> String {
-    format!("{}:{}:{}:{}", prefix, ledger_type, method, entity)
+pub fn qualify_with_ledger(entity: &str, prefix: &str, method: &str, ledger_type: &str) -> String {
+    format!("{}:{}:{}:{}", prefix, method, ledger_type, entity)
 }
 
 pub fn to_unqualified(entity: &str) -> String {
+    trace!("qualifier::to_unqualified >> {}", entity);
     match REGEX.captures(entity) {
         None => entity.to_string(),
-        Some(caps) => caps
-            .get(2)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or(entity.to_string()),
+        Some(caps) => {
+            trace!("qualifier::to_unqualified: parts {:?}", caps);
+            caps.get(4)
+                .map(|m| m.as_str().to_string())
+                .unwrap_or(entity.to_string())
+        }
     }
 }
 
 pub fn method(entity: &str) -> Option<String> {
     match REGEX.captures(entity) {
         None => None,
-        Some(caps) => caps.get(1).map(|m| m.as_str().to_string()),
+        Some(caps) => {
+            trace!("qualifier::method: caps {:?}", caps);
+            match (caps.get(2), caps.get(3)) {
+                (Some(type_), Some(subnet)) => {
+                    Some(type_.as_str().to_owned() + subnet.as_str())
+                }
+                (Some(type_), None) => Some(type_.as_str().to_owned()),
+                _ => {
+                    warn!("Unrecognized FQ method for {}, parsed items are \
+                    (where 2nd is method type, and 3rd is sub-method (namespace, ledger, type, etc)\
+                     {:?}", entity, caps);
+                    None
+                }
+            }
+        },
     }
 }
 
@@ -53,12 +70,12 @@ macro_rules! qualifiable_type (($newtype:ident) => (
 
         #[allow(dead_code)]
         pub fn set_ledger_and_method(&self, ledger_type: &str, method: &str) -> $newtype {
-            $newtype(qualifier::qualify_with_ledger(&self.0, $newtype::PREFIX, ledger_type, method))
+            $newtype(qualifier::qualify_with_ledger(&self.0, $newtype::PREFIX, method, ledger_type))
         }
 
         #[allow(dead_code)]
         pub fn is_fully_qualified(&self) -> bool {
-            self.0.starts_with($newtype::PREFIX) && qualifier::is_fully_qualified(&self.0)
+            self.0.contains($newtype::PREFIX) && qualifier::is_fully_qualified(&self.0)
         }
     }
 ));

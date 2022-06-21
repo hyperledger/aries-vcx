@@ -11,7 +11,7 @@ use crate::domain::{
             CheqdEndorsementSpec,
             CheqdEndorsement,
         },
-        ledger_types::LedgerTypes,
+        ledger_types::DidMethod,
         ping_status::PingStatus,
     },
     cheqd_ledger::cheqd::v1::messages::{
@@ -66,8 +66,8 @@ impl Ledger for CheqdLedger {
         self.name.clone()
     }
 
-    fn ledger_type(&self) -> LedgerTypes {
-        LedgerTypes::Cheqd
+    fn ledger_type(&self) -> DidMethod {
+        DidMethod::Cheqd
     }
 
     async fn ping(&self) -> IndyResult<PingStatus> {

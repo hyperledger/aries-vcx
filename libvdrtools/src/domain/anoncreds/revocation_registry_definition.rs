@@ -1,14 +1,13 @@
 use std::collections::{HashMap, HashSet};
+use indy_api_types::errors::{err_msg, IndyErrorKind, IndyResult};
 
 use indy_api_types::validation::Validatable;
 use lazy_static::lazy_static;
 use regex::Regex;
 use ursa::cl::{RevocationKeyPrivate, RevocationKeyPublic};
 
-use super::super::{
-        anoncreds::{credential_definition::CredentialDefinitionId, DELIMITER},
-        crypto::did::DidValue,
-};
+use super::{credential_definition::CredentialDefinitionId, indy_identifiers, DELIMITER};
+use super::super::crypto::did::DidValue;
 
 use crate::utils::qualifier;
 
@@ -145,33 +144,48 @@ pub struct RevocationRegistryInfo {
 qualifiable_type!(RevocationRegistryId);
 
 impl RevocationRegistryId {
-    pub const PREFIX: &'static str = "revreg";
+    pub const PREFIX: &'static str = "/anoncreds/v0/REV_REG_DEF/";
 
     pub fn new(
         did: &DidValue,
         cred_def_id: &CredentialDefinitionId,
         rev_reg_type: &str,
         tag: &str,
-    ) -> RevocationRegistryId {
-        let id = RevocationRegistryId(format!(
-            "{}{}{}{}{}{}{}{}{}",
-            did.0,
-            DELIMITER,
-            REV_REG_DEG_MARKER,
-            DELIMITER,
-            cred_def_id.0,
-            DELIMITER,
-            rev_reg_type,
-            DELIMITER,
-            tag
-        ));
+    ) -> IndyResult<RevocationRegistryId> {
         match did.get_method() {
-            Some(method) => RevocationRegistryId(qualifier::qualify(&id.0, Self::PREFIX, &method)),
-            None => id,
+            Some(method) if method.starts_with("indy") => {
+                if let Some((_issuer_did, _cl_type, schema_id, creddef_tag)) = cred_def_id.parts() {
+                    Ok(RevocationRegistryId(did.0.to_owned() + "/anoncreds/v0/REV_REG_DEF/" + &schema_id.0 + "/" + &creddef_tag + "/" + tag))
+                } else {
+                    Err(err_msg(IndyErrorKind::InvalidStructure, "Can't parse Indy CredDef to construct RevReg ID"))
+                }
+            },
+            None => {
+                Ok(RevocationRegistryId(format!(
+                    "{}{}{}{}{}{}{}{}{}",
+                    did.0,
+                    DELIMITER,
+                    REV_REG_DEG_MARKER,
+                    DELIMITER,
+                    cred_def_id.0,
+                    DELIMITER,
+                    rev_reg_type,
+                    DELIMITER,
+                    tag
+                )))
+            },
+            Some(method) => Err(err_msg(IndyErrorKind::InvalidStructure,
+                                        format!("Unsupported DID method {} for RevReg ID", method)))
         }
     }
 
     pub fn parts(&self) -> Option<(DidValue, CredentialDefinitionId, String, String)> {
+        trace!("RevocationRegistryId::parts >> self.0 {}", self.0);
+        if let Some(parts) = indy_identifiers::try_parse_indy_rev_reg(self.0.as_str()) {
+            trace!("RevocationRegistryId::parts: parsed Indy RevReg {:?}", parts);
+            return Some(parts);
+        }
+
         match QUALIFIED_REV_REG_ID.captures(&self.0) {
             Some(caps) => Some((
                 DidValue(caps["did"].to_string()),
@@ -190,7 +204,7 @@ impl RevocationRegistryId {
                 &cred_def_id.to_unqualified(),
                 &rev_reg_type,
                 &tag,
-            ),
+            ).expect("Can't create unqualified RevocationRegistryId"),
             None => self.clone(),
         }
     }
@@ -288,6 +302,8 @@ mod tests {
 
     mod parts {
         use super::*;
+
+
 
         #[test]
         fn test_rev_reg_id_parts_for_id_as_unqualified() {

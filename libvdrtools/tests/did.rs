@@ -1115,7 +1115,7 @@ mod medium_cases {
             let setup = Setup::wallet();
 
             let identity_json =
-                r#"{"did":"did:sov:8wZcEriaNLNKtteJvx7f8i", "verkey":"~NcYxiDXkpYi6ov5FcYDi1e"}"#;
+                r#"{"did":"did:indy:8wZcEriaNLNKtteJvx7f8i", "verkey":"~NcYxiDXkpYi6ov5FcYDi1e"}"#;
             did::store_their_did(setup.wallet_handle, identity_json).unwrap();
         }
 

@@ -12,7 +12,9 @@ extern crate serde_json;
 #[macro_use]
 extern crate log;
 
-use utils::{cheqd_keys, cheqd_setup, cheqd_ledger};
+use utils::{cheqd_keys, cheqd_setup};
+#[cfg(feature = "local_nodes_cheqd_pool")]
+use utils::cheqd_ledger;
 
 mod utils;
 
@@ -107,9 +109,11 @@ mod high_cases {
     }
 
     mod sign {
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         use super::*;
 
         #[test]
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn test_sign() {
             let setup = cheqd_setup::CheqdSetup::new();
 

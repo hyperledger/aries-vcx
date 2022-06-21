@@ -423,7 +423,7 @@ pub fn gvt_schema_id() -> String {
         GVT_SCHEMA_NAME,
         SCHEMA_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_sub_schema_id() -> String {
@@ -432,7 +432,7 @@ pub fn gvt_sub_schema_id() -> String {
         GVT_SUB_SCHEMA_NAME,
         SCHEMA_SUB_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_schema_id_fully_qualified() -> String {
@@ -441,7 +441,7 @@ pub fn gvt_schema_id_fully_qualified() -> String {
         GVT_SCHEMA_NAME,
         SCHEMA_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_cred_def_id() -> String {
@@ -451,7 +451,7 @@ pub fn gvt_cred_def_id() -> String {
         SIGNATURE_TYPE,
         TAG_1,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn local_gvt_cred_def_id() -> String {
@@ -461,7 +461,7 @@ pub fn local_gvt_cred_def_id() -> String {
         SIGNATURE_TYPE,
         TAG_1,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_cred_def_id_fully_qualified() -> String {
@@ -471,7 +471,7 @@ pub fn gvt_cred_def_id_fully_qualified() -> String {
         SIGNATURE_TYPE,
         TAG_1,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn local_gvt_cred_def_id_fully_qualified() -> String {
@@ -481,7 +481,7 @@ pub fn local_gvt_cred_def_id_fully_qualified() -> String {
         SIGNATURE_TYPE,
         TAG_1,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_rev_reg_id() -> String {
@@ -490,7 +490,7 @@ pub fn gvt_rev_reg_id() -> String {
         &CredentialDefinitionId(gvt_cred_def_id()),
         REVOC_REG_TYPE,
         TAG_1,
-    )
+    ).unwrap()
     .0
 }
 
@@ -500,7 +500,7 @@ pub fn gvt_rev_reg_id_fully_qualified() -> String {
         &CredentialDefinitionId(gvt_cred_def_id()),
         REVOC_REG_TYPE,
         TAG_1,
-    )
+    ).unwrap()
     .0
 }
 
@@ -542,7 +542,7 @@ pub fn gvt_schema_id_issuer2() -> String {
         GVT_SCHEMA_NAME,
         SCHEMA_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn gvt_schema_issuer2() -> SchemaV1 {
@@ -567,7 +567,7 @@ pub fn xyz_schema_id() -> String {
         XYZ_SCHEMA_NAME,
         SCHEMA_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn xyz_schema() -> SchemaV1 {
@@ -592,7 +592,7 @@ pub fn xyz_schema_id_tag2() -> String {
         &format!("{}{}", XYZ_SCHEMA_NAME, TAG_2),
         SCHEMA_VERSION,
     )
-    .0
+    .unwrap().0
 }
 
 pub fn xyz_schema_tag2() -> SchemaV1 {

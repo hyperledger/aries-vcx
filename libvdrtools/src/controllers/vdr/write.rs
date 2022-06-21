@@ -63,8 +63,8 @@ impl VDRController {
             "build_prepare_txn_result > id {:?} txn_bytes {:?} bytes_to_sign {:?} endorser {:?}",
             id, txn_bytes, bytes_to_sign, endorser,
         );
-        let namespace = id.namespace;
-        let signature_spec = id.ledger_type.signature_type().to_string();
+        let namespace = id.namespace();
+        let signature_spec = id.did_method.signature_type().to_string();
         let endorsement_spec = ledger.prepare_endorsement_spec(endorser)?;
         let endorsement_spec = endorsement_spec.map(|endorsement_spec| json!(endorsement_spec).to_string());
         Ok((namespace, txn_bytes, signature_spec, bytes_to_sign, endorsement_spec))

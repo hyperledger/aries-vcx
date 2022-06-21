@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
+#![cfg(feature = "local_nodes_cheqd_pool")]
 
 #[macro_use]
 extern crate derivative;

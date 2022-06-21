@@ -72,7 +72,7 @@ mod high_cases {
                 setup.pool_handle,
                 setup.wallet_handle,
                 DID_MY1,
-                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").0,
+                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").unwrap().0,
                 &options_json,
             );
 

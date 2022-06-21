@@ -13,7 +13,9 @@ extern crate log;
 mod utils;
 
 #[cfg(feature = "cheqd")]
-use utils::{cheqd_pool, cheqd_setup, cheqd_ledger, Setup};
+use utils::{cheqd_pool, Setup};
+#[cfg(feature = "local_nodes_cheqd_pool")]
+use utils::{cheqd_setup, cheqd_ledger};
 #[cfg(feature = "cheqd")]
 use utils::test;
 #[cfg(feature = "cheqd")]
@@ -119,6 +121,7 @@ mod high_cases {
     }
 
     #[cfg(test)]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     mod broadcast_tx_commit {
         use super::*;
         use utils::did;
@@ -161,6 +164,7 @@ mod high_cases {
     }
 
     #[cfg(test)]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     mod abci_query {
         use super::*;
         use utils::did;
@@ -219,6 +223,7 @@ mod high_cases {
     }
 
     #[cfg(test)]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     mod abci_info {
         use super::*;
         use utils::environment;
