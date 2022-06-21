@@ -4,16 +4,25 @@ use super::super::crypto::{
 };
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
-pub enum LedgerTypes {
+pub enum DidMethod {
     Indy,
     Cheqd,
 }
 
-impl LedgerTypes {
+impl ToString for DidMethod {
+    fn to_string(&self) -> String {
+        match self {
+            DidMethod::Indy => "indy".to_owned(),
+            DidMethod::Cheqd => "cheqd".to_owned(),
+        }
+    }
+}
+
+impl DidMethod {
     pub(crate) fn signature_type(&self) -> &'static str {
         match self {
-            LedgerTypes::Indy => ED25519,
-            LedgerTypes::Cheqd => SECP256K1,
+            DidMethod::Indy => ED25519,
+            DidMethod::Cheqd => SECP256K1,
         }
     }
 }

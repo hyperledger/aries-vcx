@@ -1,4 +1,5 @@
 #![cfg(feature = "cheqd")]
+#![cfg(feature = "local_nodes_cheqd_pool")]
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
 #[macro_use]

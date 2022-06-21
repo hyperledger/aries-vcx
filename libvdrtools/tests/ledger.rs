@@ -5056,7 +5056,7 @@ mod medium_cases {
 
             let get_schema_request = ledger::build_get_schema_request(
                 Some(DID_TRUSTEE),
-                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").0,
+                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").unwrap().0,
             )
             .unwrap();
 
@@ -5092,7 +5092,7 @@ mod medium_cases {
 
             let get_schema_request = ledger::build_get_schema_request(
                 Some(DID_TRUSTEE),
-                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").0,
+                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").unwrap().0,
             )
             .unwrap();
 

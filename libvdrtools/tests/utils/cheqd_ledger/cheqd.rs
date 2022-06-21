@@ -1,5 +1,6 @@
 use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError, WalletHandle};
 
+#[cfg(feature = "local_nodes_cheqd_pool")]
 use crate::utils::{cheqd_ledger as u_cheqd_ledger, cheqd_pool, cheqd_setup};
 
 pub const VERKEY_TYPE: &str = "verkey";
@@ -9,8 +10,8 @@ const VERKEY_ALIAS: &str = "#verkey";
 
 pub fn did_info() -> String {
     json!({
-        "ledger_type": "cheqd",
-        "method_name": "testnet",
+        "ledger_type": "testnet",
+        "method_name": "cheqd",
     }).to_string()
 }
 
@@ -55,6 +56,7 @@ pub fn sign_msg_request(wallet_handle: WalletHandle, fully_did: &str, msg: &[u8]
     cheqd_ledger::cheqd::sign_msg_write_request(wallet_handle, fully_did, msg).wait()
 }
 
+#[cfg(feature = "local_nodes_cheqd_pool")]
 pub fn sign_and_broadcast_cheqd_msg(setup: &cheqd_setup::CheqdSetup, fully_did: &str, msg: Vec<u8>) -> Result<String, IndyError> {
     let (account_number, account_sequence) = setup.get_base_account_number_and_sequence(&setup.account_id)?;
 

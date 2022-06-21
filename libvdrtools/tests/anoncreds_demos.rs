@@ -5055,7 +5055,7 @@ mod demos {
         .unwrap();
 
         //4. Issuer1 creates fully qualified GVT Schema and Credential Definition
-        let gvt_issuer_did = "did:sov:NcYxiDXkpYi6ov5FcYDi1e"; // fully qualified did
+        let gvt_issuer_did = "did:indy:NcYxiDXkpYi6ov5FcYDi1e"; // fully qualified did
         let (gvt_schema_id, gvt_schema, gvt_cred_def_id, gvt_cred_def_json) =
             anoncreds::multi_steps_issuer_preparation(
                 issuer_gvt_wallet_handle,

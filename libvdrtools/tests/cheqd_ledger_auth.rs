@@ -17,17 +17,22 @@ extern crate log;
 #[macro_use]
 mod utils;
 
+#[cfg(feature = "local_nodes_cheqd_pool")]
 use utils::{cheqd_pool, cheqd_setup, cheqd_ledger};
+#[cfg(feature = "local_nodes_cheqd_pool")]
 use serde_json::Value;
 
 mod high_cases {
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     use super::*;
 
     #[cfg(test)]
     mod build_tx {
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         use super::*;
 
         #[test]
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn test_build_tx() {
             let setup = cheqd_setup::CheqdSetup::new();
 
@@ -63,11 +68,14 @@ mod high_cases {
 
     #[cfg(test)]
     mod query_account {
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         use super::*;
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         use rstest::rstest;
 
         #[test]
         #[cfg(feature = "cheqd")]
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn test_query_account() {
             let setup = cheqd_setup::CheqdSetup::new();
 
@@ -78,6 +86,7 @@ mod high_cases {
             println!("Parsed query response: {:?}", parsed);
         }
 
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn get_account_type_from_str(account_resp: String) -> String {
             let resp: Value = serde_json::from_str(&account_resp).unwrap();
             let account = resp["account"].as_object().unwrap();
@@ -92,6 +101,7 @@ mod high_cases {
         case("delayedVesting", "cheqd1njwu33lek5jt4kzlmljkp366ny4qpqusahpyrj", "DelayedVestingAccount"),
         case("periodicVesting", "cheqd1uyngr0l3xtyj07js9sdew9mk50tqeq8lghhcfr", "PeriodicVestingAccount"),
         )]
+        #[cfg(feature = "local_nodes_cheqd_pool")]
         fn test_query_accounts(
             alias: &str,
             account_id: &str,

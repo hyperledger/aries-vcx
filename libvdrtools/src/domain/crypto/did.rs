@@ -12,7 +12,7 @@ pub struct DidMethod(pub String);
 impl Validatable for DidMethod {
     fn validate(&self) -> Result<(), String> {
         lazy_static! {
-            static ref REGEX_METHOD_NAME: Regex = Regex::new("^[a-z0-9]+$").unwrap();
+            static ref REGEX_METHOD_NAME: Regex = Regex::new("^[a-z0-9:]+$").unwrap();
         }
         if !REGEX_METHOD_NAME.is_match(&self.0) {
             return Err(format!(
@@ -105,7 +105,7 @@ impl DidValue {
 
     pub fn is_abbreviatable(&self) -> bool {
         match self.get_method() {
-            Some(ref method) if method.starts_with("sov") => true,
+            Some(ref method) if method.starts_with("sov") || method.starts_with("indy") => true,
             Some(_) => false,
             None => true,
         }

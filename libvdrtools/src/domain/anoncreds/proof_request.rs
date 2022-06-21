@@ -373,13 +373,13 @@ mod tests {
     mod to_unqualified {
         use super::*;
 
-        const DID_QUALIFIED: &str = "did:sov:NcYxiDXkpYi6ov5FcYDi1e";
+        const DID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
         const DID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-        const SCHEMA_ID_QUALIFIED: &str = "schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
+        const SCHEMA_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
         const SCHEMA_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
-        const CRED_DEF_ID_QUALIFIED: &str = "creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
-        const CRED_DEF_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
-        const REV_REG_ID_QUALIFIED: &str = "revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+        const CRED_DEF_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
+        const CRED_DEF_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
+        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
         const REV_REG_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
 
         #[test]

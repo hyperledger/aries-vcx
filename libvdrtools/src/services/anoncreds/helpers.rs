@@ -26,7 +26,7 @@ use crate::domain::{
 
 macro_rules! _id_to_unqualified {
     ($entity:expr, $type_:ident) => {{
-        if $entity.starts_with($type_::PREFIX) {
+        if $entity.contains($type_::PREFIX) {
             return Ok($type_($entity.to_string()).to_unqualified().0);
         }
     }};
@@ -188,17 +188,17 @@ impl AnoncredsHelpers {
     pub(crate) fn to_unqualified(entity: &str) -> IndyResult<String> {
         trace!("to_unqualified > entity {:?}", entity);
 
-        _id_to_unqualified!(entity, DidValue);
-        _id_to_unqualified!(entity, SchemaId);
-        _id_to_unqualified!(entity, CredentialDefinitionId);
-        _id_to_unqualified!(entity, RevocationRegistryId);
-
-        _object_to_unqualified!(entity, Schema);
         _object_to_unqualified!(entity, CredentialDefinition);
+        _object_to_unqualified!(entity, Schema);
         _object_to_unqualified!(entity, RevocationRegistryDefinition);
         _object_to_unqualified!(entity, CredentialOffer);
         _object_to_unqualified!(entity, CredentialRequest);
         _object_to_unqualified!(entity, ProofRequest);
+
+        _id_to_unqualified!(entity, RevocationRegistryId);
+        _id_to_unqualified!(entity, CredentialDefinitionId);
+        _id_to_unqualified!(entity, SchemaId);
+        _id_to_unqualified!(entity, DidValue);
 
         let res = Ok(entity.to_string());
         trace!("to_unqualified < {:?}", res);
@@ -250,17 +250,17 @@ mod tests {
     mod to_unqualified {
         use super::*;
 
-        const DID_QUALIFIED: &str = "did:sov:NcYxiDXkpYi6ov5FcYDi1e";
+        const DID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
         const DID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-        const SCHEMA_ID_QUALIFIED: &str = "schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
+        const SCHEMA_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
         const SCHEMA_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
-        const CRED_DEF_ID_QUALIFIED: &str = "creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
+        const CRED_DEF_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
         const CRED_DEF_ID_UNQUALIFIED: &str =
-            "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
-        const REV_REG_ID_QUALIFIED: &str = "revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+            "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
+        const REV_REG_ID_QUALIFIED: &str = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
         const REV_REG_ID_UNQUALIFIED: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
         const SCHEMA_ID_WITH_SPACES_QUALIFIED: &str =
-            "schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:Passport Schema:1.0";
+            "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/Passport Schema/1.0";
         const SCHEMA_ID_WITH_SPACES_UNQUALIFIED: &str =
             "NcYxiDXkpYi6ov5FcYDi1e:2:Passport Schema:1.0";
 

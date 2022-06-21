@@ -935,7 +935,7 @@ mod tests {
     const SCHEMA_NAME: &str = "gvt";
     const SCHEMA_VERSION: &str = "1.0";
     const ISSUER_DID: &str = "NcYxiDXkpYi6ov5FcYDi1e";
-    const CRED_DEF_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
+    const CRED_DEF_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:3:CL:1:tag";
     const REV_REG_ID: &str = "NcYxiDXkpYi6ov5FcYDi1e:4:NcYxiDXkpYi6ov5FcYDi1e:3:CL:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
     const NO_REV_REG_ID: &str = "None";
 
@@ -1059,13 +1059,13 @@ mod tests {
         }
 
         #[test]
-        fn build_credential_tags_works_for_fully_qualified_ids() {
+        fn  build_credential_tags_works_for_fully_qualified_ids() {
             let ps = ProverService::new();
 
-            let schema_id = "schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0";
-            let issuer_did = "did:sov:NcYxiDXkpYi6ov5FcYDi1e";
-            let cred_def_id = "creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag";
-            let rev_reg_id = "revreg:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:4:creddef:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:3:CL:schema:sov:did:sov:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0:tag:CL_ACCUM:TAG_1";
+            let schema_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";
+            let issuer_did = "did:indy:NcYxiDXkpYi6ov5FcYDi1e";
+            let cred_def_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag";
+            let rev_reg_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/REV_REG_DEF/did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0/tag/TAG_1";
 
             let mut credential = _credential();
             credential.schema_id = SchemaId(schema_id.to_string());

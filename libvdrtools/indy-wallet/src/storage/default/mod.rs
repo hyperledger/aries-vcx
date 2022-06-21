@@ -927,7 +927,7 @@ impl WalletStorageType for SQLiteStorageType {
         let mut connect_options = SqliteConnectOptions::new()
             .filename(db_path.as_path())
             .journal_mode(SqliteJournalMode::Wal);
-        connect_options.log_statements(LevelFilter::Debug);
+        connect_options.disable_statement_logging();
 
         Ok(Box::new(SQLiteStorage {
             pool: SqlitePoolOptions::default()

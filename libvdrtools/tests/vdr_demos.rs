@@ -44,19 +44,24 @@ mod demos {
     #[cfg(feature = "cheqd")]
     use utils::{
         cheqd_setup::CheqdSetup,
-        cheqd_keys,
         cheqd_ledger,
         environment,
+    };
+
+    #[cfg(feature = "cheqd")]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
+    use utils::{
+        cheqd_keys,
         vdr::VDR,
     };
 
-    const INDY_NAMESPACE_1: &'static str = "indytest";
+    const INDY_NAMESPACE_1: &'static str = "indy:indy";
     const INDY_NAMESPACE_2: &'static str = "indyfirst";
     const INDY_NAMESPACE_3: &'static str = "indysecond";
-    const INDY_NAMESPACE_4: &'static str = "indythird";
+    const INDY_NAMESPACE_4: &'static str = "indy:test";
 
     #[cfg(feature = "cheqd")]
-    const CHEQD_NAMESPACE_1: &'static str = "testnet";
+    const CHEQD_NAMESPACE_1: &'static str = "cheqd:testnet";
     #[cfg(feature = "cheqd")]
     const CHEQD_NAMESPACE_2: &'static str = "cheqdsecond";
 
@@ -236,15 +241,18 @@ mod demos {
     #[cfg(feature = "local_nodes_pool")]
     #[test]
     fn vdr_indy_anoncreds_demo() {
-        Setup::wallet();
+        let mut setup = Setup::wallet();
 
         let (trustee_wallet_handle, trustee_wallet_config) = wallet::create_and_open_default_wallet("vdr_indy_anoncreds_demo_trustee").unwrap();
         let (issuer_wallet_handle, issuer_wallet_config) = wallet::create_and_open_default_wallet("vdr_indy_anoncreds_demo_issuer").unwrap();
         let (holder_wallet_handle, holder_wallet_config) = wallet::create_and_open_default_wallet("vdr_indy_anoncreds_demo_holder").unwrap();
+        setup.attach_wallet(trustee_wallet_config, trustee_wallet_handle);
+        setup.attach_wallet(issuer_wallet_config, issuer_wallet_handle);
+        setup.attach_wallet(holder_wallet_config, holder_wallet_handle);
 
         let (trustee_did, trustee_verkey) = did::create_store_predefined_trustee_did(trustee_wallet_handle, Some(INDY_NAMESPACE_1)).unwrap();
-        let (issuer_did, issuer_verkey) = did::create_my_did(issuer_wallet_handle, &json!({"method_name": INDY_NAMESPACE_1}).to_string()).unwrap();
-        let (holder_did, _) = did::create_my_did(holder_wallet_handle, &json!({"method_name": INDY_NAMESPACE_1}).to_string()).unwrap();
+        let (issuer_did, issuer_verkey) = did::create_my_did_with_method(issuer_wallet_handle, INDY_NAMESPACE_1).unwrap();
+        let (holder_did, _) = did::create_my_did_with_method(holder_wallet_handle, INDY_NAMESPACE_1).unwrap();
 
         // 0. open VDR with indy pool
         let mut vdr_builder = vdr::vdr_builder_create().unwrap();
@@ -435,9 +443,6 @@ mod demos {
 
         // 10. Clean up
         vdr::cleanup(vdr).unwrap();
-        wallet::close_and_delete_wallet(trustee_wallet_handle, &trustee_wallet_config).unwrap();
-        wallet::close_and_delete_wallet(issuer_wallet_handle, &issuer_wallet_config).unwrap();
-        wallet::close_and_delete_wallet(holder_wallet_handle, &holder_wallet_config).unwrap();
     }
 
     #[cfg(feature = "local_nodes_pool")]
@@ -445,7 +450,7 @@ mod demos {
     fn vdr_indy_submit_txn_works_for_failed_txn() {
         let setup = Setup::did_fully_qualified();
         let mut vdr_builder = vdr::vdr_builder_create().unwrap();
-        let namespace_list_of_default = json!(vec![DEFAULT_METHOD_NAME]).to_string();
+        let namespace_list_of_default = json!(vec![INDY_NAMESPACE_1]).to_string();
         vdr::vdr_builder_register_indy_ledger(&mut vdr_builder, &namespace_list_of_default, &vdr::local_genesis_txn(), None).unwrap();
         let vdr = vdr::vdr_builder_finalize(vdr_builder).unwrap();
         vdr::ping(&vdr, &namespace_list_of_default).unwrap();
@@ -520,6 +525,7 @@ mod demos {
 
     #[cfg(feature = "cheqd")]
     #[test]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     fn vdr_cheqd_demo_payment() {
         let setup = CheqdSetup::new();
 
@@ -590,6 +596,7 @@ mod demos {
     }
 
     #[cfg(feature = "cheqd")]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     fn create_account(setup: &CheqdSetup) -> (String, String) {
         let alias = get_rand_string(7);
         let key_info = cheqd_keys::add_random(setup.wallet_handle, &alias).unwrap();
@@ -600,6 +607,7 @@ mod demos {
     }
 
     #[cfg(feature = "cheqd")]
+    #[cfg(feature = "local_nodes_cheqd_pool")]
     fn get_account_balance(vdr: &VDR, account_id: &str) -> String {
         let query = cheqd_ledger::bank::bank_build_query_balance(&account_id, &environment::cheqd_denom()).unwrap();
         let response = vdr::submit_query(vdr, CHEQD_NAMESPACE_1, &query).unwrap();

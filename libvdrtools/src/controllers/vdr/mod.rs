@@ -92,8 +92,8 @@ impl VDR {
     async fn resolve_ledger_for_namespace<'a>(&'a self,
                                               namespace: &str) -> IndyResult<RwLockReadGuard<'a, dyn Ledger>> {
         trace!(
-            "resolve_ledger_for_namespace > namespace {:?}",
-            namespace
+            "resolve_ledger_for_namespace > namespace {:?}, all registred namespaces {:?}",
+            namespace, self.namespaces.keys()
         );
         let ledger = self.namespaces
             .get(namespace)
@@ -115,13 +115,13 @@ impl VDR {
         let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from(id)
             .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, err))?;
 
-        let ledger = self.resolve_ledger_for_namespace(&parsed_id.namespace).await?;
+        let ledger = self.resolve_ledger_for_namespace(&parsed_id.namespace()).await?;
 
-        if parsed_id.ledger_type != ledger.ledger_type() {
+        if parsed_id.did_method != ledger.ledger_type() {
             return Err(err_msg(
                 IndyErrorKind::InvalidVDRHandle,
                 format!("Registered Ledger type \"{:?}\" does not match to the network of id \"{:?}\"",
-                        ledger.ledger_type(), parsed_id.ledger_type),
+                        ledger.ledger_type(), parsed_id.did_method),
             ));
         }
 

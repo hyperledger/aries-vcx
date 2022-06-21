@@ -467,7 +467,7 @@ impl LedgerService {
                     &DidValue::new(&res.dest.0, None, method_name)?,
                     &res.data.name,
                     &res.data.version,
-                ),
+                )?,
                 name: res.data.name,
                 version: res.data.version,
                 attr_names: res.data.attr_names.into(),
@@ -478,7 +478,7 @@ impl LedgerService {
                 version: res.txn.data.schema_version,
                 attr_names: res.txn.data.value.attr_names.into(),
                 id: match method_name {
-                    Some(method) => res.txn.data.id.qualify(method),
+                    Some(method) => res.txn.data.id.qualify(method)?,
                     None => res.txn.data.id,
                 },
                 seq_no: Some(res.txn_metadata.seq_no),
@@ -510,7 +510,7 @@ impl LedgerService {
                     &SchemaId(res.ref_.to_string()),
                     &res.signature_type.to_str(),
                     &res.tag.clone().unwrap_or_default(),
-                ),
+                )?,
                 schema_id: SchemaId(res.ref_.to_string()),
                 signature_type: res.signature_type,
                 tag: res.tag.unwrap_or_default(),
@@ -518,7 +518,7 @@ impl LedgerService {
             },
             GetCredDefReplyResult::GetCredDefReplyResultV1(res) => CredentialDefinitionV1 {
                 id: match method_name {
-                    Some(method) => res.txn.data.id.qualify(method),
+                    Some(method) => res.txn.data.id.qualify(method)?,
                     None => res.txn.data.id,
                 },
                 schema_id: res.txn.data.schema_ref,
@@ -1198,7 +1198,7 @@ mod tests {
         attr_names.0.insert("male".to_string());
 
         let data = SchemaV1 {
-            id: SchemaId::new(&identifier(), "name", "1.0"),
+            id: SchemaId::new(&identifier(), "name", "1.0").unwrap(),
             name: "name".to_string(),
             version: "1.0".to_string(),
             attr_names,
@@ -1225,7 +1225,7 @@ mod tests {
     fn build_get_schema_request_works_for_valid_id() {
         let ledger_service = LedgerService::new();
 
-        let id = SchemaId::new(&identifier(), "name", "1.0");
+        let id = SchemaId::new(&identifier(), "name", "1.0").unwrap();
 
         let expected_result = json!({
             "type": GET_SCHEMA,
@@ -1254,7 +1254,7 @@ mod tests {
             &SchemaId("1".to_string()),
             "signature_type",
             "tag",
-        );
+        ).unwrap();
 
         let expected_result = json!({
             "type": GET_CRED_DEF,

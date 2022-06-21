@@ -127,7 +127,7 @@ impl VDRController {
                                    format!("Error while converting fully-qualified DID to short representation. Err: {:?}", err))
             )?;
 
-        let ledger = vdr.resolve_ledger_for_namespace(&parsed_did.namespace).await?;
+        let ledger = vdr.resolve_ledger_for_namespace(&parsed_did.namespace()).await?;
         let name = ledger.name();
 
         let key: CheqdKey = self.wallet_service

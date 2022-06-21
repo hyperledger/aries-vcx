@@ -1,18 +1,24 @@
 use core::convert::TryFrom;
 use lazy_static::lazy_static;
 use regex::{Regex, Captures};
-use super::vdr::ledger_types::LedgerTypes;
+use super::vdr::ledger_types::DidMethod;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^(did|schema|creddef)(:?:)?(indy|cheqd)?:([a-z0-9-]+):(.*)$").unwrap();
+    pub static ref REGEX: Regex = Regex::new("^(did|schema|creddef):(indy|cheqd)?(:?:)?([a-z0-9-]+):(.*)$").unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize, PartialEq, Clone)]
 pub(crate) struct FullyQualifiedId {
     pub prefix: String,
-    pub ledger_type: LedgerTypes,
-    pub namespace: String,
+    pub did_method: DidMethod,
+    pub did_subspace: String,
     pub id: String,
+}
+
+impl FullyQualifiedId {
+    pub fn namespace(&self) -> String {
+        format!("{}:{}", self.did_method.to_string(), self.did_subspace)
+    }
 }
 
 impl TryFrom<&str> for FullyQualifiedId {
@@ -24,9 +30,10 @@ impl TryFrom<&str> for FullyQualifiedId {
                 Err(format!("Unable to parse FullyQualifiedId from the string: {}", value))
             }
             Some(caps) => {
-                let ledger_type = match get_opt_string_value(&caps, 3).as_ref().map(String::as_str) {
-                    None | Some("indy") => LedgerTypes::Indy,
-                    Some("cheqd") => LedgerTypes::Cheqd,
+                trace!("FullyQualifiedId::TryFrom str: parts {:?}", caps);
+                let did_method = match get_opt_string_value(&caps, 2).as_ref().map(String::as_str) {
+                    None | Some("indy") => DidMethod::Indy,
+                    Some("cheqd") => DidMethod::Cheqd,
                     Some(type_) => {
                         return Err(format!("ID contains unsupported ledger type: {}", type_));
                     }
@@ -34,8 +41,8 @@ impl TryFrom<&str> for FullyQualifiedId {
 
                 Ok(FullyQualifiedId {
                     prefix: get_string_value(&caps, 1),
-                    ledger_type,
-                    namespace: get_string_value(&caps, 4),
+                    did_method,
+                    did_subspace: get_string_value(&caps, 4),
                     id: get_string_value(&caps, 5),
                 })
             }
@@ -87,8 +94,8 @@ mod tests {
         let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from(schema_id).unwrap();
         let expected = FullyQualifiedId {
             prefix: _prefix().to_string(),
-            ledger_type: LedgerTypes::Indy,
-            namespace: _namespace().to_string(),
+            did_method: DidMethod::Indy,
+            did_subspace: _namespace().to_string(),
             id: _id().to_string(),
         };
         assert_eq!(parsed_id, expected);
@@ -99,8 +106,8 @@ mod tests {
         let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from("schema:sovrin:did:sovrin:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0").unwrap();
         let expected = FullyQualifiedId {
             prefix: "schema".to_string(),
-            ledger_type: LedgerTypes::Indy,
-            namespace: _namespace().to_string(),
+            did_method: DidMethod::Indy,
+            did_subspace: _namespace().to_string(),
             id: "did:sovrin:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0".to_string(),
         };
         assert_eq!(parsed_id, expected);
@@ -116,8 +123,8 @@ mod tests {
         let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from("did:cheqd:cheqd-testnet:NcYxiDXkpYi6ov5FcYDi1e").unwrap();
         let expected = FullyQualifiedId {
             prefix: _prefix().to_string(),
-            ledger_type: LedgerTypes::Cheqd,
-            namespace: _cheqd_namespace().to_string(),
+            did_method: DidMethod::Cheqd,
+            did_subspace: _cheqd_namespace().to_string(),
             id: _cheqd_id().to_string(),
         };
         assert_eq!(parsed_id, expected);

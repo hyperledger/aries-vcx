@@ -31,7 +31,7 @@ use crate::domain::{
             IndyEndorsementSpec,
             IndyEndorsement,
         },
-        ledger_types::LedgerTypes,
+        ledger_types::DidMethod,
         ping_status::PingStatus,
         taa_config::TAAConfig,
     },
@@ -79,8 +79,8 @@ impl Ledger for IndyLedger {
         self.name.clone()
     }
 
-    fn ledger_type(&self) -> LedgerTypes {
-        LedgerTypes::Indy
+    fn ledger_type(&self) -> DidMethod {
+        DidMethod::Indy
     }
 
     async fn ping(&self) -> IndyResult<PingStatus> {

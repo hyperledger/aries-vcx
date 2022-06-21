@@ -24,8 +24,9 @@ pub fn create_store_predefined_trustee_did(
     wallet_handle: WalletHandle,
     method_name: Option<&str>,
 ) -> Result<(String, String), IndyError> {
+    let method = method_name.map(|method| method.splitn(2,":").collect::<Vec<&str>>()).unwrap_or(Vec::new());
     let my_did_json =
-        json!({"method_name": method_name, "seed": crate::utils::constants::TRUSTEE_SEED})
+        json!({"method_name": method.get(0), "ledger_type": method.get(1), "seed": crate::utils::constants::TRUSTEE_SEED})
             .to_string();
     create_my_did(wallet_handle, &my_did_json)
 }
@@ -51,7 +52,7 @@ pub fn create_store_and_publish_my_did_from_trustee_v1(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
 ) -> Result<(String, String), IndyError> {
-    create_store_and_publish_did(wallet_handle, pool_handle, "TRUSTEE", Some("sov"))
+    create_store_and_publish_did(wallet_handle, pool_handle, "TRUSTEE", Some(DEFAULT_METHOD_NAME))
 }
 
 pub fn create_store_and_publish_my_did_from_steward(
@@ -82,6 +83,17 @@ pub fn create_my_did(
     my_did_json: &str,
 ) -> Result<(String, String), IndyError> {
     did::create_and_store_my_did(wallet_handle, my_did_json).wait()
+}
+
+pub fn create_my_did_with_method(
+    wallet_handle: WalletHandle,
+    method: &str,
+) -> Result<(String, String), IndyError> {
+    let method = method.splitn(2,":").collect::<Vec<&str>>();
+    let my_did_json =
+        json!({"method_name": method.get(0), "ledger_type": method.get(1)})
+            .to_string();
+    did::create_and_store_my_did(wallet_handle, &my_did_json).wait()
 }
 
 pub fn store_their_did(wallet_handle: WalletHandle, identity_json: &str) -> Result<(), IndyError> {
