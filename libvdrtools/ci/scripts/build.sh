@@ -20,7 +20,12 @@ fi
 set -eux
 
 pushd libvdrtools
-# Build without cheqd feature enabled first
+
+# Due to instability of cheqd implementation feature, building without cheqd first is useful to identify if 
+# the build failure is due to cheqd or not. Since most of the code does not involve cheqd, rebuilding with
+# the cheqd feature is fairly quick operation meaning that these two build steps only add a little bit of extra
+# overhead.
 cargo build $CARGO_FLAGS --features "fatal_warnings sodium_static"
 cargo build $CARGO_FLAGS --features "fatal_warnings sodium_static cheqd"
+
 popd

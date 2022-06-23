@@ -43,6 +43,7 @@ check_if_emulator_is_running(){
 kill_avd(){
     adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done || true
 }
+
 delete_existing_avd(){
     kill_avd
     avdmanager delete avd -n ${ABSOLUTE_ARCH}
