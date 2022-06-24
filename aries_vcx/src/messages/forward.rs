@@ -1,7 +1,10 @@
 use crate::error::prelude::*;
+use crate::messages::a2a::MessageId;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct Forward {
+    #[serde(rename = "@id")]
+    pub id: MessageId,
     pub to: String,
     #[serde(rename = "msg")]
     pub msg: serde_json::Value,
@@ -13,6 +16,7 @@ impl Forward {
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
 
         Ok(Forward {
+            id: MessageId::new(),
             to,
             msg,
         })
@@ -35,6 +39,7 @@ pub mod tests {
 
     fn _forward() -> Forward {
         Forward {
+            id: MessageId::default(),
             to: _to(),
             msg: _msg(),
         }

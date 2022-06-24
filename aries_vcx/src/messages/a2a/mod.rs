@@ -415,6 +415,7 @@ pub mod test_a2a_serialization {
         // serialization
         let val: Value = serde_json::from_str(&serialized).unwrap();
         assert_eq!(val["@type"], Value::String("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward".into()));
+        assert_eq!(val["@id"], Value::String("testid".into()));
     }
 
     #[test]
