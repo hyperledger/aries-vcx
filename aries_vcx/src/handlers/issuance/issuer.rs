@@ -25,8 +25,7 @@ pub struct IssuerConfig {
 }
 
 fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPreviewData> {
-    trace!("Issuer::_build_credential_preview >>> credential_json: {:?}", credential_json);
-
+    trace!("Issuer::_build_credential_preview >>> credential_json: {:?}", secret!(credential_json));
     let cred_values: serde_json::Value = serde_json::from_str(credential_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Can't deserialize credential preview json. credential_json: {}, error: {:?}", credential_json, err)))?;
 
@@ -48,7 +47,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                 let (key, value) = item;
                 credential_preview = credential_preview.add_value(
                     key,
-                    &value.to_string(),
+                    value.as_str().ok_or_else(|| VcxError::from_msg(VcxErrorKind::InvalidOption, "Credential values are currently only allowed to be strings"))?,
                     MimeType::Plain,
                 );
             }
@@ -240,6 +239,20 @@ pub mod test {
             self.step(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             self
         }
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_build_credential_preview() {
+        let _setup = SetupMocks::init();
+        let input = json!({"name":"Alice","age":"123"}).to_string();
+        let preview = _build_credential_preview(&input).unwrap();
+        let value_name = preview.attributes.clone().into_iter().find(|x| x.name == "name").unwrap();
+        let value_age = preview.attributes.clone().into_iter().find(|x| x.name == "age").unwrap();
+        assert_eq!(value_name.name, "name");
+        assert_eq!(value_name.value, "Alice");
+        assert_eq!(value_age.name, "age");
+        assert_eq!(value_age.value, "123");
     }
 
     #[tokio::test]
