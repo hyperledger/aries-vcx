@@ -446,11 +446,11 @@ pub mod tests {
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
-        let h2 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
-        let h3 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
-        let h4 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
-        let h5 = create_and_store("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
+        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
+        let h3 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
+        let h4 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
+        let h5 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);

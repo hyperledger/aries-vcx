@@ -194,7 +194,7 @@ pub mod test {
             };
         }
 
-        pub async fn create_credential_definition(&mut self) {
+        pub async fn create_nonrevocable_credential_definition(&mut self) {
             self.activate().await.unwrap();
 
             let config = CredentialDefConfigBuilder::default()
@@ -204,7 +204,7 @@ pub mod test {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create_and_store(String::from("test_cred_def"), config, RevocationDetails::default()).await.unwrap()
+            self.cred_def = CredentialDef::create(String::from("test_cred_def"), config, false).await.unwrap()
                 .publish_cred_def().await.unwrap();
         }
 

@@ -134,6 +134,7 @@ impl CredentialDef {
     }
 
     pub async fn create_and_store(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails) -> VcxResult<Self> {
+        // unimplemented!("Use create()+publish_cred_def() instead")
         trace!("CredentialDef::create_and_store >>> source_id: {}, config: {:?}, revocation_details: {:?}", source_id, config, revocation_details);
         let CredentialDefConfig { issuer_did, schema_id, tag } = config;
         let (_, schema_json) = anoncreds::get_schema_json(&schema_id).await?;
@@ -193,6 +194,7 @@ impl CredentialDef {
     }
 
     pub async fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails) -> VcxResult<()> {
+        // unimplemented!("Just create a new revocation registry bro")
         trace!("CredentialDef::rotate_rev_reg >>> revocation_details: {:?}", revocation_details);
         let (tails_dir, max_creds) = (
             revocation_details.tails_dir.or(self.get_tails_dir()),
@@ -215,6 +217,7 @@ impl CredentialDef {
     }
 
     pub async fn publish_revocation_primitives(&mut self, tails_url: &str) -> VcxResult<()> {
+        // unimplemented!("Just create and publish new revocation registry bro")
         warn!("publish_revocation_primitives >>> tails_url: {}", tails_url);
         match &mut self.rev_reg {
             Some(rev_reg) => rev_reg.publish_revocation_primitives(tails_url).await,

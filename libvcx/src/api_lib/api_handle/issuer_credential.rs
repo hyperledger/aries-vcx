@@ -89,24 +89,6 @@ pub fn from_string(credential_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub async fn build_credential_offer_msg(handle: u32,
-                                        cred_def_handle: u32,
-                                        credential_json: &str,
-                                        comment: Option<&str>) -> VcxResult<()> {
-    if credential_def::has_pending_revocations_primitives_to_be_published(cred_def_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition because its revocation primitives were not published on the ledger yet.")));
-    };
-    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    let offer_info = OfferInfo {
-        credential_json: credential_json.to_string(),
-        cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
-        rev_reg_id: credential_def::get_rev_reg_id(cred_def_handle).ok(),
-        tails_file: credential_def::get_tails_file(cred_def_handle)?,
-    };
-    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
-    ISSUER_CREDENTIAL_MAP.insert(handle, credential)
-}
-
 pub async fn build_credential_offer_msg_v2(handle: u32,
                                            cred_def_handle: u32,
                                            rev_reg_handle: u32,
