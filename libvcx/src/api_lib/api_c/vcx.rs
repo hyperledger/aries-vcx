@@ -991,7 +991,7 @@ mod tests {
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
+        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id, _cred_def, _rev_reg) =
             create_and_store_credential_def(&attrs_list).await;
         assert!(schema_id.len() > 0);
 

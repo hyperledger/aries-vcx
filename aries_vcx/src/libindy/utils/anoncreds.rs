@@ -702,7 +702,7 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::{libindy, settings};
-    use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
+    use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
     use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
     use crate::libindy::credentials::encode_attributes;
     use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
@@ -762,7 +762,7 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let mut cred_def = CredentialDef::create("1".to_string(), config, true).await.unwrap()
+        let cred_def = CredentialDef::create("1".to_string(), config, true).await.unwrap()
             .publish_cred_def().await.unwrap();
         let mut rev_reg = RevocationRegistry::create(&issuer_did, &cred_def.cred_def_id, get_temp_dir_path(TAILS_DIR).to_str().unwrap(), 10, 1).await.unwrap();
         rev_reg.publish_revocation_primitives(TEST_TAILS_URL).await.unwrap();

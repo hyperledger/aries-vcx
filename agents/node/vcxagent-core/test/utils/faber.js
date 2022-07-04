@@ -85,7 +85,7 @@ module.exports.createFaber = async function createFaber () {
   async function createOobCredOffer (usePublicDid = true) {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
-    const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, schemaAttrs)
+    const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, revRegId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
     if (usePublicDid) {
       return await createOobMessageWithDid(credOfferMsg)
@@ -182,20 +182,21 @@ module.exports.createFaber = async function createFaber () {
       supportRevocation
     )
     credDefId = getFaberCredDefName()
-    const _credDefId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
+    const credDefLedgerId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
     if (supportRevocation) {
       const { tailsDir, maxCreds } = revocationDetails
       logger.info('Faber writing revocation registry');
-      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, _credDefId, 1, tailsDir, maxCreds))
+      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, credDefLedgerId, 1, tailsDir, maxCreds))
     }
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function rotateRevReg (maxCreds) {
+  async function rotateRevReg (tailsDir, maxCreds) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber rotating revocation registry');
-    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
+    const credDefLedgerId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId);
+    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, credDefLedgerId, 2, tailsDir, maxCreds))
 
     await vcxAgent.agentShutdownVcx()
   }

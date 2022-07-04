@@ -6,13 +6,15 @@ const { pollFunction } = require('../common')
 const assert = require('assert')
 
 module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ logger, loadConnection, loadCredDef, loadRevReg, saveIssuerCredential, loadIssuerCredential, listIssuerCredentialIds, issuerDid }) {
-  async function buildOfferAndMarkAsSent (issuerCredId, credDefId, schemaAttrs) {
+  async function buildOfferAndMarkAsSent (issuerCredId, credDefId, revRegId, schemaAttrs) {
     const credDef = await loadCredDef(credDefId)
+    const revReg = await loadRevReg(revRegId)
     logger.debug('Building issuer credential')
     const issuerCred = await IssuerCredential.create('alice_degree')
     logger.info(`Per issuer credential ${issuerCredId}, building cred offer.`)
-    await issuerCred.buildCredentialOfferMsg({
+    await issuerCred.buildCredentialOfferMsgV2({
       credDef,
+      revReg,
       attr: schemaAttrs
     })
     const state1 = await issuerCred.getState()

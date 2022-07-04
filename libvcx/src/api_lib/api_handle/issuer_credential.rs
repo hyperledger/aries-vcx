@@ -105,7 +105,7 @@ pub async fn build_credential_offer_msg_v2(handle: u32,
             credential_json: credential_json.to_string(),
             cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
             rev_reg_id: Some(rev_reg.get_rev_reg_id()),
-            tails_file: Some(rev_reg.get_tails_file())
+            tails_file: Some(rev_reg.get_tails_dir())
         }
     } else {
         OfferInfo {

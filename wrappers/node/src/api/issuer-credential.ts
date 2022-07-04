@@ -344,39 +344,6 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         }
     }
 
-    /**
-     * Generated Credential Offer
-     */
-    public async buildCredentialOfferMsg({ credDef, attr, comment }: IIssuerCredentialBuildOfferData): Promise<void> {
-        try {
-            await createFFICallbackPromise<void>(
-                (resolve, reject, cb) => {
-                    const rc = rustAPI().vcx_issuer_build_credential_offer_msg(
-                        0,
-                        this.handle,
-                        credDef.handle,
-                        JSON.stringify(attr),
-                        comment,
-                        cb,
-                    );
-                    if (rc) {
-                        reject(rc);
-                    }
-                },
-                (resolve, reject) =>
-                    ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
-                        if (err) {
-                            reject(err);
-                            return;
-                        }
-                        resolve();
-                    }),
-            );
-        } catch (err) {
-            throw new VCXInternalError(err);
-        }
-    }
-
     public async buildCredentialOfferMsgV2({ credDef, attr, revReg, comment }: IIssuerCredentialBuildOfferDataV2): Promise<void> {
         try {
             await createFFICallbackPromise<void>(

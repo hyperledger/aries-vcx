@@ -46,7 +46,7 @@ impl RevocationRegistry {
         self.rev_reg_def.clone()
     }
 
-    pub fn get_tails_file(&self) -> String {
+    pub fn get_tails_dir(&self) -> String {
         self.tails_dir.clone()
     }
 
