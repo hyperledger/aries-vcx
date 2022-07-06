@@ -4827,19 +4827,21 @@ mod demos {
 
     #[test]
     fn anoncreds_works_for_single_fully_qualified_issuer_single_unqualified_prover() {
-        Setup::empty();
+        let mut setup = Setup::empty();
 
         //1. Create Issuer wallet, gets wallet handle
         let (issuer_wallet_handle, issuer_wallet_config) = wallet::create_and_open_default_wallet(
             "anoncreds_works_for_single_fully_qualified_issuer_single_unqualified_prover",
         )
         .unwrap();
+        setup.attach_wallet(issuer_wallet_config, issuer_wallet_handle);
 
         //2. Create Prover wallet, gets wallet handle
         let (prover_wallet_handle, prover_wallet_config) = wallet::create_and_open_default_wallet(
             "anoncreds_works_for_single_fully_qualified_issuer_single_unqualified_prover",
         )
         .unwrap();
+        setup.attach_wallet(prover_wallet_config, prover_wallet_handle);
 
         //3. Issuer creates Schema and Credential Definition
         let (schema_id, schema_json, cred_def_id, cred_def_json) =
@@ -5025,9 +5027,6 @@ mod demos {
         )
         .unwrap();
         assert!(valid);
-
-        wallet::close_and_delete_wallet(issuer_wallet_handle, &issuer_wallet_config).unwrap();
-        wallet::close_and_delete_wallet(prover_wallet_handle, &prover_wallet_config).unwrap();
     }
 
     #[test]

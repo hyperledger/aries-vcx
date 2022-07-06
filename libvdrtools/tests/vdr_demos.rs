@@ -55,7 +55,7 @@ mod demos {
         vdr::VDR,
     };
 
-    const INDY_NAMESPACE_1: &'static str = "indy:indy";
+    const INDY_NAMESPACE_1: &'static str = "indy:sovrin:builder";
     const INDY_NAMESPACE_2: &'static str = "indyfirst";
     const INDY_NAMESPACE_3: &'static str = "indysecond";
     const INDY_NAMESPACE_4: &'static str = "indy:test";

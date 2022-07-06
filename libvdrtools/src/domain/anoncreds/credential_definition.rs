@@ -316,7 +316,7 @@ mod tests {
     }
 
     fn _did_qualified() -> DidValue {
-        DidValue("did:indy:NcYxiDXkpYi6ov5FcYDi1e".to_string())
+        DidValue("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e".to_string())
     }
 
     fn _schema_id_seq_no() -> SchemaId {
@@ -328,7 +328,7 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string())
+        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string())
     }
 
     fn _cred_def_id_unqualified() -> CredentialDefinitionId {
@@ -352,7 +352,7 @@ mod tests {
     }
 
     fn _cred_def_id_qualified_with_schema_as_seq_no() -> CredentialDefinitionId {
-        CredentialDefinitionId("did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag".to_string())
+        CredentialDefinitionId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag".to_string())
     }
 
     mod to_unqualified {

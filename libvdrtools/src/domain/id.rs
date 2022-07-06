@@ -4,7 +4,7 @@ use regex::{Regex, Captures};
 use super::vdr::ledger_types::DidMethod;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^(did|schema|creddef):(indy|cheqd)?(:?:)?([a-z0-9-]+):(.*)$").unwrap();
+    pub static ref REGEX: Regex = Regex::new("^(did|schema|creddef):(indy|cheqd)?(:?:)?([a-z0-9-:]+):(.*)$").unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize, PartialEq, Clone)]
@@ -97,18 +97,6 @@ mod tests {
             did_method: DidMethod::Indy,
             did_subspace: _namespace().to_string(),
             id: _id().to_string(),
-        };
-        assert_eq!(parsed_id, expected);
-    }
-
-    #[test]
-    fn parse_schema_fully_qulified_id_old_fully_qualified_format() {
-        let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from("schema:sovrin:did:sovrin:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0").unwrap();
-        let expected = FullyQualifiedId {
-            prefix: "schema".to_string(),
-            did_method: DidMethod::Indy,
-            did_subspace: _namespace().to_string(),
-            id: "did:sovrin:NcYxiDXkpYi6ov5FcYDi1e:2:gvt:1.0".to_string(),
         };
         assert_eq!(parsed_id, expected);
     }

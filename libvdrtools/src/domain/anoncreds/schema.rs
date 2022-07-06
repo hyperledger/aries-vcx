@@ -213,7 +213,7 @@ mod tests {
     }
 
     fn _did_qualified() -> DidValue {
-        DidValue("did:indy:NcYxiDXkpYi6ov5FcYDi1e".to_string())
+        DidValue("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e".to_string())
     }
 
     fn _schema_id_seq_no() -> SchemaId {
@@ -225,7 +225,7 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0".to_string())
+        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0".to_string())
     }
 
     fn _schema_id_invalid() -> SchemaId {

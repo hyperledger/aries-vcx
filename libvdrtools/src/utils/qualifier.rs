@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^[a-z0-9]+(:(indy|cheqd))?(:[a-z0-9]+)?:(.*)$").unwrap();
+    pub static ref REGEX: Regex = Regex::new("^[a-z0-9]+(:(indy|cheqd))?(:[a-z0-9:]+)?:(.*)$").unwrap();
 }
 
 pub fn qualify(entity: &str, prefix: &str, method: &str) -> String {
