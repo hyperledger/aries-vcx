@@ -17,7 +17,6 @@ pub struct CredentialDef {
     source_id: String,
     issuer_did: String,
     cred_def_json: String,
-    rev_reg: Option<RevocationRegistry>,
     support_revocation: bool,
     #[serde(default)]
     pub state: PublicEntityStateType,
@@ -126,46 +125,7 @@ impl CredentialDef {
                 cred_def_id,
                 cred_def_json,
                 issuer_did,
-                rev_reg: None,
                 support_revocation,
-                state: PublicEntityStateType::Built,
-            }
-        )
-    }
-
-    pub async fn create_and_store(source_id: String, config: CredentialDefConfig, revocation_details: RevocationDetails) -> VcxResult<Self> {
-        // unimplemented!("Use create()+publish_cred_def() instead")
-        trace!("CredentialDef::create_and_store >>> source_id: {}, config: {:?}, revocation_details: {:?}", source_id, config, revocation_details);
-        let CredentialDefConfig { issuer_did, schema_id, tag } = config;
-        let (_, schema_json) = anoncreds::get_schema_json(&schema_id).await?;
-        let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(&issuer_did,
-                                                                        &schema_json,
-                                                                        &tag,
-                                                                        None,
-                                                                        revocation_details.support_revocation.clone()).await?;
-
-        let rev_reg = if revocation_details.support_revocation.unwrap_or(false) {
-            let tails_dir = revocation_details
-                .tails_dir
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `tails_dir` field not found"))?;
-
-            let max_creds = revocation_details
-                .max_creds
-                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Invalid RevocationDetails: `max_creds` field not found"))?;
-
-            Some(RevocationRegistry::create(&issuer_did, &cred_def_id, &tails_dir, max_creds, 1).await?)
-        } else {
-            None
-        };
-        Ok(
-            Self {
-                source_id,
-                tag,
-                cred_def_id,
-                cred_def_json,
-                issuer_did,
-                support_revocation: revocation_details.support_revocation.unwrap_or(false),
-                rev_reg,
                 state: PublicEntityStateType::Built,
             }
         )
@@ -193,51 +153,6 @@ impl CredentialDef {
         )
     }
 
-    pub async fn rotate_rev_reg(&mut self, revocation_details: RevocationDetails) -> VcxResult<()> {
-        // unimplemented!("Just create a new revocation registry bro")
-        trace!("CredentialDef::rotate_rev_reg >>> revocation_details: {:?}", revocation_details);
-        let (tails_dir, max_creds) = (
-            revocation_details.tails_dir.or(self.get_tails_dir()),
-            revocation_details.max_creds.or(self.get_max_creds())
-        );
-
-        self.rev_reg = match (&self.rev_reg, &tails_dir, &max_creds) {
-            (Some(rev_reg), Some(tails_dir), Some(max_creds)) => {
-                let tag = rev_reg.tag + 1;
-                Some(RevocationRegistry::create(&self.issuer_did, &self.cred_def_id, tails_dir, max_creds.clone(), tag).await?)
-            }
-            _ => return {
-                Err(VcxError::from_msg(VcxErrorKind::RevRegDefNotFound,
-                                       "No revocation registry definitions associated with this credential definition",
-                ))
-            }
-        };
-        trace!("rotate_rev_reg_def <<< new_rev_reg_def: {:?}", self.rev_reg);
-        Ok(())
-    }
-
-    pub async fn publish_revocation_primitives(&mut self, tails_url: &str) -> VcxResult<()> {
-        // unimplemented!("Just create and publish new revocation registry bro")
-        warn!("publish_revocation_primitives >>> tails_url: {}", tails_url);
-        match &mut self.rev_reg {
-            Some(rev_reg) => rev_reg.publish_revocation_primitives(tails_url).await,
-            None => {
-                Err(VcxError::from_msg(VcxErrorKind::NotReady,
-                                       "Tried to publish revocation primitives, but this credential definition is not revocable",
-                ))
-            }
-        }
-    }
-
-    pub fn has_pending_revocations_primitives_to_be_published(&self) -> bool {
-        match &self.rev_reg {
-            None => false,
-            Some(rev_reg) => {
-                !rev_reg.was_rev_reg_def_published() || !rev_reg.was_rev_reg_delta_published()
-            }
-        }
-    }
-
     pub fn from_string(data: &str) -> VcxResult<Self> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Self>| obj.data)
@@ -253,55 +168,14 @@ impl CredentialDef {
 
     pub fn get_source_id(&self) -> &String { &self.source_id }
 
-    pub fn get_rev_reg_id(&self) -> Option<String> {
-        match &self.rev_reg {
-            Some(rev_reg) => Some(rev_reg.rev_reg_id.clone()),
-            None => None
-        }
-    }
-
-    pub fn get_tails_dir(&self) -> Option<String> {
-        match &self.rev_reg {
-            Some(rev_reg) => Some(rev_reg.tails_dir.clone()),
-            None => None
-        }
-    }
-
-    pub fn get_max_creds(&self) -> Option<u32> {
-        match &self.rev_reg {
-            Some(rev_reg) => Some(rev_reg.max_creds.clone()),
-            None => None
-        }
-    }
-
-    pub fn get_rev_reg_def(&self) -> VcxResult<Option<String>> {
-        match &self.rev_reg {
-            Some(rev_reg) => {
-                let rev_reg_def_json = serde_json::to_string(&rev_reg.rev_reg_def)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg.rev_reg_def, err)))?;
-                Ok(Some(rev_reg_def_json))
-            }
-            None => Ok(None)
-        }
-    }
-
     pub fn get_cred_def_id(&self) -> String { self.cred_def_id.clone() }
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
     pub async fn update_state(&mut self) -> VcxResult<u32> {
-        if let Some(ref rev_reg_id) = self.get_rev_reg_id() {
-            if let (Ok(_), Ok(_), Ok(_)) = (anoncreds::get_cred_def_json(&self.cred_def_id).await,
-                                            anoncreds::get_rev_reg_def_json(rev_reg_id).await,
-                                            anoncreds::get_rev_reg(rev_reg_id, time::get_time().sec as u64).await) {
-                self.state = PublicEntityStateType::Published
-            }
-        } else {
-            if let Ok(_) = anoncreds::get_cred_def_json(&self.cred_def_id).await {
-                self.state = PublicEntityStateType::Published
-            }
+        if let Ok(_) = anoncreds::get_cred_def_json(&self.cred_def_id).await {
+            self.state = PublicEntityStateType::Published
         }
-
         Ok(self.state as u32)
     }
 
