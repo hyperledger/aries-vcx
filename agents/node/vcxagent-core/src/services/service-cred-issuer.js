@@ -18,28 +18,14 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
       attr: schemaAttrs
     })
     const state1 = await issuerCred.getState()
-    expect(state1).toBe(IssuerStateType.OfferSet)
+    assert.equal(state1, IssuerStateType.OfferSet)
     const credOfferMsg = await issuerCred.getCredentialOfferMsg()
     await issuerCred.markCredentialOfferMsgSent()
     const state2 = await issuerCred.getState()
-    expect(state2).toBe(IssuerStateType.OfferSent)
+    assert.equal(state2, IssuerStateType.OfferSent)
     await saveIssuerCredential(issuerCredId, issuerCred)
 
     return credOfferMsg
-  }
-
-  async function sendOffer (issuerCredId, connectionId, credDefId, schemaAttrs) {
-    const connection = await loadConnection(connectionId)
-    const credDef = await loadCredDef(credDefId)
-    logger.debug('Building issuer credential')
-    const issuerCred = await IssuerCredential.create('alice_degree')
-    logger.info(`Per issuer credential ${issuerCredId}, sending cred offer to connection ${connectionId}`)
-    await issuerCred.sendOffer({
-      connection,
-      credDef,
-      attr: schemaAttrs
-    })
-    await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
   async function sendOfferV2 (issuerCredId, revRegId, connectionId, credDefId, schemaAttrs) {
@@ -56,10 +42,10 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
       revReg
     })
     const state1 = await issuerCred.getState()
-    expect(state1).toBe(IssuerStateType.OfferSet)
+    assert.equal(state1, IssuerStateType.OfferSet)
     await issuerCred.sendOfferV2(connection)
     const state2 = await issuerCred.getState()
-    expect(state2).toBe(IssuerStateType.OfferSent)
+    assert.equal(state2, IssuerStateType.OfferSent)
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
@@ -81,8 +67,8 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
-  async function sendOfferAndWaitForCredRequest (issuerCredId, connectionId, credDefId, schemaAttrs, attemptThreshold = 20, timeoutMs = 500) {
-    await sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
+  async function sendOfferAndWaitForCredRequest (issuerCredId, revRegId, connectionId, credDefId, schemaAttrs, attemptThreshold = 20, timeoutMs = 500) {
+    await sendOfferV2(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
     const issuerCred = await loadIssuerCredential(issuerCredId)
     const connection = await loadConnection(connectionId)
     logger.debug('Going to wait until credential request is received.')
@@ -99,8 +85,8 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     await saveIssuerCredential(issuerCredId, issuerCred)
   }
 
-  async function sendOfferAndCredential (issuerCredId, connectionId, credDefId, schemaAttrs) {
-    await sendOfferAndWaitForCredRequest(issuerCredId, connectionId, credDefId, schemaAttrs)
+  async function sendOfferAndCredential (issuerCredId, revRegId, connectionId, credDefId, schemaAttrs) {
+    await sendOfferAndWaitForCredRequest(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
     await sendCredentialAndProgress(issuerCredId, connectionId)
   }
 
@@ -162,7 +148,6 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
   }
 
   return {
-    sendOffer,
     sendOfferV2,
     buildOfferAndMarkAsSent,
     sendOfferAndWaitForCredRequest,

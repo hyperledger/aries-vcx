@@ -32,7 +32,21 @@ module.exports.createServiceLedgerRevocationRegistry = function createServiceLed
     return { revReg: newRevReg, revRegId: newRevRegId }
   }
 
+  async function getTailsFile (credDefId) {
+    const revReg = await loadRevReg(credDefId)
+    logger.info(`Getting tails file for revocation registry ${revReg}`)
+    return revReg.getTailsFile()
+  }
+
+  async function getTailsHash (credDefId) {
+    const revReg = await loadRevReg(credDefId)
+    logger.info(`Getting tails hash for revocation registry ${revReg}`)
+    return revReg.getTailsHash()
+  }
+
   return {
+    getTailsFile,
+    getTailsHash,
     createRevocationRegistry,
     rotateRevocationRegistry
   }

@@ -55,7 +55,8 @@ describe('test out of band communication', () => {
   it('Faber issues credential via OOB', async () => {
     try {
       const { alice, faber } = await createAliceAndFaber()
-      await faber.createCredDef(undefined, undefined)
+      const tailsDir = `${__dirname}/tmp/faber/tails`
+      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
       const oobCredOfferMsg = await faber.createOobCredOffer()
 
       await connectViaOobMessage(alice, faber, oobCredOfferMsg)
@@ -73,8 +74,9 @@ describe('test out of band communication', () => {
   it('Faber requests proof via OOB', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
-      await faber.buildLedgerPrimitives()
-      await faber.sendCredentialOffer()
+      const tailsDir = `${__dirname}/tmp/faber/tails`
+      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
+      await faber.sendCredentialOfferV2()
       await alice.acceptCredentialOffer()
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
       await faber.sendCredential()
@@ -84,7 +86,7 @@ describe('test out of band communication', () => {
 
       const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
       const presentationRequest = await oobReceiver.extractMessage()
-      await alice.sendHolderProof(presentationRequest, null)
+      await alice.sendHolderProof(presentationRequest, revRegId => tailsDir)
       await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
     } catch (e) {
       console.error(e.stack)

@@ -947,14 +947,6 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
 
-      - name: Run wrapper demo with legacy initialization
-        run: |
-          set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:legacy)'
-
       - name: Run integration tests
         run: |
           set -x
