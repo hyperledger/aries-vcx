@@ -50,19 +50,6 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
     }
   }
 
-  public async rotate(maxCreds: number): Promise<RevocationRegistry> {
-    try {
-      const commandHandle = 0;
-      const revReg = new RevocationRegistry('');
-      await revReg._create((cb) =>
-        rustAPI().vcx_revocation_registry_rotate(commandHandle, this.handle, maxCreds, cb),
-      );
-      return revReg;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public async publish(tailsUrl: string): Promise<void> {
     try {
       const revRegId = await createFFICallbackPromise<string>(

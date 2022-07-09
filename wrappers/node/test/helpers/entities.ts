@@ -11,19 +11,19 @@ import {
   IConnectionCreateData,
   ICredentialCreateWithMsgId,
   ICredentialCreateWithOffer,
-  ICredentialDefCreateData,
+  ICredentialDefCreateDataV2,
   IDisclosedProofCreateData,
-  IDisclosedProofCreateWithMsgIdData,
+  IDisclosedProofCreateWithMsgIdData, IIssuerCredentialBuildOfferDataV2,
   IIssuerCredentialCreateData,
   IIssuerCredentialOfferSendData,
-  IProofCreateData,
+  IProofCreateData, IRevocationRegistryConfig,
   ISchemaCreateData,
   ISchemaLookupData,
   ISchemaPrepareForEndorserData,
   IssuerCredential,
-  Proof,
+  Proof, RevocationRegistry,
   Schema,
-} from 'src';
+} from 'src'
 import * as uuid from 'uuid';
 
 const ARIES_CONNECTION_REQUEST = {
@@ -96,26 +96,34 @@ export const createConnectionInviterRequested = async (
   return connection;
 };
 
-export const dataCredentialDefCreate = (): ICredentialDefCreateData => ({
-  revocationDetails: {
-    maxCreds: undefined,
-    supportRevocation: false,
-    tailsDir: undefined,
-  },
+export const dataCredentialDefCreate = (): ICredentialDefCreateDataV2 => ({
   schemaId: 'testCredentialDefSchemaId',
   sourceId: 'testCredentialDefSourceId',
+  supportRevocation: true,
+  tag: '1'
 });
 
 export const credentialDefCreate = async (
   data = dataCredentialDefCreate(),
 ): Promise<CredentialDef> => {
-  const credentialDef = await CredentialDef.createAndStore(data);
+  const credentialDef = await CredentialDef.create(data);
   await credentialDef.publish();
   assert.notEqual(credentialDef.handle, undefined);
   assert.equal(credentialDef.sourceId, data.sourceId);
   assert.equal(credentialDef.schemaId, data.schemaId);
   return credentialDef;
 };
+
+export const revRegCreate = async (): Promise<RevocationRegistry> => {
+  const rev_reg_config = {
+    issuerDid: "1234",
+    credDefId: "1234",
+    tag: 1,
+    tailsDir: "/foo/bar",
+    maxCreds: 5
+  }
+  return await RevocationRegistry.create(rev_reg_config)
+}
 
 export const dataCredentialCreateWithOffer = async (): Promise<ICredentialCreateWithOffer> => {
   const connection = await createConnectionInviterRequested();
@@ -203,27 +211,22 @@ export const disclosedProofCreateWithMsgId = async (
   return disclousedProof;
 };
 
-export const dataIssuerCredentialCreate = async (): Promise<IIssuerCredentialOfferSendData> => {
-  const connection = await createConnectionInviterRequested();
+export const issuerCredentialCreate = async (): Promise<[IssuerCredential, IIssuerCredentialBuildOfferDataV2]> => {
   const credDef = await credentialDefCreate();
-  return {
-    connection,
+  const revReg = await revRegCreate();
+  const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
+  assert.notEqual(issuerCredential.handle, undefined);
+  const buildOfferData = {
     attr: {
       key1: 'value1',
       key2: 'value2',
       key3: 'value3',
     },
     credDef,
+    revReg,
+    comment: "foo"
   };
-};
-
-export const issuerCredentialCreate = async (
-  _data = dataIssuerCredentialCreate(),
-): Promise<[IssuerCredential, IIssuerCredentialOfferSendData]> => {
-  const data = await _data;
-  const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
-  assert.notEqual(issuerCredential.handle, undefined);
-  return [issuerCredential, data];
+  return [issuerCredential, buildOfferData];
 };
 
 export const dataProofCreate = (): IProofCreateData => ({

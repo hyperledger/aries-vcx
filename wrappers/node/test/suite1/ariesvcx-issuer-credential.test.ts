@@ -3,7 +3,6 @@ import '../module-resolver-helper';
 import { assert } from 'chai';
 import {
   createConnectionInviterRequested, credentialDefCreate,
-  dataIssuerCredentialCreate,
   issuerCredentialCreate,
 } from 'helpers/entities'
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
@@ -18,7 +17,6 @@ describe('IssuerCredential:', () => {
     });
 
     it('throws: missing sourceId', async () => {
-      const data = await dataIssuerCredentialCreate();
       const error = await shouldThrow(() => IssuerCredential.create(''));
       assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
     });
@@ -80,46 +78,21 @@ describe('IssuerCredential:', () => {
   describe('updateState:', () => {
     it(`returns state offer sent`, async () => {
       const [issuerCredential, data] = await issuerCredentialCreate();
-      await issuerCredential.sendOffer(data);
-      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
-    });
-  });
-
-  describe('sendOffer:', () => {
-    it('success', async () => {
-      const [issuerCredential, data] = await issuerCredentialCreate();
-      await issuerCredential.sendOffer(data);
-      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
-    });
-
-    it('success sendOfferV2', async () => {
+      await issuerCredential.buildCredentialOfferMsgV2(data)
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
       const connection = await createConnectionInviterRequested();
-      const credDef = await credentialDefCreate();
-      const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
-      const attr = {
-        key1: 'value1',
-        key2: 'value2',
-        key3: 'value3',
-      }
-      await issuerCredential.buildCredentialOfferMsg({credDef, attr, comment: "hello"})
       await issuerCredential.sendOfferV2(connection);
       assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSent);
     });
 
     it('build offer and mark as sent', async () => {
-      const issuerCredential = await IssuerCredential.create('testCredentialSourceId');
-      const credDef = await credentialDefCreate();
-      const attr = {
-          key1: 'value1',
-          key2: 'value2',
-          key3: 'value3',
-      }
-      await issuerCredential.buildCredentialOfferMsg({ credDef, attr, comment: "c1" });
-      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
+      const [issuerCredential, data] = await issuerCredentialCreate();
+      await issuerCredential.buildCredentialOfferMsgV2(data)
       const offer = JSON.parse(await issuerCredential.getCredentialOfferMsg())
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
       // @ts-ignore
       assert.isDefined(offer['@id']);
-      assert.equal(offer.comment, 'c1');
+      assert.equal(offer.comment, 'foo');
       assert.isDefined(offer.credential_preview);
       assert.equal(offer.credential_preview['@type'], 'https://didcomm.org/issue-credential/1.0/credential-preview');
 
@@ -130,62 +103,31 @@ describe('IssuerCredential:', () => {
     it('throws: not initialized', async () => {
       const [_issuerCredential, data] = await issuerCredentialCreate();
       const issuerCredential = new IssuerCredential('');
-      const error = await shouldThrow(() => issuerCredential.sendOffer(data));
+      const error = await shouldThrow(() => issuerCredential.buildCredentialOfferMsgV2(data));
       assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
     });
 
     it('throws: connection not initialized', async () => {
+      const [issuerCredential, data] = await issuerCredentialCreate();
+      await issuerCredential.buildCredentialOfferMsgV2(data)
+      assert.equal(await issuerCredential.getState(), IssuerStateType.OfferSet);
       const connection = new (Connection as any)();
-      const [issuerCredential, data] = await issuerCredentialCreate();
-      data.connection = connection;
-      const error = await shouldThrow(() => issuerCredential.sendOffer(data));
+      const error = await shouldThrow(() => issuerCredential.sendOfferV2(connection));
       assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
-    });
-
-    // "vcx_issuer_get_credential_offer_msg" not implemented for Aries
-    it.skip('can generate the offer message', async () => {
-      const [issuerCredential, data] = await issuerCredentialCreate();
-      const message = await issuerCredential.getCredentialOfferMsg();
-      assert(message.length > 0);
     });
 
     it('throws: missing attr', async () => {
       const [issuerCredential, _data] = await issuerCredentialCreate();
       const { attr, ...data } = _data;
-      const error = await shouldThrow(() => issuerCredential.sendOffer(data as any));
+      const error = await shouldThrow(() => issuerCredential.buildCredentialOfferMsgV2(data as any));
       assert.equal(error.vcxCode, VCXCode.INVALID_OPTION);
     });
 
     it('throws: invalid credDefHandle', async () => {
       const [issuerCredential, _data] = await issuerCredentialCreate();
       const { credDef, ...data } = _data;
-      const error = await shouldThrow(() => issuerCredential.sendOffer(data as any));
+      const error = await shouldThrow(() => issuerCredential.buildCredentialOfferMsgV2(data as any));
       assert.equal(error.vcxCode, VCXCode.UNKNOWN_ERROR);
-    });
-  });
-
-  describe('sendCredential:', () => {
-    it('throws: not initialized', async () => {
-      const connection = await createConnectionInviterRequested();
-      const issuerCredential = new IssuerCredential('');
-      const error = await shouldThrow(() => issuerCredential.sendCredential(connection));
-      assert.equal(error.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
-    });
-
-    // todo: recorder this test/behaviour in 4.0, issuerCredential is not throwing, only prints warning
-    it.skip('throws: no offer', async () => {
-      const connection = await createConnectionInviterRequested();
-      const issuerCredential = await issuerCredentialCreate();
-      const error = await shouldThrow(() => issuerCredential[0].sendCredential(connection));
-      assert.equal(error.vcxCode, VCXCode.NOT_READY);
-    });
-
-    // todo: recorder this test/behaviour in 4.0, issuerCredential is not throwing, only prints warning
-    it.skip('throws: no request', async () => {
-      const [issuerCredential, data] = await issuerCredentialCreate();
-      await issuerCredential.sendOffer(data);
-      const error = await shouldThrow(() => issuerCredential.sendCredential(data.connection));
-      assert.equal(error.vcxCode, VCXCode.NOT_READY);
     });
   });
 
