@@ -117,9 +117,6 @@ pub mod tests {
 
     use super::*;
 
-    static ISSUER_DID: &str = "4fUDR9R7fjwELRvH9JT6HH";
-
-
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::tests::create_schema_real().await;
         sleep(Duration::from_secs(1));
@@ -228,11 +225,12 @@ pub mod tests {
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
-        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
-        let h3 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
-        let h4 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
-        let h5 = create("SourceId".to_string(), SCHEMA_ID.to_string(), ISSUER_DID.to_string(), "tag".to_string(), false).await.unwrap();
+        let issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
+        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
+        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
+        let h3 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
+        let h4 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
+        let h5 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
