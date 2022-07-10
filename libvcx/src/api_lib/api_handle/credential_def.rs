@@ -120,49 +120,26 @@ pub mod tests {
     static ISSUER_DID: &str = "4fUDR9R7fjwELRvH9JT6HH";
 
 
-    pub async fn create_test_cred_def_non_revocable() -> (u32, u32) {
+    pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::tests::create_schema_real().await;
         sleep(Duration::from_secs(1));
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        // let tails_url = "http://tails-url.org".to_string();
         let cred_def_handle = create("1".to_string(),
                                      schema_id,
                                      issuer_did.clone(),
                                      "tag_1".to_string(),
                                      false).await.unwrap();
         publish(cred_def_handle).await.unwrap();
-        //
-        // let rev_reg_config = RevocationRegistryConfig {
-        //     issuer_did,
-        //     cred_def_id: get_cred_def_id(cred_def_handle).unwrap(),
-        //     tag: 0,
-        //     tails_dir: String::from(get_temp_dir_path("tails.txt").to_str().unwrap()),
-        //     max_creds: 0
-        // };
-        // let rev_reg_handle = revocation_registry::create(rev_reg_config).await.unwrap();
-        // revocation_registry::publish(rev_reg_handle, &tails_url).await.unwrap();
-        // sleep(Duration::from_secs(1));
         (schema_handle, cred_def_handle)
-    }
-
-    pub async fn create_creddef_nonrevocable() -> u32 {
-        let handle = create("SourceId".to_string(),
-                            SCHEMA_ID.to_string(),
-                            ISSUER_DID.to_string(),
-                            "tag".to_string(),
-                            false).await.unwrap();
-        publish(handle).await.unwrap();
-        handle
     }
 
     #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_create_cred_def() {
         let _setup = SetupMocks::init();
-
-        let (_, _) = create_test_cred_def_non_revocable().await;
+        let (_, _) = create_and_publish_nonrevocable_creddef().await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -207,7 +184,7 @@ pub mod tests {
     async fn test_create_credential_def_real() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        let (_, handle) = create_test_cred_def_non_revocable().await;
+        let (_, handle) = create_and_publish_nonrevocable_creddef().await;
 
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
@@ -219,9 +196,9 @@ pub mod tests {
     async fn test_to_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_creddef_nonrevocable().await;
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
 
-        let credential_string = to_string(handle).unwrap();
+        let credential_string = to_string(cred_def_handle).unwrap();
         let credential_values: serde_json::Value = serde_json::from_str(&credential_string).unwrap();
         assert_eq!(credential_values["version"].clone(), "1.0");
     }
@@ -231,10 +208,10 @@ pub mod tests {
     async fn test_from_string_succeeds() {
         let _setup = SetupMocks::init();
 
-        let handle = create_creddef_nonrevocable().await;
-        let credentialdef_data = to_string(handle).unwrap();
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let credentialdef_data = to_string(cred_def_handle).unwrap();
         assert!(!credentialdef_data.is_empty());
-        release(handle).unwrap();
+        release(cred_def_handle).unwrap();
 
         let new_handle = from_string(&credentialdef_data).unwrap();
         let new_credentialdef_data = to_string(new_handle).unwrap();

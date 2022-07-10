@@ -212,7 +212,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
-    use crate::api_lib::api_handle::credential_def::tests::create_creddef_nonrevocable;
+    use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
@@ -262,7 +262,7 @@ pub mod tests {
 
         let credential_handle = _issuer_credential_create();
 
-        let cred_def_handle = create_creddef_nonrevocable().await;
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
@@ -290,11 +290,13 @@ pub mod tests {
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let err = build_credential_offer_msg_v2(credential_handle, create_creddef_nonrevocable().await, 1234, _cred_json(), None).await.unwrap_err();
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap_err();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        let err = build_credential_offer_msg_v2(credential_handle, create_creddef_nonrevocable().await, 1234, _cred_json(), None).await.unwrap();
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
@@ -325,7 +327,8 @@ pub mod tests {
 
         let connection_handle = build_test_connection_inviter_requested().await;
         let credential_handle = _issuer_credential_create();
-        build_credential_offer_msg_v2(credential_handle, create_creddef_nonrevocable().await, 1234, _cred_json(), None).await.unwrap();
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(credential_handle,  connection_handle).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
@@ -340,7 +343,8 @@ pub mod tests {
 
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
-        build_credential_offer_msg_v2(handle_cred, create_creddef_nonrevocable().await, 1234, _cred_json(), None).await.unwrap();
+        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
