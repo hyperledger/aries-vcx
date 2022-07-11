@@ -740,7 +740,7 @@ mod tests {
 
         let data = r#"["name","male"]"#;
         let connection = connection::tests::build_test_connection_inviter_invited().await;
-        let credentialdef = credential_def::create_and_store("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), "{}".to_string()).await.unwrap();
+        let credentialdef = credential_def::create("SID".to_string(), "4fUDR9R7fjwELRvH9JT6HH".to_string(), "id".to_string(), "tag".to_string(), false).await.unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof("1".to_string(), "[]".to_string(), "[]".to_string(), r#"{"support_revocation":false}"#.to_string(), "Optional".to_owned()).await.unwrap();
         let schema = schema::create_and_publish_schema("5", "VsKV7grR1BUE29mG2Fm2kX".to_string(), "name".to_string(), "0.1".to_string(), data.to_string()).await.unwrap();
@@ -991,8 +991,8 @@ mod tests {
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id) =
-            create_and_store_credential_def(&attrs_list, true).await;
+        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id, _cred_def, _rev_reg) =
+            create_and_store_credential_def(&attrs_list).await;
         assert!(schema_id.len() > 0);
 
         delete_test_pool().await;

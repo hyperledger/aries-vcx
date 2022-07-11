@@ -1,5 +1,4 @@
 /* eslint-env jest */
-const { buildRevocationDetails } = require('../../src')
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
@@ -13,6 +12,7 @@ module.exports.createFaber = async function createFaber () {
   let credDefId, revRegId
   const proofId = 'proof-from-alice'
   const logger = require('../../demo/logger')('Faber')
+  let revRegTagNo = 1
 
   const faberAgentConfig = {
     agentName,
@@ -85,7 +85,7 @@ module.exports.createFaber = async function createFaber () {
   async function createOobCredOffer (usePublicDid = true) {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
-    const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, schemaAttrs)
+    const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, revRegId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
     if (usePublicDid) {
       return await createOobMessageWithDid(credOfferMsg)
@@ -128,45 +128,6 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createCredDef (revocationDetails, tailsUrl) {
-    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
-
-    await vcxAgent.agentInitVcx()
-
-    logger.info('Faber writing schema on ledger')
-    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await sleep(500)
-
-    logger.info('Faber writing credential definition on ledger')
-    credDefId = getFaberCredDefName()
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
-      schemaId,
-      credDefId,
-      revocationDetails,
-      tailsUrl
-    )
-    await vcxAgent.agentShutdownVcx()
-  }
-
-  async function buildLedgerPrimitives (revocationDetails, tailsUrl) {
-    await vcxAgent.agentInitVcx()
-
-    logger.info('Faber writing schema on ledger')
-    const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-    await sleep(500)
-
-    logger.info('Faber writing credential definition on ledger')
-    revocationDetails = revocationDetails || buildRevocationDetails({ supportRevocation: false })
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(
-      schemaId,
-      getFaberCredDefName(),
-      revocationDetails,
-      tailsUrl
-    )
-    credDefId = getFaberCredDefName()
-    await vcxAgent.agentShutdownVcx()
-  }
-
   async function buildLedgerPrimitivesV2 (revocationDetails) {
     await vcxAgent.agentInitVcx()
 
@@ -182,28 +143,23 @@ module.exports.createFaber = async function createFaber () {
       supportRevocation
     )
     credDefId = getFaberCredDefName()
-    const _credDefId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
+    const credDefLedgerId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId)
     if (supportRevocation) {
-      const { tailsDir, maxCreds } = revocationDetails
+      const { tailsDir, maxCreds, tailsUrl } = revocationDetails
       logger.info('Faber writing revocation registry');
-      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, _credDefId, 1, tailsDir, maxCreds))
+      ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, credDefLedgerId, revRegTagNo, tailsDir, maxCreds, tailsUrl))
     }
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function rotateRevReg (maxCreds) {
+  async function rotateRevReg (tailsDir, maxCreds) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber rotating revocation registry');
-    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.rotateRevocationRegistry(revRegId, maxCreds))
+    const credDefLedgerId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId);
+    ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, credDefLedgerId, revRegTagNo + 1, tailsDir, maxCreds))
+    revRegTagNo += 1
 
-    await vcxAgent.agentShutdownVcx()
-  }
-
-  async function sendCredentialOffer () {
-    await vcxAgent.agentInitVcx()
-    const schemaAttrs = getAliceSchemaAttrs()
-    await vcxAgent.serviceCredIssuer.sendOffer(issuerCredId, connectionId, credDefId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
   }
 
@@ -335,7 +291,7 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function getTailsFile () {
-    logger.info(`Faber is going to obtain tails file for cred id ${issuerCredId}`)
+    logger.info(`Faber is going to obtain tails file for rev reg id ${revRegId}`)
     await vcxAgent.agentInitVcx()
     const tailsFile = await vcxAgent.serviceLedgerCredDef.getTailsFile(issuerCredId)
     await vcxAgent.agentShutdownVcx()
@@ -344,9 +300,9 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function getTailsHash () {
-    logger.info(`Faber is going to obtain tails hash for cred def id ${credDefId}`)
+    logger.info(`Faber is going to obtain tails hash for rev reg id ${revRegId}`)
     await vcxAgent.agentInitVcx()
-    const tailsHash = await vcxAgent.serviceLedgerCredDef.getTailsHash(credDefId)
+    const tailsHash = await vcxAgent.serviceLedgerRevReg.getTailsHash(revRegId)
     logger.info(`Faber obtained tails hash ${tailsHash}`)
     await vcxAgent.agentShutdownVcx()
     return tailsHash
@@ -360,10 +316,8 @@ module.exports.createFaber = async function createFaber () {
   }
 
   return {
-    buildLedgerPrimitives,
     buildLedgerPrimitivesV2,
     rotateRevReg,
-    createCredDef,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
     sendMessage,
@@ -376,7 +330,6 @@ module.exports.createFaber = async function createFaber () {
     createConnectionFromReceivedRequest,
     updateConnection,
     sendConnectionResponse,
-    sendCredentialOffer,
     sendCredentialOfferV2,
     createOobCredOffer,
     updateStateCredentialV2,

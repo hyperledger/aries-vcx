@@ -194,7 +194,7 @@ pub mod test {
             };
         }
 
-        pub async fn create_credential_definition(&mut self) {
+        pub async fn create_nonrevocable_credential_definition(&mut self) {
             self.activate().await.unwrap();
 
             let config = CredentialDefConfigBuilder::default()
@@ -204,7 +204,7 @@ pub mod test {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create_and_store(String::from("test_cred_def"), config, RevocationDetails::default()).await.unwrap()
+            self.cred_def = CredentialDef::create(String::from("test_cred_def"), config, false).await.unwrap()
                 .publish_cred_def().await.unwrap();
         }
 
@@ -259,7 +259,7 @@ pub mod test {
             serde_json::from_str(&details).unwrap()
         }
 
-        pub async fn offer_credential(&mut self) {
+        pub async fn offer_non_revocable_credential(&mut self) {
             self.activate().await.unwrap();
 
             let credential_json = json!({
@@ -272,8 +272,8 @@ pub mod test {
             let offer_info = OfferInfo {
                 credential_json,
                 cred_def_id: self.cred_def.get_cred_def_id(),
-                rev_reg_id: self.cred_def.get_rev_reg_id(),
-                tails_file: self.cred_def.get_tails_dir(),
+                rev_reg_id: None,
+                tails_file: None,
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential.build_credential_offer_msg(offer_info, None).await.unwrap();

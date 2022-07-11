@@ -118,40 +118,6 @@ pub extern fn vcx_revocation_registry_publish_revocations(command_handle: Comman
 }
 
 #[no_mangle]
-pub extern fn vcx_revocation_registry_rotate(command_handle: CommandHandle,
-                                             rev_reg_handle: u32,
-                                             max_creds: u32,
-                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_handle: u32)>) -> u32 {
-    info!("vcx_revocation_registry_rotate >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-
-    trace!("vcx_revocation_registry_rotate(command_handle: {}, max_creds: {})", command_handle, max_creds);
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let (rc, handle) = match revocation_registry::rotate_rev_reg(rev_reg_handle, max_creds).await {
-            Ok(handle) => {
-                trace!("vcx_revocation_registry_rotate_cb(command_handle: {}, rc: {}, handle: {})",
-                           command_handle, error::SUCCESS.message, handle);
-                (error::SUCCESS.code_num, handle)
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_revocation_registry_rotate_cb(command_handle: {}, rc: {}, handle: {})",
-                      command_handle, err, 0);
-                (err.into(), 0)
-            }
-        };
-
-        cb(command_handle, rc, handle);
-
-        Ok(())
-    }));
-    
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
 pub extern fn vcx_revocation_registry_get_rev_reg_id(command_handle: CommandHandle,
                                                      handle: u32,
                                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, rev_reg_id: *const c_char)>) -> u32 {

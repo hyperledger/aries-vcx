@@ -43,7 +43,7 @@ pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxR
 pub mod tests {
     use crate::{libindy, settings, utils};
     use crate::libindy::proofs::proof_request::ProofRequestData;
-    use crate::libindy::utils::anoncreds::test_utils::create_and_store_credential;
+    use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWithWalletAndAgency;
 
     use super::*;
@@ -121,8 +121,8 @@ pub mod tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
+            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -180,8 +180,8 @@ pub mod tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id, _, _)
-            = create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
+            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 

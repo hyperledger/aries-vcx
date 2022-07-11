@@ -25,8 +25,8 @@ describe('test tails distribution', () => {
       const port = 5468
       const tailsUrlId = uuid.v4()
       const tailsUrl = `http://127.0.0.1:${port}/${tailsUrlId}`
-      await faber.buildLedgerPrimitives(buildRevocationDetails({ supportRevocation: true, tailsDir: `${__dirname}/tmp/faber/tails`, maxCreds: 5 }), tailsUrl)
-      await faber.sendCredentialOffer()
+      await faber.buildLedgerPrimitivesV2(buildRevocationDetails({ supportRevocation: true, tailsDir: `${__dirname}/tmp/faber/tails`, maxCreds: 5, tailsUrl }))
+      await faber.sendCredentialOfferV2()
       await alice.acceptCredentialOffer()
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
       await faber.sendCredential()

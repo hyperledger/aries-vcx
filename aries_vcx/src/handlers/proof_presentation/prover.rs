@@ -166,7 +166,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_proof};
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_nonrevocable_credential, create_proof};
     use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
     use crate::utils;
     use crate::utils::constants::TAILS_DIR;
@@ -180,7 +180,7 @@ mod tests {
     async fn test_retrieve_credentials() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
+        create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, _, req, _) = create_proof().await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
@@ -224,7 +224,7 @@ mod tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWithWalletAndAgency::init().await;
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, false).await;
+        create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -281,7 +281,7 @@ mod tests {
     async fn test_generate_proof() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -366,7 +366,7 @@ mod tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS, true).await;
+        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",

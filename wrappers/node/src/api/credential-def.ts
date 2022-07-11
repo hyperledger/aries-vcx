@@ -94,38 +94,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  public static async createAndStore({
-    revocationDetails,
-    schemaId,
-    sourceId,
-  }: ICredentialDefCreateData): Promise<CredentialDef> {
-    const tailsDir = revocationDetails.tailsDir;
-    const credentialDef = new CredentialDef(sourceId, { schemaId, tailsDir });
-    const commandHandle = 0;
-    const issuerDid = null;
-    const revocation = {
-      max_creds: revocationDetails.maxCreds,
-      support_revocation: revocationDetails.supportRevocation,
-      tails_dir: revocationDetails.tailsDir,
-    };
-    try {
-      await credentialDef._create((cb) =>
-        rustAPI().vcx_credentialdef_create_and_store(
-          commandHandle,
-          sourceId,
-          schemaId,
-          issuerDid,
-          'tag1',
-          JSON.stringify(revocation),
-          cb,
-        ),
-      );
-      return credentialDef;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   public static async deserialize(
     credentialDef: ISerializedData<ICredentialDefData>,
   ): Promise<CredentialDef> {
@@ -232,62 +200,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
     }
   }
 
-  public async getTailsHash(): Promise<string> {
-    try {
-      const tailsHash = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_get_tails_hash(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xcommandHandle: number, err: number, _tailsHash: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(_tailsHash);
-            },
-          ),
-      );
-      return tailsHash;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async getRevRegId(): Promise<string> {
-    try {
-      const revRegId = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_get_rev_reg_id(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xcommandHandle: number, err: number, _revRegId: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(_revRegId);
-            },
-          ),
-      );
-      return revRegId;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
   /**
    *
    * Checks if credential definition is published on the Ledger and updates the state
@@ -356,71 +268,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ),
       );
       return stateRes;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async rotateRevRegDef(
-    revocationDetails: IRevocationDetails
-  ): Promise<ISerializedData<ICredentialDefCreateData>> {
-    const revocation = {
-      max_creds: revocationDetails.maxCreds,
-      tails_file: revocationDetails.tailsDir,
-    };
-    try {
-      const dataStr = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_rotate_rev_reg_def(
-            0,
-            this.handle,
-            JSON.stringify(revocation),
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: number, err: number, x: string) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(x);
-            },
-          ),
-      );
-      const data: ISerializedData<ICredentialDefCreateData> = JSON.parse(dataStr);
-      return data;
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public async publishRevocations(): Promise<void> {
-    try {
-      await createFFICallbackPromise<number>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_credentialdef_publish_revocations(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'uint32'],
-            (handle: number, err: number, state: CredentialDefState) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(state);
-            },
-          ),
-      );
     } catch (err) {
       throw new VCXInternalError(err);
     }

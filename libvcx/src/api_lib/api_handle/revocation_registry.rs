@@ -2,6 +2,7 @@ use aries_vcx::error::prelude::*;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
 use aries_vcx::libindy::utils::anoncreds;
+use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
 
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> = ObjectCache::<RevocationRegistry>::new("revocation-registry-cache");
@@ -9,11 +10,11 @@ lazy_static! {
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
 pub struct RevocationRegistryConfig {
-    issuer_did: String,
-    cred_def_id: String,
-    tag: u32,
-    tails_dir: String,
-    max_creds: u32
+    pub issuer_did: String,
+    pub cred_def_id: String,
+    pub tag: u32,
+    pub tails_dir: String,
+    pub max_creds: u32
 }
 
 pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
@@ -36,13 +37,6 @@ pub async fn publish_revocations(handle: u32) -> VcxResult<()> {
     // TODO: Check result 
     anoncreds::publish_local_revocations(&rev_reg_id).await?;
     Ok(())
-}
-
-pub async fn rotate_rev_reg(handle: u32, max_creds: u32) -> VcxResult<u32> {
-    let rev_reg = REV_REG_MAP.get_cloned(handle)?;
-    let new_rev_reg = rev_reg.rotate_rev_reg(max_creds).await?;
-    let handle = REV_REG_MAP.add(new_rev_reg)?;
-    Ok(handle)
 }
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
@@ -70,5 +64,11 @@ pub fn release(handle: u32) -> VcxResult<()> {
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
     REV_REG_MAP.get(handle, |rev_reg| {
         Ok(rev_reg.get_rev_reg_def().value.tails_hash)
+    })
+}
+
+pub fn get_rev_reg_def(handle: u32) -> VcxResult<RevocationRegistryDefinition> {
+    REV_REG_MAP.get(handle, |rev_reg| {
+        Ok(rev_reg.get_rev_reg_def())
     })
 }

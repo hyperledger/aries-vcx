@@ -28,7 +28,6 @@
     "demo:notifyserver": "node demo/notification-server.js",
     "demo": "node demo/integration-test.js",
     "demo:revocation": "REVOCATION=true node demo/integration-test.js",
-    "demo:legacy": "LEGACY=true node demo/integration-test.js",
     "demo:alice": "node demo/alice.js",
     "demo:faber": "node demo/faber.js",
     "demo:faber:rev": "node demo/faber.js --revocation",

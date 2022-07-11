@@ -114,69 +114,6 @@ pub extern fn vcx_issuer_create_credential(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-/// Send a credential offer to user showing what will be included in the actual credential
-///
-/// #Params
-/// command_handle: command handle to map callback to user context.
-///
-/// credential_handle: Credential handle that was provided during creation. Used to identify credential object
-///
-/// connection_handle: Connection handle that identifies pairwise connection
-///
-/// cb: Callback that provides error status of credential offer
-///
-/// #Returns
-/// Error code as a u32
-#[no_mangle]
-#[deprecated(since = "0.28.0", note = "Call methods 'vcx_issuer_build_credential_offer_msg' and \
-then 'vcx_issuer_send_credential_offer_v2' instead.")]
-pub extern fn vcx_issuer_send_credential_offer(command_handle: CommandHandle,
-                                               credential_handle: u32,
-                                               cred_def_handle: u32,
-                                               connection_handle: u32,
-                                               credential_data: *const c_char,
-                                               cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
-    info!("vcx_issuer_send_credential_offer >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credential_data, VcxErrorKind::InvalidOption);
-
-    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_issuer_send_credential_offer(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}",
-           command_handle, credential_handle, connection_handle, source_id);
-
-    if !credential_def::is_valid_handle(cred_def_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
-    }
-
-    if !credential_def::check_is_published(cred_def_handle).unwrap_or(false) {
-        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle, "Credential Definition is not in the published state").into();
-    }
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let err = match issuer_credential::send_credential_offer(credential_handle, cred_def_handle, connection_handle, &credential_data, None).await {
-            Ok(err) => {
-                trace!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                       command_handle, credential_handle, error::SUCCESS.message, source_id);
-                err
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
-                      command_handle, credential_handle, err, source_id);
-                err.into()
-            }
-        };
-
-        cb(command_handle, err);
-
-        Ok(())
-    }));
-
-    error::SUCCESS.code_num
-}
-
-
 #[no_mangle]
 pub extern fn vcx_issuer_send_credential_offer_v2(command_handle: CommandHandle,
                                                   credential_handle: u32,
@@ -255,51 +192,6 @@ pub extern fn vcx_issuer_get_credential_offer_msg(command_handle: CommandHandle,
 
         Ok(())
     });
-
-    error::SUCCESS.code_num
-}
-
-#[no_mangle]
-pub extern fn vcx_issuer_build_credential_offer_msg(command_handle: CommandHandle,
-                                                    credential_handle: u32,
-                                                    cred_def_handle: u32,
-                                                    credential_data: *const c_char,
-                                                    comment: *const c_char,
-                                                    cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>) -> u32 {
-    info!("vcx_issuer_build_credential_offer_msg >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credential_data, VcxErrorKind::InvalidOption);
-    let comment = if !comment.is_null() {
-        check_useful_opt_c_str!(comment, VcxErrorKind::InvalidOption);
-        comment.to_owned()
-    } else {
-        None
-    };
-
-    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!("vcx_issuer_build_credential_offer_msg(command_handle: {}, credential_handle: {}) source_id: {}",
-           command_handle, credential_handle, source_id);
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match issuer_credential::build_credential_offer_msg(credential_handle, cred_def_handle, &credential_data, comment.as_deref()).await {
-            Ok(offer_msg) => {
-                let offer_msg = json!(offer_msg).to_string();
-                let offer_msg = CStringUtils::string_to_cstring(offer_msg);
-                trace!("vcx_issuer_build_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                       command_handle, credential_handle, error::SUCCESS.message, source_id);
-                cb(command_handle, error::SUCCESS.code_num, offer_msg.as_ptr());
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_issuer_build_credential_offer_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})",
-                      command_handle, credential_handle, err, source_id);
-                cb(command_handle, err.into(), ptr::null_mut());
-            }
-        };
-
-        Ok(())
-    }));
 
     error::SUCCESS.code_num
 }
@@ -1066,8 +958,7 @@ pub mod tests {
                                                 ptr::null(),
                                                 Some(cb.get_callback())),
                    error::INVALID_OPTION.code_num);
-        // todo: Timeouting 15 seconds in test, could we do this better?
-        let _ = cb.receive(TimeoutUtils::some_medium()).is_err();
+        let _ = cb.receive(TimeoutUtils::some_short()).is_err();
     }
 
     #[test]
@@ -1093,136 +984,6 @@ pub mod tests {
         assert!(handle_2 > 0);
 
         assert_ne!(handle, handle_2);
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_vcx_issuer_send_credential_offer() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
-
-        let credential_handle = _vcx_issuer_create_credential_c_closure().unwrap();
-
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
-                                                    credential_handle,
-                                                    credential_def::tests::create_cred_def_fake().await,
-                                                    connection_handle,
-                                                    CString::new(DEFAULT_ATTR).unwrap().into_raw(),
-                                                    Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(vcx_v2_issuer_credential_update_state_with_message(cb.command_handle,
-                                                                      credential_handle,
-                                                                      connection_handle,
-                                                                      CString::new(ARIES_CREDENTIAL_REQUEST).unwrap().into_raw(),
-                                                                      Some(cb.get_callback())), error::SUCCESS.code_num);
-        let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, u32::from(IssuerState::RequestReceived));
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_vcx_issuer_update_state_v2() {
-        let _setup = SetupMocks::init();
-
-        let connection_handle = connection::tests::build_test_connection_invitee_completed();
-        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
-        let cb = return_types_u32::Return_U32::new().unwrap();
-
-        assert_eq!(vcx_issuer_send_credential_offer(cb.command_handle,
-                                                    handle,
-                                                    credential_def::tests::create_cred_def_fake().await,
-                                                    connection_handle,
-                                                    CString::new(DEFAULT_ATTR).unwrap().into_raw(),
-                                                    Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-
-        let connection_serialized = connection::to_string(connection_handle).unwrap();
-        connection::release(connection_handle).unwrap();
-        let connection_handle = connection::from_string(&connection_serialized).unwrap();
-
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-
-        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);
-
-        assert_eq!(vcx_v2_issuer_credential_update_state(cb.command_handle,
-                                                         handle,
-                                                         connection_handle,
-                                                         Some(cb.get_callback())), error::SUCCESS.code_num);
-        let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, u32::from(IssuerState::OfferSent));
-    }
-
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // TODO: generate_credential_offer_msg() not implemented for V3 aries credential
-    fn test_vcx_issuer_get_credential_offer_msg() {
-        let _setup = SetupMocks::init();
-
-        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_issuer_get_credential_offer_msg(cb.command_handle,
-                                                       handle,
-                                                       Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        let _msg = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // easyfix after merge of v2_update
-    // failing because credential has bad handle cached when vcx_issuer_send_credential (the one stored in serialized credential)
-    // instead it should be using connection handle passed to vcx_issuer_send_credential
-    // but in Aries, it's not doing so
-    fn test_vcx_issuer_send_a_credential() {
-        let _setup = SetupMocks::init();
-
-        info!("test_vcx_issuer_send_a_credential:: going to build_test_connection");
-        let handle_conn = connection::tests::build_test_connection_inviter_invited();
-        info!("test_vcx_issuer_send_a_credential:: created connection with handle {}", handle_conn);
-
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, DEFAULT_DID);
-
-        info!("test_vcx_issuer_send_a_credential:: going to create issuer credential in state 'credential request received'");
-        let handle_cred = issuer_credential::from_string(CREDENTIAL_ISSUER_SM_REQUEST_RECEIVED).unwrap();
-
-        info!("test_vcx_issuer_send_a_credential:: going to send credential");
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_issuer_send_credential(cb.command_handle,
-                                              handle_cred,
-                                              handle_conn,
-                                              Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    // TODO: get_credential_msg not implemented yet for v3
-    #[test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")]
-    fn test_vcx_issuer_get_credential_msg() {
-        let _setup = SetupMocks::init();
-
-        let handle = issuer_credential::from_string(&issuer_credential_state_accepted()).unwrap();
-
-        // send the credential
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_issuer_get_credential_msg(cb.command_handle,
-                                                 handle,
-                                                 CString::new(DEFAULT_DID).unwrap().into_raw(),
-                                                 Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        let _msg = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
 
     #[test]

@@ -46,7 +46,7 @@ impl RevocationRegistry {
         self.rev_reg_def.clone()
     }
 
-    pub fn get_tails_file(&self) -> String {
+    pub fn get_tails_dir(&self) -> String {
         self.tails_dir.clone()
     }
 
@@ -56,12 +56,6 @@ impl RevocationRegistry {
 
     pub fn was_rev_reg_delta_published(&self) -> bool {
         self.rev_reg_delta_state == PublicEntityStateType::Published
-    }
-
-    pub async fn rotate_rev_reg(&self, max_creds: u32) -> VcxResult<Self> {
-        trace!("RevocationRegistry::rotate_rev_reg >>> max_creds: {:?}", max_creds);
-        let tag = self.tag + 1;
-        RevocationRegistry::create(&self.issuer_did, &self.cred_def_id, &self.tails_dir, max_creds, tag).await
     }
 
     pub async fn publish_rev_reg_def(&mut self, issuer_did: &str, tails_url: &str) -> VcxResult<()> {

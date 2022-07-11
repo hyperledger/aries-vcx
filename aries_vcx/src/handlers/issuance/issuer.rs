@@ -70,6 +70,7 @@ impl Issuer {
         Ok(Issuer { issuer_sm })
     }
 
+    // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
     pub async fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id).await?;

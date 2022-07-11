@@ -42,16 +42,6 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
         logger.info('Going to accept taa.\n')
         await ariesAgent.acceptTaa()
         logger.info('Taa accepted.\n')
-      } else if (cmd === '1') {
-        logger.info(`Cmd was ${cmd}, going to create schema\n`)
-        const schemaId = await ariesAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
-        await ariesAgent.serviceLedgerSchema.printInfo([schemaId])
-      } else if (cmd === '2') {
-        const schemaId = readlineSync.question('Enter schemaId:\n')
-        const name = readlineSync.question('Enter credDef name:\n')
-        logger.info(`Cmd was ${cmd}, going to create cred def`)
-        const credentialDef = await ariesAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, name)
-        logger.info(`Credential definition ${JSON.stringify(await credentialDef.serialize())}`)
       } else if (cmd === '10') {
         const connectionId = readlineSync.question('Enter connection id:\n')
         await ariesAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
