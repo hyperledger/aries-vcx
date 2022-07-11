@@ -26,7 +26,7 @@ pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
 pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg.publish_revocation_primitives(tails_url).await?;
-    let handle = REV_REG_MAP.add(rev_reg)?;
+    REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
 }
 
