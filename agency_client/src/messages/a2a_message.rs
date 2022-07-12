@@ -30,8 +30,6 @@ pub enum A2AMessageV2 {
 
     GetMessages(GetMessages),
     GetMessagesResponse(GetMessagesResponse),
-    GetMessagesByConnections(GetMessages),
-    GetMessagesByConnectionsResponse(MessagesByConnections),
 
     UpdateConnection(UpdateConnection),
     UpdateConnectionResponse(UpdateConnectionResponse),
@@ -111,16 +109,6 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
             "MSGS" => {
                 GetMessagesResponse::deserialize(value)
                     .map(A2AMessageV2::GetMessagesResponse)
-                    .map_err(de::Error::custom)
-            }
-            "GET_MSGS_BY_CONNS" => {
-                GetMessages::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesByConnections)
-                    .map_err(de::Error::custom)
-            }
-            "MSGS_BY_CONNS" => {
-                MessagesByConnections::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesByConnectionsResponse)
                     .map_err(de::Error::custom)
             }
             "UPDATE_CONN_STATUS" => {
@@ -209,9 +197,7 @@ pub enum A2AMessageKinds {
     CreateKey,
     KeyCreated,
 
-    MessageSent,
     GetMessages,
-    GetMessagesByConnections,
     Messages,
     UpdateMessageStatusByConnections,
     MessageStatusUpdatedByConnections,
@@ -232,9 +218,7 @@ impl A2AMessageKinds {
             A2AMessageKinds::SignedUp => MessageFamilies::Onboarding,
             A2AMessageKinds::CreateKey => MessageFamilies::Pairwise,
             A2AMessageKinds::KeyCreated => MessageFamilies::Pairwise,
-            A2AMessageKinds::MessageSent => MessageFamilies::Pairwise,
             A2AMessageKinds::GetMessages => MessageFamilies::Pairwise,
-            A2AMessageKinds::GetMessagesByConnections => MessageFamilies::Pairwise,
             A2AMessageKinds::Messages => MessageFamilies::Pairwise,
             A2AMessageKinds::UpdateConnectionStatus => MessageFamilies::Pairwise,
             A2AMessageKinds::UpdateMessageStatusByConnections => MessageFamilies::Pairwise,
@@ -255,9 +239,7 @@ impl A2AMessageKinds {
             A2AMessageKinds::SignedUp => "SIGNED_UP".to_string(),
             A2AMessageKinds::CreateKey => "CREATE_KEY".to_string(),
             A2AMessageKinds::KeyCreated => "KEY_CREATED".to_string(),
-            A2AMessageKinds::MessageSent => "MSGS_SENT".to_string(),
             A2AMessageKinds::GetMessages => "GET_MSGS".to_string(),
-            A2AMessageKinds::GetMessagesByConnections => "GET_MSGS_BY_CONNS".to_string(),
             A2AMessageKinds::UpdateMessageStatusByConnections => "UPDATE_MSG_STATUS_BY_CONNS".to_string(),
             A2AMessageKinds::MessageStatusUpdatedByConnections => "MSG_STATUS_UPDATED_BY_CONNS".to_string(),
             A2AMessageKinds::Messages => "MSGS".to_string(),

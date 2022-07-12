@@ -144,62 +144,6 @@ impl GetMessagesBuilder {
             _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
         }
     }
-
-    pub async fn download_messages_noauth(&mut self) -> AgencyClientResult<Vec<MessageByConnection>> {
-        trace!("GetMessages::download >>>");
-
-        let data = self.prepare_download_request().await?;
-
-        let response = post_to_agency(&data).await?;
-
-        if mocking::agency_mocks_enabled() && response.len() == 0 {
-            return Ok(Vec::new());
-        }
-
-        let response = self.parse_download_messages_response_noauth(response).await?;
-
-        Ok(response)
-    }
-
-    async fn prepare_download_request(&self) -> AgencyClientResult<Vec<u8>> {
-        let message = A2AMessage::Version2(
-            A2AMessageV2::GetMessages(
-                GetMessages::build(A2AMessageKinds::GetMessagesByConnections,
-                                   self.exclude_payload.clone(),
-                                   self.uids.clone(),
-                                   self.status_codes.clone(),
-                                   self.pairwise_dids.clone()))
-        );
-
-        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
-
-        prepare_message_for_agency(&message, &agency_did).await
-    }
-
-    // todo: This should be removed after public method vcx_messages_download is removed
-    async fn parse_download_messages_response_noauth(&self, response: Vec<u8>) -> AgencyClientResult<Vec<MessageByConnection>> {
-        trace!("parse_download_messages_response >>>");
-        let mut response = parse_response_from_agency(&response).await?;
-
-        trace!("parse_download_messages_response: parsed response {:?}", response);
-        let msgs = match response.remove(0) {
-            A2AMessage::Version2(A2AMessageV2::GetMessagesByConnectionsResponse(res)) => res.msgs,
-            _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesByConnectionsResponse"))
-        };
-
-        let msgs: Vec<MessageByConnection> = futures::stream::iter(msgs.iter())
-            .then(|connection| {
-                async move {
-                    MessageByConnection {
-                        pairwise_did: connection.pairwise_did.clone(),
-                        msgs: futures::stream::iter(connection.msgs.iter()).then(|message| async move { message.decrypt_noauth().await }).collect().await,
-                    }
-                }
-            })
-            .collect::<Vec<MessageByConnection>>()
-            .await;
-        Ok(msgs)
-    }
 }
 
 //Todo: Every GeneralMessage extension, duplicates code
