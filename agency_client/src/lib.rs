@@ -130,63 +130,6 @@ async fn parse_response_from_agency(response: &Vec<u8>) -> AgencyClientResult<Ve
     Ok(vec![message])
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct Bundled<T> {
-    bundled: Vec<T>,
-}
-
-impl<T> Bundled<T> {
-    pub fn create(bundled: T) -> Bundled<T> {
-        let mut vec = Vec::new();
-        vec.push(bundled);
-        Bundled {
-            bundled: vec,
-        }
-    }
-
-    pub fn encode(&self) -> AgencyClientResult<Vec<u8>> where T: serde::Serialize {
-        rmp_serde::to_vec_named(self)
-            .map_err(|err| {
-                error!("Could not convert bundle to messagepack: {}", err);
-                AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, format!("Could not encode bundle: {}", err))
-            })
-    }
-}
-
-pub fn try_i8_bundle(data: Vec<u8>) -> AgencyClientResult<Bundled<Vec<u8>>> {
-    let bundle: Bundled<Vec<i8>> =
-        rmp_serde::from_slice(&data[..])
-            .map_err(|_| {
-                trace!("could not deserialize bundle with i8, will try u8");
-                AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8")
-            })?;
-
-    let mut new_bundle: Bundled<Vec<u8>> = Bundled { bundled: Vec::new() };
-    for i in bundle.bundled {
-        let mut buf: Vec<u8> = Vec::new();
-        for j in i { buf.push(j as u8); }
-        new_bundle.bundled.push(buf);
-    }
-    Ok(new_bundle)
-}
-
-pub fn to_u8(bytes: &Vec<i8>) -> Vec<u8> {
-    bytes.iter().map(|i| *i as u8).collect()
-}
-
-pub fn to_i8(bytes: &Vec<u8>) -> Vec<i8> {
-    bytes.iter().map(|i| *i as i8).collect()
-}
-
-pub fn bundle_from_u8(data: Vec<u8>) -> AgencyClientResult<Bundled<Vec<u8>>> {
-    try_i8_bundle(data.clone())
-        .or_else(|_| rmp_serde::from_slice::<Bundled<Vec<u8>>>(&data[..]))
-        .map_err(|err| {
-            error!("could not deserialize bundle with i8 or u8: {}", err);
-            AgencyClientError::from_msg(AgencyClientErrorKind::InvalidMessagePack, "Could not deserialize bundle with i8 or u8")
-        })
-}
-
 async fn prepare_forward_message(message: Vec<u8>, did: &str) -> AgencyClientResult<Vec<u8>> {
     trace!("prepare_forward_message >>>");
     let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
@@ -273,25 +216,3 @@ pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }
 pub fn delete_connection() -> DeleteConnectionBuilder { DeleteConnectionBuilder::create() }
 
 pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
-
-#[cfg(test)]
-pub mod tests {
-    use super::*;
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_to_u8() {
-        let vec: Vec<i8> = vec![-127, -89, 98, 117, 110, 100, 108, 101, 100, -111, -36, 5, -74];
-
-        let buf = to_u8(&vec);
-        info!("new bundle: {:?}", buf);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_to_i8() {
-        let vec: Vec<u8> = vec![129, 167, 98, 117, 110, 100, 108, 101, 100, 145, 220, 19, 13];
-        let buf = to_i8(&vec);
-        info!("new bundle: {:?}", buf);
-    }
-}

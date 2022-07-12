@@ -5,7 +5,8 @@ use crate::message_type::{MessageFamilies, MessageType, MessageTypes};
 use crate::messages::create_key::{CreateKey, CreateKeyResponse};
 use crate::messages::forward::ForwardV2;
 use crate::messages::get_messages::{GetMessages, GetMessagesResponse, MessagesByConnections};
-use crate::messages::onboarding::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use crate::messages::onboarding::{Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse};
+use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
 use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
 use crate::messages::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 

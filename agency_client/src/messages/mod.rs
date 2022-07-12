@@ -5,3 +5,4 @@ pub mod onboarding;
 pub mod update_connection;
 pub mod update_message;
 pub mod create_key;
+pub mod update_com_method;
