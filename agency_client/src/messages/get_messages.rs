@@ -173,7 +173,7 @@ impl AgencyMessageEncrypted {
         }
     }
 
-    pub async fn decrypt_noauth(&self) -> AgencyClientResult<AgencyMessage> {
+    pub async fn decrypt_noauth(self) -> AgencyClientResult<AgencyMessage> {
         let decrypted_payload = self._noauth_decrypt_v3_message().await?;
         Ok(AgencyMessage {
             status_code: self.status_code.clone(),

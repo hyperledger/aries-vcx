@@ -727,17 +727,19 @@ impl Connection {
                 let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| async move { msg.decrypt_noauth().await.unwrap() }) // todo: no unwrap
+                    .then(|msg| msg.decrypt_noauth() )
+                    .filter_map(|res| async { res.ok() })
                     .collect::<Vec<AgencyMessage>>()
                     .await;
                 Ok(msgs)
             }
             _ => {
                 let expected_sender_vk = self.remote_vk()?;
-                let msgs =futures::stream::iter(self.cloud_agent_info()
+                let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| async { msg.decrypt_auth(&expected_sender_vk).await.unwrap() }) // todo: no unwrap
+                    .then(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .filter_map(|res| async { res.ok() })
                     .collect::<Vec<AgencyMessage>>()
                     .await;
                 Ok(msgs)
