@@ -2,20 +2,20 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use serde::de::Error;
 use crate::agent_utils::ComMethod;
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ComMethodUpdated {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateComMethod {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "comMethod")]
     com_method: ComMethod,
 }
@@ -50,7 +50,7 @@ impl<'de> Deserialize<'de> for ComMethodType {
 impl UpdateComMethod {
     pub fn build(com_method: ComMethod) -> UpdateComMethod {
         UpdateComMethod {
-            msg_type: MessageTypes::build(A2AMessageKinds::UpdateComMethod),
+            msg_type: MessageType::build_v2(A2AMessageKinds::UpdateComMethod),
             com_method,
         }
     }

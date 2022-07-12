@@ -5,32 +5,15 @@ use serde_json::Value;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
-pub const MESSAGE_VERSION_V1: &str = "1.0";
 pub const DID: &str = "did:sov:123456789abcdefghi1234";
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-#[serde(untagged)]
-pub enum MessageTypes {
-    MessageType(MessageType),
-}
-
-impl MessageTypes {
+impl MessageType {
     pub fn build_v2(kind: A2AMessageKinds) -> MessageType {
         MessageType {
             did: DID.to_string(),
             family: kind.family(),
             version: kind.family().version().to_string(),
             type_: kind.name(),
-        }
-    }
-
-    pub fn build(kind: A2AMessageKinds) -> MessageTypes {
-        MessageTypes::MessageType(MessageTypes::build_v2(kind))
-    }
-
-    pub fn name<'a>(&'a self) -> &'a str {
-        match self {
-            MessageTypes::MessageType(type_) => type_.type_.as_str(),
         }
     }
 }
@@ -49,7 +32,6 @@ pub enum MessageFamilies {
     Onboarding,
     Pairwise,
     Configs,
-    CredentialExchange,
     Unknown(String),
 }
 
@@ -60,7 +42,6 @@ impl MessageFamilies {
             MessageFamilies::Onboarding => "1.0",
             MessageFamilies::Pairwise => "1.0",
             MessageFamilies::Configs => "1.0",
-            MessageFamilies::CredentialExchange => "1.0",
             _ => "1.0"
         }
     }
@@ -73,7 +54,6 @@ impl From<String> for MessageFamilies {
             "onboarding" => MessageFamilies::Onboarding,
             "pairwise" => MessageFamilies::Pairwise,
             "configs" => MessageFamilies::Configs,
-            "credential-exchange" => MessageFamilies::CredentialExchange,
             family @ _ => MessageFamilies::Unknown(family.to_string())
         }
     }
@@ -85,7 +65,6 @@ impl ::std::string::ToString for MessageFamilies {
             MessageFamilies::Routing => "routing".to_string(),
             MessageFamilies::Onboarding => "onboarding".to_string(),
             MessageFamilies::Pairwise => "pairwise".to_string(),
-            MessageFamilies::CredentialExchange => "credential_exchange".to_string(),
             MessageFamilies::Configs => "configs".to_string(),
             MessageFamilies::Unknown(family) => family.to_string()
         }

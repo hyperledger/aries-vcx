@@ -4,7 +4,6 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
 
-use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
@@ -13,6 +12,7 @@ use aries_vcx::utils::error;
 use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::execute_async;

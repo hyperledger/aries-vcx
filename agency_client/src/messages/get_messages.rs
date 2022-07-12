@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::{agency_settings, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::testing::mocking;
@@ -12,7 +12,7 @@ use crate::utils::encryption_envelope::EncryptionEnvelope;
 #[serde(rename_all = "camelCase")]
 pub struct GetMessages {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "excludePayload")]
     #[serde(skip_serializing_if = "Option::is_none")]
     exclude_payload: Option<String>,
@@ -30,7 +30,7 @@ impl GetMessages {
     fn build(kind: A2AMessageKinds, exclude_payload: Option<String>, uids: Option<Vec<String>>,
              status_codes: Option<Vec<MessageStatusCode>>, pairwise_dids: Option<Vec<String>>) -> GetMessages {
         GetMessages {
-            msg_type: MessageTypes::build(kind),
+            msg_type: MessageType::build_v2(kind),
             exclude_payload,
             uids,
             status_codes,
@@ -43,7 +43,7 @@ impl GetMessages {
 #[serde(rename_all = "camelCase")]
 pub struct GetMessagesResponse {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     msgs: Vec<AgencyMessageEncrypted>,
 }
 

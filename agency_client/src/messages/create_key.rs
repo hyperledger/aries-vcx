@@ -1,6 +1,6 @@
 use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency, validation};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::AgencyMock;
@@ -10,7 +10,7 @@ use crate::utils::comm::post_to_agency;
 #[serde(rename_all = "camelCase")]
 pub struct CreateKey {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "forDID")]
     for_did: String,
     #[serde(rename = "forDIDVerKey")]
@@ -20,7 +20,7 @@ pub struct CreateKey {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateKeyResponse {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "withPairwiseDID")]
     for_did: String,
     #[serde(rename = "withPairwiseDIDVerKey")]
@@ -76,7 +76,7 @@ impl CreateKeyBuilder {
         trace!("CreateKeyBuilder::prepare_request >>>");
         let message = AgencyMsg::Version2(
             AgencyMessageTypes::CreateKey(CreateKey {
-                msg_type: MessageTypes::MessageType(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
+                msg_type: MessageType::build_v2(A2AMessageKinds::CreateKey),
                 for_did: self.for_did.to_string(),
                 for_verkey: self.for_verkey.to_string(),
             })

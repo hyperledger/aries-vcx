@@ -1,5 +1,5 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use crate::testing::mocking::AgencyMock;
@@ -10,7 +10,7 @@ use crate::utils::comm::post_to_agency;
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMessageStatusByConnections {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     status_code: Option<MessageStatusCode>,
     uids_by_conns: Vec<UIDsByConn>,
 }
@@ -19,7 +19,7 @@ pub struct UpdateMessageStatusByConnections {
 #[serde(rename_all = "camelCase")]
 pub struct UpdateMessageStatusByConnectionsResponse {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     status_code: Option<String>,
 }
 
@@ -74,7 +74,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         let message = AgencyMsg::Version2(
             AgencyMessageTypes::UpdateMessageStatusByConnections(
                 UpdateMessageStatusByConnections {
-                    msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
+                    msg_type: MessageType::build_v2(A2AMessageKinds::UpdateMessageStatusByConnections),
                     uids_by_conns: self.uids_by_conns.clone(),
                     status_code: self.status_code.clone(),
                 }

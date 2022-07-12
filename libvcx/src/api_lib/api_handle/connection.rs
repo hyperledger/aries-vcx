@@ -262,6 +262,32 @@ pub struct MessageByConnection {
     pub msgs: Vec<AgencyMessage>,
 }
 
+pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
+    match status_codes {
+        Some(codes) => {
+            let codes = codes
+                .iter()
+                .map(|code|
+                    ::serde_json::from_str::<MessageStatusCode>(&format!("\"{}\"", code))
+                        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse message status code: {}", err)))
+                ).collect::<VcxResult<Vec<MessageStatusCode>>>()?;
+            Ok(Some(codes))
+        }
+        None => Ok(None)
+    }
+}
+
+pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+    trace!("parse_connection_handles >>> conn_handles: {:?}", conn_handles);
+    let codes = conn_handles
+        .iter()
+        .map(|handle|
+            ::serde_json::from_str::<u32>(handle)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
+        ).collect::<VcxResult<Vec<u32>>>()?;
+    Ok(codes)
+}
+
 pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
     trace!("download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}", conn_handles, status_codes, uids);
     let mut res = Vec::new();

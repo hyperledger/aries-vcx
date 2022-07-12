@@ -3,7 +3,7 @@ use core::u8;
 use uuid::Uuid;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::{MessageType, MessageTypes};
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::{AgencyMsg, AgencyMessageTypes};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -24,7 +24,7 @@ impl ForwardV2 {
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, err))?;
         Ok(AgencyMsg::Version2(AgencyMessageTypes::Forward(
             ForwardV2 {
-                msg_type: MessageTypes::build_v2(A2AMessageKinds::Forward),
+                msg_type: MessageType::build_v2(A2AMessageKinds::Forward),
                 fwd,
                 msg,
                 id: Uuid::new_v4().to_string()

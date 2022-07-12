@@ -1,10 +1,10 @@
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connect {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "fromDID")]
     from_did: String,
     #[serde(rename = "fromDIDVerKey")]
@@ -14,7 +14,7 @@ pub struct Connect {
 impl Connect {
     pub fn build(from_did: &str, from_vk: &str) -> Connect {
         Connect {
-            msg_type: MessageTypes::build(A2AMessageKinds::Connect),
+            msg_type: MessageType::build_v2(A2AMessageKinds::Connect),
             from_did: from_did.to_string(),
             from_vk: from_vk.to_string(),
         }
@@ -24,7 +24,7 @@ impl Connect {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectResponse {
     #[serde(rename = "@type")]
-    pub msg_type: MessageTypes,
+    pub msg_type: MessageType,
     #[serde(rename = "withPairwiseDID")]
     pub from_did: String,
     #[serde(rename = "withPairwiseDIDVerKey")]

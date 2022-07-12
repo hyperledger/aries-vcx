@@ -3,7 +3,7 @@ use serde_json::Value;
 use async_trait::async_trait;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::{GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
-use crate::message_type::MessageTypes;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::utils::comm::post_to_agency;
 
@@ -11,7 +11,7 @@ use crate::utils::comm::post_to_agency;
 #[serde(rename_all = "camelCase")]
 pub struct UpdateConnection {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "statusCode")]
     status_code: ConnectionStatus,
 }
@@ -49,7 +49,7 @@ impl<'de> Deserialize<'de> for ConnectionStatus {
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct UpdateConnectionResponse {
     #[serde(rename = "@type")]
-    msg_type: MessageTypes,
+    msg_type: MessageType,
     #[serde(rename = "statusCode")]
     pub status_code: ConnectionStatus,
 }
@@ -118,7 +118,7 @@ impl GeneralMessage for DeleteConnectionBuilder {
         let message = AgencyMsg::Version2(
             AgencyMessageTypes::UpdateConnection(
                 UpdateConnection {
-                    msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
+                    msg_type: MessageType::build_v2(A2AMessageKinds::UpdateConnectionStatus),
                     status_code: self.status_code.clone(),
                 }
             )

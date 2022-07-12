@@ -1,7 +1,7 @@
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::message_type::{MessageFamilies, MessageType, MessageTypes};
+use crate::message_type::{MessageFamilies, MessageType};
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::create_key::{CreateKey, CreateKeyResponse};
@@ -165,7 +165,7 @@ impl Serialize for AgencyMsg {
 impl<'de> Deserialize<'de> for AgencyMsg {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageTypes = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
+        let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
         if log::log_enabled!(log::Level::Trace) {
             let message_json = serde_json::ser::to_string(&value);
@@ -176,12 +176,9 @@ impl<'de> Deserialize<'de> for AgencyMsg {
             trace!("Found A2AMessage message type {:?}", &message_type);
         }
 
-        match message_type {
-            MessageTypes::MessageType(_) =>
-                AgencyMessageTypes::deserialize(value)
-                    .map(AgencyMsg::Version2)
-                    .map_err(de::Error::custom)
-        }
+        AgencyMessageTypes::deserialize(value)
+            .map(AgencyMsg::Version2)
+            .map_err(de::Error::custom)
     }
 }
 
