@@ -48,6 +48,7 @@ pub mod agent_utils;
 pub mod error;
 pub mod messages;
 pub mod testing;
+pub mod httpclient;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {
