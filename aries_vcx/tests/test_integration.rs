@@ -80,7 +80,7 @@ mod tests {
     use serde_json::Value;
 
     use agency_client::get_message::get_connection_messages;
-    use agency_client::messages::get_messages::{Message, MessageByConnection};
+    use agency_client::messages::get_messages::Message;
     use agency_client::messages::update_message::UIDsByConn;
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::MessageStatusCode;

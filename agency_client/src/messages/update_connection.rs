@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::{GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
 use crate::message_type::MessageTypes;
-use crate::messages::a2a_message::{A2AMessage, A2AMessageKinds, A2AMessageV2};
+use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::utils::comm::post_to_agency;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
@@ -92,7 +92,7 @@ impl DeleteConnectionBuilder {
         let mut response = parse_response_from_agency(response).await?;
 
         match response.remove(0) {
-            A2AMessage::Version2(A2AMessageV2::UpdateConnectionResponse(_)) => Ok(()),
+            AgencyMsg::Version2(AgencyMessageTypes::UpdateConnectionResponse(_)) => Ok(()),
             _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
         }
     }
@@ -115,8 +115,8 @@ impl GeneralMessage for DeleteConnectionBuilder {
     }
 
     async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        let message = A2AMessage::Version2(
-            A2AMessageV2::UpdateConnection(
+        let message = AgencyMsg::Version2(
+            AgencyMessageTypes::UpdateConnection(
                 UpdateConnection {
                     msg_type: MessageTypes::build(A2AMessageKinds::UpdateConnectionStatus),
                     status_code: self.status_code.clone(),

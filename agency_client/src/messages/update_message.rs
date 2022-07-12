@@ -1,6 +1,6 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::messages::a2a_message::{A2AMessage, A2AMessageKinds, A2AMessageV2};
+use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use crate::testing::mocking::AgencyMock;
 use crate::testing::test_constants;
@@ -71,8 +71,8 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        let message = A2AMessage::Version2(
-            A2AMessageV2::UpdateMessageStatusByConnections(
+        let message = AgencyMsg::Version2(
+            AgencyMessageTypes::UpdateMessageStatusByConnections(
                 UpdateMessageStatusByConnections {
                     msg_type: MessageTypes::build(A2AMessageKinds::UpdateMessageStatusByConnections),
                     uids_by_conns: self.uids_by_conns.clone(),
@@ -91,7 +91,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         let mut response = parse_response_from_agency(response).await?;
 
         match response.remove(0) {
-            A2AMessage::Version2(A2AMessageV2::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
+            AgencyMsg::Version2(AgencyMessageTypes::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
             _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
         }
     }

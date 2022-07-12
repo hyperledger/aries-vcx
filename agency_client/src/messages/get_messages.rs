@@ -3,7 +3,7 @@ use futures::StreamExt;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
 use crate::{agency_settings, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
-use crate::messages::a2a_message::{A2AMessage, A2AMessageKinds, A2AMessageV2};
+use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::testing::mocking;
 use crate::utils::comm::post_to_agency;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -47,22 +47,6 @@ pub struct GetMessagesResponse {
     msgs: Vec<Message>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct MessagesByConnections {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "msgsByConns")]
-    #[serde(default)]
-    msgs: Vec<MessageByConnection>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-pub struct MessageByConnection {
-    #[serde(rename = "pairwiseDID")]
-    pub pairwise_did: String,
-    pub msgs: Vec<Message>,
-}
-
 #[derive(Debug)]
 pub struct GetMessagesBuilder {
     to_did: String,
@@ -91,31 +75,13 @@ impl GetMessagesBuilder {
         }
     }
 
-    #[cfg(test)]
-    pub fn create_v1() -> GetMessagesBuilder {
-        GetMessagesBuilder::create()
-    }
-
     pub fn uid(&mut self, uids: Option<Vec<String>>) -> AgencyClientResult<&mut Self> {
-        //Todo: validate msg_uid??
         self.uids = uids;
         Ok(self)
     }
 
     pub fn status_codes(&mut self, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<&mut Self> {
         self.status_codes = status_codes;
-        Ok(self)
-    }
-
-    pub fn pairwise_dids(&mut self, pairwise_dids: Option<Vec<String>>) -> AgencyClientResult<&mut Self> {
-        //Todo: validate msg_uid??
-        self.pairwise_dids = pairwise_dids;
-        Ok(self)
-    }
-
-    pub fn include_edge_payload(&mut self, payload: &str) -> AgencyClientResult<&mut Self> {
-        //todo: is this a json value, String??
-        self.exclude_payload = Some(payload.to_string());
         Ok(self)
     }
 
@@ -137,7 +103,7 @@ impl GetMessagesBuilder {
         trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
 
         match response.remove(0) {
-            A2AMessage::Version2(A2AMessageV2::GetMessagesResponse(res)) => {
+            AgencyMsg::Version2(AgencyMessageTypes::GetMessagesResponse(res)) => {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
             }
@@ -158,8 +124,8 @@ impl GeneralMessage for GetMessagesBuilder {
 
     async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_request >>");
-        let message = A2AMessage::Version2(
-            A2AMessageV2::GetMessages(
+        let message = AgencyMsg::Version2(
+            AgencyMessageTypes::GetMessages(
                 GetMessages::build(A2AMessageKinds::GetMessages,
                                    self.exclude_payload.clone(),
                                    self.uids.clone(),
@@ -169,14 +135,6 @@ impl GeneralMessage for GetMessagesBuilder {
 
         prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct DeliveryDetails {
-    to: String,
-    status_code: String,
-    last_updated_date_time: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -198,9 +156,6 @@ pub struct Message {
     pub status_code: MessageStatusCode,
     pub payload: Option<MessagePayload>,
     pub uid: String,
-    pub ref_msg_id: Option<String>,
-    #[serde(skip_deserializing)]
-    pub delivery_details: Vec<DeliveryDetails>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub decrypted_msg: Option<String>,
 }

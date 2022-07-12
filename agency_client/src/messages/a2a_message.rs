@@ -2,17 +2,19 @@ use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::message_type::{MessageFamilies, MessageType, MessageTypes};
+use crate::messages::connect::{Connect, ConnectResponse};
+use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::create_key::{CreateKey, CreateKeyResponse};
 use crate::messages::forward::ForwardV2;
-use crate::messages::get_messages::{GetMessages, GetMessagesResponse, MessagesByConnections};
-use crate::messages::onboarding::{Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse};
+use crate::messages::get_messages::{GetMessages, GetMessagesResponse};
+use crate::messages::sign_up::{SignUp, SignUpResponse};
 use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
 use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
 use crate::messages::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
-pub enum A2AMessageV2 {
+pub enum AgencyMessageTypes {
     /// routing
     Forward(ForwardV2),
 
@@ -41,7 +43,7 @@ pub enum A2AMessageV2 {
     ComMethodUpdated(ComMethodUpdated),
 }
 
-impl<'de> Deserialize<'de> for A2AMessageV2 {
+impl<'de> Deserialize<'de> for AgencyMessageTypes {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
@@ -58,87 +60,87 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
         match message_type.type_.as_str() {
             "FWD" => {
                 ForwardV2::deserialize(value)
-                    .map(A2AMessageV2::Forward)
+                    .map(AgencyMessageTypes::Forward)
                     .map_err(de::Error::custom)
             }
             "CONNECT" => {
                 Connect::deserialize(value)
-                    .map(A2AMessageV2::Connect)
+                    .map(AgencyMessageTypes::Connect)
                     .map_err(de::Error::custom)
             }
             "CONNECTED" => {
                 ConnectResponse::deserialize(value)
-                    .map(A2AMessageV2::ConnectResponse)
+                    .map(AgencyMessageTypes::ConnectResponse)
                     .map_err(de::Error::custom)
             }
             "SIGNUP" => {
                 SignUp::deserialize(value)
-                    .map(A2AMessageV2::SignUp)
+                    .map(AgencyMessageTypes::SignUp)
                     .map_err(de::Error::custom)
             }
             "SIGNED_UP" => {
                 SignUpResponse::deserialize(value)
-                    .map(A2AMessageV2::SignUpResponse)
+                    .map(AgencyMessageTypes::SignUpResponse)
                     .map_err(de::Error::custom)
             }
             "CREATE_AGENT" => {
                 CreateAgent::deserialize(value)
-                    .map(A2AMessageV2::CreateAgent)
+                    .map(AgencyMessageTypes::CreateAgent)
                     .map_err(de::Error::custom)
             }
             "AGENT_CREATED" => {
                 CreateAgentResponse::deserialize(value)
-                    .map(A2AMessageV2::CreateAgentResponse)
+                    .map(AgencyMessageTypes::CreateAgentResponse)
                     .map_err(de::Error::custom)
             }
             "CREATE_KEY" => {
                 CreateKey::deserialize(value)
-                    .map(A2AMessageV2::CreateKey)
+                    .map(AgencyMessageTypes::CreateKey)
                     .map_err(de::Error::custom)
             }
             "KEY_CREATED" => {
                 CreateKeyResponse::deserialize(value)
-                    .map(A2AMessageV2::CreateKeyResponse)
+                    .map(AgencyMessageTypes::CreateKeyResponse)
                     .map_err(de::Error::custom)
             }
             "GET_MSGS" => {
                 GetMessages::deserialize(value)
-                    .map(A2AMessageV2::GetMessages)
+                    .map(AgencyMessageTypes::GetMessages)
                     .map_err(de::Error::custom)
             }
             "MSGS" => {
                 GetMessagesResponse::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesResponse)
+                    .map(AgencyMessageTypes::GetMessagesResponse)
                     .map_err(de::Error::custom)
             }
             "UPDATE_CONN_STATUS" => {
                 UpdateConnection::deserialize(value)
-                    .map(A2AMessageV2::UpdateConnection)
+                    .map(AgencyMessageTypes::UpdateConnection)
                     .map_err(de::Error::custom)
             }
             "CONN_STATUS_UPDATED" => {
                 UpdateConnectionResponse::deserialize(value)
-                    .map(A2AMessageV2::UpdateConnectionResponse)
+                    .map(AgencyMessageTypes::UpdateConnectionResponse)
                     .map_err(de::Error::custom)
             }
             "UPDATE_MSG_STATUS_BY_CONNS" => {
                 UpdateMessageStatusByConnections::deserialize(value)
-                    .map(A2AMessageV2::UpdateMessageStatusByConnections)
+                    .map(AgencyMessageTypes::UpdateMessageStatusByConnections)
                     .map_err(de::Error::custom)
             }
             "MSG_STATUS_UPDATED_BY_CONNS" => {
                 UpdateMessageStatusByConnectionsResponse::deserialize(value)
-                    .map(A2AMessageV2::UpdateMessageStatusByConnectionsResponse)
+                    .map(AgencyMessageTypes::UpdateMessageStatusByConnectionsResponse)
                     .map_err(de::Error::custom)
             }
             "UPDATE_COM_METHOD" => {
                 UpdateComMethod::deserialize(value)
-                    .map(A2AMessageV2::UpdateComMethod)
+                    .map(AgencyMessageTypes::UpdateComMethod)
                     .map_err(de::Error::custom)
             }
             "COM_METHOD_UPDATED" => {
                 ComMethodUpdated::deserialize(value)
-                    .map(A2AMessageV2::ComMethodUpdated)
+                    .map(AgencyMessageTypes::ComMethodUpdated)
                     .map_err(de::Error::custom)
             }
             _ => Err(de::Error::custom("Unexpected @type field structure."))
@@ -148,19 +150,19 @@ impl<'de> Deserialize<'de> for A2AMessageV2 {
 
 // We don't want to use this anymore
 #[derive(Debug)]
-pub enum A2AMessage {
-    Version2(A2AMessageV2),
+pub enum AgencyMsg {
+    Version2(AgencyMessageTypes),
 }
 
-impl Serialize for A2AMessage {
+impl Serialize for AgencyMsg {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         match self {
-            A2AMessage::Version2(msg) => msg.serialize(serializer).map_err(ser::Error::custom)
+            AgencyMsg::Version2(msg) => msg.serialize(serializer).map_err(ser::Error::custom)
         }
     }
 }
 
-impl<'de> Deserialize<'de> for A2AMessage {
+impl<'de> Deserialize<'de> for AgencyMsg {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageTypes = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
@@ -176,8 +178,8 @@ impl<'de> Deserialize<'de> for A2AMessage {
 
         match message_type {
             MessageTypes::MessageType(_) =>
-                A2AMessageV2::deserialize(value)
-                    .map(A2AMessage::Version2)
+                AgencyMessageTypes::deserialize(value)
+                    .map(AgencyMsg::Version2)
                     .map_err(de::Error::custom)
         }
     }

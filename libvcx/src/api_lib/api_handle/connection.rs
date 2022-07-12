@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use aries_vcx::agency_client::messages::get_messages::MessageByConnection;
+use aries_vcx::agency_client::messages::get_messages::Message;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
@@ -253,6 +253,13 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection.get_connection_info().map_err(|err| err.into())
     })
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+pub struct MessageByConnection {
+    #[serde(rename = "pairwiseDID")]
+    pub pairwise_did: String,
+    pub msgs: Vec<Message>,
 }
 
 pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {

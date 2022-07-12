@@ -1,7 +1,7 @@
 use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency, validation};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::messages::a2a_message::{A2AMessage, A2AMessageKinds, A2AMessageV2};
+use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
 use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::AgencyMock;
 use crate::utils::comm::post_to_agency;
@@ -74,8 +74,8 @@ impl CreateKeyBuilder {
 
     async fn prepare_request(&self) -> AgencyClientResult<Vec<u8>> {
         trace!("CreateKeyBuilder::prepare_request >>>");
-        let message = A2AMessage::Version2(
-            A2AMessageV2::CreateKey(CreateKey {
+        let message = AgencyMsg::Version2(
+            AgencyMessageTypes::CreateKey(CreateKey {
                 msg_type: MessageTypes::MessageType(MessageTypes::build_v2(A2AMessageKinds::CreateKey)),
                 for_did: self.for_did.to_string(),
                 for_verkey: self.for_verkey.to_string(),
@@ -90,7 +90,7 @@ impl CreateKeyBuilder {
     async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<(String, String)> {
         let mut response = parse_response_from_agency(response).await?;
         match response.remove(0) {
-            A2AMessage::Version2(A2AMessageV2::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
+            AgencyMsg::Version2(AgencyMessageTypes::CreateKeyResponse(res)) => Ok((res.for_did, res.for_verkey)),
             _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse))
         }
     }

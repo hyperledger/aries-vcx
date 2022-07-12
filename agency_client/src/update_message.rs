@@ -31,19 +31,3 @@ pub async fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<
         .send_secure()
         .await
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::messages::update_message::UpdateMessageStatusByConnectionsBuilder;
-    use crate::testing::mocking;
-    use crate::testing::test_constants::AGENCY_MSG_STATUS_UPDATED_BY_CONNS;
-    use crate::testing::test_utils::SetupMocks;
-
-    #[async_std::test]
-    #[cfg(feature = "general_test")]
-    async fn test_parse_update_messages_response() {
-        let _setup = SetupMocks::init();
-        mocking::AgencyMockDecrypted::set_next_decrypted_response(AGENCY_MSG_STATUS_UPDATED_BY_CONNS);
-        UpdateMessageStatusByConnectionsBuilder::create().parse_response(&Vec::from("<something_ecrypted>")).await.unwrap();
-    }
-}

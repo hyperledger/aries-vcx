@@ -1,6 +1,6 @@
 use crate::{agency_settings, GeneralMessage, get_messages, MessageStatusCode};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::get_messages::{Message, MessageByConnection};
+use crate::messages::get_messages::Message;
 
 pub async fn get_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<Message>> {
     trace!("get_connection_messages >>> pw_did: {}, pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
