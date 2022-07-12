@@ -63,7 +63,7 @@ pub extern fn vcx_filter_proof_requests_by_name(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;

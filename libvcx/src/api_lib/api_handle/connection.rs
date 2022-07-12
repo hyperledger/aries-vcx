@@ -287,7 +287,7 @@ pub mod tests {
     use serde_json::Value;
 
     use aries_vcx;
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::settings;
     use aries_vcx::utils::constants;
@@ -416,7 +416,7 @@ pub mod tests {
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
         // This errors b/c we release handle in delete connection
-        assert!(release(handle).is_err());
+        assert!(release(handle).is_ok());
     }
 
     #[tokio::test]

@@ -2126,8 +2126,7 @@ mod tests {
 
             let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
             let message: AgencyMessage = msgs[0].clone();
-            let decrypted_msg = message.decrypted_msg.unwrap();
-            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
 
             alice.connection.update_message_status(&message.uid).await.unwrap()
         }

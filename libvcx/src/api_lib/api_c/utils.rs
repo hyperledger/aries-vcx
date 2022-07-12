@@ -586,19 +586,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    #[allow(deprecated)]
-    fn test_messages_download() {
-        let _setup = SetupMocks::init();
-
-        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_messages_download(cb.command_handle, ptr::null_mut(), ptr::null_mut(), ptr::null_mut(), Some(cb.get_callback())), error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_messages_update_status() {
         let _setup = SetupMocks::init();
 

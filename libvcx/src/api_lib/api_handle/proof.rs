@@ -139,8 +139,8 @@ pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
+    use aries_vcx::agency_client::testing::mocking::HttpClientMockResponse;
 
-    use aries_vcx::agency_client::mocking::HttpClientMockResponse;
     use aries_vcx::utils::constants::{PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;

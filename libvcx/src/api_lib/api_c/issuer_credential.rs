@@ -846,7 +846,6 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::settings;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;

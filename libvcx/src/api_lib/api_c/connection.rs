@@ -1322,6 +1322,7 @@ mod tests {
 
     use serde_json::Value;
 
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::error;
@@ -1332,7 +1333,6 @@ mod tests {
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use crate::aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
     use super::*;
 
