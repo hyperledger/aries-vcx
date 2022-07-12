@@ -1578,27 +1578,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
     return vcx_disclosed_proof_release(proofHandle);
 }
 
-- (void)downloadMessages:(NSString *)messageStatus
-                    uid_s:(NSString *)uid_s
-                  pwdids:(NSString *)pwdids
-              completion:(void (^)(NSError *error, NSString* messages))completion{
-    vcx_error_t ret;
-    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
-    const char * message_status = [messageStatus cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * uids = [uid_s cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * pw_dids = [pwdids cStringUsingEncoding:NSUTF8StringEncoding];
-    ret = vcx_messages_download(handle, message_status, uids, pw_dids, VcxWrapperCommonStringCallback);
-
-    if( ret != 0 )
-    {
-        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            completion([NSError errorFromVcxError: ret], nil);
-        });
-    }
-}
-
 - (void)downloadMessagesV2:(NSString *)connectionHandles
             messageStatus:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s

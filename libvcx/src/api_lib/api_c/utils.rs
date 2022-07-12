@@ -209,7 +209,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
             }
             Err(err) => {
                 set_current_error_vcx(&err);
-                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                error!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                       command_handle, err, "null");
 
                 cb(command_handle, err.into(), ptr::null_mut());

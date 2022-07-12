@@ -319,30 +319,3 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
     throw new VCXInternalError(err);
   }
 }
-
-export async function downloadAllMessages({ status, uids, pwdids }: IConnectionDownloadAllMessages): Promise<string> {
-  try {
-    return await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_messages_download(0, status, uids, pwdids, cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (xhandle: number, err: number, messages: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(messages);
-          },
-        ),
-    );
-  } catch (err) {
-    throw new VCXInternalError(err);
-  }
-}

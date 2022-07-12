@@ -1301,7 +1301,7 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
                 };
             }
             Err(err) => {
-                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                error!("vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                       command_handle, err, "null");
 
                 cb(command_handle, err.into(), ptr::null_mut());
