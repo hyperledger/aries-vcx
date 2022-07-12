@@ -79,8 +79,7 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use agency_client::get_message::get_connection_messages;
-    use agency_client::messages::get_messages::Message;
+    use agency_client::messages::get_messages::AgencyMessage;
     use agency_client::messages::update_message::UIDsByConn;
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::MessageStatusCode;
@@ -1464,7 +1463,7 @@ mod tests {
         institution.activate().await.unwrap();
         let mut msgs = institution_to_consumer.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+        let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuse(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
@@ -1478,7 +1477,7 @@ mod tests {
         consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
@@ -2011,14 +2010,14 @@ mod tests {
         institution.activate().await.unwrap();
         let msgs = faber_to_alice.download_messages(None, None).await.unwrap();
         assert_eq!(msgs.len(), 2);
-        let ack_msg = msgs.iter().find(|msg| msg.decrypted_msg.clone().unwrap().contains("https://didcomm.org/notification/1.0/ack")).unwrap();
+        let ack_msg = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("https://didcomm.org/notification/1.0/ack")).unwrap();
         assert_eq!(ack_msg.status_code, MessageStatusCode::Reviewed);
-        let hello_msg  = msgs.iter().find(|msg| msg.decrypted_msg.clone().unwrap().contains("Hello Faber")).unwrap();
+        let hello_msg  = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
         assert_eq!(hello_msg.status_code, MessageStatusCode::Received);
 
         let received = faber_to_alice.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 1);
-        received.iter().find(|msg| msg.decrypted_msg.clone().unwrap().contains("Hello Faber")).unwrap();
+        received.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
 
         let msgs_by_uid = faber_to_alice.download_messages(None, Some(vec![hello_msg.uid.clone()])).await.unwrap();
         assert_eq!(msgs_by_uid.len(), 1);
@@ -2126,7 +2125,7 @@ mod tests {
             alice.activate().await.unwrap();
 
             let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
-            let message: Message = msgs[0].clone();
+            let message: AgencyMessage = msgs[0].clone();
             let decrypted_msg = message.decrypted_msg.unwrap();
             let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
 

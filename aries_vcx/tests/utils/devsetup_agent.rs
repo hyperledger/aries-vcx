@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod test {
-    use agency_client::messages::get_messages::Message;
+    use agency_client::messages::get_messages::AgencyMessage;
     use agency_client::MessageStatusCode;
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
@@ -72,9 +72,9 @@ pub mod test {
         Ok(determine_message_type(a2a_message))
     }
 
-    async fn filter_messages(messages: Vec<Message>, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
+    async fn filter_messages(messages: Vec<AgencyMessage>, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
         for message in messages.into_iter() {
-            let decrypted_msg = &message.decrypted_msg.unwrap();
+            let decrypted_msg = &message.decrypted_msg;
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
                 return Some(VcxAgencyMessage {

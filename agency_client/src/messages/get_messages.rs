@@ -39,12 +39,12 @@ impl GetMessages {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GetMessagesResponse {
     #[serde(rename = "@type")]
     msg_type: MessageTypes,
-    msgs: Vec<Message>,
+    msgs: Vec<AgencyMessageEncrypted>,
 }
 
 #[derive(Debug)]
@@ -85,7 +85,7 @@ impl GetMessagesBuilder {
         Ok(self)
     }
 
-    pub async fn send_secure(&mut self) -> AgencyClientResult<Vec<Message>> {
+    pub async fn send_secure(&mut self) -> AgencyClientResult<Vec<AgencyMessageEncrypted>> {
         debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
 
         let data = self.prepare_request().await?;
@@ -95,7 +95,7 @@ impl GetMessagesBuilder {
         self.parse_response(response).await
     }
 
-    async fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<Message>> {
+    async fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<AgencyMessageEncrypted>> {
         trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
 
         let mut response = parse_response_from_agency(&response).await?;
@@ -149,43 +149,46 @@ impl Default for MessagePayload {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Message {
-    #[serde(rename = "statusCode")]
+pub struct AgencyMessageEncrypted {
     pub status_code: MessageStatusCode,
-    pub payload: Option<MessagePayload>,
+    pub payload: MessagePayload,
     pub uid: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decrypted_msg: Option<String>,
 }
 
-impl Message {
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AgencyMessage {
+    pub status_code: MessageStatusCode,
+    pub uid: String,
+    pub decrypted_msg: String,
+}
+
+impl AgencyMessageEncrypted {
     pub fn payload(&self) -> AgencyClientResult<Vec<u8>> {
-        match self.payload {
-            Some(MessagePayload::V2(ref payload)) => serde_json::to_vec(payload).map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
-            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidState)),
+        match &self.payload {
+            MessagePayload::V2(payload) => serde_json::to_vec(payload)
+                .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
         }
     }
 
-    pub async fn decrypt_noauth(&self) -> Message {
-        let mut new_message = self.clone();
-        if let Ok(decrypted_msg) = self._noauth_decrypt_v3_message().await {
-            new_message.decrypted_msg = Some(decrypted_msg);
-        } else {
-            new_message.decrypted_msg = None;
-        }
-        new_message.payload = None;
-        new_message
+    pub async fn decrypt_noauth(&self) -> AgencyClientResult<AgencyMessage> {
+        let decrypted_payload = self._noauth_decrypt_v3_message().await?;
+        Ok(AgencyMessage {
+            status_code: self.status_code.clone(),
+            uid: self.uid.clone(),
+            decrypted_msg: decrypted_payload
+        })
     }
 
-    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<Message> {
-        let mut new_message = self.clone();
-        let decrypted_msg = self._auth_decrypt_v3_message(expected_sender_vk).await?;
-        trace!("decrypt_auth >>> decrypted_msg: {:?}", decrypted_msg);
-        new_message.decrypted_msg = Some(decrypted_msg);
-        new_message.payload = None;
-        Ok(new_message)
+    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<AgencyMessage> {
+        let decrypted_payload = self._auth_decrypt_v3_message(expected_sender_vk).await?;
+        Ok(AgencyMessage {
+            status_code: self.status_code.clone(),
+            uid: self.uid.clone(),
+            decrypted_msg: decrypted_payload
+        })
     }
 
     async fn _noauth_decrypt_v3_message(&self) -> AgencyClientResult<String> {

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use agency_client::messages::get_messages::Message;
+use agency_client::messages::get_messages::{AgencyMessage, AgencyMessageEncrypted};
 use agency_client::messages::update_message::UIDsByConn;
 
-use crate::agency_client::get_message::get_connection_messages;
+use crate::agency_client::get_message::get_encrypted_connection_messages;
 use crate::agency_client::MessageStatusCode;
 use crate::agency_client::update_connection::send_delete_connection_message;
 use crate::agency_client::update_message::update_messages as update_messages_status;
@@ -89,9 +89,9 @@ impl CloudAgentInfo {
             .map_err(|err| err.into())
     }
 
-    pub async fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<Message>> {
+    pub async fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<AgencyMessageEncrypted>> {
         trace!("CloudAgentInfo::download_encrypted_messages >>>");
-        get_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
+        get_encrypted_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
             .await
             .map_err(|err| err.into())
     }
@@ -124,7 +124,7 @@ impl CloudAgentInfo {
         Ok(message)
     }
 
-    async fn decrypt_decode_messages(&self, messages: &Vec<Message>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages(&self, messages: &Vec<AgencyMessageEncrypted>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
             a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(&message, expected_sender_vk).await?);
@@ -132,7 +132,7 @@ impl CloudAgentInfo {
         return Ok(a2a_messages);
     }
 
-    async fn decrypt_decode_messages_noauth(&self, messages: &Vec<Message>) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages_noauth(&self, messages: &Vec<AgencyMessageEncrypted>) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
             a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(&message).await?);
@@ -140,11 +140,11 @@ impl CloudAgentInfo {
         return Ok(a2a_messages);
     }
 
-    async fn decrypt_decode_message(&self, message: &Message, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
+    async fn decrypt_decode_message(&self, message: &AgencyMessageEncrypted, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
         EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk).await
     }
 
-    async fn decrypt_decode_message_noauth(&self, message: &Message) -> VcxResult<A2AMessage> {
+    async fn decrypt_decode_message_noauth(&self, message: &AgencyMessageEncrypted) -> VcxResult<A2AMessage> {
         EncryptionEnvelope::anon_unpack(message.payload()?).await
     }
 }
