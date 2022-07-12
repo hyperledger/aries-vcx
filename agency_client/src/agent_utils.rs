@@ -1,137 +1,11 @@
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
-
-use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, parse_response_from_agency, prepare_message_for_agency};
+use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageTypes;
-use crate::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
-use crate::utils::{constants, error_utils};
+use crate::messages::a2a_message::{A2AMessage, A2AMessageV2};
+use crate::messages::onboarding::{ComMethodType, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
+use crate::testing::mocking::{agency_mocks_enabled, AgencyMockDecrypted};
+use crate::testing::test_constants;
 use crate::utils::comm::post_to_agency;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Connect {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "fromDID")]
-    from_did: String,
-    #[serde(rename = "fromDIDVerKey")]
-    from_vk: String,
-}
-
-impl Connect {
-    fn build(from_did: &str, from_vk: &str) -> Connect {
-        Connect {
-            msg_type: MessageTypes::build(A2AMessageKinds::Connect),
-            from_did: from_did.to_string(),
-            from_vk: from_vk.to_string(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ConnectResponse {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "withPairwiseDID")]
-    from_did: String,
-    #[serde(rename = "withPairwiseDIDVerKey")]
-    from_vk: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SignUp {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-}
-
-impl SignUp {
-    fn build() -> SignUp {
-        SignUp {
-            msg_type: MessageTypes::build(A2AMessageKinds::SignUp),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SignUpResponse {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateAgent {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-}
-
-impl CreateAgent {
-    fn build() -> CreateAgent {
-        CreateAgent {
-            msg_type: MessageTypes::build(A2AMessageKinds::CreateAgent),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CreateAgentResponse {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "withPairwiseDID")]
-    from_did: String,
-    #[serde(rename = "withPairwiseDIDVerKey")]
-    from_vk: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ComMethodUpdated {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct UpdateComMethod {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "comMethod")]
-    com_method: ComMethod,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ComMethodType {
-    A2A,
-    Webhook,
-}
-
-impl Serialize for ComMethodType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let value = match self {
-            ComMethodType::A2A => "1",
-            ComMethodType::Webhook => "2",
-        };
-        Value::String(value.to_string()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for ComMethodType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        match value.as_str() {
-            Some("1") => Ok(ComMethodType::A2A),
-            Some("2") => Ok(ComMethodType::Webhook),
-            _ => Err(de::Error::custom("Unexpected communication method type."))
-        }
-    }
-}
-
-impl UpdateComMethod {
-    fn build(com_method: ComMethod) -> UpdateComMethod {
-        UpdateComMethod {
-            msg_type: MessageTypes::build(A2AMessageKinds::UpdateComMethod),
-            com_method,
-        }
-    }
-}
+use crate::utils::error_utils;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ComMethod {
@@ -170,7 +44,7 @@ pub async fn connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClien
 
 pub async fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     info!("onboarding >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
-    AgencyMockDecrypted::set_next_decrypted_response(constants::CONNECTED_RESPONSE_DECRYPTED);
+    AgencyMockDecrypted::set_next_decrypted_response(test_constants::CONNECTED_RESPONSE_DECRYPTED);
     let (agency_pw_did, _) = connect(my_did, my_vk, agency_did).await?;
 
     /* STEP 2 - REGISTER */
@@ -178,7 +52,7 @@ pub async fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyCl
         A2AMessageV2::SignUp(SignUp::build())
     );
 
-    AgencyMockDecrypted::set_next_decrypted_response(constants::REGISTER_RESPONSE_DECRYPTED);
+    AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
     let mut response = send_message_to_agency(&message, &agency_pw_did).await?;
 
     let _response: SignUpResponse =
@@ -191,7 +65,7 @@ pub async fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyCl
     let message = A2AMessage::Version2(
         A2AMessageV2::CreateAgent(CreateAgent::build())
     );
-    AgencyMockDecrypted::set_next_decrypted_response(constants::AGENT_CREATED_DECRYPTED);
+    AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
     let mut response = send_message_to_agency(&message, &agency_pw_did).await?;
 
     let response: CreateAgentResponse =
@@ -251,7 +125,8 @@ pub async fn send_message_to_agency(message: &A2AMessage, did: &str) -> AgencyCl
 mod tests {
     use std::env;
 
-    use crate::agent_utils::{ComMethodType, update_agent_webhook};
+    use crate::agent_utils::update_agent_webhook;
+    use crate::messages::onboarding::ComMethodType;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -267,21 +142,11 @@ mod tests {
         assert_eq!(ComMethodType::Webhook, serde_json::from_str::<ComMethodType>("\"2\"").unwrap());
     }
 
-    #[test]
-    #[cfg(feature = "to_restore")]
-    #[cfg(feature = "general_test")]
-    fn test_update_agent_info() {
-        let _setup = SetupMocks::init();
-        // todo: Need to mock agency v2 response, only agency v1 mocking works
-        update_agent_info("123", "value").unwrap();
-    }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agent_webhook_real() {
         let _setup = SetupLibraryAgencyV2::init().await;
-
-        ::utils::devsetup::set_consumer(None);
         update_agent_webhook("https://example.org").unwrap();
     }
 }

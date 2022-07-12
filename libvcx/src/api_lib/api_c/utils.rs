@@ -5,7 +5,7 @@ use libc::c_char;
 use serde_json;
 
 use aries_vcx::agency_client::get_message::{parse_connection_handles, parse_status_codes};
-use aries_vcx::agency_client::mocking::AgencyMock;
+use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
@@ -533,8 +533,8 @@ pub extern fn vcx_rotate_verkey_apply(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
-                                did: *const c_char,
-                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+                                         did: *const c_char,
+                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
     info!("vcx_get_verkey_from_wallet >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
@@ -565,8 +565,8 @@ pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
-                                did: *const c_char,
-                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+                                         did: *const c_char,
+                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
     info!("vcx_get_verkey_from_ledger >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
@@ -597,9 +597,9 @@ pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
-                                submitter_did: *const c_char,
-                                seq_no: i32,
-                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
+                                 submitter_did: *const c_char,
+                                 seq_no: i32,
+                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
     info!("vcx_get_ledger_txn >>>");
 
     check_useful_opt_c_str!(submitter_did, VcxErrorKind::InvalidOption);
@@ -632,7 +632,7 @@ pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::provision::AgentProvisionConfig;

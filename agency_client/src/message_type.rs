@@ -2,7 +2,7 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::A2AMessageKinds;
+use crate::messages::a2a_message::A2AMessageKinds;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 pub const MESSAGE_VERSION_V1: &str = "1.0";

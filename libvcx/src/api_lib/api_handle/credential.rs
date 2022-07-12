@@ -5,7 +5,7 @@ use aries_vcx::{
     messages::a2a::A2AMessage,
     messages::issuance::credential_offer::CredentialOffer,
 };
-use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
@@ -283,7 +283,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
 pub mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED};
+    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED, CREDENTIAL_SM_OFFER_RECEIVED};
     use aries_vcx::utils::mockdata::mockdata_credex;
 
     use crate::api_lib::api_handle::connection;
@@ -407,26 +407,6 @@ pub mod tests {
         let offer_attrs: serde_json::Value = serde_json::from_str(&offer_attrs).unwrap();
         let offer_attrs_expected: serde_json::Value = serde_json::from_str(mockdata_credex::OFFERED_ATTRIBUTES).unwrap();
         assert_eq!(offer_attrs, offer_attrs_expected);
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // todo: generate_credential_request_msg is not implemented for v3
-    async fn test_get_request_msg() {
-        let _setup = SetupMocks::init();
-
-        let connection_h = connection::tests::build_test_connection_inviter_invited();
-
-        let offer = _get_offer(connection_h).await;
-
-        let my_pw_did = connection::get_pw_did(connection_h).unwrap();
-        let their_pw_did = connection::get_their_pw_did(connection_h).unwrap();
-
-        let c_h = credential_create_with_offer("TEST_CREDENTIAL", &offer).unwrap();
-        assert_eq!(HolderState::OfferReceived as u32, get_state(c_h).unwrap());
-
-        let msg = generate_credential_request_msg(c_h, &my_pw_did, &their_pw_did).unwrap();
-        // serde_json::from_str::<CredentialRequest>(&msg).unwrap();
     }
 
     #[tokio::test]

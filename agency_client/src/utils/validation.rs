@@ -44,12 +44,6 @@ pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
     }
 }
 
-pub fn validate_url(url: &str) -> AgencyClientResult<String> {
-    Url::parse(url)
-        .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidUrl, err))?;
-    Ok(url.to_string())
-}
-
 #[cfg(test)]
 mod tests {
     // use utils::devsetup::SetupDefaults;

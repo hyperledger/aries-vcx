@@ -78,13 +78,15 @@ mod tests {
 
     use rand::Rng;
     use serde_json::Value;
+    use agency_client::messages::get_messages::{Message, MessageByConnection};
+    use agency_client::messages::update_message::UIDsByConn;
 
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::get_message::download_messages_noauth;
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::agency_client::payload::PayloadKinds;
-    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
+    use aries_vcx::agency_client::update_message::update_agency_messages;
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -2135,7 +2137,7 @@ mod tests {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            use aries_vcx::agency_client::get_message::{MessageByConnection, Message};
+            use aries_vcx::agency_client::get_message::{};
 
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 

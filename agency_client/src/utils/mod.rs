@@ -1,14 +1,7 @@
 pub mod validation;
-pub mod constants;
-#[cfg(feature = "test_utils")]
-pub mod test_constants;
 pub mod error_utils;
 pub mod libindy;
 pub mod encryption_envelope;
 pub mod wallet;
-pub mod timeout;
-#[cfg(feature = "test_utils")]
-pub mod test_utils;
-pub mod create_key;
-pub mod update_profile;
 pub(super) mod comm;
+pub mod httpclient;

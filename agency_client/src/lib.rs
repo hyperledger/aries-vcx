@@ -1,4 +1,6 @@
 #![crate_name = "agency_client"]
+extern crate async_std;
+extern crate async_trait;
 extern crate failure;
 extern crate futures;
 extern crate indyrs as indy;
@@ -14,401 +16,50 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate url;
-extern crate async_std;
-extern crate async_trait;
+
+use std::u8;
+
+use async_trait::async_trait;
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value;
+
+use messages::a2a_message::{A2AMessage, A2AMessageV2};
+use messages::forward::ForwardV2;
+use messages::get_messages::GetMessagesBuilder;
+use messages::update_connection::DeleteConnectionBuilder;
+
+use crate::messages::create_key::CreateKeyBuilder;
+use crate::testing::mocking::AgencyMockDecrypted;
+
+use self::error::prelude::*;
+use self::utils::libindy::crypto;
+use self::utils::validation;
 
 pub mod get_message;
-mod utils;
+pub mod utils;
 pub mod update_connection;
 pub mod update_message;
 pub mod message_type;
 pub mod payload;
 #[macro_use]
 pub mod agency_settings;
-pub mod mocking;
-pub mod httpclient;
 pub mod agency_client;
 pub mod agent_utils;
 pub mod error;
-
-use std::u8;
-
-use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
-use serde_json::Value;
-
-use self::error::prelude::*;
-use self::utils::libindy::crypto;
-
-use self::agent_utils::{ComMethodUpdated, Connect, ConnectResponse, CreateAgent, CreateAgentResponse, SignUp, SignUpResponse, UpdateComMethod};
-use self::utils::validation;
-use self::utils::create_key::{CreateKey, CreateKeyBuilder, CreateKeyResponse};
-use self::get_message::{GetMessages, GetMessagesBuilder, GetMessagesResponse, MessagesByConnections};
-use self::message_type::*;
-use self::update_connection::{DeleteConnectionBuilder, UpdateConnection, UpdateConnectionResponse};
-use self::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use self::utils::update_profile::{UpdateConfigs, UpdateConfigsResponse, UpdateProfileDataBuilder};
-use self::mocking::AgencyMockDecrypted;
-use async_trait::async_trait;
-use uuid::Uuid;
-
-#[derive(Debug, Serialize)]
-#[serde(untagged)]
-pub enum A2AMessageV2 {
-    /// routing
-    Forward(ForwardV2),
-
-    /// onbording
-    Connect(Connect),
-    ConnectResponse(ConnectResponse),
-    SignUp(SignUp),
-    SignUpResponse(SignUpResponse),
-    CreateAgent(CreateAgent),
-    CreateAgentResponse(CreateAgentResponse),
-
-    /// PW Connection
-    CreateKey(CreateKey),
-    CreateKeyResponse(CreateKeyResponse),
-
-    SendRemoteMessage(SendRemoteMessage),
-    SendRemoteMessageResponse(SendRemoteMessageResponse),
-
-    GetMessages(GetMessages),
-    GetMessagesResponse(GetMessagesResponse),
-    GetMessagesByConnections(GetMessages),
-    GetMessagesByConnectionsResponse(MessagesByConnections),
-
-    UpdateConnection(UpdateConnection),
-    UpdateConnectionResponse(UpdateConnectionResponse),
-    UpdateMessageStatusByConnections(UpdateMessageStatusByConnections),
-    UpdateMessageStatusByConnectionsResponse(UpdateMessageStatusByConnectionsResponse),
-
-    /// config
-    UpdateConfigs(UpdateConfigs),
-    UpdateConfigsResponse(UpdateConfigsResponse),
-    UpdateComMethod(UpdateComMethod),
-    ComMethodUpdated(ComMethodUpdated),
-}
-
-impl<'de> Deserialize<'de> for A2AMessageV2 {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
-
-        if log::log_enabled!(log::Level::Trace) {
-            let message_json = serde_json::ser::to_string(&value);
-            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
-
-            trace!("Deserializing A2AMessageV2 json: {:?}", &message_json);
-            trace!("Found A2AMessageV2 message type json {:?}", &message_type_json);
-            trace!("Found A2AMessageV2 message type {:?}", &message_type);
-        };
-
-        match message_type.type_.as_str() {
-            "FWD" => {
-                ForwardV2::deserialize(value)
-                    .map(A2AMessageV2::Forward)
-                    .map_err(de::Error::custom)
-            }
-            "CONNECT" => {
-                Connect::deserialize(value)
-                    .map(A2AMessageV2::Connect)
-                    .map_err(de::Error::custom)
-            }
-            "CONNECTED" => {
-                ConnectResponse::deserialize(value)
-                    .map(A2AMessageV2::ConnectResponse)
-                    .map_err(de::Error::custom)
-            }
-            "SIGNUP" => {
-                SignUp::deserialize(value)
-                    .map(A2AMessageV2::SignUp)
-                    .map_err(de::Error::custom)
-            }
-            "SIGNED_UP" => {
-                SignUpResponse::deserialize(value)
-                    .map(A2AMessageV2::SignUpResponse)
-                    .map_err(de::Error::custom)
-            }
-            "CREATE_AGENT" => {
-                CreateAgent::deserialize(value)
-                    .map(A2AMessageV2::CreateAgent)
-                    .map_err(de::Error::custom)
-            }
-            "AGENT_CREATED" => {
-                CreateAgentResponse::deserialize(value)
-                    .map(A2AMessageV2::CreateAgentResponse)
-                    .map_err(de::Error::custom)
-            }
-            "CREATE_KEY" => {
-                CreateKey::deserialize(value)
-                    .map(A2AMessageV2::CreateKey)
-                    .map_err(de::Error::custom)
-            }
-            "KEY_CREATED" => {
-                CreateKeyResponse::deserialize(value)
-                    .map(A2AMessageV2::CreateKeyResponse)
-                    .map_err(de::Error::custom)
-            }
-            "GET_MSGS" => {
-                GetMessages::deserialize(value)
-                    .map(A2AMessageV2::GetMessages)
-                    .map_err(de::Error::custom)
-            }
-            "MSGS" => {
-                GetMessagesResponse::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesResponse)
-                    .map_err(de::Error::custom)
-            }
-            "GET_MSGS_BY_CONNS" => {
-                GetMessages::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesByConnections)
-                    .map_err(de::Error::custom)
-            }
-            "MSGS_BY_CONNS" => {
-                MessagesByConnections::deserialize(value)
-                    .map(A2AMessageV2::GetMessagesByConnectionsResponse)
-                    .map_err(de::Error::custom)
-            }
-            "SEND_REMOTE_MSG" => {
-                SendRemoteMessage::deserialize(value)
-                    .map(A2AMessageV2::SendRemoteMessage)
-                    .map_err(de::Error::custom)
-            }
-            "REMOTE_MSG_SENT" => {
-                SendRemoteMessageResponse::deserialize(value)
-                    .map(A2AMessageV2::SendRemoteMessageResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_CONN_STATUS" => {
-                UpdateConnection::deserialize(value)
-                    .map(A2AMessageV2::UpdateConnection)
-                    .map_err(de::Error::custom)
-            }
-            "CONN_STATUS_UPDATED" => {
-                UpdateConnectionResponse::deserialize(value)
-                    .map(A2AMessageV2::UpdateConnectionResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_MSG_STATUS_BY_CONNS" => {
-                UpdateMessageStatusByConnections::deserialize(value)
-                    .map(A2AMessageV2::UpdateMessageStatusByConnections)
-                    .map_err(de::Error::custom)
-            }
-            "MSG_STATUS_UPDATED_BY_CONNS" => {
-                UpdateMessageStatusByConnectionsResponse::deserialize(value)
-                    .map(A2AMessageV2::UpdateMessageStatusByConnectionsResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_CONFIGS" => {
-                UpdateConfigs::deserialize(value)
-                    .map(A2AMessageV2::UpdateConfigs)
-                    .map_err(de::Error::custom)
-            }
-            "CONFIGS_UPDATED" => {
-                UpdateConfigsResponse::deserialize(value)
-                    .map(A2AMessageV2::UpdateConfigsResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_COM_METHOD" => {
-                UpdateComMethod::deserialize(value)
-                    .map(A2AMessageV2::UpdateComMethod)
-                    .map_err(de::Error::custom)
-            }
-            "COM_METHOD_UPDATED" => {
-                ComMethodUpdated::deserialize(value)
-                    .map(A2AMessageV2::ComMethodUpdated)
-                    .map_err(de::Error::custom)
-            }
-            _ => Err(de::Error::custom("Unexpected @type field structure."))
-        }
-    }
-}
-
-// We don't want to use this anymore
-#[derive(Debug)]
-pub enum A2AMessage {
-    Version2(A2AMessageV2),
-}
-
-impl Serialize for A2AMessage {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        match self {
-            A2AMessage::Version2(msg) => msg.serialize(serializer).map_err(ser::Error::custom)
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for A2AMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        let message_type: MessageTypes = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
-
-        if log::log_enabled!(log::Level::Trace) {
-            let message_json = serde_json::ser::to_string(&value);
-            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
-
-            trace!("Deserializing A2AMessage json: {:?}", &message_json);
-            trace!("Found A2AMessage message type json {:?}", &message_type_json);
-            trace!("Found A2AMessage message type {:?}", &message_type);
-        }
-
-        match message_type {
-            MessageTypes::MessageType(_) =>
-                A2AMessageV2::deserialize(value)
-                    .map(A2AMessage::Version2)
-                    .map_err(de::Error::custom)
-        }
-    }
-}
-
-
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct ForwardV2 {
-    #[serde(rename = "@type")]
-    msg_type: MessageType,
-    #[serde(rename = "@fwd")]
-    fwd: String,
-    #[serde(rename = "@msg")]
-    msg: Value,
-    #[serde(rename = "@id")]
-    id: String,
-}
-
-impl ForwardV2 {
-    fn new(fwd: String, msg: Vec<u8>) -> AgencyClientResult<A2AMessage> {
-        let msg = serde_json::from_slice(msg.as_slice())
-            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, err))?;
-        Ok(A2AMessage::Version2(A2AMessageV2::Forward(
-            ForwardV2 {
-                msg_type: MessageTypes::build_v2(A2AMessageKinds::Forward),
-                fwd,
-                msg,
-                id: Uuid::new_v4().to_string()
-            }
-        )))
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SendRemoteMessage {
-    #[serde(rename = "@type")]
-    pub msg_type: MessageType,
-    #[serde(rename = "@id")]
-    pub id: String,
-    pub mtype: RemoteMessageType,
-    #[serde(rename = "replyToMsgId")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reply_to_msg_id: Option<String>,
-    #[serde(rename = "sendMsg")]
-    pub send_msg: bool,
-    #[serde(rename = "@msg")]
-    msg: Value,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    detail: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SendRemoteMessageResponse {
-    #[serde(rename = "@type")]
-    msg_type: MessageTypes,
-    #[serde(rename = "@id")]
-    pub id: String,
-    pub sent: bool,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum RemoteMessageType {
-    Other(String),
-    ConnReq,
-    ConnReqAnswer,
-    ConnReqRedirect,
-    CredOffer,
-    CredReq,
-    Cred,
-    ProofReq,
-    Proof,
-}
-
-impl Serialize for RemoteMessageType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let value = match self {
-            RemoteMessageType::ConnReq => "connReq",
-            RemoteMessageType::ConnReqAnswer => "connReqAnswer",
-            RemoteMessageType::ConnReqRedirect => "connReqRedirect",
-            RemoteMessageType::CredOffer => "credOffer",
-            RemoteMessageType::CredReq => "credReq",
-            RemoteMessageType::Cred => "cred",
-            RemoteMessageType::ProofReq => "proofReq",
-            RemoteMessageType::Proof => "proof",
-            RemoteMessageType::Other(_type) => _type,
-        };
-        Value::String(value.to_string()).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for RemoteMessageType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
-        match value.as_str() {
-            Some("connReq") => Ok(RemoteMessageType::ConnReq),
-            Some("connReqAnswer") | Some("CONN_REQ_ACCEPTED") => Ok(RemoteMessageType::ConnReqAnswer),
-            Some("connReqRedirect") | Some("CONN_REQ_REDIRECTED") | Some("connReqRedirected") => Ok(RemoteMessageType::ConnReqRedirect),
-            Some("credOffer") => Ok(RemoteMessageType::CredOffer),
-            Some("credReq") => Ok(RemoteMessageType::CredReq),
-            Some("cred") => Ok(RemoteMessageType::Cred),
-            Some("proofReq") => Ok(RemoteMessageType::ProofReq),
-            Some("proof") => Ok(RemoteMessageType::Proof),
-            Some(_type) => Ok(RemoteMessageType::Other(_type.to_string())),
-            _ => Err(de::Error::custom("Unexpected message type."))
-        }
-    }
-}
+pub mod messages;
+pub mod testing;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {
-    Created,
-    Sent,
     Received,
-    Accepted,
-    Rejected,
     Reviewed,
-    Redirected,
-}
-
-impl Default for MessageStatusCode {
-    fn default() -> Self {
-        Self::Created
-    }
-}
-
-impl MessageStatusCode {
-    pub fn message(&self) -> &'static str {
-        match self {
-            MessageStatusCode::Created => "message created",
-            MessageStatusCode::Sent => "message sent",
-            MessageStatusCode::Received => "message received",
-            MessageStatusCode::Redirected => "message redirected",
-            MessageStatusCode::Accepted => "message accepted",
-            MessageStatusCode::Rejected => "message rejected",
-            MessageStatusCode::Reviewed => "message reviewed",
-        }
-    }
 }
 
 impl std::string::ToString for MessageStatusCode {
     fn to_string(&self) -> String {
         match self {
-            MessageStatusCode::Created => "MS-101",
-            MessageStatusCode::Sent => "MS-102",
             MessageStatusCode::Received => "MS-103",
-            MessageStatusCode::Accepted => "MS-104",
-            MessageStatusCode::Rejected => "MS-105",
             MessageStatusCode::Reviewed => "MS-106",
-            MessageStatusCode::Redirected => "MS-107",
         }.to_string()
     }
 }
@@ -424,105 +75,9 @@ impl<'de> Deserialize<'de> for MessageStatusCode {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         match value.as_str() {
-            Some("MS-101") => Ok(MessageStatusCode::Created),
-            Some("MS-102") => Ok(MessageStatusCode::Sent),
             Some("MS-103") => Ok(MessageStatusCode::Received),
-            Some("MS-104") => Ok(MessageStatusCode::Accepted),
-            Some("MS-105") => Ok(MessageStatusCode::Rejected),
             Some("MS-106") => Ok(MessageStatusCode::Reviewed),
-            Some("MS-107") => Ok(MessageStatusCode::Redirected),
             _ => Err(de::Error::custom("Unexpected message type."))
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub enum A2AMessageKinds {
-    Forward,
-    Connect,
-    Connected,
-    SignUp,
-    SignedUp,
-    CreateAgent,
-    AgentCreated,
-    CreateKey,
-    KeyCreated,
-    CreateMessage,
-    MessageDetail,
-    MessageCreated,
-    MessageSent,
-    GetMessages,
-    GetMessagesByConnections,
-    Messages,
-    UpdateMessageStatusByConnections,
-    MessageStatusUpdatedByConnections,
-    UpdateConnectionStatus,
-    UpdateConfigs,
-    ConfigsUpdated,
-    UpdateComMethod,
-    ComMethodUpdated,
-    SendRemoteMessage,
-    SendRemoteMessageResponse,
-}
-
-impl A2AMessageKinds {
-    pub fn family(&self) -> MessageFamilies {
-        match self {
-            A2AMessageKinds::Forward => MessageFamilies::Routing,
-            A2AMessageKinds::Connect => MessageFamilies::Onboarding,
-            A2AMessageKinds::Connected => MessageFamilies::Onboarding,
-            A2AMessageKinds::CreateAgent => MessageFamilies::Onboarding,
-            A2AMessageKinds::AgentCreated => MessageFamilies::Onboarding,
-            A2AMessageKinds::SignUp => MessageFamilies::Onboarding,
-            A2AMessageKinds::SignedUp => MessageFamilies::Onboarding,
-            A2AMessageKinds::CreateKey => MessageFamilies::Pairwise,
-            A2AMessageKinds::KeyCreated => MessageFamilies::Pairwise,
-            A2AMessageKinds::CreateMessage => MessageFamilies::Pairwise,
-            A2AMessageKinds::MessageDetail => MessageFamilies::Pairwise,
-            A2AMessageKinds::MessageCreated => MessageFamilies::Pairwise,
-            A2AMessageKinds::MessageSent => MessageFamilies::Pairwise,
-            A2AMessageKinds::GetMessages => MessageFamilies::Pairwise,
-            A2AMessageKinds::GetMessagesByConnections => MessageFamilies::Pairwise,
-            A2AMessageKinds::Messages => MessageFamilies::Pairwise,
-            A2AMessageKinds::UpdateConnectionStatus => MessageFamilies::Pairwise,
-            A2AMessageKinds::UpdateMessageStatusByConnections => MessageFamilies::Pairwise,
-            A2AMessageKinds::MessageStatusUpdatedByConnections => MessageFamilies::Pairwise,
-            A2AMessageKinds::UpdateConfigs => MessageFamilies::Configs,
-            A2AMessageKinds::ConfigsUpdated => MessageFamilies::Configs,
-            A2AMessageKinds::UpdateComMethod => MessageFamilies::Configs,
-            A2AMessageKinds::ComMethodUpdated => MessageFamilies::Configs,
-            A2AMessageKinds::SendRemoteMessage => MessageFamilies::Routing,
-            A2AMessageKinds::SendRemoteMessageResponse => MessageFamilies::Routing,
-        }
-    }
-
-    pub fn name(&self) -> String {
-        match self {
-            A2AMessageKinds::Forward => "FWD".to_string(),
-            A2AMessageKinds::Connect => "CONNECT".to_string(),
-            A2AMessageKinds::Connected => "CONNECTED".to_string(),
-            A2AMessageKinds::CreateAgent => "CREATE_AGENT".to_string(),
-            A2AMessageKinds::AgentCreated => "AGENT_CREATED".to_string(),
-            A2AMessageKinds::SignUp => "SIGNUP".to_string(),
-            A2AMessageKinds::SignedUp => "SIGNED_UP".to_string(),
-            A2AMessageKinds::CreateKey => "CREATE_KEY".to_string(),
-            A2AMessageKinds::KeyCreated => "KEY_CREATED".to_string(),
-            A2AMessageKinds::CreateMessage => "CREATE_MSG".to_string(),
-            A2AMessageKinds::MessageDetail => "MSG_DETAIL".to_string(),
-            A2AMessageKinds::MessageCreated => "MSG_CREATED".to_string(),
-            A2AMessageKinds::MessageSent => "MSGS_SENT".to_string(),
-            A2AMessageKinds::GetMessages => "GET_MSGS".to_string(),
-            A2AMessageKinds::GetMessagesByConnections => "GET_MSGS_BY_CONNS".to_string(),
-            A2AMessageKinds::UpdateMessageStatusByConnections => "UPDATE_MSG_STATUS_BY_CONNS".to_string(),
-            A2AMessageKinds::MessageStatusUpdatedByConnections => "MSG_STATUS_UPDATED_BY_CONNS".to_string(),
-            A2AMessageKinds::Messages => "MSGS".to_string(),
-            A2AMessageKinds::UpdateConnectionStatus => "UPDATE_CONN_STATUS".to_string(),
-            A2AMessageKinds::UpdateConfigs => "UPDATE_CONFIGS".to_string(),
-            A2AMessageKinds::ConfigsUpdated => "CONFIGS_UPDATED".to_string(),
-            A2AMessageKinds::UpdateComMethod => "UPDATE_COM_METHOD".to_string(),
-            A2AMessageKinds::ComMethodUpdated => "COM_METHOD_UPDATED".to_string(),
-            A2AMessageKinds::SendRemoteMessage => "SEND_REMOTE_MSG".to_string(),
-            A2AMessageKinds::SendRemoteMessageResponse => "REMOTE_MSG_SENT".to_string(),
         }
     }
 }
@@ -716,8 +271,6 @@ pub trait GeneralMessage {
 pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }
 
 pub fn delete_connection() -> DeleteConnectionBuilder { DeleteConnectionBuilder::create() }
-
-pub fn update_data() -> UpdateProfileDataBuilder { UpdateProfileDataBuilder::create() }
 
 pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }
 

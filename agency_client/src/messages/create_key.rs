@@ -1,8 +1,9 @@
-use crate::{A2AMessage, A2AMessageKinds, A2AMessageV2, agency_settings, mocking, parse_response_from_agency, prepare_message_for_agency};
+use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency, validation};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageTypes;
-use crate::mocking::AgencyMock;
-use crate::utils::{constants, validation};
+use crate::messages::a2a_message::{A2AMessage, A2AMessageKinds, A2AMessageV2};
+use crate::testing::{mocking, test_constants};
+use crate::testing::mocking::AgencyMock;
 use crate::utils::comm::post_to_agency;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -61,7 +62,7 @@ impl CreateKeyBuilder {
 
         if mocking::agency_mocks_enabled() {
             warn!("CreateKeyBuilder::send_secure >>> agency mocks enabled, setting next mocked response");
-            AgencyMock::set_next_response(constants::CREATE_KEYS_V2_RESPONSE.to_vec());
+            AgencyMock::set_next_response(test_constants::CREATE_KEYS_V2_RESPONSE.to_vec());
         }
 
         let data = self.prepare_request().await?;
@@ -99,8 +100,8 @@ impl CreateKeyBuilder {
 mod tests {
     use crate::create_keys;
     use crate::error::AgencyClientErrorKind;
-    use crate::utils::constants;
-    use crate::utils::test_utils::SetupMocks;
+    use crate::testing::test_constants;
+    use crate::testing::test_utils::SetupMocks;
 
     use super::*;
 
@@ -135,7 +136,7 @@ mod tests {
 
         let mut builder = CreateKeyBuilder::create();
 
-        let (for_did, for_verkey) = builder.parse_response(&constants::CREATE_KEYS_V2_RESPONSE.to_vec()).await.unwrap();
+        let (for_did, for_verkey) = builder.parse_response(&test_constants::CREATE_KEYS_V2_RESPONSE.to_vec()).await.unwrap();
 
         assert_eq!(for_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(for_verkey, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");

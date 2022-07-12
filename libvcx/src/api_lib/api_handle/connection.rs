@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use aries_vcx::agency_client::get_message::MessageByConnection;
+use aries_vcx::agency_client::messages::get_messages::MessageByConnection;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
@@ -407,9 +407,6 @@ pub mod tests {
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_ACK);
         update_state(handle).await.unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
-
-        AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);
-        assert_eq!(delete_connection(handle).await.unwrap(), 0);
 
         // This errors b/c we release handle in delete connection
         assert!(release(handle).is_err());

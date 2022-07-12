@@ -67,7 +67,7 @@ impl PublicAgent {
                         }
                     }
                     _ => {
-                        self.agent_info.reject_message(&self.pairwise_info, uid).await.ok()?;
+                        self.agent_info.update_message_status(&self.pairwise_info, uid).await.ok()?;
                         None
                     }
                 }

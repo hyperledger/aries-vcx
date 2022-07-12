@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use agency_client::messages::get_messages::Message;
+use agency_client::messages::update_message::UIDsByConn;
 
-use crate::agency_client::get_message::{get_connection_messages, Message};
+use crate::agency_client::get_message::get_connection_messages;
 use crate::agency_client::MessageStatusCode;
 use crate::agency_client::update_connection::send_delete_connection_message;
-use crate::agency_client::update_message::{UIDsByConn, update_messages as update_messages_status};
+use crate::agency_client::update_message::update_messages as update_messages_status;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -83,19 +85,6 @@ impl CloudAgentInfo {
         }];
 
         update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
-            .await
-            .map_err(|err| err.into())
-    }
-
-    pub async fn reject_message(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
-        trace!("CloudAgentInfo::reject_message >>> uid: {:?}", uid);
-
-        let messages_to_reject = vec![UIDsByConn {
-            pairwise_did: pairwise_info.pw_did.clone(),
-            uids: vec![uid],
-        }];
-
-        update_messages_status(MessageStatusCode::Rejected, messages_to_reject)
             .await
             .map_err(|err| err.into())
     }

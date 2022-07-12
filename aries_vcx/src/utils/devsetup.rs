@@ -1,12 +1,13 @@
 use std::fs;
 use std::sync::Once;
 
+use agency_client::testing::mocking::AgencyMockDecrypted;
+
 use crate::{libindy, settings, utils};
-use crate::agency_client::mocking::AgencyMockDecrypted;
 use crate::init::{init_issuer_config, open_as_main_wallet};
 use crate::init::PoolConfig;
-use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 use crate::libindy::utils::mocks::did_mocks::DidMocks;
+use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
