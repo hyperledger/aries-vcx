@@ -17,7 +17,7 @@ use aries_vcx::utils::provision::AgentProvisionConfig;
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
 
 /// Provision an agent in the agency.
@@ -260,8 +260,26 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     trace!("vcx_messages_set_status(command_handle: {}, message_status: {:?}, uids: {:?})",
            command_handle, message_status, msg_json);
 
+    let status_code: MessageStatusCode = match ::serde_json::from_str(&format!("\"{}\"", message_status)) {
+        Ok(status_code) => status_code,
+        Err(err) => {
+            set_current_error(&err);
+            error!("vcx_messages_update_status >>> Cannot deserialize MessageStatusCode: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num;
+        }
+    };
+
+    let uids_by_conns: Vec<UIDsByConn>  = match serde_json::from_str(&msg_json) {
+        Ok(status_code) => status_code,
+        Err(err) => {
+            set_current_error(&err);
+            error!("vcx_messages_update_status >>> Cannot deserialize UIDsByConn: {:?}", err);
+            return error::INVALID_CONFIGURATION.code_num;
+        }
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match update_agency_messages(&message_status, &msg_json).await {
+        match update_messages(status_code, uids_by_conns).await {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -282,19 +300,6 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     error::SUCCESS.code_num
 }
 
-pub async fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()> {
-    trace!("update_agency_messages >>> status_code: {:?}, msg_json: {:?}", status_code, msg_json);
-
-    let status_code: MessageStatusCode = ::serde_json::from_str(&format!("\"{}\"", status_code))
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize MessageStatusCode: {}", err)))?;
-
-    debug!("updating agency messages {} to status code: {:?}", msg_json, status_code);
-
-    let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(msg_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize UIDsByConn: {}", err)))?;
-
-    update_messages(status_code, uids_by_conns).await.into()
-}
 
 
 /// Set the pool handle before calling vcx_init_minimal
