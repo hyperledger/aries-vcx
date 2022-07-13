@@ -1954,6 +1954,7 @@ mod tests {
     pub async fn connect_using_request_sent_to_public_agent(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
+        let mut conn_requests = institution.agent.download_messages_nauth().await.unwrap();
         let mut conn_requests = institution.agent.download_connection_requests(None).await.unwrap();
         assert_eq!(conn_requests.len(), 1);
         let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent).await.unwrap();
