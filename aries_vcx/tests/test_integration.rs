@@ -2115,8 +2115,6 @@ mod tests {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            use aries_vcx::agency_client::get_message::{};
-
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().await.unwrap();

@@ -1,7 +1,6 @@
 use crate::error::AgencyClientResult;
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
-use crate::utils::comm::post_to_agency;
 use crate::validation;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -67,7 +66,6 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use crate::api::agent::create_keys;
-    use crate::create_keys;
     use crate::error::AgencyClientErrorKind;
     use crate::testing::test_constants;
     use crate::testing::test_utils::SetupMocks;

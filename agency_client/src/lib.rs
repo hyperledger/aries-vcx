@@ -21,7 +21,6 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use self::error::prelude::*;
-use self::utils::libindy::crypto;
 use self::utils::validation;
 
 pub mod utils;

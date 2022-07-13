@@ -11,7 +11,6 @@ use crate::messages::sign_up::{SignUp, SignUpResponse};
 use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
 use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
 use crate::messages::update_message::{UpdateMessageStatusByConnections, UpdateMessageStatusByConnectionsResponse};
-use crate::testing::test_utils::SetupMocks;
 
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(untagged)]
@@ -216,21 +215,27 @@ impl A2AMessageKinds {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
+    use crate::messages::get_messages::GetMessages;
+    use crate::testing::test_utils::SetupMocks;
 
-#[test]
-#[cfg(feature = "general_test")]
-fn test_serialize_deserialize_agency_message() {
-    let _setup = SetupMocks::init();
-    let msg = Client2AgencyMessage::GetMessages(GetMessages::build(
-        A2AMessageKinds::GetMessages, Some("foo".into()), Some(vec!["abcd".into()]), None, None));
-    let serialized = serde_json::to_string(&msg).unwrap();
-    let expected = serde_json::to_string(&json!({
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serialize_deserialize_agency_message() {
+        let _setup = SetupMocks::init();
+        let msg = Client2AgencyMessage::GetMessages(GetMessages::build(
+            A2AMessageKinds::GetMessages, Some("foo".into()), Some(vec!["abcd".into()]), None, None));
+        let serialized = serde_json::to_string(&msg).unwrap();
+        let expected = serde_json::to_string(&json!({
         "@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS",
         "excludePayload":"foo",
         "uids":["abcd"]
     })).unwrap();
-    assert_eq!(serialized, expected);
+        assert_eq!(serialized, expected);
 
-    let deserialized: Client2AgencyMessage = serde_json::from_str(&serialized).unwrap();
-    assert_eq!(deserialized, msg);
+        let deserialized: Client2AgencyMessage = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized, msg);
+    }
 }
