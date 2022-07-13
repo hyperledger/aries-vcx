@@ -86,26 +86,6 @@ impl PartialEq for FullService {
     }
 }
 
-impl TryFrom<&PublicAgent> for FullService {
-    type Error = VcxError;
-    fn try_from(agent: &PublicAgent) -> Result<Self, Self::Error> {
-        Ok(FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
-            .set_recipient_keys(vec![agent.pairwise_info().pw_vk.clone()])
-            .set_routing_keys(agent.cloud_agent_info().routing_keys()?))
-    }
-}
-
-impl TryFrom<(&PairwiseInfo, &CloudAgentInfo)> for FullService {
-    type Error = VcxError;
-    fn try_from((pairwise_info, agent_info): (&PairwiseInfo, &CloudAgentInfo)) -> Result<Self, Self::Error> {
-        Ok(FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
-            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
-            .set_routing_keys(agent_info.routing_keys()?))
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
