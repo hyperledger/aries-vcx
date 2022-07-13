@@ -1350,7 +1350,7 @@ mod tests {
         institution.activate().await.unwrap();
         let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
-        let service = FullService::try_from(&institution.agent).unwrap();
+        let service = institution.agent.service().unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
@@ -1412,7 +1412,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
         institution.activate().await.unwrap();
-        let service = FullService::try_from(&institution.agent).unwrap();
+        let service = institution.agent.service().unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
@@ -1442,7 +1442,7 @@ mod tests {
         let (mut consumer_to_institution, mut institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
         institution.activate().await.unwrap();
-        let service = FullService::try_from(&institution.agent).unwrap();
+        let service = institution.agent.service().unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)

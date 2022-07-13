@@ -11,6 +11,7 @@ use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::settings::get_agency_client;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {
@@ -24,7 +25,10 @@ impl PublicAgent {
     pub async fn create(source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create().await?;
         let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
-        let service = FullService::try_from((&pairwise_info, &agent_info))?;
+        let service = FullService::create()
+            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
+            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
+            .set_routing_keys(agent_info.routing_keys()?);
         add_service(&institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
@@ -44,7 +48,10 @@ impl PublicAgent {
     }
 
     pub fn service(&self) -> VcxResult<FullService> {
-        FullService::try_from(self)
+        Ok(FullService::create()
+            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
+            .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
+            .set_routing_keys(self.agent_info.routing_keys()?))
     }
 
     pub async fn download_connection_requests(&self, uids: Option<Vec<String>>) -> VcxResult<Vec<Request>> {
