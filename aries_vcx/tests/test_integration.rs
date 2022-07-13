@@ -73,6 +73,7 @@ enum_number!(ProofStateType
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
+    use std::ops::Deref;
     use std::thread;
     use std::time::Duration;
 
@@ -119,6 +120,7 @@ mod tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::settings;
+    use aries_vcx::settings::get_agency_client;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},
         get_temp_dir_path,
@@ -1954,7 +1956,6 @@ mod tests {
     pub async fn connect_using_request_sent_to_public_agent(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        let mut conn_requests = institution.agent.download_messages_nauth().await.unwrap();
         let mut conn_requests = institution.agent.download_connection_requests(None).await.unwrap();
         assert_eq!(conn_requests.len(), 1);
         let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent).await.unwrap();
@@ -2184,7 +2185,8 @@ mod tests {
         let reviewed_count_before = reviewed.len();
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
-        update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
+        let client = get_agency_client().unwrap();
+        client.deref().update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
 
         let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 2);

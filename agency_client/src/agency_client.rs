@@ -6,17 +6,29 @@ use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult}
 use crate::testing::mocking;
 use crate::utils::{error_utils, validation};
 
-#[derive(Default, Deserialize)]
+// pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
+//     CONFIG_AGENCY_ENDPOINT,
+//     CONFIG_AGENCY_DID,
+//     CONFIG_AGENCY_VERKEY,
+//     CONFIG_REMOTE_TO_SDK_DID,
+//     CONFIG_REMOTE_TO_SDK_VERKEY,
+//     CONFIG_SDK_TO_REMOTE_DID,
+//     CONFIG_SDK_TO_REMOTE_VERKEY,
+//     CONFIG_ENABLE_TEST_MODE,
+//     CONFIG_WALLET_HANDLE,
+// ];
+
+#[derive(Default, Deserialize, Clone)]
 pub struct AgencyClient {
     wallet_handle: i32,
-    agency_url: String,
-    agency_did: String,
-    agency_pwdid: String,
-    agency_vk: String,
-    agent_pwdid: String,
-    agent_vk: String,
-    my_pwdid: String,
-    my_vk: String,
+    pub agency_url: String,
+    pub agency_did: String,
+    pub agency_pwdid: String,
+    pub agency_vk: String,
+    pub agent_pwdid: String,
+    pub agent_vk: String,
+    pub my_pwdid: String,
+    pub my_vk: String,
 }
 
 impl AgencyClient {
