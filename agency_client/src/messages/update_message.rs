@@ -47,50 +47,20 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     pub fn uids_by_conns(&mut self, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<&mut Self> {
-        //Todo: validate msg_uid??
         self.uids_by_conns = uids_by_conns;
         Ok(self)
     }
 
     pub fn status_code(&mut self, code: MessageStatusCode) -> AgencyClientResult<&mut Self> {
-        //Todo: validate that it can be parsed to number??
         self.status_code = Some(code.clone());
         Ok(self)
     }
 
-    pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
-        trace!("UpdateMessages::send >>>");
-
-        AgencyMock::set_next_response(test_constants::UPDATE_MESSAGES_RESPONSE.to_vec());
-
-        let data = self.prepare_request().await?;
-
-        let response = post_to_agency(&data).await?;
-
-        self.parse_response(&response).await
-    }
-
-    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        let message = Client2AgencyMessage::UpdateMessageStatusByConnections(
-            UpdateMessageStatusByConnections {
-                msg_type: MessageType::build_v2(A2AMessageKinds::UpdateMessageStatusByConnections),
-                uids_by_conns: self.uids_by_conns.clone(),
-                status_code: self.status_code.clone(),
-            }
-        );
-
-        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
-        prepare_message_for_agency(&message, &agency_did).await
-    }
-
-    pub async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
-        trace!("UpdateMessageStatusByConnectionsBuilder::parse_response >>>");
-
-        let mut response = parse_response_from_agency(response).await?;
-
-        match response.remove(0) {
-            Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
-            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
+    pub fn build(&self) -> UpdateMessageStatusByConnections {
+        UpdateMessageStatusByConnections {
+            msg_type: MessageType::build_v2(A2AMessageKinds::UpdateMessageStatusByConnections),
+            uids_by_conns: self.uids_by_conns.clone(),
+            status_code: self.status_code.clone(),
         }
     }
 }

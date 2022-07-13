@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::{GeneralMessage, parse_response_from_agency, prepare_message_for_agent};
+use crate::{parse_response_from_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
@@ -57,7 +57,6 @@ pub struct UpdateConnectionResponse {
 
 #[derive(Debug)]
 pub struct DeleteConnectionBuilder {
-    to_did: String,
     to_vk: String,
     status_code: ConnectionStatus,
     agent_did: String,
@@ -69,7 +68,6 @@ impl DeleteConnectionBuilder {
         trace!("DeleteConnection::create_message >>>");
 
         DeleteConnectionBuilder {
-            to_did: String::new(),
             to_vk: String::new(),
             status_code: ConnectionStatus::Deleted,
             agent_did: String::new(),
@@ -77,52 +75,10 @@ impl DeleteConnectionBuilder {
         }
     }
 
-    pub async fn send_secure(&mut self) -> AgencyClientResult<()> {
-        trace!("DeleteConnection::send >>>");
-
-        let data = self.prepare_request().await?;
-
-        let response = post_to_agency(&data).await?;
-
-        self.parse_response(&response).await
-    }
-
-    async fn parse_response(&self, response: &Vec<u8>) -> AgencyClientResult<()> {
-        trace!("parse_response >>>");
-
-        let mut response = parse_response_from_agency(response).await?;
-
-        match response.remove(0) {
-            Client2AgencyMessage::UpdateConnectionResponse(_) => Ok(()),
-            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
+    pub fn build(&self) -> UpdateConnection {
+        UpdateConnection {
+            msg_type: MessageType::build_v2(A2AMessageKinds::UpdateConnectionStatus),
+            status_code: self.status_code.clone(),
         }
-    }
-}
-
-//TODO Every GeneralMessage extension, duplicates code
-#[async_trait]
-impl GeneralMessage for DeleteConnectionBuilder {
-    type Msg = DeleteConnectionBuilder;
-
-    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
-
-    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
-
-    fn set_agent_did(&mut self, did: String) {
-        self.agent_did = did;
-    }
-    fn set_agent_vk(&mut self, vk: String) {
-        self.agent_vk = vk;
-    }
-
-    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        let message = Client2AgencyMessage::UpdateConnection(
-            UpdateConnection {
-                msg_type: MessageType::build_v2(A2AMessageKinds::UpdateConnectionStatus),
-                status_code: self.status_code.clone(),
-            }
-        );
-
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
     }
 }

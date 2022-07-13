@@ -48,6 +48,7 @@ pub mod error;
 pub mod messages;
 pub mod testing;
 pub mod httpclient;
+pub mod create_keys;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {
@@ -172,47 +173,3 @@ async fn prepare_message_for_agent(messages: Vec<Client2AgencyMessage>, pw_vk: &
 
     pack_for_agency_v2(&message, &to_did).await
 }
-
-#[async_trait]
-pub trait GeneralMessage {
-    type Msg;
-
-    //todo: deserialize_message
-
-    fn to(&mut self, to_did: &str) -> AgencyClientResult<&mut Self> {
-        validation::validate_did(to_did)?;
-        self.set_to_did(to_did.to_string());
-        Ok(self)
-    }
-
-    fn to_vk(&mut self, to_vk: &str) -> AgencyClientResult<&mut Self> {
-        validation::validate_verkey(to_vk)?;
-        self.set_to_vk(to_vk.to_string());
-        Ok(self)
-    }
-
-    fn agent_did(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
-        validation::validate_did(did)?;
-        self.set_agent_did(did.to_string());
-        Ok(self)
-    }
-
-    fn agent_vk(&mut self, to_vk: &str) -> AgencyClientResult<&mut Self> {
-        validation::validate_verkey(to_vk)?;
-        self.set_agent_vk(to_vk.to_string());
-        Ok(self)
-    }
-
-    fn set_to_vk(&mut self, to_vk: String);
-    fn set_to_did(&mut self, to_did: String);
-    fn set_agent_did(&mut self, did: String);
-    fn set_agent_vk(&mut self, vk: String);
-
-    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>>;
-}
-
-pub fn create_keys() -> CreateKeyBuilder { CreateKeyBuilder::create() }
-
-pub fn delete_connection() -> DeleteConnectionBuilder { DeleteConnectionBuilder::create() }
-
-pub fn get_messages() -> GetMessagesBuilder { GetMessagesBuilder::create() }

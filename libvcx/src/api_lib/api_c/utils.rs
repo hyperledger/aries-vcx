@@ -3,9 +3,12 @@ use std::ptr;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
+use aries_vcx::agency_client::messages::update_message::UIDsByConn;
+use aries_vcx::agency_client::MessageStatusCode;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
-use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::agency_client::update_message::update_messages;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
@@ -258,7 +261,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
            command_handle, message_status, msg_json);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::agency_client::update_message::update_agency_messages(&message_status, &msg_json).await {
+        match update_agency_messages(&message_status, &msg_json).await {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -278,6 +281,21 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
+
+pub async fn update_agency_messages(status_code: &str, msg_json: &str) -> VcxResult<()> {
+    trace!("update_agency_messages >>> status_code: {:?}, msg_json: {:?}", status_code, msg_json);
+
+    let status_code: MessageStatusCode = ::serde_json::from_str(&format!("\"{}\"", status_code))
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize MessageStatusCode: {}", err)))?;
+
+    debug!("updating agency messages {} to status code: {:?}", msg_json, status_code);
+
+    let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(msg_json)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize UIDsByConn: {}", err)))?;
+
+    update_messages(status_code, uids_by_conns).await.into()
+}
+
 
 /// Set the pool handle before calling vcx_init_minimal
 ///

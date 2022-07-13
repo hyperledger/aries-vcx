@@ -1,21 +1,28 @@
-use crate::{agency_settings, GeneralMessage, get_messages, MessageStatusCode};
+use crate::{agency_settings, Client2AgencyMessage, GetMessagesBuilder, MessageStatusCode, parse_response_from_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::get_messages::{AgencyMessage, AgencyMessageEncrypted};
+use crate::messages::get_messages::{DownloadedMessage, DownloadedMessageEncrypted};
+use crate::utils::comm::post_to_agency;
 
-pub async fn get_encrypted_connection_messages(pw_did: &str, pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<AgencyMessageEncrypted>> {
-    trace!("get_connection_messages >>> pw_did: {}, pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
-           pw_did, pw_vk, agent_vk, msg_uid);
+pub async fn get_encrypted_connection_messages(_pw_did: &str, to_pw_vk: &str, agent_did: &str, agent_vk: &str, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>) -> AgencyClientResult<Vec<DownloadedMessageEncrypted>> {
+    trace!("get_connection_messages >>> pw_vk: {}, agent_vk: {}, msg_uid: {:?}",
+           to_pw_vk, agent_vk, msg_uid);
 
-    let response = get_messages()
-        .to(&pw_did)?
-        .to_vk(&pw_vk)?
-        .agent_did(&agent_did)?
-        .agent_vk(&agent_vk)?
-        .uid(msg_uid)?
-        .status_codes(status_codes)?
-        .send_secure()
-        .await
-        .map_err(|err| err.map(AgencyClientErrorKind::PostMessageFailed, "Cannot get messages"))?;
+    let message = Client2AgencyMessage::GetMessages(
+        GetMessagesBuilder::create()
+            .uid(msg_uid)?
+            .status_codes(status_codes)?
+            .build()
+    );
 
-    Ok(response)
+    let data = prepare_message_for_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
+    let response = post_to_agency(&data).await?;
+    let mut response = parse_response_from_agency(&response).await?;
+
+    match response.remove(0) {
+        Client2AgencyMessage::GetMessagesResponse(res) => {
+            trace!("Interpreting response as V2");
+            Ok(res.msgs)
+        }
+        _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
+    }
 }

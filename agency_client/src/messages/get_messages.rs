@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 
-use crate::{agency_settings, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
+use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
@@ -44,13 +44,12 @@ impl GetMessages {
 #[serde(rename_all = "camelCase")]
 pub struct GetMessagesResponse {
     #[serde(rename = "@type")]
-    msg_type: MessageType,
-    msgs: Vec<AgencyMessageEncrypted>,
+    pub msg_type: MessageType,
+    pub msgs: Vec<DownloadedMessageEncrypted>,
 }
 
 #[derive(Debug)]
 pub struct GetMessagesBuilder {
-    to_did: String,
     to_vk: String,
     agent_did: String,
     agent_vk: String,
@@ -65,7 +64,6 @@ impl GetMessagesBuilder {
         trace!("GetMessages::create_message >>>");
 
         GetMessagesBuilder {
-            to_did: String::new(),
             to_vk: String::new(),
             agent_did: String::new(),
             agent_vk: String::new(),
@@ -86,52 +84,12 @@ impl GetMessagesBuilder {
         Ok(self)
     }
 
-    pub async fn send_secure(&mut self) -> AgencyClientResult<Vec<AgencyMessageEncrypted>> {
-        debug!("GetMessages::send >>> self.agent_vk={} self.agent_did={} self.to_did={} self.to_vk={}", self.agent_vk, self.agent_did, self.to_did, self.to_vk);
-
-        let data = self.prepare_request().await?;
-
-        let response = post_to_agency(&data).await?;
-
-        self.parse_response(response).await
-    }
-
-    async fn parse_response(&self, response: Vec<u8>) -> AgencyClientResult<Vec<AgencyMessageEncrypted>> {
-        trace!("parse_get_messages_response >>> processing payload of {} bytes", response.len());
-
-        let mut response = parse_response_from_agency(&response).await?;
-
-        trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
-
-        match response.remove(0) {
-            Client2AgencyMessage::GetMessagesResponse(res) => {
-                trace!("Interpreting response as V2");
-                Ok(res.msgs)
-            }
-            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of GetMessagesResponse"))
-        }
-    }
-}
-
-//Todo: Every GeneralMessage extension, duplicates code
-#[async_trait]
-impl GeneralMessage for GetMessagesBuilder {
-    type Msg = GetMessagesBuilder;
-
-    fn set_to_vk(&mut self, to_vk: String) { self.to_vk = to_vk; }
-    fn set_to_did(&mut self, to_did: String) { self.to_did = to_did; }
-    fn set_agent_did(&mut self, did: String) { self.agent_did = did; }
-    fn set_agent_vk(&mut self, vk: String) { self.agent_vk = vk; }
-
-    async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        debug!("prepare_request >>");
-        let message = Client2AgencyMessage::GetMessages(
+    pub fn build(&self) -> GetMessages {
             GetMessages::build(A2AMessageKinds::GetMessages,
                                self.exclude_payload.clone(),
                                self.uids.clone(),
                                self.status_codes.clone(),
-                               self.pairwise_dids.clone()));
-        prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
+                               self.pairwise_dids.clone())
     }
 }
 
@@ -149,7 +107,7 @@ impl Default for MessagePayload {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct AgencyMessageEncrypted {
+pub struct DownloadedMessageEncrypted {
     pub status_code: MessageStatusCode,
     pub payload: MessagePayload,
     pub uid: String,
@@ -157,13 +115,13 @@ pub struct AgencyMessageEncrypted {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct AgencyMessage {
+pub struct DownloadedMessage {
     pub status_code: MessageStatusCode,
     pub uid: String,
     pub decrypted_msg: String,
 }
 
-impl AgencyMessageEncrypted {
+impl DownloadedMessageEncrypted {
     pub fn payload(&self) -> AgencyClientResult<Vec<u8>> {
         match &self.payload {
             MessagePayload::V2(payload) => serde_json::to_vec(payload)
@@ -171,18 +129,18 @@ impl AgencyMessageEncrypted {
         }
     }
 
-    pub async fn decrypt_noauth(self) -> AgencyClientResult<AgencyMessage> {
+    pub async fn decrypt_noauth(self) -> AgencyClientResult<DownloadedMessage> {
         let decrypted_payload = self._noauth_decrypt_v3_message().await?;
-        Ok(AgencyMessage {
+        Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
             decrypted_msg: decrypted_payload,
         })
     }
 
-    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<AgencyMessage> {
+    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<DownloadedMessage> {
         let decrypted_payload = self._auth_decrypt_v3_message(expected_sender_vk).await?;
-        Ok(AgencyMessage {
+        Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
             decrypted_msg: decrypted_payload,

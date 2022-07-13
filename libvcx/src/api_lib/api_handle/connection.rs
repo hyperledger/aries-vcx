@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use aries_vcx::agency_client::messages::get_messages::AgencyMessage;
+use aries_vcx::agency_client::messages::get_messages::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
@@ -259,7 +259,7 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
 pub struct MessageByConnection {
     #[serde(rename = "pairwiseDID")]
     pub pairwise_did: String,
-    pub msgs: Vec<AgencyMessage>,
+    pub msgs: Vec<DownloadedMessage>,
 }
 
 pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {

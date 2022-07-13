@@ -8,7 +8,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
 
-use agency_client::messages::get_messages::AgencyMessage;
+use agency_client::messages::get_messages::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
 use crate::error::prelude::*;
@@ -719,7 +719,7 @@ impl Connection {
         return Ok(connection_info_json);
     }
 
-    pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<AgencyMessage>> {
+    pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<DownloadedMessage>> {
         match self.get_state() {
             ConnectionState::Invitee(InviteeState::Initial) |
             ConnectionState::Inviter(InviterState::Initial) |
@@ -729,7 +729,7 @@ impl Connection {
                     .await?)
                     .then(|msg| msg.decrypt_noauth() )
                     .filter_map(|res| async { res.ok() })
-                    .collect::<Vec<AgencyMessage>>()
+                    .collect::<Vec<DownloadedMessage>>()
                     .await;
                 Ok(msgs)
             }
@@ -740,7 +740,7 @@ impl Connection {
                     .await?)
                     .then(|msg| msg.decrypt_auth(&expected_sender_vk))
                     .filter_map(|res| async { res.ok() })
-                    .collect::<Vec<AgencyMessage>>()
+                    .collect::<Vec<DownloadedMessage>>()
                     .await;
                 Ok(msgs)
             }

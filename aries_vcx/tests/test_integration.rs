@@ -79,11 +79,11 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
-    use agency_client::messages::get_messages::AgencyMessage;
+    use agency_client::messages::get_messages::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
+    use agency_client::update_message::update_messages;
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::agency_client::update_message::update_agency_messages;
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -2125,7 +2125,7 @@ mod tests {
             alice.activate().await.unwrap();
 
             let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
-            let message: AgencyMessage = msgs[0].clone();
+            let message: DownloadedMessage = msgs[0].clone();
             let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
 
             alice.connection.update_message_status(&message.uid).await.unwrap()
@@ -2185,8 +2185,7 @@ mod tests {
         let reviewed_count_before = reviewed.len();
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
-        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
-        update_agency_messages("MS-106", &message).await.unwrap();
+        update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
 
         let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 2);
