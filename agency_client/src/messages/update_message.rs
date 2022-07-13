@@ -1,7 +1,7 @@
+use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
-use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
-use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency};
+use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
 use crate::testing::mocking::AgencyMock;
 use crate::testing::test_constants;
 use crate::utils::comm::post_to_agency;
@@ -71,14 +71,12 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
-        let message = AgencyMsg::Version2(
-            AgencyMessageTypes::UpdateMessageStatusByConnections(
-                UpdateMessageStatusByConnections {
-                    msg_type: MessageType::build_v2(A2AMessageKinds::UpdateMessageStatusByConnections),
-                    uids_by_conns: self.uids_by_conns.clone(),
-                    status_code: self.status_code.clone(),
-                }
-            )
+        let message = Client2AgencyMessage::UpdateMessageStatusByConnections(
+            UpdateMessageStatusByConnections {
+                msg_type: MessageType::build_v2(A2AMessageKinds::UpdateMessageStatusByConnections),
+                uids_by_conns: self.uids_by_conns.clone(),
+                status_code: self.status_code.clone(),
+            }
         );
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
@@ -91,7 +89,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
         let mut response = parse_response_from_agency(response).await?;
 
         match response.remove(0) {
-            AgencyMsg::Version2(AgencyMessageTypes::UpdateMessageStatusByConnectionsResponse(_)) => Ok(()),
+            Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
             _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
         }
     }

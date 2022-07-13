@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use futures::StreamExt;
+
+use crate::{agency_settings, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
-use crate::{agency_settings, GeneralMessage, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
-use crate::messages::a2a_message::{AgencyMsg, A2AMessageKinds, AgencyMessageTypes};
+use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
 use crate::testing::mocking;
 use crate::utils::comm::post_to_agency;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -27,8 +28,8 @@ pub struct GetMessages {
 }
 
 impl GetMessages {
-    fn build(kind: A2AMessageKinds, exclude_payload: Option<String>, uids: Option<Vec<String>>,
-             status_codes: Option<Vec<MessageStatusCode>>, pairwise_dids: Option<Vec<String>>) -> GetMessages {
+    pub(crate) fn build(kind: A2AMessageKinds, exclude_payload: Option<String>, uids: Option<Vec<String>>,
+                        status_codes: Option<Vec<MessageStatusCode>>, pairwise_dids: Option<Vec<String>>) -> GetMessages {
         GetMessages {
             msg_type: MessageType::build_v2(kind),
             exclude_payload,
@@ -39,7 +40,7 @@ impl GetMessages {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct GetMessagesResponse {
     #[serde(rename = "@type")]
@@ -103,7 +104,7 @@ impl GetMessagesBuilder {
         trace!("parse_get_messages_response >>> obtained agency response {:?}", response);
 
         match response.remove(0) {
-            AgencyMsg::Version2(AgencyMessageTypes::GetMessagesResponse(res)) => {
+            Client2AgencyMessage::GetMessagesResponse(res) => {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
             }
@@ -124,15 +125,12 @@ impl GeneralMessage for GetMessagesBuilder {
 
     async fn prepare_request(&mut self) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_request >>");
-        let message = AgencyMsg::Version2(
-            AgencyMessageTypes::GetMessages(
-                GetMessages::build(A2AMessageKinds::GetMessages,
-                                   self.exclude_payload.clone(),
-                                   self.uids.clone(),
-                                   self.status_codes.clone(),
-                                   self.pairwise_dids.clone()))
-        );
-
+        let message = Client2AgencyMessage::GetMessages(
+            GetMessages::build(A2AMessageKinds::GetMessages,
+                               self.exclude_payload.clone(),
+                               self.uids.clone(),
+                               self.status_codes.clone(),
+                               self.pairwise_dids.clone()));
         prepare_message_for_agent(vec![message], &self.to_vk, &self.agent_did, &self.agent_vk).await
     }
 }
@@ -149,7 +147,7 @@ impl Default for MessagePayload {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AgencyMessageEncrypted {
     pub status_code: MessageStatusCode,
@@ -178,7 +176,7 @@ impl AgencyMessageEncrypted {
         Ok(AgencyMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
-            decrypted_msg: decrypted_payload
+            decrypted_msg: decrypted_payload,
         })
     }
 
@@ -187,7 +185,7 @@ impl AgencyMessageEncrypted {
         Ok(AgencyMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
-            decrypted_msg: decrypted_payload
+            decrypted_msg: decrypted_payload,
         })
     }
 

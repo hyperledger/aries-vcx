@@ -1,6 +1,6 @@
 use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::messages::a2a_message::{AgencyMsg, AgencyMessageTypes};
+use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
@@ -10,7 +10,7 @@ use crate::testing::test_constants;
 use crate::utils::comm::post_to_agency;
 use crate::utils::error_utils;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ComMethod {
     id: String,
     #[serde(rename = "type")]
@@ -21,16 +21,14 @@ pub struct ComMethod {
 async fn _connect(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyClientResult<(String, String)> {
     trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
     /* STEP 1 - CONNECT */
-    let message = AgencyMsg::Version2(
-        AgencyMessageTypes::Connect(Connect::build(my_did, my_vk))
+    let message = Client2AgencyMessage::Connect(Connect::build(my_did, my_vk)
     );
 
     let mut response = _send_message_to_agency(&message, agency_did).await?;
 
     let ConnectResponse { from_vk: agency_pw_vk, from_did: agency_pw_did, .. } =
         match response.remove(0) {
-            AgencyMsg::Version2(AgencyMessageTypes::ConnectResponse(resp)) =>
-                resp,
+            Client2AgencyMessage::ConnectResponse(resp) => resp,
             _ => return
                 Err(AgencyClientError::from_msg(
                     AgencyClientErrorKind::InvalidHttpResponse,
@@ -51,29 +49,25 @@ pub async fn onboarding(my_did: &str, my_vk: &str, agency_did: &str) -> AgencyCl
     let (agency_pw_did, _) = _connect(my_did, my_vk, agency_did).await?;
 
     /* STEP 2 - REGISTER */
-    let message = AgencyMsg::Version2(
-        AgencyMessageTypes::SignUp(SignUp::build())
-    );
+    let message = Client2AgencyMessage::SignUp(SignUp::build());
 
     AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
     let mut response = _send_message_to_agency(&message, &agency_pw_did).await?;
 
     let _response: SignUpResponse =
         match response.remove(0) {
-            AgencyMsg::Version2(AgencyMessageTypes::SignUpResponse(resp)) => resp,
+            Client2AgencyMessage::SignUpResponse(resp) => resp,
             _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of SignUpResponse"))
         };
 
     /* STEP 3 - CREATE AGENT */
-    let message = AgencyMsg::Version2(
-        AgencyMessageTypes::CreateAgent(CreateAgent::build())
-    );
+    let message = Client2AgencyMessage::CreateAgent(CreateAgent::build());
     AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
     let mut response = _send_message_to_agency(&message, &agency_pw_did).await?;
 
     let response: CreateAgentResponse =
         match response.remove(0) {
-            AgencyMsg::Version2(AgencyMessageTypes::CreateAgentResponse(resp)) => resp,
+            Client2AgencyMessage::CreateAgentResponse(resp) => resp,
             _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
         };
 
@@ -97,9 +91,7 @@ pub async fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
                 return Ok(());
             }
 
-            let message = AgencyMsg::Version2(
-                AgencyMessageTypes::UpdateComMethod(UpdateComMethod::build(com_method))
-            );
+            let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
             _send_message_to_agency(&message, &to_did).await?;
         }
         Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
@@ -107,7 +99,7 @@ pub async fn update_agent_webhook(webhook_url: &str) -> AgencyClientResult<()> {
     Ok(())
 }
 
-async fn _send_message_to_agency(message: &AgencyMsg, did: &str) -> AgencyClientResult<Vec<AgencyMsg>> {
+async fn _send_message_to_agency(message: &Client2AgencyMessage, did: &str) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
     trace!("send_message_to_agency >>> message: ..., did: {}", did);
     let data = prepare_message_for_agency(message, &did).await?;
 

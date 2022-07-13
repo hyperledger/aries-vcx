@@ -1,7 +1,7 @@
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct CreateAgent {
     #[serde(rename = "@type")]
     msg_type: MessageType,
@@ -15,7 +15,7 @@ impl CreateAgent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct CreateAgentResponse {
     #[serde(rename = "@type")]
     pub msg_type: MessageType,

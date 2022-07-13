@@ -23,7 +23,7 @@ use async_trait::async_trait;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use messages::a2a_message::{AgencyMsg, AgencyMessageTypes};
+use messages::a2a_message::Client2AgencyMessage;
 use messages::forward::ForwardV2;
 use messages::get_messages::GetMessagesBuilder;
 use messages::update_connection::DeleteConnectionBuilder;
@@ -82,11 +82,11 @@ impl<'de> Deserialize<'de> for MessageStatusCode {
     }
 }
 
-pub async fn prepare_message_for_agency(message: &AgencyMsg, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
+pub async fn prepare_message_for_agency(message: &Client2AgencyMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
     pack_for_agency_v2(message, agency_did).await
 }
 
-async fn pack_for_agency_v2(message: &AgencyMsg, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
+async fn pack_for_agency_v2(message: &Client2AgencyMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
     trace!("pack_for_agency_v2 >>>");
     let agent_vk = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
     let my_vk = agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
@@ -112,7 +112,7 @@ pub async fn parse_message_from_response(response: &Vec<u8>) -> AgencyClientResu
         .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Cannot find `message` field on response"))?.to_string())
 }
 
-async fn parse_response_from_agency(response: &Vec<u8>) -> AgencyClientResult<Vec<AgencyMsg>> {
+async fn parse_response_from_agency(response: &Vec<u8>) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
     trace!("parse_response_from_agency >>> processing payload of {} bytes", response.len());
 
     let message: String = if AgencyMockDecrypted::has_decrypted_mock_responses() {
@@ -124,7 +124,7 @@ async fn parse_response_from_agency(response: &Vec<u8>) -> AgencyClientResult<Ve
 
     trace!("AgencyComm Inbound V2 A2AMessage: {}", message);
 
-    let message: AgencyMsg = serde_json::from_str(&message)
+    let message: Client2AgencyMessage = serde_json::from_str(&message)
         .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize A2A message: {}", err)))?;
 
     Ok(vec![message])
@@ -137,7 +137,7 @@ async fn prepare_forward_message(message: Vec<u8>, did: &str) -> AgencyClientRes
     let message = ForwardV2::new(did.to_string(), message)?;
 
     match message {
-        AgencyMsg::Version2(AgencyMessageTypes::Forward(msg)) => prepare_forward_message_for_agency_v2(&msg, &agency_vk).await,
+        Client2AgencyMessage::Forward(msg) => prepare_forward_message_for_agency_v2(&msg, &agency_vk).await,
         _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidState, "Invalid message type"))
     }
 }
@@ -152,7 +152,7 @@ async fn prepare_forward_message_for_agency_v2(message: &ForwardV2, agency_vk: &
     crypto::pack_message(None, &receiver_keys, message.as_bytes()).await
 }
 
-async fn prepare_message_for_agent(messages: Vec<AgencyMsg>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
+async fn prepare_message_for_agent(messages: Vec<Client2AgencyMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
     debug!("prepare_message_for_agent >> {:?}", messages);
     let message = messages.get(0)
         .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, "Cannot get message"))?;

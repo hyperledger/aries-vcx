@@ -5,14 +5,14 @@ use crate::agent_utils::ComMethod;
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ComMethodUpdated {
     #[serde(rename = "@type")]
     msg_type: MessageType,
     id: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct UpdateComMethod {
     #[serde(rename = "@type")]
     msg_type: MessageType,

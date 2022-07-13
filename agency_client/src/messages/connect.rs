@@ -1,7 +1,7 @@
 use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Connect {
     #[serde(rename = "@type")]
     msg_type: MessageType,
@@ -21,7 +21,7 @@ impl Connect {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ConnectResponse {
     #[serde(rename = "@type")]
     pub msg_type: MessageType,
