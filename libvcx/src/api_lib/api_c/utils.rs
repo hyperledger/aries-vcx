@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::ptr;
 
 use futures::future::{BoxFuture, FutureExt};
@@ -10,12 +11,14 @@ use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::api::agent::update_messages;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::settings::get_agency_client;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
+use crate::api_lib::api_handle::utils::agency_update_messages;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
@@ -279,7 +282,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match update_messages(status_code, uids_by_conns).await {
+        match agency_update_messages(status_code, uids_by_conns).await {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);

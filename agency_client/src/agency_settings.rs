@@ -4,6 +4,7 @@ use std::sync::RwLock;
 
 use serde_json::Value;
 use url::Url;
+use crate::agency_settings;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::{error_utils, validation};
@@ -138,6 +139,18 @@ pub fn get_config_value(key: &str) -> AgencyClientResult<String> {
         .get(key)
         .map(|v| v.to_string())
         .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from AGENCY_SETTINGS", key)))
+}
+
+pub fn get_config_enable_test_mode() -> AgencyClientResult<String> {
+    get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE)
+}
+
+pub fn enable_agency_test_mode() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "true");
+}
+
+pub fn disable_agency_test_mode() {
+    agency_settings::set_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE, "false");
 }
 
 pub fn set_config_value(key: &str, value: &str) {

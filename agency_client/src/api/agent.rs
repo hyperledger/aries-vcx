@@ -1,4 +1,5 @@
 use crate::{agency_settings, MessageStatusCode};
+use crate::agency_client::AgencyClient;
 use crate::api::messaging;
 use crate::api::messaging::{parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
@@ -73,6 +74,34 @@ pub async fn update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<
     match response.remove(0) {
         Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
         _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
+    }
+}
+
+impl AgencyClient {
+    pub async fn update_messages(&self, status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<()> {
+        trace!("update_messages >>> ");
+        if mocking::agency_mocks_enabled() {
+            trace!("update_messages >>> agency mocks enabled, returning empty response");
+            return Ok(());
+        };
+
+        trace!("ideally we would use client.agency_did={} on the next line ", self.agency_did);
+        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
+        AgencyMock::set_next_response(test_constants::UPDATE_MESSAGES_RESPONSE.to_vec());
+
+        let message = UpdateMessageStatusByConnectionsBuilder::create()
+            .uids_by_conns(uids_by_conns)?
+            .status_code(status_code)?
+            .build();
+
+        let data = prepare_message_for_agency(&Client2AgencyMessage::UpdateMessageStatusByConnections(message), &agency_did).await?;
+        let response = post_to_agency(&data).await?;
+        let mut response = parse_response_from_agency(&response).await?;
+
+        match response.remove(0) {
+            Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
+            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateMessageStatusByConnectionsResponse"))
+        }
     }
 }
 

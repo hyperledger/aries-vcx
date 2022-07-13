@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use agency_client::api::agent::create_keys;
 use agency_client::messages::get_messages::{DownloadedMessage, DownloadedMessageEncrypted};
 use agency_client::messages::update_message::UIDsByConn;
@@ -6,11 +7,11 @@ use agency_client::messages::update_message::UIDsByConn;
 use agency_client::api::agent::get_encrypted_connection_messages;
 use crate::agency_client::MessageStatusCode;
 use agency_client::api::agent::send_delete_connection_message;
-use agency_client::api::agent::update_messages as update_messages_status;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::settings;
+use crate::settings::get_agency_client;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -82,7 +83,7 @@ impl CloudAgentInfo {
             uids: vec![uid],
         }];
 
-        update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
+        get_agency_client()?.update_messages(MessageStatusCode::Reviewed, messages_to_update)
             .await
             .map_err(|err| err.into())
     }
