@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use agency_client::create_keys::create_keys;
+use agency_client::api::agent::create_keys;
 use agency_client::messages::get_messages::{DownloadedMessage, DownloadedMessageEncrypted};
 use agency_client::messages::update_message::UIDsByConn;
 
-use crate::agency_client::get_message::get_encrypted_connection_messages;
+use agency_client::api::agent::get_encrypted_connection_messages;
 use crate::agency_client::MessageStatusCode;
-use crate::agency_client::update_connection::send_delete_connection_message;
-use crate::agency_client::update_message::update_messages as update_messages_status;
+use agency_client::api::agent::send_delete_connection_message;
+use agency_client::api::agent::update_messages as update_messages_status;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -33,7 +33,7 @@ pub async fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -
     trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
 
     let (agent_did, agent_verkey) = create_keys(pw_did, pw_verkey).await
-        .map_err(|err| err.extend("Cannot create pairwise keys"))?;;
+        .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
 
     trace!("create_agent_keys <<< agent_did: {}, agent_verkey: {}", agent_did, agent_verkey);

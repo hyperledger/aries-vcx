@@ -1,10 +1,8 @@
-use crate::{agency_settings, parse_response_from_agency, prepare_message_for_agency, validation};
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::error::AgencyClientResult;
 use crate::message_type::MessageType;
-use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
-use crate::testing::{mocking, test_constants};
-use crate::testing::mocking::AgencyMock;
+use crate::messages::a2a_message::A2AMessageKinds;
 use crate::utils::comm::post_to_agency;
+use crate::validation;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -68,8 +66,8 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::agent::create_keys;
     use crate::create_keys;
-    use crate::create_keys::create_keys;
     use crate::error::AgencyClientErrorKind;
     use crate::testing::test_constants;
     use crate::testing::test_utils::SetupMocks;

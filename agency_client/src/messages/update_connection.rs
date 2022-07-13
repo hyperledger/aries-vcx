@@ -1,12 +1,8 @@
-use async_trait::async_trait;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::{parse_response_from_agency, prepare_message_for_agent};
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
-use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
-use crate::utils::comm::post_to_agency;
+use crate::messages::a2a_message::A2AMessageKinds;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -57,10 +53,7 @@ pub struct UpdateConnectionResponse {
 
 #[derive(Debug)]
 pub struct DeleteConnectionBuilder {
-    to_vk: String,
     status_code: ConnectionStatus,
-    agent_did: String,
-    agent_vk: String,
 }
 
 impl DeleteConnectionBuilder {
@@ -68,10 +61,7 @@ impl DeleteConnectionBuilder {
         trace!("DeleteConnection::create_message >>>");
 
         DeleteConnectionBuilder {
-            to_vk: String::new(),
             status_code: ConnectionStatus::Deleted,
-            agent_did: String::new(),
-            agent_vk: String::new(),
         }
     }
 

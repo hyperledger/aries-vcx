@@ -365,7 +365,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::agency_client::agent_utils::update_agent_webhook(&notification_webhook_url[..]).await {
+        match aries_vcx::agency_client::api::agent::update_agent_webhook(&notification_webhook_url[..]).await {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);

@@ -81,7 +81,7 @@ mod tests {
 
     use agency_client::messages::get_messages::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
-    use agency_client::update_message::update_messages;
+    use agency_client::api::agent::update_messages;
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::error::VcxResult;

@@ -1,12 +1,9 @@
-use async_trait::async_trait;
 use futures::StreamExt;
 
-use crate::{agency_settings, MessageStatusCode, parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
-use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
-use crate::testing::mocking;
-use crate::utils::comm::post_to_agency;
+use crate::messages::a2a_message::A2AMessageKinds;
+use crate::MessageStatusCode;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -50,9 +47,6 @@ pub struct GetMessagesResponse {
 
 #[derive(Debug)]
 pub struct GetMessagesBuilder {
-    to_vk: String,
-    agent_did: String,
-    agent_vk: String,
     exclude_payload: Option<String>,
     uids: Option<Vec<String>>,
     status_codes: Option<Vec<MessageStatusCode>>,
@@ -64,9 +58,6 @@ impl GetMessagesBuilder {
         trace!("GetMessages::create_message >>>");
 
         GetMessagesBuilder {
-            to_vk: String::new(),
-            agent_did: String::new(),
-            agent_vk: String::new(),
             uids: None,
             exclude_payload: None,
             status_codes: None,
@@ -85,11 +76,11 @@ impl GetMessagesBuilder {
     }
 
     pub fn build(&self) -> GetMessages {
-            GetMessages::build(A2AMessageKinds::GetMessages,
-                               self.exclude_payload.clone(),
-                               self.uids.clone(),
-                               self.status_codes.clone(),
-                               self.pairwise_dids.clone())
+        GetMessages::build(A2AMessageKinds::GetMessages,
+                           self.exclude_payload.clone(),
+                           self.uids.clone(),
+                           self.status_codes.clone(),
+                           self.pairwise_dids.clone())
     }
 }
 

@@ -1,7 +1,6 @@
 extern crate rust_base58;
 
 use regex::Regex;
-use url::Url;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
@@ -46,8 +45,6 @@ pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
 
 #[cfg(test)]
 mod tests {
-    // use utils::devsetup::SetupDefaults;
-
     use crate::error::AgencyClientErrorKind;
 
     use super::*;

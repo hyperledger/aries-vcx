@@ -1,9 +1,11 @@
-use serde_json::Value;
 use core::u8;
+
+use serde_json::Value;
 use uuid::Uuid;
-use crate::messages::a2a_message::A2AMessageKinds;
+
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::message_type::MessageType;
+use crate::messages::a2a_message::A2AMessageKinds;
 use crate::messages::a2a_message::Client2AgencyMessage;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -27,7 +29,7 @@ impl ForwardV2 {
                 msg_type: MessageType::build_v2(A2AMessageKinds::Forward),
                 fwd,
                 msg,
-                id: Uuid::new_v4().to_string()
+                id: Uuid::new_v4().to_string(),
             }
         ))
     }

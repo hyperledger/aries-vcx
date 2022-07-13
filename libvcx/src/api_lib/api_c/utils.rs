@@ -7,7 +7,7 @@ use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
-use aries_vcx::agency_client::update_message::update_messages;
+use aries_vcx::agency_client::api::agent::update_messages;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
