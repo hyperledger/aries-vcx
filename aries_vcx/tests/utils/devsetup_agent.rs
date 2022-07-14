@@ -1,6 +1,7 @@
 #[cfg(test)]
 pub mod test {
-    use aries_vcx::agency_client::payload::PayloadKinds;
+    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::MessageStatusCode;
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
@@ -37,6 +38,17 @@ pub mod test {
         pub decrypted_msg: String,
     }
 
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum PayloadKinds {
+        CredOffer,
+        CredReq,
+        Cred,
+        Proof,
+        ProofRequest,
+        ConnRequest,
+        Other(String),
+    }
+
     fn determine_message_type(a2a_message: A2AMessage) -> PayloadKinds {
         debug!("determine_message_type >>> a2a_message: {:?}", a2a_message);
         match a2a_message.clone() {
@@ -60,13 +72,9 @@ pub mod test {
         Ok(determine_message_type(a2a_message))
     }
 
-    async fn download_message(did: String, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
-        let mut messages = aries_vcx::agency_client::get_message::download_messages_noauth(Some(vec![did]), Some(vec![String::from("MS-103")]), None).await.unwrap();
-        assert_eq!(1, messages.len());
-        let messages = messages.pop().unwrap();
-
-        for message in messages.msgs.into_iter() {
-            let decrypted_msg = &message.decrypted_msg.unwrap();
+    async fn filter_messages(messages: Vec<DownloadedMessage>, filter_msg_type: PayloadKinds) -> Option<VcxAgencyMessage> {
+        for message in messages.into_iter() {
+            let decrypted_msg = &message.decrypted_msg;
             let msg_type = str_message_to_payload_type(decrypted_msg).unwrap();
             if filter_msg_type == msg_type {
                 return Some(VcxAgencyMessage {
@@ -380,7 +388,8 @@ pub mod test {
         pub async fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate().await?;
             let did = self.connection.pairwise_info().pw_did.to_string();
-            download_message(did, message_type)
+            let messages = self.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+            filter_messages(messages, message_type)
                 .await
                 .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
         }

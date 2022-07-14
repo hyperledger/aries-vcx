@@ -249,13 +249,6 @@ export interface IFFIEntryPoint {
     uids: string,
     cb: ICbRef,
   ) => number;
-  vcx_messages_download: (
-    commandId: number,
-    status: string,
-    uids: string,
-    pwdids: string,
-    cb: ICbRef,
-  ) => number;
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number;
@@ -799,11 +792,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_get_thread_id: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
-  ],
-
-  vcx_messages_download: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
 
   // issuer

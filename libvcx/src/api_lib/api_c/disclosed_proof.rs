@@ -929,8 +929,8 @@ mod tests {
     use std::ffi::CString;
 
     use serde_json::Value;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{CREDS_FROM_PROOF_REQ, GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;

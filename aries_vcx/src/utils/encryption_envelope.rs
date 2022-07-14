@@ -1,5 +1,5 @@
-use agency_client::mocking::AgencyMockDecrypted;
 use indy::future::TryFutureExt;
+use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::crypto;

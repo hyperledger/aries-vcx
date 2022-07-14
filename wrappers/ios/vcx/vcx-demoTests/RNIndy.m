@@ -630,33 +630,6 @@
     });
 }
 
--(void)downloadMessages: (NSString *) messageStatus
-                  uid_s: (NSString *) uid_s
-                 pwdids: (NSString *) pwdids
-             completion:(void (^)(BOOL success))successful
-{
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] downloadMessages: messageStatus uid_s:uid_s pwdids:pwdids completion:^(NSError *error, NSString *messages) {
-
-
-        if (error != nil && error.code !=0) {
-            NSString *indyErrorCode = [NSString stringWithFormat:@"%ld", (long)error.code];
-            //reject(indyErrorCode, @"Error occured while downloading messages", error);
-            NSLog(@"Value of indyErrorCode is: %@", indyErrorCode);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                successful(NO);
-            });
-        } else{
-            //resolve(messages);
-            NSLog(@"downloadMessages was successful!");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                successful(YES);
-            });
-        }
-    }];
-    });
-}
-
 -(void)proofCreateWithMsgId: (NSString *)sourceId
                   withConnectionHandle: (vcx_connection_handle_t)connectionHandle
                   withMsgId: (NSString *)msgId

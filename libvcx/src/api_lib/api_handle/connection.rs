@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use aries_vcx::agency_client::get_message::MessageByConnection;
+use aries_vcx::agency_client::messages::get_messages::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
@@ -255,6 +255,39 @@ pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     })
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+pub struct MessageByConnection {
+    #[serde(rename = "pairwiseDID")]
+    pub pairwise_did: String,
+    pub msgs: Vec<DownloadedMessage>,
+}
+
+pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
+    match status_codes {
+        Some(codes) => {
+            let codes = codes
+                .iter()
+                .map(|code|
+                    ::serde_json::from_str::<MessageStatusCode>(&format!("\"{}\"", code))
+                        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse message status code: {}", err)))
+                ).collect::<VcxResult<Vec<MessageStatusCode>>>()?;
+            Ok(Some(codes))
+        }
+        None => Ok(None)
+    }
+}
+
+pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+    trace!("parse_connection_handles >>> conn_handles: {:?}", conn_handles);
+    let codes = conn_handles
+        .iter()
+        .map(|handle|
+            ::serde_json::from_str::<u32>(handle)
+                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot parse connection handles: {}", err)))
+        ).collect::<VcxResult<Vec<u32>>>()?;
+    Ok(codes)
+}
+
 pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<MessageByConnection>> {
     trace!("download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}", conn_handles, status_codes, uids);
     let mut res = Vec::new();
@@ -280,7 +313,7 @@ pub mod tests {
     use serde_json::Value;
 
     use aries_vcx;
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::settings;
     use aries_vcx::utils::constants;
@@ -408,11 +441,8 @@ pub mod tests {
         update_state(handle).await.unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateAccepted as u32);
 
-        AgencyMockDecrypted::set_next_decrypted_response(constants::DELETE_CONNECTION_DECRYPTED_RESPONSE);
-        assert_eq!(delete_connection(handle).await.unwrap(), 0);
-
         // This errors b/c we release handle in delete connection
-        assert!(release(handle).is_err());
+        assert!(release(handle).is_ok());
     }
 
     #[tokio::test]

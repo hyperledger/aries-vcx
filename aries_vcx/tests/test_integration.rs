@@ -1,3 +1,4 @@
+extern crate async_trait;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -5,7 +6,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate tokio;
-extern crate async_trait;
 
 use std::fmt;
 
@@ -79,12 +79,11 @@ mod tests {
     use rand::Rng;
     use serde_json::Value;
 
+    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::messages::update_message::UIDsByConn;
+    use agency_client::api::agent::update_messages;
     use aries_vcx::{libindy, utils};
-    use aries_vcx::agency_client::get_message::download_messages_noauth;
     use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
-    use aries_vcx::agency_client::payload::PayloadKinds;
-    use aries_vcx::agency_client::update_message::{UIDsByConn, update_agency_messages};
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -130,7 +129,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test::{Alice, Faber, PayloadKinds, TestAgent};
 
     use super::*;
 
@@ -239,7 +238,7 @@ mod tests {
             credential_json: credential_json.to_string(),
             cred_def_id: cred_def.cred_def_id.clone(),
             rev_reg_id: Some(rev_reg.get_rev_reg_id()),
-            tails_file: Some(rev_reg.get_tails_dir())
+            tails_file: Some(rev_reg.get_tails_dir()),
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
@@ -601,7 +600,7 @@ mod tests {
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data = json!({address1: "123 Main St", address2: "Suite 3", city: "Draper", state: "UT", zip: "84000"}).to_string();
 
-        let credential_handle = _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg,consumer_to_institution, institution_to_consumer, None).await;
+        let credential_handle = _exchange_credential(consumer, institution, credential_data, &cred_def, &rev_reg, consumer_to_institution, institution_to_consumer, None).await;
         (schema_id, cred_def_id, rev_reg_id, cred_def, rev_reg, credential_handle)
     }
 
@@ -817,7 +816,7 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) = _create_address_schema().await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, &rev_reg,&consumer1_to_issuer, &issuer_to_consumer1, None).await;
+        let _credential_handle1 = _exchange_credential(&mut consumer1, &mut issuer, credential_data1, &cred_def, &rev_reg, &consumer1_to_issuer, &issuer_to_consumer1, None).await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
         let _credential_handle2 = _exchange_credential(&mut consumer2, &mut issuer, credential_data2, &cred_def, &rev_reg, &consumer2_to_issuer, &issuer_to_consumer2, None).await;
 
@@ -914,11 +913,11 @@ mod tests {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) = _create_address_schema().await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, &cred_def, &rev_reg,&consumer_to_institution1, &institution_to_consumer1, None).await;
+        let credential_handle1 = _exchange_credential(&mut consumer1, &mut institution, credential_data1, &cred_def, &rev_reg, &consumer_to_institution1, &institution_to_consumer1, None).await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, &cred_def, &rev_reg,&consumer_to_institution2, &institution_to_consumer2, None).await;
+        let credential_handle2 = _exchange_credential(&mut consumer2, &mut institution, credential_data2, &cred_def, &rev_reg, &consumer_to_institution2, &institution_to_consumer2, None).await;
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let _credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, &cred_def, &rev_reg,&consumer_to_institution3, &institution_to_consumer3, None).await;
+        let _credential_handle3 = _exchange_credential(&mut consumer3, &mut institution, credential_data3, &cred_def, &rev_reg, &consumer_to_institution3, &institution_to_consumer3, None).await;
 
         revoke_credential_local(&mut institution, &credential_handle1, rev_reg.rev_reg_id.clone()).await;
         revoke_credential_local(&mut institution, &credential_handle2, rev_reg.rev_reg_id.clone()).await;
@@ -1202,7 +1201,7 @@ mod tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg,  rev_reg_id) = _create_address_schema().await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) = _create_address_schema().await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -1464,7 +1463,7 @@ mod tests {
         institution.activate().await.unwrap();
         let mut msgs = institution_to_consumer.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+        let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuse(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
@@ -1478,7 +1477,7 @@ mod tests {
         consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg.unwrap()).unwrap() {
+        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
@@ -2006,49 +2005,30 @@ mod tests {
         consumer.activate().await.unwrap();
         alice_to_faber.send_generic_message("Hello Faber").await.unwrap();
 
-        let alice_pw_did = alice_to_faber.pairwise_info().pw_did.clone();
-        let faber_remote_did = faber_to_alice.remote_did().unwrap();
-        assert_eq!(alice_pw_did, faber_remote_did);
+        thread::sleep(Duration::from_millis(100));
 
-        thread::sleep(Duration::from_millis(1000));
+        institution.activate().await.unwrap();
+        let msgs = faber_to_alice.download_messages(None, None).await.unwrap();
+        assert_eq!(msgs.len(), 2);
+        let ack_msg = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("https://didcomm.org/notification/1.0/ack")).unwrap();
+        assert_eq!(ack_msg.status_code, MessageStatusCode::Reviewed);
+        let hello_msg  = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
+        assert_eq!(hello_msg.status_code, MessageStatusCode::Received);
 
-        let all_messages = download_messages_noauth(Some(vec![alice_pw_did.clone()]), None, None).await.unwrap();
-        assert_eq!(all_messages.len(), 1);
-        assert_eq!(all_messages[0].msgs.len(), 3);
-        assert!(all_messages[0].msgs[0].decrypted_msg.is_some());
-        assert!(all_messages[0].msgs[1].decrypted_msg.is_some());
-
-        let received = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Received.to_string()]), None).await.unwrap();
+        let received = faber_to_alice.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 1);
-        assert_eq!(received[0].msgs.len(), 2);
-        assert!(received[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(received[0].msgs[0].status_code, MessageStatusCode::Received);
-        assert!(received[0].msgs[1].decrypted_msg.is_some());
+        received.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
 
-        // there should be messages in "Reviewed" status connections/1.0/response from Aries-Faber connection protocol
-        let reviewed = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Reviewed.to_string()]), None).await.unwrap();
-        assert_eq!(reviewed.len(), 1);
-        assert_eq!(reviewed[0].msgs.len(), 1);
-        assert!(reviewed[0].msgs[0].decrypted_msg.is_some());
-        assert_eq!(reviewed[0].msgs[0].status_code, MessageStatusCode::Reviewed);
+        let msgs_by_uid = faber_to_alice.download_messages(None, Some(vec![hello_msg.uid.clone()])).await.unwrap();
+        assert_eq!(msgs_by_uid.len(), 1);
+        assert_eq!(msgs_by_uid[0].uid, hello_msg.uid);
 
-        let rejected = download_messages_noauth(Some(vec![alice_pw_did.clone()]), Some(vec![MessageStatusCode::Rejected.to_string()]), None).await.unwrap();
-        assert_eq!(rejected.len(), 1);
-        assert_eq!(rejected[0].msgs.len(), 0);
+        let double_filter = faber_to_alice.download_messages(Some(vec![MessageStatusCode::Received]), Some(vec![hello_msg.uid.clone()])).await.unwrap();
+        assert_eq!(double_filter.len(), 1);
+        assert_eq!(double_filter[0].uid, hello_msg.uid);
 
-        let specific = download_messages_noauth(Some(vec![alice_pw_did.clone()]), None, Some(vec![received[0].msgs[0].uid.clone()])).await.unwrap();
-        assert_eq!(specific.len(), 1);
-        assert_eq!(specific[0].msgs.len(), 1);
-        let msg = specific[0].msgs[0].decrypted_msg.clone().unwrap();
-        let msg_aries_value: Value = serde_json::from_str(&msg).unwrap();
-        assert!(msg_aries_value.is_object());
-        assert!(msg_aries_value["@id"].is_string());
-        assert!(msg_aries_value["@type"].is_string());
-        assert!(msg_aries_value["content"].is_string());
-
-        let unknown_did = "CmrXdgpTXsZqLQtGpX5Yee".to_string();
-        let empty = download_messages_noauth(Some(vec![unknown_did]), None, None).await.unwrap();
-        assert_eq!(empty.len(), 0);
+        let msgs = faber_to_alice.download_messages(None, Some(vec!["abcd123".into()])).await.unwrap();
+        assert_eq!(msgs.len(), 0);
     }
 
     #[tokio::test]
@@ -2135,8 +2115,6 @@ mod tests {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            use aries_vcx::agency_client::get_message::{MessageByConnection, Message};
-
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().await.unwrap();
@@ -2145,9 +2123,8 @@ mod tests {
             alice.activate().await.unwrap();
 
             let msgs = alice.connection.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
-            let message: Message = msgs[0].clone();
-            let decrypted_msg = message.decrypted_msg.unwrap();
-            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&decrypted_msg).unwrap();
+            let message: DownloadedMessage = msgs[0].clone();
+            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
 
             alice.connection.update_message_status(&message.uid).await.unwrap()
         }
@@ -2206,8 +2183,7 @@ mod tests {
         let reviewed_count_before = reviewed.len();
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
-        let message = serde_json::to_string(&vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).unwrap();
-        update_agency_messages("MS-106", &message).await.unwrap();
+        update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
 
         let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 2);

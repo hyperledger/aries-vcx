@@ -88,9 +88,4 @@
       completion:(void (^)(BOOL success))successful;
 -(NSString*)createWalletKey: (NSInteger) lengthOfKey;
 
--(void)downloadMessages: (NSString *) messageStatus
-                  uid_s: (NSString *) uid_s
-                 pwdids: (NSString *) pwdids
-             completion:(void (^)(BOOL success))successful;
-
 @end

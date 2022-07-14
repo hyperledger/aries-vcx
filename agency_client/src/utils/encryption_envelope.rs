@@ -1,5 +1,5 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::mocking::AgencyMockDecrypted;
+use crate::testing::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
 
 #[derive(Debug)]

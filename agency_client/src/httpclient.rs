@@ -6,14 +6,13 @@ use reqwest;
 use reqwest::Client;
 use reqwest::header::CONTENT_TYPE;
 
-use crate::{AgencyMockDecrypted, mocking};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::mocking::{AgencyMock, HttpClientMockResponse};
-use crate::utils::timeout::TimeoutUtils;
+use crate::testing::mocking;
+use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
     static ref HTTP_CLIENT: RwLock<Client> = RwLock::new(reqwest::ClientBuilder::new()
-        .timeout(TimeoutUtils::long_timeout())
+        .timeout(Duration::from_secs(50))
         .pool_idle_timeout(Some(Duration::from_secs(4)))
         .build()
         .map_err(|err| {

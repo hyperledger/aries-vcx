@@ -3,7 +3,6 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::agency_client::get_message::parse_status_codes;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::libindy;
@@ -1301,7 +1300,7 @@ pub extern fn vcx_connection_messages_download(command_handle: CommandHandle,
                 };
             }
             Err(err) => {
-                error!("vcx_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                error!("vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                       command_handle, err, "null");
 
                 cb(command_handle, err.into(), ptr::null_mut());
@@ -1322,6 +1321,7 @@ mod tests {
 
     use serde_json::Value;
 
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::error;
@@ -1332,7 +1332,6 @@ mod tests {
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
-    use crate::aries_vcx::agency_client::mocking::AgencyMockDecrypted;
 
     use super::*;
 

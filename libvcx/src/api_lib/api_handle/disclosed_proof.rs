@@ -4,7 +4,7 @@ use aries_vcx::{
     handlers::proof_presentation::prover::Prover,
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
-use aries_vcx::agency_client::mocking::AgencyMockDecrypted;
+use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::settings::indy_mocks_enabled;

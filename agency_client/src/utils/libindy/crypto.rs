@@ -1,7 +1,7 @@
 use indy::crypto;
 
 use crate::error::AgencyClientResult;
-use crate::mocking::agency_mocks_enabled;
+use crate::testing::mocking::agency_mocks_enabled;
 
 pub async fn pack_message(sender_vk: Option<&str>, receiver_keys: &str, msg: &[u8]) -> AgencyClientResult<Vec<u8>> {
     trace!("pack_message >>> sender_vk: {:?}, receiver_keys: {}, msg: ...", sender_vk, receiver_keys);

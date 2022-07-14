@@ -418,8 +418,6 @@ vcx_error_t vcx_wallet_close_search(vcx_command_handle_t commond_handle, vcx_sea
 vcx_error_t vcx_shutdown(vcx_bool_t deleteWallet);
 
 /** Get Messages (Connections) of given status */
-vcx_error_t vcx_messages_download(vcx_command_handle_t command_handle, const char *message_status, const char *uids, const char *pw_dids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
-
 vcx_error_t vcx_v2_messages_download(vcx_command_handle_t command_handle, const char *connection_handles, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
 
 /** Update Message status */

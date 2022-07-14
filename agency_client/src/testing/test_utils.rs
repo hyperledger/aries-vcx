@@ -3,8 +3,8 @@ use std::sync::Once;
 use env_logger;
 
 use crate::agency_settings;
-use crate::mocking;
-use crate::mocking::AgencyMockDecrypted;
+use crate::testing::mocking;
+use crate::testing::mocking::AgencyMockDecrypted;
 use crate::utils::wallet::reset_wallet_handle;
 
 pub struct SetupMocks;
