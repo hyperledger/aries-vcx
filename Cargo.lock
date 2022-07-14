@@ -37,6 +37,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "tokio",
  "url 1.7.2",
  "uuid 0.8.2",
 ]

@@ -76,14 +76,16 @@ mod tests {
     use std::ops::Deref;
     use std::thread;
     use std::time::Duration;
+    use indyrs::wallet;
 
     use rand::Rng;
     use serde_json::Value;
+    use agency_client::agency_client::AgencyClient;
 
     use agency_client::messages::get_messages::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
-    use agency_client::api::agent::update_messages;
     use aries_vcx::{libindy, utils};
+
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::error::VcxResult;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
@@ -97,11 +99,14 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::init::open_wallet;
     use aries_vcx::libindy::credential_def;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
     use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
     use aries_vcx::libindy::utils::anoncreds::test_utils::{create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema};
+    use aries_vcx::libindy::utils::signus;
+    use aries_vcx::libindy::utils::signus::create_and_store_my_did;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::test_utils::_ack;
@@ -2186,7 +2191,7 @@ mod tests {
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
         let client = get_agency_client().unwrap();
-        client.deref().update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
+        client.update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
 
         let received = alice_to_faber.download_messages(Some(vec![MessageStatusCode::Received]), None).await.unwrap();
         assert_eq!(received.len(), 2);
@@ -2234,5 +2239,39 @@ mod tests {
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
+    }
+
+    #[cfg(feature = "agency_v2")]
+    #[tokio::test]
+    async fn test_update_agent_webhook() {
+        let wallet_config = WalletConfig {
+            wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+            wallet_type: None,
+            storage_config: None,
+            storage_credentials: None,
+            rekey: None,
+            rekey_derivation_method: None,
+        };
+
+        create_indy_wallet(&wallet_config).await.unwrap();
+        let wh = open_wallet(&wallet_config).await.unwrap();
+        let mut client = AgencyClient::new().unwrap();
+        client.set_wallet_handle(wh.0);
+        let agency_url = "http://localhost:8080";
+        let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
+        let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
+        let (my_did, my_vk) = create_and_store_my_did(wh, None, None).await.unwrap();
+        client.set_agency_did(agency_did);
+        client.set_agency_vk(agency_vk);
+        client.set_agency_url(agency_url);
+        client.set_my_vk(&my_vk);
+        client.set_my_pwdid(&my_did);
+        client.set_agent_vk(agency_vk); // This is reset when connection is established and agent did needs not be set before onboarding
+        let config = client.provision_cloud_agent(&my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
+        client.update_agent_webhook("https://example.org").await.unwrap();
+        wallet::close_wallet(wh)
+            .await.unwrap();
     }
 }
