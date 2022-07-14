@@ -10,3 +10,9 @@ pub async fn agency_update_messages(status_code: MessageStatusCode, uids_by_conn
         .map_err(|err| VcxError::from_msg(VcxErrorKind::UnknownError,
                                           format!("Error updating state of message in agency.\nError: {}", err)))
 }
+
+pub async fn agency_update_agent_webhook(webhook_url: &str) -> VcxResult<()> {
+    let client = get_agency_client()?;
+    client.update_agent_webhook(webhook_url).await?;
+    Ok(())
+}

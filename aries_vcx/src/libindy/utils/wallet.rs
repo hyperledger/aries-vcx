@@ -77,15 +77,15 @@ pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
     unsafe { WALLET_HANDLE }
 }
 
-pub fn get_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
+pub fn get_main_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
-pub fn reset_wallet_handle() -> VcxResult<()> {
+pub fn reset_main_wallet_handle() -> VcxResult<()> {
     set_wallet_handle(INVALID_WALLET_HANDLE);
     settings::get_agency_client_mut()?.reset_wallet_handle();
     Ok(())
 }
 
-pub async fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
+pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
     let wh = create_and_open_as_main_wallet(&config).await?;
     trace!("Created wallet with handle {:?}", wh);
 
@@ -97,7 +97,7 @@ pub async fn create_wallet(config: &WalletConfig) -> VcxResult<()> {
 }
 
 pub async fn configure_issuer_wallet(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
-    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(Some(enterprise_seed), None).await?;
+    let (institution_did, _institution_verkey) = signus::main_wallet_create_and_store_my_did(Some(enterprise_seed), None).await?;
     Ok(IssuerConfig {
         institution_did,
     })
@@ -175,10 +175,10 @@ pub async fn close_main_wallet() -> VcxResult<()> {
         return Ok(());
     }
 
-    wallet::close_wallet(get_wallet_handle())
+    wallet::close_wallet(get_main_wallet_handle())
         .await?;
 
-    reset_wallet_handle()?;
+    reset_main_wallet_handle()?;
     Ok(())
 }
 
@@ -213,7 +213,7 @@ pub async fn add_record(xtype: &str, id: &str, value: &str, tags: Option<&str>) 
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    wallet::add_wallet_record(get_wallet_handle(), xtype, id, value, tags)
+    wallet::add_wallet_record(get_main_wallet_handle(), xtype, id, value, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -225,7 +225,7 @@ pub async fn get_record(xtype: &str, id: &str, options: &str) -> VcxResult<Strin
         return Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string());
     }
 
-    wallet::get_wallet_record(get_wallet_handle(), xtype, id, options)
+    wallet::get_wallet_record(get_main_wallet_handle(), xtype, id, options)
         .await
         .map_err(VcxError::from)
 }
@@ -235,7 +235,7 @@ pub async fn delete_record(xtype: &str, id: &str) -> VcxResult<()> {
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    wallet::delete_wallet_record(get_wallet_handle(), xtype, id)
+    wallet::delete_wallet_record(get_main_wallet_handle(), xtype, id)
         .await
         .map_err(VcxError::from)
 }
@@ -246,7 +246,7 @@ pub async fn update_record_value(xtype: &str, id: &str, value: &str) -> VcxResul
 
     if settings::indy_mocks_enabled() { return Ok(()); }
 
-    wallet::update_wallet_record_value(get_wallet_handle(), xtype, id, value)
+    wallet::update_wallet_record_value(get_main_wallet_handle(), xtype, id, value)
         .await
         .map_err(VcxError::from)
 }
@@ -258,7 +258,7 @@ pub async fn add_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<()>
         return Ok(());
     }
 
-    wallet::add_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
+    wallet::add_wallet_record_tags(get_main_wallet_handle(), xtype, id, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -270,7 +270,7 @@ pub async fn update_record_tags(xtype: &str, id: &str, tags: &str) -> VcxResult<
         return Ok(());
     }
 
-    wallet::update_wallet_record_tags(get_wallet_handle(), xtype, id, tags)
+    wallet::update_wallet_record_tags(get_main_wallet_handle(), xtype, id, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -282,7 +282,7 @@ pub async fn delete_record_tags(xtype: &str, id: &str, tag_names: &str) -> VcxRe
         return Ok(());
     }
 
-    wallet::delete_wallet_record_tags(get_wallet_handle(), xtype, id, tag_names)
+    wallet::delete_wallet_record_tags(get_main_wallet_handle(), xtype, id, tag_names)
         .await
         .map_err(VcxError::from)
 }
@@ -294,7 +294,7 @@ pub async fn open_search(xtype: &str, query: &str, options: &str) -> VcxResult<S
         return Ok(1);
     }
 
-    wallet::open_wallet_search(get_wallet_handle(), xtype, query, options)
+    wallet::open_wallet_search(get_main_wallet_handle(), xtype, query, options)
         .await
         .map_err(VcxError::from)
 }
@@ -306,7 +306,7 @@ pub async fn fetch_next_records(search_handle: SearchHandle, count: usize) -> Vc
         return Ok(String::from("{}"));
     }
 
-    wallet::fetch_wallet_search_next_records(get_wallet_handle(), search_handle, count)
+    wallet::fetch_wallet_search_next_records(get_main_wallet_handle(), search_handle, count)
         .await
         .map_err(VcxError::from)
 }
@@ -324,7 +324,7 @@ pub async fn close_search(search_handle: SearchHandle) -> VcxResult<()> {
 }
 
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
-    let wallet_handle = get_wallet_handle();
+    let wallet_handle = get_main_wallet_handle();
     trace!("export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****", wallet_handle, path);
 
     let export_config = json!({ "key": backup_key, "path": &path}).to_string();
@@ -353,7 +353,7 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
 
 #[cfg(feature = "test_utils")]
 pub mod tests {
-    use crate::libindy::utils::signus::create_and_store_my_did;
+    use crate::libindy::utils::signus::main_wallet_create_and_store_my_did;
     use crate::utils::devsetup::TempFile;
 
     use super::*;
@@ -379,7 +379,7 @@ pub mod tests {
         };
         let _handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
-        let (my_did, my_vk) = create_and_store_my_did(None, None).await.unwrap();
+        let (my_did, my_vk) = main_wallet_create_and_store_my_did(None, None).await.unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
         settings::get_agency_client_mut().unwrap().set_my_vk(&my_vk);

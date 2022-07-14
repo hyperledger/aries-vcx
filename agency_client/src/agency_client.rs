@@ -1,22 +1,8 @@
-use serde_json::Value;
-use url::Url;
-
 use crate::agency_settings;
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::error::AgencyClientResult;
+use crate::provision::AgencyClientConfig;
 use crate::testing::mocking;
-use crate::utils::{error_utils, validation};
-
-// pub static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
-//     CONFIG_AGENCY_ENDPOINT,
-//     CONFIG_AGENCY_DID,
-//     CONFIG_AGENCY_VERKEY,
-//     CONFIG_REMOTE_TO_SDK_DID,
-//     CONFIG_REMOTE_TO_SDK_VERKEY,
-//     CONFIG_SDK_TO_REMOTE_DID,
-//     CONFIG_SDK_TO_REMOTE_VERKEY,
-//     CONFIG_ENABLE_TEST_MODE,
-//     CONFIG_WALLET_HANDLE,
-// ];
+use crate::utils::error_utils;
 
 #[derive(Default, Deserialize, Clone)]
 pub struct AgencyClient {
@@ -88,53 +74,30 @@ impl AgencyClient {
     pub fn enable_test_mode(&self) { mocking::enable_agency_mocks() }
     pub fn disable_test_mode(&self) { mocking::disable_agency_mocks() }
 
-    // TODO: This should eventually become private
-    pub fn process_config_string(&mut self, config: &str, validate: bool) -> AgencyClientResult<u32> {
+    pub fn configure(&mut self, config: &AgencyClientConfig, validate: bool) -> AgencyClientResult<u32> {
         trace!("AgencyClient::process_config_string >>> config {:?}, validate: {:?}", config, validate);
 
-        let configuration: Value = serde_json::from_str(config)
-            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot parse config: {}", err)))?;
+        // todo: enable validation
+        // if (validate) {
+        // agency_settings::validate_mandotory_config_val(&self.agency_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        // agency_settings::validate_mandotory_config_val(&self.agency_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        //
+        // agency_settings::validate_mandotory_config_val(&self.my_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        // agency_settings::validate_mandotory_config_val(&self.my_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        //
+        // agency_settings::validate_mandotory_config_val(&self.agent_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        // agency_settings::validate_mandotory_config_val(&self.agent_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        //
+        // agency_settings::validate_mandotory_config_val(&self.agency_url, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
+        // }
 
-        if let Value::Object(ref map) = configuration {
-            for (key, value) in map {
-                trace!("AgencyClient::process_config_string >>> key {:?}, value {:?} ", key, value);
-                let value = match value {
-                    Value::String(value_) => value_,
-                    _ => {
-                        warn!("Unexpected config value type for key: {}, value: {:?}", key, value);
-                        continue;
-                    }
-                };
-                match key.as_ref() {
-                    agency_settings::CONFIG_AGENCY_ENDPOINT => { self.set_agency_url(&value.to_string()); }
-                    agency_settings::CONFIG_AGENCY_DID => { self.set_agency_did(&value.to_string()); }
-                    agency_settings::CONFIG_AGENCY_VERKEY => { self.set_agency_vk(&value.to_string()); }
-                    agency_settings::CONFIG_REMOTE_TO_SDK_DID => { self.set_agent_pwdid(&value.to_string()); }
-                    agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY => { self.set_agent_vk(&value.to_string()); }
-                    agency_settings::CONFIG_SDK_TO_REMOTE_DID => { self.set_my_pwdid(&value.to_string()); }
-                    agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY => { self.set_my_vk(&value.to_string()); }
-                    agency_settings::CONFIG_ENABLE_TEST_MODE => { self.enable_test_mode(); }
-                    _ => { trace!("AgencyClient::process_config_string >>> ignoring key {}", key); }
-                }
-            }
-        }
-        if validate { self.validate()?; };
-        Ok(error_utils::SUCCESS.code_num)
-    }
-
-    pub fn validate(&self) -> AgencyClientResult<u32> {
-        trace!("AgencyClient::validate >>>");
-
-        agency_settings::validate_mandotory_config_val(&self.agency_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        agency_settings::validate_mandotory_config_val(&self.agency_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-        agency_settings::validate_mandotory_config_val(&self.my_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        agency_settings::validate_mandotory_config_val(&self.my_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-        agency_settings::validate_mandotory_config_val(&self.agent_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        agency_settings::validate_mandotory_config_val(&self.agent_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-
-        agency_settings::validate_mandotory_config_val(&self.agency_url, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
+        self.set_agency_url(&config.agency_endpoint);
+        self.set_agency_did(&config.agency_did);
+        self.set_agency_vk(&config.agency_verkey);
+        self.set_agent_pwdid(&config.remote_to_sdk_did);
+        self.set_agent_vk(&config.remote_to_sdk_verkey);
+        self.set_my_pwdid(&config.sdk_to_remote_did);
+        self.set_my_vk(&config.sdk_to_remote_verkey);
 
         Ok(error_utils::SUCCESS.code_num)
     }
@@ -158,6 +121,11 @@ impl AgencyClient {
         agency_settings::set_testing_defaults_agency();
 
         error_utils::SUCCESS.code_num
+    }
+
+    pub fn new() -> AgencyClientResult<Self> {
+        let agency_client = Self::default();
+        Ok(agency_client)
     }
 
     // pub fn new(config: &str, wallet_handle: i32, validate: bool) -> AgencyClientResult<Self> {

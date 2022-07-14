@@ -1,22 +1,26 @@
 use indy::did;
 use indy::future::TryFutureExt;
+use indy_sys::WalletHandle;
 use serde_json::Value;
 
 use crate::{settings, utils};
 use crate::error::prelude::*;
-use crate::libindy::utils::wallet::get_wallet_handle;
+use crate::libindy::utils::wallet::get_main_wallet_handle;
 use crate::libindy::utils::ledger;
 use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
 
-pub async fn create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
+pub async fn main_wallet_create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
+    create_and_store_my_did(get_main_wallet_handle(), seed, method_name).await
+}
+
+pub async fn create_and_store_my_did(wallet_handle: WalletHandle, seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
+    let my_did_json = json!({"seed": seed, "method_name": method_name});
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::DID.to_string(), utils::constants::VERKEY.to_string()));
     }
 
-    let my_did_json = json!({"seed": seed, "method_name": method_name});
-
-    let res = did::create_and_store_my_did(get_wallet_handle(), &my_did_json.to_string())
+    let res = did::create_and_store_my_did(wallet_handle, &my_did_json.to_string())
         .await
         .map_err(VcxError::from);
     res
@@ -27,7 +31,7 @@ pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
         warn!("libindy_replace_keys_start >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        did::replace_keys_start(get_wallet_handle(), did, "{}")
+        did::replace_keys_start(get_main_wallet_handle(), did, "{}")
             .map_err(VcxError::from)
             .await
     }
@@ -57,7 +61,7 @@ pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
         warn!("libindy_replace_keys_apply >> retrieving did mock response");
         Ok(())
     } else {
-        did::replace_keys_apply(get_wallet_handle(), did)
+        did::replace_keys_apply(get_main_wallet_handle(), did)
             .map_err(VcxError::from)
             .await
     }
@@ -68,7 +72,7 @@ pub async fn get_verkey_from_wallet(did: &str) -> VcxResult<String> {
         warn!("get_verkey_from_wallet >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        did::key_for_local_did(get_wallet_handle(), did)
+        did::key_for_local_did(get_main_wallet_handle(), did)
             .map_err(VcxError::from)
             .await
     }

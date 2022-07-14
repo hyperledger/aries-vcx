@@ -65,7 +65,7 @@ impl CreateKeyBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::agent::create_keys;
+    use crate::agency_client::AgencyClient;
     use crate::error::AgencyClientErrorKind;
     use crate::testing::test_constants;
     use crate::testing::test_utils::SetupMocks;
@@ -90,7 +90,8 @@ mod tests {
 
         let for_did = "11235yBzrpJQmNyZzgoTqB";
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
-        let (res_did, res_vk) = create_keys(for_did, for_verkey).await.unwrap();
+        let client = AgencyClient::new().unwrap();
+        let (res_did, res_vk) = client.create_connection_agent(for_did, for_verkey).await.unwrap();
 
         assert_eq!(res_did, "MNepeSWtGfhnv8jLB1sFZC");
         assert_eq!(res_vk, "C73MRnns4qUjR5N4LRwTyiXVPKPrA5q4LCT8PZzxVdt9");

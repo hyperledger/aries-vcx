@@ -4,7 +4,7 @@ extern crate url;
 
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{RwLock, RwLockWriteGuard};
 
 use strum::IntoEnumIterator;
 

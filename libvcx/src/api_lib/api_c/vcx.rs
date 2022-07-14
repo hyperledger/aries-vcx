@@ -3,6 +3,7 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
+use aries_vcx::agency_client::provision::AgencyClientConfig;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::CommandHandle;
 use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
@@ -12,9 +13,9 @@ use aries_vcx::libindy::utils::wallet::{close_main_wallet, IssuerConfig, WalletC
 use aries_vcx::settings;
 use aries_vcx::utils;
 use aries_vcx::utils::error;
-use aries_vcx::utils::provision::AgencyClientConfig;
 use aries_vcx::utils::version_constants;
 
+use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error, set_current_error_agency, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
@@ -365,7 +366,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::agency_client::api::agent::update_agent_webhook(&notification_webhook_url[..]).await {
+        match agency_update_agent_webhook(&notification_webhook_url[..]).await {
             Ok(()) => {
                 trace!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -373,7 +374,7 @@ pub extern fn vcx_update_webhook_url(command_handle: CommandHandle,
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
-                set_current_error_agency(&err);
+                set_current_error_vcx(&err);
                 error!("vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                       command_handle, err);
 
@@ -489,6 +490,7 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
+    use aries_vcx::agency_client::provision::AgentProvisionConfig;
     use aries_vcx::indy::INVALID_WALLET_HANDLE;
     use aries_vcx::init::PoolConfig;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
@@ -496,10 +498,9 @@ mod tests {
     use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
     use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::wallet::get_wallet_handle;
+    use aries_vcx::libindy::utils::wallet::get_main_wallet_handle;
     use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, SetupWallet, SetupWithWalletAndAgency, TempFile};
-    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -612,11 +613,11 @@ mod tests {
             _vcx_init_full("{}", &json!(setup_pool.pool_config).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
 
             //Assert config values were set correctly
-            assert_ne!(get_wallet_handle(), INVALID_WALLET_HANDLE);
+            assert_ne!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
 
             //Verify shutdown was successful
             vcx_shutdown(true);
-            assert_eq!(get_wallet_handle(), INVALID_WALLET_HANDLE);
+            assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
         }
     }
 
@@ -755,7 +756,7 @@ mod tests {
         assert_eq!(credential_def::release(credentialdef).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(credential::release(credential).unwrap_err().kind(), VcxErrorKind::InvalidCredentialHandle);
         assert_eq!(disclosed_proof::release(disclosed_proof).unwrap_err().kind(), VcxErrorKind::InvalidDisclosedProofHandle);
-        assert_eq!(wallet::get_wallet_handle(), INVALID_WALLET_HANDLE);
+        assert_eq!(wallet::get_main_wallet_handle(), INVALID_WALLET_HANDLE);
     }
 
     #[test]
@@ -1005,7 +1006,7 @@ mod tests {
     async fn test_agency_client_does_not_have_to_be_initialized() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        api_c::wallet::vcx_wallet_set_handle(get_wallet_handle());
+        api_c::wallet::vcx_wallet_set_handle(get_main_wallet_handle());
         api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
 
         settings::clear_config();
