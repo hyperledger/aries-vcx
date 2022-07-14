@@ -90,6 +90,8 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 mod test {
+    use std::thread;
+    use std::time::Duration;
     use super::*;
 
     use crate::utils::devsetup::*;
@@ -102,6 +104,7 @@ mod test {
         let _setup = SetupWithWalletAndAgency::init().await;
         let (did, verkey) = ledger::add_new_did(None).await;
         rotate_verkey(&did).await.unwrap();
+        thread::sleep(Duration::from_millis(100));
         let local_verkey = get_verkey_from_wallet(&did).await.unwrap();
         let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
