@@ -968,9 +968,12 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_provision_cloud_agent(cb.command_handle, CString::new(config_provision_agent).unwrap().into_raw(), Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+        let agency_client_config = cb.receive(TimeoutUtils::some_custom(3)).unwrap().unwrap();
 
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        vcx_create_agency_client_for_main_wallet(cb.command_handle, CString::new(agency_client_config).unwrap().into_raw(), Some(cb.get_callback()));
         let webhook_url = "https://example.com";
+
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(error::SUCCESS.code_num, vcx_update_webhook_url(cb.command_handle,
                                                                    CString::new(webhook_url.to_string()).unwrap().into_raw(),
