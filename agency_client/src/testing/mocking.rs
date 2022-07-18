@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use crate::error::AgencyClientResult;
-use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_enable_test_mode};
+use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_agency_test_mode};
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -102,14 +102,14 @@ impl AgencyMockDecrypted {
 }
 
 pub fn agency_mocks_enabled() -> bool {
-    match get_config_enable_test_mode().ok() {
+    match get_config_agency_test_mode().ok() {
         None => false,
         Some(value) => value == "true" || value == "agency"
     }
 }
 
 pub fn agency_decrypted_mocks_enabled() -> bool {
-    match get_config_enable_test_mode().ok() {
+    match get_config_agency_test_mode().ok() {
         None => false,
         Some(value) => value == "true"
     }

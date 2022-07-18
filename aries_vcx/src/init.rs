@@ -7,6 +7,7 @@ use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, s
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
 use crate::settings;
 use agency_client::configuration::AgencyClientConfig;
+use crate::settings::enable_indy_mocks;
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -14,12 +15,6 @@ pub struct PoolConfig {
     pub genesis_path: String,
     pub pool_name: Option<String>,
     pub pool_config: Option<String>,
-}
-
-pub fn enable_vcx_mocks() -> VcxResult<()> {
-    info!("enable_vcx_mocks >>>");
-    settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "true");
-    Ok(())
 }
 
 pub fn enable_agency_mocks() -> VcxResult<()> {
@@ -35,7 +30,7 @@ pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxR
 }
 
 pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
-    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &config.institution_did);
+    settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &config.institution_did)?;
     Ok(())
 }
 

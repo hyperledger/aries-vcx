@@ -82,7 +82,6 @@ pub fn get_agency_client() -> VcxResult<AgencyClient> {
 pub fn set_testing_defaults() -> u32 {
     trace!("set_testing_defaults >>>");
 
-    // if this fails the program should exit
     let mut settings = SETTINGS.write().unwrap();
 
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
@@ -95,12 +94,25 @@ pub fn set_testing_defaults() -> u32 {
     error::SUCCESS.code_num
 }
 
+pub fn enable_indy_mocks() -> VcxResult<()> {
+    warn!("enable_indy_mocks >>>");
+    set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
+}
+
+pub fn disable_indy_mocks() -> VcxResult<()> {
+    warn!("disable_indy_mocks >>>");
+    set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
+}
+
 pub fn indy_mocks_enabled() -> bool {
     let config = SETTINGS.read().unwrap();
 
     match config.get(CONFIG_ENABLE_TEST_MODE) {
         None => false,
-        Some(value) => value == "true" || value == "indy"
+        Some(value) => {
+            warn!("indy_mocks_enabled >>> {}", value);
+            value == "true" || value == "indy"
+        }
     }
 }
 
@@ -115,11 +127,13 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
         .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from settings", key)))
 }
 
-pub fn set_config_value(key: &str, value: &str) {
+pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
-        .write().unwrap()
+        .write()
+        .or(Err(VcxError::from_msg(VcxErrorKind::UnknownError, "Cannot write settings")))?
         .insert(key.to_string(), value.to_string());
+    Ok(())
 }
 
 pub fn get_protocol_version() -> usize {
@@ -163,11 +177,15 @@ pub enum Actors {
     Receiver,
 }
 
-pub fn clear_config() {
-    trace!("clear_config >>>");
+pub fn reset_settings() {
+    trace!("reset_settings >>>");
     let mut config = SETTINGS.write().unwrap();
-    let mut agency_client = AGENCY_CLIENT.write().unwrap();
     config.clear();
+}
+
+pub fn reset_agency_client() {
+    trace!("reset_agency_client >>>");
+    let mut agency_client = AGENCY_CLIENT.write().unwrap();
     *agency_client = AgencyClient::default();
 }
 

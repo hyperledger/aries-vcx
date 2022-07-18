@@ -136,18 +136,15 @@ pub mod tests {
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::did_doc::test_utils::*;
+    use crate::settings::disable_indy_mocks;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
-    fn _setup() {
-        settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
-    }
-
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_no_keys() {
-        _setup();
+        SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wh).await;
 
@@ -160,7 +157,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_recipient_only() {
-        _setup();
+        SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wh).await;
 
@@ -173,7 +170,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_routing_keys() {
-        _setup();
+        SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wh).await;
 
@@ -215,7 +212,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_auth_unpack_message_should_succeed_if_sender_key_matches_expectation() {
         SetupEmpty::init();
-        _setup();
         let recipient_wallet = test_setup::setup_wallet().await;
         let recipient_key = test_setup::create_key(recipient_wallet.wh).await;
 
@@ -238,7 +234,6 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_auth_unpack_message_should_fail_if_sender_key_does_not_match_expectation() {
         SetupEmpty::init();
-        _setup();
         let recipient_wallet = test_setup::setup_wallet().await;
         let recipient_key = test_setup::create_key(recipient_wallet.wh).await;
 

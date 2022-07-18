@@ -374,7 +374,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_errors() {
-        let _setup = SetupLibraryWallet::init();
+        let _setup = SetupLibraryWallet::init().await;
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);

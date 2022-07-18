@@ -495,13 +495,6 @@ mod test {
 
     use super::*;
 
-    pub async fn add_service_old(did: &str, service: &FullService) -> VcxResult<String> {
-        let ser_service = serde_json::to_string(service)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize service before writing to ledger: {:?}", err)))?;
-        let attrib_json = json!({ "service": ser_service }).to_string();
-        add_attr(did, &attrib_json).await
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_verify_transaction_can_be_endorsed() {
@@ -545,20 +538,6 @@ mod test {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();
         add_service(&did, &expect_service).await.unwrap();
-        thread::sleep(Duration::from_millis(50));
-        let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
-
-        assert_eq!(expect_service, service)
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_add_get_service_old() {
-        let _setup = SetupWithWalletAndAgency::init().await;
-
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let expect_service = FullService::default();
-        add_service_old(&did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
 

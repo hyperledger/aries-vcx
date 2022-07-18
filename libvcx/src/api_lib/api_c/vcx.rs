@@ -6,11 +6,12 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::CommandHandle;
-use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
+use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, init_issuer_config, open_main_pool, PoolConfig};
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
 use aries_vcx::libindy::utils::pool::is_pool_open;
 use aries_vcx::libindy::utils::wallet::{close_main_wallet, IssuerConfig, WalletConfig};
 use aries_vcx::settings;
+use aries_vcx::settings::enable_indy_mocks;
 use aries_vcx::utils;
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
@@ -31,7 +32,7 @@ use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 #[no_mangle]
 pub extern fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
-    match enable_vcx_mocks() {
+    match enable_indy_mocks() {
         Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
@@ -322,7 +323,8 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         };
     }
 
-    settings::clear_config();
+    settings::reset_settings();
+    settings::reset_agency_client();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -890,7 +892,7 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_call_c_callable_api_without_threadpool() {
-        let _setup = SetupMocks::init_without_threadpool();
+        let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let _rc = vcx_connection_create(cb.command_handle,
@@ -1001,23 +1003,6 @@ mod tests {
         assert!(schema_id.len() > 0);
 
         delete_test_pool().await;
-        settings::set_testing_defaults();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    #[ignore]
-    async fn test_agency_client_does_not_have_to_be_initialized() {
-        let _setup = SetupWithWalletAndAgency::init().await;
-
-        api_c::wallet::vcx_wallet_set_handle(get_main_wallet_handle());
-        api_c::utils::vcx_pool_set_handle(get_pool_handle().unwrap());
-
-        settings::clear_config();
-
-        let connection_handle = connection::create_connection("test_create_works").await.unwrap();
-        connection::connect(connection_handle).await.unwrap();
-
         settings::set_testing_defaults();
     }
 }

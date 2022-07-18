@@ -110,7 +110,6 @@ impl AgencyClient {
         Ok(())
     }
 
-    // TODO: This should be implemented in the module doing the tests
     pub fn set_testing_defaults_agency(&mut self) {
         trace!("set_testing_defaults_agency >>>");
 
