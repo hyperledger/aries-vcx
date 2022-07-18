@@ -586,7 +586,7 @@ pub async fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Opt
                               -> VcxResult<(String, String, u64)> {
     trace!("get_rev_reg_delta_json >>> rev_reg_id: {}, from: {:?}, to: {:?}", rev_reg_id, from, to);
     if settings::indy_mocks_enabled() {
-        warn!("get_rev_reg_delta_json >>> returning mocked value");
+        debug!("get_rev_reg_delta_json >>> returning mocked value");
         return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1));
     }
 
