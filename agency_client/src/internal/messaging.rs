@@ -1,7 +1,7 @@
 use core::u8;
 use serde_json::Value;
 use crate::agency_client::AgencyClient;
-use crate::{agency_settings, httpclient};
+use crate::httpclient;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::forward::ForwardV2;
@@ -22,7 +22,7 @@ impl AgencyClient {
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk])
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
-        let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
+        let message = crypto::pack_message(self.get_wallet_handle(), Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
         self.prepare_forward_message(message, agent_did).await
     }
 
@@ -34,12 +34,12 @@ impl AgencyClient {
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk])
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
-        let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
+        let message = crypto::pack_message(self.get_wallet_handle(), Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
         self.prepare_forward_message(message, agent_did).await
     }
 
     pub async fn parse_message_from_response(&self, response: &Vec<u8>) -> AgencyClientResult<String> {
-        let unpacked_msg = crypto::unpack_message(&response[..]).await?;
+        let unpacked_msg = crypto::unpack_message(self.get_wallet_handle(), &response[..]).await?;
         let message: Value = ::serde_json::from_slice(unpacked_msg.as_slice())
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize response: {}", err)))?;
         Ok(message["message"].as_str()
@@ -81,7 +81,7 @@ impl AgencyClient {
         let receiver_keys = serde_json::to_string(&vec![agency_vk])
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
 
-        crypto::pack_message(None, &receiver_keys, message.as_bytes()).await
+        crypto::pack_message(self.get_wallet_handle(), None, &receiver_keys, message.as_bytes()).await
     }
 
     pub async fn prepare_message_for_connection_agent(&self, messages: Vec<Client2AgencyMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
@@ -92,7 +92,7 @@ impl AgencyClient {
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
         let receiver_keys = serde_json::to_string(&vec![&agent_vk])
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot receiver keys: {}", err)))?;
-        let message = crypto::pack_message(Some(pw_vk), &receiver_keys, message.as_bytes()).await?;
+        let message = crypto::pack_message(self.get_wallet_handle(), Some(pw_vk), &receiver_keys, message.as_bytes()).await?;
 
         let message = ForwardV2::new(agent_did.to_owned(), message)?;
 

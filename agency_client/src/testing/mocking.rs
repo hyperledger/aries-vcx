@@ -1,8 +1,7 @@
 use std::sync::Mutex;
 
-use crate::agency_settings;
-use crate::agency_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_enable_test_mode};
 use crate::error::AgencyClientResult;
+use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test_mode, get_config_enable_test_mode};
 
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
@@ -64,8 +63,6 @@ impl AgencyMockDecrypted {
         if agency_mocks_enabled() {
             trace!("Mocks enabled, setting next decrypted response");
             AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.push(body.into());
-        } else {
-            warn!("Attempting to set mocked decrypted response when mocks are not enabled!");
         }
     }
 
@@ -87,8 +84,6 @@ impl AgencyMockDecrypted {
         if agency_mocks_enabled() {
             trace!("Mocks enabled, getting next decrypted message");
             AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.push(message.into());
-        } else {
-            warn!("Attempting to set mocked decrypted message when mocks are not enabled!");
         }
     }
 

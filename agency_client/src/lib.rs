@@ -26,7 +26,6 @@ use self::utils::validation;
 pub mod utils;
 pub mod message_type;
 #[macro_use]
-pub mod agency_settings;
 pub mod agency_client;
 pub mod error;
 pub mod messages;

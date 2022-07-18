@@ -1,4 +1,4 @@
-use crate::{agency_settings, AgencyClientError, AgencyClientErrorKind, AgencyClientResult, MessageStatusCode};
+use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult, MessageStatusCode};
 use crate::agency_client::AgencyClient;
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::get_messages::{DownloadedMessageEncrypted, GetMessagesBuilder};

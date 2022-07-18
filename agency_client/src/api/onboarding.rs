@@ -1,4 +1,3 @@
-use crate::agency_settings;
 use crate::agency_client::AgencyClient;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
@@ -12,7 +11,6 @@ use crate::testing::test_constants;
 impl AgencyClient {
     async fn _connect(&self, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str) -> AgencyClientResult<(String, String)> {
         trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
-        /* STEP 1 - CONNECT */
         let message = Client2AgencyMessage::Connect(Connect::build(my_did, my_vk));
 
         let mut response = self.send_message_to_agency(&message, agency_did, &agency_vk).await?;
@@ -32,7 +30,6 @@ impl AgencyClient {
     }
 
     async fn _register(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<()> {
-        /* STEP 2 - REGISTER */
         let message = Client2AgencyMessage::SignUp(SignUp::build());
 
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
@@ -47,7 +44,6 @@ impl AgencyClient {
     }
 
     async fn _create_agent(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<CreateAgentResponse> {
-        /* STEP 3 - CREATE AGENT */
         let message = Client2AgencyMessage::CreateAgent(CreateAgent::build());
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
         let mut response = self.send_message_to_agency(&message, &agency_pw_did, &agency_pw_vk).await?;
@@ -61,7 +57,7 @@ impl AgencyClient {
     }
 
     pub async fn provision_cloud_agent(&mut self, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str, agency_url: &str) -> AgencyClientResult<()> {
-        info!("provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
+        info!("provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}", my_did, my_vk, agency_did, agency_vk, agency_url);
         self.set_agency_url(agency_url);
         self.set_agency_vk(agency_vk);
         self.set_agency_did(agency_vk);

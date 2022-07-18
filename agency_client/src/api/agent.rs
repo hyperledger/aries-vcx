@@ -1,5 +1,5 @@
 use crate::agency_client::AgencyClient;
-use crate::{agency_settings, AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::create_key::CreateKeyBuilder;
 use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};

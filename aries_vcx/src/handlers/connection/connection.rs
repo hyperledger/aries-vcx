@@ -15,6 +15,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
+use crate::libindy::utils::wallet::get_main_wallet_handle;
 use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
@@ -720,6 +721,7 @@ impl Connection {
     }
 
     pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<DownloadedMessage>> {
+        let wallet_handle = get_main_wallet_handle().0; // todo: agency client wallet handle should be used
         match self.get_state() {
             ConnectionState::Invitee(InviteeState::Initial) |
             ConnectionState::Inviter(InviterState::Initial) |
@@ -727,7 +729,7 @@ impl Connection {
                 let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| msg.decrypt_noauth() )
+                    .then(|msg| msg.decrypt_noauth(wallet_handle) )
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<DownloadedMessage>>()
                     .await;
@@ -738,7 +740,7 @@ impl Connection {
                 let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| msg.decrypt_auth(&expected_sender_vk))
+                    .then(|msg| msg.decrypt_auth(wallet_handle, &expected_sender_vk))
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<DownloadedMessage>>()
                     .await;
