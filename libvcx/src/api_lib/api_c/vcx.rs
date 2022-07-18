@@ -3,7 +3,7 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::agency_client::provision::AgencyClientConfig;
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::CommandHandle;
 use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, enable_vcx_mocks, init_issuer_config, open_main_pool, PoolConfig};
@@ -490,7 +490,7 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 mod tests {
     use std::ptr;
 
-    use aries_vcx::agency_client::provision::AgentProvisionConfig;
+    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::indy::INVALID_WALLET_HANDLE;
     use aries_vcx::init::PoolConfig;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;

@@ -1,5 +1,5 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageType;
+use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::MessageStatusCode;
 use crate::utils::encryption_envelope::EncryptionEnvelope;

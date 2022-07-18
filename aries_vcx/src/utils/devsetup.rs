@@ -1,6 +1,6 @@
 use std::fs;
 use std::sync::Once;
-use agency_client::provision::AgentProvisionConfig;
+use agency_client::configuration::AgentProvisionConfig;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 

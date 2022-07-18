@@ -2,7 +2,7 @@
 pub mod test {
     use agency_client::messages::get_messages::DownloadedMessage;
     use agency_client::MessageStatusCode;
-    use agency_client::provision::{AgencyClientConfig, AgentProvisionConfig};
+    use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;

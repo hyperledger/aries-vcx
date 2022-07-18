@@ -4,7 +4,7 @@ use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::provision::AgencyClientConfig;
+use crate::configuration::AgencyClientConfig;
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::testing::test_constants;
 
