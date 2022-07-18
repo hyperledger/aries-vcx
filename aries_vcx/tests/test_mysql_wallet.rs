@@ -35,7 +35,7 @@ mod test_utils {
 #[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
-    use agency_client::provision::AgentProvisionConfig;
+    use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
     use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_main_wallet, WalletConfig, WalletConfigBuilder};
     use aries_vcx::settings;

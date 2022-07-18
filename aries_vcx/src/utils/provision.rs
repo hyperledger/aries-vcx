@@ -1,4 +1,4 @@
-use agency_client::provision::{AgencyClientConfig, AgentProvisionConfig};
+use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 
 use crate::error::prelude::*;
 use crate::libindy::utils::signus;

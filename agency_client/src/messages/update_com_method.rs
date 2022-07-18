@@ -2,7 +2,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::api::agent::ComMethod;
-use crate::message_type::MessageType;
+use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

@@ -7,7 +7,7 @@ use serde_json;
 
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::agency_client::provision::AgentProvisionConfig;
+use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
@@ -558,7 +558,7 @@ pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use aries_vcx::agency_client::provision::AgentProvisionConfig;
+    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::SetupMocks;

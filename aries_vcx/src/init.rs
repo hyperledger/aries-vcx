@@ -6,7 +6,7 @@ use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, set_pool_handle};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
 use crate::settings;
-use agency_client::provision::AgencyClientConfig;
+use agency_client::configuration::AgencyClientConfig;
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
