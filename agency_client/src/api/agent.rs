@@ -13,7 +13,7 @@ impl AgencyClient {
         let message = DeleteConnectionBuilder::create()
             .build();
 
-        let data = self.prepare_message_for_agent(vec![Client2AgencyMessage::UpdateConnection(message)], to_pw_vk, agent_did, agent_vk).await?;
+        let data = self.prepare_message_for_connection_agent(vec![Client2AgencyMessage::UpdateConnection(message)], to_pw_vk, agent_did, agent_vk).await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
@@ -36,9 +36,9 @@ impl AgencyClient {
             .for_verkey(pw_verkey)?
             .build();
 
-        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
+        let agent_pwdid = self.get_agent_pwdid()?;
 
-        let data = self.prepare_message_for_agency(&Client2AgencyMessage::CreateKey(message), &agency_did).await?;
+        let data = self.prepare_message_for_agent(&Client2AgencyMessage::CreateKey(message), &agent_pwdid).await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
@@ -51,24 +51,23 @@ impl AgencyClient {
     pub async fn update_agent_webhook(&self, webhook_url: &str) -> AgencyClientResult<()> {
         info!("update_agent_webhook >>> webhook_url: {:?}", webhook_url);
 
+        if agency_mocks_enabled() {
+            warn!("update_agent_webhook ::: Indy mocks enabled, skipping updating webhook url.");
+            return Ok(());
+        }
+
         let com_method: ComMethod = ComMethod {
             id: String::from("123"),
             e_type: ComMethodType::Webhook,
             value: String::from(webhook_url),
         };
 
-        match agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID) {
-            Ok(to_did) => {
-                if agency_mocks_enabled() {
-                    warn!("update_agent_webhook_v2 ::: Indy mocks enabled, skipping updating webhook url.");
-                    return Ok(());
-                }
+        let agent_did = self.get_agent_pwdid()?;
+        let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
+        let data = self.prepare_message_for_agent(&message, &agent_did).await?;
+        let response = self.post_to_agency(&data).await?;
+        self.parse_response_from_agency(&response).await?;
 
-                let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
-                self.send_message_to_agency(&message, &to_did).await?;
-            }
-            Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
-        }
         Ok(())
     }
 }

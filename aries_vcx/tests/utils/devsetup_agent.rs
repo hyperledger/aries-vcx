@@ -168,6 +168,8 @@ pub mod test {
             init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
             let institution_did = config_issuer.clone().institution_did;
+            create_agency_client_for_main_wallet(&config_agency).unwrap();
+            Connection::create("faber", true).await.unwrap();
             let faber = Faber {
                 is_active: false,
                 config_wallet,
@@ -360,6 +362,7 @@ pub mod test {
             create_main_wallet(&config_wallet).await.unwrap();
             open_as_main_wallet(&config_wallet).await.unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
+            create_agency_client_for_main_wallet(&config_agency).unwrap();
             let alice = Alice {
                 is_active: false,
                 config_wallet,
