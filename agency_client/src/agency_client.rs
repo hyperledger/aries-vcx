@@ -1,4 +1,3 @@
-use crate::agency_settings;
 use crate::error::AgencyClientResult;
 use crate::provision::AgencyClientConfig;
 use crate::testing::mocking;
@@ -55,12 +54,10 @@ impl AgencyClient {
 
     pub fn set_wallet_handle(&mut self, wh: i32) {
         self.wallet_handle = wh;
-        crate::utils::wallet::set_wallet_handle(indy::WalletHandle(wh));
     }
 
     pub fn reset_wallet_handle(&mut self) {
         self.wallet_handle = indy::INVALID_WALLET_HANDLE.0;
-        crate::utils::wallet::reset_wallet_handle();
     }
     pub fn set_agency_url(&mut self, url: &str) {
         self.agency_url = url.to_string();
@@ -88,7 +85,7 @@ impl AgencyClient {
     pub fn disable_test_mode(&self) { mocking::disable_agency_mocks() }
 
     pub fn configure(&mut self, config: &AgencyClientConfig, validate: bool) -> AgencyClientResult<u32> {
-        warn!("AgencyClient::process_config_string >>> config {:?}, validate: {:?}", config, validate);
+        info!("AgencyClient::configure >>> config {:?}, validate: {:?}", config, validate);
 
         // todo: enable validation
         // if (validate) {

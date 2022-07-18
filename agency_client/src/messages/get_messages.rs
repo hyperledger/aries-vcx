@@ -118,8 +118,8 @@ impl DownloadedMessageEncrypted {
         }
     }
 
-    pub async fn decrypt_noauth(self) -> AgencyClientResult<DownloadedMessage> {
-        let decrypted_payload = self._noauth_decrypt_v3_message().await?;
+    pub async fn decrypt_noauth(self, wallet_handle: i32) -> AgencyClientResult<DownloadedMessage> {
+        let decrypted_payload = self._noauth_decrypt_v3_message(wallet_handle).await?;
         Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
@@ -127,8 +127,8 @@ impl DownloadedMessageEncrypted {
         })
     }
 
-    pub async fn decrypt_auth(self, expected_sender_vk: &str) -> AgencyClientResult<DownloadedMessage> {
-        let decrypted_payload = self._auth_decrypt_v3_message(expected_sender_vk).await?;
+    pub async fn decrypt_auth(self, wallet_handle: i32, expected_sender_vk: &str) -> AgencyClientResult<DownloadedMessage> {
+        let decrypted_payload = self._auth_decrypt_v3_message(wallet_handle, expected_sender_vk).await?;
         Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
             uid: self.uid.clone(),
@@ -136,11 +136,11 @@ impl DownloadedMessageEncrypted {
         })
     }
 
-    async fn _noauth_decrypt_v3_message(&self) -> AgencyClientResult<String> {
-        EncryptionEnvelope::anon_unpack(self.payload()?).await
+    async fn _noauth_decrypt_v3_message(&self, wallet_handle: i32,) -> AgencyClientResult<String> {
+        EncryptionEnvelope::anon_unpack(wallet_handle, self.payload()?).await
     }
 
-    async fn _auth_decrypt_v3_message(&self, expected_sender_vk: &str) -> AgencyClientResult<String> {
-        EncryptionEnvelope::auth_unpack(self.payload()?, &expected_sender_vk).await
+    async fn _auth_decrypt_v3_message(&self, wallet_handle: i32, expected_sender_vk: &str) -> AgencyClientResult<String> {
+        EncryptionEnvelope::auth_unpack(wallet_handle, self.payload()?, &expected_sender_vk).await
     }
 }
