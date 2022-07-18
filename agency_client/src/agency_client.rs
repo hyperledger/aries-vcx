@@ -1,8 +1,12 @@
+use url::Url;
+
+use crate::{AgencyClientError, AgencyClientErrorKind, validation};
 use crate::error::AgencyClientResult;
 use crate::provision::AgencyClientConfig;
 use crate::testing::mocking;
 use crate::utils::error_utils;
 
+// todo: remove Default
 #[derive(Default, Deserialize, Clone)]
 pub struct AgencyClient {
     wallet_handle: i32,
@@ -16,24 +20,24 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
-// pub fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
-//     where F: Fn(&str) -> Result<S, E> {
-//     if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
-//
-//     closure(val.as_ref().ok_or(AgencyClientError::from(AgencyClientErrorKind::InvalidConfiguration))?)
-//         .or(Err(AgencyClientError::from(err)))?;
-//
-//     Ok(error_utils::SUCCESS.code_num)
-// }
-//
-// pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
-//     where F: Fn(&str) -> Result<S, E> {
-//     closure(val)
-//         .or(Err(AgencyClientError::from(err)))?;
-//
-//     Ok(error_utils::SUCCESS.code_num)
-// }
-//
+pub fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
+    where F: Fn(&str) -> Result<S, E> {
+    if val.is_none() { return Ok(()); }
+
+    closure(val.as_ref().ok_or(AgencyClientError::from(AgencyClientErrorKind::InvalidConfiguration))?)
+        .or(Err(AgencyClientError::from(err)))?;
+
+    Ok(())
+}
+
+pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
+    where F: Fn(&str) -> Result<S, E> {
+    closure(val)
+        .or(Err(AgencyClientError::from(err)))?;
+
+    Ok(())
+}
+
 
 impl AgencyClient {
     pub fn get_wallet_handle(&self) -> i32 { self.wallet_handle }
@@ -84,22 +88,16 @@ impl AgencyClient {
     pub fn enable_test_mode(&self) { mocking::enable_agency_mocks() }
     pub fn disable_test_mode(&self) { mocking::disable_agency_mocks() }
 
-    pub fn configure(&mut self, config: &AgencyClientConfig, validate: bool) -> AgencyClientResult<u32> {
-        info!("AgencyClient::configure >>> config {:?}, validate: {:?}", config, validate);
+    pub fn configure(&mut self, config: &AgencyClientConfig) -> AgencyClientResult<()> {
+        info!("AgencyClient::configure >>> config {:?}", config);
 
-        // todo: enable validation
-        // if (validate) {
-        // agency_settings::validate_mandotory_config_val(&self.agency_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        // agency_settings::validate_mandotory_config_val(&self.agency_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-        //
-        // agency_settings::validate_mandotory_config_val(&self.my_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        // agency_settings::validate_mandotory_config_val(&self.my_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-        //
-        // agency_settings::validate_mandotory_config_val(&self.agent_pwdid, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        // agency_settings::validate_mandotory_config_val(&self.agent_vk, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-        //
-        // agency_settings::validate_mandotory_config_val(&self.agency_url, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
-        // }
+        validate_mandotory_config_val(&config.agency_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        validate_mandotory_config_val(&config.agency_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        validate_mandotory_config_val(&config.sdk_to_remote_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        validate_mandotory_config_val(&config.sdk_to_remote_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        validate_mandotory_config_val(&config.remote_to_sdk_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
+        validate_mandotory_config_val(&config.remote_to_sdk_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        validate_mandotory_config_val(&config.agency_endpoint, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
 
         self.set_agency_url(&config.agency_endpoint);
         self.set_agency_did(&config.agency_did);
@@ -109,11 +107,11 @@ impl AgencyClient {
         self.set_my_pwdid(&config.sdk_to_remote_did);
         self.set_my_vk(&config.sdk_to_remote_verkey);
 
-        Ok(error_utils::SUCCESS.code_num)
+        Ok(())
     }
 
     // TODO: This should be implemented in the module doing the tests
-    pub fn set_testing_defaults_agency(&mut self) -> u32 {
+    pub fn set_testing_defaults_agency(&mut self) {
         trace!("set_testing_defaults_agency >>>");
 
         let default_did = "VsKV7grR1BUE29mG2Fm2kX";
@@ -127,8 +125,6 @@ impl AgencyClient {
         self.set_agent_vk(default_verkey);
         self.set_my_pwdid(default_did);
         self.set_my_vk(default_verkey);
-
-        error_utils::SUCCESS.code_num
     }
 
     pub fn new() -> AgencyClientResult<Self> {
@@ -136,6 +132,7 @@ impl AgencyClient {
         Ok(agency_client)
     }
 
+    // todo: use this in favor of `fn new()`
     // pub fn new(config: &str, wallet_handle: i32, validate: bool) -> AgencyClientResult<Self> {
     //     let mut agency_client = Self::default();
     //     agency_client.process_config_string(config, wallet_handle, validate)?;

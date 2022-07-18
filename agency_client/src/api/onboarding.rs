@@ -60,7 +60,7 @@ impl AgencyClient {
         info!("provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}", my_did, my_vk, agency_did, agency_vk, agency_url);
         self.set_agency_url(agency_url);
         self.set_agency_vk(agency_vk);
-        self.set_agency_did(agency_vk);
+        self.set_agency_did(agency_did);
         self.set_my_pwdid(my_did);
         self.set_my_vk(my_vk);
 
