@@ -1,12 +1,10 @@
 use crate::{agency_settings, AgencyClientError, AgencyClientErrorKind, AgencyClientResult, MessageStatusCode};
 use crate::agency_client::AgencyClient;
-use crate::internal::messaging::{parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::get_messages::{DownloadedMessageEncrypted, GetMessagesBuilder};
 use crate::messages::update_message::{UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
 use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::AgencyMock;
-use crate::utils::comm::post_to_agency;
 
 impl AgencyClient {
     pub async fn update_messages(&self, status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> AgencyClientResult<()> {
@@ -25,9 +23,9 @@ impl AgencyClient {
             .status_code(status_code)?
             .build();
 
-        let data = prepare_message_for_agency(&Client2AgencyMessage::UpdateMessageStatusByConnections(message), &agency_did).await?;
-        let response = post_to_agency(&data).await?;
-        let mut response = parse_response_from_agency(&response).await?;
+        let data = self.prepare_message_for_agency(&Client2AgencyMessage::UpdateMessageStatusByConnections(message), &agency_did).await?;
+        let response = self.post_to_agency(&data).await?;
+        let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
@@ -46,9 +44,9 @@ impl AgencyClient {
                 .build()
         );
 
-        let data = prepare_message_for_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
-        let response = post_to_agency(&data).await?;
-        let mut response = parse_response_from_agency(&response).await?;
+        let data = self.prepare_message_for_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
+        let response = self.post_to_agency(&data).await?;
+        let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::GetMessagesResponse(res) => {

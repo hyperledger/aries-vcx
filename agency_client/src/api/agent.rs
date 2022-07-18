@@ -1,13 +1,11 @@
 use crate::agency_client::AgencyClient;
 use crate::{agency_settings, AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::internal::messaging::{parse_response_from_agency, prepare_message_for_agency, prepare_message_for_agent, send_message_to_agency};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::create_key::CreateKeyBuilder;
 use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
 use crate::messages::update_connection::DeleteConnectionBuilder;
 use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
-use crate::utils::comm::post_to_agency;
 
 impl AgencyClient {
     pub async fn delete_connection_agent(&self, _pw_did: &str, to_pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<()> {
@@ -15,9 +13,9 @@ impl AgencyClient {
         let message = DeleteConnectionBuilder::create()
             .build();
 
-        let data = prepare_message_for_agent(vec![Client2AgencyMessage::UpdateConnection(message)], to_pw_vk, agent_did, agent_vk).await?;
-        let response = post_to_agency(&data).await?;
-        let mut response = parse_response_from_agency(&response).await?;
+        let data = self.prepare_message_for_agent(vec![Client2AgencyMessage::UpdateConnection(message)], to_pw_vk, agent_did, agent_vk).await?;
+        let response = self.post_to_agency(&data).await?;
+        let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::UpdateConnectionResponse(_) => Ok(()),
@@ -40,9 +38,9 @@ impl AgencyClient {
 
         let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        let data = prepare_message_for_agency(&Client2AgencyMessage::CreateKey(message), &agency_did).await?;
-        let response = post_to_agency(&data).await?;
-        let mut response = parse_response_from_agency(&response).await?;
+        let data = self.prepare_message_for_agency(&Client2AgencyMessage::CreateKey(message), &agency_did).await?;
+        let response = self.post_to_agency(&data).await?;
+        let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::CreateKeyResponse(res) => Ok((res.for_did, res.for_verkey)),
@@ -67,7 +65,7 @@ impl AgencyClient {
                 }
 
                 let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
-                send_message_to_agency(&message, &to_did).await?;
+                self.send_message_to_agency(&message, &to_did).await?;
             }
             Err(e) => warn!("Unable to update webhook (did you provide remote did in the config?): {}", e)
         }
