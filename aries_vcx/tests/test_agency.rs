@@ -290,7 +290,7 @@ mod tests {
         let (my_did, my_vk) = create_and_store_my_did(wh, None, None).await.unwrap();
         client.provision_cloud_agent(&my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
         let config = client.get_config().unwrap();
-        client.configure(&config, false);
+        client.configure(&config);
         client.update_agent_webhook("https://example.org").await.unwrap();
         close_wallet(wh)
             .await.unwrap();

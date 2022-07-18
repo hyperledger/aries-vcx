@@ -30,7 +30,7 @@ pub fn enable_agency_mocks() -> VcxResult<()> {
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
     settings::get_agency_client_mut()?
-        .configure(config, false)?;
+        .configure(config)?;
     Ok(())
 }
 
