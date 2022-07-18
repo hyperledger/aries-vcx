@@ -17,19 +17,41 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
+// pub fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
+//     where F: Fn(&str) -> Result<S, E> {
+//     if val.is_none() { return Ok(error_utils::SUCCESS.code_num); }
+//
+//     closure(val.as_ref().ok_or(AgencyClientError::from(AgencyClientErrorKind::InvalidConfiguration))?)
+//         .or(Err(AgencyClientError::from(err)))?;
+//
+//     Ok(error_utils::SUCCESS.code_num)
+// }
+//
+// pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<u32>
+//     where F: Fn(&str) -> Result<S, E> {
+//     closure(val)
+//         .or(Err(AgencyClientError::from(err)))?;
+//
+//     Ok(error_utils::SUCCESS.code_num)
+// }
+//
+
 impl AgencyClient {
-    pub fn get_wallet_handle(&self) -> AgencyClientResult<i32> { Ok(self.wallet_handle) }
-    pub fn get_agency_url(&self) -> AgencyClientResult<String> { Ok(self.agency_url.clone()) }
+    pub fn get_wallet_handle(&self) -> i32 { self.wallet_handle }
+    pub fn get_agency_url_config(&self) -> String { self.agency_url.clone() }
+    pub fn get_agency_url_full(&self) -> String {
+        format!("{}/agency/msg", self.agency_url.clone())
+    }
 
-    pub fn get_agency_did(&self) -> AgencyClientResult<String> { Ok(self.agency_did.clone()) }
-    pub fn get_agency_pwdid(&self) -> AgencyClientResult<String> { Ok(self.agency_pwdid.clone()) }
-    pub fn get_agency_vk(&self) -> AgencyClientResult<String> { Ok(self.agency_vk.clone()) }
+    pub fn get_agency_did(&self) -> String { self.agency_did.clone() }
+    pub fn get_agency_pwdid(&self) -> String { self.agency_pwdid.clone() }
+    pub fn get_agency_vk(&self) -> String { self.agency_vk.clone() }
 
-    pub fn get_agent_pwdid(&self) -> AgencyClientResult<String> { Ok(self.agent_pwdid.clone()) }
-    pub fn get_agent_vk(&self) -> AgencyClientResult<String> { Ok(self.agent_vk.clone()) }
+    pub fn get_agent_pwdid(&self) -> String { self.agent_pwdid.clone() }
+    pub fn get_agent_vk(&self) -> String { self.agent_vk.clone() }
 
-    pub fn get_my_pwdid(&self) -> AgencyClientResult<String> { Ok(self.my_pwdid.clone()) }
-    pub fn get_my_vk(&self) -> AgencyClientResult<String> { Ok(self.my_vk.clone()) }
+    pub fn get_my_pwdid(&self) -> String { self.my_pwdid.clone() }
+    pub fn get_my_vk(&self) -> String { self.my_vk.clone() }
 
     pub fn set_wallet_handle(&mut self, wh: i32) {
         self.wallet_handle = wh;
@@ -41,32 +63,24 @@ impl AgencyClient {
         crate::utils::wallet::reset_wallet_handle();
     }
     pub fn set_agency_url(&mut self, url: &str) {
-        let url = format!("{}/agency/msg", url);
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT, &url);
-        self.agency_url = url;
+        self.agency_url = url.to_string();
     }
     pub fn set_agency_did(&mut self, did: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, did);
         self.agency_did = did.to_string();
     }
     pub fn set_agency_vk(&mut self, vk: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, vk);
         self.agency_vk = vk.to_string();
     }
     pub fn set_agent_pwdid(&mut self, pwdid: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, pwdid);
         self.agent_pwdid = pwdid.to_string();
     }
     pub fn set_agent_vk(&mut self, vk: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY, vk);
         self.agent_vk = vk.to_string();
     }
     pub fn set_my_pwdid(&mut self, pwdid: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_DID, pwdid);
         self.my_pwdid = pwdid.to_string();
     }
     pub fn set_my_vk(&mut self, vk: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY, vk);
         self.my_vk = vk.to_string();
     }
 
@@ -116,8 +130,6 @@ impl AgencyClient {
         self.set_agent_vk(default_verkey);
         self.set_my_pwdid(default_did);
         self.set_my_vk(default_verkey);
-
-        agency_settings::set_testing_defaults_agency();
 
         error_utils::SUCCESS.code_num
     }

@@ -62,12 +62,11 @@ impl CloudAgentInfo {
     }
 
     pub fn service_endpoint(&self) -> VcxResult<String> {
-        settings::get_agency_client()?.get_agency_url()
-            .map_err(|err| err.into())
+        Ok(settings::get_agency_client()?.get_agency_url_full())
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = &settings::get_agency_client()?.get_agency_vk()?;
+        let agency_vk = &settings::get_agency_client()?.get_agency_vk();
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
