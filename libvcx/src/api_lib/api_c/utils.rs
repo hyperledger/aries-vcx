@@ -79,8 +79,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                 cb(command_handle, err.into(), ptr::null_mut());
             }
             Ok(agency_config) => {
-                let agency_config = serde_json::to_string(&agency_config).unwrap();
-                // todo: no unwrap
+                let agency_config = json!(&agency_config).to_string();
                 trace!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
                        command_handle, error::SUCCESS.message, agency_config);
                 let msg = CStringUtils::string_to_cstring(agency_config);
