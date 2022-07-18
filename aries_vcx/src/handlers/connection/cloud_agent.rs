@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use agency_client::messages::get_messages::DownloadedMessageEncrypted;
+use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 
 use crate::agency_client::MessageStatusCode;

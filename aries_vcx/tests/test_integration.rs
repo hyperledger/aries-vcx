@@ -24,7 +24,7 @@ mod tests {
     use serde_json::Value;
 
     use agency_client::agency_client::AgencyClient;
-    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
     use aries_vcx::{libindy, utils};
     use aries_vcx::agency_client::MessageStatusCode;

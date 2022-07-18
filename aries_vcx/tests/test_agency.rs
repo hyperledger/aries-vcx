@@ -19,7 +19,7 @@ mod tests {
     use indyrs::wallet::close_wallet;
 
     use agency_client::agency_client::AgencyClient;
-    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
     use agency_client::MessageStatusCode;
     use aries_vcx::init::open_wallet;

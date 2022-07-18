@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json;
 
-use aries_vcx::agency_client::messages::get_messages::DownloadedMessage;
+use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
