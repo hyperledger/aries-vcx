@@ -130,17 +130,6 @@ pub fn process_agency_config_string(config: &str, validate: bool) -> AgencyClien
     }
 }
 
-pub fn get_config_value(key: &str) -> AgencyClientResult<String> {
-    trace!("get_config_value >>> key: {}", key);
-
-    AGENCY_SETTINGS
-        .read()
-        .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidConfiguration, "Cannot read AGENCY_SETTINGS")))?
-        .get(key)
-        .map(|v| v.to_string())
-        .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from AGENCY_SETTINGS", key)))
-}
-
 pub fn get_config_enable_test_mode() -> AgencyClientResult<String> {
     get_config_value(agency_settings::CONFIG_ENABLE_TEST_MODE)
 }
@@ -162,4 +151,15 @@ pub fn set_config_value(key: &str, value: &str) {
             .write().unwrap()
             .insert(key.to_string(), value.to_string());
     }
+}
+
+pub fn get_config_value(key: &str) -> AgencyClientResult<String> {
+    trace!("get_config_value >>> key: {}", key);
+
+    AGENCY_SETTINGS
+        .read()
+        .or(Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidConfiguration, "Cannot read AGENCY_SETTINGS")))?
+        .get(key)
+        .map(|v| v.to_string())
+        .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidConfiguration, format!("Cannot read \"{}\" from AGENCY_SETTINGS", key)))
 }

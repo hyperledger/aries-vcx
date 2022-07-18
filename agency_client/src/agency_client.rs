@@ -20,11 +20,14 @@ pub struct AgencyClient {
 impl AgencyClient {
     pub fn get_wallet_handle(&self) -> AgencyClientResult<i32> { Ok(self.wallet_handle) }
     pub fn get_agency_url(&self) -> AgencyClientResult<String> { Ok(self.agency_url.clone()) }
+
     pub fn get_agency_did(&self) -> AgencyClientResult<String> { Ok(self.agency_did.clone()) }
     pub fn get_agency_pwdid(&self) -> AgencyClientResult<String> { Ok(self.agency_pwdid.clone()) }
     pub fn get_agency_vk(&self) -> AgencyClientResult<String> { Ok(self.agency_vk.clone()) }
+
     pub fn get_agent_pwdid(&self) -> AgencyClientResult<String> { Ok(self.agent_pwdid.clone()) }
     pub fn get_agent_vk(&self) -> AgencyClientResult<String> { Ok(self.agent_vk.clone()) }
+
     pub fn get_my_pwdid(&self) -> AgencyClientResult<String> { Ok(self.my_pwdid.clone()) }
     pub fn get_my_vk(&self) -> AgencyClientResult<String> { Ok(self.my_vk.clone()) }
 
@@ -45,10 +48,6 @@ impl AgencyClient {
     pub fn set_agency_did(&mut self, did: &str) {
         agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_DID, did);
         self.agency_did = did.to_string();
-    }
-    pub fn set_agency_pwdid(&mut self, pwdid: &str) {
-        agency_settings::set_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID, pwdid);
-        self.agency_pwdid = pwdid.to_string();
     }
     pub fn set_agency_vk(&mut self, vk: &str) {
         agency_settings::set_config_value(agency_settings::CONFIG_AGENCY_VERKEY, vk);
@@ -75,7 +74,7 @@ impl AgencyClient {
     pub fn disable_test_mode(&self) { mocking::disable_agency_mocks() }
 
     pub fn configure(&mut self, config: &AgencyClientConfig, validate: bool) -> AgencyClientResult<u32> {
-        trace!("AgencyClient::process_config_string >>> config {:?}, validate: {:?}", config, validate);
+        warn!("AgencyClient::process_config_string >>> config {:?}, validate: {:?}", config, validate);
 
         // todo: enable validation
         // if (validate) {

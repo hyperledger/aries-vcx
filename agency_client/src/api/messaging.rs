@@ -13,17 +13,17 @@ impl AgencyClient {
             trace!("update_messages >>> agency mocks enabled, returning empty response");
             return Ok(());
         };
-
-        // ideally we would use `self.agency_did` on the next line instead
-        let agency_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
         AgencyMock::set_next_response(test_constants::UPDATE_MESSAGES_RESPONSE.to_vec());
 
         let message = UpdateMessageStatusByConnectionsBuilder::create()
             .uids_by_conns(uids_by_conns)?
             .status_code(status_code)?
             .build();
-
-        let data = self.prepare_message_for_agency(&Client2AgencyMessage::UpdateMessageStatusByConnections(message), &agency_did).await?;
+        let agent_did = self.get_agent_pwdid()?;
+        let data = self.prepare_message_for_agent(
+            &Client2AgencyMessage::UpdateMessageStatusByConnections(message),
+            &agent_did,
+        ).await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
@@ -44,7 +44,7 @@ impl AgencyClient {
                 .build()
         );
 
-        let data = self.prepare_message_for_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
+        let data = self.prepare_message_for_connection_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 

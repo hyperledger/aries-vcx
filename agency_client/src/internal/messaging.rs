@@ -11,18 +11,14 @@ use crate::utils::libindy::crypto;
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: &Vec<u8>) -> AgencyClientResult<Vec<u8>> {
-        let endpoint = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_ENDPOINT)?;
+        let endpoint = self.get_agency_url()?;
         httpclient::post_message(body_content, &endpoint).await
     }
 
-    pub async fn prepare_message_for_agency(&self, message: &Client2AgencyMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
-        self.pack_for_agency_v2(message, agency_did).await
-    }
-
-    async fn pack_for_agency_v2(&self, message: &Client2AgencyMessage, agency_did: &str) -> AgencyClientResult<Vec<u8>> {
-        trace!("pack_for_agency_v2 >>>");
-        let agent_vk = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_VERKEY)?;
-        let my_vk = agency_settings::get_config_value(agency_settings::CONFIG_SDK_TO_REMOTE_VERKEY)?;
+    pub async fn prepare_message_for_agency(&self, message: &Client2AgencyMessage, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
+        let my_vk = self.get_my_vk()?;
+        warn!("prepare_message_for_agency >>> agent_did: {}, agent_did: {}, message: {:?}", agent_did, agent_vk, message);
+        warn!("prepare_message_for_agency >>> my_vk: {}", my_vk);
 
         let message = ::serde_json::to_string(&message)
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
@@ -32,7 +28,23 @@ impl AgencyClient {
 
         let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
 
-        self.prepare_forward_message(message, agency_did).await
+        self.prepare_forward_message(message, agent_did).await
+    }
+
+    pub async fn prepare_message_for_agent(&self, message: &Client2AgencyMessage, agent_did: &str) -> AgencyClientResult<Vec<u8>> {
+        warn!("pack_for_agency_v2 >>> {:?}", message);
+        let agent_vk = self.get_agent_vk()?;
+        let my_vk = self.get_my_vk()?;
+
+        let message = ::serde_json::to_string(&message)
+            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize A2A message: {}", err)))?;
+
+        let receiver_keys = ::serde_json::to_string(&vec![&agent_vk])
+            .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, format!("Cannot serialize receiver keys: {}", err)))?;
+
+        let message = crypto::pack_message(Some(&my_vk), &receiver_keys, message.as_bytes()).await?;
+
+        self.prepare_forward_message(message, agent_did).await
     }
 
     pub async fn parse_message_from_response(&self, response: &Vec<u8>) -> AgencyClientResult<String> {
@@ -65,7 +77,7 @@ impl AgencyClient {
 
     async fn prepare_forward_message(&self, message: Vec<u8>, did: &str) -> AgencyClientResult<Vec<u8>> {
         trace!("prepare_forward_message >>>");
-        let agency_vk = agency_settings::get_config_value(agency_settings::CONFIG_AGENCY_VERKEY)?;
+        let agency_vk = self.get_agency_vk()?;
 
         let message = ForwardV2::new(did.to_string(), message)?;
 
@@ -85,7 +97,7 @@ impl AgencyClient {
         crypto::pack_message(None, &receiver_keys, message.as_bytes()).await
     }
 
-    pub async fn prepare_message_for_agent(&self, messages: Vec<Client2AgencyMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
+    pub async fn prepare_message_for_connection_agent(&self, messages: Vec<Client2AgencyMessage>, pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_message_for_agent >> {:?}", messages);
         let message = messages.get(0)
             .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::SerializationError, "Cannot get message"))?;
@@ -103,12 +115,12 @@ impl AgencyClient {
 
         let to_did = agency_settings::get_config_value(agency_settings::CONFIG_REMOTE_TO_SDK_DID)?;
 
-        self.pack_for_agency_v2(&message, &to_did).await
+        self.prepare_message_for_agent(&message, &to_did).await
     }
 
-    pub async fn send_message_to_agency(&self, message: &Client2AgencyMessage, did: &str) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
+    pub async fn send_message_to_agency(&self, message: &Client2AgencyMessage, did: &str, verkey: &str) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
         trace!("send_message_to_agency >>> message: ..., did: {}", did);
-        let data = self.prepare_message_for_agency(message, &did).await?;
+        let data = self.prepare_message_for_agency(message, &did, verkey).await?;
 
         let response = self.post_to_agency(&data)
             .await
