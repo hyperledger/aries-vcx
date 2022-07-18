@@ -268,6 +268,7 @@ mod tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
+        let _setup = SetupLibraryAgencyV2::init().await;
         let wallet_config = WalletConfig {
             wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -287,13 +288,9 @@ mod tests {
         let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
         let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
         let (my_did, my_vk) = create_and_store_my_did(wh, None, None).await.unwrap();
-        client.set_agency_did(agency_did);
-        client.set_agency_vk(agency_vk);
-        client.set_agency_url(agency_url);
-        client.set_my_vk(&my_vk);
-        client.set_my_pwdid(&my_did);
-        client.set_agent_vk(agency_vk); // This is reset when connection is established and agent did needs not be set before onboarding
-        let config = client.provision_cloud_agent(&my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
+        client.provision_cloud_agent(&my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
+        let config = client.get_config().unwrap();
+        client.configure(&config, false);
         client.update_agent_webhook("https://example.org").await.unwrap();
         close_wallet(wh)
             .await.unwrap();

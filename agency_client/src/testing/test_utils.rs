@@ -23,8 +23,6 @@ pub fn init_test_logging() {
 
 fn setup() {
     init_test_logging();
-    agency_settings::clear_config_agency();
-    agency_settings::set_testing_defaults_agency();
 }
 
 impl SetupMocks {

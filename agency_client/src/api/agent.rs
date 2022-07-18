@@ -36,7 +36,7 @@ impl AgencyClient {
             .for_verkey(pw_verkey)?
             .build();
 
-        let agent_pwdid = self.get_agent_pwdid()?;
+        let agent_pwdid = self.get_agent_pwdid();
 
         let data = self.prepare_message_for_agent(&Client2AgencyMessage::CreateKey(message), &agent_pwdid).await?;
         let response = self.post_to_agency(&data).await?;
@@ -61,8 +61,7 @@ impl AgencyClient {
             e_type: ComMethodType::Webhook,
             value: String::from(webhook_url),
         };
-
-        let agent_did = self.get_agent_pwdid()?;
+        let agent_did = self.get_agent_pwdid();
         let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
         let data = self.prepare_message_for_agent(&message, &agent_did).await?;
         let response = self.post_to_agency(&data).await?;

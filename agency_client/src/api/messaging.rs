@@ -19,7 +19,7 @@ impl AgencyClient {
             .uids_by_conns(uids_by_conns)?
             .status_code(status_code)?
             .build();
-        let agent_did = self.get_agent_pwdid()?;
+        let agent_did = self.get_agent_pwdid();
         let data = self.prepare_message_for_agent(
             &Client2AgencyMessage::UpdateMessageStatusByConnections(message),
             &agent_did,

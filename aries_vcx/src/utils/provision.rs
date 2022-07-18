@@ -15,10 +15,11 @@ pub async fn provision_cloud_agent(provision_config: &AgentProvisionConfig) -> V
     settings::get_agency_client_mut().unwrap().set_my_pwdid(&my_did);
     settings::get_agency_client_mut().unwrap().set_agent_vk(&provision_config.agency_verkey); // This is reset when connection is established and agent did needs not be set before onboarding
 
-    let client = get_agency_client()?;
-    let config = client.provision_cloud_agent(
+    let mut client = get_agency_client()?;
+    client.provision_cloud_agent(
         &my_did, &my_vk,
         &provision_config.agency_did, &provision_config.agency_verkey, &provision_config.agency_endpoint,
     ).await?;
+    let config = client.get_config()?;
     Ok(config)
 }
