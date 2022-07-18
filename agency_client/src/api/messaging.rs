@@ -1,7 +1,8 @@
 use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult, MessageStatusCode};
 use crate::agency_client::AgencyClient;
 use crate::messages::a2a_message::Client2AgencyMessage;
-use crate::messages::get_messages::{DownloadedMessageEncrypted, GetMessagesBuilder};
+use crate::api::downloaded_message::DownloadedMessageEncrypted;
+use crate::messages::get_messages::GetMessagesBuilder;
 use crate::messages::update_message::{UIDsByConn, UpdateMessageStatusByConnectionsBuilder};
 use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::AgencyMock;

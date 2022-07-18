@@ -8,7 +8,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
 
-use agency_client::messages::get_messages::DownloadedMessage;
+use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
 use crate::error::prelude::*;

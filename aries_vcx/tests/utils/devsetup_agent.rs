@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub mod test {
-    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::MessageStatusCode;
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
