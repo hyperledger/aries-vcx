@@ -973,12 +973,13 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         vcx_create_agency_client_for_main_wallet(cb.command_handle, CString::new(agency_client_config).unwrap().into_raw(), Some(cb.get_callback()));
         let webhook_url = "https://example.com";
+        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(error::SUCCESS.code_num, vcx_update_webhook_url(cb.command_handle,
                                                                    CString::new(webhook_url.to_string()).unwrap().into_raw(),
                                                                    Some(cb.get_callback())));
-        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+        cb.receive(TimeoutUtils::some_custom(2)).unwrap();
     }
 
 
