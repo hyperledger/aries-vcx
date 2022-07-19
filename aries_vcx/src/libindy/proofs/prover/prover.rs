@@ -1,8 +1,9 @@
 use crate::error::prelude::*;
+use crate::global::settings;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::prover::prover_internal::{build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover, credential_def_identifiers};
 use crate::libindy::utils::anoncreds;
-use crate::global::settings;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
@@ -29,7 +30,8 @@ pub async fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, p
     let schemas_json = build_schemas_json_prover(&credentials_identifiers).await?;
     let credential_defs_json = build_cred_defs_json_prover(&credentials_identifiers).await?;
 
-    let proof = anoncreds::libindy_prover_create_proof(&proof_req_data_json,
+    let proof = anoncreds::libindy_prover_create_proof(get_main_wallet_handle(),
+                                                       &proof_req_data_json,
                                                        &requested_credentials,
                                                        settings::DEFAULT_LINK_SECRET_ALIAS,
                                                        &schemas_json,

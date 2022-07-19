@@ -1,5 +1,6 @@
 use std::fs;
 use std::sync::Once;
+use indy_sys::WalletHandle;
 use agency_client::configuration::AgentProvisionConfig;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
@@ -30,7 +31,9 @@ pub struct SetupMocks; // set default settings and enable test mode
 
 pub struct SetupIndyMocks; // set default settings and enable indy mode
 
-pub struct SetupPoolMocks; // set default settings and enable pool mocks mode
+pub struct SetupPoolMocks {
+    pub wallet_handle: WalletHandle
+}
 
 pub struct SetupWallet {
     pub wallet_config: WalletConfig,
@@ -44,10 +47,12 @@ pub struct SetupPoolConfig {
 
 pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig,
+    pub wallet_handle: WalletHandle
 } // set default settings and init indy wallet
 
 pub struct SetupWithWalletAndAgency {
     pub institution_did: String,
+    pub wallet_handle: WalletHandle
 }  // set default settings, init indy wallet, init pool
 
 pub struct SetupAgencyMock {
@@ -131,8 +136,8 @@ impl SetupLibraryWallet {
             rekey_derivation_method: None,
         };
 
-        create_and_open_as_main_wallet(&wallet_config).await.unwrap();
-        SetupLibraryWallet { wallet_config }
+        let wallet_handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
+        SetupLibraryWallet { wallet_config, wallet_handle }
     }
 }
 
@@ -215,9 +220,11 @@ impl Drop for SetupPoolConfig {
 impl SetupPoolMocks {
     pub async fn init() -> SetupPoolMocks {
         init_test_logging();
-        setup_indy_env().await;
+        let (_issuer_did, wallet_handle) = setup_indy_env().await;
         enable_pool_mocks();
-        SetupPoolMocks {}
+        SetupPoolMocks {
+            wallet_handle
+        }
     }
 }
 
@@ -247,12 +254,13 @@ impl SetupWithWalletAndAgency {
         init_test_logging();
         set_test_configs();
 
-        let institution_did = setup_indy_env().await;
+        let (institution_did, wallet_handle) = setup_indy_env().await;
 
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
         open_test_pool().await;
         SetupWithWalletAndAgency {
-            institution_did
+            institution_did,
+            wallet_handle
         }
     }
 }
@@ -343,14 +351,14 @@ pub fn create_new_seed() -> String {
     format!("{:032}", x)
 }
 
-pub async fn configure_trustee_did() {
-    libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
-    let (my_did, my_vk) = libindy::utils::signus::main_wallet_create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).await.unwrap();
+pub async fn configure_trustee_did(wallet_handle: WalletHandle) {
+    libindy::utils::anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(wallet_handle, Some(constants::TRUSTEE_SEED), None).await.unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
 
-pub async fn setup_indy_env() -> String {
+pub async fn setup_indy_env() -> (String, WalletHandle) {
     global::agency_client::get_agency_client_mut().unwrap().disable_test_mode();
 
     let enterprise_seed = "000000000000000000000000Trustee1";
@@ -372,15 +380,15 @@ pub async fn setup_indy_env() -> String {
     };
 
     create_main_wallet(&config_wallet).await.unwrap();
-    open_as_main_wallet(&config_wallet).await.unwrap();
+    let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
 
     let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
 
-    provision_cloud_agent(&config_provision_agent).await.unwrap();
+    provision_cloud_agent(wallet_handle, &config_provision_agent).await.unwrap();
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    institution_did
+    (institution_did, wallet_handle)
 }
 
 pub struct TempFile {

@@ -2,6 +2,7 @@
 pub mod test_utils {
     use std::thread;
     use std::time::Duration;
+    use indy_sys::WalletHandle;
     use serde_json::{json, Value};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -460,20 +461,20 @@ pub mod test_utils {
     pub async fn rotate_rev_reg(faber: &mut Faber, credential_def: &CredentialDef, rev_reg: &RevocationRegistry) -> RevocationRegistry {
         faber.activate().await.unwrap();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let mut rev_reg_new = RevocationRegistry::create(&institution_did, &credential_def.cred_def_id, &rev_reg.get_tails_dir(), 10, 2).await.unwrap();
-        rev_reg_new.publish_revocation_primitives(TEST_TAILS_URL).await.unwrap();
+        let mut rev_reg_new = RevocationRegistry::create(faber.wallet_handle, &institution_did, &credential_def.cred_def_id, &rev_reg.get_tails_dir(), 10, 2).await.unwrap();
+        rev_reg_new.publish_revocation_primitives(faber.wallet_handle, TEST_TAILS_URL).await.unwrap();
         rev_reg_new
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
         institution.activate().await.unwrap();
-        libindy::utils::anoncreds::publish_local_revocations(rev_reg_id.as_str()).await.unwrap();
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, rev_reg_id.as_str()).await.unwrap();
     }
 
-    pub async fn _create_address_schema() -> (String, String, String, String, CredentialDef, RevocationRegistry, Option<String>) {
+    pub async fn _create_address_schema(wallet_handle: WalletHandle) -> (String, String, String, String, CredentialDef, RevocationRegistry, Option<String>) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) = create_and_store_credential_def(&attrs_list).await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) = create_and_store_credential_def(wallet_handle,&attrs_list).await;
         (schema_id, schema_json, cred_def_id.to_string(), cred_def_json, cred_def, rev_reg, Some(rev_reg_id))
     }
 
@@ -496,7 +497,7 @@ pub mod test_utils {
     }
 
     pub async fn issue_address_credential(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &Connection, institution_to_consumer: &Connection) -> (String, String, Option<String>, CredentialDef, RevocationRegistry, Issuer) {
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) = _create_address_schema().await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) = _create_address_schema(institution.wallet_handle).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();

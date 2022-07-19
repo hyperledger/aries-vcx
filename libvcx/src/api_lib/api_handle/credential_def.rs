@@ -142,9 +142,9 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn create_revocable_cred_def_and_check_tails_location() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()

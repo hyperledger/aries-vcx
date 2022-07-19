@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::handlers::connection::connection::Connection;
 use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds;
@@ -41,7 +42,7 @@ impl Prover {
     pub async fn retrieve_credentials(&self) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
-        anoncreds::libindy_prover_get_credentials_for_proof_req(&presentation_request).await
+        anoncreds::libindy_prover_get_credentials_for_proof_req(get_main_wallet_handle(), &presentation_request).await
     }
 
     pub async fn generate_presentation(&mut self, credentials: String, self_attested_attrs: String) -> VcxResult<()> {
@@ -178,10 +179,10 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_retrieve_credentials() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-        let (_, _, req, _) = create_proof().await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (_, _, req, _) = create_proof(setup.wallet_handle).await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create().set_request_presentations_attach(&pres_req_data).unwrap();
@@ -224,7 +225,7 @@ mod tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWithWalletAndAgency::init().await;
-        create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -281,7 +282,7 @@ mod tests {
     async fn test_generate_proof() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -366,7 +367,7 @@ mod tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWithWalletAndAgency::init().await;
 
-        create_and_store_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",

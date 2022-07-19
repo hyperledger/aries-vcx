@@ -12,6 +12,7 @@ use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::global::agency_client::get_agency_client;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 
@@ -72,7 +73,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::utils::provision::provision_cloud_agent(&agency_config).await {
+        match aries_vcx::utils::provision::provision_cloud_agent(get_main_wallet_handle(), &agency_config).await {
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, err);
@@ -339,7 +340,7 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
            command_handle, transaction);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(&transaction).await {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &transaction).await {
             Ok(()) => {
                 trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -371,7 +372,7 @@ pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
     trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey(&did).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), &did).await {
             Ok(()) => {
                 trace!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -402,7 +403,7 @@ pub extern fn vcx_rotate_verkey_start(command_handle: CommandHandle,
     trace!("vcx_rotate_verkey_start(command_handle: {}, did: {})", command_handle, did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::libindy_replace_keys_start(&did).await {
+        match aries_vcx::libindy::utils::signus::libindy_replace_keys_start(get_main_wallet_handle(), &did).await {
             Ok(temp_vk) => {
                 trace!("vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
                        command_handle, error::SUCCESS.message, temp_vk);
@@ -436,7 +437,7 @@ pub extern fn vcx_rotate_verkey_apply(command_handle: CommandHandle,
     trace!("vcx_rotate_verkey_apply(command_handle: {}, did: {}, temp_vk: {:?})", command_handle, did, temp_vk);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(&did, &temp_vk).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), &did, &temp_vk).await {
             Ok(()) => {
                 trace!("vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -467,7 +468,7 @@ pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
     trace!("vcx_get_verkey_from_wallet(command_handle: {}, did: {})", command_handle, did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(&did).await {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(get_main_wallet_handle(), &did).await {
             Ok(verkey) => {
                 trace!("vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
                        command_handle, error::SUCCESS.message, verkey);
@@ -532,7 +533,7 @@ pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
     trace!("vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})", command_handle, submitter_did);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(submitter_did.as_deref(), seq_no).await {
+        match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(get_main_wallet_handle(), submitter_did.as_deref(), seq_no).await {
             Ok(txn) => {
                 trace!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
                        command_handle, error::SUCCESS.message, txn);

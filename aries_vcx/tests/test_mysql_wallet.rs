@@ -78,10 +78,10 @@ mod dbtests {
             agent_seed: None
         };
         create_main_wallet(&config_wallet).await.unwrap();
-        open_as_main_wallet(&config_wallet).await.unwrap();
+        let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
         let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
-        provision_cloud_agent(&config_provision_agent).await.unwrap();
+        provision_cloud_agent(wallet_handle, &config_provision_agent).await.unwrap();
         close_main_wallet().await.unwrap();
     }
 }

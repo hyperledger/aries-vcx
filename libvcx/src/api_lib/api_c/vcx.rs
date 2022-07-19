@@ -998,12 +998,12 @@ mod tests {
         let genesis_path = create_tmp_genesis_txn_file();
 
         _vcx_init_full("{}", &json!({"genesis_path": genesis_path}).to_string(), &json!(setup_wallet.wallet_config).to_string()).unwrap();
-        configure_trustee_did().await;
+        configure_trustee_did(get_main_wallet_handle()).await;
 
         info!("test_init_composed :: creating schema + creddef to verify wallet and pool connectivity");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id, _cred_def, _rev_reg) =
-            create_and_store_credential_def(&attrs_list).await;
+            create_and_store_credential_def(get_main_wallet_handle(), &attrs_list).await;
         assert!(schema_id.len() > 0);
 
         delete_test_pool().await;

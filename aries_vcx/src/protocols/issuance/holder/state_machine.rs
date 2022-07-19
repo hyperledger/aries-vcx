@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
-use crate::protocols::SendClosure;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::anoncreds::{self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -18,6 +18,7 @@ use crate::protocols::issuance::holder::states::offer_received::OfferReceivedSta
 use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::verify_thread_id;
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -370,7 +371,8 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 }
 
 async fn _store_credential(credential: &Credential,
-                     req_meta: &str, cred_def_json: &str) -> VcxResult<(String, Option<String>)> {
+                           req_meta: &str,
+                           cred_def_json: &str) -> VcxResult<(String, Option<String>)> {
     trace!("Holder::_store_credential >>> credential: {:?}, req_meta: {}, cred_def_json: {}", credential, req_meta, cred_def_json);
 
     let credential_json = credential.credentials_attach.content()?;
@@ -382,7 +384,8 @@ async fn _store_credential(credential: &Credential,
         None
     };
 
-    let cred_id = libindy_prover_store_credential(None,
+    let cred_id = libindy_prover_store_credential(get_main_wallet_handle(),
+                                                  None,
                                                   req_meta,
                                                   &credential_json,
                                                   cred_def_json,
@@ -393,13 +396,15 @@ async fn _store_credential(credential: &Credential,
 async fn _delete_credential(cred_id: &str) -> VcxResult<()> {
     trace!("Holder::_delete_credential >>> cred_id: {}", cred_id);
 
-    libindy_prover_delete_credential(cred_id).await
+    libindy_prover_delete_credential(get_main_wallet_handle(), cred_id).await
 }
 
 pub async fn create_credential_request(cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
-    let (cred_def_id, cred_def_json) = get_cred_def_json(&cred_def_id).await?;
+    let wallet_handle = get_main_wallet_handle();
+    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, &cred_def_id).await?;
 
-    libindy_prover_create_credential_req(&prover_did,
+    libindy_prover_create_credential_req(wallet_handle,
+                                         &prover_did,
                                          &cred_offer,
                                          &cred_def_json)
         .await

@@ -22,11 +22,11 @@ pub fn reset_main_wallet_handle() -> VcxResult<()> {
 }
 
 pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
-    let wh = create_and_open_as_main_wallet(&config).await?;
-    trace!("Created wallet with handle {:?}", wh);
+    let wallet_handle = create_and_open_as_main_wallet(&config).await?;
+    trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
-    anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
+    anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
 
     close_main_wallet().await?;
     Ok(())
@@ -78,7 +78,7 @@ pub mod tests {
     use crate::global;
     use crate::global::settings;
     use crate::global::wallet::{add_main_wallet_record, close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};
-    use crate::libindy::utils::signus::main_wallet_create_and_store_my_did;
+    use crate::libindy::utils::signus::create_and_store_my_did;
     use crate::utils::devsetup::TempFile;
 
     use crate::libindy::utils::wallet::*;
@@ -102,9 +102,9 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
-        let _handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
+        let wallet_handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
-        let (my_did, my_vk) = main_wallet_create_and_store_my_did(None, None).await.unwrap();
+        let (my_did, my_vk) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
 
         settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
         global::agency_client::get_agency_client_mut().unwrap().set_my_vk(&my_vk);
@@ -238,7 +238,7 @@ pub async fn close_search_main_wallet(search_handle: SearchHandle) -> VcxResult<
 }
 
 pub async fn main_wallet_configure_issuer(enterprise_seed: &str) -> VcxResult<IssuerConfig> {
-    let (institution_did, _institution_verkey) = signus::main_wallet_create_and_store_my_did(Some(enterprise_seed), None).await?;
+    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(get_main_wallet_handle(), Some(enterprise_seed), None).await?;
     Ok(IssuerConfig {
         institution_did,
     })

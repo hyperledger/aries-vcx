@@ -10,6 +10,7 @@ use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::global::agency_client::get_agency_client;
+use crate::global::wallet::get_main_wallet_handle;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {
@@ -27,7 +28,7 @@ impl PublicAgent {
             .set_service_endpoint(get_agency_client()?.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys()?);
-        add_service(&institution_did, &service).await?;
+        add_service(get_main_wallet_handle(), &institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })

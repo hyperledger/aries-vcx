@@ -1,3 +1,4 @@
+use indy_sys::WalletHandle;
 use crate::error::prelude::*;
 use crate::libindy::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
@@ -42,8 +43,8 @@ impl Schema {
             .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
     }
 
-    pub async fn update_state(&mut self) -> VcxResult<u32> {
-        if anoncreds::get_schema_json(&self.schema_id).await.is_ok() {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle) -> VcxResult<u32> {
+        if anoncreds::get_schema_json(wallet_handle, &self.schema_id).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

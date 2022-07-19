@@ -217,14 +217,6 @@ pub mod tests {
 
     use super::*;
 
-    pub async fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let tag = "test_tag";
-        let config = "{support_revocation: false}";
-
-        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).await.unwrap();
-    }
-
     fn _issuer_credential_create() -> u32 {
         issuer_credential_create("1".to_string()).unwrap()
     }

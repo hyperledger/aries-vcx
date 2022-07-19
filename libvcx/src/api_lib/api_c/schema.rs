@@ -7,6 +7,7 @@ use futures::future::BoxFuture;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::global::settings;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;
@@ -408,7 +409,7 @@ pub extern fn vcx_schema_update_state(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match schema::update_state(schema_handle).await {
+        match schema::update_state(get_main_wallet_handle(), schema_handle).await {
             Ok(state) => {
                 trace!("vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
                        command_handle, error::SUCCESS.message, state);
@@ -553,9 +554,10 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle,
+                                                          utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(vcx_schema_get_attributes(cb.command_handle,

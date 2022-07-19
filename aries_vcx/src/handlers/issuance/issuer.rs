@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::handlers::connection::connection::Connection;
 use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
@@ -73,7 +74,7 @@ impl Issuer {
     // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
     pub async fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = libindy_issuer_create_credential_offer(&offer_info.cred_def_id).await?;
+        let libindy_cred_offer = libindy_issuer_create_credential_offer(get_main_wallet_handle(), &offer_info.cred_def_id).await?;
         let cred_offer_msg = CredentialOffer::create()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?

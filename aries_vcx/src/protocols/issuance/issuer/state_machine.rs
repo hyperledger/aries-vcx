@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::credentials::encode_attributes;
-use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -21,6 +21,7 @@ use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::protocols::issuance::verify_thread_id;
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -116,9 +117,9 @@ impl IssuerSM {
                 Some(rev_info) => {
                     if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
                         if publish {
-                            anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id).await?;
+                            anoncreds::revoke_credential(get_main_wallet_handle(), tails_file, rev_reg_id, cred_rev_id).await?;
                         } else {
-                            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id).await?;
+                            anoncreds::revoke_credential_local(get_main_wallet_handle(), tails_file, rev_reg_id, cred_rev_id).await?;
                         }
                         Ok(())
                     } else {
@@ -413,11 +414,13 @@ async fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<Str
     };
     let request = &request.requests_attach.content()?;
     let cred_data = encode_attributes(cred_data)?;
-    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(&offer,
-                                                                                       &request,
-                                                                                       &cred_data,
-                                                                                       rev_reg_id.clone(),
-                                                                                       tails_file.clone()).await?;
+    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(
+        get_main_wallet_handle(),
+        &offer,
+        &request,
+        &cred_data,
+        rev_reg_id.clone(),
+        tails_file.clone()).await?;
     let credential = Credential::create().set_credential(ser_credential)?;
     Ok((credential, cred_rev_id))
 }

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::error::prelude::*;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
@@ -27,7 +28,7 @@ pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoPro
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+            let (_, schema_json) = anoncreds::get_schema_json(get_main_wallet_handle(), &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -46,7 +47,7 @@ pub async fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoP
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
+            let (_, credential_def) = anoncreds::get_cred_def_json(get_main_wallet_handle(), &cred_info.cred_def_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
 

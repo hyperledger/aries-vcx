@@ -1,7 +1,9 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
+use crate::global::settings;
 use crate::libindy::utils::anoncreds::get_cred_def_json;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::global::settings;
 
 pub mod issuer;
 pub mod holder;
@@ -14,8 +16,8 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
     Ok(())
 }
 
-pub async fn is_cred_def_revokable(cred_def_id: &str) -> VcxResult<bool> {
-    let (_, cred_def_json) = get_cred_def_json(cred_def_id)
+pub async fn is_cred_def_revokable(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<bool> {
+    let (_, cred_def_json) = get_cred_def_json(wallet_handle, cred_def_id)
         .await
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Failed to obtain credential definition from ledger or cache: {}", err)))?;
     let parsed_cred_def: serde_json::Value = serde_json::from_str(&cred_def_json)

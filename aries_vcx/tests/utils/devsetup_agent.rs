@@ -1,5 +1,6 @@
 #[cfg(test)]
 pub mod test {
+    use indy_sys::WalletHandle;
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::MessageStatusCode;
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
@@ -106,6 +107,7 @@ pub mod test {
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
         pub agent: PublicAgent,
+        pub wallet_handle: WalletHandle
     }
 
 
@@ -119,7 +121,8 @@ pub mod test {
             global::agency_client::reset_agency_client();
 
             info!("activate >>> Faber opening main wallet");
-            open_as_main_wallet(&self.config_wallet).await?;
+            let wallet_handle = open_as_main_wallet(&self.config_wallet).await?;
+            self.wallet_handle = wallet_handle;
             info!("activate >>> Faber initiating issuer config");
             init_issuer_config(&self.config_issuer)?;
             info!("activate >>> Faber initiating agency client");
@@ -139,7 +142,8 @@ pub mod test {
             global::agency_client::reset_agency_client();
 
             info!("activate >>> Alice opening main wallet");
-            open_as_main_wallet(&self.config_wallet).await?;
+            let wallet_handle = open_as_main_wallet(&self.config_wallet).await?;
+            self.wallet_handle = wallet_handle;
             info!("activate >>> Alice initiating agency client");
             create_agency_client_for_main_wallet(&self.config_agency)?;
             info!("activate >>> Alice done");
@@ -169,14 +173,15 @@ pub mod test {
                 agent_seed: None,
             };
             create_main_wallet(&config_wallet).await.unwrap();
-            open_as_main_wallet(&config_wallet).await.unwrap();
+            let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
             let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
-            let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
+            let config_agency = provision_cloud_agent(wallet_handle, &config_provision_agent).await.unwrap();
             let institution_did = config_issuer.clone().institution_did;
             create_agency_client_for_main_wallet(&config_agency).unwrap();
             Connection::create("faber", true).await.unwrap();
             let faber = Faber {
+                wallet_handle,
                 is_active: false,
                 config_wallet,
                 config_agency,
@@ -199,7 +204,7 @@ pub mod test {
             let version: String = String::from("1.0");
 
             let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await.unwrap();
-            anoncreds::publish_schema(&schema).await.unwrap();
+            anoncreds::publish_schema(self.wallet_handle, &schema).await.unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),
@@ -341,6 +346,7 @@ pub mod test {
         pub connection: Connection,
         pub credential: Holder,
         pub prover: Prover,
+        pub wallet_handle: WalletHandle
     }
 
     impl Alice {
@@ -367,10 +373,11 @@ pub mod test {
             };
 
             create_main_wallet(&config_wallet).await.unwrap();
-            open_as_main_wallet(&config_wallet).await.unwrap();
-            let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
+            let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
+            let config_agency = provision_cloud_agent(wallet_handle, &config_provision_agent).await.unwrap();
             create_agency_client_for_main_wallet(&config_agency).unwrap();
             let alice = Alice {
+                wallet_handle,
                 is_active: false,
                 config_wallet,
                 config_agency,

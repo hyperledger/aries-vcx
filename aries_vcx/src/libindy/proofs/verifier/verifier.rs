@@ -52,7 +52,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_self_attested_proof_validation() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -76,6 +76,7 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
               "self_attested_attributes":{
@@ -96,7 +97,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_restrictions() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -123,11 +124,12 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
@@ -153,7 +155,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_validate_attribute() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([
@@ -182,11 +184,12 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
