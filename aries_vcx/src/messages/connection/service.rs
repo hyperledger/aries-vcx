@@ -1,12 +1,6 @@
-use std::convert::TryFrom;
-
 use crate::error::prelude::*;
-use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::handlers::connection::public_agent::PublicAgent;
 use crate::libindy::utils::ledger;
 use crate::messages::connection::did::Did;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::settings::get_agency_client;
 
 pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";
@@ -83,26 +77,6 @@ impl PartialEq for FullService {
     fn eq(&self, other: &Self) -> bool {
         self.recipient_keys == other.recipient_keys &&
             self.routing_keys == other.routing_keys
-    }
-}
-
-impl TryFrom<&PublicAgent> for FullService {
-    type Error = VcxError;
-    fn try_from(agent: &PublicAgent) -> Result<Self, Self::Error> {
-        Ok(FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
-            .set_recipient_keys(vec![agent.pairwise_info().pw_vk.clone()])
-            .set_routing_keys(agent.cloud_agent_info().routing_keys()?))
-    }
-}
-
-impl TryFrom<(&PairwiseInfo, &CloudAgentInfo)> for FullService {
-    type Error = VcxError;
-    fn try_from((pairwise_info, agent_info): (&PairwiseInfo, &CloudAgentInfo)) -> Result<Self, Self::Error> {
-        Ok(FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
-            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
-            .set_routing_keys(agent_info.routing_keys()?))
     }
 }
 

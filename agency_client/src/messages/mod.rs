@@ -8,3 +8,4 @@ pub mod sign_up;
 pub mod update_connection;
 pub mod update_message;
 pub mod update_com_method;
+pub mod message_type;

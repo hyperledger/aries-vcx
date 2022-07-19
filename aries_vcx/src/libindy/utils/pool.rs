@@ -53,7 +53,7 @@ pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult
     }
 }
 
-pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<u32> {
+pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<i32> {
     set_protocol_version().await?;
 
     let handle = pool::open_pool_ledger(pool_name, config)
@@ -81,9 +81,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
                     err.to_vcx(VcxErrorKind::LibndyError(error_code as u32), "Indy error occurred")
                 }
             })?;
-
-    set_pool_handle(Some(handle));
-    Ok(handle as u32)
+    Ok(handle)
 }
 
 pub async fn close() -> VcxResult<()> {
@@ -139,7 +137,9 @@ pub mod test_utils {
 
     pub async fn open_test_pool() -> u32 {
         create_test_ledger_config().await;
-        open_pool_ledger(POOL, None).await.unwrap()
+        let handle = open_pool_ledger(POOL, None).await.unwrap();
+        set_pool_handle(Some(handle));
+        handle as u32
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {

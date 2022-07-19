@@ -1,16 +1,13 @@
 use std::collections::HashMap;
-use agency_client::api::agent::create_keys;
-use agency_client::messages::get_messages::{DownloadedMessage, DownloadedMessageEncrypted};
+use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 
-use agency_client::api::agent::get_encrypted_connection_messages;
 use crate::agency_client::MessageStatusCode;
-use agency_client::api::agent::send_delete_connection_message;
-use agency_client::api::agent::update_messages as update_messages_status;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::settings;
+use crate::settings::get_agency_client;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -32,7 +29,7 @@ pub async fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -
     debug!("creating pairwise keys on agent for connection {}", source_id);
     trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
 
-    let (agent_did, agent_verkey) = create_keys(pw_did, pw_verkey).await
+    let (agent_did, agent_verkey) = settings::get_agency_client()?.create_connection_agent(pw_did, pw_verkey).await
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
 
@@ -59,18 +56,17 @@ impl CloudAgentInfo {
 
     pub async fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
         trace!("CloudAgentInfo::delete >>>");
-        send_delete_connection_message(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
+        settings::get_agency_client()?.delete_connection_agent(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
             .await
             .map_err(|err| err.into())
     }
 
     pub fn service_endpoint(&self) -> VcxResult<String> {
-        settings::get_agency_client()?.get_agency_url()
-            .map_err(|err| err.into())
+        Ok(settings::get_agency_client()?.get_agency_url_full())
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = &settings::get_agency_client()?.get_agency_vk()?;
+        let agency_vk = &settings::get_agency_client()?.get_agency_vk();
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
@@ -82,14 +78,14 @@ impl CloudAgentInfo {
             uids: vec![uid],
         }];
 
-        update_messages_status(MessageStatusCode::Reviewed, messages_to_update)
+        get_agency_client()?.update_messages(MessageStatusCode::Reviewed, messages_to_update)
             .await
             .map_err(|err| err.into())
     }
 
     pub async fn download_encrypted_messages(&self, msg_uid: Option<Vec<String>>, status_codes: Option<Vec<MessageStatusCode>>, pairwise_info: &PairwiseInfo) -> VcxResult<Vec<DownloadedMessageEncrypted>> {
         trace!("CloudAgentInfo::download_encrypted_messages >>>");
-        get_encrypted_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
+        get_agency_client()?.get_encrypted_connection_messages(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk, msg_uid, status_codes)
             .await
             .map_err(|err| err.into())
     }

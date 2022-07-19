@@ -2,10 +2,8 @@ use std::sync::Once;
 
 use env_logger;
 
-use crate::agency_settings;
 use crate::testing::mocking;
 use crate::testing::mocking::AgencyMockDecrypted;
-use crate::utils::wallet::reset_wallet_handle;
 
 pub struct SetupMocks;
 
@@ -23,8 +21,6 @@ pub fn init_test_logging() {
 
 fn setup() {
     init_test_logging();
-    agency_settings::clear_config_agency();
-    agency_settings::set_testing_defaults_agency();
 }
 
 impl SetupMocks {
@@ -38,7 +34,6 @@ impl SetupMocks {
 impl Drop for SetupMocks {
     fn drop(&mut self) {
         AgencyMockDecrypted::clear_mocks();
-        reset_wallet_handle();
         mocking::disable_agency_mocks();
     }
 }

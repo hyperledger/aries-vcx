@@ -1,9 +1,6 @@
 use std::fmt;
 
-use serde_json;
-
 use crate::error::prelude::*;
-use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
 use crate::libindy::utils::anoncreds;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
@@ -109,7 +106,7 @@ async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> V
 }
 
 impl CredentialDef {
-    pub async fn create(source_id: String, config: CredentialDefConfig, support_revocation: bool) -> VcxResult<Self>{
+    pub async fn create(source_id: String, config: CredentialDefConfig, support_revocation: bool) -> VcxResult<Self> {
         trace!("CredentialDef::create >>> source_id: {}, config: {:?}", source_id, config);
         let CredentialDefConfig { issuer_did, schema_id, tag } = config;
         let (_, schema_json) = anoncreds::get_schema_json(&schema_id).await?;
