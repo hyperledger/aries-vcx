@@ -1,7 +1,8 @@
 #[cfg(test)]
 pub mod test {
-    use agency_client::messages::get_messages::DownloadedMessage;
+    use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::MessageStatusCode;
+    use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
@@ -30,7 +31,7 @@ pub mod test {
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::settings;
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::provision::{AgencyClientConfig, AgentProvisionConfig, provision_cloud_agent};
+    use aries_vcx::utils::provision::provision_cloud_agent;
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -161,12 +162,14 @@ pub mod test {
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None,
             };
-            create_wallet(&config_wallet).await.unwrap();
+            create_main_wallet(&config_wallet).await.unwrap();
             open_as_main_wallet(&config_wallet).await.unwrap();
             let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
             let institution_did = config_issuer.clone().institution_did;
+            create_agency_client_for_main_wallet(&config_agency).unwrap();
+            Connection::create("faber", true).await.unwrap();
             let faber = Faber {
                 is_active: false,
                 config_wallet,
@@ -356,9 +359,10 @@ pub mod test {
                 agent_seed: None,
             };
 
-            create_wallet(&config_wallet).await.unwrap();
+            create_main_wallet(&config_wallet).await.unwrap();
             open_as_main_wallet(&config_wallet).await.unwrap();
             let config_agency = provision_cloud_agent(&config_provision_agent).await.unwrap();
+            create_agency_client_for_main_wallet(&config_agency).unwrap();
             let alice = Alice {
                 is_active: false,
                 config_wallet,

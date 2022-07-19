@@ -1,7 +1,7 @@
 use serde::{de, Deserialize, Deserializer};
 use serde_json::Value;
 
-use crate::message_type::{MessageFamilies, MessageType};
+use crate::messages::message_type::{MessageFamilies, MessageType};
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::create_key::{CreateKey, CreateKeyResponse};

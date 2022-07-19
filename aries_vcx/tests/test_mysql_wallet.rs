@@ -35,11 +35,12 @@ mod test_utils {
 #[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
+    use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
-    use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_wallet, WalletConfig, WalletConfigBuilder};
+    use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_main_wallet, WalletConfig, WalletConfigBuilder};
     use aries_vcx::settings;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
-    use aries_vcx::utils::provision::{AgentProvisionConfig, AgentProvisionConfigBuilder, provision_cloud_agent};
+    use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
 
     use crate::test_utils::setup_mysql_walletdb;
@@ -69,13 +70,13 @@ mod dbtests {
             .storage_credentials(storage_credentials)
             .build()
             .unwrap();
-        let config_provision_agent: AgentProvisionConfig = AgentProvisionConfigBuilder::default()
-            .agency_did(AGENCY_DID.to_string())
-            .agency_verkey(AGENCY_VERKEY.to_string())
-            .agency_endpoint(AGENCY_ENDPOINT.to_string())
-            .build()
-            .unwrap();
-        create_wallet(&config_wallet).await.unwrap();
+        let config_provision_agent: AgentProvisionConfig = AgentProvisionConfig {
+            agency_did: AGENCY_DID.to_string(),
+            agency_verkey: AGENCY_VERKEY.to_string(),
+            agency_endpoint: AGENCY_ENDPOINT.to_string(),
+            agent_seed: None
+        };
+        create_main_wallet(&config_wallet).await.unwrap();
         open_as_main_wallet(&config_wallet).await.unwrap();
         let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();

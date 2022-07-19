@@ -3,7 +3,8 @@ extern crate url;
 
 
 use std::collections::HashMap;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::ops::Deref;
+use std::sync::{RwLock, RwLockWriteGuard};
 
 use strum::IntoEnumIterator;
 
@@ -73,8 +74,8 @@ pub fn get_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClie
     Ok(agency_client)
 }
 
-pub fn get_agency_client() -> VcxResult<RwLockReadGuard<'static, AgencyClient>> {
-    let agency_client = AGENCY_CLIENT.read()?;
+pub fn get_agency_client() -> VcxResult<AgencyClient> {
+    let agency_client = AGENCY_CLIENT.read()?.deref().clone();
     Ok(agency_client)
 }
 

@@ -6,7 +6,7 @@ use time;
 
 use crate::{settings, utils};
 use crate::error::prelude::*;
-use crate::libindy::utils::{LibindyMock, wallet::get_wallet_handle};
+use crate::libindy::utils::{LibindyMock, wallet::get_main_wallet_handle};
 use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use crate::libindy::utils::ledger::*;
 use crate::libindy::utils::ledger::publish_txn_on_ledger;
@@ -64,7 +64,7 @@ pub async fn libindy_create_and_store_revoc_reg(issuer_did: &str, cred_def_id: &
 
     let revoc_config = json!({"max_cred_num": max_creds, "issuance_type": REVOCATION_REGISTRY_TYPE}).to_string();
 
-    anoncreds::issuer_create_and_store_revoc_reg(get_wallet_handle(), issuer_did, None, tag, cred_def_id, &revoc_config, writer)
+    anoncreds::issuer_create_and_store_revoc_reg(get_main_wallet_handle(), issuer_did, None, tag, cred_def_id, &revoc_config, writer)
         .await
         .map_err(VcxError::from)
 }
@@ -74,7 +74,7 @@ pub async fn libindy_create_and_store_credential_def(issuer_did: &str,
                                                tag: &str,
                                                sig_type: Option<&str>,
                                                config_json: &str) -> VcxResult<(String, String)> {
-    anoncreds::issuer_create_and_store_credential_def(get_wallet_handle(),
+    anoncreds::issuer_create_and_store_credential_def(get_main_wallet_handle(),
                                                       issuer_did,
                                                       schema_json,
                                                       tag,
@@ -90,7 +90,7 @@ pub async fn libindy_issuer_create_credential_offer(cred_def_id: &str) -> VcxRes
         if rc != 0 { return Err(VcxError::from(VcxErrorKind::InvalidState)); };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }
-    anoncreds::issuer_create_credential_offer(get_wallet_handle(),
+    anoncreds::issuer_create_credential_offer(get_main_wallet_handle(),
                                               cred_def_id)
         .await
         .map_err(VcxError::from)
@@ -116,7 +116,7 @@ pub async fn libindy_issuer_create_credential(cred_offer_json: &str,
         Some(x) => blob_storage_open_reader(&x).await?,
         None => -1,
     };
-    anoncreds::issuer_create_credential(get_wallet_handle(),
+    anoncreds::issuer_create_credential(get_main_wallet_handle(),
                                         cred_offer_json,
                                         cred_req_json,
                                         cred_values_json,
@@ -135,7 +135,7 @@ pub async fn libindy_prover_create_proof(proof_req_json: &str,
     if settings::indy_mocks_enabled() { return Ok(utils::constants::PROOF_JSON.to_owned()); }
 
     let revoc_states_json = revoc_states_json.unwrap_or("{}");
-    anoncreds::prover_create_proof(get_wallet_handle(),
+    anoncreds::prover_create_proof(get_main_wallet_handle(),
                                    proof_req_json,
                                    requested_credentials_json,
                                    master_secret_id,
@@ -176,7 +176,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(proof_req: &str) -> Vc
         }
     }
 
-    let wallet_handle = get_wallet_handle();
+    let wallet_handle = get_main_wallet_handle();
 
     // this may be too redundant since Prover::search_credentials will validate the proof reqeuest already.
     let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req)
@@ -234,7 +234,7 @@ pub async fn libindy_prover_create_credential_req(prover_did: &str,
     if settings::indy_mocks_enabled() { return Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new())); }
 
     let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
-    anoncreds::prover_create_credential_req(get_wallet_handle(),
+    anoncreds::prover_create_credential_req(get_main_wallet_handle(),
                                             prover_did,
                                             credential_offer_json,
                                             credential_def_json,
@@ -271,7 +271,7 @@ pub async fn libindy_prover_store_credential(cred_id: Option<&str>,
     trace!("libindy_prover_store_credential >>> cred_id: {:?}, cred_req_meta: {}, cred_json: {}, cred_def_json: {}, rev_reg_def_json: {:?}", cred_id, cred_req_meta, cred_json, cred_def_json, rev_reg_def_json);
     if settings::indy_mocks_enabled() { return Ok("cred_id".to_string()); }
 
-    anoncreds::prover_store_credential(get_wallet_handle(),
+    anoncreds::prover_store_credential(get_main_wallet_handle(),
                                        cred_id,
                                        cred_req_meta,
                                        cred_json,
@@ -282,7 +282,7 @@ pub async fn libindy_prover_store_credential(cred_id: Option<&str>,
 }
 
 pub async fn libindy_prover_delete_credential(cred_id: &str) -> VcxResult<()> {
-    anoncreds::prover_delete_credential(get_wallet_handle(),
+    anoncreds::prover_delete_credential(get_main_wallet_handle(),
                                         cred_id)
         .await
         .map_err(VcxError::from)
@@ -291,7 +291,7 @@ pub async fn libindy_prover_delete_credential(cred_id: &str) -> VcxResult<()> {
 pub async fn libindy_prover_create_master_secret(master_secret_id: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(settings::DEFAULT_LINK_SECRET_ALIAS.to_string()); }
 
-    anoncreds::prover_create_master_secret(get_wallet_handle(),
+    anoncreds::prover_create_master_secret(get_main_wallet_handle(),
                                            Some(master_secret_id))
         .await
         .map_err(VcxError::from)
@@ -314,7 +314,7 @@ pub async fn libindy_issuer_create_schema(issuer_did: &str,
 pub async fn libindy_issuer_revoke_credential(tails_file: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<String> {
     let blob_handle = blob_storage_open_reader(tails_file).await?;
 
-    anoncreds::issuer_revoke_credential(get_wallet_handle(), blob_handle, rev_reg_id, cred_rev_id)
+    anoncreds::issuer_revoke_credential(get_main_wallet_handle(), blob_handle, rev_reg_id, cred_rev_id)
         .await
         .map_err(VcxError::from)
 }

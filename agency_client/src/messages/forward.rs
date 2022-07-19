@@ -4,7 +4,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::message_type::MessageType;
+use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::messages::a2a_message::Client2AgencyMessage;
 

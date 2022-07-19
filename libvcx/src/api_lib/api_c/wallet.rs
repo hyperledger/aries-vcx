@@ -57,7 +57,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match wallet::create_wallet(&wallet_config).await {
+        match wallet::create_main_wallet(&wallet_config).await {
             Err(err) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());

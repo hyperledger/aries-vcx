@@ -3,10 +3,10 @@ use indy::ErrorCode;
 use indy_sys::WalletHandle;
 
 use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
-use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, set_pool_handle};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, IssuerConfig, set_wallet_handle, WalletConfig};
 use crate::settings;
-use crate::utils::provision::AgencyClientConfig;
+use agency_client::configuration::AgencyClientConfig;
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -29,10 +29,8 @@ pub fn enable_agency_mocks() -> VcxResult<()> {
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
-    let config = serde_json::to_string(config).unwrap();
-    // todo: remove unwrap
-    info!("init_agency_client >>> config = {}", config);
-    settings::get_agency_client_mut()?.process_config_string(&config, false)?;
+    settings::get_agency_client_mut()?
+        .configure(config)?;
     Ok(())
 }
 
@@ -51,16 +49,18 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
 
     debug!("open_pool ::: Pool Config Created Successfully");
 
-    open_pool_ledger(&pool_name, config.pool_config.as_deref())
+    let handle = open_pool_ledger(&pool_name, config.pool_config.as_deref())
         .await
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
+
+    set_pool_handle(Some(handle));
 
     info!("open_pool ::: Pool Opened Successfully");
 
     Ok(())
 }
 
-pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
     let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_deref(), wallet_config.storage_config.as_deref());
     let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, wallet_config.rekey.as_deref(), wallet_config.rekey_derivation_method.as_deref())?;
@@ -86,7 +86,11 @@ pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<Wall
                 }
             })?;
 
-    set_wallet_handle(handle);
+    Ok(handle)
+}
 
+pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+    let handle = open_wallet(wallet_config).await?;
+    set_wallet_handle(handle);
     Ok(handle)
 }
