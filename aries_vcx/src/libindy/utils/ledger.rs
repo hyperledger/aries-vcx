@@ -9,8 +9,8 @@ use serde_json;
 use crate::{settings, utils};
 use crate::error::prelude::*;
 use crate::libindy::utils::pool::get_pool_handle;
-use crate::libindy::utils::signus::main_wallet_create_and_store_my_did;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
+use crate::libindy::utils::signus::create_and_store_my_did;
+use crate::libindy::utils::wallet::get_wallet_handle;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
@@ -18,13 +18,13 @@ use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
 
 pub async fn multisign_request(did: &str, request: &str) -> VcxResult<String> {
-    ledger::multi_sign_request(get_main_wallet_handle(), did, request)
+    ledger::multi_sign_request(get_wallet_handle(), did, request)
         .map_err(VcxError::from)
         .await
 }
 
 pub async fn libindy_sign_request(did: &str, request: &str) -> VcxResult<String> {
-    ledger::sign_request(get_main_wallet_handle(), did, request)
+    ledger::sign_request(get_wallet_handle(), did, request)
         .map_err(VcxError::from)
         .await
 }
@@ -38,7 +38,7 @@ pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &st
     };
 
     let pool_handle = get_pool_handle()?;
-    let wallet_handle = get_main_wallet_handle();
+    let wallet_handle = get_wallet_handle();
 
     ledger::sign_and_submit_request(pool_handle, wallet_handle, issuer_did, request_json)
         .map_err(VcxError::from)
@@ -287,7 +287,7 @@ pub mod auth_rule {
 
         let auth_rules_request = libindy_build_auth_rules_request(submitter_did, &data).await?;
 
-        let response = ledger::sign_and_submit_request(get_pool_handle()?, get_main_wallet_handle(), submitter_did, &auth_rules_request)
+        let response = ledger::sign_and_submit_request(get_pool_handle()?, get_wallet_handle(), submitter_did, &auth_rules_request)
             .await?;
 
         let response: serde_json::Value = serde_json::from_str(&response)
@@ -365,7 +365,7 @@ pub fn parse_response(response: &str) -> VcxResult<Response> {
 
 pub async fn libindy_get_schema(submitter_did: &str, schema_id: &str) -> VcxResult<String> {
     let pool_handle = get_pool_handle()?;
-    let wallet_handle = get_main_wallet_handle();
+    let wallet_handle = get_wallet_handle();
 
     cache::get_schema(pool_handle, wallet_handle, submitter_did, schema_id, "{}")
         .await
@@ -380,7 +380,7 @@ pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cre
 
 pub async fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
     let pool_handle = get_pool_handle()?;
-    let wallet_handle = get_main_wallet_handle();
+    let wallet_handle = get_wallet_handle();
     let submitter_did = generate_random_did();
     trace!("libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}", pool_handle, wallet_handle, submitter_did);
 
@@ -628,7 +628,7 @@ pub async fn publish_txn_on_ledger(req: &str) -> VcxResult<String> {
 pub async fn add_new_did(role: Option<&str>) -> (String, String) {
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-    let (did, verkey) = main_wallet_create_and_store_my_did(None, None).await.unwrap();
+    let (did, verkey) = create_and_store_my_did(None, None).await.unwrap();
     let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).await.unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();

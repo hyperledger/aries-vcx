@@ -5,10 +5,10 @@ use serde_json::Value;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
-const DID: &str = "did:sov:123456789abcdefghi1234";
+pub const DID: &str = "did:sov:123456789abcdefghi1234";
 
 impl MessageType {
-    pub(crate) fn build_v2(kind: A2AMessageKinds) -> MessageType {
+    pub fn build_v2(kind: A2AMessageKinds) -> MessageType {
         MessageType {
             did: DID.to_string(),
             family: kind.family(),
@@ -20,10 +20,10 @@ impl MessageType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MessageType {
-    did: String,
-    family: MessageFamilies,
-    version: String,
-    pub(crate) type_: String,
+    pub did: String,
+    pub family: MessageFamilies,
+    pub version: String,
+    pub type_: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -36,7 +36,7 @@ pub enum MessageFamilies {
 }
 
 impl MessageFamilies {
-    fn version(&self) -> &'static str {
+    pub fn version(&self) -> &'static str {
         match self {
             MessageFamilies::Routing => "1.0",
             MessageFamilies::Onboarding => "1.0",
@@ -72,7 +72,7 @@ impl ::std::string::ToString for MessageFamilies {
 }
 
 
-pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(String, String, String, String)> {
+pub fn parse_message_type(message_type: &str) -> AgencyClientResult<(String, String, String, String)> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(?x)
             (?P<did>[\d\w:]*);

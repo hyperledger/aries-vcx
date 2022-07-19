@@ -23,15 +23,15 @@ lazy_static! {
 pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
-            warn!("post_message >> mocking response for POST {}", url);
+            warn!("post_to_agency >> mocking response for POST {}", url);
             return HttpClientMockResponse::get_response();
         }
         if AgencyMockDecrypted::has_decrypted_mock_responses() {
-            warn!("post_message >> will use mocked decrypted response for POST {}", url);
+            warn!("post_to_agency >> will use mocked decrypted response for POST {}", url);
             return Ok(vec!());
         }
         let mocked_response = AgencyMock::get_response();
-        warn!("post_message >> mocking response of length {} for POST {}", mocked_response.len(), url);
+        warn!("post_to_agency >> mocking response of length {} for POST {}", mocked_response.len(), url);
         return Ok(mocked_response);
     }
 
@@ -42,7 +42,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
     }
 
     let client = HTTP_CLIENT.read().await;
-    debug!("post_message >> http client sending request POST {}", url);
+    debug!("post_to_agency >> http client sending request POST {}", url);
 
     let response =
         client.post(url)

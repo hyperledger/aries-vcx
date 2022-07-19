@@ -1,6 +1,5 @@
 use std::fs;
 use std::sync::Once;
-use agency_client::configuration::AgentProvisionConfig;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
@@ -11,13 +10,13 @@ use crate::libindy::utils::mocks::did_mocks::DidMocks;
 use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 use crate::libindy::utils::pool::reset_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_main_wallet_handle, WalletConfig};
-use crate::libindy::utils::wallet::{configure_issuer_wallet, create_main_wallet};
+use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_wallet_handle, WalletConfig};
+use crate::libindy::utils::wallet::{configure_issuer_wallet, create_wallet};
 use crate::settings::set_testing_defaults;
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
-use crate::utils::provision::provision_cloud_agent;
+use crate::utils::provision::{AgentProvisionConfig, provision_cloud_agent};
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
 pub struct SetupEmpty; // clears settings, setups up logging
@@ -67,7 +66,7 @@ fn setup_empty() {
 
 fn tear_down() {
     settings::clear_config();
-    reset_main_wallet_handle().unwrap();
+    reset_wallet_handle().unwrap();
     reset_pool_handle();
     settings::get_agency_client_mut().unwrap().disable_test_mode();
     AgencyMockDecrypted::clear_mocks();
@@ -188,7 +187,7 @@ impl Drop for SetupWallet {
         if self.skip_cleanup == false {
             let _res = futures::executor::block_on(close_main_wallet()).unwrap_or_else(|_e| error!("Failed to close main wallet while dropping SetupWallet test config."));
             futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
-            reset_main_wallet_handle().unwrap_or_else(|_e| error!("Failed to reset wallet handle while dropping SetupWallet test config."));
+            reset_wallet_handle().unwrap_or_else(|_e| error!("Failed to reset wallet handle while dropping SetupWallet test config."));
         }
     }
 }
@@ -354,7 +353,7 @@ pub fn create_new_seed() -> String {
 pub async fn configure_trustee_did() {
     settings::set_config_value(settings::CONFIG_ENABLE_TEST_MODE, "false");
     libindy::utils::anoncreds::libindy_prover_create_master_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
-    let (my_did, my_vk) = libindy::utils::signus::main_wallet_create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).await.unwrap();
+    let (my_did, my_vk) = libindy::utils::signus::create_and_store_my_did(Some(constants::TRUSTEE_SEED), None).await.unwrap();
     settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &my_did);
     settings::set_config_value(settings::CONFIG_INSTITUTION_VERKEY, &my_vk);
 }
@@ -381,7 +380,7 @@ pub async fn setup_indy_env(open_pool: bool) -> String {
         agent_seed: None,
     };
 
-    create_main_wallet(&config_wallet).await.unwrap();
+    create_wallet(&config_wallet).await.unwrap();
     open_as_main_wallet(&config_wallet).await.unwrap();
 
     let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();

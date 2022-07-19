@@ -1,5 +1,5 @@
 use crate::error::AgencyClientResult;
-use crate::messages::message_type::MessageType;
+use crate::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::MessageStatusCode;
 

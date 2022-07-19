@@ -1,6 +1,12 @@
+use std::convert::TryFrom;
+
 use crate::error::prelude::*;
+use crate::handlers::connection::cloud_agent::CloudAgentInfo;
+use crate::handlers::connection::public_agent::PublicAgent;
 use crate::libindy::utils::ledger;
 use crate::messages::connection::did::Did;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::settings::get_agency_client;
 
 pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";

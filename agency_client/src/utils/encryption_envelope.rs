@@ -1,4 +1,3 @@
-use indy::WalletHandle;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
@@ -7,10 +6,10 @@ use crate::utils::libindy::crypto;
 pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
-    async fn _unpack_a2a_message(wallet_handle: i32, payload: Vec<u8>) -> AgencyClientResult<(String, Option<String>)> {
+    async fn _unpack_a2a_message(payload: Vec<u8>) -> AgencyClientResult<(String, Option<String>)> {
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> processing payload of {} bytes", payload.len());
 
-        let unpacked_msg = crypto::unpack_message(wallet_handle, &payload).await?;
+        let unpacked_msg = crypto::unpack_message(&payload).await?;
 
         let msg_value: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice())
             .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Cannot deserialize message: {}", err)))?;
@@ -27,26 +26,27 @@ impl EncryptionEnvelope {
         Ok((msg_string, sender_vk))
     }
 
-    pub async fn anon_unpack(wallet_handle: i32, payload: Vec<u8>) -> AgencyClientResult<String> {
+    // todo: we should use auth_unpack wherever possible
+    pub async fn anon_unpack(payload: Vec<u8>) -> AgencyClientResult<String> {
         trace!("EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes", payload.len());
         if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
             Ok(AgencyMockDecrypted::get_next_decrypted_message())
         } else {
-            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
+            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(payload).await?;
             trace!("EncryptionEnvelope::anon_unpack >>> a2a_message: {:?}", a2a_message);
             Ok(a2a_message)
         }
     }
 
-    pub async fn auth_unpack(wallet_handle: i32, payload: Vec<u8>, expected_vk: &str) -> AgencyClientResult<String> {
+    pub async fn auth_unpack(payload: Vec<u8>, expected_vk: &str) -> AgencyClientResult<String> {
         trace!("EncryptionEnvelope::auth_unpack >>> processing payload of {} bytes, expected_vk={}", payload.len(), expected_vk);
 
         if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
             Ok(AgencyMockDecrypted::get_next_decrypted_message())
         } else {
-            let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
+            let (a2a_message, sender_vk) = Self::_unpack_a2a_message(payload).await?;
             trace!("EncryptionEnvelope::auth_unpack >>> a2a_message: {:?}, sender_vk: {:?}", a2a_message, sender_vk);
 
             match sender_vk {

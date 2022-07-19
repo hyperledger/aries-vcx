@@ -120,7 +120,6 @@ pub static POISONED_LOCK: Error = Error { code_num: 1109, message: "Attempted to
 pub static CREATE_PUBLIC_AGENT: Error = Error { code_num: 1110, message: "Error creating public agent" };
 pub static INVALID_MESSAGE_FORMAT: Error = Error { code_num: 1111, message: "Invalid message format" };
 pub static CREATE_OUT_OF_BAND: Error = Error { code_num: 1112, message: "Error creating out of band message" };
-pub static CREATE_AGENT: Error = Error { code_num: 1113, message: "Error creating agent in agency" };
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {

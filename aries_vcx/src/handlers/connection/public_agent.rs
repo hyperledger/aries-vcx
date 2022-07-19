@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use futures::stream::iter;
 use futures::StreamExt;
 
@@ -24,7 +26,7 @@ impl PublicAgent {
         let pairwise_info = PairwiseInfo::create().await?;
         let agent_info = CloudAgentInfo::create(&pairwise_info).await?;
         let service = FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url_full())
+            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys()?);
         add_service(&institution_did, &service).await?;
@@ -47,7 +49,7 @@ impl PublicAgent {
 
     pub fn service(&self) -> VcxResult<FullService> {
         Ok(FullService::create()
-            .set_service_endpoint(get_agency_client()?.get_agency_url_full())
+            .set_service_endpoint(get_agency_client()?.get_agency_url()?)
             .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
             .set_routing_keys(self.agent_info.routing_keys()?))
     }

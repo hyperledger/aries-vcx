@@ -4,7 +4,6 @@ use std::sync;
 use failure::{Backtrace, Context, Fail};
 
 use agency_client;
-use agency_client::error::AgencyClientErrorKind;
 
 use crate::utils::error;
 
@@ -215,8 +214,6 @@ pub enum VcxErrorKind {
     NoEndpoint,
     #[fail(display = "Error Retrieving messages from API")]
     InvalidMessages,
-    #[fail(display = "Error creating agent in agency")]
-    CreateAgent,
 
     #[fail(display = "Common error {}", 0)]
     Common(u32),
@@ -301,44 +298,8 @@ impl From<VcxErrorKind> for VcxError {
 
 impl From<agency_client::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
-        let vcx_error_kind: VcxErrorKind = agency_err.kind().into();
-        VcxError::from_msg(vcx_error_kind, agency_err.to_string())
-    }
-}
-
-impl From<AgencyClientErrorKind> for VcxErrorKind {
-    fn from(agency_err: AgencyClientErrorKind) -> VcxErrorKind {
-        match agency_err {
-            AgencyClientErrorKind::InvalidState => VcxErrorKind::InvalidState,
-            AgencyClientErrorKind::InvalidConfiguration => VcxErrorKind::InvalidConfiguration,
-            AgencyClientErrorKind::InvalidJson => VcxErrorKind::InvalidJson,
-            AgencyClientErrorKind::InvalidOption => VcxErrorKind::InvalidOption,
-            AgencyClientErrorKind::InvalidMessagePack => VcxErrorKind::InvalidMessagePack,
-            AgencyClientErrorKind::IOError => VcxErrorKind::IOError,
-            AgencyClientErrorKind::LibindyInvalidStructure => VcxErrorKind::LibindyInvalidStructure,
-            AgencyClientErrorKind::TimeoutLibindy => VcxErrorKind::TimeoutLibindy,
-            AgencyClientErrorKind::InvalidLibindyParam => VcxErrorKind::InvalidLibindyParam,
-            AgencyClientErrorKind::PostMessageFailed => VcxErrorKind::PostMessageFailed,
-            AgencyClientErrorKind::InvalidWalletHandle => VcxErrorKind::InvalidWalletHandle,
-            AgencyClientErrorKind::DuplicationWallet => VcxErrorKind::DuplicationWallet,
-            AgencyClientErrorKind::WalletRecordNotFound => VcxErrorKind::WalletRecordNotFound,
-            AgencyClientErrorKind::DuplicationWalletRecord => VcxErrorKind::DuplicationWalletRecord,
-            AgencyClientErrorKind::WalletNotFound => VcxErrorKind::WalletNotFound,
-            AgencyClientErrorKind::WalletAlreadyOpen => VcxErrorKind::WalletAlreadyOpen,
-            AgencyClientErrorKind::MissingWalletKey => VcxErrorKind::MissingWalletKey,
-            AgencyClientErrorKind::DuplicationMasterSecret => VcxErrorKind::DuplicationMasterSecret,
-            AgencyClientErrorKind::DuplicationDid => VcxErrorKind::DuplicationDid,
-            AgencyClientErrorKind::UnknownError => VcxErrorKind::UnknownError,
-            AgencyClientErrorKind::InvalidDid => VcxErrorKind::InvalidDid,
-            AgencyClientErrorKind::InvalidVerkey => VcxErrorKind::InvalidVerkey,
-            AgencyClientErrorKind::InvalidUrl => VcxErrorKind::InvalidUrl,
-            AgencyClientErrorKind::SerializationError => VcxErrorKind::SerializationError,
-            AgencyClientErrorKind::NotBase58 => VcxErrorKind::NotBase58,
-            AgencyClientErrorKind::InvalidHttpResponse => VcxErrorKind::InvalidHttpResponse,
-            AgencyClientErrorKind::CreateAgent => VcxErrorKind::CreateAgent,
-            AgencyClientErrorKind::LibndyError(v) => VcxErrorKind::LibndyError(v),
-            AgencyClientErrorKind::UnknownLibndyError => VcxErrorKind::UnknownLibndyError,
-        }
+        let kind_num: u32 = agency_err.kind().into();
+        VcxError::from_msg(kind_num.into(), agency_err.to_string())
     }
 }
 
@@ -479,8 +440,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
             VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num,
             VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
-            VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num,
-            VcxErrorKind::CreateAgent => error::CREATE_AGENT.code_num
+            VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num
         }
     }
 }

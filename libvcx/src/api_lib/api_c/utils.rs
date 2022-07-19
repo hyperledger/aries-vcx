@@ -1,23 +1,21 @@
-use std::ops::Deref;
 use std::ptr;
 
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
-
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use aries_vcx::agency_client::api::agent::update_messages;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::settings::get_agency_client;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
+use aries_vcx::utils::provision::AgentProvisionConfig;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
-use crate::api_lib::api_handle::utils::agency_update_messages;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
@@ -79,7 +77,8 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
                 cb(command_handle, err.into(), ptr::null_mut());
             }
             Ok(agency_config) => {
-                let agency_config = json!(&agency_config).to_string();
+                let agency_config = serde_json::to_string(&agency_config).unwrap();
+                // todo: no unwrap
                 trace!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
                        command_handle, error::SUCCESS.message, agency_config);
                 let msg = CStringUtils::string_to_cstring(agency_config);
@@ -270,7 +269,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
         }
     };
 
-    let uids_by_conns: Vec<UIDsByConn> = match serde_json::from_str(&msg_json) {
+    let uids_by_conns: Vec<UIDsByConn>  = match serde_json::from_str(&msg_json) {
         Ok(status_code) => status_code,
         Err(err) => {
             set_current_error(&err);
@@ -280,7 +279,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match agency_update_messages(status_code, uids_by_conns).await {
+        match update_messages(status_code, uids_by_conns).await {
             Ok(()) => {
                 trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -300,6 +299,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 
     error::SUCCESS.code_num
 }
+
 
 
 /// Set the pool handle before calling vcx_init_minimal
@@ -557,10 +557,10 @@ pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
 mod tests {
     use std::ffi::CString;
 
-    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::provision::AgentProvisionConfig;
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
