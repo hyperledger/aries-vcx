@@ -1,12 +1,14 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
+use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
+use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationRequestReceived {
@@ -19,8 +21,9 @@ impl PresentationRequestReceived {
         Self { presentation_request }
     }
 
-    pub async fn build_presentation(&self, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        generate_indy_proof(credentials,
+    pub async fn build_presentation(&self, wallet_handle: WalletHandle, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
+        generate_indy_proof(wallet_handle,
+                            credentials,
                             self_attested_attrs,
                             &self.presentation_request.request_presentations_attach.content()?).await
     }
@@ -52,7 +55,7 @@ impl From<PresentationRequestReceived> for FinishedState {
         FinishedState {
             presentation_request: Some(state.presentation_request),
             presentation: None,
-            status: Status::Success
+            status: Status::Success,
         }
     }
 }

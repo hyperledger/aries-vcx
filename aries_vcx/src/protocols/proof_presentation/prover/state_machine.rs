@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::error::prelude::*;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::protocols::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -159,7 +160,7 @@ impl ProverSM {
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                        match state.build_presentation(&credentials, &self_attested_attrs).await {
+                        match state.build_presentation(get_main_wallet_handle(), &credentials, &self_attested_attrs).await {
                             Ok(presentation) => {
                                 let presentation = Presentation::create()
                                     .ask_for_ack()

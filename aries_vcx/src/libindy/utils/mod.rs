@@ -58,7 +58,7 @@ pub mod test_setup {
     pub struct WalletSetup {
         pub name: String,
         pub wallet_config: String,
-        pub wh: indy::WalletHandle,
+        pub wallet_handle: indy::WalletHandle,
     }
 
     pub async fn setup_wallet() -> WalletSetup {
@@ -69,7 +69,7 @@ pub mod test_setup {
         let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
         global::wallet::set_wallet_handle(wallet_handle);
 
-        WalletSetup { name, wallet_config, wh: wallet_handle }
+        WalletSetup { name, wallet_config, wallet_handle: wallet_handle }
     }
 
     pub async fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
@@ -85,8 +85,8 @@ pub mod test_setup {
 
     impl Drop for WalletSetup {
         fn drop(&mut self) {
-            if self.wh.0 != 0 {
-                futures::executor::block_on(indy::wallet::close_wallet(self.wh)).unwrap();
+            if self.wallet_handle.0 != 0 {
+                futures::executor::block_on(indy::wallet::close_wallet(self.wallet_handle)).unwrap();
                 futures::executor::block_on(indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS)).unwrap();
             }
         }

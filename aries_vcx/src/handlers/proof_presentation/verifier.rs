@@ -138,6 +138,7 @@ impl Verifier {
 
 #[cfg(test)]
 mod tests {
+    use indy_sys::WalletHandle;
     use crate::messages::a2a::A2AMessage;
     use crate::messages::basic_message::message::BasicMessage;
     use crate::messages::connection::did_doc::DidDoc;

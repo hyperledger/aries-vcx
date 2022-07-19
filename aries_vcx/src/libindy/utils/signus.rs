@@ -6,7 +6,6 @@ use serde_json::Value;
 use crate::utils;
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::ledger;
 use crate::libindy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 

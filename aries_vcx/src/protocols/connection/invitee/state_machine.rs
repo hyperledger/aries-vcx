@@ -497,6 +497,8 @@ pub mod test {
     use super::*;
 
     pub mod invitee {
+        use indy_sys::WalletHandle;
+        use crate::global::wallet::get_main_wallet_handle;
         use crate::messages::connection::did_doc::test_utils::_service_endpoint;
         use crate::messages::connection::response::{Response, SignedResponse};
 
@@ -533,27 +535,27 @@ pub mod test {
                 let routing_keys: Vec<String> = vec!(key.clone());
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self.handle_connect(routing_keys, service_endpoint, _send_message).await.unwrap();
-                self = self.handle_connection_response(_response(&key).await).unwrap();
+                self = self.handle_connection_response(_response(WalletHandle(0), &key).await).unwrap();
                 self = self.handle_send_ack(&_send_message).await.unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
             }
         }
 
-        async fn _response(key: &str) -> SignedResponse {
+        async fn _response(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id(&_request().id.0)
-                .encode(&key).await.unwrap()
+                .encode(wallet_handle, &key).await.unwrap()
         }
 
-        async fn _response_1(key: &str) -> SignedResponse {
+        async fn _response_1(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id("testid_1")
-                .encode(&key).await.unwrap()
+                .encode(wallet_handle, &key).await.unwrap()
         }
 
         mod new {
@@ -587,7 +589,7 @@ pub mod test {
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee.handle_connect(routing_keys, service_endpoint, _send_message).await.unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
-                invitee = invitee.handle_connection_response(_response_1(&key).await).unwrap();
+                invitee = invitee.handle_connection_response(_response_1(WalletHandle(0), &key).await).unwrap();
                 assert_match!(InviteeState::Responded, invitee.get_state());
                 invitee = invitee.handle_send_ack(&_send_message).await.unwrap();
                 assert_match!(InviteeState::Initial, invitee.get_state());
@@ -672,7 +674,7 @@ pub mod test {
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
-                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(&key).await).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(WalletHandle(0), &key).await).unwrap();
                 did_exchange_sm = did_exchange_sm.handle_send_ack(&_send_message).await.unwrap();
 
                 assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);

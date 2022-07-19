@@ -1,4 +1,6 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::global::settings;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -6,7 +8,6 @@ use crate::messages::proof_presentation::presentation_request::PresentationReque
 use crate::messages::status::Status;
 use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
-use crate::global::settings;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {
@@ -19,7 +20,8 @@ impl PresentationRequestSentState {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
         };
 
-        let valid = validate_indy_proof(&presentation.presentations_attach.content()?,
+        let valid = validate_indy_proof(get_main_wallet_handle(),
+                                        &presentation.presentations_attach.content()?,
                                         &self.presentation_request.request_presentations_attach.content()?).await?;
 
         if !valid {

@@ -1,3 +1,5 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::global::wallet::get_main_wallet_handle;
@@ -6,7 +8,7 @@ use crate::libindy::proofs::prover::prover_internal::{build_cred_defs_json_prove
 use crate::libindy::utils::anoncreds;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
-pub async fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
+pub async fn generate_indy_proof(wallet_handle: WalletHandle, credentials: &str, self_attested_attrs: &str, proof_req_data_json: &str) -> VcxResult<String> {
     trace!("generate_indy_proof >>> credentials: {}, self_attested_attrs: {}", secret!(&credentials), secret!(&self_attested_attrs));
 
     match get_mock_generate_indy_proof() {
@@ -27,8 +29,8 @@ pub async fn generate_indy_proof(credentials: &str, self_attested_attrs: &str, p
                                                                  self_attested_attrs,
                                                                  &proof_request)?;
 
-    let schemas_json = build_schemas_json_prover(&credentials_identifiers).await?;
-    let credential_defs_json = build_cred_defs_json_prover(&credentials_identifiers).await?;
+    let schemas_json = build_schemas_json_prover(wallet_handle, &credentials_identifiers).await?;
+    let credential_defs_json = build_cred_defs_json_prover(wallet_handle, &credentials_identifiers).await?;
 
     let proof = anoncreds::libindy_prover_create_proof(get_main_wallet_handle(),
                                                        &proof_req_data_json,

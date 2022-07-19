@@ -1,7 +1,7 @@
 use std::fmt;
+use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::anoncreds;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
@@ -107,12 +107,12 @@ async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> V
 }
 
 impl CredentialDef {
-    pub async fn create(source_id: String, config: CredentialDefConfig, support_revocation: bool) -> VcxResult<Self> {
+    pub async fn create(wallet_handle: WalletHandle, source_id: String, config: CredentialDefConfig, support_revocation: bool) -> VcxResult<Self> {
         trace!("CredentialDef::create >>> source_id: {}, config: {:?}", source_id, config);
         let CredentialDefConfig { issuer_did, schema_id, tag } = config;
-        let (_, schema_json) = anoncreds::get_schema_json(get_main_wallet_handle(), &schema_id).await?;
+        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &schema_id).await?;
         let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(
-            get_main_wallet_handle(),
+            wallet_handle,
             &issuer_did,
             &schema_json,
             &tag,
@@ -139,12 +139,12 @@ impl CredentialDef {
         self.support_revocation
     }
 
-    pub async fn publish_cred_def(self) -> VcxResult<Self> {
+    pub async fn publish_cred_def(self, wallet_handle: WalletHandle,) -> VcxResult<Self> {
         trace!("publish_cred_def >>> issuer_did: {}, cred_def_id: {}", self.issuer_did, self.cred_def_id);
         if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id).await? {
             return Err(VcxError::from_msg(VcxErrorKind::CredDefAlreadyCreated, format!("Credential definition with id {} already exists on the ledger: {}", self.cred_def_id, ledger_cred_def_json)));
         }
-        anoncreds::publish_cred_def(get_main_wallet_handle(), &self.issuer_did, &self.cred_def_json).await?;
+        anoncreds::publish_cred_def(wallet_handle, &self.issuer_did, &self.cred_def_json).await?;
         Ok(
             Self {
                 state: PublicEntityStateType::Published,
@@ -172,8 +172,8 @@ impl CredentialDef {
 
     pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
 
-    pub async fn update_state(&mut self) -> VcxResult<u32> {
-        if let Ok(_) = anoncreds::get_cred_def_json(get_main_wallet_handle(), &self.cred_def_id).await {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle,) -> VcxResult<u32> {
+        if let Ok(_) = anoncreds::get_cred_def_json(wallet_handle, &self.cred_def_id).await {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

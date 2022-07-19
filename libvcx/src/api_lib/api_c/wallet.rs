@@ -5,9 +5,10 @@ use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global;
-use aries_vcx::global::wallet::export_main_wallet;
+use aries_vcx::global::wallet::{export_main_wallet, get_main_wallet_handle};
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::global::wallet::open_as_main_wallet;
+use aries_vcx::libindy::utils;
 use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
@@ -254,7 +255,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&value), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::add_main_wallet_record(&type_, &id, &value, Some(&tags_json)).await {
+        match utils::wallet::add_main_wallet_record(get_main_wallet_handle(), &type_, &id, &value, Some(&tags_json)).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -310,7 +311,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&value));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::update_main_wallet_record_value(&type_, &id, &value).await {
+        match utils::wallet::update_main_wallet_record_value(get_main_wallet_handle(), &type_, &id, &value).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -366,7 +367,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::update_main_wallet_record_tags(&type_, &id, &tags_json).await {
+        match utils::wallet::update_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -422,7 +423,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::add_main_wallet_record_tags(&type_, &id, &tags_json).await {
+        match utils::wallet::add_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -478,7 +479,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tag_names_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::delete_main_wallet_record_tags(&type_, &id, &tag_names_json).await {
+        match utils::wallet::delete_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tag_names_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -533,7 +534,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), options_json);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::get_main_wallet_record(&type_, &id, &options_json).await {
+        match utils::wallet::get_main_wallet_record(get_main_wallet_handle(), &type_, &id, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -589,7 +590,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::delete_main_wallet_record(&type_, &id).await {
+        match utils::wallet::delete_main_wallet_record(get_main_wallet_handle(), &type_, &id).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -657,7 +658,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&query_json), secret!(&options_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::open_search_main_wallet(&type_, &query_json, &options_json).await {
+        match utils::wallet::open_search_main_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -713,7 +714,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
            command_handle, wallet_search_handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::fetch_next_records_main_wallet(wallet_search_handle, count).await {
+        match utils::wallet::fetch_next_records_main_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
             Ok(err) => {
                 trace!("vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -764,7 +765,7 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_close_search(command_handle: {}, rc: {})",
                command_handle, error::SUCCESS.message);
-        match global::wallet::close_search_main_wallet(search_handle).await {
+        match utils::wallet::close_search_main_wallet(search_handle).await {
             Ok(()) => {
                 trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);

@@ -226,8 +226,8 @@ pub mod test {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(String::from("test_cred_def"), config, false).await.unwrap()
-                .publish_cred_def().await.unwrap();
+            self.cred_def = CredentialDef::create(self.wallet_handle, String::from("test_cred_def"), config, false).await.unwrap()
+                .publish_cred_def(self.wallet_handle).await.unwrap();
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {

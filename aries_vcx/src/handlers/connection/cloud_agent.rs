@@ -9,6 +9,7 @@ use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::global;
 use crate::global::agency_client::get_agency_client;
 use crate::global::settings;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -136,10 +137,10 @@ impl CloudAgentInfo {
     }
 
     async fn decrypt_decode_message(&self, message: &DownloadedMessageEncrypted, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::auth_unpack(message.payload()?, &expected_sender_vk).await
+        EncryptionEnvelope::auth_unpack(get_main_wallet_handle(), message.payload()?, &expected_sender_vk).await
     }
 
     async fn decrypt_decode_message_noauth(&self, message: &DownloadedMessageEncrypted) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::anon_unpack(message.payload()?).await
+        EncryptionEnvelope::anon_unpack(get_main_wallet_handle(), message.payload()?).await
     }
 }

@@ -672,18 +672,18 @@ pub async fn revoke_credential_local(wallet_handle: WalletHandle,
                                      rev_reg_id: &str,
                                      cred_rev_id: &str) -> VcxResult<()> {
     let mut new_delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    if let Some(old_delta) = get_rev_reg_delta_cache(rev_reg_id).await {
+    if let Some(old_delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
         new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str()).await?;
     }
-    set_rev_reg_delta_cache(rev_reg_id, &new_delta).await
+    set_rev_reg_delta_cache(wallet_handle, rev_reg_id, &new_delta).await
 }
 
 pub async fn publish_local_revocations(wallet_handle: WalletHandle,
                                        rev_reg_id: &str)
                                        -> VcxResult<String> {
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-    if let Some(delta) = get_rev_reg_delta_cache(rev_reg_id).await {
-        match clear_rev_reg_delta_cache(rev_reg_id).await {
+    if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
+        match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
             Ok(_) => publish_rev_reg_delta(wallet_handle, &submitter_did, rev_reg_id, &delta).await,
             Err(err) => Err(err)
         }
@@ -794,8 +794,8 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let cred_def = CredentialDef::create("1".to_string(), config, false).await.unwrap()
-            .publish_cred_def().await.unwrap();
+        let cred_def = CredentialDef::create(wallet_handle, "1".to_string(), config, false).await.unwrap()
+            .publish_cred_def(wallet_handle).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
@@ -812,8 +812,8 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let cred_def = CredentialDef::create("1".to_string(), config, true).await.unwrap()
-            .publish_cred_def().await.unwrap();
+        let cred_def = CredentialDef::create(wallet_handle, "1".to_string(), config, true).await.unwrap()
+            .publish_cred_def(wallet_handle).await.unwrap();
         let mut rev_reg = RevocationRegistry::create(wallet_handle, &issuer_did, &cred_def.cred_def_id, get_temp_dir_path(TAILS_DIR).to_str().unwrap(), 10, 1).await.unwrap();
         rev_reg.publish_revocation_primitives(wallet_handle, TEST_TAILS_URL).await.unwrap();
 

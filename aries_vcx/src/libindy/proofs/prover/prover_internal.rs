@@ -1,9 +1,9 @@
 use std::collections::HashMap;
+use indy_sys::WalletHandle;
 
 use serde_json::Value;
 
 use crate::error::prelude::*;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
@@ -22,13 +22,13 @@ pub struct CredInfoProver {
     pub timestamp: Option<u64>,
 }
 
-pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_schemas_json_prover(wallet_handle: WalletHandle, credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(get_main_wallet_handle(), &cred_info.schema_id)
+            let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -41,13 +41,13 @@ pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoPro
     Ok(rtn.to_string())
 }
 
-pub async fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_cred_defs_json_prover(wallet_handle: WalletHandle, credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
     trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
     for ref cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(get_main_wallet_handle(), &cred_info.cred_def_id)
+            let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
 
@@ -263,7 +263,7 @@ pub mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(&creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(WalletHandle(0), &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -271,7 +271,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_find_credential_def_fails() {
-        let _setup = SetupLibraryWallet::init().await;
+        let setup = SetupLibraryWallet::init().await;
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
@@ -283,14 +283,14 @@ pub mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        let err_kind = build_cred_defs_json_prover(&credential_ids).await.unwrap_err().kind();
+        let err_kind = build_cred_defs_json_prover(setup.wallet_handle, &credential_ids).await.unwrap_err().kind();
         assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_find_schemas_fails() {
-        let _setup = SetupLibraryWallet::init().await;
+        let setup = SetupLibraryWallet::init().await;
 
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
@@ -303,7 +303,7 @@ pub mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_schemas_json_prover(&credential_ids).await.unwrap_err().kind(), VcxErrorKind::InvalidSchema);
+        assert_eq!(build_schemas_json_prover(setup.wallet_handle, &credential_ids).await.unwrap_err().kind(), VcxErrorKind::InvalidSchema);
     }
 
     #[tokio::test]
@@ -311,7 +311,7 @@ pub mod tests {
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
-        assert_eq!(build_schemas_json_prover(&Vec::new()).await.unwrap(), "{}".to_string());
+        assert_eq!(build_schemas_json_prover(WalletHandle(0), &Vec::new()).await.unwrap(), "{}".to_string());
 
         let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
@@ -337,7 +337,7 @@ pub mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(&creds).await.unwrap();
+        let schemas = build_schemas_json_prover(WalletHandle(0), &creds).await.unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::future::Future;
 
 use crate::error::prelude::*;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -533,7 +534,7 @@ impl SmConnectionInviter {
             .set_keys(new_recipient_keys, new_routing_keys)
             .ask_for_ack()
             .set_thread_id(&request.get_thread_id())
-            .encode(&bootstrap_pairwise_info.pw_vk)
+            .encode(get_main_wallet_handle(), &bootstrap_pairwise_info.pw_vk)
             .await
     }
 }
