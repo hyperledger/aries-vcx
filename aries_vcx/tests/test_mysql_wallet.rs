@@ -36,9 +36,10 @@ mod test_utils {
 #[cfg(test)]
 mod dbtests {
     use agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
-    use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_main_wallet, WalletConfig, WalletConfigBuilder};
-    use aries_vcx::settings;
+    use aries_vcx::global::settings::init_issuer_config;
+    use aries_vcx::libindy::utils::wallet::{WalletConfig, WalletConfigBuilder};
+    use aries_vcx::global::settings;
+    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, main_wallet_configure_issuer, open_as_main_wallet};
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
@@ -78,7 +79,7 @@ mod dbtests {
         };
         create_main_wallet(&config_wallet).await.unwrap();
         open_as_main_wallet(&config_wallet).await.unwrap();
-        let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
+        let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
         provision_cloud_agent(&config_provision_agent).await.unwrap();
         close_main_wallet().await.unwrap();

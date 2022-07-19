@@ -3,11 +3,12 @@ use indy::future::TryFutureExt;
 use indy_sys::WalletHandle;
 use serde_json::Value;
 
-use crate::{settings, utils};
+use crate::utils;
 use crate::error::prelude::*;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
+use crate::global::settings;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::ledger;
-use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
+use crate::libindy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 
 pub async fn main_wallet_create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     create_and_store_my_did(get_main_wallet_handle(), seed, method_name).await

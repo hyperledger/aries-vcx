@@ -4,9 +4,11 @@ use serde_json;
 use serde_json::{map::Map, Value};
 use time;
 
-use crate::{settings, utils};
+use crate::utils;
 use crate::error::prelude::*;
-use crate::libindy::utils::{LibindyMock, wallet::get_main_wallet_handle};
+use crate::global::settings;
+use crate::global::wallet::get_main_wallet_handle;
+use crate::libindy::utils::LibindyMock;
 use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
 use crate::libindy::utils::ledger::*;
 use crate::libindy::utils::ledger::publish_txn_on_ledger;
@@ -720,7 +722,8 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use crate::{libindy, settings};
+    use crate::libindy;
+    use crate::global::settings;
     use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
     use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
     use crate::libindy::credentials::encode_attributes;
@@ -965,10 +968,10 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_nonrevocable_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate, create_and_store_credential};
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::constants::SCHEMAS_JSON;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupWithWalletAndAgency, SetupMocks};
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWithWalletAndAgency};
     use crate::utils::get_temp_dir_path;
 
     use super::*;

@@ -315,7 +315,7 @@ pub mod tests {
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED};

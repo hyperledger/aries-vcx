@@ -6,7 +6,7 @@ use crate::libindy::utils::crypto;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::forward::Forward;
-use crate::settings;
+use crate::global::settings;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -131,12 +131,13 @@ impl EncryptionEnvelope {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::global;
     use crate::libindy::utils::{test_setup, wallet};
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::did_doc::test_utils::*;
-    use crate::settings::disable_indy_mocks;
+    use crate::global::settings::disable_indy_mocks;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
@@ -223,10 +224,10 @@ pub mod tests {
 
         let ack = A2AMessage::Ack(_ack());
 
-        wallet::set_wallet_handle(sender_wallet.wh);
+        global::wallet::set_wallet_handle(sender_wallet.wh);
         let envelope = EncryptionEnvelope::create(&ack, Some(&sender_key), &did_doc).await.unwrap();
 
-        wallet::set_wallet_handle(recipient_wallet.wh);
+        global::wallet::set_wallet_handle(recipient_wallet.wh);
         let _message_1 = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key).await.unwrap();
     }
 
@@ -246,10 +247,10 @@ pub mod tests {
 
         let ack = A2AMessage::Ack(_ack());
 
-        wallet::set_wallet_handle(sender_wallet.wh);
+        global::wallet::set_wallet_handle(sender_wallet.wh);
         let envelope = EncryptionEnvelope::create(&ack, Some(&sender_key_2), &did_doc).await.unwrap();
 
-        wallet::set_wallet_handle(recipient_wallet.wh);
+        global::wallet::set_wallet_handle(recipient_wallet.wh);
         let result = EncryptionEnvelope::auth_unpack(envelope.0, &sender_key_1).await;
         assert!(result.is_err());
     }

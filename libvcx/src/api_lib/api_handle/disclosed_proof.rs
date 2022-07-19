@@ -7,7 +7,7 @@ use aries_vcx::{
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::settings::indy_mocks_enabled;
+use aries_vcx::global::settings::indy_mocks_enabled;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;

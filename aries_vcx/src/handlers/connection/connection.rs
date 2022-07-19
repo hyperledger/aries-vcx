@@ -15,7 +15,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;

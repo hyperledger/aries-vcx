@@ -6,7 +6,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::settings;
+use crate::global::settings;
 
 fn _build_ping_response(ping: &Ping) -> PingResponse {
     PingResponse::create().set_thread_id(

@@ -6,11 +6,12 @@ use futures::future::TryFutureExt;
 use indy::ledger;
 use serde_json;
 
-use crate::{settings, utils};
+use crate::utils;
 use crate::error::prelude::*;
-use crate::libindy::utils::pool::get_pool_handle;
+use crate::global::settings;
+use crate::global::pool::get_main_pool_handle;
 use crate::libindy::utils::signus::main_wallet_create_and_store_my_did;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
+use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
@@ -37,7 +38,7 @@ pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &st
         return Ok(PoolMocks::get_next_pool_response());
     };
 
-    let pool_handle = get_pool_handle()?;
+    let pool_handle = get_main_pool_handle()?;
     let wallet_handle = get_main_wallet_handle();
 
     ledger::sign_and_submit_request(pool_handle, wallet_handle, issuer_did, request_json)
@@ -47,7 +48,7 @@ pub async fn libindy_sign_and_submit_request(issuer_did: &str, request_json: &st
 
 pub async fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
     trace!("libindy_submit_request >>> request_json: {}", request_json);
-    let pool_handle = get_pool_handle()?;
+    let pool_handle = get_main_pool_handle()?;
 
     ledger::submit_request(pool_handle, request_json)
         .map_err(VcxError::from)
@@ -287,7 +288,7 @@ pub mod auth_rule {
 
         let auth_rules_request = libindy_build_auth_rules_request(submitter_did, &data).await?;
 
-        let response = ledger::sign_and_submit_request(get_pool_handle()?, get_main_wallet_handle(), submitter_did, &auth_rules_request)
+        let response = ledger::sign_and_submit_request(get_main_pool_handle()?, get_main_wallet_handle(), submitter_did, &auth_rules_request)
             .await?;
 
         let response: serde_json::Value = serde_json::from_str(&response)
@@ -364,7 +365,7 @@ pub fn parse_response(response: &str) -> VcxResult<Response> {
 }
 
 pub async fn libindy_get_schema(submitter_did: &str, schema_id: &str) -> VcxResult<String> {
-    let pool_handle = get_pool_handle()?;
+    let pool_handle = get_main_pool_handle()?;
     let wallet_handle = get_main_wallet_handle();
 
     cache::get_schema(pool_handle, wallet_handle, submitter_did, schema_id, "{}")
@@ -379,7 +380,7 @@ pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cre
 }
 
 pub async fn libindy_get_cred_def(cred_def_id: &str) -> VcxResult<String> {
-    let pool_handle = get_pool_handle()?;
+    let pool_handle = get_main_pool_handle()?;
     let wallet_handle = get_main_wallet_handle();
     let submitter_did = generate_random_did();
     trace!("libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}", pool_handle, wallet_handle, submitter_did);

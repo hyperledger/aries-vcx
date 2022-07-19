@@ -6,8 +6,9 @@ use crate::agency_client::MessageStatusCode;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::settings;
-use crate::settings::get_agency_client;
+use crate::global;
+use crate::global::agency_client::get_agency_client;
+use crate::global::settings;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -29,7 +30,7 @@ pub async fn create_agent_keys(source_id: &str, pw_did: &str, pw_verkey: &str) -
     debug!("creating pairwise keys on agent for connection {}", source_id);
     trace!("create_agent_keys >>> source_id: {}, pw_did: {}, pw_verkey: {}", source_id, pw_did, pw_verkey);
 
-    let (agent_did, agent_verkey) = settings::get_agency_client()?.create_connection_agent(pw_did, pw_verkey).await
+    let (agent_did, agent_verkey) = global::agency_client::get_agency_client()?.create_connection_agent(pw_did, pw_verkey).await
         .map_err(|err| err.extend("Cannot create pairwise keys"))?;
 
 
@@ -56,17 +57,17 @@ impl CloudAgentInfo {
 
     pub async fn destroy(&self, pairwise_info: &PairwiseInfo) -> VcxResult<()> {
         trace!("CloudAgentInfo::delete >>>");
-        settings::get_agency_client()?.delete_connection_agent(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
+        global::agency_client::get_agency_client()?.delete_connection_agent(&pairwise_info.pw_did, &pairwise_info.pw_vk, &self.agent_did, &self.agent_vk)
             .await
             .map_err(|err| err.into())
     }
 
     pub fn service_endpoint(&self) -> VcxResult<String> {
-        Ok(settings::get_agency_client()?.get_agency_url_full())
+        Ok(global::agency_client::get_agency_client()?.get_agency_url_full())
     }
 
     pub fn routing_keys(&self) -> VcxResult<Vec<String>> {
-        let agency_vk = &settings::get_agency_client()?.get_agency_vk();
+        let agency_vk = &global::agency_client::get_agency_client()?.get_agency_vk();
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 

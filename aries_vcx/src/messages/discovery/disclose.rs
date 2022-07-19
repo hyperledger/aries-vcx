@@ -1,6 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
-use crate::settings::Actors;
+use crate::actors::Actors;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {

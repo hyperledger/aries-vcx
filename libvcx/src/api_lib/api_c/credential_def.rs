@@ -5,7 +5,7 @@ use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::settings;
+use aries_vcx::global::settings;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::credential_def;

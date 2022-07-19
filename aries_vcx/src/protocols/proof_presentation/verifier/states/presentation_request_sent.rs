@@ -6,7 +6,7 @@ use crate::messages::proof_presentation::presentation_request::PresentationReque
 use crate::messages::status::Status;
 use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
-use crate::settings;
+use crate::global::settings;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {

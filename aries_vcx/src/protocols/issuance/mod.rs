@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds::get_cred_def_json;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::settings;
+use crate::global::settings;
 
 pub mod issuer;
 pub mod holder;

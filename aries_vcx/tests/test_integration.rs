@@ -40,7 +40,7 @@ mod tests {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::init::open_wallet;
+    use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::libindy::credential_def;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
@@ -65,8 +65,8 @@ mod tests {
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-    use aries_vcx::settings;
-    use aries_vcx::settings::get_agency_client;
+    use aries_vcx::global::settings;
+    use aries_vcx::global::agency_client::get_agency_client;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},
         get_temp_dir_path,

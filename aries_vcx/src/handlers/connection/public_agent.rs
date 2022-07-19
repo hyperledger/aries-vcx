@@ -9,7 +9,7 @@ use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::settings::get_agency_client;
+use crate::global::agency_client::get_agency_client;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {

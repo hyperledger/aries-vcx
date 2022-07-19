@@ -4,16 +4,18 @@ use agency_client::configuration::AgentProvisionConfig;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
-use crate::{libindy, settings, utils};
-use crate::init::{init_issuer_config, open_as_main_wallet};
-use crate::init::PoolConfig;
+use crate::{global, libindy, utils};
+use crate::global::settings;
+use crate::global::settings::init_issuer_config;
+use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::mocks::did_mocks::DidMocks;
 use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
-use crate::libindy::utils::pool::reset_pool_handle;
+use crate::global::pool::reset_main_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_indy_wallet, delete_wallet, reset_main_wallet_handle, WalletConfig};
-use crate::libindy::utils::wallet::{configure_issuer_wallet, create_main_wallet};
-use crate::settings::{disable_indy_mocks, enable_indy_mocks, set_testing_defaults};
+use crate::libindy::utils::wallet::{create_indy_wallet, delete_wallet, WalletConfig};
+use crate::global::wallet::main_wallet_configure_issuer;
+use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
+use crate::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, open_as_main_wallet, reset_main_wallet_handle};
 use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
@@ -60,10 +62,10 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     reset_main_wallet_handle().unwrap();
-    reset_pool_handle();
+    reset_main_pool_handle();
     disable_indy_mocks();
-    settings::reset_settings();
-    settings::reset_agency_client();
+    settings::reset_config_values();
+    global::agency_client::reset_agency_client();
 }
 
 impl SetupEmpty {
@@ -96,8 +98,8 @@ impl Drop for SetupDefaults {
 impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
-        set_testing_defaults();
-        settings::get_agency_client_mut().unwrap().enable_test_mode();
+        set_test_configs();
+        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
         enable_indy_mocks();
         SetupMocks {} // todo: not needed since we don't implement drop
     }
@@ -114,7 +116,7 @@ impl SetupLibraryWallet {
     pub async fn init() -> SetupLibraryWallet {
         init_test_logging();
         debug!("SetupLibraryWallet::init >>");
-        set_testing_defaults();
+        set_test_configs();
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
@@ -145,9 +147,9 @@ impl Drop for SetupLibraryWallet {
 impl SetupWallet {
     pub async fn init() -> SetupWallet {
         init_test_logging();
-        set_testing_defaults();
+        set_test_configs();
         let wallet_name: String = format!("Test_SetupWallet_{}", uuid::Uuid::new_v4().to_string());
-        settings::get_agency_client_mut().unwrap().disable_test_mode();
+        global::agency_client::get_agency_client_mut().unwrap().disable_test_mode();
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -204,7 +206,7 @@ impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
             futures::executor::block_on(delete_test_pool());
-            reset_pool_handle();
+            reset_main_pool_handle();
         }
         reset_global_state();
     }
@@ -229,7 +231,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
         enable_indy_mocks();
-        settings::get_agency_client_mut().unwrap().enable_test_mode();
+        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
         SetupIndyMocks {}
     }
 }
@@ -243,7 +245,7 @@ impl Drop for SetupIndyMocks {
 impl SetupWithWalletAndAgency {
     pub async fn init() -> SetupWithWalletAndAgency {
         init_test_logging();
-        set_testing_defaults();
+        set_test_configs();
 
         let institution_did = setup_indy_env().await;
 
@@ -267,7 +269,7 @@ impl SetupAgencyMock {
         init_test_logging();
 
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
-        settings::get_agency_client_mut().unwrap().enable_test_mode();
+        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -349,7 +351,7 @@ pub async fn configure_trustee_did() {
 }
 
 pub async fn setup_indy_env() -> String {
-    settings::get_agency_client_mut().unwrap().disable_test_mode();
+    global::agency_client::get_agency_client_mut().unwrap().disable_test_mode();
 
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
@@ -372,7 +374,7 @@ pub async fn setup_indy_env() -> String {
     create_main_wallet(&config_wallet).await.unwrap();
     open_as_main_wallet(&config_wallet).await.unwrap();
 
-    let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
+    let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
 
     provision_cloud_agent(&config_provision_agent).await.unwrap();

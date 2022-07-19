@@ -11,7 +11,7 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::settings::get_agency_client;
+use aries_vcx::global::agency_client::get_agency_client;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 
@@ -312,7 +312,7 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { aries_vcx::libindy::utils::pool::set_pool_handle(None); } else { aries_vcx::libindy::utils::pool::set_pool_handle(Some(handle)); }
+    if handle <= 0 { aries_vcx::global::pool::set_main_pool_handle(None); } else { aries_vcx::global::pool::set_main_pool_handle(Some(handle)); }
 
     handle
 }

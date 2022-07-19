@@ -104,7 +104,7 @@ pub mod tests {
     use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{
         constants::SCHEMA_ID,

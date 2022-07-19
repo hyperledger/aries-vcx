@@ -6,13 +6,15 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy::CommandHandle;
-use aries_vcx::init::{create_agency_client_for_main_wallet, enable_agency_mocks, init_issuer_config, open_main_pool, PoolConfig};
+use aries_vcx::libindy::utils::pool::PoolConfig;
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
-use aries_vcx::libindy::utils::pool::is_pool_open;
-use aries_vcx::libindy::utils::wallet::{close_main_wallet, IssuerConfig, WalletConfig};
-use aries_vcx::settings;
-use aries_vcx::settings::enable_indy_mocks;
-use aries_vcx::utils;
+use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
+use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
+use aries_vcx::global::{agency_client, settings};
+use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
+use aries_vcx::global::wallet::close_main_wallet;
+use aries_vcx::{global, utils};
+use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, enable_agency_mocks};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
 
@@ -214,7 +216,7 @@ pub extern fn vcx_init_issuer_config(command_handle: CommandHandle, config: *con
 pub extern fn vcx_open_main_pool(command_handle: CommandHandle, pool_config: *const c_char, cb: extern fn(xcommand_handle: CommandHandle, err: u32)) -> u32 {
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, VcxErrorKind::InvalidOption);
-    if is_pool_open() {
+    if is_main_pool_open() {
         error!("vcx_open_main_pool :: Pool connection is already open.");
         return VcxError::from_msg(VcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
     }
@@ -269,7 +271,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match futures::executor::block_on(wallet::close_main_wallet()) {
+    match futures::executor::block_on(global::wallet::close_main_wallet()) {
         Ok(()) => {}
         Err(_) => {}
     };
@@ -323,8 +325,8 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
         };
     }
 
-    settings::reset_settings();
-    settings::reset_agency_client();
+    settings::reset_config_values();
+    agency_client::reset_agency_client();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -493,15 +495,17 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+    use aries_vcx::global;
+    use aries_vcx::global::agency_client;
     use aries_vcx::indy::INVALID_WALLET_HANDLE;
-    use aries_vcx::init::PoolConfig;
+    use aries_vcx::libindy::utils::pool::PoolConfig;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
-    use aries_vcx::libindy::utils::pool::get_pool_handle;
+    use aries_vcx::global::pool::get_main_pool_handle;
     use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
     use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::wallet::get_main_wallet_handle;
-    use aries_vcx::libindy::utils::wallet::tests::create_main_wallet_and_its_backup;
+    use aries_vcx::global::wallet::get_main_wallet_handle;
+    use aries_vcx::global::wallet::tests::create_main_wallet_and_its_backup;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, SetupWallet, SetupWithWalletAndAgency, TempFile};
 
     use crate::api_lib;
@@ -552,7 +556,7 @@ mod tests {
             error!("vcx_init_threadpool failed");
             return Err(rc);
         }
-        settings::get_agency_client_mut()?.enable_test_mode();
+        agency_client::get_agency_client_mut()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -587,7 +591,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: _genesis_transactions.path.clone(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
 
         delete_named_test_pool(&pool_name).await;
     }
@@ -601,7 +605,7 @@ mod tests {
         let pool_config = PoolConfig { genesis_path: "invalid/txn/path".to_string(), pool_name: Some(pool_name.clone()), pool_config: None };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
-        assert_eq!(get_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), aries_vcx::error::VcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -758,7 +762,7 @@ mod tests {
         assert_eq!(credential_def::release(credentialdef).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(credential::release(credential).unwrap_err().kind(), VcxErrorKind::InvalidCredentialHandle);
         assert_eq!(disclosed_proof::release(disclosed_proof).unwrap_err().kind(), VcxErrorKind::InvalidDisclosedProofHandle);
-        assert_eq!(wallet::get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+        assert_eq!(global::wallet::get_main_wallet_handle(), INVALID_WALLET_HANDLE);
     }
 
     #[test]
@@ -874,7 +878,7 @@ mod tests {
 
         assert_eq!(expected, auth_agreement);
 
-        settings::set_testing_defaults();
+        settings::set_test_configs();
     }
 
     #[test]
@@ -912,7 +916,7 @@ mod tests {
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
         delete_test_pool().await;
-        settings::set_testing_defaults();
+        settings::set_test_configs();
     }
 
     #[tokio::test]
@@ -927,7 +931,7 @@ mod tests {
 
         _test_add_and_get_wallet_record();
 
-        settings::set_testing_defaults();
+        settings::set_test_configs();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1003,6 +1007,6 @@ mod tests {
         assert!(schema_id.len() > 0);
 
         delete_test_pool().await;
-        settings::set_testing_defaults();
+        settings::set_test_configs();
     }
 }

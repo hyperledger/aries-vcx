@@ -3,8 +3,9 @@ use strum::IntoEnumIterator;
 
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
-use crate::settings;
-use crate::settings::Actors;
+use crate::actors;
+use crate::actors::Actors;
+use crate::global::settings;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,
@@ -13,7 +14,7 @@ pub struct ProtocolRegistry {
 impl ProtocolRegistry {
     pub fn init() -> ProtocolRegistry {
         let mut registry = ProtocolRegistry { protocols: Vec::new() };
-        let actors = settings::get_actors();
+        let actors = actors::get_actors();
 
         for family in MessageFamilies::iter() {
             match family {
@@ -77,7 +78,7 @@ impl ProtocolRegistry {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::settings;
+    use crate::global::settings;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

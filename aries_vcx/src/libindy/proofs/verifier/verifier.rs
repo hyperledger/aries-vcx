@@ -41,7 +41,8 @@ pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxR
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{libindy, settings, utils};
+    use crate::{libindy, utils};
+    use crate::global::settings;
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWithWalletAndAgency;

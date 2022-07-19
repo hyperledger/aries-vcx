@@ -22,13 +22,13 @@ mod tests {
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::messages::update_message::UIDsByConn;
     use agency_client::MessageStatusCode;
-    use aries_vcx::init::open_wallet;
+    use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::libindy::utils::signus::create_and_store_my_did;
     use aries_vcx::libindy::utils::wallet::{create_indy_wallet, WalletConfig};
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::test_utils::_ack;
-    use aries_vcx::settings;
-    use aries_vcx::settings::get_agency_client;
+    use aries_vcx::global::settings;
+    use aries_vcx::global::agency_client::get_agency_client;
     use aries_vcx::utils::devsetup::SetupLibraryAgencyV2;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};

@@ -11,7 +11,8 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::{libindy, settings};
+    use aries_vcx::libindy;
+    use aries_vcx::global::settings;
     use aries_vcx::libindy::credential_def::CredentialDef;
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
     use aries_vcx::libindy::proofs::proof_request_internal::AttrInfo;

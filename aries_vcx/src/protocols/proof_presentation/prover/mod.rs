@@ -1,6 +1,6 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
-use crate::settings;
+use crate::global::settings;
 
 pub mod states;
 pub mod messages;

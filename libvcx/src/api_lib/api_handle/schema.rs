@@ -157,7 +157,7 @@ pub mod tests {
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::utils::ledger::add_new_did;
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
