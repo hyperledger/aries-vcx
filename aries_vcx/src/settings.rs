@@ -95,12 +95,12 @@ pub fn set_testing_defaults() -> u32 {
 }
 
 pub fn enable_indy_mocks() -> VcxResult<()> {
-    warn!("enable_indy_mocks >>>");
+    debug!("enable_indy_mocks >>>");
     set_config_value(CONFIG_ENABLE_TEST_MODE, "true")
 }
 
 pub fn disable_indy_mocks() -> VcxResult<()> {
-    warn!("disable_indy_mocks >>>");
+    debug!("disable_indy_mocks >>>");
     set_config_value(CONFIG_ENABLE_TEST_MODE, "false")
 }
 
@@ -110,7 +110,7 @@ pub fn indy_mocks_enabled() -> bool {
     match config.get(CONFIG_ENABLE_TEST_MODE) {
         None => false,
         Some(value) => {
-            warn!("indy_mocks_enabled >>> {}", value);
+            debug!("indy_mocks_enabled >>> {}", value);
             value == "true" || value == "indy"
         }
     }

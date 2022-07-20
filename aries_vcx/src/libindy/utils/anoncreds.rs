@@ -488,7 +488,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
 pub async fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
     trace!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
     if settings::indy_mocks_enabled() {
-        warn!("publish_cred_def >>> mocked success");
+        debug!("publish_cred_def >>> mocked success");
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, &cred_def_json).await?;
@@ -498,7 +498,7 @@ pub async fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResul
 
 pub async fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
-        warn!("get_cred_def_json >>> returning mocked value");
+        debug!("get_cred_def_json >>> returning mocked value");
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
     }
 
@@ -511,7 +511,7 @@ pub async fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &s
                         -> VcxResult<(String, RevocationRegistryDefinition, String)> {
     trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_dir, max_creds, tag);
     if settings::indy_mocks_enabled() {
-        warn!("generate_rev_reg >>> returning mocked value");
+        debug!("generate_rev_reg >>> returning mocked value");
         return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string()));
     }
 
@@ -530,7 +530,7 @@ pub async fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &s
 
 pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
-        warn!("build_rev_reg_request >>> returning mocked value");
+        debug!("build_rev_reg_request >>> returning mocked value");
         return Ok("".to_string());
     }
 
@@ -542,7 +542,7 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
 pub async fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegistryDefinition) -> VcxResult<()> {
     trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
     if settings::indy_mocks_enabled() {
-        warn!("publish_rev_reg_def >>> mocked success");
+        debug!("publish_rev_reg_def >>> mocked success");
         return Ok(());
     }
 
@@ -555,7 +555,7 @@ pub async fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegis
 
 pub async fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
-        warn!("get_rev_reg_def_json >>> returning mocked value");
+        debug!("get_rev_reg_def_json >>> returning mocked value");
         return Ok((REV_REG_ID.to_string(), rev_def_json()));
     }
 
