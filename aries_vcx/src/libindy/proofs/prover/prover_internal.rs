@@ -270,8 +270,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_find_credential_def_fails() {
-        let _setup = SetupLibraryWallet::init();
-
+        let _setup = SetupLibraryWallet::init().await;
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
@@ -283,13 +282,14 @@ pub mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_cred_defs_json_prover(&credential_ids).await.unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        let err_kind = build_cred_defs_json_prover(&credential_ids).await.unwrap_err().kind();
+        assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_find_schemas_fails() {
-        let _setup = SetupLibraryWallet::init();
+        let _setup = SetupLibraryWallet::init().await;
 
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),

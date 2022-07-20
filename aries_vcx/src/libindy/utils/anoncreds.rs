@@ -488,6 +488,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
 pub async fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
     trace!("publish_cred_def >>> issuer_did: {}, cred_def_json: {}", issuer_did, cred_def_json);
     if settings::indy_mocks_enabled() {
+        debug!("publish_cred_def >>> mocked success");
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, &cred_def_json).await?;
@@ -496,7 +497,10 @@ pub async fn publish_cred_def(issuer_did: &str, cred_def_json: &str) -> VcxResul
 }
 
 pub async fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)> {
-    if settings::indy_mocks_enabled() { return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string())); }
+    if settings::indy_mocks_enabled() {
+        debug!("get_cred_def_json >>> returning mocked value");
+        return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
+    }
 
     let cred_def_json = libindy_get_cred_def(cred_def_id).await?;
 
@@ -506,7 +510,10 @@ pub async fn get_cred_def_json(cred_def_id: &str) -> VcxResult<(String, String)>
 pub async fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &str, max_creds: u32, tag: &str)
                         -> VcxResult<(String, RevocationRegistryDefinition, String)> {
     trace!("generate_rev_reg >>> issuer_did: {}, cred_def_id: {}, tails_file: {}, max_creds: {}, tag: {}", issuer_did, cred_def_id, tails_dir, max_creds, tag);
-    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string())); }
+    if settings::indy_mocks_enabled() {
+        debug!("generate_rev_reg >>> returning mocked value");
+        return Ok((REV_REG_ID.to_string(), RevocationRegistryDefinition::default(), "".to_string()));
+    }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
         libindy_create_and_store_revoc_reg(issuer_did,
@@ -522,7 +529,10 @@ pub async fn generate_rev_reg(issuer_did: &str, cred_def_id: &str, tails_dir: &s
 }
 
 pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok("".to_string()); }
+    if settings::indy_mocks_enabled() {
+        debug!("build_rev_reg_request >>> returning mocked value");
+        return Ok("".to_string());
+    }
 
     let rev_reg_def_req = libindy_build_revoc_reg_def_request(issuer_did, &rev_reg_def_json).await?;
     let rev_reg_def_req = append_txn_author_agreement_to_request(&rev_reg_def_req).await?;
@@ -531,7 +541,10 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
 
 pub async fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegistryDefinition) -> VcxResult<()> {
     trace!("publish_rev_reg_def >>> issuer_did: {}, rev_reg_def: ...", issuer_did);
-    if settings::indy_mocks_enabled() { return Ok(()); }
+    if settings::indy_mocks_enabled() {
+        debug!("publish_rev_reg_def >>> mocked success");
+        return Ok(());
+    }
 
     let rev_reg_def_json = serde_json::to_string(&rev_reg_def)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err)))?;
@@ -541,7 +554,10 @@ pub async fn publish_rev_reg_def(issuer_did: &str, rev_reg_def: &RevocationRegis
 }
 
 pub async fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
-    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), rev_def_json())); }
+    if settings::indy_mocks_enabled() {
+        debug!("get_rev_reg_def_json >>> returning mocked value");
+        return Ok((REV_REG_ID.to_string(), rev_def_json()));
+    }
 
     let submitter_did = crate::utils::random::generate_random_did();
 
@@ -569,7 +585,10 @@ pub async fn publish_rev_reg_delta(issuer_did: &str, rev_reg_id: &str, rev_reg_e
 pub async fn get_rev_reg_delta_json(rev_reg_id: &str, from: Option<u64>, to: Option<u64>)
                               -> VcxResult<(String, String, u64)> {
     trace!("get_rev_reg_delta_json >>> rev_reg_id: {}, from: {:?}, to: {:?}", rev_reg_id, from, to);
-    if settings::indy_mocks_enabled() { return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1)); }
+    if settings::indy_mocks_enabled() {
+        warn!("get_rev_reg_delta_json >>> returning mocked value");
+        return Ok((REV_REG_ID.to_string(), REV_REG_DELTA_JSON.to_string(), 1));
+    }
 
     let submitter_did = crate::utils::random::generate_random_did();
 

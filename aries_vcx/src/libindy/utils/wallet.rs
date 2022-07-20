@@ -81,7 +81,6 @@ pub fn get_main_wallet_handle() -> WalletHandle { unsafe { WALLET_HANDLE } }
 
 pub fn reset_main_wallet_handle() -> VcxResult<()> {
     set_wallet_handle(INVALID_WALLET_HANDLE);
-    settings::get_agency_client_mut()?.reset_wallet_handle();
     Ok(())
 }
 

@@ -8,26 +8,26 @@ use url::Url;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::{error_utils, validation};
 
-const CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
+const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 
 static VALID_AGENCY_CONFIG_KEYS: &[&str] = &[
-    CONFIG_ENABLE_TEST_MODE,
+    CONFIG_AGENCY_TEST_MODE,
 ];
 
 lazy_static! {
     static ref AGENCY_SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
 }
 
-pub fn get_config_enable_test_mode() -> AgencyClientResult<String> {
-    _get_config_value(CONFIG_ENABLE_TEST_MODE)
+pub fn get_config_agency_test_mode() -> AgencyClientResult<String> {
+    _get_config_value(CONFIG_AGENCY_TEST_MODE)
 }
 
 pub fn enable_agency_test_mode() {
-    _set_test_config(CONFIG_ENABLE_TEST_MODE, "true");
+    _set_test_config(CONFIG_AGENCY_TEST_MODE, "true");
 }
 
 pub fn disable_agency_test_mode() {
-    _set_test_config(CONFIG_ENABLE_TEST_MODE, "false");
+    _set_test_config(CONFIG_AGENCY_TEST_MODE, "false");
 }
 
 fn _set_test_config(key: &str, value: &str) {

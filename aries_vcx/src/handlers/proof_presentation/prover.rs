@@ -269,7 +269,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        let _setup = SetupLibraryWallet::init();
+        let _setup = SetupLibraryWallet::init().await;
 
         let proof_req = PresentationRequest::create();
         let proof = Prover::create_from_request("1", proof_req).unwrap();

@@ -112,7 +112,8 @@ pub mod test {
             close_main_wallet()
                 .await
                 .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
-            settings::clear_config();
+            settings::reset_settings();
+            settings::reset_agency_client();
 
             info!("activate >>> Faber opening main wallet");
             open_as_main_wallet(&self.config_wallet).await?;
@@ -131,7 +132,8 @@ pub mod test {
             close_main_wallet()
                 .await
                 .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
-            settings::clear_config();
+            settings::reset_settings();
+            settings::reset_agency_client();
 
             info!("activate >>> Alice opening main wallet");
             open_as_main_wallet(&self.config_wallet).await?;
@@ -144,7 +146,8 @@ pub mod test {
 
     impl Faber {
         pub async fn setup() -> Faber {
-            settings::clear_config();
+            settings::reset_settings();
+            settings::reset_agency_client();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -339,7 +342,8 @@ pub mod test {
 
     impl Alice {
         pub async fn setup() -> Alice {
-            settings::clear_config();
+            settings::reset_settings();
+            settings::reset_agency_client();
 
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -353,9 +357,9 @@ pub mod test {
             };
 
             let config_provision_agent = AgentProvisionConfig {
-                agency_did: C_AGENCY_DID.to_string(),
-                agency_verkey: C_AGENCY_VERKEY.to_string(),
-                agency_endpoint: C_AGENCY_ENDPOINT.to_string(),
+                agency_did: AGENCY_DID.to_string(),
+                agency_verkey: AGENCY_VERKEY.to_string(),
+                agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None,
             };
 
