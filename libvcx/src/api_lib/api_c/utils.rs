@@ -11,7 +11,7 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::global::agency_client::get_agency_client;
+use aries_vcx::global::agency_client::get_main_agency_client;
 use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
@@ -73,7 +73,7 @@ pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::utils::provision::provision_cloud_agent(get_main_wallet_handle(), &agency_config).await {
+        match aries_vcx::utils::provision::provision_cloud_agent(&mut get_main_agency_client().unwrap(), get_main_wallet_handle(), &agency_config).await {
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, err);

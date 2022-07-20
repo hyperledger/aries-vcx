@@ -14,7 +14,7 @@ use aries_vcx::global::{agency_client, settings};
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::global::wallet::close_main_wallet;
 use aries_vcx::{global, utils};
-use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, enable_agency_mocks};
+use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, enable_main_agency_client_mocks};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
 
@@ -38,7 +38,7 @@ pub extern fn vcx_enable_mocks() -> u32 {
         Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
-    return match enable_agency_mocks() {
+    return match enable_main_agency_client_mocks() {
         Ok(_) => error::SUCCESS.code_num,
         Err(_) => error::UNKNOWN_ERROR.code_num
     };
@@ -326,7 +326,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     }
 
     settings::reset_config_values();
-    agency_client::reset_agency_client();
+    agency_client::reset_main_agency_client();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -556,7 +556,7 @@ mod tests {
             error!("vcx_init_threadpool failed");
             return Err(rc);
         }
-        agency_client::get_agency_client_mut()?.enable_test_mode();
+        agency_client::get_main_agency_client_mut()?.enable_test_mode();
 
         info!("_vcx_init_full >>> going to open pool");
         let cb = return_types_u32::Return_U32::new().unwrap();

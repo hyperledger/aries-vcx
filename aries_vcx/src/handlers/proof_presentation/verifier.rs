@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
@@ -122,15 +123,15 @@ impl Verifier {
         self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message)).await
     }
 
-    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<VerifierState> {
+    pub async fn update_state(&mut self, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
         if !self.progressable_by_message() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages().await?;
+        let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid).await?;
+            connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
     }

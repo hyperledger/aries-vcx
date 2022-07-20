@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::global::wallet::get_main_wallet_handle;
@@ -157,15 +158,15 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<IssuerState> {
+    pub async fn update_state(&mut self, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<IssuerState> {
         trace!("Issuer::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages().await?;
+        let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid).await?;
+            connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
     }
@@ -173,13 +174,14 @@ impl Issuer {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use agency_client::agency_client::AgencyClient;
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
     use crate::messages::issuance::credential_proposal::CredentialProposal;
 
-    pub async fn get_credential_proposal_messages(connection: &Connection) -> VcxResult<String> {
-        let credential_proposals: Vec<CredentialProposal> = connection.get_messages()
+    pub async fn get_credential_proposal_messages(agency_client: &AgencyClient, connection: &Connection) -> VcxResult<String> {
+        let credential_proposals: Vec<CredentialProposal> = connection.get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, message)| {

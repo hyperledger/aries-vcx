@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
@@ -104,15 +105,15 @@ impl Holder {
         Ok(())
     }
 
-    pub async fn update_state(&mut self, connection: &Connection) -> VcxResult<HolderState> {
+    pub async fn update_state(&mut self, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<HolderState> {
         trace!("Holder::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
         let send_message = connection.send_message_closure()?;
 
-        let messages = connection.get_messages().await?;
+        let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(msg.into(), Some(send_message)).await?;
-            connection.update_message_status(&uid).await?;
+            connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
     }
@@ -120,12 +121,13 @@ impl Holder {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use agency_client::agency_client::AgencyClient;
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
 
-    pub async fn get_credential_offer_messages(connection: &Connection) -> VcxResult<String> {
-        let credential_offers: Vec<A2AMessage> = connection.get_messages()
+    pub async fn get_credential_offer_messages(agency_client: &AgencyClient, connection: &Connection) -> VcxResult<String> {
+        let credential_offers: Vec<A2AMessage> = connection.get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, a2a_message)| {

@@ -10,29 +10,29 @@ lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());
 }
 
-pub fn get_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
+pub fn get_main_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
     let agency_client = AGENCY_CLIENT.write()?;
     Ok(agency_client)
 }
 
-pub fn get_agency_client() -> VcxResult<AgencyClient> {
+pub fn get_main_agency_client() -> VcxResult<AgencyClient> {
     let agency_client = AGENCY_CLIENT.read()?.deref().clone();
     Ok(agency_client)
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
-    get_agency_client_mut()?
+    get_main_agency_client_mut()?
         .configure(config)?;
     Ok(())
 }
 
-pub fn enable_agency_mocks() -> VcxResult<()> {
+pub fn enable_main_agency_client_mocks() -> VcxResult<()> {
     info!("enable_agency_mocks >>>");
-    get_agency_client_mut()?.enable_test_mode();
+    get_main_agency_client_mut()?.enable_test_mode();
     Ok(())
 }
 
-pub fn reset_agency_client() {
+pub fn reset_main_agency_client() {
     trace!("reset_agency_client >>>");
     let mut agency_client = AGENCY_CLIENT.write().unwrap();
     *agency_client = AgencyClient::default();

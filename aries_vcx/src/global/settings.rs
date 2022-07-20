@@ -115,7 +115,7 @@ pub fn set_test_configs() -> u32 {
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
 
-    global::agency_client::get_agency_client_mut().unwrap().set_testing_defaults_agency();
+    global::agency_client::get_main_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 

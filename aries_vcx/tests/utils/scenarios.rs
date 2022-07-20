@@ -4,6 +4,7 @@ pub mod test_utils {
     use std::time::Duration;
     use indy_sys::WalletHandle;
     use serde_json::{json, Value};
+    use aries_vcx::global::agency_client::get_main_agency_client;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
@@ -156,7 +157,7 @@ pub mod test_utils {
         info!("send_cred_req >>> switching to consumer");
         alice.activate().await.unwrap();
         info!("send_cred_req :: getting offers");
-        let credential_offers = get_credential_offer_messages(connection).await.unwrap();
+        let credential_offers = get_credential_offer_messages(&get_main_agency_client().unwrap(), connection).await.unwrap();
         let credential_offers = match comment {
             Some(comment) => {
                 let filtered = filter_credential_offers_by_comment(&credential_offers, comment).unwrap();
@@ -202,7 +203,7 @@ pub mod test_utils {
 
     pub async fn send_cred_proposal_1(holder: &mut Holder, alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) {
         alice.activate().await.unwrap();
-        holder.update_state(connection).await.unwrap();
+        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
@@ -222,7 +223,7 @@ pub mod test_utils {
 
     pub async fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
         faber.activate().await.unwrap();
-        let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(connection).await.unwrap()).unwrap();
+        let proposals: Vec<CredentialProposal> = serde_json::from_str(&get_credential_proposal_messages(&get_main_agency_client().unwrap(), connection).await.unwrap()).unwrap();
         let proposal = proposals.last().unwrap();
         let mut issuer = Issuer::create_from_proposal("TEST_CREDENTIAL", proposal).unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
@@ -243,7 +244,7 @@ pub mod test_utils {
     pub async fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
         faber.activate().await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        issuer.update_state(connection).await.unwrap();
+        issuer.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         let offer_info = OfferInfo {
@@ -260,7 +261,7 @@ pub mod test_utils {
 
     pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().await.unwrap();
-        holder.update_state(connection).await.unwrap();
+        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
@@ -270,7 +271,7 @@ pub mod test_utils {
 
     pub async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().await.unwrap();
-        holder.update_state(connection).await.unwrap();
+        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         holder.decline_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
@@ -282,7 +283,7 @@ pub mod test_utils {
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
-        issuer_credential.update_state(issuer_to_consumer).await.unwrap();
+        issuer_credential.update_state(&get_main_agency_client().unwrap(), issuer_to_consumer).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
@@ -296,7 +297,7 @@ pub mod test_utils {
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
         assert_eq!(holder_credential.is_revokable().await.unwrap(), revokable);
-        holder_credential.update_state(consumer_to_issuer).await.unwrap();
+        holder_credential.update_state(&get_main_agency_client().unwrap(), consumer_to_issuer).await.unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(holder_credential.is_revokable().await.unwrap(), revokable);
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
@@ -323,7 +324,7 @@ pub mod test_utils {
 
     pub async fn send_proof_proposal_1(alice: &mut Alice, prover: &mut Prover, connection: &Connection, cred_def_id: &str) {
         alice.activate().await.unwrap();
-        prover.update_state(connection).await.unwrap();
+        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let attrs = requested_attr_objects_1(cred_def_id);
         let mut proposal_data = PresentationProposalData::create();
@@ -337,7 +338,7 @@ pub mod test_utils {
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         faber.activate().await.unwrap();
-        verifier.update_state(connection).await.unwrap();
+        verifier.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
         let attrs = proposal.presentation_proposal.attributes.into_iter().map(|attr| {
@@ -356,7 +357,7 @@ pub mod test_utils {
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
         faber.activate().await.unwrap();
         let mut verifier = Verifier::create("1").unwrap();
-        verifier.update_state(connection).await.unwrap();
+        verifier.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         verifier.decline_presentation_proposal(connection.send_message_closure().unwrap(), "I don't like Alices").await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Failed);
@@ -366,7 +367,7 @@ pub mod test_utils {
     pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
         alice.activate().await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        prover.update_state(connection).await.unwrap();
+        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
     }
 
@@ -398,7 +399,7 @@ pub mod test_utils {
         alice.activate().await.unwrap();
         info!("create_proof >>> getting proof request messages");
         let requests = {
-            let _requests = get_proof_request_messages(connection).await.unwrap();
+            let _requests = get_proof_request_messages(&get_main_agency_client().unwrap(), connection).await.unwrap();
             info!("create_proof :: get proof request messages returned {}", _requests);
             match request_name {
                 Some(request_name) => {
@@ -434,7 +435,7 @@ pub mod test_utils {
 
     pub async fn verify_proof(institution: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         institution.activate().await.unwrap();
-        verifier.update_state(&connection).await.unwrap();
+        verifier.update_state(&get_main_agency_client().unwrap(), &connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
@@ -521,7 +522,7 @@ pub mod test_utils {
         connection: &Connection,
         requested_values: Option<&str>) -> String {
         consumer.activate().await.unwrap();
-        prover.update_state(connection).await.unwrap();
+        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let retrieved_credentials = prover.retrieve_credentials().await.unwrap();
         let selected_credentials_value = match requested_values {
@@ -561,20 +562,20 @@ pub mod test_utils {
     pub async fn connect_using_request_sent_to_public_agent(consumer: &mut Alice, institution: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        let mut conn_requests = institution.agent.download_connection_requests(None).await.unwrap();
+        let mut conn_requests = institution.agent.download_connection_requests(&get_main_agency_client().unwrap(), None).await.unwrap();
         assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent).await.unwrap();
+        let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent, &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
-        institution_to_consumer.update_state().await.unwrap();
+        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
 
         consumer.activate().await.unwrap();
-        consumer_to_institution.update_state().await.unwrap();
+        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
 
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state().await.unwrap();
+        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
         assert_eq!(institution_to_consumer.get_thread_id(), consumer_to_institution.get_thread_id());
@@ -588,9 +589,9 @@ pub mod test_utils {
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
 
         consumer.activate().await.unwrap();
-        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true).await.unwrap();
-        consumer_to_institution.connect().await.unwrap();
-        consumer_to_institution.update_state().await.unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true, &get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.connect(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
 
         let institution_to_consumer = connect_using_request_sent_to_public_agent(consumer, institution, &mut consumer_to_institution).await;
         (consumer_to_institution, institution_to_consumer)
@@ -600,36 +601,36 @@ pub mod test_utils {
     pub async fn create_connected_connections(consumer: &mut Alice, institution: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
         institution.activate().await.unwrap();
-        let mut institution_to_consumer = Connection::create("consumer", true).await.unwrap();
-        institution_to_consumer.connect().await.unwrap();
+        let mut institution_to_consumer = Connection::create("consumer", true, &get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.connect(&get_main_agency_client().unwrap()).await.unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         consumer.activate().await.unwrap();
         debug!("Consumer is going to accept connection invitation.");
-        let mut consumer_to_institution = Connection::create_with_invite("institution", details.clone(), true).await.unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", details.clone(), true, &get_main_agency_client().unwrap()).await.unwrap();
 
-        consumer_to_institution.connect().await.unwrap();
-        consumer_to_institution.update_state().await.unwrap();
+        consumer_to_institution.connect(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
 
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state().await.unwrap();
+        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
         assert_eq!(thread_id, institution_to_consumer.get_thread_id());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().await.unwrap();
-        consumer_to_institution.update_state().await.unwrap();
+        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state().await.unwrap();
+        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 

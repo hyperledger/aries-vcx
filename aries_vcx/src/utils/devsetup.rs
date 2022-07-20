@@ -6,6 +6,7 @@ use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use crate::{global, libindy, utils};
+use crate::global::agency_client::get_main_agency_client;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::libindy::utils::pool::PoolConfig;
@@ -70,7 +71,7 @@ fn reset_global_state() {
     reset_main_pool_handle();
     disable_indy_mocks();
     settings::reset_config_values();
-    global::agency_client::reset_agency_client();
+    global::agency_client::reset_main_agency_client();
 }
 
 impl SetupEmpty {
@@ -89,7 +90,7 @@ impl Drop for SetupEmpty {
 impl SetupDefaults {
     pub fn init() -> SetupDefaults {
         init_test_logging();
-        set_testing_defaults();
+        set_test_configs();
         SetupDefaults {}
     }
 }
@@ -104,7 +105,7 @@ impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
         set_test_configs();
-        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
+        global::agency_client::get_main_agency_client_mut().unwrap().enable_test_mode();
         enable_indy_mocks();
         SetupMocks {} // todo: not needed since we don't implement drop
     }
@@ -154,7 +155,7 @@ impl SetupWallet {
         init_test_logging();
         set_test_configs();
         let wallet_name: String = format!("Test_SetupWallet_{}", uuid::Uuid::new_v4().to_string());
-        global::agency_client::get_agency_client_mut().unwrap().disable_test_mode();
+        global::agency_client::get_main_agency_client_mut().unwrap().disable_test_mode();
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -238,7 +239,7 @@ impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
         enable_indy_mocks();
-        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
+        global::agency_client::get_main_agency_client_mut().unwrap().enable_test_mode();
         SetupIndyMocks {}
     }
 }
@@ -277,7 +278,7 @@ impl SetupAgencyMock {
         init_test_logging();
 
         let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
-        global::agency_client::get_agency_client_mut().unwrap().enable_test_mode();
+        global::agency_client::get_main_agency_client_mut().unwrap().enable_test_mode();
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.clone(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -359,7 +360,7 @@ pub async fn configure_trustee_did(wallet_handle: WalletHandle) {
 }
 
 pub async fn setup_indy_env() -> (String, WalletHandle) {
-    global::agency_client::get_agency_client_mut().unwrap().disable_test_mode();
+    global::agency_client::get_main_agency_client_mut().unwrap().disable_test_mode();
 
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
@@ -385,7 +386,7 @@ pub async fn setup_indy_env() -> (String, WalletHandle) {
     let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
 
-    provision_cloud_agent(wallet_handle, &config_provision_agent).await.unwrap();
+    provision_cloud_agent(&mut get_main_agency_client().unwrap(), wallet_handle, &config_provision_agent).await.unwrap();
 
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
     (institution_did, wallet_handle)
