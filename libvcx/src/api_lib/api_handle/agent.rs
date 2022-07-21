@@ -1,5 +1,6 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::agency_client::get_main_agency_client;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -19,7 +20,7 @@ fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
 
 pub async fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<u32> {
     trace!("create_public_agent >>> source_id: {}, institution_did: {}", source_id, institution_did);
-    let agent = PublicAgent::create(&get_main_agency_client().unwrap(), source_id, institution_did).await?;
+    let agent = PublicAgent::create(get_main_wallet_handle(), &get_main_agency_client().unwrap(), source_id, institution_did).await?;
     store_public_agent(agent)
 }
 

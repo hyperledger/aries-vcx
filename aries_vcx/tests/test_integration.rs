@@ -67,6 +67,7 @@ mod tests {
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::global::settings;
     use aries_vcx::global::agency_client::get_main_agency_client;
+    use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::utils::{
         constants::{TAILS_DIR, TEST_TAILS_URL},
         get_temp_dir_path,
@@ -112,7 +113,7 @@ mod tests {
 
         info!("test_proof_should_be_validated :: verifier :: going to verify proof");
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -140,7 +141,7 @@ mod tests {
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
         info!("verifier received presentation!: {}", verifier.get_presentation_attachment().unwrap());
     }
@@ -196,7 +197,7 @@ mod tests {
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -216,7 +217,7 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
 
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         publish_revocation(&mut institution, rev_reg.rev_reg_id.clone()).await;
@@ -225,7 +226,7 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
 
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -253,14 +254,14 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer1, &schema_id, &cred_def_id, request_name1).await;
         prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer1).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer1).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer2, &schema_id, &cred_def_id, request_name2).await;
         prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer2).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer2).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -281,14 +282,14 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, request_name1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, request_name2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -309,14 +310,14 @@ mod tests {
         let mut verifier = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let request_name2 = Some("request2");
         let mut verifier = verifier_create_proof_and_send_request(&mut institution, &institution_to_consumer, &schema_id, &cred_def_id, request_name2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -355,9 +356,9 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None).await;
 
         institution.activate().await.unwrap();
-        verifier1.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer1).await.unwrap();
-        verifier2.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer2).await.unwrap();
-        verifier3.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer3).await.unwrap();
+        verifier1.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer1).await.unwrap();
+        verifier2.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer2).await.unwrap();
+        verifier3.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer3).await.unwrap();
         assert_eq!(verifier1.get_presentation_status(), ProofStateType::ProofValidated as u32);
         assert_eq!(verifier2.get_presentation_status(), ProofStateType::ProofValidated as u32);
         assert_eq!(verifier3.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -377,9 +378,9 @@ mod tests {
         assert_ne!(verifier2, verifier3);
 
         institution.activate().await.unwrap();
-        verifier1.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer1).await.unwrap();
-        verifier2.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer2).await.unwrap();
-        verifier3.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer3).await.unwrap();
+        verifier1.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer1).await.unwrap();
+        verifier2.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer2).await.unwrap();
+        verifier3.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer3).await.unwrap();
         assert_eq!(verifier1.get_presentation_status(), ProofStateType::ProofInvalid as u32);
         assert_eq!(verifier2.get_presentation_status(), ProofStateType::ProofInvalid as u32);
         assert_eq!(verifier3.get_presentation_status(), ProofStateType::ProofValidated as u32);
@@ -416,7 +417,7 @@ mod tests {
         let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
         info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
-        let retrieved_credentials = prover.retrieve_credentials().await.unwrap();
+        let retrieved_credentials = prover.retrieve_credentials(get_main_wallet_handle()).await.unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}", &retrieved_credentials);
 
         let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
@@ -427,7 +428,7 @@ mod tests {
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -486,7 +487,7 @@ mod tests {
         let mut prover = create_proof(&mut consumer, &consumer_to_issuer, None).await;
         info!("test_real_proof :: retrieving matching credentials");
 
-        let retrieved_credentials = prover.retrieve_credentials().await.unwrap();
+        let retrieved_credentials = prover.retrieve_credentials(get_main_wallet_handle()).await.unwrap();
         let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
         info!("test_real_proof :: generating and sending proof");
@@ -497,7 +498,7 @@ mod tests {
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &issuer_to_consumer).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &issuer_to_consumer).await.unwrap();
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
     }
@@ -523,13 +524,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -556,13 +557,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -589,13 +590,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -621,13 +622,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -655,13 +656,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
 
@@ -689,13 +690,13 @@ mod tests {
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req1).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
 
         let mut proof_verifier = verifier_create_proof_and_send_request(&mut verifier, &verifier_to_consumer, &schema_id, &cred_def_id, req2).await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2)).await;
         verifier.activate().await.unwrap();
-        proof_verifier.update_state(&get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
+        proof_verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &verifier_to_consumer).await.unwrap();
         assert_eq!(proof_verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
     }
 
@@ -708,7 +709,7 @@ mod tests {
 
         let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution_to_consumer.send_generic_message("Hello Alice, Faber here").await.unwrap();
+        institution_to_consumer.send_generic_message(get_main_wallet_handle(), "Hello Alice, Faber here").await.unwrap();
 
         consumer.activate().await.unwrap();
         let consumer_msgs = consumer_to_institution.download_messages(&get_main_agency_client().unwrap(), Some(vec![MessageStatusCode::Received]), None).await.unwrap();
@@ -741,8 +742,8 @@ mod tests {
         let conn = oob_receiver.connection_exists(&conns).await.unwrap();
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver.build_connection(&get_main_agency_client().unwrap(), true).await.unwrap();
-        conn_receiver.connect(&get_main_agency_client().unwrap()).await.unwrap();
-        conn_receiver.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        conn_receiver.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+        conn_receiver.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
         assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
@@ -766,9 +767,9 @@ mod tests {
             assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
         }
 
-        conn_sender.send_generic_message("Hello oob receiver, from oob sender").await.unwrap();
+        conn_sender.send_generic_message(get_main_wallet_handle(), "Hello oob receiver, from oob sender").await.unwrap();
         consumer.activate().await.unwrap();
-        conn_receiver.send_generic_message("Hello oob sender, from oob receiver").await.unwrap();
+        conn_receiver.send_generic_message(get_main_wallet_handle(), "Hello oob sender, from oob receiver").await.unwrap();
         institution.activate().await.unwrap();
         let sender_msgs = conn_sender.download_messages(&get_main_agency_client().unwrap(), None, None).await.unwrap();
         consumer.activate().await.unwrap();
@@ -800,7 +801,7 @@ mod tests {
         let conns = vec![&consumer_to_institution];
         let conn = oob_receiver.connection_exists(&conns).await.unwrap();
         assert!(conn.is_some());
-        conn.unwrap().send_generic_message("Hello oob sender, from oob receiver").await.unwrap();
+        conn.unwrap().send_generic_message(get_main_wallet_handle(), "Hello oob sender, from oob receiver").await.unwrap();
 
         institution.activate().await.unwrap();
         let msgs = institution_to_consumer.download_messages(&get_main_agency_client().unwrap(), None, None).await.unwrap();
@@ -833,7 +834,7 @@ mod tests {
         assert!(conn.is_some());
         let receiver_oob_id = oob_receiver.get_id();
         let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
-        conn.unwrap().send_handshake_reuse(&receiver_msg).await.unwrap();
+        conn.unwrap().send_handshake_reuse(get_main_wallet_handle(), &receiver_msg).await.unwrap();
 
         institution.activate().await.unwrap();
         let mut msgs = institution_to_consumer.download_messages(&get_main_agency_client().unwrap(), Some(vec![MessageStatusCode::Received]), None).await.unwrap();
@@ -847,7 +848,7 @@ mod tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuse message type"); }
         };
-        institution_to_consumer.update_state_with_message(&get_main_agency_client().unwrap(), &A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
+        institution_to_consumer.update_state_with_message(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
 
         consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution.download_messages(&get_main_agency_client().unwrap(), Some(vec![MessageStatusCode::Received]), None).await.unwrap();
@@ -861,8 +862,8 @@ mod tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
         };
-        consumer_to_institution.update_state_with_message(&get_main_agency_client().unwrap(), &A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
-        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state_with_message(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
+        consumer_to_institution.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(consumer_to_institution.download_messages(&get_main_agency_client().unwrap(), Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
     }
 
@@ -907,7 +908,7 @@ mod tests {
         decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
         institution.activate().await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        issuer.update_state(&get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
+        issuer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &institution_to_consumer).await.unwrap();
         assert_eq!(IssuerState::Failed, issuer.get_state());
     }
 
@@ -1125,7 +1126,7 @@ mod tests {
             alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
             let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-            alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap()).await.unwrap();
+            alice.credential.send_request(get_main_wallet_handle(), pw_did, alice.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
@@ -1143,10 +1144,10 @@ mod tests {
 
             let credentials = alice.get_credentials_for_presentation().await;
 
-            alice.prover.generate_presentation(credentials.to_string(), String::from("{}")).await.unwrap();
+            alice.prover.generate_presentation(get_main_wallet_handle(), credentials.to_string(), String::from("{}")).await.unwrap();
             assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            alice.prover.send_presentation(alice.connection.send_message_closure().unwrap()).await.unwrap();
+            alice.prover.send_presentation(get_main_wallet_handle(), alice.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
@@ -1194,7 +1195,7 @@ mod tests {
             alice.connection.update_message_status(&message.uid, &get_main_agency_client().unwrap()).await.unwrap();
 
             let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-            alice.credential.send_request(pw_did, alice.connection.send_message_closure().unwrap()).await.unwrap();
+            alice.credential.send_request(get_main_wallet_handle(), pw_did, alice.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
@@ -1215,10 +1216,10 @@ mod tests {
 
             let credentials = alice.get_credentials_for_presentation().await;
 
-            alice.prover.generate_presentation(credentials.to_string(), String::from("{}")).await.unwrap();
+            alice.prover.generate_presentation(get_main_wallet_handle(), credentials.to_string(), String::from("{}")).await.unwrap();
             assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            alice.prover.send_presentation(alice.connection.send_message_closure().unwrap()).await.unwrap();
+            alice.prover.send_presentation(get_main_wallet_handle(), alice.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 

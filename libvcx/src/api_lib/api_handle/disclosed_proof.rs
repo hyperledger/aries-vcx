@@ -8,6 +8,7 @@ use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::global::settings::indy_mocks_enabled;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
@@ -80,12 +81,12 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         let message: A2AMessage = serde_json::from_str(message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Can not updated state with message: Message deserialization failed: {:?}", err)))?;
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
-        proof.handle_message(message.into(), Some(send_message)).await?;
+        proof.handle_message(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof.handle_message(message.into(), Some(send_message)).await?;
+            proof.handle_message(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
             connection::update_message_status(connection_handle, &uid).await?;
         };
     }
@@ -127,7 +128,7 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
-    proof.send_presentation(send_message).await?;
+    proof.send_presentation(get_main_wallet_handle(), send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -140,14 +141,14 @@ pub fn generate_reject_proof_msg(_handle: u32) -> VcxResult<String> {
 pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
-    proof.decline_presentation_request(send_message, Some(String::from("Presentation Request was rejected")), None).await?;
+    proof.decline_presentation_request(get_main_wallet_handle(), send_message, Some(String::from("Presentation Request was rejected")), None).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    proof.generate_presentation(credentials.to_string(), self_attested_attrs.to_string()).await?;
+    proof.generate_presentation(get_main_wallet_handle(), credentials.to_string(), self_attested_attrs.to_string()).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -155,14 +156,14 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
 pub async fn decline_presentation_request(handle: u32, connection_handle: u32, reason: Option<&str>, proposal: Option<&str>) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
-    proof.decline_presentation_request(send_message, reason.map(|s| s.to_string()), proposal.map(|s| s.to_string())).await?;
+    proof.decline_presentation_request(get_main_wallet_handle(), send_message, reason.map(|s| s.to_string()), proposal.map(|s| s.to_string())).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> VcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
-    proof.retrieve_credentials().await.map_err(|err| err.into())
+    proof.retrieve_credentials(get_main_wallet_handle()).await.map_err(|err| err.into())
 }
 
 pub fn get_proof_request_data(handle: u32) -> VcxResult<String> {

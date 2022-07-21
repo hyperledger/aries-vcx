@@ -1,5 +1,6 @@
+use indy_sys::WalletHandle;
+
 use crate::error::VcxResult;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::utils::signus::create_and_store_my_did;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -18,8 +19,8 @@ impl Default for PairwiseInfo {
 }
 
 impl PairwiseInfo {
-    pub async fn create() -> VcxResult<PairwiseInfo> {
-        let (pw_did, pw_vk) = create_and_store_my_did(get_main_wallet_handle(), None, None).await?;
+    pub async fn create(wallet_handle: WalletHandle) -> VcxResult<PairwiseInfo> {
+        let (pw_did, pw_vk) = create_and_store_my_did(wallet_handle, None, None).await?;
         Ok(PairwiseInfo { pw_did, pw_vk })
     }
 }

@@ -29,6 +29,7 @@ mod tests {
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::global::settings;
     use aries_vcx::global::agency_client::get_main_agency_client;
+    use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::utils::devsetup::SetupLibraryAgencyV2;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
@@ -44,11 +45,11 @@ mod tests {
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
         institution.activate().await.unwrap();
-        faber_to_alice.send_generic_message("Hello Alice").await.unwrap();
-        faber_to_alice.send_generic_message("How are you Alice?").await.unwrap();
+        faber_to_alice.send_generic_message(get_main_wallet_handle(), "Hello Alice").await.unwrap();
+        faber_to_alice.send_generic_message(get_main_wallet_handle(), "How are you Alice?").await.unwrap();
 
         consumer.activate().await.unwrap();
-        alice_to_faber.send_generic_message("Hello Faber").await.unwrap();
+        alice_to_faber.send_generic_message(get_main_wallet_handle(), "Hello Faber").await.unwrap();
 
         thread::sleep(Duration::from_millis(100));
 
@@ -96,7 +97,7 @@ mod tests {
         info!("test_connection_send_works:: Test if Send Message works");
         {
             faber.activate().await.unwrap();
-            faber.connection.send_message_closure().unwrap()(message.to_a2a_message()).await.unwrap();
+            faber.connection.send_message_closure(get_main_wallet_handle()).unwrap()(message.to_a2a_message()).await.unwrap();
         }
 
         {
@@ -141,7 +142,7 @@ mod tests {
             faber.activate().await.unwrap();
 
             let basic_message = r#"Hi there"#;
-            faber.connection.send_generic_message(basic_message).await.unwrap();
+            faber.connection.send_generic_message(get_main_wallet_handle(), basic_message).await.unwrap();
 
             alice.activate().await.unwrap();
 
@@ -163,7 +164,7 @@ mod tests {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().await.unwrap();
-            faber.connection.send_message_closure().unwrap()(credential_offer.to_a2a_message()).await.unwrap();
+            faber.connection.send_message_closure(get_main_wallet_handle()).unwrap()(credential_offer.to_a2a_message()).await.unwrap();
 
             alice.activate().await.unwrap();
 
@@ -186,9 +187,9 @@ mod tests {
         let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1.activate().await.unwrap();
-        consumer1_to_institution.send_generic_message("Hello Institution from consumer1").await.unwrap();
+        consumer1_to_institution.send_generic_message(get_main_wallet_handle(), "Hello Institution from consumer1").await.unwrap();
         consumer2.activate().await.unwrap();
-        consumer2_to_institution.send_generic_message("Hello Institution from consumer2").await.unwrap();
+        consumer2_to_institution.send_generic_message(get_main_wallet_handle(), "Hello Institution from consumer2").await.unwrap();
 
         institution.activate().await.unwrap();
 
@@ -213,9 +214,9 @@ mod tests {
         let mut consumer1 = Alice::setup().await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer1, &mut institution).await;
 
-        faber_to_alice.send_generic_message("Hello 1").await.unwrap();
-        faber_to_alice.send_generic_message("Hello 2").await.unwrap();
-        faber_to_alice.send_generic_message("Hello 3").await.unwrap();
+        faber_to_alice.send_generic_message(get_main_wallet_handle(), "Hello 1").await.unwrap();
+        faber_to_alice.send_generic_message(get_main_wallet_handle(), "Hello 2").await.unwrap();
+        faber_to_alice.send_generic_message(get_main_wallet_handle(), "Hello 3").await.unwrap();
 
         thread::sleep(Duration::from_millis(1000));
         consumer1.activate().await.unwrap();
@@ -253,9 +254,9 @@ mod tests {
         let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1.activate().await.unwrap();
-        consumer1_to_institution.send_generic_message("Hello Institution from consumer1").await.unwrap();
+        consumer1_to_institution.send_generic_message(get_main_wallet_handle(), "Hello Institution from consumer1").await.unwrap();
         consumer2.activate().await.unwrap();
-        consumer2_to_institution.send_generic_message("Hello Institution from consumer2").await.unwrap();
+        consumer2_to_institution.send_generic_message(get_main_wallet_handle(), "Hello Institution from consumer2").await.unwrap();
 
         institution.activate().await.unwrap();
         let consumer1_msgs = institution_to_consumer1.download_messages(&get_main_agency_client().unwrap(), None, None).await.unwrap();

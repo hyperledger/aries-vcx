@@ -1,6 +1,6 @@
+use indy_sys::WalletHandle;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -15,12 +15,15 @@ pub struct PresentationRequestSentState {
 }
 
 impl PresentationRequestSentState {
-    pub async fn verify_presentation(&self, presentation: &Presentation, thread_id: &str) -> VcxResult<()> {
+    pub async fn verify_presentation(&self,
+                                     wallet_handle: WalletHandle,
+                                     presentation: &Presentation,
+                                     thread_id: &str) -> VcxResult<()> {
         if !settings::indy_mocks_enabled() && !presentation.from_thread(&thread_id) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
         };
 
-        let valid = validate_indy_proof(get_main_wallet_handle(),
+        let valid = validate_indy_proof(wallet_handle,
                                         &presentation.presentations_attach.content()?,
                                         &self.presentation_request.request_presentations_attach.content()?).await?;
 

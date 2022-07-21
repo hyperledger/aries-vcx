@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use indy_sys::WalletHandle;
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
@@ -9,7 +10,6 @@ use crate::messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::global;
 use crate::global::settings;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -98,7 +98,7 @@ impl CloudAgentInfo {
         trace!("CloudAgentInfo::get_messages >>> expect_sender_vk: {}", expect_sender_vk);
         let messages = self.download_encrypted_messages(agency_client, None, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages >>> obtained {} messages", messages.len());
-        let a2a_messages = self.decrypt_decode_messages(&messages, expect_sender_vk).await?;
+        let a2a_messages = self.decrypt_decode_messages(agency_client.get_wallet_handle(), &messages, expect_sender_vk).await?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
@@ -107,7 +107,7 @@ impl CloudAgentInfo {
         trace!("CloudAgentInfo::get_messages_noauth >>>");
         let messages = self.download_encrypted_messages(agency_client, uids, Some(vec![MessageStatusCode::Received]), pairwise_info).await?;
         debug!("CloudAgentInfo::get_messages_noauth >>> obtained {} messages", messages.len());
-        let a2a_messages = self.decrypt_decode_messages_noauth(&messages).await?;
+        let a2a_messages = self.decrypt_decode_messages_noauth(agency_client.get_wallet_handle(), &messages).await?;
         _log_messages_optionally(&a2a_messages);
         Ok(a2a_messages)
     }
@@ -118,31 +118,31 @@ impl CloudAgentInfo {
         let message = messages
             .pop()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidMessages, format!("Message not found for id: {:?}", msg_id)))?;
-        let message = self.decrypt_decode_message(&message, &expected_sender_vk).await?;
+        let message = self.decrypt_decode_message(agency_client.get_wallet_handle(), &message, &expected_sender_vk).await?;
         Ok(message)
     }
 
-    async fn decrypt_decode_messages(&self, messages: &Vec<DownloadedMessageEncrypted>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages(&self, wallet_handle: WalletHandle, messages: &Vec<DownloadedMessageEncrypted>, expected_sender_vk: &str) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(&message, expected_sender_vk).await?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message(wallet_handle, &message, expected_sender_vk).await?);
         }
         return Ok(a2a_messages);
     }
 
-    async fn decrypt_decode_messages_noauth(&self, messages: &Vec<DownloadedMessageEncrypted>) -> VcxResult<HashMap<String, A2AMessage>> {
+    async fn decrypt_decode_messages_noauth(&self, wallet_handle: WalletHandle, messages: &Vec<DownloadedMessageEncrypted>) -> VcxResult<HashMap<String, A2AMessage>> {
         let mut a2a_messages: HashMap<String, A2AMessage> = HashMap::new();
         for message in messages {
-            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(&message).await?);
+            a2a_messages.insert(message.uid.clone(), self.decrypt_decode_message_noauth(wallet_handle, &message).await?);
         }
         return Ok(a2a_messages);
     }
 
-    async fn decrypt_decode_message(&self, message: &DownloadedMessageEncrypted, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::auth_unpack(get_main_wallet_handle(), message.payload()?, &expected_sender_vk).await
+    async fn decrypt_decode_message(&self, wallet_handle: WalletHandle, message: &DownloadedMessageEncrypted, expected_sender_vk: &str) -> VcxResult<A2AMessage> {
+        EncryptionEnvelope::auth_unpack(wallet_handle, message.payload()?, &expected_sender_vk).await
     }
 
-    async fn decrypt_decode_message_noauth(&self, message: &DownloadedMessageEncrypted) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::anon_unpack(get_main_wallet_handle(), message.payload()?).await
+    async fn decrypt_decode_message_noauth(&self, wallet_handle: WalletHandle, message: &DownloadedMessageEncrypted) -> VcxResult<A2AMessage> {
+        EncryptionEnvelope::anon_unpack(wallet_handle, message.payload()?).await
     }
 }

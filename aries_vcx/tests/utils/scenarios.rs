@@ -15,6 +15,7 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::libindy;
     use aries_vcx::global::settings;
+    use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::libindy::credential_def::CredentialDef;
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
     use aries_vcx::libindy::proofs::proof_request_internal::AttrInfo;
@@ -128,8 +129,8 @@ pub mod test_utils {
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: sending credential offer");
-        issuer.build_credential_offer_msg(offer_info, comment.map(String::from)).await.unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
+        issuer.build_credential_offer_msg(get_main_wallet_handle(), offer_info, comment.map(String::from)).await.unwrap();
+        issuer.send_credential_offer(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -146,8 +147,8 @@ pub mod test_utils {
         };
         let mut issuer = Issuer::create("1").unwrap();
         info!("create_and_send_cred_offer :: sending credential offer");
-        issuer.build_credential_offer_msg(offer_info, comment.map(String::from)).await.unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
+        issuer.build_credential_offer_msg(get_main_wallet_handle(), offer_info, comment.map(String::from)).await.unwrap();
+        issuer.send_credential_offer(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
         thread::sleep(Duration::from_millis(2000));
         issuer
@@ -176,7 +177,7 @@ pub mod test_utils {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         info!("send_cred_req :: sending credential request");
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
-        holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).await.unwrap();
+        holder.send_request(get_main_wallet_handle(), my_pw_did, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         thread::sleep(Duration::from_millis(2000));
         holder
     }
@@ -195,7 +196,7 @@ pub mod test_utils {
             .add_credential_preview_data(&zip, "84000", MimeType::Plain);
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
-        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).await.unwrap();
+        holder.send_proposal(get_main_wallet_handle(), proposal, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
         thread::sleep(Duration::from_millis(1000));
         holder
@@ -203,7 +204,7 @@ pub mod test_utils {
 
     pub async fn send_cred_proposal_1(holder: &mut Holder, alice: &mut Alice, connection: &Connection, schema_id: &str, cred_def_id: &str, comment: &str) {
         alice.activate().await.unwrap();
-        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        holder.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let (address1, address2, city, state, zip) = attr_names();
@@ -216,7 +217,7 @@ pub mod test_utils {
             .add_credential_preview_data(&city, "Austin", MimeType::Plain)
             .add_credential_preview_data(&state, "TX", MimeType::Plain)
             .add_credential_preview_data(&zip, "42000", MimeType::Plain);
-        holder.send_proposal(proposal, connection.send_message_closure().unwrap()).await.unwrap();
+        holder.send_proposal(get_main_wallet_handle(), proposal, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
@@ -234,8 +235,8 @@ pub mod test_utils {
             rev_reg_id,
             tails_file,
         };
-        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).await.unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
+        issuer.build_credential_offer_msg(get_main_wallet_handle(), offer_info, Some("comment".into())).await.unwrap();
+        issuer.send_credential_offer(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
         issuer
@@ -244,7 +245,7 @@ pub mod test_utils {
     pub async fn accept_cred_proposal_1(issuer: &mut Issuer, faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) {
         faber.activate().await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        issuer.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        issuer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
         let proposal = issuer.get_proposal().unwrap();
         let offer_info = OfferInfo {
@@ -253,27 +254,27 @@ pub mod test_utils {
             rev_reg_id,
             tails_file,
         };
-        issuer.build_credential_offer_msg(offer_info, Some("comment".into())).await.unwrap();
-        issuer.send_credential_offer(connection.send_message_closure().unwrap()).await.unwrap();
+        issuer.build_credential_offer_msg(get_main_wallet_handle(), offer_info, Some("comment".into())).await.unwrap();
+        issuer.send_credential_offer(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         thread::sleep(Duration::from_millis(1000));
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().await.unwrap();
-        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        holder.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         assert!(holder.get_offer().is_ok());
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
-        holder.send_request(my_pw_did, connection.send_message_closure().unwrap()).await.unwrap();
+        holder.send_request(get_main_wallet_handle(), my_pw_did, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         alice.activate().await.unwrap();
-        holder.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        holder.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
-        holder.decline_offer(Some("Have a nice day"), connection.send_message_closure().unwrap()).await.unwrap();
+        holder.decline_offer(get_main_wallet_handle(), Some("Have a nice day"), connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(HolderState::Failed, holder.get_state());
     }
 
@@ -283,23 +284,23 @@ pub mod test_utils {
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
-        issuer_credential.update_state(&get_main_agency_client().unwrap(), issuer_to_consumer).await.unwrap();
+        issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), issuer_to_consumer).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer_credential.get_state());
         assert_eq!(issuer_credential.is_revokable(), false);
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("send_credential >>> sending credential");
-        issuer_credential.send_credential(issuer_to_consumer.send_message_closure().unwrap()).await.unwrap();
+        issuer_credential.send_credential(get_main_wallet_handle(), issuer_to_consumer.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         thread::sleep(Duration::from_millis(2000));
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         consumer.activate().await.unwrap();
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
-        assert_eq!(holder_credential.is_revokable().await.unwrap(), revokable);
-        holder_credential.update_state(&get_main_agency_client().unwrap(), consumer_to_issuer).await.unwrap();
+        assert_eq!(holder_credential.is_revokable(get_main_wallet_handle()).await.unwrap(), revokable);
+        holder_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), consumer_to_issuer).await.unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
-        assert_eq!(holder_credential.is_revokable().await.unwrap(), revokable);
+        assert_eq!(holder_credential.is_revokable(get_main_wallet_handle()).await.unwrap(), revokable);
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
 
         if revokable {
@@ -316,7 +317,7 @@ pub mod test_utils {
             proposal_data = proposal_data.add_attribute(attr);
         }
         let mut prover = Prover::create("1").unwrap();
-        prover.send_proposal(proposal_data, connection.send_message_closure().unwrap()).await.unwrap();
+        prover.send_proposal(get_main_wallet_handle(), proposal_data, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         thread::sleep(Duration::from_millis(1000));
         prover
@@ -324,21 +325,21 @@ pub mod test_utils {
 
     pub async fn send_proof_proposal_1(alice: &mut Alice, prover: &mut Prover, connection: &Connection, cred_def_id: &str) {
         alice.activate().await.unwrap();
-        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        prover.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
         let attrs = requested_attr_objects_1(cred_def_id);
         let mut proposal_data = PresentationProposalData::create();
         for attr in attrs.into_iter() {
             proposal_data = proposal_data.add_attribute(attr);
         }
-        prover.send_proposal(proposal_data, connection.send_message_closure().unwrap()).await.unwrap();
+        prover.send_proposal(get_main_wallet_handle(), proposal_data, connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         thread::sleep(Duration::from_millis(1000));
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         faber.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         let proposal = verifier.get_presentation_proposal().unwrap();
         let attrs = proposal.presentation_proposal.attributes.into_iter().map(|attr| {
@@ -351,15 +352,15 @@ pub mod test_utils {
             PresentationRequestData::create("request-1").await.unwrap()
                 .set_requested_attributes_as_vec(attrs).unwrap();
         verifier.set_request(presentation_request_data, None).unwrap();
-        verifier.send_presentation_request(connection.send_message_closure().unwrap()).await.unwrap();
+        verifier.send_presentation_request(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
     }
 
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
         faber.activate().await.unwrap();
         let mut verifier = Verifier::create("1").unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
-        verifier.decline_presentation_proposal(connection.send_message_closure().unwrap(), "I don't like Alices").await.unwrap();
+        verifier.decline_presentation_proposal(get_main_wallet_handle(), connection.send_message_closure(get_main_wallet_handle()).unwrap(), "I don't like Alices").await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Failed);
         verifier
     }
@@ -367,7 +368,7 @@ pub mod test_utils {
     pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
         alice.activate().await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        prover.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
     }
 
@@ -379,7 +380,7 @@ pub mod test_utils {
                 .set_requested_predicates_as_string(requested_preds.to_string()).unwrap()
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
-        verifier.send_presentation_request(connection.send_message_closure().unwrap()).await.unwrap();
+        verifier.send_presentation_request(connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
         thread::sleep(Duration::from_millis(2000));
         verifier
     }
@@ -422,11 +423,11 @@ pub mod test_utils {
         alice.activate().await.unwrap();
         let thread_id = prover.get_thread_id().unwrap();
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
-        prover.generate_presentation(selected_credentials.into(), "{}".to_string()).await.unwrap();
+        prover.generate_presentation(get_main_wallet_handle(), selected_credentials.into(), "{}".to_string()).await.unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
         if ProverState::PresentationPrepared == prover.get_state() {
             info!("generate_and_send_proof :: proof generated, sending proof");
-            prover.send_presentation(connection.send_message_closure().unwrap()).await.unwrap();
+            prover.send_presentation(get_main_wallet_handle(), connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
             thread::sleep(Duration::from_millis(5000));
@@ -435,7 +436,7 @@ pub mod test_utils {
 
     pub async fn verify_proof(institution: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         institution.activate().await.unwrap();
-        verifier.update_state(&get_main_agency_client().unwrap(), &connection).await.unwrap();
+        verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &connection).await.unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofValidated as u32);
     }
@@ -445,7 +446,7 @@ pub mod test_utils {
         // GET REV REG DELTA BEFORE REVOCATION
         let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None).await.unwrap();
         info!("revoking credential");
-        issuer_credential.revoke_credential(true).await.unwrap();
+        issuer_credential.revoke_credential(get_main_wallet_handle(), true).await.unwrap();
         let (_, delta_after_revoke, _) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id, Some(timestamp + 1), None).await.unwrap();
         assert_ne!(delta, delta_after_revoke);
     }
@@ -454,7 +455,7 @@ pub mod test_utils {
         faber.activate().await.unwrap();
         let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None).await.unwrap();
         info!("revoking credential locally");
-        issuer_credential.revoke_credential(false).await.unwrap();
+        issuer_credential.revoke_credential(get_main_wallet_handle(), false).await.unwrap();
         let (_, delta_after_revoke, _) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id, Some(timestamp + 1), None).await.unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
     }
@@ -522,9 +523,9 @@ pub mod test_utils {
         connection: &Connection,
         requested_values: Option<&str>) -> String {
         consumer.activate().await.unwrap();
-        prover.update_state(&get_main_agency_client().unwrap(), connection).await.unwrap();
+        prover.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), connection).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
-        let retrieved_credentials = prover.retrieve_credentials().await.unwrap();
+        let retrieved_credentials = prover.retrieve_credentials(get_main_wallet_handle()).await.unwrap();
         let selected_credentials_value = match requested_values {
             Some(requested_values) => {
                 let credential_data = prover.presentation_request_data().unwrap();
@@ -564,18 +565,18 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(500));
         let mut conn_requests = institution.agent.download_connection_requests(&get_main_agency_client().unwrap(), None).await.unwrap();
         assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_request(conn_requests.pop().unwrap(), &institution.agent, &get_main_agency_client().unwrap()).await.unwrap();
+        let mut institution_to_consumer = Connection::create_with_request(get_main_wallet_handle(), conn_requests.pop().unwrap(), &institution.agent, &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
-        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
 
         consumer.activate().await.unwrap();
-        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
 
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
         assert_eq!(institution_to_consumer.get_thread_id(), consumer_to_institution.get_thread_id());
@@ -590,8 +591,8 @@ pub mod test_utils {
 
         consumer.activate().await.unwrap();
         let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true, &get_main_agency_client().unwrap()).await.unwrap();
-        consumer_to_institution.connect(&get_main_agency_client().unwrap()).await.unwrap();
-        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
 
         let institution_to_consumer = connect_using_request_sent_to_public_agent(consumer, institution, &mut consumer_to_institution).await;
         (consumer_to_institution, institution_to_consumer)
@@ -602,35 +603,35 @@ pub mod test_utils {
         debug!("Institution is going to create connection.");
         institution.activate().await.unwrap();
         let mut institution_to_consumer = Connection::create("consumer", true, &get_main_agency_client().unwrap()).await.unwrap();
-        institution_to_consumer.connect(&get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         consumer.activate().await.unwrap();
         debug!("Consumer is going to accept connection invitation.");
         let mut consumer_to_institution = Connection::create_with_invite("institution", details.clone(), true, &get_main_agency_client().unwrap()).await.unwrap();
 
-        consumer_to_institution.connect(&get_main_agency_client().unwrap()).await.unwrap();
-        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
 
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
         assert_eq!(thread_id, institution_to_consumer.get_thread_id());
 
         debug!("Consumer is going to complete the connection protocol.");
         consumer.activate().await.unwrap();
-        consumer_to_institution.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        consumer_to_institution.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
         institution.activate().await.unwrap();
         thread::sleep(Duration::from_millis(500));
-        institution_to_consumer.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+        institution_to_consumer.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 

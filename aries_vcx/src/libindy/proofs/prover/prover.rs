@@ -2,7 +2,6 @@ use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::prover::prover_internal::{build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover, credential_def_identifiers};
 use crate::libindy::utils::anoncreds;
@@ -32,7 +31,7 @@ pub async fn generate_indy_proof(wallet_handle: WalletHandle, credentials: &str,
     let schemas_json = build_schemas_json_prover(wallet_handle, &credentials_identifiers).await?;
     let credential_defs_json = build_cred_defs_json_prover(wallet_handle, &credentials_identifiers).await?;
 
-    let proof = anoncreds::libindy_prover_create_proof(get_main_wallet_handle(),
+    let proof = anoncreds::libindy_prover_create_proof(wallet_handle,
                                                        &proof_req_data_json,
                                                        &requested_credentials,
                                                        settings::DEFAULT_LINK_SECRET_ALIAS,

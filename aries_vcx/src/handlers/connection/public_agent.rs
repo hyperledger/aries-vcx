@@ -1,5 +1,6 @@
 use futures::stream::iter;
 use futures::StreamExt;
+use indy_sys::WalletHandle;
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
@@ -10,7 +11,6 @@ use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::service::FullService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::global::wallet::get_main_wallet_handle;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {
@@ -21,14 +21,14 @@ pub struct PublicAgent {
 }
 
 impl PublicAgent {
-    pub async fn create(agency_client: &AgencyClient, source_id: &str, institution_did: &str) -> VcxResult<Self> {
-        let pairwise_info = PairwiseInfo::create().await?;
+    pub async fn create(wallet_handle: WalletHandle, agency_client: &AgencyClient, source_id: &str, institution_did: &str) -> VcxResult<Self> {
+        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
         let agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         let service = FullService::create()
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys(agency_client)?);
-        add_service(get_main_wallet_handle(), &institution_did, &service).await?;
+        add_service(wallet_handle, &institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })

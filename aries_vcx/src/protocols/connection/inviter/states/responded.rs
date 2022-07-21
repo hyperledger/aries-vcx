@@ -1,5 +1,6 @@
 use std::clone::Clone;
 use std::future::Future;
+use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
@@ -49,14 +50,15 @@ impl From<(RespondedState, PingResponse)> for CompleteState {
 
 impl RespondedState {
     pub async fn handle_ping<F, T>(&self,
+                                   wallet_handle: WalletHandle,
                                    ping: &Ping,
                                    pw_vk: &str,
                                    send_message: F,
     ) -> VcxResult<()>
         where
-            F: Fn(String, DidDoc, A2AMessage) -> T,
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
             T: Future<Output=VcxResult<()>>
     {
-        handle_ping(ping, pw_vk, &self.did_doc, send_message).await
+        handle_ping(wallet_handle, ping, pw_vk, &self.did_doc, send_message).await
     }
 }

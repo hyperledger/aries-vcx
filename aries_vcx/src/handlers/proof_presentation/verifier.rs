@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use indy_sys::WalletHandle;
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
@@ -40,9 +41,12 @@ impl Verifier {
 
     pub fn get_state(&self) -> VerifierState { self.verifier_sm.get_state() }
 
-    pub async fn handle_message(&mut self, message: VerifierMessages, send_message: Option<SendClosure>) -> VcxResult<()> {
+    pub async fn handle_message(&mut self,
+                                wallet_handle: WalletHandle,
+                                message: VerifierMessages,
+                                send_message: Option<SendClosure>) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(message, send_message).await
+        self.step(wallet_handle, message, send_message).await
     }
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
@@ -54,9 +58,9 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_ack(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
-        self.step(VerifierMessages::SendPresentationAck(), Some(send_message)).await
+        self.step(wallet_handle, VerifierMessages::SendPresentationAck(), Some(send_message)).await
     }
 
     pub fn set_request(&mut self, presentation_request_data: PresentationRequestData, comment: Option<String>) -> VcxResult<()> {
@@ -104,9 +108,12 @@ impl Verifier {
         Ok(self.verifier_sm.thread_id())
     }
 
-    pub async fn step(&mut self, message: VerifierMessages, send_message: Option<SendClosure>)
+    pub async fn step(&mut self,
+                      wallet_handle: WalletHandle,
+                      message: VerifierMessages,
+                      send_message: Option<SendClosure>)
                       -> VcxResult<()> {
-        self.verifier_sm = self.verifier_sm.clone().step(message, send_message).await?;
+        self.verifier_sm = self.verifier_sm.clone().step(wallet_handle, message, send_message).await?;
         Ok(())
     }
 
@@ -118,19 +125,19 @@ impl Verifier {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
-    pub async fn decline_presentation_proposal<'a>(&'a mut self, send_message: SendClosure, reason: &'a str) -> VcxResult<()> {
+    pub async fn decline_presentation_proposal<'a>(&'a mut self, wallet_handle: WalletHandle, send_message: SendClosure, reason: &'a str) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
-        self.step(VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message)).await
+        self.step(wallet_handle, VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message)).await
     }
 
-    pub async fn update_state(&mut self, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<VerifierState> {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
         if !self.progressable_by_message() { return Ok(self.get_state()); }
-        let send_message = connection.send_message_closure()?;
+        let send_message = connection.send_message_closure(wallet_handle)?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -147,9 +154,11 @@ mod tests {
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
-    use crate::utils::send_message;
 
     use super::*;
+    fn _dummy_wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
 
     async fn _verifier() -> Verifier {
         let presentation_request_data =
@@ -161,7 +170,7 @@ mod tests {
     }
 
     pub fn _send_message() -> Option<SendClosure> {
-        Some(Box::new(|_: A2AMessage| Box::pin(send_message("".to_string(), DidDoc::default(), A2AMessage::BasicMessage(BasicMessage::default())))))
+        Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
 
     impl Verifier {
@@ -171,7 +180,7 @@ mod tests {
 
         async fn to_finished_state(&mut self) {
             self.to_presentation_request_sent_state().await;
-            self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            self.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
         }
     }
 

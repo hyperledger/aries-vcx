@@ -1,5 +1,6 @@
 use std::clone::Clone;
 use std::future::Future;
+use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
@@ -13,17 +14,18 @@ fn _build_ping_response(ping: &Ping) -> PingResponse {
         &ping.thread.as_ref().and_then(|thread| thread.thid.clone()).unwrap_or(ping.id.0.clone()))
 }
 
-pub async fn handle_ping<F, T>(ping: &Ping,
+pub async fn handle_ping<F, T>(wallet_handle: WalletHandle,
+                               ping: &Ping,
                                pw_vk: &str,
                                did_doc: &DidDoc,
                                send_message: F,
 ) -> VcxResult<()>
     where
-        F: Fn(String, DidDoc, A2AMessage) -> T,
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
         T: Future<Output=VcxResult<()>>
 {
     if ping.response_requested {
-        send_message(pw_vk.to_string(), did_doc.clone(), _build_ping_response(ping).to_a2a_message()).await?;
+        send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), _build_ping_response(ping).to_a2a_message()).await?;
     }
     Ok(())
 }

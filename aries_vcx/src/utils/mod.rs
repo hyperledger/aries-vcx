@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use indy_sys::WalletHandle;
 
 use crate::error::VcxResult;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did_doc::DidDoc;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -65,16 +64,16 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     path
 }
 
-pub async fn send_message(sender_verkey: String, did_doc: DidDoc, message: A2AMessage) -> VcxResult<()> {
+pub async fn send_message(wallet_handle: WalletHandle, sender_verkey: String, did_doc: DidDoc, message: A2AMessage) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let envelope = EncryptionEnvelope::create(get_main_wallet_handle(), &message, Some(&sender_verkey), &did_doc).await?;
+    let envelope = EncryptionEnvelope::create(wallet_handle, &message, Some(&sender_verkey), &did_doc).await?;
     agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint()).await?;
     Ok(())
 }
 
-pub async fn send_message_anonymously(did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
+pub async fn send_message_anonymously(wallet_handle: WalletHandle, did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
     trace!("send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let envelope = EncryptionEnvelope::create(get_main_wallet_handle(), &message, None, &did_doc).await?;
+    let envelope = EncryptionEnvelope::create(wallet_handle, &message, None, &did_doc).await?;
     agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint()).await?;
     Ok(())
 }

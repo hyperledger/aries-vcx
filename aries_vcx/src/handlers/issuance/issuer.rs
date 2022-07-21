@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+use indy_sys::WalletHandle;
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::global::wallet::get_main_wallet_handle;
 use crate::handlers::connection::connection::Connection;
 use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
@@ -73,9 +73,9 @@ impl Issuer {
     }
 
     // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
-    pub async fn build_credential_offer_msg(&mut self, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
+    pub async fn build_credential_offer_msg(&mut self, wallet_handle: WalletHandle, offer_info: OfferInfo, comment: Option<String>) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = libindy_issuer_create_credential_offer(get_main_wallet_handle(), &offer_info.cred_def_id).await?;
+        let libindy_cred_offer = libindy_issuer_create_credential_offer(wallet_handle, &offer_info.cred_def_id).await?;
         let cred_offer_msg = CredentialOffer::create()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?
@@ -109,8 +109,8 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_credential(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        self.step(CredentialIssuanceAction::CredentialSend(), Some(send_message)).await
+    pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
+        self.step(wallet_handle, CredentialIssuanceAction::CredentialSend(), Some(send_message)).await
     }
 
     pub fn get_state(&self) -> IssuerState {
@@ -129,8 +129,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential(&self, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(publish).await
+    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(wallet_handle, publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -153,19 +153,19 @@ impl Issuer {
         self.issuer_sm.is_revokable()
     }
 
-    pub async fn step(&mut self, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().handle_message(message, send_message).await?;
+    pub async fn step(&mut self, wallet_handle: WalletHandle, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().handle_message(wallet_handle, message, send_message).await?;
         Ok(())
     }
 
-    pub async fn update_state(&mut self, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<IssuerState> {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<IssuerState> {
         trace!("Issuer::update_state >>>");
         if self.is_terminal_state() { return Ok(self.get_state()); }
-        let send_message = connection.send_message_closure()?;
+        let send_message = connection.send_message_closure(wallet_handle)?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -207,7 +207,10 @@ pub mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
-
+    fn _dummy_wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
+    
     fn _cred_data() -> String {
         json!({"name": "alice"}).to_string()
     }
@@ -226,21 +229,21 @@ pub mod test {
 
     impl Issuer {
         async fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.build_credential_offer_msg(_offer_info_unrevokable(), None).await.unwrap();
+            self.build_credential_offer_msg(_dummy_wallet_handle(), _offer_info_unrevokable(), None).await.unwrap();
             self.mark_credential_offer_msg_sent().unwrap();
             self
         }
 
         async fn to_request_received_state(mut self) -> Issuer {
             self = self.to_offer_sent_state_unrevokable().await;
-            self.step(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
 
         async fn to_finished_state_unrevokable(mut self) -> Issuer {
             self = self.to_request_received_state().await;
-            self.step(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
-            self.step(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
+            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             self
         }
     }
@@ -265,7 +268,7 @@ pub mod test {
         let _setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(true).await;
+        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), true).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 
@@ -276,11 +279,11 @@ pub mod test {
         let mut issuer = _issuer().to_request_received_state().await;
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer.send_credential(_send_message_but_fail().unwrap()).await;
+        let send_result = issuer.send_credential(_dummy_wallet_handle(), _send_message_but_fail().unwrap()).await;
         assert_eq!(send_result.is_err(), true);
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer.send_credential(_send_message().unwrap()).await;
+        let send_result = issuer.send_credential(_dummy_wallet_handle(), _send_message().unwrap()).await;
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
     }
@@ -292,7 +295,7 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
+        issuer.build_credential_offer_msg(_dummy_wallet_handle(), _offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -300,17 +303,17 @@ pub mod test {
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).await.unwrap();
+        issuer.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer.send_credential(_send_message().unwrap()).await.unwrap();
+        issuer.send_credential(_dummy_wallet_handle(), _send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialAck(_ack())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).await.unwrap();
+        issuer.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
@@ -321,7 +324,7 @@ pub mod test {
         let mut issuer = _issuer_revokable_from_proposal();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
+        issuer.build_credential_offer_msg(_dummy_wallet_handle(), _offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -329,10 +332,10 @@ pub mod test {
             "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).await.unwrap();
+        issuer.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
-        issuer.build_credential_offer_msg(_offer_info(), Some("comment".into())).await.unwrap();
+        issuer.build_credential_offer_msg(_dummy_wallet_handle(), _offer_info(), Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
 
@@ -340,17 +343,17 @@ pub mod test {
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).await.unwrap();
+        issuer.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        issuer.send_credential(_send_message().unwrap()).await.unwrap();
+        issuer.send_credential(_dummy_wallet_handle(), _send_message().unwrap()).await.unwrap();
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialAck(_ack())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer.step(msg.into(), _send_message()).await.unwrap();
+        issuer.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 

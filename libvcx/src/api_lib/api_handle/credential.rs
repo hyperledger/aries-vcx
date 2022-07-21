@@ -8,6 +8,7 @@ use aries_vcx::{
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
@@ -83,8 +84,9 @@ pub async fn credential_create_with_msgid(source_id: &str, connection_handle: u3
     Ok((handle, offer))
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
-    let mut credential = HANDLE_MAP.get_cloned(handle)?;
+pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
+    let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
+    let wallet_handle = get_main_wallet_handle();
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
     let send_message = connection::send_message_closure(connection_handle)?;
@@ -92,16 +94,16 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-        credential.step(message.into(), Some(send_message)).await?;
+        credential.step(wallet_handle, message.into(), Some(send_message)).await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(msg.into(), Some(send_message)).await?;
+            credential.step(wallet_handle, msg.into(), Some(send_message)).await?;
             connection::update_message_status(connection_handle, &uid).await?;
         }
     }
     let state = credential.get_state().into();
-    HANDLE_MAP.insert(handle, credential)?;
+    HANDLE_MAP.insert(credential_handle, credential)?;
     Ok(state)
 }
 
@@ -143,13 +145,13 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 
 pub async fn is_revokable(handle: u32) -> VcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    credential.is_revokable().await.map_err(|err| err.into())
+    credential.is_revokable(get_main_wallet_handle()).await.map_err(|err| err.into())
 }
 
 pub async fn delete_credential(handle: u32) -> VcxResult<u32> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle );
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    credential.delete_credential().await?;
+    credential.delete_credential(get_main_wallet_handle()).await?;
     HANDLE_MAP.release(handle)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -173,7 +175,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = connection::get_pw_did(connection_handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
-    credential.send_request(my_pw_did, send_message).await?;
+    credential.send_request(get_main_wallet_handle(), my_pw_did, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -274,7 +276,7 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> VcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
-    credential.decline_offer(comment, send_message).await?;
+    credential.decline_offer(get_main_wallet_handle(), comment, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
 }

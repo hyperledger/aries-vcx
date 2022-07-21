@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::protocols::SendClosure;
@@ -161,7 +162,10 @@ impl VerifierSM {
         Ok(Self { source_id, thread_id, state })
     }
 
-    pub async fn step(self, message: VerifierMessages, send_message: Option<SendClosure>) -> VcxResult<Self> {
+    pub async fn step(self,
+                      wallet_handle: WalletHandle,
+                      message: VerifierMessages, 
+                      send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
         let state_name = self.state.to_string();
         let Self { source_id, state, thread_id } = self.clone();
@@ -214,7 +218,7 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 match message {
                     VerifierMessages::VerifyPresentation(presentation) => {
-                        match state.verify_presentation(&presentation, &thread_id).await {
+                        match state.verify_presentation(wallet_handle, &presentation, &thread_id).await {
                             Ok(()) => {
                                 if presentation.please_ack.is_some() {
                                     let ack = PresentationAck::create().set_thread_id(&state.presentation_request.id.0);
@@ -365,7 +369,10 @@ pub mod test {
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
 
     use super::*;
-
+    fn _dummy_wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
+    
     pub fn _verifier_sm() -> VerifierSM {
         VerifierSM::new(&source_id())
     }
@@ -384,12 +391,12 @@ pub mod test {
 
     impl VerifierSM {
         async fn to_presentation_proposal_received_state(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
             self
         }
 
         async fn to_presentation_proposal_received_state_with_request(mut self) -> VerifierSM {
-            self = self.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), None).await.unwrap();
             self = self.set_request(&_presentation_request_data(), Some("foo".into())).unwrap();
             self
         }
@@ -401,7 +408,7 @@ pub mod test {
 
         async fn to_finished_state(mut self) -> VerifierSM {
             self = self.to_presentation_request_sent_state();
-            self = self.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             self
         }
     }
@@ -464,7 +471,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
@@ -487,13 +494,13 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
         }
@@ -526,7 +533,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
-            verifier_sm = verifier_sm.step(VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::RejectPresentationProposal(_reason()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Declined(ProblemReport::default()).code(), verifier_sm.presentation_status());
@@ -539,10 +546,10 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
 
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
 
@@ -555,7 +562,7 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
@@ -570,7 +577,7 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
@@ -586,7 +593,7 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            let res = verifier_sm.clone().step(VerifierMessages::VerifyPresentation(_presentation_1()), _send_message()).await;
+            let res = verifier_sm.clone().step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation_1()), _send_message()).await;
             assert!(res.is_err());
         }
 
@@ -597,7 +604,7 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
         }
@@ -609,7 +616,7 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(Status::Failed(_problem_report()).code(), verifier_sm.presentation_status());
@@ -622,12 +629,12 @@ pub mod test {
 
             let mut verifier_sm = _verifier_sm_from_request();
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
-            verifier_sm = verifier_sm.step(VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
 
-            verifier_sm = verifier_sm.step(VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
+            verifier_sm = verifier_sm.step(_dummy_wallet_handle(), VerifierMessages::PresentationProposalReceived(_presentation_proposal()), _send_message()).await.unwrap();
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
         }
     }

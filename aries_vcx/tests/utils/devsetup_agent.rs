@@ -34,7 +34,7 @@ pub mod test {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::global::settings;
-    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, main_wallet_configure_issuer, open_as_main_wallet};
+    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, main_wallet_configure_issuer, open_as_main_wallet};
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
 
@@ -193,7 +193,7 @@ pub mod test {
                 connection: Connection::create("faber", true, &get_main_agency_client().unwrap()).await.unwrap(),
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent: PublicAgent::create(&get_main_agency_client().unwrap(), "faber", &institution_did).await.unwrap(),
+                agent: PublicAgent::create(get_main_wallet_handle(), &get_main_agency_client().unwrap(), "faber", &institution_did).await.unwrap(),
             };
             close_main_wallet().await.unwrap();
             faber
@@ -247,8 +247,8 @@ pub mod test {
 
         pub async fn create_invite(&mut self) -> String {
             self.activate().await.unwrap();
-            self.connection.connect(&get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
@@ -263,18 +263,18 @@ pub mod test {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_ping(None).await.unwrap();
+            self.connection.send_ping(get_main_wallet_handle(),None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_discovery_features(None, None).await.unwrap();
+            self.connection.send_discovery_features(get_main_wallet_handle(),None, None).await.unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
@@ -300,19 +300,19 @@ pub mod test {
                 tails_file: None,
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
-            self.issuer_credential.build_credential_offer_msg(offer_info, None).await.unwrap();
-            self.issuer_credential.send_credential_offer(self.connection.send_message_closure().unwrap()).await.unwrap();
-            self.issuer_credential.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info, None).await.unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
         pub async fn send_credential(&mut self) {
             self.activate().await.unwrap();
-            self.issuer_credential.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
-            self.issuer_credential.send_credential(self.connection.send_message_closure().unwrap()).await.unwrap();
-            self.issuer_credential.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.send_credential(get_main_wallet_handle(), self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
         }
 
@@ -321,8 +321,8 @@ pub mod test {
             self.verifier = self.create_presentation_request().await;
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
-            self.verifier.send_presentation_request(self.connection.send_message_closure().unwrap()).await.unwrap();
-            self.verifier.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
+            self.verifier.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
 
             assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
@@ -335,7 +335,7 @@ pub mod test {
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().await.unwrap();
 
-            self.verifier.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
@@ -395,14 +395,14 @@ pub mod test {
         pub async fn accept_invite(&mut self, invite: &str) {
             self.activate().await.unwrap();
             self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true, &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.connect(&get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.connect(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
@@ -428,13 +428,13 @@ pub mod test {
             assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
-            self.credential.send_request(pw_did, self.connection.send_message_closure().unwrap()).await.unwrap();
+            self.credential.send_request(get_main_wallet_handle(), pw_did, self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 
         pub async fn accept_credential(&mut self) {
             self.activate().await.unwrap();
-            self.credential.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
@@ -471,7 +471,7 @@ pub mod test {
         }
 
         pub async fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
-            let credentials = self.prover.retrieve_credentials().await.unwrap();
+            let credentials = self.prover.retrieve_credentials(get_main_wallet_handle()).await.unwrap();
             let credentials: std::collections::HashMap<String, serde_json::Value> = serde_json::from_str(&credentials).unwrap();
 
             let mut use_credentials = json!({});
@@ -493,16 +493,16 @@ pub mod test {
 
             let credentials = self.get_credentials_for_presentation().await;
 
-            self.prover.generate_presentation(credentials.to_string(), String::from("{}")).await.unwrap();
+            self.prover.generate_presentation(get_main_wallet_handle(), credentials.to_string(), String::from("{}")).await.unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-            self.prover.send_presentation(self.connection.send_message_closure().unwrap()).await.unwrap();
+            self.prover.send_presentation(get_main_wallet_handle(), self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.activate().await.unwrap();
-            self.prover.update_state(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.prover.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }
