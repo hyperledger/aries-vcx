@@ -6,10 +6,10 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{RwLock, RwLockWriteGuard};
 
-use strum::IntoEnumIterator;
-
 use crate::agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
+use crate::global;
+use crate::libindy::utils::wallet::IssuerConfig;
 use crate::utils::error;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
@@ -54,44 +54,6 @@ pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
-    pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());
-}
-
-trait ToString {
-    fn to_string(&self) -> String;
-}
-
-impl ToString for HashMap<String, String> {
-    fn to_string(&self) -> String {
-        let mut v = self.clone();
-        v.insert(CONFIG_WALLET_KEY.to_string(), MASK_VALUE.to_string());
-        serde_json::to_string(&v).unwrap()
-    }
-}
-
-pub fn get_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
-    let agency_client = AGENCY_CLIENT.write()?;
-    Ok(agency_client)
-}
-
-pub fn get_agency_client() -> VcxResult<AgencyClient> {
-    let agency_client = AGENCY_CLIENT.read()?.deref().clone();
-    Ok(agency_client)
-}
-
-pub fn set_testing_defaults() -> u32 {
-    trace!("set_testing_defaults >>>");
-
-    let mut settings = SETTINGS.write().unwrap();
-
-    settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
-    settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
-    settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
-    settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
-
-    get_agency_client_mut().unwrap().set_testing_defaults_agency();
-    error::SUCCESS.code_num
 }
 
 pub fn enable_indy_mocks() -> VcxResult<()> {
@@ -136,6 +98,27 @@ pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     Ok(())
 }
 
+pub fn reset_config_values() {
+    trace!("reset_config_values >>>");
+    let mut config = SETTINGS.write().unwrap();
+    config.clear();
+}
+
+pub fn set_test_configs() -> u32 {
+    trace!("set_testing_defaults >>>");
+
+    let mut settings = SETTINGS.write().unwrap();
+
+    settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
+    settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
+    settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
+    settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
+    settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
+
+    global::agency_client::get_main_agency_client_mut().unwrap().set_testing_defaults_agency();
+    error::SUCCESS.code_num
+}
+
 pub fn get_protocol_version() -> usize {
     let protocol_version = match get_config_value(CONFIG_PROTOCOL_VERSION) {
         Ok(ver) => ver.parse::<usize>().unwrap_or_else(|err| {
@@ -156,63 +139,14 @@ pub fn get_protocol_version() -> usize {
     }
 }
 
-pub fn get_actors() -> Vec<Actors> {
-    get_config_value(CONFIG_ACTORS)
-        .and_then(|actors|
-            serde_json::from_str(&actors)
-                .map_err(|_| VcxError::from(VcxErrorKind::InvalidOption))
-        ).unwrap_or_else(|_| Actors::iter().collect())
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq, EnumIter)]
-#[serde(rename_all = "lowercase")]
-pub enum Actors {
-    Inviter,
-    Invitee,
-    Issuer,
-    Holder,
-    Prover,
-    Verifier,
-    Sender,
-    Receiver,
-}
-
-pub fn reset_settings() {
-    trace!("reset_settings >>>");
-    let mut config = SETTINGS.write().unwrap();
-    config.clear();
-}
-
-pub fn reset_agency_client() {
-    trace!("reset_agency_client >>>");
-    let mut agency_client = AGENCY_CLIENT.write().unwrap();
-    *agency_client = AgencyClient::default();
-}
-
 #[cfg(test)]
 pub mod tests {
     use crate::utils::devsetup::{SetupDefaults, TempFile};
-    use crate::utils::file::read_file;
 
     use super::*;
 
     fn _pool_config() -> String {
         r#"{"timeout":40}"#.to_string()
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_read_config_file() {
-        let config_json = json!({
-            "foo" : "value1",
-            "bar":"value2",
-        }).to_string();
-        let _setup = SetupDefaults::init();
-
-        let mut config_file: TempFile = TempFile::create("test_init.json");
-        config_file.write(&config_json);
-
-        assert_eq!(read_file(&config_file.path).unwrap(), config_json);
     }
 
     fn _mandatory_config() -> HashMap<String, String> {
@@ -236,4 +170,9 @@ pub mod tests {
         set_config_value(&key, &value1);
         assert_eq!(get_config_value(&key).unwrap(), value1);
     }
+}
+
+pub fn init_issuer_config(config: &IssuerConfig) -> VcxResult<()> {
+    set_config_value(CONFIG_INSTITUTION_DID, &config.institution_did)?;
+    Ok(())
 }

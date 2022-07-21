@@ -846,7 +846,7 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::get_temp_dir_path;

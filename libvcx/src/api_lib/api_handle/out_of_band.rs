@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::agency_client::get_main_agency_client;
 use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
@@ -135,7 +136,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
 
 pub async fn build_connection(handle: u32) -> VcxResult<String> {
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    oob.build_connection(false).await?.to_string().map_err(|err| err.into())
+    oob.build_connection(&get_main_agency_client().unwrap(), false).await?.to_string().map_err(|err| err.into())
 }
 
 pub fn get_thread_id_sender(handle: u32) -> VcxResult<String> {

@@ -4,20 +4,6 @@ use std::path::{Path, PathBuf};
 
 use crate::error::prelude::*;
 
-pub fn read_file<P: AsRef<Path>>(file: P) -> VcxResult<String> {
-    let mut file = File::open(file)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read file: {:?}", err)))?;
-
-    let content = {
-        let mut s = String::new();
-        file.read_to_string(&mut s)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Cannot read file: {:?}", err)))?;
-        s
-    };
-
-    Ok(content)
-}
-
 pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxResult<()> where P: std::convert::AsRef<std::ffi::OsStr> {
     let path = PathBuf::from(&file);
 

@@ -1,6 +1,7 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
@@ -35,11 +36,11 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-        credential.step(message.into(), Some(send_message)).await?;
+        credential.step(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(msg.into(), Some(send_message)).await?;
+            credential.step(get_main_wallet_handle(), msg.into(), Some(send_message)).await?;
             connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -117,7 +118,7 @@ pub async fn build_credential_offer_msg_v2(credential_handle: u32,
         }
 
     };
-    credential.build_credential_offer_msg(offer_info.clone(), comment.map(|s| s.to_string())).await?;
+    credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info.clone(), comment.map(|s| s.to_string())).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
 
@@ -147,7 +148,7 @@ pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<Stri
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.send_credential(connection::send_message_closure(connection_handle)?).await?;
+    credential.send_credential(get_main_wallet_handle(), connection::send_message_closure(connection_handle)?).await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -155,12 +156,12 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
 pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.revoke_credential(true).await.map_err(|err| err.into())
+    credential.revoke_credential(get_main_wallet_handle(), true).await.map_err(|err| err.into())
 }
 
 pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.revoke_credential(false).await.map_err(|err| err.into())
+    credential.revoke_credential(get_main_wallet_handle(), false).await.map_err(|err| err.into())
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
@@ -204,7 +205,7 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 pub mod tests {
     use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use aries_vcx::libindy::utils::LibindyMock;
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWithWalletAndAgency};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
@@ -216,14 +217,6 @@ pub mod tests {
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
-
-    pub async fn util_put_credential_def_in_issuer_wallet(_schema_seq_num: u32, _wallet_handle: i32) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let tag = "test_tag";
-        let config = "{support_revocation: false}";
-
-        libindy_create_and_store_credential_def(&issuer_did, SCHEMAS_JSON, tag, None, config).await.unwrap();
-    }
 
     fn _issuer_credential_create() -> u32 {
         issuer_credential_create("1".to_string()).unwrap()

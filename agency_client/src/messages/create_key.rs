@@ -90,7 +90,7 @@ mod tests {
 
         let for_did = "11235yBzrpJQmNyZzgoTqB";
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
-        let client = AgencyClient::new().unwrap();
+        let client = AgencyClient::new();
         let (res_did, res_vk) = client.create_connection_agent(for_did, for_verkey).await.unwrap();
 
         assert_eq!(res_did, "MNepeSWtGfhnv8jLB1sFZC");

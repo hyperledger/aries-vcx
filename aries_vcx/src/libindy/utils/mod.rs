@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use indy_sys::CommandHandle;
 
-use crate::settings;
+use crate::global::settings;
 
 pub mod ledger;
 pub mod anoncreds;
@@ -48,6 +48,7 @@ impl LibindyMock {
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
     use indy;
+    use crate::global;
 
     use super::*;
 
@@ -57,7 +58,7 @@ pub mod test_setup {
     pub struct WalletSetup {
         pub name: String,
         pub wallet_config: String,
-        pub wh: indy::WalletHandle,
+        pub wallet_handle: indy::WalletHandle,
     }
 
     pub async fn setup_wallet() -> WalletSetup {
@@ -66,9 +67,9 @@ pub mod test_setup {
 
         indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
         let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
-        wallet::set_wallet_handle(wallet_handle);
+        global::wallet::set_wallet_handle(wallet_handle);
 
-        WalletSetup { name, wallet_config, wh: wallet_handle }
+        WalletSetup { name, wallet_config, wallet_handle: wallet_handle }
     }
 
     pub async fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
@@ -84,8 +85,8 @@ pub mod test_setup {
 
     impl Drop for WalletSetup {
         fn drop(&mut self) {
-            if self.wh.0 != 0 {
-                futures::executor::block_on(indy::wallet::close_wallet(self.wh)).unwrap();
+            if self.wallet_handle.0 != 0 {
+                futures::executor::block_on(indy::wallet::close_wallet(self.wallet_handle)).unwrap();
                 futures::executor::block_on(indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS)).unwrap();
             }
         }
@@ -95,8 +96,9 @@ pub mod test_setup {
 #[allow(unused_imports)]
 #[cfg(feature = "pool_tests")]
 pub mod tests {
-    use crate::init::open_main_pool;
-    use crate::settings;
+    use crate::global;
+    use crate::global::pool::open_main_pool;
+    use crate::global::settings;
     use crate::utils::devsetup::*;
 
     use super::*;
@@ -109,6 +111,6 @@ pub mod tests {
         let setup_pool = SetupPoolConfig::init().await;
 
         open_main_pool(&setup_pool.pool_config).await.unwrap();
-        wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).await.unwrap();
+        global::wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).await.unwrap();
     }
 }

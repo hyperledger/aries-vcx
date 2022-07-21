@@ -1,4 +1,5 @@
 use std::clone::Clone;
+use agency_client::agency_client::AgencyClient;
 
 use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::handlers::connection::connection::Connection;
@@ -92,9 +93,9 @@ impl OutOfBandReceiver {
         return Ok(None);
     }
 
-    pub async fn build_connection(&self, autohop_enabled: bool) -> VcxResult<Connection> {
+    pub async fn build_connection(&self, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
-        Connection::create_with_invite(&self.oob.id.0, Invitation::OutOfBand(self.oob.clone()), autohop_enabled).await
+        Connection::create_with_invite(&self.oob.id.0, Invitation::OutOfBand(self.oob.clone()), autohop_enabled, agency_client).await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {

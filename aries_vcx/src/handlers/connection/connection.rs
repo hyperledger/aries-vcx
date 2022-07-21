@@ -4,9 +4,11 @@ use std::collections::HashMap;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
+use indy_sys::WalletHandle;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
+use agency_client::agency_client::AgencyClient;
 
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
@@ -15,7 +17,6 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
 use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
@@ -79,10 +80,11 @@ pub enum Actor {
 }
 
 impl Connection {
-    pub async fn create(source_id: &str, autohop_enabled: bool) -> VcxResult<Self> {
+    pub async fn create(source_id: &str, autohop_enabled: bool, agency_client: &AgencyClient) -> VcxResult<Self> {
         trace!("Connection::create >>> source_id: {}", source_id);
-        let pairwise_info = PairwiseInfo::create().await?;
-        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
+        // todo: Would be cleaner to pass wallet_handle as argument instead of reading off AgencyClient
+        let pairwise_info = PairwiseInfo::create(agency_client.get_wallet_handle()).await?;
+        let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         Ok(Self {
             cloud_agent_info,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
@@ -90,10 +92,10 @@ impl Connection {
         })
     }
 
-    pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
+    pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool, agency_client: &AgencyClient,) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
-        let pairwise_info = PairwiseInfo::create().await?;
-        let cloud_agent_info = CloudAgentInfo::create(&pairwise_info).await?;
+        let pairwise_info = PairwiseInfo::create(agency_client.get_wallet_handle()).await?;
+        let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         let mut connection = Self {
             cloud_agent_info,
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info)),
@@ -103,7 +105,7 @@ impl Connection {
         Ok(connection)
     }
 
-    pub async fn create_with_request(request: Request, public_agent: &PublicAgent) -> VcxResult<Self> {
+    pub async fn create_with_request(wallet_handle: WalletHandle, request: Request, public_agent: &PublicAgent, agency_client: &AgencyClient,) -> VcxResult<Self> {
         trace!("Connection::create_with_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
         let pairwise_info: PairwiseInfo = public_agent.into();
         let mut connection = Self {
@@ -111,7 +113,7 @@ impl Connection {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection.process_request(request).await
+        connection.process_request(wallet_handle, request, agency_client).await
     }
 
     pub fn from_parts(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, cloud_agent_info: CloudAgentInfo, state: SmConnectionState, autohop_enabled: bool) -> Self {
@@ -298,15 +300,15 @@ impl Connection {
         Ok(())
     }
 
-    async fn process_request(&mut self, request: Request) -> VcxResult<Self> {
+    async fn process_request(&mut self, wallet_handle: WalletHandle, request: Request, agency_client: &AgencyClient) -> VcxResult<Self> {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let new_pairwise_info = PairwiseInfo::create().await?;
-                let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info).await?;
-                let new_routing_keys = new_cloud_agent.routing_keys()?;
-                let new_service_endpoint = new_cloud_agent.service_endpoint()?;
-                (SmConnection::Inviter(sm_inviter.clone().handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint, send_message).await?), new_cloud_agent)
+                let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
+                let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
+                let new_service_endpoint = agency_client.get_agency_url_full();
+                (SmConnection::Inviter(sm_inviter.clone().handle_connection_request(wallet_handle, request, &new_pairwise_info, new_routing_keys, new_service_endpoint, send_message).await?), new_cloud_agent)
             }
             SmConnection::Invitee(_) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -366,19 +368,19 @@ impl Connection {
     //     Ok(None)
     // }
 
-    fn _update_state(&mut self, message: Option<A2AMessage>) -> BoxFuture<'_, VcxResult<()>> {
+    fn _update_state(&mut self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: AgencyClient) -> BoxFuture<'_, VcxResult<()>> {
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
                 SmConnection::Inviter(_) => {
-                    self._step_inviter(message).await?
+                    self._step_inviter(wallet_handle, message, &agency_client).await?
                 }
                 SmConnection::Invitee(_) => {
-                    self._step_invitee(message).await?
+                    self._step_invitee(wallet_handle, message).await?
                 }
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled.clone() {
-                let res = self._update_state(None).await;
+                let res = self._update_state(wallet_handle, None, agency_client).await;
                 res
             } else {
                 Ok(())
@@ -386,20 +388,20 @@ impl Connection {
         })
     }
 
-    pub async fn update_state(&mut self) -> VcxResult<()> {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         if self.is_in_null_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
 
-        let messages = self.get_messages_noauth().await?;
+        let messages = self.get_messages_noauth(agency_client).await?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
                 trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-                self._update_state(Some(message)).await?;
-                self.cloud_agent_info().clone().update_message_status(self.pairwise_info(), uid).await?;
+                self._update_state(wallet_handle, Some(message), agency_client.clone()).await?;
+                self.cloud_agent_info().clone().update_message_status(agency_client, self.pairwise_info(), uid).await?;
             }
             None => {
                 // Todo: Restore lookup into bootstrap cloud agent
@@ -412,41 +414,41 @@ impl Connection {
                 //     }
                 // } else {
                 trace!("Connection::update_state >>> trying to update state without message");
-                self._update_state(None).await?;
+                self._update_state(wallet_handle, None, agency_client.clone()).await?;
                 // }
             }
         }
         Ok(())
     }
 
-    pub async fn update_state_with_message(&mut self, message: &A2AMessage) -> VcxResult<()> {
+    pub async fn update_state_with_message(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, message: &A2AMessage) -> VcxResult<()> {
         trace!("Connection: update_state_with_message: {:?}", message);
         if self.is_in_null_state() {
             warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
             return Ok(());
         }
-        self._update_state(Some(message.clone())).await?;
+        self._update_state(wallet_handle, Some(message.clone()), agency_client.clone()).await?;
         Ok(())
     }
 
-    async fn _step_inviter(&self, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
+    async fn _step_inviter(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: &AgencyClient) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
-                            let new_pairwise_info = PairwiseInfo::create().await?;
-                            let new_cloud_agent = CloudAgentInfo::create(&new_pairwise_info).await?;
-                            let new_routing_keys = new_cloud_agent.routing_keys()?;
-                            let new_service_endpoint = new_cloud_agent.service_endpoint()?;
-                            let sm_connection = sm_inviter.handle_connection_request(request, &new_pairwise_info, new_routing_keys, new_service_endpoint, send_message).await?;
+                            let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                            let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
+                            let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
+                            let new_service_endpoint = new_cloud_agent.service_endpoint(agency_client)?;
+                            let sm_connection = sm_inviter.handle_connection_request(wallet_handle, request, &new_pairwise_info, new_routing_keys, new_service_endpoint, send_message).await?;
                             (sm_connection, Some(new_cloud_agent), true)
                         }
                         A2AMessage::Ack(ack) => {
-                            (sm_inviter.handle_ack(ack, send_message).await?, None, false)
+                            (sm_inviter.handle_ack(wallet_handle, ack, send_message).await?, None, false)
                         }
                         A2AMessage::Ping(ping) => {
-                            (sm_inviter.handle_ping(ping, send_message).await?, None, false)
+                            (sm_inviter.handle_ping(wallet_handle, ping, send_message).await?, None, false)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_inviter.handle_problem_report(problem_report)?, None, false)
@@ -455,10 +457,10 @@ impl Connection {
                             (sm_inviter.handle_ping_response(ping_response)?, None, false)
                         }
                         A2AMessage::OutOfBandHandshakeReuse(reuse) => {
-                            (sm_inviter.handle_handshake_reuse(reuse, send_message).await?, None, false)
+                            (sm_inviter.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, None, false)
                         }
                         A2AMessage::Query(query) => {
-                            (sm_inviter.handle_discovery_query(query, send_message).await?, None, false)
+                            (sm_inviter.handle_discovery_query(wallet_handle, query, send_message).await?, None, false)
                         }
                         A2AMessage::Disclose(disclose) => {
                             (sm_inviter.handle_disclose(disclose)?, None, false)
@@ -469,7 +471,7 @@ impl Connection {
                     }
                     None => {
                         if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                            (sm_inviter.handle_send_response(&send_message).await?, None, false)
+                            (sm_inviter.handle_send_response(wallet_handle, &send_message).await?, None, false)
                         } else {
                             (sm_inviter.clone(), None, false)
                         }
@@ -491,7 +493,7 @@ impl Connection {
         }
     }
 
-    async fn _step_invitee(&self, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
+    async fn _step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
@@ -509,7 +511,7 @@ impl Connection {
                             (sm_invitee.handle_ack(ack)?, false)
                         }
                         A2AMessage::Ping(ping) => {
-                            (sm_invitee.handle_ping(ping, send_message).await?, false)
+                            (sm_invitee.handle_ping(wallet_handle, ping, send_message).await?, false)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
@@ -518,10 +520,10 @@ impl Connection {
                             (sm_invitee.handle_ping_response(ping_response)?, false)
                         }
                         A2AMessage::OutOfBandHandshakeReuse(reuse) => {
-                            (sm_invitee.handle_handshake_reuse(reuse, send_message).await?, false)
+                            (sm_invitee.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, false)
                         }
                         A2AMessage::Query(query) => {
-                            (sm_invitee.handle_discovery_query(query, send_message).await?, false)
+                            (sm_invitee.handle_discovery_query(wallet_handle, query, send_message).await?, false)
                         }
                         A2AMessage::Disclose(disclose) => {
                             (sm_invitee.handle_disclose(disclose)?, false)
@@ -531,7 +533,7 @@ impl Connection {
                         }
                     }
                     None => {
-                        (sm_invitee.handle_send_ack(&send_message).await?, false)
+                        (sm_invitee.handle_send_ack(wallet_handle, &send_message).await?, false)
                     }
                 };
                 let connection = Self {
@@ -548,45 +550,45 @@ impl Connection {
         }
     }
 
-    pub async fn connect(&mut self) -> VcxResult<()> {
+    pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?)?)
+                SmConnection::Inviter(sm_inviter.clone().handle_connect(self.cloud_agent_info.routing_keys(agency_client)?, self.cloud_agent_info.service_endpoint(agency_client)?)?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_connect(self.cloud_agent_info.routing_keys()?, self.cloud_agent_info.service_endpoint()?, send_message).await?)
+                SmConnection::Invitee(sm_invitee.clone().handle_connect(wallet_handle, self.cloud_agent_info.routing_keys(agency_client)?, self.cloud_agent_info.service_endpoint(agency_client)?, send_message).await?)
             }
         };
         Ok(())
     }
 
-    pub async fn update_message_status(&self, uid: &str) -> VcxResult<()> {
+    pub async fn update_message_status(&self, uid: &str, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::update_message_status >>> uid: {:?}", uid);
-        self.cloud_agent_info().update_message_status(self.pairwise_info(), uid.to_string()).await
+        self.cloud_agent_info().update_message_status(agency_client, self.pairwise_info(), uid.to_string()).await
     }
 
-    pub async fn get_messages_noauth(&self) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages_noauth(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let messages = self.cloud_agent_info().get_messages_noauth(sm_inviter.pairwise_info(), None).await?;
+                let messages = self.cloud_agent_info().get_messages_noauth(agency_client, sm_inviter.pairwise_info(), None).await?;
                 Ok(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                let messages = self.cloud_agent_info().get_messages_noauth(sm_invitee.pairwise_info(), None).await?;
+                let messages = self.cloud_agent_info().get_messages_noauth(agency_client, sm_invitee.pairwise_info(), None).await?;
                 Ok(messages)
             }
         }
     }
 
-    pub async fn get_messages(&self) -> VcxResult<HashMap<String, A2AMessage>> {
+    pub async fn get_messages(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
         let expected_sender_vk = self.get_expected_sender_vk()?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                Ok(self.cloud_agent_info().get_messages(&expected_sender_vk, sm_inviter.pairwise_info()).await?)
+                Ok(self.cloud_agent_info().get_messages(agency_client, &expected_sender_vk, sm_inviter.pairwise_info()).await?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                Ok(self.cloud_agent_info().get_messages(&expected_sender_vk, sm_invitee.pairwise_info()).await?)
+                Ok(self.cloud_agent_info().get_messages(agency_client, &expected_sender_vk, sm_invitee.pairwise_info()).await?)
             }
         }
     }
@@ -599,19 +601,19 @@ impl Connection {
             )
     }
 
-    pub async fn get_message_by_id(&self, msg_id: &str) -> VcxResult<A2AMessage> {
+    pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk()?;
-        self.cloud_agent_info().get_message_by_id(msg_id, &expected_sender_vk, self.pairwise_info()).await
+        self.cloud_agent_info().get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info()).await
     }
 
-    pub fn send_message_closure(&self) -> VcxResult<SendClosure> {
+    pub fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Cannot send message: Remote Connection information is not set"))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
         Ok(Box::new(move |message: A2AMessage| {
-            Box::pin(send_message(sender_vk.clone(), did_doc.clone(), message))
+            Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
         }))
     }
 
@@ -627,27 +629,27 @@ impl Connection {
         }
     }
 
-    pub async fn send_generic_message(&self, message: &str) -> VcxResult<String> {
+    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
         trace!("Connection::send_generic_message >>> message: {:?}", message);
         let message = Self::parse_generic_message(message);
-        let send_message = self.send_message_closure()?;
+        let send_message = self.send_message_closure(wallet_handle)?;
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_ping(&mut self, comment: Option<String>) -> VcxResult<()> {
+    pub async fn send_ping(&mut self, wallet_handle: WalletHandle, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_ping >>> comment: {:?}", comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_send_ping(comment, send_message).await?)
+                SmConnection::Inviter(sm_inviter.clone().handle_send_ping(wallet_handle, comment, send_message).await?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_send_ping(comment, send_message).await?)
+                SmConnection::Invitee(sm_invitee.clone().handle_send_ping(wallet_handle, comment, send_message).await?)
             }
         };
         Ok(())
     }
 
-    pub async fn send_handshake_reuse(&self, oob_msg: &str) -> VcxResult<()> {
+    pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
         trace!("Connection::send_handshake_reuse >>>");
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
@@ -658,34 +660,34 @@ impl Connection {
         };
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(oob, send_message).await?)
+                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(wallet_handle, oob, send_message).await?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(oob, send_message).await?)
+                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(wallet_handle, oob, send_message).await?)
             }
         };
         Ok(())
     }
 
-    pub async fn delete(&self) -> VcxResult<()> {
+    pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
-        self.cloud_agent_info().destroy(self.pairwise_info()).await
+        self.cloud_agent_info().destroy(agency_client, self.pairwise_info()).await
     }
 
-    pub async fn send_discovery_features(&mut self, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
+    pub async fn send_discovery_features(&mut self, wallet_handle: WalletHandle, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_discover_features(query, comment, send_message).await?)
+                SmConnection::Inviter(sm_inviter.clone().handle_discover_features(wallet_handle, query, comment, send_message).await?)
             }
             SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_discover_features(query, comment, send_message).await?)
+                SmConnection::Invitee(sm_invitee.clone().handle_discover_features(wallet_handle, query, comment, send_message).await?)
             }
         };
         Ok(())
     }
 
-    pub fn get_connection_info(&self) -> VcxResult<String> {
+    pub fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
         let agent_info = self.cloud_agent_info().clone();
@@ -695,8 +697,8 @@ impl Connection {
         let current = SideConnectionInfo {
             did: pairwise_info.pw_did.clone(),
             recipient_keys: recipient_keys.clone(),
-            routing_keys: agent_info.routing_keys()?,
-            service_endpoint: agent_info.service_endpoint()?,
+            routing_keys: agent_info.routing_keys(agency_client)?,
+            service_endpoint: agent_info.service_endpoint(agency_client)?,
             protocols: Some(self.get_protocols()),
         };
 
@@ -720,16 +722,15 @@ impl Connection {
         return Ok(connection_info_json);
     }
 
-    pub async fn download_messages(&self, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<DownloadedMessage>> {
-        let wallet_handle = get_main_wallet_handle().0; // todo: agency client wallet handle should be used
+    pub async fn download_messages(&self, agency_client: &AgencyClient, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<DownloadedMessage>> {
         match self.get_state() {
             ConnectionState::Invitee(InviteeState::Initial) |
             ConnectionState::Inviter(InviterState::Initial) |
             ConnectionState::Inviter(InviterState::Invited) => {
                 let msgs = futures::stream::iter(self.cloud_agent_info()
-                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| msg.decrypt_noauth(wallet_handle) )
+                    .then(|msg| msg.decrypt_noauth(agency_client.get_wallet_handle()) )
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<DownloadedMessage>>()
                     .await;
@@ -738,9 +739,9 @@ impl Connection {
             _ => {
                 let expected_sender_vk = self.remote_vk()?;
                 let msgs = futures::stream::iter(self.cloud_agent_info()
-                    .download_encrypted_messages(uids, status_codes, self.pairwise_info())
+                    .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| msg.decrypt_auth(wallet_handle, &expected_sender_vk))
+                    .then(|msg| msg.decrypt_auth(agency_client.get_wallet_handle(), &expected_sender_vk))
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<DownloadedMessage>>()
                     .await;
@@ -832,6 +833,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 
 #[cfg(test)]
 mod tests {
+    use indy_sys::WalletHandle;
     use crate::handlers::connection::public_agent::tests::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::request::tests::_request;
@@ -843,7 +845,9 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true).await.unwrap();
+        let agency_client = AgencyClient::new();
+        agency_client.enable_test_mode();
+        let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
 
@@ -851,7 +855,9 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true).await.unwrap();
+        let agency_client = AgencyClient::new();
+        agency_client.enable_test_mode();
+        let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
 
@@ -859,16 +865,18 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
         let _setup = SetupMocks::init();
+        let agency_client = AgencyClient::new();
+        agency_client.enable_test_mode();
 
         let pub_inv = _public_invitation_random_id();
-        let mut connection = Connection::create_with_invite("abcd", Invitation::Public(pub_inv.clone()), true).await.unwrap();
-        connection.connect().await.unwrap();
+        let mut connection = Connection::create_with_invite("abcd", Invitation::Public(pub_inv.clone()), true, &agency_client).await.unwrap();
+        connection.connect(WalletHandle(0), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
         assert_ne!(connection.get_thread_id(), pub_inv.id.0);
 
         let pw_inv = _pairwise_invitation_random_id();
-        let mut connection = Connection::create_with_invite("dcba", Invitation::Pairwise(pw_inv.clone()), true).await.unwrap();
-        connection.connect().await.unwrap();
+        let mut connection = Connection::create_with_invite("dcba", Invitation::Pairwise(pw_inv.clone()), true, &agency_client).await.unwrap();
+        connection.connect(WalletHandle(0), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
         assert_eq!(connection.get_thread_id(), pw_inv.id.0);
     }
@@ -877,7 +885,9 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_with_request(_request(), &_public_agent()).await.unwrap();
+        let agency_client = AgencyClient::new();
+        agency_client.enable_test_mode();
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
     }
 }

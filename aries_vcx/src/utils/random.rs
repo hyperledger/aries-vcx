@@ -19,5 +19,5 @@ pub fn generate_random_schema_version() -> String {
 }
 
 pub fn generate_random_did() -> String {
-    crate::settings::DEFAULT_DID.to_string()
+    crate::global::settings::DEFAULT_DID.to_string()
 }

@@ -1,4 +1,4 @@
-use crate::settings::Actors;
+use crate::actors::Actors;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, EnumIter)]
 pub enum MessageFamilies {

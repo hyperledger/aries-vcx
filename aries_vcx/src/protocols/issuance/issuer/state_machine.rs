@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
+use indy_sys::WalletHandle;
+
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::credentials::encode_attributes;
-use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
@@ -21,6 +22,7 @@ use crate::protocols::issuance::issuer::states::offer_set::OfferSetState;
 use crate::protocols::issuance::issuer::states::proposal_received::ProposalReceivedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::protocols::issuance::verify_thread_id;
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -80,6 +82,24 @@ pub struct IssuerSM {
     state: IssuerFullState,
 }
 
+async fn _revoke(wallet_handle: WalletHandle, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
+    match rev_info {
+        Some(rev_info) => {
+            if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
+                if publish {
+                    anoncreds::revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+                } else {
+                    anoncreds::revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+                }
+                Ok(())
+            } else {
+                Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Missing data to perform revocation."))
+            }
+        }
+        None => Err(VcxError::from(VcxErrorKind::NotReady))
+    }
+}
+
 impl IssuerSM {
     pub fn new(source_id: &str) -> Self {
         Self {
@@ -109,29 +129,12 @@ impl IssuerSM {
         }
     }
 
-    pub async fn revoke(&self, publish: bool) -> VcxResult<()> {
+    pub async fn revoke(&self, wallet_handle: WalletHandle, publish: bool) -> VcxResult<()> {
         trace!("Issuer::revoke >>> publish: {}", publish);
-        async fn _revoke(rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
-            match rev_info {
-                Some(rev_info) => {
-                    if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file) {
-                        if publish {
-                            anoncreds::revoke_credential(tails_file, rev_reg_id, cred_rev_id).await?;
-                        } else {
-                            anoncreds::revoke_credential_local(tails_file, rev_reg_id, cred_rev_id).await?;
-                        }
-                        Ok(())
-                    } else {
-                        Err(VcxError::from_msg(VcxErrorKind::InvalidRevocationDetails, "Missing data to perform revocation."))
-                    }
-                }
-                None => Err(VcxError::from(VcxErrorKind::NotReady))
-            }
-        }
 
         match &self.state {
-            IssuerFullState::CredentialSent(state) => _revoke(&state.revocation_info_v1, publish).await,
-            IssuerFullState::Finished(state) => _revoke(&state.revocation_info_v1, publish).await,
+            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, &state.revocation_info_v1, publish).await,
+            IssuerFullState::Finished(state) => _revoke(wallet_handle, &state.revocation_info_v1, publish).await,
             _ => Err(VcxError::from(VcxErrorKind::NotReady))
         }
     }
@@ -292,7 +295,10 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub async fn handle_message(self, cim: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<Self> {
+    pub async fn handle_message(self,
+                                wallet_handle: WalletHandle,
+                                cim: CredentialIssuanceAction,
+                                send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.thread_id, &cim)?;
         let state_name = self.state.to_string();
@@ -331,7 +337,7 @@ impl IssuerSM {
             },
             IssuerFullState::RequestReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialSend() => {
-                    let credential_msg = _create_credential(&state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &thread_id).await;
+                    let credential_msg = _create_credential(wallet_handle, &state_data.request, &state_data.rev_reg_id, &state_data.tails_file, &state_data.offer, &state_data.cred_data, &thread_id).await;
                     match credential_msg {
                         Ok((credential_msg, cred_rev_id)) => {
                             let credential_msg = credential_msg.set_thread_id(&thread_id).ask_for_ack(); // TODO: Make configurable
@@ -405,7 +411,13 @@ impl IssuerSM {
     }
 }
 
-async fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<String>, tails_file: &Option<String>, offer: &CredentialOffer, cred_data: &str, thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
+async fn _create_credential(wallet_handle: WalletHandle,
+                            request: &CredentialRequest,
+                            rev_reg_id: &Option<String>,
+                            tails_file: &Option<String>,
+                            offer: &CredentialOffer,
+                            cred_data: &str,
+                            thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
     let offer = offer.offers_attach.content()?;
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
     if !request.from_thread(&thread_id) {
@@ -413,11 +425,13 @@ async fn _create_credential(request: &CredentialRequest, rev_reg_id: &Option<Str
     };
     let request = &request.requests_attach.content()?;
     let cred_data = encode_attributes(cred_data)?;
-    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(&offer,
-                                                                                       &request,
-                                                                                       &cred_data,
-                                                                                       rev_reg_id.clone(),
-                                                                                       tails_file.clone()).await?;
+    let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(
+        wallet_handle,
+        &offer,
+        &request,
+        &cred_data,
+        rev_reg_id.clone(),
+        tails_file.clone()).await?;
     let credential = Credential::create().set_credential(ser_credential)?;
     Ok((credential, cred_rev_id))
 }
@@ -435,6 +449,10 @@ pub mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
+
+    fn _dummy_wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
 
     pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
@@ -472,14 +490,14 @@ pub mod test {
 
         async fn to_request_received_state(mut self) -> IssuerSM {
             self = self.to_offer_sent_state();
-            self = self.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            self = self.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             self
         }
 
         async fn to_finished_state(mut self) -> IssuerSM {
             self = self.to_request_received_state().await;
-            self = self.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
-            self = self.handle_message(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
+            self = self.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            self = self.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             self
         }
     }
@@ -519,7 +537,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut issuer_sm = _issuer_sm();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialProposal(_credential_proposal()), None).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialProposal(_credential_proposal()), None).await.unwrap();
 
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
@@ -546,10 +564,10 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Initial(_), issuer_sm.state);
         }
 
@@ -571,10 +589,10 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm_from_proposal();
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
 
@@ -585,7 +603,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::RequestReceived(_), issuer_sm.state);
         }
@@ -597,7 +615,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialProposal(_credential_proposal()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialProposal(_credential_proposal()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::ProposalReceived(_), issuer_sm.state);
         }
@@ -609,7 +627,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::ProblemReport(_problem_report()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::ProblemReport(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -622,7 +640,7 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
         }
@@ -634,8 +652,8 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::CredentialSent(_), issuer_sm.state);
         }
@@ -647,8 +665,8 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(CredentialRequest::create()), _send_message()).await.unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(CredentialRequest::create()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
 
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
@@ -661,10 +679,10 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::CredentialSent(_), issuer_sm.state);
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialAck(_ack()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
         }
 
@@ -675,8 +693,8 @@ pub mod test {
 
             let mut issuer_sm = _issuer_sm();
             issuer_sm = issuer_sm.to_offer_sent_state();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request_1()), _send_message()).await.unwrap();
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request_1()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialSend(), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), issuer_sm.credential_status());
         }
@@ -690,10 +708,10 @@ pub mod test {
             issuer_sm = issuer_sm.to_finished_state().await;
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequest(_credential_request()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
 
-            issuer_sm = issuer_sm.handle_message(CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
+            issuer_sm = issuer_sm.handle_message(_dummy_wallet_handle(), CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
             assert_match!(IssuerFullState::Finished(_), issuer_sm.state);
         }
 

@@ -39,9 +39,9 @@ pub mod handlers;
 pub mod messages;
 pub mod error;
 pub mod libindy;
-pub mod settings;
-pub mod init;
 pub mod protocols;
+pub mod actors;
+pub mod global;
 
  #[cfg(test)]
 pub mod test {

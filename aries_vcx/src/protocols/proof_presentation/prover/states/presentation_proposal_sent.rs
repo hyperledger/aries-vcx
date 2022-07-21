@@ -2,7 +2,7 @@ use crate::messages::proof_presentation::presentation_proposal::PresentationProp
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PresentationProposalSent {
-    proposal: PresentationProposal
+    proposal: PresentationProposal,
 }
 
 impl PresentationProposalSent {

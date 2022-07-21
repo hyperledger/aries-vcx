@@ -1,30 +1,8 @@
-use std::sync::RwLock;
-
 use indy::{ErrorCode, pool};
 
 use crate::error::prelude::*;
-use crate::settings;
-
-lazy_static! {
-    static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
-}
-
-pub fn set_pool_handle(handle: Option<i32>) {
-    let mut h = POOL_HANDLE.write().unwrap();
-    *h = handle;
-}
-
-pub fn get_pool_handle() -> VcxResult<i32> {
-    POOL_HANDLE.read()
-        .or(Err(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened")))?
-        .ok_or(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened"))
-}
-
-pub fn is_pool_open() -> bool {
-    get_pool_handle().is_ok()
-}
-
-pub fn reset_pool_handle() { set_pool_handle(None); }
+use crate::global;
+use crate::global::settings;
 
 pub async fn set_protocol_version() -> VcxResult<()> {
     pool::set_protocol_version(settings::get_protocol_version())
@@ -85,12 +63,12 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
 }
 
 pub async fn close() -> VcxResult<()> {
-    let handle = get_pool_handle()?;
+    let handle = global::pool::get_main_pool_handle()?;
 
     //TODO there was timeout here (before future-based Rust wrapper)
     pool::close_pool_ledger(handle).await?;
 
-    reset_pool_handle();
+    global::pool::reset_main_pool_handle();
 
     Ok(())
 }
@@ -99,7 +77,7 @@ pub async fn delete(pool_name: &str) -> VcxResult<()> {
     trace!("delete >>> pool_name: {}", pool_name);
 
     if settings::indy_mocks_enabled() {
-        set_pool_handle(None);
+        global::pool::set_main_pool_handle(None);
         return Ok(());
     }
 
@@ -112,6 +90,7 @@ pub async fn delete(pool_name: &str) -> VcxResult<()> {
 pub mod test_utils {
     use std::fs;
     use std::io::Write;
+    use crate::global::pool::set_main_pool_handle;
 
     use crate::utils::{
         constants::{GENESIS_PATH, POOL},
@@ -138,7 +117,7 @@ pub mod test_utils {
     pub async fn open_test_pool() -> u32 {
         create_test_ledger_config().await;
         let handle = open_pool_ledger(POOL, None).await.unwrap();
-        set_pool_handle(Some(handle));
+        set_main_pool_handle(Some(handle));
         handle as u32
     }
 
@@ -165,7 +144,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::libindy::utils::pool::get_pool_handle;
+    use crate::global::pool::get_main_pool_handle;
     use crate::utils::devsetup::SetupWithWalletAndAgency;
 
     #[cfg(feature = "pool_tests")]
@@ -173,6 +152,14 @@ pub mod tests {
     async fn test_open_close_pool() {
         let _setup = SetupWithWalletAndAgency::init().await;
 
-        assert!(get_pool_handle().unwrap() > 0);
+        assert!(get_main_pool_handle().unwrap() > 0);
     }
+}
+
+#[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
+#[builder(setter(into, strip_option), default)]
+pub struct PoolConfig {
+    pub genesis_path: String,
+    pub pool_name: Option<String>,
+    pub pool_config: Option<String>,
 }

@@ -1,9 +1,10 @@
+use indy_sys::WalletHandle;
 use serde_json;
 use serde_json::Value;
 
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds;
-use crate::settings;
+use crate::global::settings;
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -69,13 +70,13 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub async fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_cred_defs_json_verifier(wallet_handle: WalletHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
     let mut credential_json = json!({});
 
     for ref cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let (id, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id).await?;
+            let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id).await?;
 
             let credential_def = serde_json::from_str(&credential_def)
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
@@ -87,14 +88,14 @@ pub async fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifie
     Ok(credential_json.to_string())
 }
 
-pub async fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_schemas_json_verifier(wallet_handle: WalletHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
     let mut schemas_json = json!({});
 
     for ref cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
-            let (id, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+            let (id, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -191,7 +192,7 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_cred_defs_json_verifier(&credentials).await.unwrap();
+        let credential_json = build_cred_defs_json_verifier(WalletHandle(0), &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
         let expected = json!({CRED_DEF_ID:json}).to_string();
@@ -216,7 +217,7 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(&credentials).await.unwrap();
+        let schema_json = build_schemas_json_verifier(WalletHandle(0), &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(SCHEMA_JSON).unwrap();
         let expected = json!({SCHEMA_ID:json}).to_string();

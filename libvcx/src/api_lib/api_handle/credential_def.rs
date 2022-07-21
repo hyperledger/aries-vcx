@@ -1,6 +1,7 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::utils::anoncreds;
@@ -23,7 +24,7 @@ pub async fn create(source_id: String,
         .tag(tag)
         .build()
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
-    let cred_def = CredentialDef::create(source_id, config, support_revocation).await?;
+    let cred_def = CredentialDef::create(get_main_wallet_handle(), source_id, config, support_revocation).await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }
@@ -31,7 +32,7 @@ pub async fn create(source_id: String,
 pub async fn publish(handle: u32) -> VcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        cd = cd.publish_cred_def().await?;
+        cd = cd.publish_cred_def(get_main_wallet_handle()).await?;
     } else {
         info!("publish >>> Credential definition was already published")
     }
@@ -76,7 +77,7 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let res = cd.update_state().await?;
+    let res = cd.update_state(get_main_wallet_handle()).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }
@@ -104,7 +105,7 @@ pub mod tests {
     use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils;
     use aries_vcx::utils::{
         constants::SCHEMA_ID,
@@ -142,9 +143,9 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn create_revocable_cred_def_and_check_tails_location() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()

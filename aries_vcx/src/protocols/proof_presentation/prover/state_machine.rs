@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -17,6 +18,7 @@ use crate::protocols::proof_presentation::prover::states::presentation_proposal_
 use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::protocols::proof_presentation::prover::verify_thread_id;
+use crate::protocols::SendClosure;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -106,6 +108,7 @@ impl ProverSM {
     }
 
     pub async fn step(self,
+                      wallet_handle: WalletHandle,
                       message: ProverMessages,
                       send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
@@ -159,7 +162,7 @@ impl ProverSM {
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                        match state.build_presentation(&credentials, &self_attested_attrs).await {
+                        match state.build_presentation(wallet_handle, &credentials, &self_attested_attrs).await {
                             Ok(presentation) => {
                                 let presentation = Presentation::create()
                                     .ask_for_ack()
@@ -371,6 +374,10 @@ pub mod test {
 
     use super::*;
 
+    fn _dummy_wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
+
     pub fn _prover_sm_from_request() -> ProverSM {
         ProverSM::from_request(_presentation_request(), source_id())
     }
@@ -385,25 +392,25 @@ pub mod test {
 
     impl ProverSM {
         async fn to_presentation_proposal_sent_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
             self
         }
 
         async fn to_presentation_prepared_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).await.unwrap();
             self
         }
 
         async fn to_presentation_sent_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            self = self.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
             self
         }
 
         async fn to_finished_state(mut self) -> ProverSM {
-            self = self.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).await.unwrap();
-            self = self.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
-            self = self.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), None).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            self = self.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
             self
         }
     }
@@ -476,7 +483,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm();
-            prover_sm = prover_sm.step(ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationProposalSent(_), prover_sm.state);
         }
@@ -487,7 +494,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state().await;
-            prover_sm = prover_sm.step(ProverMessages::PresentationRequestReceived(_presentation_request()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRequestReceived(_presentation_request()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationRequestReceived(_), prover_sm.state);
         }
@@ -498,7 +505,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state().await;
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(Status::Declined(ProblemReport::default()).code(), prover_sm.presentation_status());
@@ -510,7 +517,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationProposalSend(_presentation_proposal_data()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationProposalSent(_), prover_sm.state);
         }
@@ -521,7 +528,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::SetPresentation(_presentation()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SetPresentation(_presentation()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationPrepared(_), prover_sm.state);
         }
@@ -534,7 +541,7 @@ pub mod test {
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationPreparationFailed(_), prover_sm.state);
         }
@@ -545,7 +552,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest(String::from("reject request")), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::RejectPresentationRequest(String::from("reject request")), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
@@ -556,7 +563,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation(_presentation_preview()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::ProposePresentation(_presentation_preview()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
@@ -568,10 +575,10 @@ pub mod test {
 
             let mut prover_sm = _prover_sm_from_request();
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationRequestReceived(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationRequestReceived(_), prover_sm.state);
         }
 
@@ -582,8 +589,8 @@ pub mod test {
 
             let mut prover_sm = _prover_sm_from_request();
 
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::PresentationSent(_), prover_sm.state);
         }
@@ -595,10 +602,10 @@ pub mod test {
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_prepared_state().await;
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationPrepared(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationPrepared(_), prover_sm.state);
         }
 
@@ -609,7 +616,7 @@ pub mod test {
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_prepared_state().await;
 
-            prover_sm = prover_sm.step(ProverMessages::RejectPresentationRequest(String::from("reject request")), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::RejectPresentationRequest(String::from("reject request")), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
@@ -620,7 +627,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request().to_presentation_prepared_state().await;
-            prover_sm = prover_sm.step(ProverMessages::ProposePresentation(_presentation_preview()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::ProposePresentation(_presentation_preview()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
@@ -633,10 +640,10 @@ pub mod test {
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationPreparationFailed(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(Status::Failed(ProblemReport::default()).code(), prover_sm.presentation_status());
         }
@@ -649,12 +656,12 @@ pub mod test {
                 set_mock_creds_retrieved_for_proof_request(CREDS_FROM_PROOF_REQ);
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())), _send_message()).await.unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationPreparationFailed(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationPreparationFailed(_), prover_sm.state);
         }
 
@@ -664,9 +671,9 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(Status::Success.code(), prover_sm.presentation_status());
@@ -678,7 +685,7 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let prover_sm = _prover_sm_from_request().to_presentation_sent_state().await;
-            let err = prover_sm.step(ProverMessages::RejectPresentationRequest(String::from("reject")), _send_message()).await.unwrap_err();
+            let err = prover_sm.step(_dummy_wallet_handle(), ProverMessages::RejectPresentationRequest(String::from("reject")), _send_message()).await.unwrap_err();
             assert_eq!(VcxErrorKind::ActionNotSupported, err.kind());
         }
 
@@ -688,9 +695,9 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(Status::Failed(ProblemReport::create()).code(), prover_sm.presentation_status());
@@ -702,13 +709,13 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationSent(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
             assert_match!(ProverFullState::PresentationSent(_), prover_sm.state);
         }
 
@@ -718,14 +725,14 @@ pub mod test {
             let _setup = SetupMocks::init();
 
             let mut prover_sm = _prover_sm_from_request();
-            prover_sm = prover_sm.step(ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::SendPresentation, _send_message()).await.unwrap();
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PreparePresentation((_credentials(), _self_attested())), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::SendPresentation, _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationAckReceived(_ack()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
 
-            prover_sm = prover_sm.step(ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
+            prover_sm = prover_sm.step(_dummy_wallet_handle(), ProverMessages::PresentationRejectReceived(_problem_report()), _send_message()).await.unwrap();
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
         }
     }

@@ -1,3 +1,4 @@
+use indy::WalletHandle;
 use url::Url;
 
 use crate::{AgencyClientError, AgencyClientErrorKind, validation};
@@ -7,9 +8,9 @@ use crate::testing::mocking;
 use crate::utils::error_utils;
 
 // todo: remove Default
-#[derive(Default, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct AgencyClient {
-    wallet_handle: i32,
+    wallet_handle: WalletHandle,
     pub agency_url: String,
     pub agency_did: String,
     pub agency_pwdid: String,
@@ -40,7 +41,7 @@ pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorK
 
 
 impl AgencyClient {
-    pub fn get_wallet_handle(&self) -> i32 { self.wallet_handle }
+    pub fn get_wallet_handle(&self) -> WalletHandle { self.wallet_handle }
     pub fn get_agency_url_config(&self) -> String { self.agency_url.clone() }
     pub fn get_agency_url_full(&self) -> String {
         format!("{}/agency/msg", self.agency_url.clone())
@@ -56,12 +57,12 @@ impl AgencyClient {
     pub fn get_my_pwdid(&self) -> String { self.my_pwdid.clone() }
     pub fn get_my_vk(&self) -> String { self.my_vk.clone() }
 
-    pub fn set_wallet_handle(&mut self, wh: i32) {
-        self.wallet_handle = wh;
+    pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
+        self.wallet_handle = wallet_handle;
     }
 
     pub fn reset_wallet_handle(&mut self) {
-        self.wallet_handle = indy::INVALID_WALLET_HANDLE.0;
+        self.wallet_handle = indy::INVALID_WALLET_HANDLE;
     }
     pub fn set_agency_url(&mut self, url: &str) {
         self.agency_url = url.to_string();
@@ -126,13 +127,22 @@ impl AgencyClient {
         self.set_my_vk(default_verkey);
     }
 
-    pub fn new() -> AgencyClientResult<Self> {
-        let agency_client = Self::default();
-        Ok(agency_client)
+    pub fn new() -> Self {
+        AgencyClient {
+            wallet_handle: WalletHandle(0),
+            agency_url: "".to_string(),
+            agency_did: "".to_string(),
+            agency_pwdid: "".to_string(),
+            agency_vk: "".to_string(),
+            agent_pwdid: "".to_string(),
+            agent_vk: "".to_string(),
+            my_pwdid: "".to_string(),
+            my_vk: "".to_string()
+        }
     }
 
     // todo: use this in favor of `fn new()`
-    // pub fn new(config: &str, wallet_handle: i32, validate: bool) -> AgencyClientResult<Self> {
+    // pub fn new(config: &str, wallet_handle: WalletHandle, validate: bool) -> AgencyClientResult<Self> {
     //     let mut agency_client = Self::default();
     //     agency_client.process_config_string(config, wallet_handle, validate)?;
     //     Ok(agency_client)

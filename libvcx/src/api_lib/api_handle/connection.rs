@@ -5,6 +5,8 @@ use serde_json;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::agency_client::get_main_agency_client;
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -94,14 +96,14 @@ pub fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(source_id, true).await?;
+    let connection = Connection::create(source_id, true, &get_main_agency_client().unwrap()).await?;
     store_connection(connection)
 }
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = Connection::create_with_invite(source_id, invitation, true).await?;
+        let connection = Connection::create_with_invite(source_id, invitation, true, &get_main_agency_client().unwrap()).await?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type
@@ -112,25 +114,25 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
     let request: Request = serde_json::from_str(request)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize connection request: {:?}", err)))?;
-    let connection = Connection::create_with_request(request, &agent).await?;
+    let connection = Connection::create_with_request(get_main_wallet_handle(), request, &agent, &get_main_agency_client().unwrap()).await?;
     store_connection(connection)
 }
 
 pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_generic_message(msg).await.map_err(|err| err.into())
+    connection.send_generic_message(get_main_wallet_handle(), msg).await.map_err(|err| err.into())
 }
 
 pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> VcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_handshake_reuse(oob_msg).await.map_err(|err| err.into())
+    connection.send_handshake_reuse(get_main_wallet_handle(), oob_msg).await.map_err(|err| err.into())
 }
 
 pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize message {} into A2AMessage, err: {:?}", message, err)))?;
-    connection.update_state_with_message(&message).await?;
+    connection.update_state_with_message(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &message).await?;
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -149,7 +151,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let res = match connection.update_state().await {
+    let res = match connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
         Ok(_) => Ok(error::SUCCESS.code_num),
         Err(err) => Err(err.into())
     };
@@ -159,14 +161,14 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
 
 pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.delete().await?;
+    connection.delete(&get_main_agency_client().unwrap()).await?;
     release(handle)?;
     Ok(error::SUCCESS.code_num)
 }
 
 pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.connect().await?;
+    connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await?;
     let invitation = connection.get_invite_details()
         .map(|invitation| match invitation {
             InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -212,17 +214,18 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
 
 pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.get_messages().await.map_err(|err| err.into())
+    connection.get_messages(&get_main_agency_client().unwrap()).await.map_err(|err| err.into())
 }
 
 pub async fn update_message_status(handle: u32, uid: &str) -> VcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.update_message_status(uid).await.map_err(|err| err.into())
+    connection.update_message_status(uid, &get_main_agency_client().unwrap()).await.map_err(|err| err.into())
 }
 
 pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.get_message_by_id(msg_id).await.map_err(|err| err.into())
+    connection.get_message_by_id(msg_id, &get_main_agency_client().unwrap()).await
+        .map_err(|err| err.into())
 }
 
 pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
@@ -233,25 +236,25 @@ pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 
 pub fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.send_message_closure().map_err(|err| err.into())
+        connection.send_message_closure(get_main_wallet_handle()).map_err(|err| err.into())
     })
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_ping(comment.map(String::from)).await?;
+    connection.send_ping(get_main_wallet_handle(), comment.map(String::from)).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_discovery_features(query.map(String::from), comment.map(String::from)).await?;
+    connection.send_discovery_features(get_main_wallet_handle(), query.map(String::from), comment.map(String::from)).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
 pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        connection.get_connection_info().map_err(|err| err.into())
+        connection.get_connection_info(&get_main_agency_client().unwrap()).map_err(|err| err.into())
     })
 }
 
@@ -301,7 +304,7 @@ pub async fn download_messages(conn_handles: Vec<u32>, status_codes: Option<Vec<
         connections.push(connection)
     };
     for connection in connections {
-        let msgs = connection.download_messages(status_codes.clone(), uids.clone()).await?;
+        let msgs = connection.download_messages(&get_main_agency_client().unwrap(), status_codes.clone(), uids.clone()).await?;
         res.push(MessageByConnection { pairwise_did: connection.pairwise_info().pw_did.clone(), msgs });
     }
     trace!("download_messages <<< res: {:?}", res);
@@ -315,7 +318,7 @@ pub mod tests {
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
-    use aries_vcx::settings;
+    use aries_vcx::global::settings;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED};

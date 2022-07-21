@@ -1,9 +1,11 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
 use crate::libindy::proofs::verifier::verifier_internal::{build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier, get_credential_info, validate_proof_revealed_attributes};
 use crate::libindy::utils::anoncreds;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
-pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
+pub async fn validate_indy_proof(wallet_handle: WalletHandle, proof_json: &str, proof_req_json: &str) -> VcxResult<bool> {
     if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
         return mock_result;
     }
@@ -12,10 +14,10 @@ pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxR
 
     let credential_data = get_credential_info(&proof_json)?;
 
-    let credential_defs_json = build_cred_defs_json_verifier(&credential_data)
+    let credential_defs_json = build_cred_defs_json_verifier(wallet_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json_verifier(&credential_data)
+    let schemas_json = build_schemas_json_verifier(wallet_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
     let rev_reg_defs_json = build_rev_reg_defs_json(&credential_data)
@@ -41,7 +43,8 @@ pub async fn validate_indy_proof(proof_json: &str, proof_req_json: &str) -> VcxR
 
 #[cfg(test)]
 pub mod tests {
-    use crate::{libindy, settings, utils};
+    use crate::{libindy, utils};
+    use crate::global::settings;
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWithWalletAndAgency;
@@ -51,7 +54,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_self_attested_proof_validation() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -75,6 +78,7 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
               "self_attested_attributes":{
@@ -89,13 +93,13 @@ pub mod tests {
             &json!({}).to_string(),
             None).await.unwrap();
 
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).await.unwrap(), true);
+        assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json.to_string()).await.unwrap(), true);
     }
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_restrictions() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -122,11 +126,12 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
@@ -142,17 +147,17 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(),
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).await.unwrap();
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected
+        assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::LibndyError(405)); // AnoncredsProofRejected
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
         proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json.to_string()).await.unwrap(), true);
+        assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json.to_string()).await.unwrap(), true);
     }
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_validate_attribute() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWithWalletAndAgency::init().await;
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([
@@ -181,11 +186,12 @@ pub mod tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
         let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+            setup.wallet_handle,
             &proof_req_json,
             &json!({
                 "self_attested_attributes":{
@@ -201,20 +207,20 @@ pub mod tests {
             &json!({schema_id: schema_json}).to_string(),
             &json!({cred_def_id: cred_def_json}).to_string(),
             None).await.unwrap();
-        assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).await.unwrap(), true);
+        assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json).await.unwrap(), true);
 
         let mut proof_obj: serde_json::Value = serde_json::from_str(&prover_proof_json).unwrap();
         {
             proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["raw"] = json!("Other Value");
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
-            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::InvalidProof);
+            assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::InvalidProof);
         }
         {
             proof_obj["requested_proof"]["revealed_attrs"]["address1_1"]["encoded"] = json!("1111111111111111111111111111111111111111111111111111111111");
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
-            assert_eq!(validate_indy_proof(&prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::InvalidProof);
+            assert_eq!(validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json).await.unwrap_err().kind(), VcxErrorKind::InvalidProof);
         }
     }
 }

@@ -4,6 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
@@ -895,7 +896,7 @@ pub extern fn vcx_connection_sign_data(command_handle: CommandHandle,
             }
         };
 
-        match libindy::utils::crypto::sign(&vk, &data_raw).await {
+        match libindy::utils::crypto::sign(get_main_wallet_handle(), &vk, &data_raw).await {
             Ok(err) => {
                 trace!("vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                        command_handle, connection_handle, error::SUCCESS.message, err);

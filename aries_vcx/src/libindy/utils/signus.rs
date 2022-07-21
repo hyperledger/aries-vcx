@@ -3,15 +3,11 @@ use indy::future::TryFutureExt;
 use indy_sys::WalletHandle;
 use serde_json::Value;
 
-use crate::{settings, utils};
+use crate::utils;
 use crate::error::prelude::*;
-use crate::libindy::utils::wallet::get_main_wallet_handle;
+use crate::global::settings;
 use crate::libindy::utils::ledger;
-use crate::libindy::utils::mocks::did_mocks::{DidMocks, did_mocks_enabled};
-
-pub async fn main_wallet_create_and_store_my_did(seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
-    create_and_store_my_did(get_main_wallet_handle(), seed, method_name).await
-}
+use crate::libindy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 
 pub async fn create_and_store_my_did(wallet_handle: WalletHandle, seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
@@ -26,21 +22,21 @@ pub async fn create_and_store_my_did(wallet_handle: WalletHandle, seed: Option<&
     res
 }
 
-pub async fn libindy_replace_keys_start(did: &str) -> VcxResult<String> {
+pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) -> VcxResult<String> {
     if DidMocks::has_did_mock_responses() {
         warn!("libindy_replace_keys_start >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        did::replace_keys_start(get_main_wallet_handle(), did, "{}")
+        did::replace_keys_start(wallet_handle, did, "{}")
             .map_err(VcxError::from)
             .await
     }
 }
 
-pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> VcxResult<()> {
+pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, did: &str, temp_vk: &str) -> VcxResult<()> {
     let nym_request = ledger::libindy_build_nym_request(&did, &did, Some(&temp_vk), None, None).await?;
     let nym_request = ledger::append_txn_author_agreement_to_request(&nym_request).await?;
-    let nym_result = ledger::libindy_sign_and_submit_request(&did, &nym_request).await?;
+    let nym_result = ledger::libindy_sign_and_submit_request(wallet_handle, &did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err)))?;
     let response_type: String = nym_result_json["op"].as_str()
@@ -48,31 +44,31 @@ pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> VcxResult<()> {
     if response_type != "REPLY" {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("Obained non-success ledger response: {}", nym_result_json)));
     }
-    libindy_replace_keys_apply(&did).await
+    libindy_replace_keys_apply(wallet_handle, &did).await
 }
 
-pub async fn rotate_verkey(did: &str) -> VcxResult<()> {
-    let trustee_temp_verkey = libindy_replace_keys_start(did).await?;
-    rotate_verkey_apply(did, &trustee_temp_verkey).await
+pub async fn rotate_verkey(wallet_handle: WalletHandle, did: &str) -> VcxResult<()> {
+    let trustee_temp_verkey = libindy_replace_keys_start(wallet_handle, did).await?;
+    rotate_verkey_apply(wallet_handle, did, &trustee_temp_verkey).await
 }
 
-pub async fn libindy_replace_keys_apply(did: &str) -> VcxResult<()> {
+pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) -> VcxResult<()> {
     if did_mocks_enabled() {
         warn!("libindy_replace_keys_apply >> retrieving did mock response");
         Ok(())
     } else {
-        did::replace_keys_apply(get_main_wallet_handle(), did)
+        did::replace_keys_apply(wallet_handle, did)
             .map_err(VcxError::from)
             .await
     }
 }
 
-pub async fn get_verkey_from_wallet(did: &str) -> VcxResult<String> {
+pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> VcxResult<String> {
     if DidMocks::has_did_mock_responses() {
         warn!("get_verkey_from_wallet >> retrieving did mock response");
         Ok(DidMocks::get_next_did_response())
     } else {
-        did::key_for_local_did(get_main_wallet_handle(), did)
+        did::key_for_local_did(wallet_handle, did)
             .map_err(VcxError::from)
             .await
     }
@@ -105,11 +101,11 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey() {
-        let _setup = SetupWithWalletAndAgency::init().await;
-        let (did, verkey) = ledger::add_new_did(None).await;
-        rotate_verkey(&did).await.unwrap();
+        let setup = SetupWithWalletAndAgency::init().await;
+        let (did, verkey) = ledger::add_new_did(setup.wallet_handle, None).await;
+        rotate_verkey(setup.wallet_handle, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));
-        let local_verkey = get_verkey_from_wallet(&did).await.unwrap();
+        let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
         let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
@@ -118,13 +114,13 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let _setup = SetupPoolMocks::init().await;
+        let setup = SetupPoolMocks::init().await;
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
-        let local_verkey_1 = get_verkey_from_wallet(&did).await.unwrap();
-        assert_eq!(rotate_verkey(&did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
-        let local_verkey_2 = get_verkey_from_wallet(&did).await.unwrap();
+        let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
+        assert_eq!(rotate_verkey(setup.wallet_handle, &did).await.unwrap_err().kind(), VcxErrorKind::InvalidLedgerResponse);
+        let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
     }
 }

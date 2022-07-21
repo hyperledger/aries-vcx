@@ -1,6 +1,7 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
@@ -49,12 +50,12 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         let message: A2AMessage = serde_json::from_str(message)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot updated state with message: Message deserialization failed: {:?}", err)))?;
         trace!("proof::update_state >>> updating using message {:?}", message);
-        proof.handle_message(message.into(), Some(send_message)).await?;
+        proof.handle_message(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
-            proof.handle_message(message.into(), Some(send_message)).await?;
+            proof.handle_message(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
             connection::update_message_status(connection_handle, &uid).await?;
         };
     }
