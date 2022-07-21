@@ -11,7 +11,7 @@ pub mod test {
     use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, get_main_agency_client};
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, main_wallet_configure_issuer, open_as_main_wallet};
+    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, open_as_main_wallet};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -25,6 +25,7 @@ pub mod test {
     use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::libindy::utils::wallet::wallet_configure_issuer;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::PublicInvitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -176,7 +177,7 @@ pub mod test {
             };
             create_main_wallet(&config_wallet).await.unwrap();
             let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
-            let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
+            let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();

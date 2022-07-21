@@ -15,7 +15,7 @@ use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 use crate::global::pool::reset_main_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{create_indy_wallet, delete_wallet, WalletConfig};
-use crate::global::wallet::main_wallet_configure_issuer;
+use crate::libindy::utils::wallet::wallet_configure_issuer;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, open_as_main_wallet, reset_main_wallet_handle};
 use crate::utils::constants;
@@ -383,7 +383,7 @@ pub async fn setup_indy_env() -> (String, WalletHandle) {
     create_main_wallet(&config_wallet).await.unwrap();
     let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
 
-    let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
+    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
 
     provision_cloud_agent(&mut get_main_agency_client().unwrap(), wallet_handle, &config_provision_agent).await.unwrap();

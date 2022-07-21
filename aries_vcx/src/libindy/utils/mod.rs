@@ -67,7 +67,7 @@ pub mod test_setup {
 
         indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
         let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
-        global::wallet::set_wallet_handle(wallet_handle);
+        global::wallet::set_main_wallet_handle(wallet_handle);
 
         WalletSetup { name, wallet_config, wallet_handle: wallet_handle }
     }

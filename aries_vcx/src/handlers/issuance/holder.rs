@@ -194,34 +194,34 @@ pub mod test {
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(get_main_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(get_main_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_request(get_main_wallet_handle(), _my_pw_did(), _send_message().unwrap()).await.unwrap();
+        holder.send_request(_dummy_wallet_handle(), _my_pw_did(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

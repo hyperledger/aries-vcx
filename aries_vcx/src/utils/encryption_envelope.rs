@@ -230,10 +230,10 @@ pub mod tests {
 
         let ack = A2AMessage::Ack(_ack());
 
-        global::wallet::set_wallet_handle(sender_wallet.wallet_handle);
+        global::wallet::set_main_wallet_handle(sender_wallet.wallet_handle);
         let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key), &did_doc).await.unwrap();
 
-        global::wallet::set_wallet_handle(recipient_wallet.wallet_handle);
+        global::wallet::set_main_wallet_handle(recipient_wallet.wallet_handle);
         let _message_1 = EncryptionEnvelope::auth_unpack(recipient_wallet.wallet_handle, envelope.0, &sender_key).await.unwrap();
     }
 
@@ -253,10 +253,10 @@ pub mod tests {
 
         let ack = A2AMessage::Ack(_ack());
 
-        global::wallet::set_wallet_handle(sender_wallet.wallet_handle);
+        global::wallet::set_main_wallet_handle(sender_wallet.wallet_handle);
         let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key_2), &did_doc).await.unwrap();
 
-        global::wallet::set_wallet_handle(recipient_wallet.wallet_handle);
+        global::wallet::set_main_wallet_handle(recipient_wallet.wallet_handle);
         let result = EncryptionEnvelope::auth_unpack(recipient_wallet.wallet_handle, envelope.0, &sender_key_1).await;
         assert!(result.is_err());
     }

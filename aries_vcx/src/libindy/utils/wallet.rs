@@ -3,7 +3,7 @@ use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::utils::{anoncreds, signus};
-use crate::global;
+use crate::{global, libindy};
 use crate::global::settings;
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
@@ -279,4 +279,52 @@ pub async fn close_search_main_wallet(search_handle: SearchHandle) -> VcxResult<
     indy::wallet::close_wallet_search(search_handle)
         .await
         .map_err(VcxError::from)
+}
+
+pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
+    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
+    Ok(IssuerConfig {
+        institution_did,
+    })
+}
+
+pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResult<()> {
+    let wallet_handle = create_and_open_wallet(&config).await?;
+    trace!("Created wallet with handle {:?}", wallet_handle);
+
+    // If MS is already in wallet then just continue
+    anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
+
+    global::wallet::close_main_wallet().await?;
+    Ok(())
+}
+
+pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: &str) -> VcxResult<()> {
+    trace!("export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****", wallet_handle, path);
+
+    let export_config = json!({ "key": backup_key, "path": &path}).to_string();
+    indy::wallet::export_wallet(wallet_handle, &export_config)
+        .await
+        .map_err(VcxError::from)
+}
+
+pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+    if settings::indy_mocks_enabled() {
+        warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
+        return Ok(WalletHandle(1));
+    }
+    create_indy_wallet(&wallet_config).await?;
+    let handle = libindy::wallet::open_wallet(wallet_config).await?;
+    Ok(handle)
+}
+
+pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
+    trace!("close_wallet >>>");
+    if settings::indy_mocks_enabled() {
+        warn!("close_wallet >>> Indy mocks enabled, skipping closing wallet");
+        return Ok(());
+    }
+    indy::wallet::close_wallet(wallet_handle)
+        .await?;
+    Ok(())
 }

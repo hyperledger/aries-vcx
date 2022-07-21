@@ -106,7 +106,7 @@ pub extern fn vcx_configure_issuer_wallet(command_handle: CommandHandle,
            command_handle, enterprise_seed);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::main_wallet_configure_issuer(&enterprise_seed).await {
+        match utils::wallet::wallet_configure_issuer(get_main_wallet_handle(), &enterprise_seed).await {
             Err(err) => {
                 error!("vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into(), null());
@@ -899,7 +899,7 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
-    global::wallet::set_wallet_handle(handle)
+    global::wallet::set_main_wallet_handle(handle)
 }
 
 #[cfg(test)]
