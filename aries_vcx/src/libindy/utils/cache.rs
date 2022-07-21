@@ -2,7 +2,7 @@ use indy_sys::WalletHandle;
 use serde_json;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::utils::wallet::{add_main_wallet_record, delete_main_wallet_record, get_main_wallet_record, update_main_wallet_record_value};
+use crate::libindy::utils::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static CACHE_TYPE: &str = "cache";
 static REV_REG_DELTA_CACHE_PREFIX: &str = "rev_reg_delta:";
@@ -20,7 +20,7 @@ pub async fn get_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &s
 
     let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
 
-    match get_main_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()).await {
+    match get_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id, &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string()).await {
         Ok(json) => {
             match serde_json::from_str(&json)
                 .and_then(|x: serde_json::Value|
@@ -53,8 +53,8 @@ pub async fn set_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &s
     match serde_json::to_string(cache) {
         Ok(json) => {
             let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
-            match update_main_wallet_record_value(wallet_handle, CACHE_TYPE, &wallet_id, &json).await
-                .or(add_main_wallet_record(wallet_handle,CACHE_TYPE, &wallet_id, &json, None).await) {
+            match update_wallet_record_value(wallet_handle, CACHE_TYPE, &wallet_id, &json).await
+                .or(add_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id, &json, None).await) {
                 Ok(_) => Ok(()),
                 Err(err) => Err(err)
             }
@@ -79,7 +79,7 @@ pub async fn clear_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: 
     if let Some(last_delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
         debug!("Got last delta = {}", last_delta);
         let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
-        delete_main_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id).await?;
+        delete_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id).await?;
         debug!("Record with id {} deleted", wallet_id);
         Ok(last_delta)
     } else {

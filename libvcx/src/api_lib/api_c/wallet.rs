@@ -255,7 +255,7 @@ pub extern fn vcx_wallet_add_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&value), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::add_main_wallet_record(get_main_wallet_handle(), &type_, &id, &value, Some(&tags_json)).await {
+        match utils::wallet::add_wallet_record(get_main_wallet_handle(), &type_, &id, &value, Some(&tags_json)).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -311,7 +311,7 @@ pub extern fn vcx_wallet_update_record_value(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&value));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::update_main_wallet_record_value(get_main_wallet_handle(), &type_, &id, &value).await {
+        match utils::wallet::update_wallet_record_value(get_main_wallet_handle(), &type_, &id, &value).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_value(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -367,7 +367,7 @@ pub extern fn vcx_wallet_update_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::update_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
+        match utils::wallet::update_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -423,7 +423,7 @@ pub extern fn vcx_wallet_add_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tags_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::add_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
+        match utils::wallet::add_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -479,7 +479,7 @@ pub extern fn vcx_wallet_delete_record_tags(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), secret!(&tag_names_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::delete_main_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tag_names_json).await {
+        match utils::wallet::delete_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tag_names_json).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -534,7 +534,7 @@ pub extern fn vcx_wallet_get_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id), options_json);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::get_main_wallet_record(get_main_wallet_handle(), &type_, &id, &options_json).await {
+        match utils::wallet::get_wallet_record(get_main_wallet_handle(), &type_, &id, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -590,7 +590,7 @@ pub extern fn vcx_wallet_delete_record(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&id));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::delete_main_wallet_record(get_main_wallet_handle(), &type_, &id).await {
+        match utils::wallet::delete_wallet_record(get_main_wallet_handle(), &type_, &id).await {
             Ok(()) => {
                 trace!("vcx_wallet_delete_record(command_handle: {}, rc: {})",
                        command_handle, error::SUCCESS.message);
@@ -658,7 +658,7 @@ pub extern fn vcx_wallet_open_search(command_handle: CommandHandle,
            command_handle, secret!(&type_), secret!(&query_json), secret!(&options_json));
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::open_search_main_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
+        match utils::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
             Ok(err) => {
                 trace!("vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -714,7 +714,7 @@ pub extern fn vcx_wallet_search_next_records(command_handle: CommandHandle,
            command_handle, wallet_search_handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match utils::wallet::fetch_next_records_main_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
+        match utils::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
             Ok(err) => {
                 trace!("vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
                        command_handle, error::SUCCESS.message, err);
@@ -765,7 +765,7 @@ pub extern fn vcx_wallet_close_search(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_close_search(command_handle: {}, rc: {})",
                command_handle, error::SUCCESS.message);
-        match utils::wallet::close_search_main_wallet(search_handle).await {
+        match utils::wallet::close_search_wallet(search_handle).await {
             Ok(()) => {
                 trace!("vcx_wallet_close_search(command_handle: {}, rc: {})", command_handle, error::SUCCESS.message);
                 cb(command_handle, error::SUCCESS.code_num);
@@ -914,6 +914,7 @@ pub mod tests {
     use aries_vcx::global::settings;
     use aries_vcx::global::wallet::{close_main_wallet, create_and_open_as_main_wallet};
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
+    use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_create_and_open_wallet};
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -940,13 +941,12 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_add_record() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
         let value = CStringUtils::string_to_cstring("Record Value".to_string());
         let tags = CStringUtils::string_to_cstring("{}".to_string());
-
         // Valid add
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_wallet_add_record(cb.command_handle,
@@ -957,7 +957,6 @@ pub mod tests {
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-
         // Failure because of duplicate
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(vcx_wallet_add_record(cb.command_handle,
@@ -967,14 +966,15 @@ pub mod tests {
                                          tags.as_ptr(),
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
-
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::DUPLICATE_WALLET_RECORD.code_num));
+
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_add_record_with_tag() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -990,12 +990,14 @@ pub mod tests {
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
+
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_get_record_fails_with_no_value() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -1014,53 +1016,22 @@ pub mod tests {
                                          Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(), Some(error::WALLET_RECORD_NOT_FOUND.code_num));
-    }
 
-    pub fn _test_add_and_get_wallet_record() {
-        let xtype = CStringUtils::string_to_cstring("record_type".to_string());
-        let id = CStringUtils::string_to_cstring("123".to_string());
-        let value = CStringUtils::string_to_cstring("Record Value".to_string());
-        let tags = CStringUtils::string_to_cstring("{}".to_string());
-        let options = json!({
-            "retrieveType": true,
-            "retrieveValue": true,
-            "retrieveTags": false
-        }).to_string();
-        let options = CStringUtils::string_to_cstring(options);
-
-        // Valid add
-        let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_wallet_add_record(cb.command_handle,
-                                         xtype.as_ptr(),
-                                         id.as_ptr(),
-                                         value.as_ptr(),
-                                         tags.as_ptr(),
-                                         Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(vcx_wallet_get_record(cb.command_handle,
-                                         xtype.as_ptr(),
-                                         id.as_ptr(),
-                                         options.as_ptr(),
-                                         Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
-        let record_value = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
-        assert!(record_value.contains("Record Value"));
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_get_record_value_success() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
         _test_add_and_get_wallet_record();
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_delete_record() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -1095,12 +1066,14 @@ pub mod tests {
                    error::SUCCESS.code_num);
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).err(),
                    Some(error::WALLET_RECORD_NOT_FOUND.code_num));
+
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_update_record_value() {
-        let _setup = SetupLibraryWallet::init().await;
+        _vcx_create_and_open_wallet().unwrap();
 
         let xtype = CStringUtils::string_to_cstring("record_type".to_string());
         let id = CStringUtils::string_to_cstring("123".to_string());
@@ -1142,6 +1115,7 @@ pub mod tests {
                                                   Some(cb.get_callback())),
                    error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_medium()).unwrap();
+        close_main_wallet().await.unwrap();
     }
 
     #[tokio::test]

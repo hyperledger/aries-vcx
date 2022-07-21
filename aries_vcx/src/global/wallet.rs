@@ -64,7 +64,7 @@ pub mod tests {
     use crate::utils::devsetup::TempFile;
 
     use crate::libindy::utils::wallet::*;
-    use crate::libindy::utils::wallet::add_main_wallet_record;
+    use crate::libindy::utils::wallet::add_wallet_record;
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
@@ -89,7 +89,7 @@ pub mod tests {
         create_and_store_my_did(wallet_handle, None, None).await.unwrap();
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
         let (type_, id, value) = _record();
-        add_main_wallet_record(wallet_handle, type_, id, value, None).await.unwrap();
+        add_wallet_record(wallet_handle, type_, id, value, None).await.unwrap();
         export_main_wallet(&export_file.path, &backup_key).await.unwrap();
 
         close_main_wallet().await.unwrap();

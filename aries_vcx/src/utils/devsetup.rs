@@ -14,7 +14,7 @@ use crate::libindy::utils::mocks::did_mocks::DidMocks;
 use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
 use crate::global::pool::reset_main_pool_handle;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{create_indy_wallet, delete_wallet, WalletConfig};
+use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, delete_wallet, WalletConfig};
 use crate::libindy::utils::wallet::wallet_configure_issuer;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, open_as_main_wallet, reset_main_wallet_handle};
@@ -137,14 +137,14 @@ impl SetupLibraryWallet {
             rekey_derivation_method: None,
         };
 
-        let wallet_handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
+        let wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
         SetupLibraryWallet { wallet_config, wallet_handle }
     }
 }
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
-        let _res = futures::executor::block_on(close_main_wallet()).unwrap();
+        let _res = futures::executor::block_on(close_wallet(self.wallet_handle)).unwrap();
         futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap();
         reset_global_state();
     }

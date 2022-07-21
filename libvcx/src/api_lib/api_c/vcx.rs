@@ -489,39 +489,16 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
     trace!("vcx_get_current_error: <<<");
 }
 
-#[cfg(test)]
+#[cfg(feature = "test_utils")]
 #[allow(unused_imports)]
-mod tests {
-    use std::ptr;
-
-    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::global;
-    use aries_vcx::global::agency_client;
-    use aries_vcx::indy::INVALID_WALLET_HANDLE;
-    use aries_vcx::libindy::utils::pool::PoolConfig;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
-    use aries_vcx::global::pool::get_main_pool_handle;
-    use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
-    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::global::wallet::get_main_wallet_handle;
-    use aries_vcx::global::wallet::tests::create_main_wallet_and_its_backup;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, SetupWallet, SetupWithWalletAndAgency, TempFile};
-
-    use crate::api_lib;
-    use crate::api_lib::api_c;
-    use crate::api_lib::api_c::connection::vcx_connection_create;
-    use crate::api_lib::api_c::utils::vcx_provision_cloud_agent;
-    use crate::api_lib::api_c::wallet::tests::_test_add_and_get_wallet_record;
-    use crate::api_lib::api_c::wallet::vcx_open_main_wallet;
-    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
-    use crate::api_lib::utils::error::reset_current_error;
+pub mod test_utils {
+    use super::*;
+    use crate::api_lib::api_c::vcx::vcx_open_main_pool;
+    use crate::api_lib::api_c::wallet::{vcx_create_wallet, vcx_open_main_wallet, vcx_wallet_add_record, vcx_wallet_get_record};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
-    use super::*;
-
-    fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
+    pub fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
 
         let rc = vcx_open_main_pool(cb.command_handle, CString::new(pool_config).unwrap().into_raw(), cb.get_callback());
@@ -531,7 +508,7 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium())
     }
 
-    fn _vcx_open_main_wallet_c_closure(wallet_config: &str) -> Result<i32, u32> {
+    pub fn _vcx_open_main_wallet_c_closure(wallet_config: &str) -> Result<i32, u32> {
         let cb = return_types_u32::Return_U32_I32::new().unwrap();
 
         let rc = vcx_open_main_wallet(cb.command_handle, CString::new(wallet_config).unwrap().into_raw(), Some(cb.get_callback()));
@@ -541,7 +518,7 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium())
     }
 
-    fn _vcx_init_threadpool_c_closure(config: &str) -> Result<(), u32> {
+    pub fn _vcx_init_threadpool_c_closure(config: &str) -> Result<(), u32> {
         let rc = vcx_init_threadpool(CString::new(config).unwrap().into_raw());
         if rc != error::SUCCESS.code_num {
             return Err(rc);
@@ -549,7 +526,7 @@ mod tests {
         Ok(())
     }
 
-    fn _vcx_init_full(config_threadpool: &str, config_pool: &str, config_wallet: &str) -> Result<(), u32> {
+    pub fn _vcx_init_full(config_threadpool: &str, config_pool: &str, config_wallet: &str) -> Result<(), u32> {
         info!("_vcx_init_full >>>");
         let rc = vcx_init_threadpool(CString::new(config_threadpool).unwrap().into_raw());
         if rc != error::SUCCESS.code_num {
@@ -577,6 +554,99 @@ mod tests {
         cb.receive(TimeoutUtils::some_custom(3)).unwrap();
         Ok(())
     }
+
+    pub fn _vcx_create_and_open_wallet() -> Result<String, u32> {
+        let wallet_name = format!("test_create_wallet_{}", uuid::Uuid::new_v4().to_string());
+        let config_wallet = json!({
+            "wallet_name": wallet_name,
+            "wallet_key": settings::DEFAULT_WALLET_KEY,
+            "wallet_key_derivation": settings::WALLET_KDF_RAW
+        }).to_string();
+
+        info!("_vcx_create_and_open_wallet >>>");
+
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        let err = vcx_create_wallet(cb.command_handle, CString::new(format!("{}", config_wallet.clone())).unwrap().into_raw(), Some(cb.get_callback()));
+        assert_eq!(err, error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+
+        info!("_vcx_init_full >>> going to open wallet");
+        let cb = return_types_u32::Return_U32_I32::new().unwrap();
+        let rc = vcx_open_main_wallet(cb.command_handle, CString::new(config_wallet.clone()).unwrap().into_raw(), Some(cb.get_callback()));
+        if rc != error::SUCCESS.code_num {
+            error!("vcx_open_wallet failed");
+            return Err(rc);
+        }
+        cb.receive(TimeoutUtils::some_custom(3)).unwrap();
+        Ok(config_wallet)
+    }
+
+    pub fn _test_add_and_get_wallet_record() {
+        let xtype = CStringUtils::string_to_cstring("record_type".to_string());
+        let id = CStringUtils::string_to_cstring("123".to_string());
+        let value = CStringUtils::string_to_cstring("Record Value".to_string());
+        let tags = CStringUtils::string_to_cstring("{}".to_string());
+        let options = json!({
+            "retrieveType": true,
+            "retrieveValue": true,
+            "retrieveTags": false
+        }).to_string();
+        let options = CStringUtils::string_to_cstring(options);
+
+        let cb = return_types_u32::Return_U32::new().unwrap();
+        assert_eq!(vcx_wallet_add_record(cb.command_handle,
+                                         xtype.as_ptr(),
+                                         id.as_ptr(),
+                                         value.as_ptr(),
+                                         tags.as_ptr(),
+                                         Some(cb.get_callback())),
+                   error::SUCCESS.code_num);
+        cb.receive(TimeoutUtils::some_custom(1)).unwrap();
+
+        let cb = return_types_u32::Return_U32_STR::new().unwrap();
+        assert_eq!(vcx_wallet_get_record(cb.command_handle,
+                                         xtype.as_ptr(),
+                                         id.as_ptr(),
+                                         options.as_ptr(),
+                                         Some(cb.get_callback())),
+                   error::SUCCESS.code_num);
+        let record_value = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
+        assert!(record_value.contains("Record Value"));
+    }
+
+}
+
+#[cfg(test)]
+#[allow(unused_imports)]
+mod tests {
+    use std::ptr;
+
+    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+    use aries_vcx::global;
+    use aries_vcx::global::agency_client;
+    use aries_vcx::indy::INVALID_WALLET_HANDLE;
+    use aries_vcx::libindy::utils::pool::PoolConfig;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
+    use aries_vcx::global::pool::get_main_pool_handle;
+    use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
+    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::global::wallet::get_main_wallet_handle;
+    use aries_vcx::global::wallet::tests::create_main_wallet_and_its_backup;
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, configure_trustee_did, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, SetupWallet, SetupWithWalletAndAgency, TempFile};
+
+    use crate::api_lib;
+    use crate::api_lib::api_c;
+    use crate::api_lib::api_c::connection::vcx_connection_create;
+    use crate::api_lib::api_c::utils::vcx_provision_cloud_agent;
+    use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_init_full, _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure, _vcx_open_main_wallet_c_closure};
+    use crate::api_lib::api_c::wallet::{vcx_create_wallet, vcx_open_main_wallet};
+    use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    use crate::api_lib::utils::error::reset_current_error;
+    use crate::api_lib::utils::return_types_u32;
+    use crate::api_lib::utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
