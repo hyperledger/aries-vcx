@@ -1,7 +1,7 @@
+use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
-use crate::messages::error::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FinishedState {

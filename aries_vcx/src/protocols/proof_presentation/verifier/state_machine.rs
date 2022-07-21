@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -18,6 +18,7 @@ use crate::protocols::proof_presentation::verifier::states::presentation_proposa
 use crate::protocols::proof_presentation::verifier::states::presentation_request_sent::PresentationRequestSentState;
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
+use crate::protocols::SendClosure;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -164,7 +165,7 @@ impl VerifierSM {
 
     pub async fn step(self,
                       wallet_handle: WalletHandle,
-                      message: VerifierMessages, 
+                      message: VerifierMessages,
                       send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
         let state_name = self.state.to_string();
@@ -369,10 +370,11 @@ pub mod test {
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }
-    
+
     pub fn _verifier_sm() -> VerifierSM {
         VerifierSM::new(&source_id())
     }

@@ -1,13 +1,17 @@
 #[cfg(test)]
 pub mod test {
     use indy_sys::WalletHandle;
+
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
-    use agency_client::MessageStatusCode;
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
+    use agency_client::MessageStatusCode;
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::global;
     use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, get_main_agency_client};
+    use aries_vcx::global::settings;
+    use aries_vcx::global::settings::init_issuer_config;
+    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, main_wallet_configure_issuer, open_as_main_wallet};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -16,7 +20,6 @@ pub mod test {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::global::settings::init_issuer_config;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
     use aries_vcx::libindy::credential_def::PublicEntityStateType;
     use aries_vcx::libindy::schema::Schema;
@@ -33,8 +36,6 @@ pub mod test {
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-    use aries_vcx::global::settings;
-    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, main_wallet_configure_issuer, open_as_main_wallet};
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
 
@@ -108,7 +109,7 @@ pub mod test {
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
         pub agent: PublicAgent,
-        pub wallet_handle: WalletHandle
+        pub wallet_handle: WalletHandle,
     }
 
 
@@ -248,7 +249,7 @@ pub mod test {
         pub async fn create_invite(&mut self) -> String {
             self.activate().await.unwrap();
             self.connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
@@ -263,18 +264,18 @@ pub mod test {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_ping(get_main_wallet_handle(),None).await.unwrap();
+            self.connection.send_ping(get_main_wallet_handle(), None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_discovery_features(get_main_wallet_handle(),None, None).await.unwrap();
+            self.connection.send_discovery_features(get_main_wallet_handle(), None, None).await.unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
@@ -302,17 +303,17 @@ pub mod test {
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
             self.issuer_credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info, None).await.unwrap();
             self.issuer_credential.send_credential_offer(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
         pub async fn send_credential(&mut self) {
             self.activate().await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
             self.issuer_credential.send_credential(get_main_wallet_handle(), self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
         }
 
@@ -322,7 +323,7 @@ pub mod test {
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier.send_presentation_request(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.verifier.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
 
             assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
@@ -335,7 +336,7 @@ pub mod test {
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().await.unwrap();
 
-            self.verifier.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
@@ -348,7 +349,7 @@ pub mod test {
         pub connection: Connection,
         pub credential: Holder,
         pub prover: Prover,
-        pub wallet_handle: WalletHandle
+        pub wallet_handle: WalletHandle,
     }
 
     impl Alice {
@@ -395,14 +396,14 @@ pub mod test {
         pub async fn accept_invite(&mut self, invite: &str) {
             self.activate().await.unwrap();
             self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true, &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.connect(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
@@ -434,7 +435,7 @@ pub mod test {
 
         pub async fn accept_credential(&mut self) {
             self.activate().await.unwrap();
-            self.credential.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
@@ -502,7 +503,7 @@ pub mod test {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.activate().await.unwrap();
-            self.prover.update_state(get_main_wallet_handle(),&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.prover.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }

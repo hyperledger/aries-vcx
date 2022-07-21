@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::error::ProblemReport;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -18,6 +18,7 @@ use crate::protocols::proof_presentation::prover::states::presentation_proposal_
 use crate::protocols::proof_presentation::prover::states::presentation_request_received::PresentationRequestReceived;
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::protocols::proof_presentation::prover::verify_thread_id;
+use crate::protocols::SendClosure;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -372,6 +373,7 @@ pub mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }

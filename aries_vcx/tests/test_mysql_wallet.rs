@@ -37,10 +37,10 @@ mod test_utils {
 mod dbtests {
     use agency_client::agency_client::AgencyClient;
     use agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::libindy::utils::wallet::{WalletConfig, WalletConfigBuilder};
     use aries_vcx::global::settings;
+    use aries_vcx::global::settings::init_issuer_config;
     use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, main_wallet_configure_issuer, open_as_main_wallet};
+    use aries_vcx::libindy::utils::wallet::{WalletConfig, WalletConfigBuilder};
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
@@ -76,7 +76,7 @@ mod dbtests {
             agency_did: AGENCY_DID.to_string(),
             agency_verkey: AGENCY_VERKEY.to_string(),
             agency_endpoint: AGENCY_ENDPOINT.to_string(),
-            agent_seed: None
+            agent_seed: None,
         };
         create_main_wallet(&config_wallet).await.unwrap();
         let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();

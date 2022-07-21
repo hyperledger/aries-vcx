@@ -1,9 +1,11 @@
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
+
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -14,10 +16,9 @@ use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
@@ -387,9 +388,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_send_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Completed(state) => {
@@ -402,9 +403,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, reuse_msg: OutOfBandHandshakeReuse, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output=VcxResult<()>>
+        where
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>
     {
         let state = match self.state {
             InviterFullState::Completed(state) => {
@@ -597,7 +598,7 @@ pub mod test {
                 let new_pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!("verkey456".into());
                 let new_service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connection_request(_dummy_wallet_handle() , _request(), &new_pairwise_info, new_routing_keys, new_service_endpoint, _send_message).await.unwrap();
+                self = self.handle_connection_request(_dummy_wallet_handle(), _request(), &new_pairwise_info, new_routing_keys, new_service_endpoint, _send_message).await.unwrap();
                 self = self.handle_send_response(_dummy_wallet_handle(), &_send_message).await.unwrap();
                 self
             }

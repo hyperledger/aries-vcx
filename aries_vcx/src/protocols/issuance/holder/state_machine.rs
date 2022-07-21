@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
@@ -434,7 +435,7 @@ mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
-    
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }

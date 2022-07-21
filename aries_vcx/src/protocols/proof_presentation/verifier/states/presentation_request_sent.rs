@@ -1,4 +1,5 @@
 use indy_sys::WalletHandle;
+
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;

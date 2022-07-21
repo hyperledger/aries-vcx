@@ -1,5 +1,6 @@
 use std::clone::Clone;
 use std::future::Future;
+
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;

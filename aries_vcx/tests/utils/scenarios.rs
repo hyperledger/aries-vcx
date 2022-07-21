@@ -2,9 +2,13 @@
 pub mod test_utils {
     use std::thread;
     use std::time::Duration;
+
     use indy_sys::WalletHandle;
     use serde_json::{json, Value};
+
     use aries_vcx::global::agency_client::get_main_agency_client;
+    use aries_vcx::global::settings;
+    use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
@@ -14,8 +18,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
     use aries_vcx::libindy;
-    use aries_vcx::global::settings;
-    use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::libindy::credential_def::CredentialDef;
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
     use aries_vcx::libindy::proofs::proof_request_internal::AttrInfo;
@@ -35,6 +37,7 @@ pub mod test_utils {
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;
+
     use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
     use crate::utils::test_macros::ProofStateType;
 
@@ -476,7 +479,7 @@ pub mod test_utils {
     pub async fn _create_address_schema(wallet_handle: WalletHandle) -> (String, String, String, String, CredentialDef, RevocationRegistry, Option<String>) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) = create_and_store_credential_def(wallet_handle,&attrs_list).await;
+        let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) = create_and_store_credential_def(wallet_handle, &attrs_list).await;
         (schema_id, schema_json, cred_def_id.to_string(), cred_def_json, cred_def, rev_reg, Some(rev_reg_id))
     }
 
