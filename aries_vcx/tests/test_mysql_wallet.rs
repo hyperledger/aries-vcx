@@ -82,7 +82,7 @@ mod dbtests {
         let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
         let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
-        let mut agency_client = AgencyClient::new().unwrap();
+        let mut agency_client = AgencyClient::new();
         provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
         close_main_wallet().await.unwrap();
     }

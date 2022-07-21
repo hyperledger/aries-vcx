@@ -7,7 +7,7 @@ use agency_client::configuration::AgencyClientConfig;
 use crate::error::VcxResult;
 
 lazy_static! {
-    pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::default());
+    pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
 }
 
 pub fn get_main_agency_client_mut() -> VcxResult<RwLockWriteGuard<'static, AgencyClient>> {
@@ -35,5 +35,5 @@ pub fn enable_main_agency_client_mocks() -> VcxResult<()> {
 pub fn reset_main_agency_client() {
     trace!("reset_agency_client >>>");
     let mut agency_client = AGENCY_CLIENT.write().unwrap();
-    *agency_client = AgencyClient::default();
+    *agency_client = AgencyClient::new();
 }

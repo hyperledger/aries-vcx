@@ -11,6 +11,7 @@ pub async fn provision_cloud_agent(client: &mut AgencyClient, wallet_handle: Wal
     let seed = provision_config.agent_seed.as_ref().map(String::as_str);
     let (my_did, my_vk) = signus::create_and_store_my_did(wallet_handle, seed, None).await?;
     client.provision_cloud_agent(
+        wallet_handle,
         &my_did, &my_vk,
         &provision_config.agency_did, &provision_config.agency_verkey, &provision_config.agency_endpoint,
     ).await?;

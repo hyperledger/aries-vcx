@@ -844,7 +844,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let agency_client = AgencyClient::new().unwrap();
+        let agency_client = AgencyClient::new();
         agency_client.enable_test_mode();
         let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
@@ -854,7 +854,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
-        let agency_client = AgencyClient::new().unwrap();
+        let agency_client = AgencyClient::new();
         agency_client.enable_test_mode();
         let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
@@ -864,7 +864,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
         let _setup = SetupMocks::init();
-        let agency_client = AgencyClient::new().unwrap();
+        let agency_client = AgencyClient::new();
         agency_client.enable_test_mode();
 
         let pub_inv = _public_invitation_random_id();
@@ -884,7 +884,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
-        let agency_client = AgencyClient::new().unwrap();
+        let agency_client = AgencyClient::new();
         agency_client.enable_test_mode();
         let connection = Connection::create_with_request(_request(), &_public_agent(), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));

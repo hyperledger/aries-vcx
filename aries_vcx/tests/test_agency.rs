@@ -282,13 +282,13 @@ mod tests {
 
         create_indy_wallet(&wallet_config).await.unwrap();
         let wallet_handle = open_wallet(&wallet_config).await.unwrap();
-        let mut client = AgencyClient::new().unwrap();
-        client.set_wallet_handle(wallet_handle.0);
+        let mut client = AgencyClient::new();
+        client.set_wallet_handle(wallet_handle);
         let agency_url = "http://localhost:8080";
         let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
         let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
         let (my_did, my_vk) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
-        client.provision_cloud_agent(&my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
+        client.provision_cloud_agent(wallet_handle, &my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
         let config = client.get_config().unwrap();
         client.configure(&config);
         client.update_agent_webhook("https://example.org").await.unwrap();

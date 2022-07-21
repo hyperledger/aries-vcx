@@ -10,7 +10,7 @@ pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 pub fn set_wallet_handle(handle: WalletHandle) -> WalletHandle {
     trace!("set_wallet_handle >>> handle: {:?}", handle);
     unsafe { WALLET_HANDLE = handle; }
-    global::agency_client::get_main_agency_client_mut().unwrap().set_wallet_handle(handle.0);
+    global::agency_client::get_main_agency_client_mut().unwrap().set_wallet_handle(handle);
     unsafe { WALLET_HANDLE }
 }
 

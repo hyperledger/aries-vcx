@@ -1,3 +1,4 @@
+use indy::WalletHandle;
 use crate::agency_client::AgencyClient;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
@@ -56,8 +57,9 @@ impl AgencyClient {
         Ok(response)
     }
 
-    pub async fn provision_cloud_agent(&mut self, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str, agency_url: &str) -> AgencyClientResult<()> {
+    pub async fn provision_cloud_agent(&mut self, wallet_handle: WalletHandle, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str, agency_url: &str) -> AgencyClientResult<()> {
         info!("provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}", my_did, my_vk, agency_did, agency_vk, agency_url);
+        self.set_wallet_handle(wallet_handle);
         self.set_agency_url(agency_url);
         self.set_agency_vk(agency_vk);
         self.set_agency_did(agency_did);

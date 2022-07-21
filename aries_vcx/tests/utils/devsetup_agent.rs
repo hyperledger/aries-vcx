@@ -177,7 +177,7 @@ pub mod test {
             let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
             let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
-            let mut agency_client = AgencyClient::new().unwrap();
+            let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
             let institution_did = config_issuer.clone().institution_did;
             create_agency_client_for_main_wallet(&config_agency).unwrap();
@@ -376,7 +376,7 @@ pub mod test {
 
             create_main_wallet(&config_wallet).await.unwrap();
             let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
-            let mut agency_client = AgencyClient::new().unwrap();
+            let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
             create_agency_client_for_main_wallet(&config_agency).unwrap();
             let alice = Alice {
