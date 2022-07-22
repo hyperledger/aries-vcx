@@ -217,6 +217,7 @@ impl A2AMessageKinds {
 
 #[cfg(test)]
 mod test {
+    use serde_json::json;
     use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
     use crate::messages::get_messages::GetMessages;
     use crate::testing::test_utils::SetupMocks;
