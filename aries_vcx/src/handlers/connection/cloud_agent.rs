@@ -74,7 +74,7 @@ impl CloudAgentInfo {
         Ok(vec![self.agent_vk.to_string(), agency_vk.to_string()])
     }
 
-    pub async fn update_message_status(&self, agency_client: &AgencyClient, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
+    pub async fn update_message_status(&self, pairwise_info: &PairwiseInfo, uid: String) -> VcxResult<()> {
         trace!("CloudAgentInfo::update_message_status >>> uid: {:?}", uid);
 
         let messages_to_update = vec![UIDsByConn {

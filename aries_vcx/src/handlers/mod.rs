@@ -10,6 +10,7 @@ pub mod connection;
 pub mod issuance;
 pub mod proof_presentation;
 pub mod out_of_band;
+pub mod connection_direct;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {
