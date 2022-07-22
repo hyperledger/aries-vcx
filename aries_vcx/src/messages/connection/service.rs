@@ -16,7 +16,7 @@ impl ServiceResolvable {
     pub async fn resolve(&self) -> VcxResult<FullService> {
         match self {
             ServiceResolvable::FullService(full_service) => Ok(full_service.clone()),
-            ServiceResolvable::Did(did) => ledger::get_service(&did).await
+            ServiceResolvable::Did(did) => ledger::get_service(did).await
         }
     }
 }

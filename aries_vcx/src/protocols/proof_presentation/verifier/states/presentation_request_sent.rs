@@ -20,7 +20,7 @@ impl PresentationRequestSentState {
                                      wallet_handle: WalletHandle,
                                      presentation: &Presentation,
                                      thread_id: &str) -> VcxResult<()> {
-        if !settings::indy_mocks_enabled() && !presentation.from_thread(&thread_id) {
+        if !settings::indy_mocks_enabled() && !presentation.from_thread(thread_id) {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
         };
 

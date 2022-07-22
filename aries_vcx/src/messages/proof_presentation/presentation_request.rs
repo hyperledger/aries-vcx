@@ -39,8 +39,8 @@ impl PresentationRequest {
 
     pub fn get_presentation_request_data(self) -> VcxResult<ProofRequestData> {
         let content = &self.request_presentations_attach.content()?;
-        Ok(serde_json::from_str(&content)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize PresentationRequestData: {}, error: {}", content, err)))?)
+        serde_json::from_str(content)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize PresentationRequestData: {}, error: {}", content, err)))
     }
 
     pub fn to_json(&self) -> VcxResult<String> {

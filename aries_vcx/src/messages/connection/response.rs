@@ -119,7 +119,7 @@ impl SignedResponse {
         let sig_data = base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
 
-        if !crypto::verify(&key, &sig_data, &signature).await? {
+        if !crypto::verify(key, &sig_data, &signature).await? {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "ConnectionResponse signature is invalid for original Invite recipient key"));
         }
 
@@ -127,7 +127,7 @@ impl SignedResponse {
 
         let sig_data = &sig_data[8..];
 
-        let connection: ConnectionData = serde_json::from_slice(&sig_data)
+        let connection: ConnectionData = serde_json::from_slice(sig_data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, err.to_string()))?;
 
         Ok(Response {

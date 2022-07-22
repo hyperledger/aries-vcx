@@ -37,7 +37,7 @@ impl Attachments {
     pub fn content(&self) -> VcxResult<String> {
         match self.get() {
             Some(Attachment::JSON(ref attach)) => attach.get_data(),
-            _ => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Unsupported Attachment type"))
+            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Unsupported Attachment type"))
         }
     }
 }

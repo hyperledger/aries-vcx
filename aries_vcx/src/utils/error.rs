@@ -263,7 +263,7 @@ impl fmt::Display for Error {
 
 pub fn error_c_message(code_num: &u32) -> &CString {
     match ERROR_C_MESSAGES.get(code_num) {
-        Some(msg) => &msg,
+        Some(msg) => msg,
         None => error_c_message(&UNKNOWN_ERROR.code_num),
     }
 }

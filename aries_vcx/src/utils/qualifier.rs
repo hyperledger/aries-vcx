@@ -5,7 +5,7 @@ lazy_static! {
 }
 
 pub fn is_fully_qualified(entity: &str) -> bool {
-    REGEX.is_match(&entity)
+    REGEX.is_match(entity)
 }
 
 #[cfg(test)]

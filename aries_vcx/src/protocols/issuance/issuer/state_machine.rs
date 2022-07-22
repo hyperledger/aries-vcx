@@ -314,11 +314,9 @@ impl IssuerSM {
                     (IssuerFullState::Initial(state_data), thread_id)
                 }
             },
-            IssuerFullState::ProposalReceived(state_data) => match cim {
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (IssuerFullState::ProposalReceived(state_data), thread_id)
-                }
+            IssuerFullState::ProposalReceived(state_data) => {
+                warn!("Unable to process received message in state {}", state_name);
+                (IssuerFullState::ProposalReceived(state_data), thread_id)
             }
             IssuerFullState::OfferSent(state_data) => match cim {
                 CredentialIssuanceAction::CredentialRequest(request) => {
@@ -420,7 +418,7 @@ async fn _create_credential(wallet_handle: WalletHandle,
                             thread_id: &str) -> VcxResult<(Credential, Option<String>)> {
     let offer = offer.offers_attach.content()?;
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
-    if !request.from_thread(&thread_id) {
+    if !request.from_thread(thread_id) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle credential request: thread id does not match: {:?}", request.thread)));
     };
     let request = &request.requests_attach.content()?;
@@ -428,7 +426,7 @@ async fn _create_credential(wallet_handle: WalletHandle,
     let (ser_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(
         wallet_handle,
         &offer,
-        &request,
+        request,
         &cred_data,
         rev_reg_id.clone(),
         tails_file.clone()).await?;

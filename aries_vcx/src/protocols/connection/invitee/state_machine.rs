@@ -84,7 +84,7 @@ impl SmConnectionInvitee {
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        return InviteeState::from(self.state.clone()) == InviteeState::Initial;
+        InviteeState::from(self.state.clone()) == InviteeState::Initial
     }
 
     pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState) -> Self {
@@ -168,7 +168,7 @@ impl SmConnectionInvitee {
 
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .map(|did_doc: DidDoc| did_doc.id.clone())
+            .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection DID is not set"))
     }
 
@@ -268,7 +268,7 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))); }
+            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))); }
         };
         Ok(Self { state, thread_id: invitation.get_id()?, ..self })
     }
@@ -373,7 +373,7 @@ impl SmConnectionInvitee {
                 state.handle_send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
+            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
@@ -392,7 +392,7 @@ impl SmConnectionInvitee {
                 state.handle_send_handshake_reuse_accepted(wallet_handle, reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
                 InviteeFullState::Completed(state)
             }
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
+            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
@@ -431,7 +431,7 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Completed(state) => {
-                InviteeFullState::Completed((state.clone(), disclose.protocols).into())
+                InviteeFullState::Completed((state, disclose.protocols).into())
             }
             _ => state.clone()
         };

@@ -154,7 +154,7 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => {
                 sm_invitee.get_thread_id()
             }
-        }.into()
+        }
     }
 
     pub fn get_state(&self) -> ConnectionState {
@@ -325,7 +325,7 @@ impl Connection {
         trace!("Connection::get_invite_details >>>");
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.get_invitation().clone()
+                sm_inviter.get_invitation()
             }
             SmConnection::Invitee(_sm_invitee) => {
                 None
@@ -379,7 +379,7 @@ impl Connection {
                 }
             };
             *self = new_connection_sm;
-            if can_autohop && self.autohop_enabled.clone() {
+            if can_autohop && self.autohop_enabled {
                 let res = self._update_state(wallet_handle, None, agency_client).await;
                 res
             } else {
@@ -481,7 +481,7 @@ impl Connection {
                 let connection = Self {
                     cloud_agent_info: new_cloud_agent_info.unwrap_or(self.cloud_agent_info.clone()),
                     connection_sm: SmConnection::Inviter(sm_inviter),
-                    autohop_enabled: self.autohop_enabled.clone(),
+                    autohop_enabled: self.autohop_enabled,
                 };
 
                 Ok((connection, can_autohop))
@@ -529,7 +529,7 @@ impl Connection {
                             (sm_invitee.handle_disclose(disclose)?, false)
                         }
                         _ => {
-                            (sm_invitee.clone(), false)
+                            (sm_invitee, false)
                         }
                     }
                     None => {
@@ -539,7 +539,7 @@ impl Connection {
                 let connection = Self {
                     connection_sm: SmConnection::Invitee(sm_invitee),
                     cloud_agent_info: self.cloud_agent_info.clone(),
-                    autohop_enabled: self.autohop_enabled.clone(),
+                    autohop_enabled: self.autohop_enabled,
                 };
                 Ok((connection, can_autohop))
             }
@@ -654,7 +654,7 @@ impl Connection {
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
                 A2AMessage::OutOfBandInvitation(oob) => oob,
-                a @ _ => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Received invalid message type: {:?}", a))); }
+                a => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Received invalid message type: {:?}", a))); }
             }
             Err(err) => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize message, err: {:?}", err))); }
         };
@@ -690,13 +690,13 @@ impl Connection {
     pub fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
-        let agent_info = self.cloud_agent_info().clone();
+        let agent_info = self.cloud_agent_info();
         let pairwise_info = self.pairwise_info();
         let recipient_keys = vec!(pairwise_info.pw_vk.clone());
 
         let current = SideConnectionInfo {
             did: pairwise_info.pw_did.clone(),
-            recipient_keys: recipient_keys.clone(),
+            recipient_keys,
             routing_keys: agent_info.routing_keys(agency_client)?,
             service_endpoint: agent_info.service_endpoint(agency_client)?,
             protocols: Some(self.get_protocols()),
@@ -719,7 +719,7 @@ impl Connection {
         let connection_info_json = serde_json::to_string(&connection_info)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot serialize ConnectionInfo: {:?}", err)))?;
 
-        return Ok(connection_info_json);
+        Ok(connection_info_json)
     }
 
     pub async fn download_messages(&self, agency_client: &AgencyClient, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>) -> VcxResult<Vec<DownloadedMessage>> {
@@ -821,7 +821,7 @@ impl<'de> Deserialize<'de> for Connection {
 
 impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
     fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String) {
-        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info().to_owned(), self.source_id(), self.get_thread_id())
+        (self.state_object(), self.pairwise_info().to_owned(), self.cloud_agent_info(), self.source_id(), self.get_thread_id())
     }
 }
 

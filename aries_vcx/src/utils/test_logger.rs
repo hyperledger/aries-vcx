@@ -91,11 +91,11 @@ impl LibvcxDefaultLogger {
             EnvLoggerBuilder::new()
                 .format(formatter)
                 .filter(None, LevelFilter::Off)
-                .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
+                .parse_filters(pattern.as_deref().unwrap_or("warn"))
                 .try_init()
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err)))?;
         }
-        libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
+        libindy::utils::logger::set_default_logger(pattern.as_deref())
     }
 }
 

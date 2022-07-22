@@ -18,7 +18,7 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
             Ok(_) => {
                 warn!("ok(_)");
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length"));
+                Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length"))
             }
             Err(x) => {
                 warn!("Err(x)");
@@ -54,7 +54,7 @@ pub fn validate_key_delegate(delegate: &str) -> VcxResult<String> {
 }
 
 pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
-    ::serde_json::from_str(&actors)
+    ::serde_json::from_str(actors)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Invalid actors: {:?}", err)))
 }
 

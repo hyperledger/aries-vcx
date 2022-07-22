@@ -38,7 +38,7 @@ impl MessageFamilies {
     }
 
     pub fn id(&self) -> String {
-        format!("{}/{}/{}", Self::ARIES_CORE_PREFIX, self.to_string(), self.version().to_string())
+        format!("{}/{}/{}", Self::ARIES_CORE_PREFIX, self.to_string(), self.version())
     }
 
     pub fn actors(&self) -> Option<(Actors, Actors)> {
@@ -73,7 +73,7 @@ impl From<String> for MessageFamilies {
             "discover-features" => MessageFamilies::DiscoveryFeatures,
             "basicmessage" => MessageFamilies::Basicmessage,
             "out-of-band" => MessageFamilies::OutOfBand,
-            family @ _ => MessageFamilies::Unknown(family.to_string())
+            family => MessageFamilies::Unknown(family.to_string())
         }
     }
 }

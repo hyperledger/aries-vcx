@@ -73,7 +73,7 @@ pub async fn send_message(wallet_handle: WalletHandle, sender_verkey: String, di
 
 pub async fn send_message_anonymously(wallet_handle: WalletHandle, did_doc: &DidDoc, message: &A2AMessage) -> VcxResult<()> {
     trace!("send_message_anonymously >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let envelope = EncryptionEnvelope::create(wallet_handle, &message, None, &did_doc).await?;
+    let envelope = EncryptionEnvelope::create(wallet_handle, message, None, did_doc).await?;
     agency_client::httpclient::post_message(&envelope.0, &did_doc.get_endpoint()).await?;
     Ok(())
 }

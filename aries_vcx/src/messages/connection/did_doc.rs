@@ -142,14 +142,10 @@ impl DidDoc {
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("DIDDoc validation failed: Invalid endpoint \"{:?}\", err: {:?}", service.service_endpoint, err)))?;
 
             service.recipient_keys
-                .iter()
-                .map(|key| self.validate_recipient_key(key))
-                .collect::<VcxResult<()>>()?;
+                .iter().try_for_each(|key| self.validate_recipient_key(key))?;
 
             service.routing_keys
-                .iter()
-                .map(|key| self.validate_routing_key(key))
-                .collect::<VcxResult<()>>()?;
+                .iter().try_for_each(|key| self.validate_routing_key(key))?;
         }
 
         Ok(())
@@ -172,7 +168,7 @@ impl DidDoc {
     fn validate_public_key(&self, target_key: &str) -> VcxResult<&Ed25519PublicKey> {
         let id = DidDoc::_parse_key_reference(target_key);
 
-        let key = self.public_key.iter().find(|key_| key_.id == id.to_string() || key_.public_key_base_58 == id.to_string())
+        let key = self.public_key.iter().find(|key_| key_.id == id || key_.public_key_base_58 == id)
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("DIDDoc validation failed: Cannot find PublicKey definition for key: {:?}", id)))?;
 
         if key.type_ != KEY_TYPE {
@@ -190,8 +186,8 @@ impl DidDoc {
         }
 
         let key = self.authentication.iter().find(|key_|
-            key_.public_key == target_key.to_string() ||
-                DidDoc::_parse_key_reference(&key_.public_key) == target_key.to_string())
+            key_.public_key == *target_key ||
+                DidDoc::_parse_key_reference(&key_.public_key) == *target_key)
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("DIDDoc validation failed: Cannot find Authentication section for key: {:?}", target_key)))?;
 
         if key.type_ != KEY_AUTHENTICATION_TYPE && key.type_ != KEY_TYPE {
@@ -254,7 +250,7 @@ impl DidDoc {
     fn key_for_reference(&self, key_reference: &str) -> String {
         let id = DidDoc::_parse_key_reference(key_reference);
 
-        self.public_key.iter().find(|key_| key_.id == id.to_string() || key_.public_key_base_58 == id.to_string())
+        self.public_key.iter().find(|key_| key_.id == id || key_.public_key_base_58 == id)
             .map(|key| key.public_key_base_58.clone())
             .unwrap_or(id)
     }
@@ -264,7 +260,7 @@ impl DidDoc {
     }
 
     fn _key_parts(key: &str) -> Vec<&str> {
-        key.split("#").collect()
+        key.split('#').collect()
     }
 
     fn _parse_key_reference(key_reference: &str) -> String {

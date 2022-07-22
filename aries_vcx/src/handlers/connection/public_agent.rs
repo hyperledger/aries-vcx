@@ -29,7 +29,7 @@ impl PublicAgent {
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys(agency_client)?);
-        add_service(wallet_handle, &institution_did, &service).await?;
+        add_service(wallet_handle, institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
         Ok(Self { source_id, agent_info, pairwise_info, institution_did })

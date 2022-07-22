@@ -34,7 +34,7 @@ impl PoolMocks {
     }
 
     pub fn has_pool_mock_responses() -> bool {
-        POOL_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+        !POOL_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn clear_mocks() {

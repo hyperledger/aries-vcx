@@ -162,7 +162,6 @@ impl CredentialDef {
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err.into())
             .map_err(|err: VcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 
@@ -170,10 +169,10 @@ impl CredentialDef {
 
     pub fn get_cred_def_id(&self) -> String { self.cred_def_id.clone() }
 
-    pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id.clone(); }
+    pub fn set_source_id(&mut self, source_id: String) { self.source_id = source_id; }
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle,) -> VcxResult<u32> {
-        if let Ok(_) = anoncreds::get_cred_def_json(wallet_handle, &self.cred_def_id).await {
+        if (anoncreds::get_cred_def_json(wallet_handle, &self.cred_def_id).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

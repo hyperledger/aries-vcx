@@ -85,7 +85,7 @@ impl SmConnectionInviter {
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        return InviterState::from(self.state.clone()) == InviterState::Initial;
+        InviterState::from(self.state.clone()) == InviterState::Initial
     }
 
     pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviterFullState) -> Self {
@@ -159,7 +159,7 @@ impl SmConnectionInviter {
 
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .map(|did_doc: DidDoc| did_doc.id.clone())
+            .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection DID is not set"))
     }
 
@@ -304,7 +304,7 @@ impl SmConnectionInviter {
                     wallet_handle,
                     &request,
                     &bootstrap_pairwise_info,
-                    &new_pairwise_info,
+                    new_pairwise_info,
                     new_routing_keys,
                     new_service_endpoint).await {
                     Ok(signed_response) => {
@@ -397,7 +397,7 @@ impl SmConnectionInviter {
                 state.handle_send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
                 InviterFullState::Completed(state)
             }
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
+            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
@@ -412,7 +412,7 @@ impl SmConnectionInviter {
                 state.handle_send_handshake_reuse_accepted(wallet_handle, reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
                 InviterFullState::Completed(state)
             }
-            s @ _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
+            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
@@ -450,7 +450,7 @@ impl SmConnectionInviter {
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Completed(state) => {
-                InviterFullState::Completed((state.clone(), disclose.protocols).into())
+                InviterFullState::Completed((state, disclose.protocols).into())
             }
             _ => self.state
         };

@@ -34,7 +34,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                     }
                 };
 
-                let encoded = encode(&first_attr)?;
+                let encoded = encode(first_attr)?;
                 let attrib_values = json!({
                     "raw": first_attr,
                     "encoded": encoded

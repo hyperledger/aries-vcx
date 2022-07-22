@@ -108,7 +108,7 @@ pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
         .await {
         Ok(()) => Ok(()),
         Err(err) => {
-            match err.error_code.clone() {
+            match err.error_code {
                 ErrorCode::WalletAlreadyExistsError => {
                     warn!("wallet \"{}\" already exists. skipping creation", wallet_config.wallet_name);
                     Ok(())
@@ -125,13 +125,13 @@ pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
 pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
 
-    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_ref().map(String::as_str), wallet_config.storage_config.as_deref());
+    let config = build_wallet_config(&wallet_config.wallet_name, wallet_config.wallet_type.as_deref(), wallet_config.storage_config.as_deref());
     let credentials = build_wallet_credentials(&wallet_config.wallet_key, wallet_config.storage_credentials.as_deref(), &wallet_config.wallet_key_derivation, None, None)?;
 
     wallet::delete_wallet(&config, &credentials)
         .await
         .map_err(|err|
-            match err.error_code.clone() {
+            match err.error_code {
                 ErrorCode::WalletAccessFailed => {
                     err.to_vcx(VcxErrorKind::WalletAccessFailed,
                                format!("Can not open wallet \"{}\". Invalid key has been provided.", &wallet_config.wallet_name))
@@ -289,7 +289,7 @@ pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_see
 }
 
 pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResult<()> {
-    let wallet_handle = create_and_open_wallet(&config).await?;
+    let wallet_handle = create_and_open_wallet(config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
@@ -313,7 +313,7 @@ pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<W
         warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");
         return Ok(WalletHandle(1));
     }
-    create_indy_wallet(&wallet_config).await?;
+    create_indy_wallet(wallet_config).await?;
     let handle = libindy::wallet::open_wallet(wallet_config).await?;
     Ok(handle)
 }

@@ -120,123 +120,123 @@ impl<'de> Deserialize<'de> for A2AMessage {
         match (message_type.family, message_type.msg_type.as_str()) {
             (MessageFamilies::Routing, A2AMessage::FORWARD) => {
                 Forward::deserialize(value)
-                    .map(|msg| A2AMessage::Forward(msg))
+                    .map(A2AMessage::Forward)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION) => {
                 PairwiseInvitation::deserialize(value.clone())
                     .map_or(PublicInvitation::deserialize(value)
-                            .map(|msg| A2AMessage::ConnectionInvitationPublic(msg)), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
+                            .map(A2AMessage::ConnectionInvitationPublic), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST) => {
                 Request::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionRequest(msg))
+                    .map(A2AMessage::ConnectionRequest)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE) => {
                 SignedResponse::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionResponse(msg))
+                    .map(A2AMessage::ConnectionResponse)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::TrustPing, A2AMessage::PING) => {
                 Ping::deserialize(value)
-                    .map(|msg| A2AMessage::Ping(msg))
+                    .map(A2AMessage::Ping)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::TrustPing, A2AMessage::PING_RESPONSE) => {
                 PingResponse::deserialize(value)
-                    .map(|msg| A2AMessage::PingResponse(msg))
+                    .map(A2AMessage::PingResponse)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_PROBLEM_REPORT) => {
                 ConnectionProblemReport::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionProblemReport(msg))
+                    .map(A2AMessage::ConnectionProblemReport)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Notification, A2AMessage::ACK) => {
                 Ack::deserialize(value)
-                    .map(|msg| A2AMessage::Ack(msg))
+                    .map(A2AMessage::Ack)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::ReportProblem, A2AMessage::PROBLEM_REPORT) => {
                 CommonProblemReport::deserialize(value)
-                    .map(|msg| A2AMessage::CommonProblemReport(msg))
+                    .map(A2AMessage::CommonProblemReport)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL) => {
                 Credential::deserialize(value)
-                    .map(|msg| A2AMessage::Credential(msg))
+                    .map(A2AMessage::Credential)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::CredentialIssuance, A2AMessage::PROPOSE_CREDENTIAL) => {
                 CredentialProposal::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialProposal(msg))
+                    .map(A2AMessage::CredentialProposal)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL_OFFER) => {
                 CredentialOffer::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialOffer(msg))
+                    .map(A2AMessage::CredentialOffer)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::CredentialIssuance, A2AMessage::REQUEST_CREDENTIAL) => {
                 CredentialRequest::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialRequest(msg))
+                    .map(A2AMessage::CredentialRequest)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::CredentialIssuance, A2AMessage::ACK) => {
                 Ack::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialAck(msg))
+                    .map(A2AMessage::CredentialAck)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION) => {
                 PresentationProposal::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationProposal(msg))
+                    .map(A2AMessage::PresentationProposal)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::PresentProof, A2AMessage::REQUEST_PRESENTATION) => {
                 PresentationRequest::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationRequest(msg))
+                    .map(A2AMessage::PresentationRequest)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::PresentProof, A2AMessage::PRESENTATION) => {
                 Presentation::deserialize(value)
-                    .map(|msg| A2AMessage::Presentation(msg))
+                    .map(A2AMessage::Presentation)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::PresentProof, A2AMessage::ACK) => {
                 Ack::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationAck(msg))
+                    .map(A2AMessage::PresentationAck)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY) => {
                 Query::deserialize(value)
-                    .map(|msg| A2AMessage::Query(msg))
+                    .map(A2AMessage::Query)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE) => {
                 Disclose::deserialize(value)
-                    .map(|msg| A2AMessage::Disclose(msg))
+                    .map(A2AMessage::Disclose)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE) => {
                 BasicMessage::deserialize(value)
-                    .map(|msg| A2AMessage::BasicMessage(msg))
+                    .map(A2AMessage::BasicMessage)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION) => {
                 OutOfBandInvitation::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandInvitation(msg))
+                    .map(A2AMessage::OutOfBandInvitation)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE) => {
                 OutOfBandHandshakeReuse::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandHandshakeReuse(msg))
+                    .map(A2AMessage::OutOfBandHandshakeReuse)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED) => {
                 OutOfBandHandshakeReuseAccepted::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandHandshakeReuseAccepted(msg))
+                    .map(A2AMessage::OutOfBandHandshakeReuseAccepted)
                     .map_err(de::Error::custom)
             }
             (_, other_type) => {

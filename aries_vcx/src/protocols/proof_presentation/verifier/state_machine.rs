@@ -139,7 +139,7 @@ impl VerifierSM {
     }
 
     pub fn set_request(self, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<Self> {
-        let Self { source_id, thread_id, state } = self.clone();
+        let Self { source_id, thread_id, state } = self;
         let state = match state {
             VerifierFullState::Initial(_) | VerifierFullState::PresentationRequestSet(_) | VerifierFullState::PresentationProposalReceived(_) => {
                 let presentation_request = PresentationRequest::create()
@@ -188,11 +188,9 @@ impl VerifierSM {
                 }
             }
             VerifierFullState::PresentationRequestSet(state) => {
-                match message {
-                    _ => {
-                        warn!("Unable to process received message in state {}", state_name);
-                        (VerifierFullState::PresentationRequestSet(state), thread_id)
-                    }
+                {
+                    warn!("Unable to process received message in state {}", state_name);
+                    (VerifierFullState::PresentationRequestSet(state), thread_id)
                 }
             }
             VerifierFullState::PresentationProposalReceived(state) => {

@@ -125,10 +125,10 @@ impl Prover {
                 self.step(wallet_handle, ProverMessages::ProposePresentation(presentation_preview), Some(send_message)).await
             }
             (None, None) => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Either `reason` or `proposal` parameter must be specified."));
+                Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Either `reason` or `proposal` parameter must be specified."))
             }
             (Some(_), Some(_)) => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Only one of `reason` or `proposal` parameters must be specified."));
+                Err(VcxError::from_msg(VcxErrorKind::InvalidOption, "Only one of `reason` or `proposal` parameters must be specified."))
             }
         }
     }

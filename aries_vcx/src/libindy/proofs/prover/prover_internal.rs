@@ -26,7 +26,7 @@ pub async fn build_schemas_json_prover(wallet_handle: WalletHandle, credentials_
     trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
-    for ref cred_info in credentials_identifiers {
+    for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
             let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
@@ -45,7 +45,7 @@ pub async fn build_cred_defs_json_prover(wallet_handle: WalletHandle, credential
     trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
     let mut rtn: Value = json!({});
 
-    for ref cred_info in credentials_identifiers {
+    for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
             let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id)
                 .await
@@ -91,7 +91,7 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                         referent: referent.to_string(),
                         schema_id: schema_id.to_string(),
                         cred_def_id: cred_def_id.to_string(),
-                        revocation_interval: _get_revocation_interval(&requested_attr, &proof_req)?,
+                        revocation_interval: _get_revocation_interval(requested_attr, proof_req)?,
                         timestamp: None,
                         rev_reg_id,
                         cred_rev_id,
@@ -128,10 +128,10 @@ pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoPro
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
                 { (interval.from, interval.to) } else { (None, None) };
 
-                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id).await?;
+                let (_, rev_reg_def_json) = get_rev_reg_def_json(rev_reg_id).await?;
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                    &rev_reg_id,
+                    rev_reg_id,
                     from,
                     to,
                 ).await?;
@@ -139,8 +139,8 @@ pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoPro
                 let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
-                    &cred_rev_id,
-                    &tails_file,
+                    cred_rev_id,
+                    tails_file,
                 ).await?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json)
@@ -177,8 +177,8 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
     });
     // do same for predicates and self_attested
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
-        for ref cred_info in credentials_identifiers {
-            if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
+        for cred_info in credentials_identifiers {
+            if proof_req.requested_attributes.get(&cred_info.requested_attr).is_some() {
                 let insert_val = json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
@@ -186,8 +186,8 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
     }
 
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
-        for ref cred_info in credentials_identifiers {
-            if let Some(_) = proof_req.requested_predicates.get(&cred_info.requested_attr) {
+        for cred_info in credentials_identifiers {
+            if proof_req.requested_predicates.get(&cred_info.requested_attr).is_some() {
                 let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }

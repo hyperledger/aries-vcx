@@ -103,9 +103,9 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
     if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
         ledger::append_txn_author_agreement_acceptance_to_request(request_json,
-                                                                  author_agreement.text.as_ref().map(String::as_str),
-                                                                  author_agreement.version.as_ref().map(String::as_str),
-                                                                  author_agreement.taa_digest.as_ref().map(String::as_str),
+                                                                  author_agreement.text.as_deref(),
+                                                                  author_agreement.version.as_deref(),
+                                                                  author_agreement.taa_digest.as_deref(),
                                                                   &author_agreement.acceptance_mechanism_type,
                                                                   author_agreement.time_of_acceptance)
             .map_err(VcxError::from)
@@ -154,17 +154,17 @@ pub async fn libindy_build_nym_request(submitter_did: &str, target_did: &str, ve
 pub async fn get_nym(did: &str) -> VcxResult<String> {
     let submitter_did = generate_random_did();
 
-    let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), &did).await?;
+    let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), did).await?;
     libindy_submit_request(&get_nym_req).await
 }
 
 pub async fn get_role(did: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(settings::DEFAULT_ROLE.to_string()); }
 
-    let get_nym_resp = get_nym(&did).await?;
+    let get_nym_resp = get_nym(did).await?;
     let get_nym_resp: serde_json::Value = serde_json::from_str(&get_nym_resp)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    let data: serde_json::Value = serde_json::from_str(&get_nym_resp["result"]["data"].as_str().unwrap_or("{}"))
+    let data: serde_json::Value = serde_json::from_str(get_nym_resp["result"]["data"].as_str().unwrap_or("{}"))
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
     let role = data["role"].as_str().unwrap_or("null").to_string();
     Ok(role)
@@ -242,7 +242,7 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
     let identifier = transaction.identifier.as_str();
     if transaction.signature.is_none() && !transaction.signatures.as_ref().map(|signatures| signatures.contains_key(identifier)).unwrap_or(false) {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                      format!("Transaction cannot be endorsed: the author must sign the transaction.")));
+                                      "Transaction cannot be endorsed: the author must sign the transaction.".to_string()));
     }
 
     Ok(())
@@ -261,12 +261,12 @@ pub async fn build_attrib_request(submitter_did: &str, target_did: &str, hash: O
 
 pub async fn add_attr(wallet_handle: WalletHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
     trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
-    let attrib_req = build_attrib_request(&did, &did, None, Some(attrib_json), None).await?;
-    libindy_sign_and_submit_request(wallet_handle, &did, &attrib_req).await
+    let attrib_req = build_attrib_request(did, did, None, Some(attrib_json), None).await?;
+    libindy_sign_and_submit_request(wallet_handle, did, &attrib_req).await
 }
 
 pub async fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
-    let get_attrib_req = ledger::build_get_attrib_request(None, &did, Some(attr_name), None, None).await?;
+    let get_attrib_req = ledger::build_get_attrib_request(None, did, Some(attr_name), None, None).await?;
     libindy_submit_request(&get_attrib_req).await
 }
 
@@ -290,9 +290,9 @@ pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &FullS
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
-    let resp: serde_json::Value = serde_json::from_str(&resp)
+    let resp: serde_json::Value = serde_json::from_str(resp)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    serde_json::from_str(&resp["result"]["data"].as_str().unwrap_or("{}"))
+    serde_json::from_str(resp["result"]["data"].as_str().unwrap_or("{}"))
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))
 }
 

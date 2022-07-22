@@ -18,7 +18,7 @@ pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult
         .await {
         Ok(()) => Ok(()),
         Err(err) => {
-            match err.error_code.clone() {
+            match err.error_code {
                 ErrorCode::PoolLedgerConfigAlreadyExistsError => Ok(()),
                 ErrorCode::CommonIOError => {
                     Err(err.to_vcx(VcxErrorKind::InvalidGenesisTxnPath, "Pool genesis file is invalid or does not exist"))
@@ -37,7 +37,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
     let handle = pool::open_pool_ledger(pool_name, config)
         .await
         .map_err(|err|
-            match err.error_code.clone() {
+            match err.error_code {
                 ErrorCode::PoolLedgerNotCreatedError => {
                     err.to_vcx(VcxErrorKind::PoolLedgerConnect,
                                format!("Pool \"{}\" does not exist.", pool_name))
@@ -53,7 +53,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
                 }
                 ErrorCode::CommonInvalidState => {
                     err.to_vcx(VcxErrorKind::PoolLedgerConnect,
-                               format!("Geneses transactions are invalid."))
+                               "Geneses transactions are invalid.".to_string())
                 }
                 error_code => {
                     err.to_vcx(VcxErrorKind::LibndyError(error_code as u32), "Indy error occurred")
