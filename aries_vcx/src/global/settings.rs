@@ -106,16 +106,12 @@ pub fn reset_config_values() {
 
 pub fn set_test_configs() -> u32 {
     trace!("set_testing_defaults >>>");
-
     let mut settings = SETTINGS.write().unwrap();
-
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
     settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
-
-    global::agency_client::get_main_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 

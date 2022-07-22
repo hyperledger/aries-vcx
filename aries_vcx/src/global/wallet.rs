@@ -11,7 +11,6 @@ pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 pub fn set_main_wallet_handle(handle: WalletHandle) -> WalletHandle {
     trace!("set_wallet_handle >>> handle: {:?}", handle);
     unsafe { WALLET_HANDLE = handle; }
-    global::agency_client::get_main_agency_client_mut().unwrap().set_wallet_handle(handle);
     unsafe { WALLET_HANDLE }
 }
 
@@ -44,6 +43,7 @@ pub async fn close_main_wallet() -> VcxResult<()> {
     Ok(())
 }
 
+// todo: deprecated! use create_wallet_with_master_secret instead
 pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
     let wallet_handle = create_and_open_as_main_wallet(&config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);

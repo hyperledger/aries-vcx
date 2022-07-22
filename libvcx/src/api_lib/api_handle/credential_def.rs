@@ -111,7 +111,7 @@ pub mod tests {
         constants::SCHEMA_ID,
         get_temp_dir_path,
     };
-    use aries_vcx::utils::devsetup::{SetupMocks, SetupWithWalletAndAgency};
+    use aries_vcx::utils::devsetup::{SetupMocks, SetupWalletPoolAgency};
 
     use crate::api_lib::api_handle::{revocation_registry, schema};
     use crate::api_lib::api_handle::revocation_registry::RevocationRegistryConfig;
@@ -143,7 +143,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn create_revocable_cred_def_and_check_tails_location() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
@@ -180,7 +180,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_credential_def_real() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let (_, handle) = create_and_publish_nonrevocable_creddef().await;
 

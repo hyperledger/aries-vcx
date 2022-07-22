@@ -327,7 +327,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_endorse_transaction() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (author_did, _) = add_new_did(setup.wallet_handle, None).await;
         let (endorser_did, _) = add_new_did(setup.wallet_handle, Some("ENDORSER")).await;
@@ -344,7 +344,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_add_get_service() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let expect_service = FullService::default();

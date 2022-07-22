@@ -913,7 +913,7 @@ pub mod tests {
     use aries_vcx::libindy::utils::wallet::{delete_wallet, WalletConfig};
     use aries_vcx::global::settings;
     use aries_vcx::global::wallet::{close_main_wallet, create_and_open_as_main_wallet};
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, TempFile};
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
     use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_create_and_open_wallet};
 
     use crate::api_lib::utils::return_types_u32;

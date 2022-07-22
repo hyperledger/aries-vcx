@@ -295,7 +295,7 @@ pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResul
     // If MS is already in wallet then just continue
     anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
 
-    global::wallet::close_main_wallet().await?;
+    wallet::close_wallet(wallet_handle).await?;
     Ok(())
 }
 

@@ -107,7 +107,7 @@ pub mod tests {
     #[tokio::test]
     async fn test_init_pool_and_wallet() {
         let _setup_defaults = SetupDefaults::init();
-        let setup_wallet = SetupWallet::init().await;
+        let setup_wallet = TestSetupCreateWallet::init().await;
         let setup_pool = SetupPoolConfig::init().await;
 
         open_main_pool(&setup_pool.pool_config).await.unwrap();

@@ -7,7 +7,6 @@ use crate::configuration::AgencyClientConfig;
 use crate::testing::mocking;
 use crate::utils::error_utils;
 
-// todo: remove Default
 #[derive(Clone)]
 pub struct AgencyClient {
     wallet_handle: WalletHandle,
@@ -21,73 +20,51 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
-pub fn validate_optional_config_val<F, S, E>(val: Option<&String>, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
-    where F: Fn(&str) -> Result<S, E> {
-    if val.is_none() { return Ok(()); }
-
-    closure(val.as_ref().ok_or(AgencyClientError::from(AgencyClientErrorKind::InvalidConfiguration))?)
-        .or(Err(AgencyClientError::from(err)))?;
-
-    Ok(())
-}
-
 pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
     where F: Fn(&str) -> Result<S, E> {
     closure(val)
         .or(Err(AgencyClientError::from(err)))?;
-
     Ok(())
 }
 
-
 impl AgencyClient {
     pub fn get_wallet_handle(&self) -> WalletHandle { self.wallet_handle }
-    pub fn get_agency_url_config(&self) -> String { self.agency_url.clone() }
-    pub fn get_agency_url_full(&self) -> String {
-        format!("{}/agency/msg", self.agency_url.clone())
-    }
+    pub fn get_agency_url_full(&self) -> String { format!("{}/agency/msg", self.agency_url.clone()) }
+    pub(crate) fn get_agency_url_config(&self) -> String { self.agency_url.clone() }
 
     pub fn get_agency_did(&self) -> String { self.agency_did.clone() }
-    pub fn get_agency_pwdid(&self) -> String { self.agency_pwdid.clone() }
     pub fn get_agency_vk(&self) -> String { self.agency_vk.clone() }
 
     pub fn get_agent_pwdid(&self) -> String { self.agent_pwdid.clone() }
     pub fn get_agent_vk(&self) -> String { self.agent_vk.clone() }
 
-    pub fn get_my_pwdid(&self) -> String { self.my_pwdid.clone() }
     pub fn get_my_vk(&self) -> String { self.my_vk.clone() }
 
-    pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
+    pub(crate) fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
         self.wallet_handle = wallet_handle;
     }
 
-    pub fn reset_wallet_handle(&mut self) {
-        self.wallet_handle = indy::INVALID_WALLET_HANDLE;
-    }
-    pub fn set_agency_url(&mut self, url: &str) {
+    pub(crate) fn set_agency_url(&mut self, url: &str) {
         self.agency_url = url.to_string();
     }
-    pub fn set_agency_did(&mut self, did: &str) {
+    pub(crate) fn set_agency_did(&mut self, did: &str) {
         self.agency_did = did.to_string();
     }
-    pub fn set_agency_vk(&mut self, vk: &str) {
+    pub(crate) fn set_agency_vk(&mut self, vk: &str) {
         self.agency_vk = vk.to_string();
     }
-    pub fn set_agent_pwdid(&mut self, pwdid: &str) {
+    pub(crate) fn set_agent_pwdid(&mut self, pwdid: &str) {
         self.agent_pwdid = pwdid.to_string();
     }
-    pub fn set_agent_vk(&mut self, vk: &str) {
+    pub(crate) fn set_agent_vk(&mut self, vk: &str) {
         self.agent_vk = vk.to_string();
     }
-    pub fn set_my_pwdid(&mut self, pwdid: &str) {
+    pub(crate) fn set_my_pwdid(&mut self, pwdid: &str) {
         self.my_pwdid = pwdid.to_string();
     }
-    pub fn set_my_vk(&mut self, vk: &str) {
+    pub(crate) fn set_my_vk(&mut self, vk: &str) {
         self.my_vk = vk.to_string();
     }
-
-    pub fn enable_test_mode(&self) { mocking::enable_agency_mocks() }
-    pub fn disable_test_mode(&self) { mocking::disable_agency_mocks() }
 
     pub fn configure(&mut self, config: &AgencyClientConfig) -> AgencyClientResult<()> {
         info!("AgencyClient::configure >>> config {:?}", config);

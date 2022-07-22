@@ -834,6 +834,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 #[cfg(test)]
 mod tests {
     use indy_sys::WalletHandle;
+    use agency_client::testing::mocking::enable_agency_mocks;
     use crate::handlers::connection::public_agent::tests::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::request::tests::_request;
@@ -846,7 +847,7 @@ mod tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
-        agency_client.enable_test_mode();
+        enable_agency_mocks();
         let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
@@ -856,7 +857,7 @@ mod tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
-        agency_client.enable_test_mode();
+        enable_agency_mocks();
         let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true, &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
@@ -866,7 +867,7 @@ mod tests {
     async fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
-        agency_client.enable_test_mode();
+        enable_agency_mocks();
 
         let pub_inv = _public_invitation_random_id();
         let mut connection = Connection::create_with_invite("abcd", Invitation::Public(pub_inv.clone()), true, &agency_client).await.unwrap();
@@ -886,7 +887,7 @@ mod tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
-        agency_client.enable_test_mode();
+        enable_agency_mocks();
         let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
     }

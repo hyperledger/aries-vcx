@@ -3,6 +3,7 @@ use std::sync::{RwLock, RwLockWriteGuard};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgencyClientConfig;
+use agency_client::testing::mocking;
 
 use crate::error::VcxResult;
 
@@ -28,7 +29,7 @@ pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxR
 
 pub fn enable_main_agency_client_mocks() -> VcxResult<()> {
     info!("enable_agency_mocks >>>");
-    get_main_agency_client_mut()?.enable_test_mode();
+    mocking::enable_agency_mocks();
     Ok(())
 }
 

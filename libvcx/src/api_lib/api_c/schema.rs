@@ -497,7 +497,7 @@ mod tests {
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::{SetupMocks, SetupWithWalletAndAgency};
+    use aries_vcx::utils::devsetup::{SetupMocks, SetupWalletPoolAgency};
 
     use crate::api_lib;
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
@@ -544,7 +544,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_create_schema_with_pool() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
@@ -554,7 +554,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle,
                                                           utils::constants::DEFAULT_SCHEMA_ATTRS).await;
@@ -628,7 +628,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_serialize_contains_version() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();

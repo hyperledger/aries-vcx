@@ -163,7 +163,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks, SetupWithWalletAndAgency};
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupMocks, SetupWalletPoolAgency};
 
     use super::*;
 
@@ -270,7 +270,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_schema_attrs_from_ledger() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(get_main_wallet_handle(),constants::DEFAULT_SCHEMA_ATTRS).await;
 
@@ -282,7 +282,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_schema_with_pool() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let handle = create_schema_real().await;
 
@@ -294,7 +294,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_create_duplicate_fails() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -338,7 +338,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_endorse_schema() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -361,7 +361,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_state_with_ledger() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let handle = create_schema_real().await;
         assert_eq!(1, get_state(handle).unwrap());

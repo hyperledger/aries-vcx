@@ -207,7 +207,7 @@ pub mod tests {
     use aries_vcx::libindy::utils::LibindyMock;
     use aries_vcx::global::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
-    use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWithWalletAndAgency};
+    use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks, SetupWalletPoolAgency};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
@@ -264,7 +264,7 @@ pub mod tests {
     #[cfg(feature = "to_restore")]
     #[tokio::test]
     async fn test_generate_cred_offer() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         let _issuer = create_full_issuer_credential().0
             .generate_credential_offer().unwrap();
@@ -367,11 +367,9 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_errors() {
-        let _setup = SetupLibraryWallet::init().await;
+        let _setup = SetupEmpty::init();
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
         assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
     }
-
-    // todo: Write test which will use use credetial definition supporting revocation, then actually revoke credential
 }

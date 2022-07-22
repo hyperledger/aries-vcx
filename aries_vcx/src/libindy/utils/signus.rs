@@ -101,7 +101,7 @@ mod test {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
         let (did, verkey) = ledger::add_new_did(setup.wallet_handle, None).await;
         rotate_verkey(setup.wallet_handle, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));

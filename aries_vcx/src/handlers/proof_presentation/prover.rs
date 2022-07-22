@@ -182,7 +182,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_retrieve_credentials() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, _, req, _) = create_proof(setup.wallet_handle).await;
@@ -198,7 +198,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_retrieve_credentials_empty() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -227,7 +227,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
         create_and_store_nonrevocable_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let mut req = json!({
@@ -283,7 +283,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_generate_proof() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         create_and_store_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
@@ -335,7 +335,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_generate_self_attested_proof() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let indy_proof_req = json!({
            "nonce":"123432421212",
@@ -368,7 +368,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_generate_proof_with_predicates() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         create_and_store_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
