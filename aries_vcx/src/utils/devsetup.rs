@@ -1,22 +1,23 @@
 use std::fs;
 use std::sync::Once;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-
 use agency_client::testing::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
 
 use crate::{global, libindy, utils};
+use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
+use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::global::settings::init_issuer_config;
-use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::mocks::did_mocks::DidMocks;
 use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
-use crate::global::pool::reset_main_pool_handle;
+use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, WalletConfig};
 use crate::libindy::utils::wallet::wallet_configure_issuer;
-use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::libindy::wallet::open_wallet;
 use crate::utils::constants;
 use crate::utils::file::write_file;
@@ -25,13 +26,17 @@ use crate::utils::provision::provision_cloud_agent;
 use crate::utils::test_logger::LibvcxDefaultLogger;
 
 pub struct SetupEmpty;
+
 pub struct SetupDefaults;
+
 pub struct SetupMocks;
+
 pub struct SetupIndyMocks;
 
 pub struct SetupPoolMocks {
-    pub wallet_handle: WalletHandle
+    pub wallet_handle: WalletHandle,
 }
+
 pub struct TestSetupCreateWallet {
     pub wallet_config: WalletConfig,
     skip_cleanup: bool,
@@ -44,13 +49,13 @@ pub struct SetupPoolConfig {
 
 pub struct SetupLibraryWallet {
     pub wallet_config: WalletConfig,
-    pub wallet_handle: WalletHandle
+    pub wallet_handle: WalletHandle,
 }
 
 pub struct SetupWalletPoolAgency {
     pub agency_client: AgencyClient,
     pub institution_did: String,
-    pub wallet_handle: WalletHandle
+    pub wallet_handle: WalletHandle,
 }
 
 pub struct SetupLibraryAgencyV2;
@@ -250,7 +255,7 @@ impl SetupWalletPoolAgency {
         SetupWalletPoolAgency {
             agency_client,
             institution_did,
-            wallet_handle
+            wallet_handle,
         }
     }
 }

@@ -3,7 +3,6 @@ use std::string::ToString;
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::indy::WalletHandle;
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::schema::{Schema, SchemaData};
@@ -11,6 +10,7 @@ use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::ledger;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
@@ -377,10 +377,10 @@ pub mod tests {
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let schema_handle = schema::create_and_publish_schema("source_id",
-                                                    issuer_did,
-                                                    schema_name,
-                                                    schema_version,
-                                                    schema_data).await.unwrap();
+                                                              issuer_did,
+                                                              schema_name,
+                                                              schema_version,
+                                                              schema_data).await.unwrap();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -390,10 +390,10 @@ pub mod tests {
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let schema_handle = schema::create_and_publish_schema("source_id",
-                                                    issuer_did,
-                                                    schema_name,
-                                                    schema_version,
-                                                    schema_data).await.unwrap();
+                                                              issuer_did,
+                                                              schema_name,
+                                                              schema_version,
+                                                              schema_data).await.unwrap();
 
         let schema_json = schema::to_string(schema_handle).unwrap();
 

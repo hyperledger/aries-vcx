@@ -6,8 +6,8 @@ use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::error::prelude::*;
 use crate::global;
 use crate::global::settings;
-use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use crate::libindy::utils::pool::PoolConfig;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);

@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
 use agency_client::messages::update_message::UIDsByConn;
 
 use crate::agency_client::MessageStatusCode;
 use crate::error::prelude::*;
-use crate::messages::a2a::A2AMessage;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::global;
 use crate::global::settings;
+use crate::messages::a2a::A2AMessage;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

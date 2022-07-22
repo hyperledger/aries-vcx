@@ -1,9 +1,9 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
@@ -55,7 +55,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
     })
 }
 
-pub  fn from_string(agent_data: &str) -> VcxResult<u32> {
+pub fn from_string(agent_data: &str) -> VcxResult<u32> {
     let agent = PublicAgent::from_string(agent_data)?;
     PUBLIC_AGENT_MAP.add(agent).map_err(|err| err.into())
 }

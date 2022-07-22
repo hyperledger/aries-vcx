@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
@@ -13,6 +14,7 @@ use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -175,6 +177,7 @@ impl Issuer {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
@@ -198,19 +201,20 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod test {
+    use crate::messages::ack::Ack;
+    use crate::messages::ack::test_utils::_ack;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::messages::ack::Ack;
-    use crate::messages::ack::test_utils::_ack;
     use crate::protocols::issuance::issuer::state_machine::test::_send_message;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }
-    
+
     fn _cred_data() -> String {
         json!({"name": "alice"}).to_string()
     }

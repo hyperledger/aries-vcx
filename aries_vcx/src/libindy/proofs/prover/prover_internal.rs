@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use indy_sys::WalletHandle;
 
+use indy_sys::WalletHandle;
 use serde_json::Value;
 
 use crate::error::prelude::*;

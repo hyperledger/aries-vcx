@@ -780,7 +780,7 @@ pub mod test_utils {
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list).await;
         let req = create_schema_req(&schema_json).await;
-        publish_txn_on_ledger(wallet_handle,&req).await.unwrap();
+        publish_txn_on_ledger(wallet_handle, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
@@ -870,7 +870,7 @@ pub mod test_utils {
     pub async fn create_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(wallet_handle,utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -927,7 +927,7 @@ pub mod test_utils {
     pub async fn create_proof_with_predicate(wallet_handle: WalletHandle, include_predicate_cred: bool) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(wallet_handle,utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let proof_req = json!({
            "nonce":"123432421212",

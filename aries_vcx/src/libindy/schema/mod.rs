@@ -1,4 +1,5 @@
 use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
 use crate::libindy::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;

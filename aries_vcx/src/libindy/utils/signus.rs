@@ -3,11 +3,11 @@ use indy::future::TryFutureExt;
 use indy_sys::WalletHandle;
 use serde_json::Value;
 
-use crate::utils;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::ledger;
 use crate::libindy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
+use crate::utils;
 
 pub async fn create_and_store_my_did(wallet_handle: WalletHandle, seed: Option<&str>, method_name: Option<&str>) -> VcxResult<(String, String)> {
     trace!("create_and_store_my_did >>> seed: {:?}, method_name: {:?}", seed, method_name);
@@ -92,11 +92,12 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
 mod test {
     use std::thread;
     use std::time::Duration;
-    use super::*;
 
+    use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
-    use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
+
+    use super::*;
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]

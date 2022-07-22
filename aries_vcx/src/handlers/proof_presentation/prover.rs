@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::SendClosure;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation::Presentation;
@@ -12,6 +13,7 @@ use crate::messages::proof_presentation::presentation_proposal::{PresentationPre
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -148,6 +150,7 @@ impl Prover {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;

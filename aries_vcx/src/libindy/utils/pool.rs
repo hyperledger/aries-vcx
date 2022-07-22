@@ -90,8 +90,8 @@ pub async fn delete(pool_name: &str) -> VcxResult<()> {
 pub mod test_utils {
     use std::fs;
     use std::io::Write;
-    use crate::global::pool::set_main_pool_handle;
 
+    use crate::global::pool::set_main_pool_handle;
     use crate::utils::{
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,

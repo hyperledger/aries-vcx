@@ -1,10 +1,10 @@
 use indy::{ErrorCode, wallet};
 use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
 
-use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, signus};
 use crate::{global, libindy};
+use crate::error::prelude::*;
 use crate::global::settings;
+use crate::libindy::utils::{anoncreds, signus};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]

@@ -3,24 +3,24 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::indy::CommandHandle;
-use aries_vcx::libindy::utils::pool::PoolConfig;
-use aries_vcx::libindy::utils::{ledger, pool, wallet};
-use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
-use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
-use crate::api_lib::global::wallet::close_main_wallet;
 use aries_vcx::{global, utils};
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
+use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
+use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::global::settings;
-use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
+use aries_vcx::indy::CommandHandle;
+use aries_vcx::libindy::utils::{ledger, pool, wallet};
+use aries_vcx::libindy::utils::pool::PoolConfig;
+use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
-use crate::api_lib;
 
+use crate::api_lib;
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
+use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
+use crate::api_lib::global::wallet::close_main_wallet;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error, set_current_error_agency, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
@@ -41,7 +41,7 @@ pub extern fn vcx_enable_mocks() -> u32 {
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
     enable_agency_mocks();
-    return error::SUCCESS.code_num
+    return error::SUCCESS.code_num;
 }
 
 
@@ -494,11 +494,13 @@ pub extern fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 pub mod test_utils {
     use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
     use aries_vcx::error::VcxResult;
-    use super::*;
+
     use crate::api_lib::api_c::vcx::vcx_open_main_pool;
     use crate::api_lib::api_c::wallet::{vcx_configure_issuer_wallet, vcx_create_wallet, vcx_open_main_wallet, vcx_wallet_add_record, vcx_wallet_get_record};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
+
+    use super::*;
 
     pub fn _vcx_open_main_pool_c_closure(pool_config: &str) -> Result<(), u32> {
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -613,7 +615,7 @@ pub mod test_utils {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         vcx_configure_issuer_wallet(cb.command_handle, CString::new(String::from(seed)).unwrap().into_raw(), Some(cb.get_callback()));
         let issuer_config = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
-        return issuer_config
+        return issuer_config;
     }
 
     pub fn _vcx_configure_issuer(config: &str) -> VcxResult<()> {
@@ -661,7 +663,6 @@ pub mod test_utils {
         let record_value = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
         assert!(record_value.contains("Record Value"));
     }
-
 }
 
 #[cfg(test)]
@@ -671,16 +672,13 @@ mod tests {
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global;
-    use aries_vcx::indy::INVALID_WALLET_HANDLE;
-    use aries_vcx::libindy::utils::pool::PoolConfig;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
+    use aries_vcx::indy::INVALID_WALLET_HANDLE;
+    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
+    use aries_vcx::libindy::utils::pool::PoolConfig;
     use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
     use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
-    #[cfg(feature = "pool_tests")]
-    use crate::api_lib::global::wallet::get_main_wallet_handle;
-    use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet};
 
@@ -691,6 +689,9 @@ mod tests {
     use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_configure_issuer, _vcx_configure_issuer_wallet, _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_full, _vcx_init_threadpool, _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure, _vcx_open_main_wallet_c_closure, _vcx_open_pool, _vcx_open_wallet};
     use crate::api_lib::api_c::wallet::{vcx_close_main_wallet, vcx_configure_issuer_wallet, vcx_create_wallet, vcx_open_main_wallet};
     use crate::api_lib::api_handle::{connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema};
+    #[cfg(feature = "pool_tests")]
+    use crate::api_lib::global::wallet::get_main_wallet_handle;
+    use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use crate::api_lib::utils::error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;

@@ -1,16 +1,17 @@
 use std::ptr;
+
 use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
-use crate::api_lib::utils::error::set_current_error;
 
 use crate::api_lib::api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig};
 use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::error::set_current_error;
 use crate::api_lib::utils::error::set_current_error_vcx;
-use crate::api_lib::utils::runtime::{execute_async, execute};
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
 pub extern fn vcx_revocation_registry_create(command_handle: CommandHandle,
@@ -51,15 +52,15 @@ pub extern fn vcx_revocation_registry_create(command_handle: CommandHandle,
 
         Ok(())
     }));
-    
+
     error::SUCCESS.code_num
 }
 
 #[no_mangle]
 pub extern fn vcx_revocation_registry_publish(command_handle: CommandHandle,
-                                             rev_reg_handle: u32,
-                                             tails_url: *const c_char,
-                                             cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
+                                              rev_reg_handle: u32,
+                                              tails_url: *const c_char,
+                                              cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
     info!("vcx_revocation_registry_publish >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -83,7 +84,7 @@ pub extern fn vcx_revocation_registry_publish(command_handle: CommandHandle,
         };
         Ok(())
     }));
-    
+
     error::SUCCESS.code_num
 }
 
@@ -113,7 +114,7 @@ pub extern fn vcx_revocation_registry_publish_revocations(command_handle: Comman
         };
         Ok(())
     }));
-    
+
     error::SUCCESS.code_num
 }
 
@@ -212,8 +213,8 @@ pub extern fn vcx_revocation_registry_serialize(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_revocation_registry_deserialize(command_handle: CommandHandle,
-                                                 rev_reg_json: *const c_char,
-                                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
+                                                  rev_reg_json: *const c_char,
+                                                  cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, handle: u32)>) -> u32 {
     info!("vcx_revocation_registry_deserialize >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);

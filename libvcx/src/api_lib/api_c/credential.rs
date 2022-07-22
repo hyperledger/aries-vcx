@@ -623,10 +623,10 @@ pub extern fn vcx_credential_get_offers(command_handle: CommandHandle,
 
 #[no_mangle]
 pub extern fn vcx_credential_decline_offer(command_handle: CommandHandle,
-                                          credential_handle: u32,
-                                          connection_handle: u32,
-                                          comment: *const c_char,
-                                          cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+                                           credential_handle: u32,
+                                           connection_handle: u32,
+                                           comment: *const c_char,
+                                           cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
     info!("vcx_credential_decline_offer >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -942,8 +942,8 @@ mod tests {
     use std::ffi::CString;
 
     use serde_json::Value;
-    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::utils::constants::{GET_MESSAGES_DECRYPTED_RESPONSE, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;

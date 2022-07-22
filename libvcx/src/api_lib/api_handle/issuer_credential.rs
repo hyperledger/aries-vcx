@@ -1,7 +1,6 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
@@ -9,8 +8,9 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::credential_def;
-use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -23,7 +23,7 @@ enum IssuerCredentials {
     V3(Issuer),
 }
 
-pub  fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
+pub fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
@@ -49,7 +49,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(res)
 }
 
-pub  fn get_state(handle: u32) -> VcxResult<u32> {
+pub fn get_state(handle: u32) -> VcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         Ok(credential.get_state().into())
     })
@@ -107,16 +107,15 @@ pub async fn build_credential_offer_msg_v2(credential_handle: u32,
             credential_json: credential_json.to_string(),
             cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
             rev_reg_id: Some(rev_reg.get_rev_reg_id()),
-            tails_file: Some(rev_reg.get_tails_dir())
+            tails_file: Some(rev_reg.get_tails_dir()),
         }
     } else {
         OfferInfo {
             credential_json: credential_json.to_string(),
             cred_def_id: credential_def::get_cred_def_id(cred_def_handle)?,
             rev_reg_id: None,
-            tails_file: None
+            tails_file: None,
         }
-
     };
     credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info.clone(), comment.map(|s| s.to_string())).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
@@ -203,9 +202,9 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
+    use aries_vcx::global::settings;
     use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
     use aries_vcx::libindy::utils::LibindyMock;
-    use aries_vcx::global::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
@@ -255,7 +254,7 @@ pub mod tests {
 
         let credential_handle = _issuer_credential_create();
 
-        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
@@ -273,12 +272,12 @@ pub mod tests {
 
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
-        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap_err();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
-        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
     }
@@ -310,9 +309,9 @@ pub mod tests {
 
         let connection_handle = build_test_connection_inviter_requested().await;
         let credential_handle = _issuer_credential_create();
-        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
-        assert_eq!(send_credential_offer_v2(credential_handle,  connection_handle).await.unwrap(), error::SUCCESS.code_num);
+        assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
         issuer_credential::update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle).await.unwrap();
@@ -326,7 +325,7 @@ pub mod tests {
 
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
-        let(_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
+        let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));

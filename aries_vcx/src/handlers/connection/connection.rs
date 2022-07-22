@@ -8,8 +8,8 @@ use indy_sys::WalletHandle;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, MapAccess, Visitor};
 use serde_json::Value;
-use agency_client::agency_client::AgencyClient;
 
+use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
@@ -17,7 +17,6 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::did_doc::DidDoc;
@@ -27,6 +26,7 @@ use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -92,7 +92,7 @@ impl Connection {
         })
     }
 
-    pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool, agency_client: &AgencyClient,) -> VcxResult<Self> {
+    pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool, agency_client: &AgencyClient) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
         let pairwise_info = PairwiseInfo::create(agency_client.get_wallet_handle()).await?;
         let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
@@ -105,7 +105,7 @@ impl Connection {
         Ok(connection)
     }
 
-    pub async fn create_with_request(wallet_handle: WalletHandle, request: Request, public_agent: &PublicAgent, agency_client: &AgencyClient,) -> VcxResult<Self> {
+    pub async fn create_with_request(wallet_handle: WalletHandle, request: Request, public_agent: &PublicAgent, agency_client: &AgencyClient) -> VcxResult<Self> {
         trace!("Connection::create_with_request >>> request: {:?}, public_agent: {:?}", request, public_agent);
         let pairwise_info: PairwiseInfo = public_agent.into();
         let mut connection = Self {
@@ -730,7 +730,7 @@ impl Connection {
                 let msgs = futures::stream::iter(self.cloud_agent_info()
                     .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                     .await?)
-                    .then(|msg| msg.decrypt_noauth(agency_client.get_wallet_handle()) )
+                    .then(|msg| msg.decrypt_noauth(agency_client.get_wallet_handle()))
                     .filter_map(|res| async { res.ok() })
                     .collect::<Vec<DownloadedMessage>>()
                     .await;
@@ -834,7 +834,9 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 #[cfg(test)]
 mod tests {
     use indy_sys::WalletHandle;
+
     use agency_client::testing::mocking::enable_agency_mocks;
+
     use crate::handlers::connection::public_agent::tests::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::request::tests::_request;

@@ -30,7 +30,7 @@ impl ProofRequestData {
         Ok(Self {
             name: name.to_string(),
             nonce: anoncreds::generate_nonce().await?,
-                ..Self::default()
+            ..Self::default()
         })
     }
 

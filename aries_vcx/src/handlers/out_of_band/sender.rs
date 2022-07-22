@@ -1,14 +1,14 @@
-use crate::handlers::out_of_band::{OutOfBandInvitation, GoalCode, HandshakeProtocol};
+use crate::error::prelude::*;
+use crate::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
+use crate::messages::a2a::A2AMessage;
+use crate::messages::a2a::message_family::MessageFamilies;
+use crate::messages::a2a::message_type::MessageType;
 use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::service::ServiceResolvable;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::a2a::message_type::MessageType;
-use crate::messages::a2a::message_family::MessageFamilies;
-use crate::error::prelude::*;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
-    pub oob: OutOfBandInvitation
+    pub oob: OutOfBandInvitation,
 }
 
 impl OutOfBandSender {
@@ -47,13 +47,13 @@ impl OutOfBandSender {
     pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
-            HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
+            HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)); }
         };
         match self.oob.handshake_protocols {
             Some(ref mut protocols) => {
                 protocols.push(new_protocol);
             }
-            None =>  {
+            None => {
                 self.oob.handshake_protocols = Some(vec![new_protocol]);
             }
         };
@@ -66,14 +66,14 @@ impl OutOfBandSender {
                 (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
             }
             a2a_msg @ A2AMessage::CredentialOffer(_) => {
-                 (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
+                (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
             }
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
                 return Err(VcxError::from_msg(
                     VcxErrorKind::InvalidMessageFormat,
                     format!("Appended message type {:?} is not allowed.", msg))
-                )
+                );
             }
         };
         self.oob.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
@@ -98,10 +98,10 @@ impl OutOfBandSender {
 
 #[cfg(test)]
 mod tests {
+    use crate::messages::connection::did::Did;
     use crate::messages::connection::service::FullService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
-    use crate::messages::connection::did::Did;
 
     use super::*;
 

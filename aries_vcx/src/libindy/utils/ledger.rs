@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 
-use indy::cache;
 use futures::executor::block_on;
 use futures::future::TryFutureExt;
+use indy::cache;
 use indy::ledger;
 use indy_sys::WalletHandle;
 use serde_json;
 
-use crate::utils;
 use crate::error::prelude::*;
-use crate::global::settings;
 use crate::global::pool::get_main_pool_handle;
-use crate::libindy::utils::signus::create_and_store_my_did;
+use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
+use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::service::FullService;
+use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
 
@@ -62,7 +62,7 @@ pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> Vc
 }
 
 pub async fn libindy_build_create_credential_def_txn(submitter_did: &str,
-                                               credential_def_json: &str) -> VcxResult<String> {
+                                                     credential_def_json: &str) -> VcxResult<String> {
     trace!("libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}", submitter_did, credential_def_json);
     ledger::build_cred_def_request(submitter_did, credential_def_json)
         .map_err(VcxError::from)
@@ -129,7 +129,7 @@ pub async fn libindy_build_attrib_request(submitter_did: &str, target_did: &str,
 }
 
 pub async fn libindy_build_get_auth_rule_request(submitter_did: Option<&str>, txn_type: Option<&str>, action: Option<&str>, field: Option<&str>,
-                                           old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
+                                                 old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
     ledger::build_get_auth_rule_request(submitter_did, txn_type, action, field, old_value, new_value)
         .map_err(VcxError::from)
         .await
@@ -200,7 +200,7 @@ pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str
         .map_err(VcxError::from)
 }
 
-pub async fn set_endorser(wallet_handle: WalletHandle,request: &str, endorser: &str) -> VcxResult<String> {
+pub async fn set_endorser(wallet_handle: WalletHandle, request: &str, endorser: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() { return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
 
     let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
@@ -412,7 +412,7 @@ pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, req: &str) -> Vc
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
     let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-    libindy_sign_and_submit_request(wallet_handle,&did, req).await
+    libindy_sign_and_submit_request(wallet_handle, &did, req).await
 }
 
 pub async fn add_new_did(wallet_handle: WalletHandle, role: Option<&str>) -> (String, String) {
@@ -423,6 +423,6 @@ pub async fn add_new_did(wallet_handle: WalletHandle, role: Option<&str>) -> (St
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle,&institution_did, &req_nym).await.unwrap();
+    libindy_sign_and_submit_request(wallet_handle, &institution_did, &req_nym).await.unwrap();
     (did, verkey)
 }

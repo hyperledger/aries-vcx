@@ -10,7 +10,7 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::out_of_band;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
-use crate::api_lib::utils::runtime::{execute_async, execute};
+use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
 pub extern fn vcx_out_of_band_sender_create(command_handle: CommandHandle,

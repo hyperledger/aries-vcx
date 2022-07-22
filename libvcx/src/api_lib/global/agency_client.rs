@@ -1,10 +1,11 @@
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::error::VcxResult;
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
-
 use std::ops::Deref;
 use std::sync::{RwLock, RwLockWriteGuard};
+
+use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use aries_vcx::error::VcxResult;
+
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());

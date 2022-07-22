@@ -1,16 +1,16 @@
 use std::ptr;
 
+use futures::future::BoxFuture;
 use libc::c_char;
 use serde_json;
-use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::global::settings;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};

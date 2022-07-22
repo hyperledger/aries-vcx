@@ -1,6 +1,7 @@
 use futures::stream::iter;
 use futures::StreamExt;
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
@@ -126,7 +127,7 @@ pub mod tests {
                 pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
                 pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
             },
-            institution_did: Did::new(INSTITUTION_DID).unwrap()
+            institution_did: Did::new(INSTITUTION_DID).unwrap(),
         }
     }
 }

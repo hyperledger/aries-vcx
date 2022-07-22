@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::agency_client::get_main_agency_client;
 use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
@@ -11,6 +10,7 @@ use aries_vcx::messages::connection::service::ServiceResolvable;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::agency_client::get_main_agency_client;
 
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> = ObjectCache::<OutOfBandSender>::new("out-of-band-sender-cache");
@@ -60,7 +60,7 @@ pub fn create_out_of_band_msg_from_msg(msg: &str) -> VcxResult<u32> {
 
 pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
-    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let msg = serde_json::from_str(msg)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
     oob = oob.clone().append_a2a_message(msg)?;
@@ -69,7 +69,7 @@ pub fn append_message(handle: u32, msg: &str) -> VcxResult<()> {
 
 pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
-    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let service = serde_json::from_str(service)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
     oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
@@ -78,7 +78,7 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 
 pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
-    let mut oob =  OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
+    let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }

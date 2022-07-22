@@ -5,8 +5,6 @@ use serde_json;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -17,6 +15,8 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
@@ -174,7 +174,7 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
             InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
             InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
             InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string()
-            });
+        });
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(invitation)
 }
@@ -317,8 +317,8 @@ pub mod tests {
 
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::global::settings;
+    use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED};

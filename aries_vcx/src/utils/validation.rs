@@ -1,8 +1,8 @@
 extern crate openssl;
 extern crate rust_base58;
 
-use crate::error::prelude::*;
 use crate::actors::Actors;
+use crate::error::prelude::*;
 use crate::utils::qualifier;
 
 use self::openssl::bn::BigNum;

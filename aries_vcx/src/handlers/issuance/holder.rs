@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -123,6 +125,7 @@ impl Holder {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
@@ -152,6 +155,7 @@ pub mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }
