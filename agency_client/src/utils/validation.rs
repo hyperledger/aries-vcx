@@ -44,6 +44,7 @@ pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use crate::error::AgencyClientErrorKind;
 

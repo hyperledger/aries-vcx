@@ -57,6 +57,7 @@ impl UpdateComMethod {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use std::env;
 

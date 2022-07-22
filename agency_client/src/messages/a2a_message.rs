@@ -216,6 +216,7 @@ impl A2AMessageKinds {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use serde_json::json;
     use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
