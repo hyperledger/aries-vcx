@@ -17,7 +17,6 @@ use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_
 use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, WalletConfig};
 use crate::libindy::utils::wallet::wallet_configure_issuer;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, create_main_wallet, open_as_main_wallet, reset_main_wallet_handle};
 use crate::libindy::wallet::open_wallet;
 use crate::utils::constants;
 use crate::utils::file::write_file;
@@ -54,10 +53,6 @@ pub struct SetupWalletPoolAgency {
     pub wallet_handle: WalletHandle
 }
 
-pub struct SetupAgencyMock {
-    pub wallet_config: WalletConfig,
-}
-
 pub struct SetupLibraryAgencyV2;
 
 fn reset_global_state() {
@@ -65,11 +60,9 @@ fn reset_global_state() {
     AgencyMockDecrypted::clear_mocks();
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
-    reset_main_wallet_handle().unwrap();
     reset_main_pool_handle();
     disable_indy_mocks();
     settings::reset_config_values();
-    global::agency_client::reset_main_agency_client();
 }
 
 impl SetupEmpty {
@@ -265,36 +258,6 @@ impl SetupWalletPoolAgency {
 impl Drop for SetupWalletPoolAgency {
     fn drop(&mut self) {
         futures::executor::block_on(delete_test_pool());
-        reset_global_state();
-    }
-}
-
-impl SetupAgencyMock {
-    pub async fn init() -> SetupAgencyMock {
-        init_test_logging();
-
-        let wallet_name: String = format!("Test_SetupWalletAndPool_{}", uuid::Uuid::new_v4().to_string());
-        enable_agency_mocks();
-        let wallet_config = WalletConfig {
-            wallet_name: wallet_name.clone(),
-            wallet_key: settings::DEFAULT_WALLET_KEY.into(),
-            wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
-            wallet_type: None,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
-        create_and_open_as_main_wallet(&wallet_config).await.unwrap();
-
-        SetupAgencyMock { wallet_config }
-    }
-}
-
-impl Drop for SetupAgencyMock {
-    fn drop(&mut self) {
-        let _res = futures::executor::block_on(close_main_wallet()).unwrap();
-        futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap();
         reset_global_state();
     }
 }

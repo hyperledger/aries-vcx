@@ -7,7 +7,7 @@ use futures::future::BoxFuture;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::global::settings;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;

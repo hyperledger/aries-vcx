@@ -1,7 +1,7 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;

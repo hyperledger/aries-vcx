@@ -21,7 +21,6 @@ pub static CONFIG_WEBHOOK_URL: &str = "webhook_url";
 pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
 pub static CONFIG_GENESIS_PATH: &str = "genesis_path";
 pub static CONFIG_LOG_CONFIG: &str = "log_config";
-pub static CONFIG_LINK_SECRET_ALIAS: &str = "link_secret_alias";
 pub static CONFIG_EXPORTED_WALLET_PATH: &str = "exported_wallet_path";
 pub static CONFIG_WALLET_BACKUP_KEY: &str = "backup_key";
 pub static CONFIG_WALLET_KEY: &str = "wallet_key";
@@ -109,7 +108,6 @@ pub fn set_test_configs() -> u32 {
     let mut settings = SETTINGS.write().unwrap();
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
     error::SUCCESS.code_num

@@ -11,8 +11,8 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::global::agency_client::get_main_agency_client;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 

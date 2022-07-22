@@ -1,6 +1,6 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::global::agency_client::get_main_agency_client;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;

@@ -1,5 +1,5 @@
 use aries_vcx::error::prelude::*;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
 use aries_vcx::libindy::utils::anoncreds;

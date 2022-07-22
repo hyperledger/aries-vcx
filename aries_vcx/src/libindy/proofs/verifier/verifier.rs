@@ -159,15 +159,14 @@ pub mod tests {
     async fn test_proof_validate_attribute() {
         let setup = SetupWalletPoolAgency::init().await;
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([
                                             json!({
                                                 "name":"address1",
-                                                "restrictions": [json!({ "issuer_did": did })]
+                                                "restrictions": [json!({ "issuer_did": setup.institution_did })]
                                             }),
                                             json!({
                                                 "name":"zip",
-                                                "restrictions": [json!({ "issuer_did": did })]
+                                                "restrictions": [json!({ "issuer_did": setup.institution_did })]
                                             }),
                                             json!({
                                                 "name":"self_attest",

@@ -5,13 +5,14 @@ use futures::future::BoxFuture;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global;
-use aries_vcx::global::wallet::{export_main_wallet, get_main_wallet_handle};
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
-use aries_vcx::global::wallet::open_as_main_wallet;
+use crate::api_lib::global::wallet::open_as_main_wallet;
 use aries_vcx::libindy::utils;
 use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
+use crate::api_lib;
+use crate::api_lib::global::wallet::{export_main_wallet, get_main_wallet_handle};
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
@@ -60,7 +61,7 @@ pub extern fn vcx_create_wallet(command_handle: CommandHandle,
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::create_main_wallet(&wallet_config).await {
+        match api_lib::global::wallet::create_main_wallet(&wallet_config).await {
             Err(err) => {
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());
@@ -192,7 +193,7 @@ pub extern fn vcx_close_main_wallet(command_handle: CommandHandle,
     trace!("vcx_close_main_wallet(command_handle: {})", command_handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match global::wallet::close_main_wallet().await {
+        match api_lib::global::wallet::close_main_wallet().await {
             Err(err) => {
                 error!("vcx_close_main_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());
@@ -899,7 +900,7 @@ pub extern fn vcx_wallet_import(command_handle: CommandHandle,
 /// Error code as u32
 #[no_mangle]
 pub extern fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
-    global::wallet::set_main_wallet_handle(handle)
+    api_lib::global::wallet::set_main_wallet_handle(handle)
 }
 
 #[cfg(test)]
@@ -912,9 +913,9 @@ pub mod tests {
 
     use aries_vcx::libindy::utils::wallet::{delete_wallet, WalletConfig};
     use aries_vcx::global::settings;
-    use aries_vcx::global::wallet::{close_main_wallet, create_and_open_as_main_wallet};
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
     use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_create_and_open_wallet};
+    use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet};
 
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;

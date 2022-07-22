@@ -3,7 +3,7 @@ use std::string::ToString;
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::indy::WalletHandle;
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::schema::{Schema, SchemaData};

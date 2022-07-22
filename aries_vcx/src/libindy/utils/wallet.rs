@@ -310,7 +310,7 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
 
 pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     if settings::indy_mocks_enabled() {
-        warn!("open_as_main_wallet ::: Indy mocks enabled, skipping opening main wallet.");
+        warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");
         return Ok(WalletHandle(1));
     }
     create_indy_wallet(&wallet_config).await?;

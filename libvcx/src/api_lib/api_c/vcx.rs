@@ -10,13 +10,15 @@ use aries_vcx::libindy::utils::pool::PoolConfig;
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
 use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
 use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::global::{agency_client, settings};
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
-use aries_vcx::global::wallet::close_main_wallet;
+use crate::api_lib::global::wallet::close_main_wallet;
 use aries_vcx::{global, utils};
-use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, enable_main_agency_client_mocks};
+use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
+use aries_vcx::global::settings;
+use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
+use crate::api_lib;
 
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -38,10 +40,8 @@ pub extern fn vcx_enable_mocks() -> u32 {
         Ok(_) => {}
         Err(_) => return error::UNKNOWN_ERROR.code_num
     };
-    return match enable_main_agency_client_mocks() {
-        Ok(_) => error::SUCCESS.code_num,
-        Err(_) => error::UNKNOWN_ERROR.code_num
-    };
+    enable_agency_mocks();
+    return error::SUCCESS.code_num
 }
 
 
@@ -271,7 +271,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match futures::executor::block_on(global::wallet::close_main_wallet()) {
+    match futures::executor::block_on(api_lib::global::wallet::close_main_wallet()) {
         Ok(()) => {}
         Err(_) => {}
     };
@@ -326,7 +326,7 @@ pub extern fn vcx_shutdown(delete: bool) -> u32 {
     }
 
     settings::reset_config_values();
-    agency_client::reset_main_agency_client();
+    api_lib::global::agency_client::reset_main_agency_client();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -671,18 +671,18 @@ mod tests {
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global;
-    use aries_vcx::global::agency_client;
     use aries_vcx::indy::INVALID_WALLET_HANDLE;
     use aries_vcx::libindy::utils::pool::PoolConfig;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::global::pool::get_main_pool_handle;
+    use aries_vcx::global::settings;
     use aries_vcx::libindy::utils::pool::test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool};
     use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::global::wallet::get_main_wallet_handle;
-    use aries_vcx::global::wallet::tests::create_main_wallet_and_its_backup;
+    use crate::api_lib::global::wallet::get_main_wallet_handle;
+    use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use aries_vcx::utils::constants;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TestSetupCreateWallet, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet};
 
     use crate::api_lib;
     use crate::api_lib::api_c;
@@ -755,7 +755,7 @@ mod tests {
     async fn test_open_wallet_of_imported_wallet_succeeds() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
+        let (export_wallet_path, wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
         wallet::delete_wallet(&wallet_config).await.unwrap();
 
@@ -785,7 +785,7 @@ mod tests {
     async fn test_open_wallet_with_wrong_name_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, _wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
+        let (export_wallet_path, _wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
         wallet::delete_wallet(&wallet_config).await.unwrap();
 
@@ -828,7 +828,7 @@ mod tests {
     async fn test_import_of_opened_wallet_fails() {
         let _setup = SetupDefaults::init();
 
-        let (export_wallet_path, wallet_name, wallet_config) = create_main_wallet_and_its_backup().await;
+        let (export_wallet_path, wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&serde_json::to_string(&wallet_config).unwrap()).unwrap();
@@ -884,7 +884,7 @@ mod tests {
         assert_eq!(credential_def::release(credentialdef).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(credential::release(credential).unwrap_err().kind(), VcxErrorKind::InvalidCredentialHandle);
         assert_eq!(disclosed_proof::release(disclosed_proof).unwrap_err().kind(), VcxErrorKind::InvalidDisclosedProofHandle);
-        assert_eq!(global::wallet::get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+        assert_eq!(api_lib::global::wallet::get_main_wallet_handle(), INVALID_WALLET_HANDLE);
     }
 
     #[test]

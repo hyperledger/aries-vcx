@@ -1,12 +1,10 @@
+use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::error::VcxResult;
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
+
 use std::ops::Deref;
 use std::sync::{RwLock, RwLockWriteGuard};
-
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::AgencyClientConfig;
-use agency_client::testing::mocking;
-
-use crate::error::VcxResult;
-use crate::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
@@ -27,12 +25,6 @@ pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxR
         .configure(config)?;
     get_main_agency_client_mut()?
         .set_wallet_handle(get_main_wallet_handle());
-    Ok(())
-}
-
-pub fn enable_main_agency_client_mocks() -> VcxResult<()> {
-    info!("enable_agency_mocks >>>");
-    mocking::enable_agency_mocks();
     Ok(())
 }
 

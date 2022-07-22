@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::agency_client::get_main_agency_client;
 use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;

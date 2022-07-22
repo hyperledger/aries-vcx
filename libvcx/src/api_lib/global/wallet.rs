@@ -1,10 +1,9 @@
-use indy::wallet::create_wallet;
-use crate::{global, indy, libindy};
-use crate::error::{VcxError, VcxResult};
-use crate::global::settings;
-use crate::indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
-use crate::libindy::utils::{anoncreds, signus, wallet};
-use crate::libindy::utils::wallet::{IssuerConfig, WalletConfig};
+use aries_vcx::error::VcxResult;
+use aries_vcx::global::settings;
+use aries_vcx::indy::{INVALID_WALLET_HANDLE, WalletHandle};
+use aries_vcx::libindy;
+use aries_vcx::libindy::utils::{anoncreds, wallet};
+use aries_vcx::libindy::utils::wallet::WalletConfig;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -43,7 +42,6 @@ pub async fn close_main_wallet() -> VcxResult<()> {
     Ok(())
 }
 
-// todo: deprecated! use create_wallet_with_master_secret instead
 pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
     let wallet_handle = create_and_open_as_main_wallet(&config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);
@@ -56,21 +54,21 @@ pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
 }
 
 #[cfg(feature = "test_utils")]
-pub mod tests {
-    use crate::global;
-    use crate::global::settings;
-    use crate::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};
-    use crate::libindy::utils::signus::create_and_store_my_did;
-    use crate::utils::devsetup::TempFile;
+pub mod test_utils {
+    use aries_vcx::global;
+    use aries_vcx::global::settings;
+    use aries_vcx::libindy::utils::signus::create_and_store_my_did;
+    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::libindy::utils::wallet::add_wallet_record;
+    use aries_vcx::utils::devsetup::TempFile;
 
-    use crate::libindy::utils::wallet::*;
-    use crate::libindy::utils::wallet::add_wallet_record;
+    use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")
     }
 
-    pub async fn create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
+    pub async fn _create_main_wallet_and_its_backup() -> (TempFile, String, WalletConfig) {
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
 
         let export_file = TempFile::prepare_path(wallet_name);
@@ -95,7 +93,6 @@ pub mod tests {
         close_main_wallet().await.unwrap();
 
         // todo: import and verify
-
         (export_file, wallet_name.to_string(), wallet_config)
     }
 }

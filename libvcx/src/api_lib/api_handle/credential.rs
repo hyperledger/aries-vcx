@@ -8,7 +8,7 @@ use aries_vcx::{
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
