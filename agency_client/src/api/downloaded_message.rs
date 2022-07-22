@@ -62,6 +62,6 @@ impl DownloadedMessageEncrypted {
     }
 
     async fn _auth_decrypt_v3_message(&self, wallet_handle: WalletHandle, expected_sender_vk: &str) -> AgencyClientResult<String> {
-        EncryptionEnvelope::auth_unpack(wallet_handle, self.payload()?, &expected_sender_vk).await
+        EncryptionEnvelope::auth_unpack(wallet_handle, self.payload()?, expected_sender_vk).await
     }
 }

@@ -101,7 +101,7 @@ impl AgencyClient {
 
     pub async fn send_message_to_agency(&self, message: &Client2AgencyMessage, did: &str, verkey: &str) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
         trace!("send_message_to_agency >>> message: ..., did: {}", did);
-        let data = self.prepare_message_for_agency(message, &did, verkey).await?;
+        let data = self.prepare_message_for_agency(message, did, verkey).await?;
         let response = self.post_to_agency(&data).await?;
         self.parse_response_from_agency(&response).await
     }
