@@ -77,7 +77,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 
     use crate::utils::devsetup_agent::test::{Alice, Faber, PayloadKinds, TestAgent};
-    use crate::utils::scenarios::test_utils::{_create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names, connect_using_request_sent_to_public_agent, create_and_send_nonrevocable_cred_offer, create_connected_connections, create_connected_connections_via_public_invite, create_proof, create_proof_request, decline_offer, generate_and_send_proof_boo, issue_address_credential, prover_select_credentials, prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof, publish_revocation, receive_proof_proposal_rejection, reject_proof_proposal, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential, revoke_credential_local, rotate_rev_reg, send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof};
+    use crate::utils::scenarios::test_utils::{_create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names, connect_using_request_sent_to_public_agent, create_and_send_nonrevocable_cred_offer, create_connected_connections, create_connected_connections_via_public_invite, create_proof, create_proof_request, decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials, prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof, publish_revocation, receive_proof_proposal_rejection, reject_proof_proposal, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential, revoke_credential_local, rotate_rev_reg, send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof};
     use crate::utils::test_macros::ProofStateType;
 
     use super::*;
@@ -421,7 +421,7 @@ mod tests {
         let selected_credentials_value = retrieved_to_selected_credentials_simple(&retrieved_credentials, true);
         let selected_credentials_str = serde_json::to_string(&selected_credentials_value).unwrap();
         info!("test_revoked_credential_might_still_work :: prover :: retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof_boo(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
         assert_eq!(ProverState::PresentationSent, prover.get_state());
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
@@ -489,7 +489,7 @@ mod tests {
         let selected_credentials = retrieved_to_selected_credentials_simple(&retrieved_credentials, false);
 
         info!("test_real_proof :: generating and sending proof");
-        generate_and_send_proof_boo(&mut consumer, &mut prover, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap()).await;
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_issuer, &serde_json::to_string(&selected_credentials).unwrap()).await;
         assert_eq!(ProverState::PresentationSent, prover.get_state());
         assert_eq!(presentation_thread_id, prover.get_thread_id().unwrap());
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
@@ -945,7 +945,7 @@ mod tests {
         let mut verifier = Verifier::create("1").unwrap();
         accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
         let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
-        generate_and_send_proof_boo(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
     }
 
@@ -984,7 +984,7 @@ mod tests {
         send_proof_proposal_1(&mut consumer, &mut prover, &consumer_to_institution, &cred_def_id).await;
         accept_proof_proposal(&mut institution, &mut verifier, &institution_to_consumer).await;
         let selected_credentials_str = prover_select_credentials(&mut prover, &mut consumer, &consumer_to_institution, None).await;
-        generate_and_send_proof_boo(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
+        generate_and_send_proof(&mut consumer, &mut prover, &consumer_to_institution, &selected_credentials_str).await;
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
     }
 

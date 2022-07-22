@@ -216,7 +216,7 @@ mod tests {
         faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 2").await.unwrap();
         faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 3").await.unwrap();
 
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
         alice.activate().await.unwrap();
 
         let received = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();

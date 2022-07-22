@@ -133,7 +133,7 @@ pub mod test_utils {
         issuer.build_credential_offer_msg(faber.wallet_handle, offer_info, comment.map(String::from)).await.unwrap();
         issuer.send_credential_offer(connection.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(100));
         issuer
     }
 
@@ -151,7 +151,7 @@ pub mod test_utils {
         issuer.build_credential_offer_msg(faber.wallet_handle, offer_info, comment.map(String::from)).await.unwrap();
         issuer.send_credential_offer(connection.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(100));
         issuer
     }
 
@@ -179,7 +179,7 @@ pub mod test_utils {
         info!("send_cred_req :: sending credential request");
         let my_pw_did = connection.pairwise_info().pw_did.to_string();
         holder.send_request(alice.wallet_handle, my_pw_did, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(100));
         holder
     }
 
@@ -199,7 +199,7 @@ pub mod test_utils {
         assert_eq!(HolderState::Initial, holder.get_state());
         holder.send_proposal(alice.wallet_handle, proposal, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
         holder
     }
 
@@ -220,7 +220,7 @@ pub mod test_utils {
             .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder.send_proposal(alice.wallet_handle, proposal, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
     }
 
     pub async fn accept_cred_proposal(faber: &mut Faber, connection: &Connection, rev_reg_id: Option<String>, tails_file: Option<String>) -> Issuer {
@@ -239,7 +239,7 @@ pub mod test_utils {
         issuer.build_credential_offer_msg(faber.wallet_handle, offer_info, Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(connection.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
         issuer
     }
 
@@ -258,7 +258,7 @@ pub mod test_utils {
         issuer.build_credential_offer_msg(faber.wallet_handle, offer_info, Some("comment".into())).await.unwrap();
         issuer.send_credential_offer(connection.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
@@ -292,7 +292,7 @@ pub mod test_utils {
 
         info!("send_credential >>> sending credential");
         issuer_credential.send_credential(faber.wallet_handle, issuer_to_consumer.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(100));
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
         alice.activate().await.unwrap();
@@ -305,7 +305,7 @@ pub mod test_utils {
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
 
         if revokable {
-            thread::sleep(Duration::from_millis(2000));
+            thread::sleep(Duration::from_millis(500));
             assert_eq!(holder_credential.get_tails_location().unwrap(), TEST_TAILS_URL.to_string());
         }
     }
@@ -320,7 +320,7 @@ pub mod test_utils {
         let mut prover = Prover::create("1").unwrap();
         prover.send_proposal(alice.wallet_handle, proposal_data, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
         prover
     }
 
@@ -335,7 +335,7 @@ pub mod test_utils {
         }
         prover.send_proposal(alice.wallet_handle, proposal_data, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(100));
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
@@ -382,7 +382,7 @@ pub mod test_utils {
                 .set_not_revoked_interval(revocation_interval.to_string()).unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
         verifier.send_presentation_request(connection.send_message_closure(faber.wallet_handle).unwrap()).await.unwrap();
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(100));
         verifier
     }
 
@@ -420,7 +420,7 @@ pub mod test_utils {
         Prover::create_from_request(DEFAULT_PROOF_NAME, presentation_request).unwrap()
     }
 
-    pub async fn generate_and_send_proof_boo(alice: &mut Alice, prover: &mut Prover, connection: &Connection, selected_credentials: &str) {
+    pub async fn generate_and_send_proof(alice: &mut Alice, prover: &mut Prover, connection: &Connection, selected_credentials: &str) {
         alice.activate().await.unwrap();
         let thread_id = prover.get_thread_id().unwrap();
         info!("generate_and_send_proof >>> generating proof using selected credentials {}", selected_credentials);
@@ -431,7 +431,7 @@ pub mod test_utils {
             prover.send_presentation(alice.wallet_handle, connection.send_message_closure(alice.wallet_handle).unwrap()).await.unwrap();
             info!("generate_and_send_proof :: proof sent");
             assert_eq!(thread_id, prover.get_thread_id().unwrap());
-            thread::sleep(Duration::from_millis(5000));
+            thread::sleep(Duration::from_millis(100));
         }
     }
 
@@ -547,7 +547,7 @@ pub mod test_utils {
         let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
         let selected_credentials_str = prover_select_credentials(&mut prover, alice, consumer_to_institution, requested_values).await;
         info!("Prover :: Retrieved credential converted to selected: {}", &selected_credentials_str);
-        generate_and_send_proof_boo(alice, &mut prover, consumer_to_institution, &selected_credentials_str).await;
+        generate_and_send_proof(alice, &mut prover, consumer_to_institution, &selected_credentials_str).await;
         assert_eq!(expected_prover_state, prover.get_state());
     }
 
@@ -562,7 +562,7 @@ pub mod test_utils {
 
     pub async fn connect_using_request_sent_to_public_agent(alice: &mut Alice, faber: &mut Faber, consumer_to_institution: &mut Connection) -> Connection {
         faber.activate().await.unwrap();
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(100));
         let mut conn_requests = faber.agent.download_connection_requests(&faber.agency_client, None).await.unwrap();
         assert_eq!(conn_requests.len(), 1);
         let mut institution_to_consumer = Connection::create_with_request(faber.wallet_handle, conn_requests.pop().unwrap(), &faber.agent, &faber.agency_client).await.unwrap();
@@ -575,7 +575,7 @@ pub mod test_utils {
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
 
         faber.activate().await.unwrap();
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(100));
         institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
@@ -617,7 +617,7 @@ pub mod test_utils {
 
         debug!("Institution is going to process connection request.");
         faber.activate().await.unwrap();
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(100));
         institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
         assert_eq!(thread_id, institution_to_consumer.get_thread_id());
@@ -630,7 +630,7 @@ pub mod test_utils {
 
         debug!("Institution is going to complete the connection protocol.");
         faber.activate().await.unwrap();
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(Duration::from_millis(100));
         institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
