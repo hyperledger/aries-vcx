@@ -200,7 +200,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+mod test {
     use crate::messages::ack::Ack;
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};

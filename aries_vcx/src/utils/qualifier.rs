@@ -9,6 +9,7 @@ pub fn is_fully_qualified(entity: &str) -> bool {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use super::*;
 
