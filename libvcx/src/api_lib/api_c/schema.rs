@@ -497,9 +497,10 @@ mod tests {
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION};
-    use aries_vcx::utils::devsetup::{SetupMocks, SetupWalletPoolAgency};
+    use aries_vcx::utils::devsetup::SetupMocks;
 
     use crate::api_lib;
+    use crate::api_lib::api_c::vcx::test_utils::_vcx_create_and_open_wallet;
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
@@ -539,36 +540,6 @@ mod tests {
         let (_, schema_name, schema_version, data) = prepare_schema_data();
         let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
         assert!(handle > 0)
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_vcx_create_schema_with_pool() {
-        let _setup = SetupWalletPoolAgency::init().await;
-
-        let (_, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-        assert!(handle > 0)
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_vcx_schema_get_attrs_with_pool() {
-        let setup = SetupWalletPoolAgency::init().await;
-
-        let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle,
-                                                          utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-
-        let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
-        assert_eq!(vcx_schema_get_attributes(cb.command_handle,
-                                             CString::new("Test Source ID").unwrap().into_raw(),
-                                             CString::new(schema_id).unwrap().into_raw(),
-                                             Some(cb.get_callback())), error::SUCCESS.code_num);
-
-        let (_err, attrs) = cb.receive(TimeoutUtils::some_short()).unwrap();
-        let mut result_vec = vec!(attrs.clone().unwrap());
-        let mut expected_vec = vec!(DEFAULT_SCHEMA_ATTRS);
-        assert_eq!(result_vec.sort(), expected_vec.sort());
     }
 
     #[test]
@@ -623,21 +594,6 @@ mod tests {
         let schema_data_as_string = schema_data_as_string.unwrap();
         let schema_as_json: serde_json::Value = serde_json::from_str(&schema_data_as_string).unwrap();
         assert_eq!(schema_as_json["data"].to_string(), data);
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_vcx_schema_serialize_contains_version() {
-        let _setup = SetupWalletPoolAgency::init().await;
-
-        let (_, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-
-        let schema_json = vcx_schema_serialize_c_closure(handle);
-
-        let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
-        let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
-        assert_eq!(j["version"], "1.0");
     }
 
     #[test]

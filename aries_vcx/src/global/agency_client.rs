@@ -38,3 +38,9 @@ pub fn reset_main_agency_client() {
     let mut agency_client = AGENCY_CLIENT.write().unwrap();
     *agency_client = AgencyClient::new();
 }
+
+pub fn set_main_agency_client(new_agency_client: AgencyClient) {
+    trace!("set_main_agency_client >>>");
+    let mut agency_client = AGENCY_CLIENT.write().unwrap();
+    *agency_client = new_agency_client;
+}

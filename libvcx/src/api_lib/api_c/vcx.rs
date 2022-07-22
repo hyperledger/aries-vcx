@@ -682,7 +682,7 @@ mod tests {
     use aries_vcx::global::wallet::get_main_wallet_handle;
     use aries_vcx::global::wallet::tests::create_main_wallet_and_its_backup;
     use aries_vcx::utils::constants;
-    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TestSetupCreateWallet, SetupWalletPoolAgency, TempFile};
+    use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TestSetupCreateWallet, TempFile};
 
     use crate::api_lib;
     use crate::api_lib::api_c;

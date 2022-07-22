@@ -207,13 +207,14 @@ pub mod tests {
     use aries_vcx::libindy::utils::LibindyMock;
     use aries_vcx::global::settings;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
-    use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks, SetupWalletPoolAgency};
+    use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::utils::devsetup::SetupGlobalsWalletPoolAgency;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
@@ -258,16 +259,6 @@ pub mod tests {
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None).await.unwrap();
         assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[cfg(feature = "to_restore")]
-    #[tokio::test]
-    async fn test_generate_cred_offer() {
-        let _setup = SetupWalletPoolAgency::init().await;
-
-        let _issuer = create_full_issuer_credential().0
-            .generate_credential_offer().unwrap();
     }
 
     #[tokio::test]

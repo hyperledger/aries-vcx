@@ -10,3 +10,4 @@ pub mod callback;
 pub mod callback_u32;
 pub mod logger;
 pub mod error;
+pub mod devsetup;
