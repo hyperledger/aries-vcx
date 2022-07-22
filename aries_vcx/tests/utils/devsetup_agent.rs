@@ -110,7 +110,7 @@ pub mod test {
         pub verifier: Verifier,
         pub agent: PublicAgent,
         pub wallet_handle: WalletHandle,
-        pub agency_client: AgencyClient
+        pub agency_client: AgencyClient,
     }
 
 
@@ -172,7 +172,7 @@ pub mod test {
                 connection,
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent
+                agent,
             };
             faber
         }
@@ -327,7 +327,7 @@ pub mod test {
         pub credential: Holder,
         pub prover: Prover,
         pub wallet_handle: WalletHandle,
-        pub agency_client: AgencyClient
+        pub agency_client: AgencyClient,
     }
 
     impl Alice {
