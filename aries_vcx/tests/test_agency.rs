@@ -212,9 +212,9 @@ mod tests {
         let mut alice = Alice::setup().await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
-        faber_to_alice.send_generic_message(alice.wallet_handle, "Hello 1").await.unwrap();
-        faber_to_alice.send_generic_message(alice.wallet_handle, "Hello 2").await.unwrap();
-        faber_to_alice.send_generic_message(alice.wallet_handle, "Hello 3").await.unwrap();
+        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 1").await.unwrap();
+        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 2").await.unwrap();
+        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 3").await.unwrap();
 
         thread::sleep(Duration::from_millis(1000));
         alice.activate().await.unwrap();
