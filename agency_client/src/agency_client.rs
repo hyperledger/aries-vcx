@@ -40,7 +40,7 @@ impl AgencyClient {
 
     pub fn get_my_vk(&self) -> String { self.my_vk.clone() }
 
-    pub(crate) fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
+    pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
         self.wallet_handle = wallet_handle;
     }
 

@@ -1097,29 +1097,4 @@ mod tests {
                                                                    Some(cb.get_callback())));
         cb.receive(TimeoutUtils::some_custom(2)).unwrap();
     }
-
-
-    // todo: restore this test by fully implementing in on handle layer, now it's a mix of handle/C apis
-    #[ignore]
-    #[tokio::test]
-    #[cfg(feature = "pool_tests")]
-    async fn test_init_composed() {
-        let _setup = SetupEmpty::init();
-        let genesis_path = create_tmp_genesis_txn_file();
-        let wallet_config = _vcx_create_wallet().unwrap();
-        _vcx_init_threadpool("{}").unwrap();
-        _vcx_open_pool(&json!({"genesis_path": genesis_path}).to_string()).unwrap();
-        _vcx_open_wallet(&wallet_config).unwrap();
-        let issuer_config = _vcx_configure_issuer_wallet(constants::TRUSTEE_SEED);
-        warn!("issuer_config: {}", &issuer_config);
-        _vcx_configure_issuer(&issuer_config).unwrap();
-
-        let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let (schema_id, _schema_json, _cred_def_id, _cred_def_json, _rev_reg_id, _cred_def, _rev_reg) =
-            create_and_store_credential_def(get_main_wallet_handle(), &attrs_list).await;
-        assert!(schema_id.len() > 0);
-
-        delete_test_pool().await;
-        settings::set_test_configs();
-    }
 }
