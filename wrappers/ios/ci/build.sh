@@ -16,7 +16,7 @@ INDY_SDK_DIR=$OUTPUT_DIR/vdr-tools
 setup() {
     echo "ios/ci/build.sh: running setup()"
     echo "Setup rustup"
-    rustup default 1.59.0
+    rustup default 1.62.1
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
