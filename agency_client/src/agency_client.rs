@@ -21,7 +21,7 @@ pub struct AgencyClient {
 pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
     where F: Fn(&str) -> Result<S, E> {
     closure(val)
-        .or(Err(AgencyClientError::from(err)))?;
+        .or_else(|_| Err(AgencyClientError::from(err)))?;
     Ok(())
 }
 

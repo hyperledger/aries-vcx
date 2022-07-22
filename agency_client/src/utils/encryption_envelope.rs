@@ -20,7 +20,7 @@ impl EncryptionEnvelope {
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> sender_vk: {:?}", sender_vk);
 
         let msg_string = msg_value["message"].as_str()
-            .ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
+            .ok_or_else(|| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, "Cannot find `message` field"))?.to_string();
 
         trace!("EncryptionEnvelope::_unpack_a2a_message >>> msg_string: {:?}", msg_string);
 
