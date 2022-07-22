@@ -1,12 +1,7 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use serde_json::Value;
-use url::Url;
-
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::utils::{error_utils, validation};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 

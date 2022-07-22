@@ -48,9 +48,6 @@ impl LibindyMock {
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
     use indy;
-    use crate::global;
-
-    use super::*;
 
     pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
     pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;

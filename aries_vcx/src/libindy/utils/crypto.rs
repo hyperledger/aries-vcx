@@ -4,7 +4,6 @@ use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy;
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() { return Ok(Vec::from(msg).to_owned()); }

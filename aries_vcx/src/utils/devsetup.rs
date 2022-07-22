@@ -7,7 +7,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
 
-use crate::{global, libindy, utils};
+use crate::utils;
 use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
@@ -19,7 +19,6 @@ use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_
 use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, WalletConfig};
 use crate::libindy::utils::wallet::wallet_configure_issuer;
 use crate::libindy::wallet::open_wallet;
-use crate::utils::constants;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
@@ -66,7 +65,7 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     reset_main_pool_handle();
-    disable_indy_mocks();
+    disable_indy_mocks().unwrap();
     settings::reset_config_values();
 }
 
@@ -102,7 +101,7 @@ impl SetupMocks {
         init_test_logging();
         set_test_configs();
         enable_agency_mocks();
-        enable_indy_mocks();
+        enable_indy_mocks().unwrap();
         SetupMocks {}
     }
 }
@@ -233,7 +232,7 @@ impl Drop for SetupPoolMocks {
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
-        enable_indy_mocks();
+        enable_indy_mocks().unwrap();
         enable_agency_mocks();
         SetupIndyMocks {}
     }
@@ -250,7 +249,7 @@ impl SetupWalletPoolAgency {
         init_test_logging();
         set_test_configs();
         let (institution_did, wallet_handle, agency_client) = setup_indy_env_new().await;
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
         open_test_pool().await;
         SetupWalletPoolAgency {
             agency_client,
@@ -272,7 +271,7 @@ impl SetupLibraryAgencyV2 {
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
         init_test_logging();
 
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap());
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
         open_test_pool().await;
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2

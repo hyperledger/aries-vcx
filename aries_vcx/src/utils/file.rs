@@ -1,5 +1,5 @@
-use std::fs::{DirBuilder, File, OpenOptions};
-use std::io::{Read, Write};
+use std::fs::{DirBuilder, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use crate::error::prelude::*;

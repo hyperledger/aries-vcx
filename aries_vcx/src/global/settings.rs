@@ -3,12 +3,9 @@ extern crate url;
 
 
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::{RwLock, RwLockWriteGuard};
+use std::sync::RwLock;
 
-use crate::agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
-use crate::global;
 use crate::libindy::utils::wallet::IssuerConfig;
 use crate::utils::error;
 

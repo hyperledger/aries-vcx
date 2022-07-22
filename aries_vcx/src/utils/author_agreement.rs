@@ -32,7 +32,7 @@ pub fn set_txn_author_agreement(text: Option<String>,
     let meta = serde_json::to_string(&meta)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, err))?;
 
-    settings::set_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT, &meta);
+    settings::set_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT, &meta)?;
 
     Ok(())
 }

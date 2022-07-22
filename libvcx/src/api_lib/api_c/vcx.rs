@@ -3,7 +3,6 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::{global, utils};
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
@@ -14,6 +13,7 @@ use aries_vcx::indy::CommandHandle;
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
 use aries_vcx::libindy::utils::pool::PoolConfig;
 use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
+use aries_vcx::utils;
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
 
@@ -22,7 +22,7 @@ use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
 use crate::api_lib::global::wallet::close_main_wallet;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error, set_current_error_agency, set_current_error_vcx};
+use crate::api_lib::utils::error::{get_current_error_c_json, set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 
 /// Only for Wrapper testing purposes, sets global library settings.

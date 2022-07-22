@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use futures::executor::block_on;
 use futures::future::TryFutureExt;
 use indy::cache;
 use indy::ledger;

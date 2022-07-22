@@ -1,10 +1,6 @@
 use std::sync::RwLock;
 
-use indy::{ErrorCode, pool};
-
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::error::prelude::*;
-use crate::global;
 use crate::global::settings;
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::pool::PoolConfig;

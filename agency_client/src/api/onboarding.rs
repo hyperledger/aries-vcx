@@ -68,7 +68,7 @@ impl AgencyClient {
 
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::CONNECTED_RESPONSE_DECRYPTED);
         let (agency_pw_did, agency_pw_vk) = self._connect(my_did, my_vk, agency_did, agency_vk).await?;
-        self._register(&agency_pw_did, &agency_pw_vk).await;
+        self._register(&agency_pw_did, &agency_pw_vk).await?;
         let create_agent_response = self._create_agent(&agency_pw_did, &agency_pw_vk).await?;
 
         let agent_did = create_agent_response.from_did;

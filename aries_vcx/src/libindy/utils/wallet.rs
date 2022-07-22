@@ -1,7 +1,7 @@
 use indy::{ErrorCode, wallet};
-use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
+use indy::{SearchHandle, WalletHandle};
 
-use crate::{global, libindy};
+use crate::libindy;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::{anoncreds, signus};

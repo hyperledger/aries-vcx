@@ -4,10 +4,8 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::global;
 use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::libindy::utils;
-use aries_vcx::libindy::utils::wallet;
 use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
 

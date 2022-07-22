@@ -1,4 +1,3 @@
-use aries_vcx::agency_client::error::AgencyClientResult;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};

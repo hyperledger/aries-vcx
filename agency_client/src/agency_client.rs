@@ -4,8 +4,6 @@ use url::Url;
 use crate::{AgencyClientError, AgencyClientErrorKind, validation};
 use crate::error::AgencyClientResult;
 use crate::configuration::AgencyClientConfig;
-use crate::testing::mocking;
-use crate::utils::error_utils;
 
 #[derive(Clone)]
 pub struct AgencyClient {

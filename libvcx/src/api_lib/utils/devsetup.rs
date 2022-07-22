@@ -1,12 +1,10 @@
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::global::pool::{reset_main_pool_handle, set_main_pool_handle};
-use aries_vcx::indy::WalletHandle;
 use aries_vcx::utils::devsetup::SetupWalletPoolAgency;
+
 use crate::api_lib::global::agency_client::{reset_main_agency_client, set_main_agency_client};
 use crate::api_lib::global::wallet::{reset_main_wallet_handle, set_main_wallet_handle};
 
 pub struct SetupGlobalsWalletPoolAgency {
-    setup: SetupWalletPoolAgency
+    setup: SetupWalletPoolAgency,
 }
 
 impl SetupGlobalsWalletPoolAgency {
