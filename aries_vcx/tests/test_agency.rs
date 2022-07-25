@@ -11,7 +11,7 @@ pub mod utils;
 
 #[cfg(test)]
 #[cfg(feature = "agency_v2")]
-mod tests {
+mod integration_tests {
     use std::fmt;
     use std::thread;
     use std::time::Duration;

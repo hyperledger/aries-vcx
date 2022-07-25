@@ -11,7 +11,7 @@ pub mod utils;
 
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
-mod tests {
+mod integration_tests {
     use std::convert::TryFrom;
     use std::fmt;
     use std::ops::Deref;
@@ -82,7 +82,6 @@ mod tests {
 
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
     async fn test_establish_connection_via_public_invite() {
         let _setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
@@ -98,7 +97,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
     async fn test_oob_connection_bootstrap() {
         let _setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
@@ -160,7 +158,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
     async fn test_oob_connection_reuse() {
         let _setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
@@ -190,7 +187,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
     async fn test_oob_connection_handshake_reuse() {
         let _setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
@@ -249,7 +245,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_pool_tests")]
     pub async fn test_two_enterprise_connections() {
         let _setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
@@ -259,10 +254,9 @@ mod tests {
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
     }
 
-    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
-        let _setup = SetupEmpty::init();
+        let _setup = SetupLibraryAgencyV2::init().await;
 
         let mut faber = Faber::setup().await;
         let mut alice = Alice::setup().await;

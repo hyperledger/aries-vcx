@@ -11,7 +11,7 @@ pub mod utils;
 
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
-mod tests {
+mod integration_tests {
     use std::thread;
     use std::time::Duration;
     use indyrs::ledger::append_request_endorser;
@@ -27,7 +27,6 @@ mod tests {
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_open_close_pool() {
         let _setup = SetupWalletPool::init().await;
@@ -35,7 +34,6 @@ mod tests {
         assert!(get_main_pool_handle().unwrap() > 0);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
@@ -49,7 +47,6 @@ mod tests {
         assert_eq!(def1, def2);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey() {
         let setup = SetupWalletPool::init().await;
@@ -62,7 +59,6 @@ mod tests {
         assert_eq!(local_verkey, ledger_verkey);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_endorse_transaction() {
         let setup = SetupWalletPool::init().await;
@@ -79,7 +75,6 @@ mod tests {
         endorse_transaction(setup.wallet_handle, &schema_request).await.unwrap();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_add_get_service() {
         let setup = SetupWalletPool::init().await;

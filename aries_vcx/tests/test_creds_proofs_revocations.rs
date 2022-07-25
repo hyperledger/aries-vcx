@@ -11,7 +11,7 @@ pub mod utils;
 
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
-mod tests {
+mod integration_tests {
     use std::convert::TryFrom;
     use std::fmt;
     use std::ops::Deref;

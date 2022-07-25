@@ -867,7 +867,7 @@ pub mod test_utils {
         (schema_id, schema_json, cred_def_id, cred_def_json, offer, req, req_meta, cred_id)
     }
 
-    pub async fn create_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
+    pub async fn create_indy_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
             = create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
@@ -1018,7 +1018,7 @@ mod unit_tests {
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_indy_proof, create_proof_with_predicate};
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
     use crate::utils::get_temp_dir_path;
@@ -1031,7 +1031,7 @@ pub mod integration_tests {
     async fn test_prover_verify_proof() {
         let setup = SetupWalletPool::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof(setup.wallet_handle).await;
+        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle).await;
 
         let proof_validation = libindy_verifier_verify_proof(
             &proof_req,
