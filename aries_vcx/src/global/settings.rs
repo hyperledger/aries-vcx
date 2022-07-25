@@ -158,7 +158,7 @@ pub mod unit_tests {
         // Fails with invalid key
         assert_eq!(get_config_value(&key).unwrap_err().kind(), VcxErrorKind::InvalidConfiguration);
 
-        set_config_value(&key, &value1);
+        set_config_value(&key, &value1).unwrap();
         assert_eq!(get_config_value(&key).unwrap(), value1);
     }
 }
