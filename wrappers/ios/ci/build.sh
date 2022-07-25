@@ -79,7 +79,7 @@ build_crypto() {
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
         cd $OUTPUT_DIR/OpenSSL-for-iPhone
-        git checkout 9ab9c250dc76b34136cc649e4589fdfb3a667d2e
+        git checkout b77ace70b2594de69c88d0748326d2a1190bbac1
         cd -
     fi
 
