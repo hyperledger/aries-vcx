@@ -78,8 +78,11 @@ build_crypto() {
     echo "ios/ci/build.sh: running build_crypto()"
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
+        cd $OUTPUT_DIR/OpenSSL-for-iPhone
+        git checkout 9ab9c250dc76b34136cc649e4589fdfb3a667d2e
+        cd -
     fi
-
+    
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone
         OPENSSL_VERSION_STRIPPED=$( echo "$OPENSSL_VERSION" | grep -Eo '[0-9]\.[0-9]\.[0-9][a-z]') # example: 1.1.1l_1a ---> 1.1.1l
         ./build-libssl.sh --version="$OPENSSL_VERSION_STRIPPED"
