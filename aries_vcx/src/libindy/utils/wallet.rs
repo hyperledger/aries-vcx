@@ -330,6 +330,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 }
 
 #[cfg(feature = "general_test")]
+#[cfg(test)]
 mod test {
     use crate::error::VcxErrorKind;
     use crate::libindy::utils::wallet::add_wallet_record;

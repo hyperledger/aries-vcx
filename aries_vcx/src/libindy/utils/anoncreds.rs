@@ -997,6 +997,7 @@ pub mod test_utils {
     }
 }
 
+#[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use indy_sys::WalletHandle;
