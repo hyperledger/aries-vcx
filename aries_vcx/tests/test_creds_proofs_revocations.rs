@@ -12,71 +12,15 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use std::convert::TryFrom;
-    use std::fmt;
-    use std::ops::Deref;
     use std::thread;
     use std::time::Duration;
 
-    use indyrs::wallet;
-    use rand::Rng;
-    use serde_json::Value;
-
-    use agency_client::agency_client::AgencyClient;
-    use agency_client::api::downloaded_message::DownloadedMessage;
-    use agency_client::messages::update_message::UIDsByConn;
-    use aries_vcx::{libindy, utils};
-    use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::error::VcxResult;
     use aries_vcx::global::settings;
-    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-    use aries_vcx::handlers::issuance::holder::Holder;
-    use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
-    use aries_vcx::handlers::issuance::issuer::{Issuer, IssuerConfig};
-    use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
-    use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
-    use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
-    use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-    use aries_vcx::handlers::proof_presentation::prover::Prover;
-    use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
-    use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::libindy::credential_def;
-    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetailsBuilder};
-    use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
-    use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
-    use aries_vcx::libindy::utils::anoncreds::test_utils::{create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema};
-    use aries_vcx::libindy::utils::signus;
-    use aries_vcx::libindy::utils::signus::create_and_store_my_did;
-    use aries_vcx::libindy::utils::wallet::*;
-    use aries_vcx::libindy::wallet::open_wallet;
-    use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::ack::test_utils::_ack;
-    use aries_vcx::messages::connection::invite::Invitation;
-    use aries_vcx::messages::connection::service::FullService;
-    use aries_vcx::messages::connection::service::ServiceResolvable;
-    use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-    use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-    use aries_vcx::messages::mime_type::MimeType;
-    use aries_vcx::messages::proof_presentation::presentation_proposal::{Attribute, PresentationProposal, PresentationProposalData};
-    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
-    use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-    use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-    use aries_vcx::utils::{
-        constants::{TAILS_DIR, TEST_TAILS_URL},
-        get_temp_dir_path,
-    };
-    use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::*;
-    use aries_vcx::utils::filters;
-    use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
-    use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, PayloadKinds, TestAgent};
-    use crate::utils::scenarios::test_utils::{_create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names, connect_using_request_sent_to_public_agent, create_and_send_nonrevocable_cred_offer, create_connected_connections, create_connected_connections_via_public_invite, create_proof, create_proof_request, decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials, prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof, publish_revocation, receive_proof_proposal_rejection, reject_proof_proposal, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential, revoke_credential_local, rotate_rev_reg, send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::scenarios::test_utils::{_create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof, generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof, publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential, revoke_credential_local, rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request};
     use crate::utils::test_macros::ProofStateType;
 
     use super::*;
@@ -329,7 +273,7 @@ mod integration_tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -361,7 +305,7 @@ mod integration_tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -395,7 +339,7 @@ mod integration_tests {
         let (consumer_to_verifier, verifier_to_consumer) = create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, mut cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(issuer.wallet_handle).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
