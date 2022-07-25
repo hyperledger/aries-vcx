@@ -99,20 +99,6 @@ mod test {
 
     use super::*;
 
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_rotate_verkey() {
-        let setup = SetupWalletPoolAgency::init().await;
-        let (did, verkey) = ledger::add_new_did(setup.wallet_handle, None).await;
-        rotate_verkey(setup.wallet_handle, &did).await.unwrap();
-        thread::sleep(Duration::from_millis(100));
-        let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
-        let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
-        assert_ne!(verkey, ledger_verkey);
-        assert_eq!(local_verkey, ledger_verkey);
-    }
-
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
         let setup = SetupPoolMocks::init().await;

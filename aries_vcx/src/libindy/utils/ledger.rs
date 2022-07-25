@@ -322,37 +322,6 @@ mod test {
         let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
     }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_endorse_transaction() {
-        let setup = SetupWalletPoolAgency::init().await;
-
-        let (author_did, _) = add_new_did(setup.wallet_handle, None).await;
-        let (endorser_did, _) = add_new_did(setup.wallet_handle, Some("ENDORSER")).await;
-
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
-
-        let schema_request = libindy_build_schema_request(&author_did, utils::constants::SCHEMA_DATA).await.unwrap();
-        let schema_request = ledger::append_request_endorser(&schema_request, &endorser_did).await.unwrap();
-        let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request).await.unwrap();
-
-        endorse_transaction(setup.wallet_handle, &schema_request).await.unwrap();
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_add_get_service() {
-        let setup = SetupWalletPoolAgency::init().await;
-
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let expect_service = FullService::default();
-        add_service(setup.wallet_handle, &did, &expect_service).await.unwrap();
-        thread::sleep(Duration::from_millis(50));
-        let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
-
-        assert_eq!(expect_service, service)
-    }
 }
 
 

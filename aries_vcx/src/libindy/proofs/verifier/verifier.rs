@@ -47,14 +47,14 @@ pub mod tests {
     use crate::global::settings;
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
-    use crate::utils::devsetup::SetupWalletPoolAgency;
+    use crate::utils::devsetup::SetupWalletPool;
 
     use super::*;
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_self_attested_proof_validation() {
-        let setup = SetupWalletPoolAgency::init().await;
+        let setup = SetupWalletPool::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -99,7 +99,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_restrictions() {
-        let setup = SetupWalletPoolAgency::init().await;
+        let setup = SetupWalletPool::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -157,7 +157,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_validate_attribute() {
-        let setup = SetupWalletPoolAgency::init().await;
+        let setup = SetupWalletPool::init().await;
 
         let requested_attrs = json!([
                                             json!({

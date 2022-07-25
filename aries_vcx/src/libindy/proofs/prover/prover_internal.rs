@@ -609,7 +609,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
-        let _setup = SetupWalletPoolAgency::init().await;
+        let _setup = SetupWalletPool::init().await;
 
         // empty vector
         assert_eq!(build_rev_states_json(Vec::new().as_mut()).await.unwrap(), "{}".to_string());

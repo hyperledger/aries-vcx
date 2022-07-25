@@ -10,6 +10,7 @@ extern crate tokio;
 pub mod utils;
 
 #[cfg(test)]
+#[cfg(feature = "agency_pool_tests")]
 mod tests {
     use std::convert::TryFrom;
     use std::fmt;

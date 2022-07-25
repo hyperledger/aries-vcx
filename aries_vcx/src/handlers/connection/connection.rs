@@ -841,6 +841,7 @@ mod tests {
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::request::tests::_request;
     use crate::utils::devsetup::SetupMocks;
+    use crate::utils::mockdata::mockdata_connection::{CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
 
@@ -892,5 +893,73 @@ mod tests {
         enable_agency_mocks();
         let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
+    }
+
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_deserialize_connection_inviter_completed() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
+        let _second_string = connection.to_string();
+
+        assert_eq!(connection.pairwise_info().pw_did, "2ZHFFhzA2XtTD6hJqzL7ux");
+        assert_eq!(connection.pairwise_info().pw_vk, "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj");
+        assert_eq!(connection.cloud_agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
+        assert_eq!(connection.cloud_agent_info().agent_vk, "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2");
+        assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Completed));
+    }
+
+    fn test_deserialize_and_serialize(sm_serialized: &str) {
+        let original_object: Value = serde_json::from_str(sm_serialized).unwrap();
+        let connection = Connection::from_string(sm_serialized).unwrap();
+        let reserialized = connection.to_string().unwrap();
+        let reserialized_object: Value = serde_json::from_str(&reserialized).unwrap();
+
+        assert_eq!(original_object, reserialized_object);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        let _setup = SetupMocks::init();
+
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
+    }
+
+    fn _dummy_agency_client() -> AgencyClient {
+        AgencyClient::new()
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_serialize_deserialize() {
+        let _setup = SetupMocks::init();
+
+
+        let connection = Connection::create("test_serialize_deserialize", true, &_dummy_agency_client()).await.unwrap();
+        let first_string = connection.to_string().unwrap();
+
+        let connection2 = Connection::from_string(&first_string).unwrap();
+        let second_string = connection2.to_string().unwrap();
+
+        assert_eq!(first_string, second_string);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_serialize_deserialize_serde() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::create("test_serialize_deserialize", true, &_dummy_agency_client()).await.unwrap();
+        let first_string = serde_json::to_string(&connection).unwrap();
+
+        let connection: Connection = serde_json::from_str(&first_string).unwrap();
+        let second_string = serde_json::to_string(&connection).unwrap();
+        assert_eq!(first_string, second_string);
     }
 }
