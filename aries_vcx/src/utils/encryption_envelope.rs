@@ -138,9 +138,9 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::global;
-    use crate::global::settings::disable_indy_mocks;
-    use crate::libindy::utils::{test_setup, wallet};
+    
+    
+    use crate::libindy::utils::{test_setup};
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;

@@ -104,7 +104,7 @@ mod unit_tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn get_txn_author_agreement_works_for_not_set() {
-        let setup = SetupDefaults::init();
+        let _setup = SetupDefaults::init();
 
         assert!(get_txn_author_agreement().unwrap().is_none());
     }

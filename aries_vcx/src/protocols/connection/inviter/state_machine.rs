@@ -574,7 +574,7 @@ pub mod unit_tests {
     pub mod inviter {
         use super::*;
 
-        async fn _send_message(wallet_handle: WalletHandle, _pv_wk: String, _did_doc: DidDoc, _a2a_message: A2AMessage) -> VcxResult<()> {
+        async fn _send_message(_wallet_handle: WalletHandle, _pv_wk: String, _did_doc: DidDoc, _a2a_message: A2AMessage) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 

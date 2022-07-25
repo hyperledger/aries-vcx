@@ -174,12 +174,12 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_nonrevocable_credential, create_proof};
-    use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-    use crate::utils;
-    use crate::utils::constants::TAILS_DIR;
+    
+    use crate::messages::proof_presentation::presentation_request::{PresentationRequest};
+    
+    
     use crate::utils::devsetup::*;
-    use crate::utils::get_temp_dir_path;
+    
 
     use super::*;
 

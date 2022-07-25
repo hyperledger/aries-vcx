@@ -152,8 +152,8 @@ mod unit_tests {
     use indy_sys::WalletHandle;
 
     use crate::messages::a2a::A2AMessage;
-    use crate::messages::basic_message::message::BasicMessage;
-    use crate::messages::connection::did_doc::DidDoc;
+    
+    
     use crate::messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
