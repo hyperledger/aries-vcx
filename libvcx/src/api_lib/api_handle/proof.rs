@@ -1,7 +1,6 @@
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
@@ -9,6 +8,7 @@ use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -140,8 +140,8 @@ pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
-    use aries_vcx::agency_client::testing::mocking::HttpClientMockResponse;
 
+    use aries_vcx::agency_client::testing::mocking::HttpClientMockResponse;
     use aries_vcx::utils::constants::{PROOF_REJECT_RESPONSE_STR_V2, REQUESTED_ATTRS, REQUESTED_PREDICATES, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;

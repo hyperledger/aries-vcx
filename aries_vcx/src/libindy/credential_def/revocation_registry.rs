@@ -1,5 +1,6 @@
 use indy_sys::WalletHandle;
-use crate::error::{VcxErrorKind, VcxResult, VcxError};
+
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::RevocationRegistryDefinition;

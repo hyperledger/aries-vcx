@@ -1,9 +1,10 @@
 use aries_vcx::error::prelude::*;
-use aries_vcx::global::wallet::get_main_wallet_handle;
-use crate::api_lib::api_handle::object_cache::ObjectCache;
 use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
+
+use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> = ObjectCache::<RevocationRegistry>::new("revocation-registry-cache");
@@ -15,7 +16,7 @@ pub struct RevocationRegistryConfig {
     pub cred_def_id: String,
     pub tag: u32,
     pub tails_dir: String,
-    pub max_creds: u32
+    pub max_creds: u32,
 }
 
 pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {

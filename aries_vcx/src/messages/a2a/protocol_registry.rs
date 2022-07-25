@@ -5,7 +5,6 @@ use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::actors;
 use crate::actors::Actors;
-use crate::global::settings;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,

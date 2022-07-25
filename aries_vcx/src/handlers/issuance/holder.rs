@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Holder {
@@ -123,6 +125,7 @@ impl Holder {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
@@ -145,7 +148,6 @@ pub mod test_utils {
 
 #[cfg(test)]
 pub mod test {
-    use crate::global::wallet::get_main_wallet_handle;
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
@@ -153,6 +155,7 @@ pub mod test {
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }
@@ -194,34 +197,34 @@ pub mod test {
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(get_main_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(get_main_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_request(get_main_wallet_handle(), _my_pw_did(), _send_message().unwrap()).await.unwrap();
+        holder.send_request(_dummy_wallet_handle(), _my_pw_did(), _send_message().unwrap()).await.unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(get_main_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

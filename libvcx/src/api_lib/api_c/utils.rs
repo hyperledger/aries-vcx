@@ -1,24 +1,23 @@
-use std::ops::Deref;
 use std::ptr;
 
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
 
+use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
-use aries_vcx::global::agency_client::get_main_agency_client;
-use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::api_handle::utils::agency_update_messages;
+use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;

@@ -780,7 +780,7 @@ pub mod test_utils {
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list).await;
         let req = create_schema_req(&schema_json).await;
-        publish_txn_on_ledger(wallet_handle,&req).await.unwrap();
+        publish_txn_on_ledger(wallet_handle, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
@@ -805,6 +805,7 @@ pub mod test_utils {
 
     pub async fn create_and_store_credential_def(wallet_handle: WalletHandle, attr_list: &str) -> (String, String, String, String, String, CredentialDef, RevocationRegistry) {
         let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, attr_list).await;
+        thread::sleep(Duration::from_millis(500));
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(&issuer_did)
@@ -869,7 +870,7 @@ pub mod test_utils {
     pub async fn create_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(wallet_handle,utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -926,7 +927,7 @@ pub mod test_utils {
     pub async fn create_proof_with_predicate(wallet_handle: WalletHandle, include_predicate_cred: bool) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id)
-            = create_and_store_nonrevocable_credential(wallet_handle,utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            = create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -1001,7 +1002,7 @@ pub mod tests {
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
     use crate::utils::constants::SCHEMAS_JSON;
     use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWithWalletAndAgency};
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWalletPoolAgency};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
@@ -1011,7 +1012,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schemas, cred_defs, proof_req, proof) = create_proof(setup.wallet_handle).await;
 
@@ -1030,7 +1031,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_success_case() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, true).await;
 
@@ -1049,7 +1050,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_fail_case() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, false).await;
 
@@ -1095,7 +1096,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_issuer_revoke_credential() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let rc = libindy_issuer_revoke_credential(setup.wallet_handle, get_temp_dir_path(TAILS_DIR).to_str().unwrap(), "", "").await;
         assert!(rc.is_err());
@@ -1110,7 +1111,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_cred_def_real() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
@@ -1123,7 +1124,8 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        // todo: does not need agency setup
+        let setup = SetupWalletPoolAgency::init().await;
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
@@ -1137,7 +1139,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_rev_reg_def() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
@@ -1153,7 +1155,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg_def_json() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
@@ -1165,7 +1167,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg_delta_json() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
@@ -1177,7 +1179,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
@@ -1189,7 +1191,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_cred_def() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(setup.wallet_handle, attrs).await;
@@ -1202,7 +1204,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_is_cred_def_on_ledger() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").await.unwrap(), false);
     }
@@ -1210,7 +1212,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn from_pool_ledger_with_id() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (schema_id, _schema_json) = create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
@@ -1233,7 +1235,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_revoke_credential() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id)
             = create_and_store_credential(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
@@ -1255,7 +1257,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_txn() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
         get_ledger_txn(setup.wallet_handle, None, 0).await.unwrap_err();
         let txn = get_ledger_txn(setup.wallet_handle, None, 1).await;
         assert!(txn.is_ok());

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use indy_sys::WalletHandle;
 
+use indy_sys::WalletHandle;
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -609,7 +609,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
-        let _setup = SetupWithWalletAndAgency::init().await;
+        let _setup = SetupWalletPoolAgency::init().await;
 
         // empty vector
         assert_eq!(build_rev_states_json(Vec::new().as_mut()).await.unwrap(), "{}".to_string());

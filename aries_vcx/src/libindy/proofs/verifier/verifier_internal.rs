@@ -3,8 +3,8 @@ use serde_json;
 use serde_json::Value;
 
 use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds;
 use crate::global::settings;
+use crate::libindy::utils::anoncreds;
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]

@@ -3,12 +3,9 @@ extern crate url;
 
 
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::{RwLock, RwLockWriteGuard};
+use std::sync::RwLock;
 
-use crate::agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
-use crate::global;
 use crate::libindy::utils::wallet::IssuerConfig;
 use crate::utils::error;
 
@@ -21,7 +18,6 @@ pub static CONFIG_WEBHOOK_URL: &str = "webhook_url";
 pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";
 pub static CONFIG_GENESIS_PATH: &str = "genesis_path";
 pub static CONFIG_LOG_CONFIG: &str = "log_config";
-pub static CONFIG_LINK_SECRET_ALIAS: &str = "link_secret_alias";
 pub static CONFIG_EXPORTED_WALLET_PATH: &str = "exported_wallet_path";
 pub static CONFIG_WALLET_BACKUP_KEY: &str = "backup_key";
 pub static CONFIG_WALLET_KEY: &str = "wallet_key";
@@ -106,16 +102,11 @@ pub fn reset_config_values() {
 
 pub fn set_test_configs() -> u32 {
     trace!("set_testing_defaults >>>");
-
     let mut settings = SETTINGS.write().unwrap();
-
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
-    settings.insert(CONFIG_LINK_SECRET_ALIAS.to_string(), DEFAULT_LINK_SECRET_ALIAS.to_string());
     settings.insert(CONFIG_PROTOCOL_VERSION.to_string(), DEFAULT_PROTOCOL_VERSION.to_string());
     settings.insert(CONFIG_WALLET_BACKUP_KEY.to_string(), DEFAULT_WALLET_BACKUP_KEY.to_string());
-
-    global::agency_client::get_main_agency_client_mut().unwrap().set_testing_defaults_agency();
     error::SUCCESS.code_num
 }
 

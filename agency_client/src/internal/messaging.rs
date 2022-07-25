@@ -6,7 +6,6 @@ use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult}
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::forward::ForwardV2;
 use crate::testing::mocking::AgencyMockDecrypted;
-use crate::utils::error_utils;
 use crate::utils::libindy::crypto;
 
 impl AgencyClient {

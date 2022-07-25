@@ -8,10 +8,8 @@ pub mod test {
     use agency_client::MessageStatusCode;
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
     use aries_vcx::global;
-    use aries_vcx::global::agency_client::{create_agency_client_for_main_wallet, get_main_agency_client};
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::global::wallet::{close_main_wallet, create_main_wallet, get_main_wallet_handle, main_wallet_configure_issuer, open_as_main_wallet};
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -25,6 +23,8 @@ pub mod test {
     use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds;
     use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::libindy::utils::wallet::wallet_configure_issuer;
+    use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::PublicInvitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -110,26 +110,16 @@ pub mod test {
         pub verifier: Verifier,
         pub agent: PublicAgent,
         pub wallet_handle: WalletHandle,
+        pub agency_client: AgencyClient,
     }
 
 
     #[async_trait::async_trait]
     impl TestAgent for Faber {
         async fn activate(&mut self) -> VcxResult<()> {
-            close_main_wallet()
-                .await
-                .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::reset_config_values();
-            global::agency_client::reset_main_agency_client();
-
-            info!("activate >>> Faber opening main wallet");
-            let wallet_handle = open_as_main_wallet(&self.config_wallet).await?;
-            self.wallet_handle = wallet_handle;
             info!("activate >>> Faber initiating issuer config");
             init_issuer_config(&self.config_issuer)?;
-            info!("activate >>> Faber initiating agency client");
-            create_agency_client_for_main_wallet(&self.config_agency)?;
-            info!("activate >>> Faber done");
             Ok(())
         }
     }
@@ -137,18 +127,7 @@ pub mod test {
     #[async_trait::async_trait]
     impl TestAgent for Alice {
         async fn activate(&mut self) -> VcxResult<()> {
-            close_main_wallet()
-                .await
-                .unwrap_or_else(|_| warn!("Failed to close main wallet (perhaps none was open?)"));
             settings::reset_config_values();
-            global::agency_client::reset_main_agency_client();
-
-            info!("activate >>> Alice opening main wallet");
-            let wallet_handle = open_as_main_wallet(&self.config_wallet).await?;
-            self.wallet_handle = wallet_handle;
-            info!("activate >>> Alice initiating agency client");
-            create_agency_client_for_main_wallet(&self.config_agency)?;
-            info!("activate >>> Alice done");
             Ok(())
         }
     }
@@ -156,7 +135,6 @@ pub mod test {
     impl Faber {
         pub async fn setup() -> Faber {
             settings::reset_config_values();
-            global::agency_client::reset_main_agency_client();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -174,29 +152,28 @@ pub mod test {
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None,
             };
-            create_main_wallet(&config_wallet).await.unwrap();
-            let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
-            let config_issuer = main_wallet_configure_issuer(enterprise_seed).await.unwrap();
+            create_wallet_with_master_secret(&config_wallet).await.unwrap();
+            let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+            let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
-            let institution_did = config_issuer.clone().institution_did;
-            create_agency_client_for_main_wallet(&config_agency).unwrap();
-            Connection::create("faber", true, &get_main_agency_client().unwrap()).await.unwrap();
+            let connection = Connection::create("faber", true, &agency_client).await.unwrap();
+            let agent = PublicAgent::create(wallet_handle, &agency_client, "faber", &config_issuer.institution_did).await.unwrap();
             let faber = Faber {
                 wallet_handle,
+                agency_client,
                 is_active: false,
                 config_wallet,
                 config_agency,
                 config_issuer,
                 schema: Schema::default(),
                 cred_def: CredentialDef::default(),
-                connection: Connection::create("faber", true, &get_main_agency_client().unwrap()).await.unwrap(),
+                connection,
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
-                agent: PublicAgent::create(get_main_wallet_handle(), &get_main_agency_client().unwrap(), "faber", &institution_did).await.unwrap(),
+                agent,
             };
-            close_main_wallet().await.unwrap();
             faber
         }
 
@@ -248,8 +225,8 @@ pub mod test {
 
         pub async fn create_invite(&mut self) -> String {
             self.activate().await.unwrap();
-            self.connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.connect(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
@@ -264,23 +241,23 @@ pub mod test {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_ping(get_main_wallet_handle(), None).await.unwrap();
+            self.connection.send_ping(self.wallet_handle, None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_discovery_features(get_main_wallet_handle(), None, None).await.unwrap();
+            self.connection.send_discovery_features(self.wallet_handle, None, None).await.unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
             self.activate().await.unwrap();
-            let details = self.connection.get_connection_info(&get_main_agency_client().unwrap()).unwrap();
+            let details = self.connection.get_connection_info(&self.agency_client).unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
@@ -301,19 +278,19 @@ pub mod test {
                 tails_file: None,
             };
             self.issuer_credential = Issuer::create("alice_degree").unwrap();
-            self.issuer_credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info, None).await.unwrap();
-            self.issuer_credential.send_credential_offer(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.build_credential_offer_msg(self.wallet_handle, offer_info, None).await.unwrap();
+            self.issuer_credential.send_credential_offer(self.connection.send_message_closure(self.wallet_handle).unwrap()).await.unwrap();
+            self.issuer_credential.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
         }
 
         pub async fn send_credential(&mut self) {
             self.activate().await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
 
-            self.issuer_credential.send_credential(get_main_wallet_handle(), self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.issuer_credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.issuer_credential.send_credential(self.wallet_handle, self.connection.send_message_closure(self.wallet_handle).unwrap()).await.unwrap();
+            self.issuer_credential.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
         }
 
@@ -322,8 +299,8 @@ pub mod test {
             self.verifier = self.create_presentation_request().await;
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
-            self.verifier.send_presentation_request(self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
-            self.verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.send_presentation_request(self.connection.send_message_closure(self.wallet_handle).unwrap()).await.unwrap();
+            self.verifier.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
 
             assert_eq!(VerifierState::PresentationRequestSent, self.verifier.get_state());
         }
@@ -336,7 +313,7 @@ pub mod test {
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.activate().await.unwrap();
 
-            self.verifier.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.verifier.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
@@ -350,13 +327,12 @@ pub mod test {
         pub credential: Holder,
         pub prover: Prover,
         pub wallet_handle: WalletHandle,
+        pub agency_client: AgencyClient,
     }
 
     impl Alice {
         pub async fn setup() -> Alice {
             settings::reset_config_values();
-            global::agency_client::reset_main_agency_client();
-
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -367,50 +343,48 @@ pub mod test {
                 rekey: None,
                 rekey_derivation_method: None,
             };
-
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
                 agency_endpoint: AGENCY_ENDPOINT.to_string(),
                 agent_seed: None,
             };
-
-            create_main_wallet(&config_wallet).await.unwrap();
-            let wallet_handle = open_as_main_wallet(&config_wallet).await.unwrap();
+            create_wallet_with_master_secret(&config_wallet).await.unwrap();
+            let wallet_handle = open_wallet(&config_wallet).await.unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
-            create_agency_client_for_main_wallet(&config_agency).unwrap();
+            let connection = Connection::create("tmp_empoty", true, &agency_client).await.unwrap();
             let alice = Alice {
                 wallet_handle,
+                agency_client,
                 is_active: false,
                 config_wallet,
                 config_agency,
-                connection: Connection::create("tmp_empoty", true, &get_main_agency_client().unwrap()).await.unwrap(),
+                connection,
                 credential: Holder::default(),
                 prover: Prover::default(),
             };
-            close_main_wallet().await.unwrap();
             alice
         }
 
         pub async fn accept_invite(&mut self, invite: &str) {
             self.activate().await.unwrap();
-            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true, &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.connect(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true, &self.agency_client).await.unwrap();
+            self.connection.connect(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await.unwrap();
+            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate().await?;
             let did = self.connection.pairwise_info().pw_did.to_string();
-            let messages = self.connection.download_messages(&get_main_agency_client().unwrap(), Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+            let messages = self.connection.download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
             filter_messages(messages, message_type)
                 .await
                 .ok_or(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Failed to download a message")))
@@ -418,7 +392,7 @@ pub mod test {
 
         pub async fn accept_offer(&mut self) {
             self.activate().await.unwrap();
-            let offers = get_credential_offer_messages(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            let offers = get_credential_offer_messages(&self.agency_client, &self.connection).await.unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
             let offer = serde_json::to_string(&offer).unwrap();
             let cred_offer: CredentialOffer = serde_json::from_str(&offer)
@@ -429,20 +403,20 @@ pub mod test {
             assert_eq!(HolderState::OfferReceived, self.credential.get_state());
 
             let pw_did = self.connection.pairwise_info().pw_did.to_string();
-            self.credential.send_request(get_main_wallet_handle(), pw_did, self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
+            self.credential.send_request(self.wallet_handle, pw_did, self.connection.send_message_closure(self.wallet_handle).unwrap()).await.unwrap();
             assert_eq!(HolderState::RequestSent, self.credential.get_state());
         }
 
         pub async fn accept_credential(&mut self) {
             self.activate().await.unwrap();
-            self.credential.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.credential.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.credential.get_credential_status().unwrap());
         }
 
         pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
             self.activate().await.unwrap();
-            let presentation_requests = get_proof_request_messages(&get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            let presentation_requests = get_proof_request_messages(&self.agency_client, &self.connection).await.unwrap();
             let presentation_request = serde_json::from_str::<Vec<::serde_json::Value>>(&presentation_requests).unwrap()[0].clone();
             let presentation_request_json = serde_json::to_string(&presentation_request).unwrap();
             let presentation_request: PresentationRequest = serde_json::from_str(&presentation_request_json).unwrap();
@@ -451,7 +425,7 @@ pub mod test {
 
         pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
             self.activate().await.unwrap();
-            match self.connection.get_message_by_id(msg_id, &get_main_agency_client().unwrap()).await.unwrap() {
+            match self.connection.get_message_by_id(msg_id, &self.agency_client).await.unwrap() {
                 A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
@@ -462,7 +436,7 @@ pub mod test {
 
         pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
             self.activate().await.unwrap();
-            match self.connection.get_message_by_id(msg_id, &get_main_agency_client().unwrap()).await.unwrap() {
+            match self.connection.get_message_by_id(msg_id, &self.agency_client).await.unwrap() {
                 A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
                 msg => {
                     Err(VcxError::from_msg(VcxErrorKind::InvalidMessages,
@@ -472,7 +446,7 @@ pub mod test {
         }
 
         pub async fn get_credentials_for_presentation(&mut self) -> serde_json::Value {
-            let credentials = self.prover.retrieve_credentials(get_main_wallet_handle()).await.unwrap();
+            let credentials = self.prover.retrieve_credentials(self.wallet_handle).await.unwrap();
             let credentials: std::collections::HashMap<String, serde_json::Value> = serde_json::from_str(&credentials).unwrap();
 
             let mut use_credentials = json!({});
@@ -494,32 +468,30 @@ pub mod test {
 
             let credentials = self.get_credentials_for_presentation().await;
 
-            self.prover.generate_presentation(get_main_wallet_handle(), credentials.to_string(), String::from("{}")).await.unwrap();
+            self.prover.generate_presentation(self.wallet_handle, credentials.to_string(), String::from("{}")).await.unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
-            self.prover.send_presentation(get_main_wallet_handle(), self.connection.send_message_closure(get_main_wallet_handle()).unwrap()).await.unwrap();
+            self.prover.send_presentation(self.wallet_handle, self.connection.send_message_closure(self.wallet_handle).unwrap()).await.unwrap();
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
         }
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.activate().await.unwrap();
-            self.prover.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &self.connection).await.unwrap();
+            self.prover.update_state(self.wallet_handle, &self.agency_client, &self.connection).await.unwrap();
             assert_eq!(aries_vcx::messages::status::Status::Success.code(), self.prover.presentation_status());
         }
     }
 
     impl Drop for Faber {
         fn drop(&mut self) {
-            futures::executor::block_on(self.activate()).unwrap_or_else(|_| error!("Failed to close main wallet while dropping Faber"));
-            futures::executor::block_on(close_main_wallet()).unwrap_or_else(|_| error!("Failed to close main wallet while dropping Faber"));
+            futures::executor::block_on(close_wallet(self.wallet_handle)).unwrap_or_else(|_| error!("Failed to close Faber's wallet while dropping Faber"));
             futures::executor::block_on(delete_wallet(&self.config_wallet)).unwrap_or_else(|_| error!("Failed to delete Faber's wallet while dropping"));
         }
     }
 
     impl Drop for Alice {
         fn drop(&mut self) {
-            futures::executor::block_on(self.activate()).unwrap_or_else(|_| error!("Failed to close main wallet while dropping Alice"));
-            futures::executor::block_on(close_main_wallet()).unwrap_or_else(|_| error!("Failed to close main wallet while dropping Alice"));
+            futures::executor::block_on(close_wallet(self.wallet_handle)).unwrap_or_else(|_| error!("Failed to close Alice's wallet while dropping Alice"));
             futures::executor::block_on(delete_wallet(&self.config_wallet)).unwrap_or_else(|_| error!("Failed to delete Alice's wallet while dropping"));
         }
     }

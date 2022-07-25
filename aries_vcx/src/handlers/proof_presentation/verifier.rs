@@ -1,16 +1,18 @@
 use std::collections::HashMap;
+
 use indy_sys::WalletHandle;
+
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::protocols::SendClosure;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::*;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -147,6 +149,7 @@ impl Verifier {
 #[cfg(test)]
 mod tests {
     use indy_sys::WalletHandle;
+
     use crate::messages::a2a::A2AMessage;
     use crate::messages::basic_message::message::BasicMessage;
     use crate::messages::connection::did_doc::DidDoc;
@@ -156,6 +159,7 @@ mod tests {
     use crate::utils::mockdata::mock_settings::MockBuilder;
 
     use super::*;
+
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }

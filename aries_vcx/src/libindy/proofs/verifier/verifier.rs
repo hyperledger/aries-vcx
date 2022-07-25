@@ -47,14 +47,14 @@ pub mod tests {
     use crate::global::settings;
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
-    use crate::utils::devsetup::SetupWithWalletAndAgency;
+    use crate::utils::devsetup::SetupWalletPoolAgency;
 
     use super::*;
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_self_attested_proof_validation() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -99,7 +99,7 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_restrictions() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
         let requested_attrs = json!([
                                             json!({
@@ -157,17 +157,16 @@ pub mod tests {
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_proof_validate_attribute() {
-        let setup = SetupWithWalletAndAgency::init().await;
+        let setup = SetupWalletPoolAgency::init().await;
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs = json!([
                                             json!({
                                                 "name":"address1",
-                                                "restrictions": [json!({ "issuer_did": did })]
+                                                "restrictions": [json!({ "issuer_did": setup.institution_did })]
                                             }),
                                             json!({
                                                 "name":"zip",
-                                                "restrictions": [json!({ "issuer_did": did })]
+                                                "restrictions": [json!({ "issuer_did": setup.institution_did })]
                                             }),
                                             json!({
                                                 "name":"self_attest",

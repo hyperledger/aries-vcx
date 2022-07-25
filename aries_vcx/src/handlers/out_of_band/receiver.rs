@@ -1,22 +1,23 @@
 use std::clone::Clone;
+
 use agency_client::agency_client::AgencyClient;
 
-use crate::handlers::out_of_band::OutOfBandInvitation;
-use crate::handlers::connection::connection::Connection;
 use crate::error::prelude::*;
+use crate::handlers::connection::connection::Connection;
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_request::CredentialRequest;
-use crate::messages::issuance::credential::Credential;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::service::ServiceResolvable;
+use crate::messages::issuance::credential::Credential;
+use crate::messages::issuance::credential_offer::CredentialOffer;
+use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::proof_presentation::presentation::Presentation;
+use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
-    pub oob: OutOfBandInvitation
+    pub oob: OutOfBandInvitation,
 }
 
 impl OutOfBandReceiver {
@@ -40,11 +41,11 @@ impl OutOfBandReceiver {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {
                             if did.to_string() == did_doc.id {
-                                return Ok(Some(connection))
+                                return Ok(Some(connection));
                             }
                         };
                         if did_doc.resolve_service()? == service.resolve().await? {
-                            return Ok(Some(connection))
+                            return Ok(Some(connection));
                         };
                     }
                     None => break

@@ -1,10 +1,10 @@
 use indy::{ErrorCode, wallet};
-use indy::{INVALID_WALLET_HANDLE, SearchHandle, WalletHandle};
+use indy::{SearchHandle, WalletHandle};
 
+use crate::libindy;
 use crate::error::prelude::*;
-use crate::libindy::utils::{anoncreds, signus};
-use crate::global;
 use crate::global::settings;
+use crate::libindy::utils::{anoncreds, signus};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -166,7 +166,7 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
-pub async fn add_main_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, value: &str, tags: Option<&str>) -> VcxResult<()> {
+pub async fn add_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, value: &str, tags: Option<&str>) -> VcxResult<()> {
     trace!("add_record >>> xtype: {}, id: {}, value: {}, tags: {:?}", secret!(&xtype), secret!(&id), secret!(&value), secret!(&tags));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
@@ -176,7 +176,7 @@ pub async fn add_main_wallet_record(wallet_handle: WalletHandle, xtype: &str, id
         .map_err(VcxError::from)
 }
 
-pub async fn get_main_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, options: &str) -> VcxResult<String> {
+pub async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, options: &str) -> VcxResult<String> {
     trace!("get_record >>> xtype: {}, id: {}, options: {}", secret!(&xtype), secret!(&id), options);
 
     if settings::indy_mocks_enabled() {
@@ -188,7 +188,7 @@ pub async fn get_main_wallet_record(wallet_handle: WalletHandle, xtype: &str, id
         .map_err(VcxError::from)
 }
 
-pub async fn delete_main_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxResult<()> {
+pub async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
@@ -199,7 +199,7 @@ pub async fn delete_main_wallet_record(wallet_handle: WalletHandle, xtype: &str,
 }
 
 
-pub async fn update_main_wallet_record_value(wallet_handle: WalletHandle, xtype: &str, id: &str, value: &str) -> VcxResult<()> {
+pub async fn update_wallet_record_value(wallet_handle: WalletHandle, xtype: &str, id: &str, value: &str) -> VcxResult<()> {
     trace!("update_record_value >>> xtype: {}, id: {}, value: {}", secret!(&xtype), secret!(&id), secret!(&value));
 
     if settings::indy_mocks_enabled() { return Ok(()); }
@@ -209,7 +209,7 @@ pub async fn update_main_wallet_record_value(wallet_handle: WalletHandle, xtype:
         .map_err(VcxError::from)
 }
 
-pub async fn add_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("add_record_tags >>> xtype: {}, id: {}, tags: {:?}", secret!(&xtype), secret!(&id), secret!(&tags));
 
     if settings::indy_mocks_enabled() {
@@ -221,7 +221,7 @@ pub async fn add_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: &st
         .map_err(VcxError::from)
 }
 
-pub async fn update_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub async fn update_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!("update_record_tags >>> xtype: {}, id: {}, tags: {}", secret!(&xtype), secret!(&id), secret!(&tags));
 
     if settings::indy_mocks_enabled() {
@@ -233,7 +233,7 @@ pub async fn update_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: 
         .map_err(VcxError::from)
 }
 
-pub async fn delete_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tag_names: &str) -> VcxResult<()> {
+pub async fn delete_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tag_names: &str) -> VcxResult<()> {
     trace!("delete_record_tags >>> xtype: {}, id: {}, tag_names: {}", secret!(&xtype), secret!(&id), secret!(&tag_names));
 
     if settings::indy_mocks_enabled() {
@@ -245,7 +245,7 @@ pub async fn delete_main_wallet_record_tags(wallet_handle: WalletHandle, xtype: 
         .map_err(VcxError::from)
 }
 
-pub async fn open_search_main_wallet(wallet_handle: WalletHandle, xtype: &str, query: &str, options: &str) -> VcxResult<SearchHandle> {
+pub async fn open_search_wallet(wallet_handle: WalletHandle, xtype: &str, query: &str, options: &str) -> VcxResult<SearchHandle> {
     trace!("open_search >>> xtype: {}, query: {}, options: {}", secret!(&xtype), query, options);
 
     if settings::indy_mocks_enabled() {
@@ -257,7 +257,7 @@ pub async fn open_search_main_wallet(wallet_handle: WalletHandle, xtype: &str, q
         .map_err(VcxError::from)
 }
 
-pub async fn fetch_next_records_main_wallet(wallet_handle: WalletHandle, search_handle: SearchHandle, count: usize) -> VcxResult<String> {
+pub async fn fetch_next_records_wallet(wallet_handle: WalletHandle, search_handle: SearchHandle, count: usize) -> VcxResult<String> {
     trace!("fetch_next_records >>> search_handle: {}, count: {}", search_handle, count);
 
     if settings::indy_mocks_enabled() {
@@ -269,7 +269,7 @@ pub async fn fetch_next_records_main_wallet(wallet_handle: WalletHandle, search_
         .map_err(VcxError::from)
 }
 
-pub async fn close_search_main_wallet(search_handle: SearchHandle) -> VcxResult<()> {
+pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
     trace!("close_search >>> search_handle: {}", search_handle);
 
     if settings::indy_mocks_enabled() {
@@ -279,4 +279,68 @@ pub async fn close_search_main_wallet(search_handle: SearchHandle) -> VcxResult<
     indy::wallet::close_wallet_search(search_handle)
         .await
         .map_err(VcxError::from)
+}
+
+pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
+    let (institution_did, _institution_verkey) = signus::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
+    Ok(IssuerConfig {
+        institution_did,
+    })
+}
+
+pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResult<()> {
+    let wallet_handle = create_and_open_wallet(&config).await?;
+    trace!("Created wallet with handle {:?}", wallet_handle);
+
+    // If MS is already in wallet then just continue
+    anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS).await.ok();
+
+    wallet::close_wallet(wallet_handle).await?;
+    Ok(())
+}
+
+pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: &str) -> VcxResult<()> {
+    trace!("export >>> wallet_handle: {:?}, path: {:?}, backup_key: ****", wallet_handle, path);
+
+    let export_config = json!({ "key": backup_key, "path": &path}).to_string();
+    indy::wallet::export_wallet(wallet_handle, &export_config)
+        .await
+        .map_err(VcxError::from)
+}
+
+pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+    if settings::indy_mocks_enabled() {
+        warn!("create_and_open_wallet ::: Indy mocks enabled, skipping opening main wallet.");
+        return Ok(WalletHandle(1));
+    }
+    create_indy_wallet(&wallet_config).await?;
+    let handle = libindy::wallet::open_wallet(wallet_config).await?;
+    Ok(handle)
+}
+
+pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
+    trace!("close_wallet >>>");
+    if settings::indy_mocks_enabled() {
+        warn!("close_wallet >>> Indy mocks enabled, skipping closing wallet");
+        return Ok(());
+    }
+    indy::wallet::close_wallet(wallet_handle)
+        .await?;
+    Ok(())
+}
+
+#[cfg(feature = "general_test")]
+mod test {
+    use crate::error::VcxErrorKind;
+    use crate::libindy::utils::wallet::add_wallet_record;
+    use crate::utils::devsetup::SetupLibraryWallet;
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_add_record() {
+        let setup = SetupLibraryWallet::init().await;
+        add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}")).await.unwrap();
+        let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}")).await.unwrap_err();
+        assert_eq!(err.kind(), VcxErrorKind::DuplicationWalletRecord);
+    }
 }

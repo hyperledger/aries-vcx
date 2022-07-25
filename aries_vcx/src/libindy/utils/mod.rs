@@ -44,13 +44,10 @@ impl LibindyMock {
     }
 }
 
-// TODO:  Is used for Aries tests...try to remove and use one of devsetup's
+// TODO:  move to devsetup, see if we can reuse this / merge with different setup
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
     use indy;
-    use crate::global;
-
-    use super::*;
 
     pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
     pub const WALLET_CREDENTIALS: &'static str = r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
@@ -67,9 +64,8 @@ pub mod test_setup {
 
         indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
         let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS).await.unwrap();
-        global::wallet::set_wallet_handle(wallet_handle);
 
-        WalletSetup { name, wallet_config, wallet_handle: wallet_handle }
+        WalletSetup { name, wallet_config, wallet_handle }
     }
 
     pub async fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
@@ -90,27 +86,5 @@ pub mod test_setup {
                 futures::executor::block_on(indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS)).unwrap();
             }
         }
-    }
-}
-
-#[allow(unused_imports)]
-#[cfg(feature = "pool_tests")]
-pub mod tests {
-    use crate::global;
-    use crate::global::pool::open_main_pool;
-    use crate::global::settings;
-    use crate::utils::devsetup::*;
-
-    use super::*;
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_init_pool_and_wallet() {
-        let _setup_defaults = SetupDefaults::init();
-        let setup_wallet = SetupWallet::init().await;
-        let setup_pool = SetupPoolConfig::init().await;
-
-        open_main_pool(&setup_pool.pool_config).await.unwrap();
-        global::wallet::create_and_open_as_main_wallet(&setup_wallet.wallet_config).await.unwrap();
     }
 }

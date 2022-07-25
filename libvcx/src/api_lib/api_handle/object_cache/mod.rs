@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use futures::future::BoxFuture;
 
+use futures::future::BoxFuture;
 use rand::Rng;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
@@ -77,8 +77,8 @@ impl<T> ObjectCache<T>
     }
 
     pub async fn get_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-    where
-        for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
+        where
+                for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
     {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
@@ -103,8 +103,8 @@ impl<T> ObjectCache<T>
     }
 
     pub async fn get_mut_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-    where
-        for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
+        where
+                for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
@@ -162,8 +162,9 @@ impl<T> ObjectCache<T>
 
 #[cfg(test)]
 mod tests {
-    use crate::api_lib::api_handle::object_cache::ObjectCache;
     use aries_vcx::utils::devsetup::SetupDefaults;
+
+    use crate::api_lib::api_handle::object_cache::ObjectCache;
 
     #[test]
     #[cfg(feature = "general_test")]

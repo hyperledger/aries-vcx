@@ -4,6 +4,7 @@ use std::fmt;
 pub mod utils;
 pub mod api_c;
 pub mod api_handle;
+pub mod global;
 
 
 /// This macro allows the VcxStateType to be

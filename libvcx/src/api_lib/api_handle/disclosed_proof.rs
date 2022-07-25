@@ -6,15 +6,15 @@ use aries_vcx::{
 };
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::global::settings::indy_mocks_enabled;
-use aries_vcx::global::wallet::get_main_wallet_handle;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");

@@ -4,13 +4,13 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::global::wallet::get_main_wallet_handle;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection::*;
 use crate::api_lib::api_handle::connection;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;

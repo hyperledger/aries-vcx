@@ -1,10 +1,11 @@
 use std::ops::Deref;
 use std::sync::{RwLock, RwLockWriteGuard};
 
-use agency_client::agency_client::AgencyClient;
-use agency_client::configuration::AgencyClientConfig;
+use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use aries_vcx::error::VcxResult;
 
-use crate::error::VcxResult;
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref AGENCY_CLIENT: RwLock<AgencyClient> = RwLock::new(AgencyClient::new());
@@ -23,12 +24,8 @@ pub fn get_main_agency_client() -> VcxResult<AgencyClient> {
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
     get_main_agency_client_mut()?
         .configure(config)?;
-    Ok(())
-}
-
-pub fn enable_main_agency_client_mocks() -> VcxResult<()> {
-    info!("enable_agency_mocks >>>");
-    get_main_agency_client_mut()?.enable_test_mode();
+    get_main_agency_client_mut()?
+        .set_wallet_handle(get_main_wallet_handle());
     Ok(())
 }
 
@@ -36,4 +33,10 @@ pub fn reset_main_agency_client() {
     trace!("reset_agency_client >>>");
     let mut agency_client = AGENCY_CLIENT.write().unwrap();
     *agency_client = AgencyClient::new();
+}
+
+pub fn set_main_agency_client(new_agency_client: AgencyClient) {
+    trace!("set_main_agency_client >>>");
+    let mut agency_client = AGENCY_CLIENT.write().unwrap();
+    *agency_client = new_agency_client;
 }
