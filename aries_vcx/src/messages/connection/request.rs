@@ -52,7 +52,8 @@ a2a_message!(Request, ConnectionRequest);
 threadlike_optional!(Request);
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::did_doc::test_utils::*;
 
     use super::*;

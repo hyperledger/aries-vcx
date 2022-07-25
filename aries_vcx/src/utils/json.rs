@@ -69,7 +69,8 @@ fn _collect_keys(map: &Map<String, Value>) -> Vec<String> {
 
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use super::*;
 
     #[test]

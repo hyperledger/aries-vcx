@@ -101,7 +101,8 @@ impl Default for ProofRequestData {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use serde_json::Value;
 
     use crate::utils;

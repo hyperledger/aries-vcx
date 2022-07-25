@@ -297,6 +297,7 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use std::thread;
     use std::time::Duration;

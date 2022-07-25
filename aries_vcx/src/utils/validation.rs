@@ -59,7 +59,8 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 
     use super::*;

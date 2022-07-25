@@ -437,13 +437,14 @@ async fn _create_credential(wallet_handle: WalletHandle,
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::a2a::A2AMessage;
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
-    use crate::messages::issuance::test::{_ack, _problem_report};
+    use crate::messages::issuance::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
     use crate::utils::devsetup::SetupMocks;

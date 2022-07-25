@@ -206,7 +206,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};

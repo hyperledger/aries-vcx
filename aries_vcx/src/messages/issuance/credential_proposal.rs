@@ -145,7 +145,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::issuance::credential_offer::test_utils::{_value, thread_id};
     use crate::messages::issuance::credential_proposal::test_utils::*;
 

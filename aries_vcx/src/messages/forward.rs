@@ -24,7 +24,8 @@ impl Forward {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::*;
 
     use super::*;

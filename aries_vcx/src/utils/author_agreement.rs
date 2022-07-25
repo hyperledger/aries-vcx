@@ -50,7 +50,8 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 
     use super::*;

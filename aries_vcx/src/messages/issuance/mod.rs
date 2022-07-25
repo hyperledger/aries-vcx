@@ -60,7 +60,8 @@ impl Default for CredentialPreviewData {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use crate::messages::ack;
     use crate::messages::error;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
@@ -70,6 +71,6 @@ pub mod test {
     }
 
     pub fn _problem_report() -> error::ProblemReport {
-        error::tests::_problem_report().set_thread_id(&_credential_offer().id.0)
+        error::test_utils::_problem_report().set_thread_id(&_credential_offer().id.0)
     }
 }

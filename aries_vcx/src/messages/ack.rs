@@ -77,7 +77,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::response::test_utils::_thread_id;
 

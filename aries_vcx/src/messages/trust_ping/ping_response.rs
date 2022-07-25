@@ -26,7 +26,8 @@ threadlike!(PingResponse);
 a2a_message!(PingResponse);
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;

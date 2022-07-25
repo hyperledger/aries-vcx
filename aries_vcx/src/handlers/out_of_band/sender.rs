@@ -97,7 +97,8 @@ impl OutOfBandSender {
 
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::messages::connection::did::Did;
     use crate::messages::connection::service::FullService;
     use crate::messages::issuance::credential_offer::CredentialOffer;

@@ -76,7 +76,8 @@ impl ProtocolRegistry {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::global::settings;
     use crate::utils::devsetup::SetupEmpty;
 

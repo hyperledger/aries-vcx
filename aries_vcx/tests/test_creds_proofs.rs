@@ -74,7 +74,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_connection::{ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
 
-    use crate::utils::devsetup_agent::test::{Alice, Faber, PayloadKinds, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, PayloadKinds, TestAgent};
     use crate::utils::scenarios::test_utils::{_create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal, accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names, connect_using_request_sent_to_public_agent, create_and_send_nonrevocable_cred_offer, create_connected_connections, create_connected_connections_via_public_invite, create_proof, create_proof_request, decline_offer, generate_and_send_proof, issue_address_credential, prover_select_credentials, prover_select_credentials_and_fail_to_generate_proof, prover_select_credentials_and_send_proof, publish_revocation, receive_proof_proposal_rejection, reject_proof_proposal, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential, revoke_credential_local, rotate_rev_reg, send_cred_proposal, send_cred_proposal_1, send_cred_req, send_credential, send_proof_proposal, send_proof_proposal_1, send_proof_request, verifier_create_proof_and_send_request, verify_proof};
     use crate::utils::test_macros::ProofStateType;
 

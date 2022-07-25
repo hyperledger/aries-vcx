@@ -111,7 +111,8 @@ impl From<&PublicAgent> for PairwiseInfo {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use super::*;
 
     static INSTITUTION_DID: &str = "2hoqvcwupRTUNkXn6ArYzs";

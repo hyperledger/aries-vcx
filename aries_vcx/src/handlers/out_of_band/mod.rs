@@ -60,8 +60,8 @@ impl OutOfBandInvitation {
     }
 }
 
-// TODO: Add more tests
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;

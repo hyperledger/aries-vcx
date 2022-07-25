@@ -168,7 +168,8 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
 

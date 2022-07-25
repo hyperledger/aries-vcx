@@ -161,7 +161,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
     use super::*;

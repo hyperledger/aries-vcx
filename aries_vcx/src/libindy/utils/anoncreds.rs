@@ -998,7 +998,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "pool_tests")]
+pub mod unit_tests {
     use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
     use crate::utils::constants::SCHEMAS_JSON;
     use crate::utils::constants::TAILS_DIR;

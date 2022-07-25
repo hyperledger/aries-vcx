@@ -147,7 +147,8 @@ impl Verifier {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use indy_sys::WalletHandle;
 
     use crate::messages::a2a::A2AMessage;

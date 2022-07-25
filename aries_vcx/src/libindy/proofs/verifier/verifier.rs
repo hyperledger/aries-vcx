@@ -42,7 +42,8 @@ pub async fn validate_indy_proof(wallet_handle: WalletHandle, proof_json: &str, 
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "pool_tests")]
+pub mod unit_tests {
     use crate::{libindy, utils};
     use crate::global::settings;
     use crate::libindy::proofs::proof_request::ProofRequestData;

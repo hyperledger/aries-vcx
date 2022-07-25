@@ -131,7 +131,8 @@ pub fn get_protocol_version() -> usize {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::utils::devsetup::{SetupDefaults, TempFile};
 
     use super::*;

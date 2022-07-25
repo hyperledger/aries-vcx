@@ -203,8 +203,42 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
 }
 
 
+#[cfg(feature = "pool_tests")]
 #[cfg(test)]
-pub mod tests {
+pub mod pool_tests {
+    use crate::libindy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
+    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
+    use crate::utils::devsetup::SetupWalletPool;
+    use crate::utils::get_temp_dir_path;
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_build_rev_states_json_empty() {
+        let _setup = SetupWalletPool::init().await;
+
+        // empty vector
+        assert_eq!(build_rev_states_json(Vec::new().as_mut()).await.unwrap(), "{}".to_string());
+
+        // no rev_reg_id
+        let cred1 = CredInfoProver {
+            requested_attr: "height_1".to_string(),
+            referent: LICENCE_CRED_ID.to_string(),
+            schema_id: SCHEMA_ID.to_string(),
+            cred_def_id: CRED_DEF_ID.to_string(),
+            rev_reg_id: None,
+            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            revocation_interval: None,
+            timestamp: None,
+        };
+        assert_eq!(build_rev_states_json(vec![cred1].as_mut()).await.unwrap(), "{}".to_string());
+    }
+
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
     use crate::utils::{
@@ -604,29 +638,6 @@ pub mod tests {
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);
         assert!(cred_info[0].timestamp.is_some());
-    }
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_build_rev_states_json_empty() {
-        let _setup = SetupWalletPool::init().await;
-
-        // empty vector
-        assert_eq!(build_rev_states_json(Vec::new().as_mut()).await.unwrap(), "{}".to_string());
-
-        // no rev_reg_id
-        let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
-            cred_def_id: CRED_DEF_ID.to_string(),
-            rev_reg_id: None,
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-        };
-        assert_eq!(build_rev_states_json(vec![cred1].as_mut()).await.unwrap(), "{}".to_string());
     }
 
     #[test]

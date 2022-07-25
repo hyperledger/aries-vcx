@@ -341,6 +341,7 @@ impl A2AMessage {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 pub mod test_a2a_serialization {
     use serde_json::Value;
 

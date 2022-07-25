@@ -100,7 +100,8 @@ impl LibvcxDefaultLogger {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use super::*;
 
     #[test]

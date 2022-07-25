@@ -31,7 +31,8 @@ impl Query {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use super::*;
 
     fn _query_string() -> String {

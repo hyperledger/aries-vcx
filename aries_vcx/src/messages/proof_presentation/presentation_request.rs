@@ -95,7 +95,7 @@ pub mod test_utils {
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation_request::test_utils::*;
 
     use super::*;

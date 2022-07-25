@@ -364,11 +364,12 @@ impl ProverSM {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::messages::proof_presentation::presentation_proposal::test_utils::{_presentation_preview, _presentation_proposal, _presentation_proposal_data};
     use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use crate::messages::proof_presentation::test::{_ack, _problem_report};
+    use crate::messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 

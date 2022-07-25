@@ -30,7 +30,7 @@ mod tests {
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::utils::devsetup::SetupLibraryAgencyV2;
 
-    use crate::utils::devsetup_agent::test::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]

@@ -832,14 +832,15 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod tests {
     use indy_sys::WalletHandle;
 
     use agency_client::testing::mocking::enable_agency_mocks;
 
-    use crate::handlers::connection::public_agent::tests::_public_agent;
+    use crate::handlers::connection::public_agent::test_utils::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
-    use crate::messages::connection::request::tests::_request;
+    use crate::messages::connection::request::unit_tests::_request;
     use crate::utils::devsetup::SetupMocks;
     use crate::utils::mockdata::mockdata_connection::{CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 

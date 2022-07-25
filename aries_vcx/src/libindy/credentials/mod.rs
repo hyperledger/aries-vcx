@@ -9,7 +9,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     match serde_json::from_str::<HashMap<String, serde_json::Value>>(attributes) {
         Ok(mut attributes) => {
             for (attr, attr_data) in attributes.iter_mut() {
-                let first_attr: &str = match attr_data {
+                let first_attr = match attr_data {
                     // new style input such as {"address2":"101 Wilson Lane"}
                     serde_json::Value::String(str_type) => str_type,
 
@@ -79,7 +79,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use serde_json::Value;
 
     use crate::utils::devsetup::*;

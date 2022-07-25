@@ -200,13 +200,14 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::Ack;
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::protocols::issuance::issuer::state_machine::test::_send_message;
+    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

@@ -1,5 +1,6 @@
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use indy_sys::WalletHandle;
 
     use agency_client::agency_client::AgencyClient;
