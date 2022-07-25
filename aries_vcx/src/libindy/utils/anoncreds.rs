@@ -997,13 +997,29 @@ pub mod test_utils {
     }
 }
 
+#[cfg(feature = "general_test")]
+mod unit_tests {
+    use indy_sys::WalletHandle;
+
+    use crate::libindy::utils::anoncreds::get_schema_json;
+    use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
+    use crate::utils::devsetup::SetupMocks;
+
+    #[tokio::test]
+    async fn from_ledger_schema_id() {
+        let _setup = SetupMocks::init();
+        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), SCHEMA_ID).await.unwrap();
+        assert_eq!(&retrieved_schema, SCHEMA_JSON);
+        assert_eq!(&id, SCHEMA_ID);
+    }
+}
+
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
-pub mod unit_tests {
-    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
-    use crate::utils::constants::SCHEMAS_JSON;
+pub mod integration_tests {
+    use crate::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema, create_proof, create_proof_with_predicate};
     use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupMocks, SetupWalletPool};
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
@@ -1221,16 +1237,6 @@ pub mod unit_tests {
 
         let (_id, retrieved_schema) = rc.unwrap();
         assert!(retrieved_schema.contains(&schema_id));
-    }
-
-    #[cfg(feature = "general_test")]
-    #[tokio::test]
-    async fn from_ledger_schema_id() {
-        let setup = SetupMocks::init();
-
-        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), SCHEMA_ID).await.unwrap();
-        assert_eq!(&retrieved_schema, SCHEMA_JSON);
-        assert_eq!(&id, SCHEMA_ID);
     }
 
     #[cfg(feature = "pool_tests")]

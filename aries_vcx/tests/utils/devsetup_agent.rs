@@ -8,7 +8,7 @@ pub mod test_utils {
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use agency_client::MessageStatusCode;
     use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-    use aries_vcx::global;
+    
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
@@ -19,7 +19,7 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder, RevocationDetails};
+    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
     use aries_vcx::libindy::credential_def::PublicEntityStateType;
     use aries_vcx::libindy::schema::Schema;
     use aries_vcx::libindy::utils::anoncreds;
@@ -384,7 +384,7 @@ pub mod test_utils {
 
         pub async fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
             self.activate().await?;
-            let did = self.connection.pairwise_info().pw_did.to_string();
+            let _did = self.connection.pairwise_info().pw_did.to_string();
             let messages = self.connection.download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
             filter_messages(messages, message_type)
                 .await

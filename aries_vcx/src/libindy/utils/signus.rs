@@ -90,8 +90,8 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 mod test {
-    use std::thread;
-    use std::time::Duration;
+    
+    
 
     use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
     use crate::utils::devsetup::*;
