@@ -43,7 +43,7 @@ mod tests {
     use aries_vcx::libindy::credential_def;
     use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
     use aries_vcx::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
-    use aries_vcx::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def, create_and_write_test_schema};
+    use aries_vcx::libindy::utils::anoncreds::test_utils::{create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential, create_and_store_nonrevocable_credential_def, create_and_write_test_schema};
     use aries_vcx::libindy::utils::signus;
     use aries_vcx::libindy::utils::signus::create_and_store_my_did;
     use aries_vcx::libindy::utils::wallet::*;
