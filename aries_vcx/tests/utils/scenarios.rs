@@ -590,7 +590,7 @@ pub mod test_utils {
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
 
         alice.activate().await.unwrap();
-        let mut consumer_to_institution = Connection::create_with_invite("institution", public_invite, true, &alice.agency_client).await.unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", alice.wallet_handle, &alice.agency_client, public_invite, true).await.unwrap();
         consumer_to_institution.connect(alice.wallet_handle, &alice.agency_client).await.unwrap();
         consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
 
@@ -602,13 +602,13 @@ pub mod test_utils {
     pub async fn create_connected_connections(alice: &mut Alice, faber: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
         faber.activate().await.unwrap();
-        let mut institution_to_consumer = Connection::create("consumer", true, &faber.agency_client).await.unwrap();
+        let mut institution_to_consumer = Connection::create("consumer", faber.wallet_handle, &faber.agency_client, true).await.unwrap();
         institution_to_consumer.connect(faber.wallet_handle, &faber.agency_client).await.unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
 
         alice.activate().await.unwrap();
         debug!("Consumer is going to accept connection invitation.");
-        let mut consumer_to_institution = Connection::create_with_invite("institution", details.clone(), true, &alice.agency_client).await.unwrap();
+        let mut consumer_to_institution = Connection::create_with_invite("institution", alice.wallet_handle, &alice.agency_client, details.clone(), true).await.unwrap();
 
         consumer_to_institution.connect(alice.wallet_handle, &alice.agency_client).await.unwrap();
         consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();

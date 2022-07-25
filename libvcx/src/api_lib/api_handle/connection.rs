@@ -96,14 +96,14 @@ pub fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(source_id, true, &get_main_agency_client().unwrap()).await?;
+    let connection = Connection::create(source_id, get_main_wallet_handle(), &get_main_agency_client().unwrap(), true).await?;
     store_connection(connection)
 }
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let connection = Connection::create_with_invite(source_id, invitation, true, &get_main_agency_client().unwrap()).await?;
+        let connection = Connection::create_with_invite(source_id, get_main_wallet_handle(), &get_main_agency_client().unwrap(), invitation, true).await?;
         store_connection(connection)
     } else {
         Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Used invite has invalid structure")) // TODO: Specific error type

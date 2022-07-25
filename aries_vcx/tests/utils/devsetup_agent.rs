@@ -159,7 +159,7 @@ pub mod test_utils {
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
-            let connection = Connection::create("faber", true, &agency_client).await.unwrap();
+            let connection = Connection::create("faber", agency_client.get_wallet_handle(), &agency_client, true).await.unwrap();
             let agent = PublicAgent::create(wallet_handle, &agency_client, "faber", &config_issuer.institution_did).await.unwrap();
             let faber = Faber {
                 wallet_handle,
@@ -354,7 +354,7 @@ pub mod test_utils {
             let wallet_handle = open_wallet(&config_wallet).await.unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
-            let connection = Connection::create("tmp_empoty", true, &agency_client).await.unwrap();
+            let connection = Connection::create("tmp_empoty", agency_client.get_wallet_handle(), &agency_client, true).await.unwrap();
             let alice = Alice {
                 wallet_handle,
                 agency_client,
@@ -370,7 +370,7 @@ pub mod test_utils {
 
         pub async fn accept_invite(&mut self, invite: &str) {
             self.activate().await.unwrap();
-            self.connection = Connection::create_with_invite("faber", serde_json::from_str(invite).unwrap(), true, &self.agency_client).await.unwrap();
+            self.connection = Connection::create_with_invite("faber", self.wallet_handle, &self.agency_client, serde_json::from_str(invite).unwrap(), true).await.unwrap();
             self.connection.connect(self.wallet_handle, &self.agency_client).await.unwrap();
             self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
