@@ -82,7 +82,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_problem_code(_problem_code())

@@ -43,7 +43,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_did_validation() {
         assert!(Did::new("2hoqvcwupRTUNkXn6ArYzs").is_ok());
         assert!(Did::new("did:sov:2hoqvcwupRTUNkXn6ArYzs").is_ok());

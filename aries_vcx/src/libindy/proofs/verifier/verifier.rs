@@ -45,7 +45,6 @@ pub async fn validate_indy_proof(wallet_handle: WalletHandle, proof_json: &str, 
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
     use crate::{libindy, utils};
-    
     use crate::libindy::proofs::proof_request::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWalletPool;
@@ -53,7 +52,6 @@ pub mod unit_tests {
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "pool_tests")]
     async fn test_proof_self_attested_proof_validation() {
         let setup = SetupWalletPool::init().await;
 
@@ -98,7 +96,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "pool_tests")]
     async fn test_proof_restrictions() {
         let setup = SetupWalletPool::init().await;
 
@@ -156,7 +153,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "pool_tests")]
     async fn test_proof_validate_attribute() {
         let setup = SetupWalletPool::init().await;
 

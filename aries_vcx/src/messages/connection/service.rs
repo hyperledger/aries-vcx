@@ -88,7 +88,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_service_comparison() {
         let service1 = FullService::create()
             .set_service_endpoint(_service_endpoint())

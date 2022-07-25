@@ -121,7 +121,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_append_full_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
@@ -135,7 +134,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
@@ -149,7 +147,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_oob_sender_to_a2a_message() {
         let _setup = SetupMocks::init();
 

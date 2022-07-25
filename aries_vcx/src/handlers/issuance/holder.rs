@@ -184,7 +184,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
         let holder = _holder().to_finished_state().await;
@@ -192,7 +191,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut holder = _holder();

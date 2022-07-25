@@ -67,7 +67,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_filter_proof_requests_by_name() {
         let filtered = _filter_proof_requests_by_name(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_ARRAY, "request1").unwrap();
         assert_eq!(filtered.len(), 1);

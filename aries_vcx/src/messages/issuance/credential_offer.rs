@@ -55,7 +55,7 @@ pub struct OfferInfo {
     pub credential_json: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
-    pub tails_file: Option<String>
+    pub tails_file: Option<String>,
 }
 
 impl OfferInfo {
@@ -64,7 +64,7 @@ impl OfferInfo {
             credential_json,
             cred_def_id,
             rev_reg_id,
-            tails_file
+            tails_file,
         }
     }
 }
@@ -120,7 +120,7 @@ pub mod test_utils {
     pub fn _tails_file() -> String {
         String::from("TEST_TAILS_FILE")
     }
-    
+
     pub fn _credential_offer() -> CredentialOffer {
         let mut attachment = Attachments::new();
         attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment()).unwrap();
@@ -139,7 +139,7 @@ pub mod test_utils {
             credential_json: _preview_data().to_string().unwrap(),
             cred_def_id: _cred_def_id(),
             rev_reg_id: Some(_rev_reg_id()),
-            tails_file: Some(_tails_file())
+            tails_file: Some(_tails_file()),
         }
     }
 
@@ -148,7 +148,7 @@ pub mod test_utils {
             credential_json: _preview_data().to_string().unwrap(),
             cred_def_id: _cred_def_id(),
             rev_reg_id: None,
-            tails_file: None
+            tails_file: None,
         }
     }
 }
@@ -162,7 +162,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_offer_build_works() {
         let credential_offer: CredentialOffer = CredentialOffer::create()
             .set_comment(_comment())

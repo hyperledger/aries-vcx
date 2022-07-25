@@ -72,7 +72,6 @@ mod test {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_oob_serialize_deserialize() {
         let _setup = SetupMocks::init();
         let oob_sender = OutOfBandSender::create()

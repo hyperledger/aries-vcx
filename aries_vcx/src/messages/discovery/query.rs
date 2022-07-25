@@ -53,7 +53,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_query_build_works() {
         let query: Query = Query::default()
             .set_query(Some(_query_string()))

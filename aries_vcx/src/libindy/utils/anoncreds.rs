@@ -1027,7 +1027,6 @@ pub mod integration_tests {
 
     extern crate serde_json;
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof() {
         let setup = SetupWalletPool::init().await;
@@ -1046,7 +1045,6 @@ pub mod integration_tests {
         assert!(proof_validation);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_success_case() {
         let setup = SetupWalletPool::init().await;
@@ -1065,7 +1063,6 @@ pub mod integration_tests {
         assert!(proof_validation);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_fail_case() {
         let setup = SetupWalletPool::init().await;
@@ -1082,7 +1079,6 @@ pub mod integration_tests {
         ).await.unwrap_err();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn tests_libindy_prover_get_credentials() {
         let setup = SetupLibraryWallet::init().await;
@@ -1111,7 +1107,6 @@ pub mod integration_tests {
         assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_issuer_revoke_credential() {
         let setup = SetupWalletPool::init().await;
@@ -1126,7 +1121,6 @@ pub mod integration_tests {
         assert!(rc.is_ok());
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_cred_def_real() {
         let setup = SetupWalletPool::init().await;
@@ -1139,7 +1133,6 @@ pub mod integration_tests {
         publish_cred_def(setup.wallet_handle, &did, &cred_def_json).await.unwrap();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
@@ -1154,7 +1147,6 @@ pub mod integration_tests {
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::LibindyInvalidStructure);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_rev_reg_def() {
         let setup = SetupWalletPool::init().await;
@@ -1170,7 +1162,6 @@ pub mod integration_tests {
         publish_rev_reg_delta(setup.wallet_handle, &did, &rev_reg_def_id, &rev_reg_entry_json).await.unwrap();
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg_def_json() {
         let setup = SetupWalletPool::init().await;
@@ -1182,7 +1173,6 @@ pub mod integration_tests {
         assert_eq!(id, rev_reg_id);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg_delta_json() {
         let setup = SetupWalletPool::init().await;
@@ -1194,7 +1184,6 @@ pub mod integration_tests {
         assert_eq!(id, rev_reg_id);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_rev_reg() {
         let setup = SetupWalletPool::init().await;
@@ -1206,7 +1195,6 @@ pub mod integration_tests {
         assert_eq!(id, rev_reg_id);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_cred_def() {
         let setup = SetupWalletPool::init().await;
@@ -1219,7 +1207,6 @@ pub mod integration_tests {
         assert_eq!(serde_json::from_str::<serde_json::Value>(&cred_def).unwrap(), serde_json::from_str::<serde_json::Value>(&cred_def_json).unwrap());
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_is_cred_def_on_ledger() {
         let _setup = SetupWalletPool::init().await;
@@ -1227,7 +1214,6 @@ pub mod integration_tests {
         assert_eq!(is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7").await.unwrap(), false);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn from_pool_ledger_with_id() {
         let setup = SetupWalletPool::init().await;
@@ -1240,7 +1226,6 @@ pub mod integration_tests {
         assert!(retrieved_schema.contains(&schema_id));
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_revoke_credential() {
         let setup = SetupWalletPool::init().await;
@@ -1262,7 +1247,6 @@ pub mod integration_tests {
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
     }
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_txn() {
         let setup = SetupWalletPool::init().await;

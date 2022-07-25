@@ -45,7 +45,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ping_response_build_works() {
         let ping_response: PingResponse = PingResponse::default()
             .set_comment(_comment())

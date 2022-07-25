@@ -77,7 +77,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_invalid_param_err() {
         let _setup = SetupDefaults::init();
 

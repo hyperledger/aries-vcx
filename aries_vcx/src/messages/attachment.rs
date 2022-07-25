@@ -153,7 +153,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_json_attachment_works_base64() {
         let json_attachment: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Base64).unwrap();
         assert_eq!(vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125], json_attachment.data.get_bytes().unwrap());
@@ -161,7 +160,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_attachments_works_base64() {
         {
             let mut attachments = Attachments::new();
@@ -182,7 +180,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_create_json_attachment_works_json() {
         let json_attachment: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Json).unwrap();
         let bytes = json_attachment.data.get_bytes().unwrap();
@@ -193,7 +190,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_attachments_works_json() {
         {
             let mut attachments = Attachments::new();

@@ -299,15 +299,11 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    
-    
-
     use crate::utils::devsetup::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_verify_transaction_can_be_endorsed() {
         let _setup = SetupDefaults::init();
 

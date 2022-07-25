@@ -847,7 +847,6 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
@@ -857,7 +856,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
@@ -867,7 +865,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
@@ -887,7 +884,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
@@ -898,7 +894,6 @@ mod tests {
 
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_connection_inviter_completed() {
         let _setup = SetupMocks::init();
 
@@ -922,7 +917,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_deserialize_and_serialize_should_produce_the_same_object() {
         let _setup = SetupMocks::init();
 
@@ -937,10 +931,8 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_serialize_deserialize() {
         let _setup = SetupMocks::init();
-
 
         let connection = Connection::create("test_serialize_deserialize", true, &_dummy_agency_client()).await.unwrap();
         let first_string = connection.to_string().unwrap();
@@ -952,7 +944,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_serialize_deserialize_serde() {
         let _setup = SetupMocks::init();
 

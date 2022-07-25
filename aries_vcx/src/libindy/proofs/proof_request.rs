@@ -125,7 +125,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
@@ -146,7 +145,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -156,7 +154,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_requested_attrs_constructed_correctly_preformatted() {
         let _setup = SetupDefaults::init();
 
@@ -169,7 +166,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_requested_predicates_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
@@ -205,7 +201,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_requested_attrs_constructed_correctly_for_names() {
         let _setup = SetupDefaults::init();
 
@@ -230,7 +225,6 @@ mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_should_return_error_if_name_and_names_passed_together() {
         let _setup = SetupDefaults::init();
 
@@ -249,7 +243,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_indy_proof_req_parses_correctly() {
         let _setup = SetupDefaults::init();
 

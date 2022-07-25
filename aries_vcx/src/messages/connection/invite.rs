@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+
 use futures::executor::block_on;
 
 use crate::error::prelude::*;
@@ -12,7 +13,7 @@ use crate::messages::connection::service::ServiceResolvable;
 pub enum Invitation {
     Pairwise(PairwiseInvitation),
     Public(PublicInvitation),
-    OutOfBand(OutOfBandInvitation)
+    OutOfBand(OutOfBandInvitation),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -117,6 +118,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 pub mod test_utils {
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::utils::uuid;
+
     use super::*;
 
     pub fn _pairwise_invitation() -> PairwiseInvitation {
@@ -165,10 +167,10 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
+
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_pairwise_invite_build_works() {
         let invitation: PairwiseInvitation = PairwiseInvitation::default()
             .set_label(&_label())
@@ -180,7 +182,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_public_invite_build_works() {
         let invitation: PublicInvitation = PublicInvitation::default()
             .set_label(&_label())

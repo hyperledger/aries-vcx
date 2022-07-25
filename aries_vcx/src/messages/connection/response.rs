@@ -20,7 +20,7 @@ pub struct Response {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
     #[serde(rename = "~thread")]
-    pub thread: Thread
+    pub thread: Thread,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -83,7 +83,7 @@ impl Response {
 
         sig_data.extend(connection_data.as_bytes());
 
-        let signature = crypto::sign(wallet_handle,key, &sig_data).await?;
+        let signature = crypto::sign(wallet_handle, key, &sig_data).await?;
 
         let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
 
@@ -215,7 +215,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_response_build_works() {
         let response: Response = Response::default()
             .set_did(_did())
@@ -227,7 +226,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_response_encode_works() {
         let setup = setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wallet_handle).await;

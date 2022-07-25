@@ -141,7 +141,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_comment(_comment())

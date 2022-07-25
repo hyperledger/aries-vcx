@@ -176,7 +176,6 @@ pub mod unit_tests {
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
         let _setup = SetupMocks::init();
 
@@ -201,7 +200,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_schemas_json_verifier_with_multiple_schemas() {
         let _setup = SetupMocks::init();
 
@@ -226,7 +224,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_reg_defs_json() {
         let _setup = SetupMocks::init();
 
@@ -251,7 +248,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_reg_json() {
         let _setup = SetupMocks::init();
 

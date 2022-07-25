@@ -211,7 +211,6 @@ pub mod pool_tests {
     use crate::utils::devsetup::SetupWalletPool;
     use crate::utils::get_temp_dir_path;
 
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
         let _setup = SetupWalletPool::init().await;
@@ -233,7 +232,6 @@ pub mod pool_tests {
         };
         assert_eq!(build_rev_states_json(vec![cred1].as_mut()).await.unwrap(), "{}".to_string());
     }
-
 }
 
 #[cfg(test)]
@@ -269,7 +267,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_credential_def() {
         let _setup = SetupMocks::init();
 
@@ -303,7 +300,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_credential_def_fails() {
         let setup = SetupLibraryWallet::init().await;
         let credential_ids = vec![CredInfoProver {
@@ -322,7 +318,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_schemas_fails() {
         let setup = SetupLibraryWallet::init().await;
 
@@ -341,7 +336,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
@@ -377,7 +371,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers() {
         let _setup = SetupDefaults::init();
 
@@ -462,7 +455,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers_failure() {
         let _setup = SetupDefaults::init();
 
@@ -553,7 +545,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_build_requested_credentials() {
         let _setup = SetupMocks::init();
 
@@ -617,7 +608,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_states_json() {
         let _setup = SetupMocks::init();
 
@@ -641,7 +631,6 @@ pub mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_credential_intervals_from_proof_req() {
         let _setup = SetupDefaults::init();
 

@@ -62,7 +62,6 @@ mod unit_tests {
     const TIME_OF_ACCEPTANCE: u64 = 123456789;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn set_txn_author_agreement_works() {
         let _setup = SetupDefaults::init();
 
@@ -78,7 +77,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_txn_author_agreement_works() {
         let _setup = SetupDefaults::init();
 
@@ -102,7 +100,6 @@ mod unit_tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_txn_author_agreement_works_for_not_set() {
         let _setup = SetupDefaults::init();
 

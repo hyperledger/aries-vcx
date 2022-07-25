@@ -1,9 +1,9 @@
 use indy::{ErrorCode, wallet};
 use indy::{SearchHandle, WalletHandle};
 
-use crate::libindy;
 use crate::error::prelude::*;
 use crate::global::settings;
+use crate::libindy;
 use crate::libindy::utils::{anoncreds, signus};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
@@ -337,7 +337,6 @@ mod test {
     use crate::utils::devsetup::SetupLibraryWallet;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_add_record() {
         let setup = SetupLibraryWallet::init().await;
         add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}")).await.unwrap();

@@ -88,7 +88,7 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: _comment(),
             request_presentations_attach: _attachment(),
-            thread: None
+            thread: None,
         }
     }
 }
@@ -101,7 +101,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_request_build_works() {
         let presentation_request: PresentationRequest = PresentationRequest::default()
             .set_comment(_comment())

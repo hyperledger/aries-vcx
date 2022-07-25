@@ -153,7 +153,6 @@ pub mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_proposal_build_works() {
         let (name, value) = _value();
 

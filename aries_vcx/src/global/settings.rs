@@ -149,7 +149,6 @@ pub mod unit_tests {
 
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_and_set_values() {
         let _setup = SetupDefaults::init();
 

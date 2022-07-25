@@ -202,7 +202,6 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
@@ -254,7 +253,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_credential_preview() {
         let _setup = SetupMocks::init();
         let input = json!({"name":"Alice","age":"123"}).to_string();
@@ -268,7 +266,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_cant_revoke_without_revocation_details() {
         let _setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
@@ -278,7 +275,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_credential_can_be_resent_after_failure() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer().to_request_received_state().await;
@@ -294,7 +290,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer_revokable_from_proposal();
@@ -323,7 +318,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer_revokable_from_proposal();
@@ -363,7 +357,6 @@ pub mod unit_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn issuer_cant_send_offer_twice() {
         let _setup = SetupMocks::init();
         let mut issuer = _issuer().to_offer_sent_state_unrevokable().await;

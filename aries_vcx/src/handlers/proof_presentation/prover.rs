@@ -174,16 +174,11 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    
-    use crate::messages::proof_presentation::presentation_request::{PresentationRequest};
-    
-    
+    use crate::messages::proof_presentation::presentation_request::PresentationRequest;
     use crate::utils::devsetup::*;
-    
 
     use super::*;
 
-    #[cfg(feature = "general_test")]
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
         let setup = SetupLibraryWallet::init().await;

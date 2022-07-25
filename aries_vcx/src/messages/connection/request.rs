@@ -10,7 +10,7 @@ pub struct Request {
     pub connection: ConnectionData,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
-    pub thread: Option<Thread>
+    pub thread: Option<Thread>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -70,12 +70,11 @@ pub mod unit_tests {
                 did: _did(),
                 did_doc: _did_doc(),
             },
-            thread: None
+            thread: None,
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_request_build_works() {
         let request: Request = Request::default()
             .set_did(_did())

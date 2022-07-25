@@ -105,7 +105,6 @@ mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_logger_for_testing() {
         LibvcxDefaultLogger::init_testing_logger();
     }
