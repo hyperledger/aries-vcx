@@ -32,10 +32,6 @@ pub struct SetupMocks;
 
 pub struct SetupIndyMocks;
 
-pub struct SetupPoolMocks {
-    pub wallet_handle: WalletHandle,
-}
-
 pub struct TestSetupCreateWallet {
     pub wallet_config: WalletConfig,
     skip_cleanup: bool,
@@ -58,6 +54,11 @@ pub struct SetupWalletPoolAgency {
 }
 
 pub struct SetupWalletPool {
+    pub institution_did: String,
+    pub wallet_handle: WalletHandle,
+}
+
+pub struct SetupInstitutionWallet {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
 }
@@ -217,23 +218,6 @@ impl Drop for SetupPoolConfig {
     }
 }
 
-impl SetupPoolMocks {
-    pub async fn init() -> SetupPoolMocks {
-        init_test_logging();
-        let (_issuer_did, wallet_handle, _agency_client) = setup_issuer_wallet_and_agency_client().await;
-        enable_pool_mocks();
-        SetupPoolMocks {
-            wallet_handle
-        }
-    }
-}
-
-impl Drop for SetupPoolMocks {
-    fn drop(&mut self) {
-        reset_global_state();
-    }
-}
-
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
@@ -288,6 +272,24 @@ impl SetupWalletPool {
 impl Drop for SetupWalletPool {
     fn drop(&mut self) {
         futures::executor::block_on(delete_test_pool());
+        reset_global_state();
+    }
+}
+
+impl SetupInstitutionWallet {
+    pub async fn init() -> SetupInstitutionWallet {
+        init_test_logging();
+        set_test_configs();
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+        SetupInstitutionWallet {
+            institution_did,
+            wallet_handle,
+        }
+    }
+}
+
+impl Drop for SetupInstitutionWallet {
+    fn drop(&mut self) {
         reset_global_state();
     }
 }

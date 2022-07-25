@@ -90,10 +90,7 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 mod test {
-    
-    
-
-    use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
+    use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
 
@@ -101,7 +98,9 @@ mod test {
 
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let setup = SetupPoolMocks::init().await;
+        let setup = SetupInstitutionWallet::init().await;
+        enable_pool_mocks();
+
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
