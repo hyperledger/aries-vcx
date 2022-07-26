@@ -18,7 +18,7 @@ pub struct CredInfoVerifier {
 pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
     let mut rtn = Vec::new();
 
-    let credentials: Value = serde_json::from_str(&proof)
+    let credentials: Value = serde_json::from_str(proof)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize libndy proof: {}", err)))?;
 
     if let Value::Array(ref identifiers) = credentials["identifiers"] {
@@ -60,9 +60,9 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
         let raw = info["raw"].as_str().ok_or(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Cannot get raw value for \"{}\" attribute", attr1_referent)))?;
         let encoded_ = info["encoded"].as_str().ok_or(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Cannot get encoded value for \"{}\" attribute", attr1_referent)))?;
 
-        let expected_encoded = encode(&raw)?;
+        let expected_encoded = encode(raw)?;
 
-        if expected_encoded != encoded_.to_string() {
+        if expected_encoded != *encoded_ {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Encoded values are different. Expected: {}. From Proof: {}", expected_encoded, encoded_)));
         }
     }
@@ -74,7 +74,7 @@ pub async fn build_cred_defs_json_verifier(wallet_handle: WalletHandle, credenti
     debug!("building credential_def_json for proof validation");
     let mut credential_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
             let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id).await?;
 
@@ -93,7 +93,7 @@ pub async fn build_schemas_json_verifier(wallet_handle: WalletHandle, credential
 
     let mut schemas_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
             let (id, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
@@ -114,7 +114,7 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
 
     let mut rev_reg_defs_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         let rev_reg_id = cred_info
             .rev_reg_id
             .as_ref()
@@ -140,7 +140,7 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
 
     let mut rev_regs_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         let rev_reg_id = cred_info
             .rev_reg_id
             .as_ref()

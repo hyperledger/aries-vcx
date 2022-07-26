@@ -52,7 +52,7 @@ impl Serialize for MessageType {
 impl std::string::ToString for MessageType {
     fn to_string(&self) -> String {
         if self.family == MessageFamilies::Routing { // vcxagency-node only supports legacy format right now
-            format!("{};spec/{}/{}/{}", MessageFamilies::DID_PREFIX.to_string(), self.family.to_string(), self.version, self.msg_type)
+            format!("{};spec/{}/{}/{}", MessageFamilies::DID_PREFIX, self.family.to_string(), self.version, self.msg_type)
         } else {
             format!("{}/{}/{}/{}", self.prefix, self.family.to_string(), self.version, self.msg_type)
         }

@@ -58,14 +58,14 @@ pub fn get_mock_generate_indy_proof() -> Option<String> {
     let config = MOCK_SETTINGS.read().unwrap();
     config
         .get(MOCKED_GENERATED_PROOF)
-        .map(|s| String::from(s))
+        .map(String::from)
 }
 
 pub fn get_mock_creds_retrieved_for_proof_request() -> Option<String> {
     let config = MOCK_SETTINGS.read().unwrap();
     config
         .get(MOCKED_RETRIEVED_CREDS)
-        .map(|s| String::from(s))
+        .map(String::from)
 }
 
 pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
@@ -73,7 +73,7 @@ pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
     config
         .get(MOCKED_VALIDATE_INDY_PROOF)
         .map(|result| match result {
-            Ok(val) => Ok(val.clone()),
+            Ok(val) => Ok(*val),
             Err(err) => Err(VcxError::from(err.kind()))
         })
 }

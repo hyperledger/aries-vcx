@@ -391,7 +391,7 @@ async fn _store_credential(wallet_handle: WalletHandle,
                                                   req_meta,
                                                   &credential_json,
                                                   cred_def_json,
-                                                  rev_reg_def_json.as_ref().map(String::as_str)).await?;
+                                                  rev_reg_def_json.as_deref()).await?;
     Ok((cred_id, rev_reg_def_json))
 }
 
@@ -402,11 +402,11 @@ async fn _delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxRe
 }
 
 pub async fn create_credential_request(wallet_handle: WalletHandle, cred_def_id: &str, prover_did: &str, cred_offer: &str) -> VcxResult<(String, String, String, String)> {
-    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, &cred_def_id).await?;
+    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, cred_def_id).await?;
 
     libindy_prover_create_credential_req(wallet_handle,
-                                         &prover_did,
-                                         &cred_offer,
+                                         prover_did,
+                                         cred_offer,
                                          &cred_def_json)
         .await
         .map_err(|err| err.extend("Cannot create credential request")).map(|(s1, s2)| (s1, s2, cred_def_id, cred_def_json))

@@ -14,8 +14,8 @@ pub fn generate_random_seed() -> String {
 }
 
 pub fn generate_random_schema_version() -> String {
-    format!("{}.{}", rand::thread_rng().gen::<u32>().to_string(),
-            rand::thread_rng().gen::<u32>().to_string())
+    format!("{}.{}", rand::thread_rng().gen::<u32>(),
+            rand::thread_rng().gen::<u32>())
 }
 
 pub fn generate_random_did() -> String {

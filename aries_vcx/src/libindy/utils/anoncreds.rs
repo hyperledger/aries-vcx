@@ -120,7 +120,7 @@ pub async fn libindy_issuer_create_credential(wallet_handle: WalletHandle,
                                               tails_file: Option<String>) -> VcxResult<(String, Option<String>, Option<String>)> {
     if settings::indy_mocks_enabled() { return Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None)); }
 
-    let revocation = rev_reg_id.as_ref().map(String::as_str);
+    let revocation = rev_reg_id.as_deref();
 
     let blob_handle = match tails_file {
         Some(x) => blob_storage_open_reader(&x).await?,
@@ -159,7 +159,7 @@ pub async fn libindy_prover_create_proof(wallet_handle: WalletHandle,
 
 async fn fetch_credentials(search_handle: i32, requested_attributes: Map<String, Value>) -> VcxResult<String> {
     let mut v: Value = json!({});
-    for item_referent in requested_attributes.keys().into_iter() {
+    for item_referent in requested_attributes.keys() {
         v[ATTRS][item_referent] =
             serde_json::from_str(&anoncreds::prover_fetch_credentials_for_proof_req(search_handle, item_referent, 100).await?)
                 .map_err(|_| {
@@ -219,7 +219,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(wallet_handle: WalletH
         Some(attrs) => fetch_attrs.extend(attrs),
         None => ()
     }
-    if 0 < fetch_attrs.len() {
+    if !fetch_attrs.is_empty() {
         let search_handle = anoncreds::prover_search_credentials_for_proof_req(wallet_handle, proof_req, None)
             .await
             .map_err(|ec| {
@@ -494,7 +494,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
         return Ok(CRED_DEF_REQ.to_string());
     }
 
-    let cred_def_req = libindy_build_create_credential_def_txn(issuer_did, &cred_def_json).await?;
+    let cred_def_req = libindy_build_create_credential_def_txn(issuer_did, cred_def_json).await?;
 
     let cred_def_req = append_txn_author_agreement_to_request(&cred_def_req).await?;
 
@@ -507,7 +507,7 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cre
         debug!("publish_cred_def >>> mocked success");
         return Ok(());
     }
-    let cred_def_req = build_cred_def_request(issuer_did, &cred_def_json).await?;
+    let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
     publish_txn_on_ledger(wallet_handle, &cred_def_req).await?;
     Ok(())
 }
@@ -557,7 +557,7 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
         return Ok("".to_string());
     }
 
-    let rev_reg_def_req = libindy_build_revoc_reg_def_request(issuer_did, &rev_reg_def_json).await?;
+    let rev_reg_def_req = libindy_build_revoc_reg_def_request(issuer_did, rev_reg_def_json).await?;
     let rev_reg_def_req = append_txn_author_agreement_to_request(&rev_reg_def_req).await?;
     Ok(rev_reg_def_req)
 }
@@ -637,7 +637,7 @@ pub async fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String,
 
 pub async fn get_cred_def(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() { return Err(VcxError::from(VcxErrorKind::LibndyError(309))); }
-    libindy_build_get_cred_def_request(issuer_did, &cred_def_id)
+    libindy_build_get_cred_def_request(issuer_did, cred_def_id)
         .and_then(|req| async move { libindy_submit_request(&req).await })
         .and_then(|response| async move { libindy_parse_get_cred_def_response(&response).await })
         .await
