@@ -50,7 +50,8 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
@@ -61,7 +62,6 @@ mod tests {
     const TIME_OF_ACCEPTANCE: u64 = 123456789;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn set_txn_author_agreement_works() {
         let _setup = SetupDefaults::init();
 
@@ -77,7 +77,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_txn_author_agreement_works() {
         let _setup = SetupDefaults::init();
 
@@ -101,9 +100,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn get_txn_author_agreement_works_for_not_set() {
-        let setup = SetupDefaults::init();
+        let _setup = SetupDefaults::init();
 
         assert!(get_txn_author_agreement().unwrap().is_none());
     }

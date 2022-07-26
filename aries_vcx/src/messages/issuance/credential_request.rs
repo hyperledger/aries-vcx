@@ -81,14 +81,14 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::issuance::credential_offer::test_utils::thread_id;
     use crate::messages::issuance::credential_request::test_utils::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_request_build_works() {
         let credential_request: CredentialRequest = CredentialRequest::create()
             .set_comment(_comment())

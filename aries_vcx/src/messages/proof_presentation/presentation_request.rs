@@ -88,20 +88,19 @@ pub mod test_utils {
             id: MessageId::id(),
             comment: _comment(),
             request_presentations_attach: _attachment(),
-            thread: None
+            thread: None,
         }
     }
 }
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation_request::test_utils::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_request_build_works() {
         let presentation_request: PresentationRequest = PresentationRequest::default()
             .set_comment(_comment())

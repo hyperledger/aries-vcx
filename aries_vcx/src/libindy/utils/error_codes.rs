@@ -68,7 +68,8 @@ pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use indy::ErrorCode;
 
     use crate::utils::devsetup::SetupDefaults;
@@ -76,7 +77,6 @@ pub mod tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_invalid_param_err() {
         let _setup = SetupDefaults::init();
 

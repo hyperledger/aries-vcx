@@ -90,32 +90,17 @@ pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
 
 #[cfg(test)]
 mod test {
-    use std::thread;
-    use std::time::Duration;
-
-    use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
+    use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mockdata_pool;
 
     use super::*;
 
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_rotate_verkey() {
-        let setup = SetupWalletPoolAgency::init().await;
-        let (did, verkey) = ledger::add_new_did(setup.wallet_handle, None).await;
-        rotate_verkey(setup.wallet_handle, &did).await.unwrap();
-        thread::sleep(Duration::from_millis(100));
-        let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
-        let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
-        assert_ne!(verkey, ledger_verkey);
-        assert_eq!(local_verkey, ledger_verkey);
-    }
-
-    #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let setup = SetupPoolMocks::init().await;
+        let setup = SetupInstitutionWallet::init().await;
+        enable_pool_mocks();
+
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);

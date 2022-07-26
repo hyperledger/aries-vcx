@@ -81,13 +81,13 @@ impl PartialEq for FullService {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_service_comparison() {
         let service1 = FullService::create()
             .set_service_endpoint(_service_endpoint())

@@ -1,6 +1,6 @@
+use crate::actors::Actors;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
-use crate::actors::Actors;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -41,7 +41,8 @@ impl Disclose {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
@@ -59,7 +60,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_disclose_build_works() {
         let mut disclose: Disclose = Disclose::default()
             .set_thread_id(&_thread_id());

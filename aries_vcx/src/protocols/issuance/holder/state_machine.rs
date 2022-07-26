@@ -424,12 +424,13 @@ async fn _make_credential_request(wallet_handle: WalletHandle, my_pw_did: String
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
-    use crate::messages::issuance::test::{_ack, _problem_report};
+    use crate::messages::issuance::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::constants;
     use crate::utils::devsetup::SetupMocks;

@@ -9,7 +9,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     match serde_json::from_str::<HashMap<String, serde_json::Value>>(attributes) {
         Ok(mut attributes) => {
             for (attr, attr_data) in attributes.iter_mut() {
-                let first_attr: &str = match attr_data {
+                let first_attr = match attr_data {
                     // new style input such as {"address2":"101 Wilson Lane"}
                     serde_json::Value::String(str_type) => str_type,
 
@@ -79,7 +79,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use serde_json::Value;
 
     use crate::utils::devsetup::*;
@@ -87,7 +88,6 @@ pub mod tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -128,7 +128,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_one_attribute_success() {
         let _setup = SetupDefaults::init();
 
@@ -150,7 +149,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_aries_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -193,7 +191,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -235,7 +232,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_new_format_one_attribute_success() {
         let _setup = SetupDefaults::init();
 
@@ -257,7 +253,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_with_mixed_format_several_attributes_success() {
         let _setup = SetupDefaults::init();
 
@@ -302,7 +297,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
 
@@ -313,7 +307,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
 
@@ -324,7 +317,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encode_empty_field() {
         let _setup = SetupDefaults::init();
 

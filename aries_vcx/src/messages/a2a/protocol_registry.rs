@@ -1,10 +1,10 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
-use crate::messages::a2a::message_family::MessageFamilies;
-use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::actors;
 use crate::actors::Actors;
+use crate::messages::a2a::message_family::MessageFamilies;
+use crate::messages::discovery::disclose::ProtocolDescriptor;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,
@@ -76,7 +76,8 @@ impl ProtocolRegistry {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::global::settings;
     use crate::utils::devsetup::SetupEmpty;
 
@@ -95,7 +96,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_protocol_registry_init_works() {
         let _setup = SetupEmpty::init();
 
@@ -104,7 +104,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_none_query() {
         let _setup = SetupEmpty::init();
 
@@ -114,7 +113,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_placeholder() {
         let _setup = SetupEmpty::init();
 
@@ -125,7 +123,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_partial() {
         let _setup = SetupEmpty::init();
 
@@ -141,7 +138,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_exact_protocol() {
         let _setup = SetupEmpty::init();
 
@@ -156,7 +152,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_no_matching() {
         let _setup = SetupEmpty::init();
 
@@ -168,7 +163,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_real() {
         let _setup = SetupEmpty::init();
 
@@ -191,11 +185,10 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_protocols_for_query_works_for_limited_actors() {
         let _setup = SetupEmpty::init();
 
-        settings::set_config_value(settings::CONFIG_ACTORS, &json!([Actors::Invitee]).to_string());
+        settings::set_config_value(settings::CONFIG_ACTORS, &json!([Actors::Invitee]).to_string()).unwrap();
 
         let registry: ProtocolRegistry = ProtocolRegistry::init();
 

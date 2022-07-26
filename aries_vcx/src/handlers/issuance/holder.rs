@@ -147,7 +147,8 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::issuance::credential::test_utils::_credential;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
@@ -183,7 +184,6 @@ pub mod test {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_without_negotiation() {
         let _setup = SetupMocks::init();
         let holder = _holder().to_finished_state().await;
@@ -191,7 +191,6 @@ pub mod test {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn exchange_credential_from_proposal_with_negotiation() {
         let _setup = SetupMocks::init();
         let mut holder = _holder();

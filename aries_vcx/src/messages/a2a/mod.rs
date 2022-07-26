@@ -1,11 +1,12 @@
 use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::connection::invite::{PublicInvitation, PairwiseInvitation};
 use log;
 
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::ack::Ack;
 use crate::messages::basic_message::message::BasicMessage;
+use crate::messages::connection::invite::{PairwiseInvitation, PublicInvitation};
 use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;
@@ -17,14 +18,13 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::handlers::out_of_band::OutOfBandInvitation;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -126,7 +126,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
             (MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION) => {
                 PairwiseInvitation::deserialize(value.clone())
                     .map_or(PublicInvitation::deserialize(value)
-                            .map(|msg| A2AMessage::ConnectionInvitationPublic(msg)), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
+                                .map(|msg| A2AMessage::ConnectionInvitationPublic(msg)), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST) => {
@@ -341,24 +341,24 @@ impl A2AMessage {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 pub mod test_a2a_serialization {
     use serde_json::Value;
 
     use crate::messages::a2a::{A2AMessage, MessageId};
     use crate::messages::ack::{Ack, AckStatus};
     use crate::messages::connection::request::Request;
-    use crate::utils::devsetup::SetupDefaults;
     use crate::messages::forward::Forward;
+    use crate::utils::devsetup::SetupDefaults;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialization_deserialization_connection_request() {
         let _setup = SetupDefaults::init();
         let a2a_msg = A2AMessage::ConnectionRequest(Request {
             id: Default::default(),
             label: "foobar".to_string(),
             connection: Default::default(),
-            thread: None
+            thread: None,
         });
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
@@ -381,7 +381,6 @@ pub mod test_a2a_serialization {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialize_deserialize_connection_ack() {
         let _setup = SetupDefaults::init();
         let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok).set_thread_id("threadid"));
@@ -409,7 +408,7 @@ pub mod test_a2a_serialization {
     // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
     fn test_serialize_forward_message_to_legacy_format() {
         let _setup = SetupDefaults::init();
-        let a2a_msg = A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(),  "{}".as_bytes().to_vec()).unwrap());
+        let a2a_msg = A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(), "{}".as_bytes().to_vec()).unwrap());
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
         // serialization
@@ -419,7 +418,6 @@ pub mod test_a2a_serialization {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_deserialize_connection_ack_legacy() {
         let _setup = SetupDefaults::init();
         let msg =
@@ -442,7 +440,6 @@ pub mod test_a2a_serialization {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_deserialization_connection_request_legacy() {
         let _setup = SetupDefaults::init();
         let msg =

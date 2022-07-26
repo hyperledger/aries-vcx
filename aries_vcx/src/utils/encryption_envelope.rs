@@ -136,10 +136,9 @@ impl EncryptionEnvelope {
 }
 
 #[cfg(test)]
-pub mod tests {
-    use crate::global;
-    use crate::global::settings::disable_indy_mocks;
-    use crate::libindy::utils::{test_setup, wallet};
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::libindy::utils::test_setup;
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;
@@ -149,7 +148,6 @@ pub mod tests {
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_no_keys() {
         SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
@@ -162,7 +160,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_recipient_only() {
         SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
@@ -175,7 +172,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_encryption_envelope_works_for_routing_keys() {
         SetupEmpty::init();
         let setup = test_setup::setup_wallet().await;
@@ -216,7 +212,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_auth_unpack_message_should_succeed_if_sender_key_matches_expectation() {
         SetupEmpty::init();
         let recipient_wallet = test_setup::setup_wallet().await;
@@ -234,7 +229,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_auth_unpack_message_should_fail_if_sender_key_does_not_match_expectation() {
         SetupEmpty::init();
         let recipient_wallet = test_setup::setup_wallet().await;

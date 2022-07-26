@@ -97,7 +97,8 @@ impl OutOfBandSender {
 
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::messages::connection::did::Did;
     use crate::messages::connection::service::FullService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
@@ -120,7 +121,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_append_full_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
@@ -134,7 +134,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
@@ -148,7 +147,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_oob_sender_to_a2a_message() {
         let _setup = SetupMocks::init();
 

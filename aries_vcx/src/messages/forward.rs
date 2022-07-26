@@ -24,7 +24,8 @@ impl Forward {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::*;
 
     use super::*;
@@ -46,7 +47,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_forward_build_works() {
         let message = serde_json::to_vec(&_ack()).unwrap();
         let forward: Forward = Forward::new(_to(), message).unwrap();

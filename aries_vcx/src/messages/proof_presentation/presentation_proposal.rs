@@ -1,9 +1,9 @@
+use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
-use crate::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -46,12 +46,12 @@ impl Attribute {
 
     pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
         self.cred_def_id = Some(cred_def_id.to_string());
-        self 
+        self
     }
 
     pub fn set_value(mut self, value: &str) -> Self {
         self.value = Some(value.to_string());
-        self 
+        self
     }
 }
 
@@ -74,7 +74,7 @@ impl Predicate {
 
     pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
         self.cred_def_id = Some(cred_def_id.to_string());
-        self 
+        self
     }
 }
 
@@ -155,7 +155,7 @@ impl From<PresentationProposalData> for PresentationProposal {
             presentation_proposal: PresentationPreview {
                 attributes: data.attributes,
                 predicates: data.predicates,
-                _type: default_presentation_preview_type()
+                _type: default_presentation_preview_type(),
             },
             ..Self::default()
         }
@@ -165,6 +165,7 @@ impl From<PresentationProposalData> for PresentationProposal {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::messages::connection::response::test_utils::_thread;
+
     use super::*;
 
     fn _attachment() -> ::serde_json::Value {
@@ -185,7 +186,7 @@ pub mod test_utils {
                 referent: None,
             }],
             predicates: vec![],
-            comment: Some(String::from("comment"))
+            comment: Some(String::from("comment")),
         }
     }
 
@@ -215,14 +216,13 @@ pub mod test_utils {
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation_proposal::test_utils::*;
     use crate::messages::proof_presentation::presentation_request::test_utils::thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_proposal_build_works() {
         let presentation_proposal: PresentationProposal = PresentationProposal::default()
             .set_comment(_comment())

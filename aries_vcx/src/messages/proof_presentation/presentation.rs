@@ -41,8 +41,8 @@ a2a_message!(Presentation);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
     use crate::messages::connection::response::test_utils::_thread_1;
+    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
 
     use super::*;
 
@@ -83,14 +83,13 @@ pub mod test_utils {
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation::test_utils::*;
     use crate::messages::proof_presentation::presentation_request::test_utils::thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_build_works() {
         let presentation: Presentation = Presentation::default()
             .set_comment(_comment())

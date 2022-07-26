@@ -102,14 +102,15 @@ pub enum Impact {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 
-    fn _code() -> u32 { 0 }
+    pub fn _code() -> u32 { 0 }
 
-    fn _comment() -> Option<String> {
+    pub fn _comment() -> Option<String> {
         Some(String::from("test comment"))
     }
 
@@ -129,9 +130,17 @@ pub mod tests {
             comment: _comment(),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::connection::response::test_utils::_thread_id;
+    use crate::messages::error::test_utils::{_code, _comment, _problem_report};
+
+    use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_comment(_comment())

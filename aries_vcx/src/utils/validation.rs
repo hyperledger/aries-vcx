@@ -59,13 +59,13 @@ pub fn validate_actors(actors: &str) -> VcxResult<Vec<Actors>> {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use crate::utils::devsetup::SetupDefaults;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_did_is_b58_and_valid_length() {
         let _setup = SetupDefaults::init();
 
@@ -77,7 +77,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_did_is_b58_but_invalid_length() {
         let _setup = SetupDefaults::init();
 
@@ -89,7 +88,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_validate_did_with_non_base58() {
         let _setup = SetupDefaults::init();
 
@@ -101,7 +99,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_and_valid_length() {
         let _setup = SetupDefaults::init();
 
@@ -113,7 +110,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_verkey_is_b58_but_invalid_length() {
         let _setup = SetupDefaults::init();
 
@@ -125,7 +121,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_validate_verkey_with_non_base58() {
         let _setup = SetupDefaults::init();
 

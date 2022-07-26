@@ -485,16 +485,17 @@ impl SmConnectionInvitee {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::invite::test_utils::_pairwise_invitation;
-    use crate::messages::connection::problem_report::tests::_problem_report;
-    use crate::messages::connection::request::tests::_request;
+    use crate::messages::connection::problem_report::unit_tests::_problem_report;
+    use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::tests::_disclose;
-    use crate::messages::discovery::query::tests::_query;
-    use crate::messages::trust_ping::ping::tests::_ping;
-    use crate::messages::trust_ping::ping_response::tests::_ping_response;
+    use crate::messages::discovery::disclose::unit_tests::_disclose;
+    use crate::messages::discovery::query::unit_tests::_query;
+    use crate::messages::trust_ping::ping::unit_tests::_ping;
+    use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 

@@ -32,10 +32,6 @@ pub struct SetupMocks;
 
 pub struct SetupIndyMocks;
 
-pub struct SetupPoolMocks {
-    pub wallet_handle: WalletHandle,
-}
-
 pub struct TestSetupCreateWallet {
     pub wallet_config: WalletConfig,
     skip_cleanup: bool,
@@ -53,6 +49,16 @@ pub struct SetupLibraryWallet {
 
 pub struct SetupWalletPoolAgency {
     pub agency_client: AgencyClient,
+    pub institution_did: String,
+    pub wallet_handle: WalletHandle,
+}
+
+pub struct SetupWalletPool {
+    pub institution_did: String,
+    pub wallet_handle: WalletHandle,
+}
+
+pub struct SetupInstitutionWallet {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
 }
@@ -212,23 +218,6 @@ impl Drop for SetupPoolConfig {
     }
 }
 
-impl SetupPoolMocks {
-    pub async fn init() -> SetupPoolMocks {
-        init_test_logging();
-        let (_issuer_did, wallet_handle, _agency_client) = setup_indy_env_new().await;
-        enable_pool_mocks();
-        SetupPoolMocks {
-            wallet_handle
-        }
-    }
-}
-
-impl Drop for SetupPoolMocks {
-    fn drop(&mut self) {
-        reset_global_state();
-    }
-}
-
 impl SetupIndyMocks {
     pub fn init() -> SetupIndyMocks {
         init_test_logging();
@@ -248,7 +237,7 @@ impl SetupWalletPoolAgency {
     pub async fn init() -> SetupWalletPoolAgency {
         init_test_logging();
         set_test_configs();
-        let (institution_did, wallet_handle, agency_client) = setup_indy_env_new().await;
+        let (institution_did, wallet_handle, agency_client) = setup_issuer_wallet_and_agency_client().await;
         settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
         open_test_pool().await;
         SetupWalletPoolAgency {
@@ -262,6 +251,45 @@ impl SetupWalletPoolAgency {
 impl Drop for SetupWalletPoolAgency {
     fn drop(&mut self) {
         futures::executor::block_on(delete_test_pool());
+        reset_global_state();
+    }
+}
+
+impl SetupWalletPool {
+    pub async fn init() -> SetupWalletPool {
+        init_test_logging();
+        set_test_configs();
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
+        open_test_pool().await;
+        SetupWalletPool {
+            institution_did,
+            wallet_handle,
+        }
+    }
+}
+
+impl Drop for SetupWalletPool {
+    fn drop(&mut self) {
+        futures::executor::block_on(delete_test_pool());
+        reset_global_state();
+    }
+}
+
+impl SetupInstitutionWallet {
+    pub async fn init() -> SetupInstitutionWallet {
+        init_test_logging();
+        set_test_configs();
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+        SetupInstitutionWallet {
+            institution_did,
+            wallet_handle,
+        }
+    }
+}
+
+impl Drop for SetupInstitutionWallet {
+    fn drop(&mut self) {
         reset_global_state();
     }
 }
@@ -315,7 +343,7 @@ pub fn create_new_seed() -> String {
     format!("{:032}", x)
 }
 
-pub async fn setup_indy_env_new() -> (String, WalletHandle, AgencyClient) {
+pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, AgencyClient) {
     let enterprise_seed = "000000000000000000000000Trustee1";
     let config_wallet = WalletConfig {
         wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -341,6 +369,25 @@ pub async fn setup_indy_env_new() -> (String, WalletHandle, AgencyClient) {
     provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
 
     (config_issuer.institution_did, wallet_handle, agency_client)
+}
+
+pub async fn setup_issuer_wallet() -> (String, WalletHandle) {
+    let enterprise_seed = "000000000000000000000000Trustee1";
+    let config_wallet = WalletConfig {
+        wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
+        wallet_key: settings::DEFAULT_WALLET_KEY.into(),
+        wallet_key_derivation: settings::WALLET_KDF_RAW.into(),
+        wallet_type: None,
+        storage_config: None,
+        storage_credentials: None,
+        rekey: None,
+        rekey_derivation_method: None,
+    };
+    create_wallet_with_master_secret(&config_wallet).await.unwrap();
+    let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+    let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
+    init_issuer_config(&config_issuer).unwrap();
+    (config_issuer.institution_did, wallet_handle)
 }
 
 pub struct TempFile {

@@ -77,14 +77,14 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::response::test_utils::_thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ack_build_works() {
         let ack: Ack = Ack::default()
             .set_status(AckStatus::Fail)

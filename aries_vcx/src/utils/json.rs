@@ -69,11 +69,11 @@ fn _collect_keys(map: &Map<String, Value>) -> Vec<String> {
 
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn simple() {
         let simple_map = vec!(("d".to_string(), "devin".to_string()));
         let simple = json!({"d":"d"});

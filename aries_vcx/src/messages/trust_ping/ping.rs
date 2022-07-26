@@ -34,7 +34,8 @@ threadlike_optional!(Ping);
 a2a_message!(Ping);
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
@@ -62,7 +63,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ping_build_works() {
         let ping: Ping = Ping::default()
             .set_comment(Some(_comment()))

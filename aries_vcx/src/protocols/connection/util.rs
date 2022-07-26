@@ -39,14 +39,14 @@ pub fn verify_thread_id(thread_id: &str, message: &A2AMessage) -> VcxResult<()> 
 }
 
 #[cfg(test)]
-pub mod tests {
-    use crate::messages::trust_ping::ping::tests::{_ping, _ping_no_thread};
-    use crate::messages::trust_ping::ping_response::tests::_ping_response;
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::trust_ping::ping::unit_tests::{_ping, _ping_no_thread};
+    use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_build_ping_response_works() {
         assert_eq!(_build_ping_response(&_ping()).get_thread_id(), _ping_response().get_thread_id());
         assert_eq!(_build_ping_response(&_ping_no_thread()).get_thread_id(), _ping_response().get_thread_id());

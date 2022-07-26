@@ -60,8 +60,8 @@ impl OutOfBandInvitation {
     }
 }
 
-// TODO: Add more tests
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;
@@ -72,7 +72,6 @@ mod test {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_oob_serialize_deserialize() {
         let _setup = SetupMocks::init();
         let oob_sender = OutOfBandSender::create()

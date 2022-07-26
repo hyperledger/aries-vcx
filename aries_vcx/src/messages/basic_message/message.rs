@@ -40,7 +40,8 @@ impl BasicMessage {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use super::*;
 
     fn _content() -> String {
@@ -48,7 +49,6 @@ pub mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_basic_message_build_works() {
         let basic_message: BasicMessage = BasicMessage::default()
             .set_content(_content())

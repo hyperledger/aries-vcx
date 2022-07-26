@@ -142,20 +142,6 @@ pub mod test_utils {
     }
 }
 
-#[cfg(test)]
-pub mod tests {
-    use crate::global::pool::get_main_pool_handle;
-    use crate::utils::devsetup::SetupWalletPoolAgency;
-
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_open_close_pool() {
-        let _setup = SetupWalletPoolAgency::init().await;
-
-        assert!(get_main_pool_handle().unwrap() > 0);
-    }
-}
-
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
 pub struct PoolConfig {
