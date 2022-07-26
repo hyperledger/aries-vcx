@@ -51,7 +51,7 @@ impl std::string::ToString for MessageStatusCode {
 impl Serialize for MessageStatusCode {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         let value = self.to_string();
-        Value::String(value.to_string()).serialize(serializer)
+        Value::String(value).serialize(serializer)
     }
 }
 

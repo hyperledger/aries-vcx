@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 pub fn is_fully_qualified(entity: &str) -> bool {
-    REGEX.is_match(&entity)
+    REGEX.is_match(entity)
 }
 
 pub fn validate_did(did: &str) -> AgencyClientResult<String> {
@@ -23,7 +23,7 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
             Ok(_) => {
-                return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidDid, "Invalid DID length"));
+                Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidDid, "Invalid DID length"))
             }
             Err(x) => {
                 warn!("Err({:?})", x);

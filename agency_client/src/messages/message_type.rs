@@ -54,7 +54,7 @@ impl From<String> for MessageFamilies {
             "onboarding" => MessageFamilies::Onboarding,
             "pairwise" => MessageFamilies::Pairwise,
             "configs" => MessageFamilies::Configs,
-            family @ _ => MessageFamilies::Unknown(family.to_string())
+            family => MessageFamilies::Unknown(family.to_string())
         }
     }
 }

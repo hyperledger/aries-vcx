@@ -14,7 +14,7 @@ impl AgencyClient {
         trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
         let message = Client2AgencyMessage::Connect(Connect::build(my_did, my_vk));
 
-        let mut response = self.send_message_to_agency(&message, agency_did, &agency_vk).await?;
+        let mut response = self.send_message_to_agency(&message, agency_did, agency_vk).await?;
 
         let ConnectResponse { from_vk: agency_pw_vk, from_did: agency_pw_did, .. } =
             match response.remove(0) {
@@ -34,7 +34,7 @@ impl AgencyClient {
         let message = Client2AgencyMessage::SignUp(SignUp::build());
 
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
-        let mut response = self.send_message_to_agency(&message, &agency_pw_did, &agency_pw_vk).await?;
+        let mut response = self.send_message_to_agency(&message, agency_pw_did, agency_pw_vk).await?;
 
         let _response: SignUpResponse =
             match response.remove(0) {
@@ -47,7 +47,7 @@ impl AgencyClient {
     async fn _create_agent(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<CreateAgentResponse> {
         let message = Client2AgencyMessage::CreateAgent(CreateAgent::build());
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
-        let mut response = self.send_message_to_agency(&message, &agency_pw_did, &agency_pw_vk).await?;
+        let mut response = self.send_message_to_agency(&message, agency_pw_did, agency_pw_vk).await?;
 
         let response: CreateAgentResponse =
             match response.remove(0) {

@@ -49,7 +49,7 @@ impl UpdateMessageStatusByConnectionsBuilder {
     }
 
     pub fn status_code(&mut self, code: MessageStatusCode) -> AgencyClientResult<&mut Self> {
-        self.status_code = Some(code.clone());
+        self.status_code = Some(code);
         Ok(self)
     }
 
