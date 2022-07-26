@@ -91,7 +91,7 @@ impl OutOfBandReceiver {
                 None => { return Ok(None); }
             };
         };
-        return Ok(None);
+        Ok(None)
     }
 
     pub async fn build_connection(&self, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Connection> {

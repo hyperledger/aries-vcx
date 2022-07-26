@@ -45,7 +45,7 @@ impl AgencyClient {
                 .build()
         );
 
-        let data = self.prepare_message_for_connection_agent(vec![message], &to_pw_vk, &agent_did, &agent_vk).await?;
+        let data = self.prepare_message_for_connection_agent(vec![message], to_pw_vk, agent_did, agent_vk).await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 

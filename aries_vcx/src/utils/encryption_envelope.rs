@@ -25,7 +25,7 @@ impl EncryptionEnvelope {
         EncryptionEnvelope::encrypt_for_pairwise(wallet_handle, message, pw_verkey, did_doc)
             .and_then(|message| async move { EncryptionEnvelope::wrap_into_forward_messages(wallet_handle, message, did_doc).await })
             .await
-            .map(|message| EncryptionEnvelope(message))
+            .map(EncryptionEnvelope)
     }
 
     async fn encrypt_for_pairwise(wallet_handle: WalletHandle,
@@ -53,7 +53,7 @@ impl EncryptionEnvelope {
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle, format!("Recipient Key not found in DIDDoc: {:?}", did_doc)))?;
 
         for routing_key in routing_keys.iter() {
-            message = EncryptionEnvelope::wrap_into_forward(wallet_handle, message, &to, &routing_key).await?;
+            message = EncryptionEnvelope::wrap_into_forward(wallet_handle, message, &to, routing_key).await?;
             to = routing_key.clone();
         }
 

@@ -10,7 +10,7 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
     let handle = indy::wallet::open_wallet(&config, &credentials)
         .await
         .map_err(|err|
-            match err.error_code.clone() {
+            match err.error_code {
                 ErrorCode::WalletAlreadyOpenedError => {
                     err.to_vcx(VcxErrorKind::WalletAlreadyOpen,
                                format!("Wallet \"{}\" already opened.", wallet_config.wallet_name))

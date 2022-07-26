@@ -23,7 +23,7 @@ impl HttpClientMockResponse {
     }
 
     pub fn has_response() -> bool {
-        HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+        !HTTPCLIENT_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn get_response() -> AgencyClientResult<Vec<u8>> {
@@ -77,7 +77,7 @@ impl AgencyMockDecrypted {
     }
 
     pub fn has_decrypted_mock_responses() -> bool {
-        AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.len() > 0
+        !AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn set_next_decrypted_message(message: &str) {
@@ -92,7 +92,7 @@ impl AgencyMockDecrypted {
     }
 
     pub fn has_decrypted_mock_messages() -> bool {
-        AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.len() > 0
+        !AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.is_empty()
     }
 
     pub fn clear_mocks() {

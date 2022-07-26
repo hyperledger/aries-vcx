@@ -73,7 +73,7 @@ impl CompleteState {
     {
         let reuse_msg = OutOfBandHandshakeReuse::default()
             .set_thread_id_matching_id()
-            .set_parent_thread_id(&oob_id);
+            .set_parent_thread_id(oob_id);
         send_message(wallet_handle, pw_vk.to_string(), self.did_doc.clone(), reuse_msg.to_a2a_message()).await.ok();
         Ok(())
     }
@@ -125,7 +125,7 @@ impl CompleteState {
             F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
             T: Future<Output=VcxResult<()>>
     {
-        let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_ref().map(String::as_str));
+        let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
 
         let disclose = Disclose::create()
             .set_protocols(protocols)

@@ -10,9 +10,9 @@ pub async fn validate_indy_proof(wallet_handle: WalletHandle, proof_json: &str, 
         return mock_result;
     }
 
-    validate_proof_revealed_attributes(&proof_json)?;
+    validate_proof_revealed_attributes(proof_json)?;
 
-    let credential_data = get_credential_info(&proof_json)?;
+    let credential_data = get_credential_info(proof_json)?;
 
     let credential_defs_json = build_cred_defs_json_verifier(wallet_handle, &credential_data)
         .await

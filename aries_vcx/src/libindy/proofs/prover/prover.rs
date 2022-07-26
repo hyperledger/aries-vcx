@@ -18,7 +18,7 @@ pub async fn generate_indy_proof(wallet_handle: WalletHandle, credentials: &str,
         }
     }
 
-    let proof_request: ProofRequestData = serde_json::from_str(&proof_req_data_json)
+    let proof_request: ProofRequestData = serde_json::from_str(proof_req_data_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize proof request: {}", err)))?;
 
     let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
@@ -32,7 +32,7 @@ pub async fn generate_indy_proof(wallet_handle: WalletHandle, credentials: &str,
     let credential_defs_json = build_cred_defs_json_prover(wallet_handle, &credentials_identifiers).await?;
 
     let proof = anoncreds::libindy_prover_create_proof(wallet_handle,
-                                                       &proof_req_data_json,
+                                                       proof_req_data_json,
                                                        &requested_credentials,
                                                        settings::DEFAULT_LINK_SECRET_ALIAS,
                                                        &schemas_json,

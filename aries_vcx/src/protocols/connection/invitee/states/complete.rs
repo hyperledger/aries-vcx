@@ -34,14 +34,14 @@ impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
 impl From<(RequestedState, Response)> for CompleteState {
     fn from((state, response): (RequestedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RequestedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.connection.did_doc, protocols: None }
     }
 }
 
 impl From<(RespondedState, Response)> for CompleteState {
     fn from((state, response): (RespondedState, Response)) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
-        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.clone().connection.did_doc, protocols: None }
+        CompleteState { bootstrap_did_doc: state.did_doc, did_doc: response.connection.did_doc, protocols: None }
     }
 }
 
@@ -140,7 +140,7 @@ impl CompleteState {
             F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
             T: Future<Output=VcxResult<()>>
     {
-        let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_ref().map(String::as_str));
+        let protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
 
         let disclose = Disclose::create()
             .set_protocols(protocols)

@@ -43,7 +43,7 @@ impl ProofRequestData {
                 for attribute in requested_attributes.iter() {
                     if attribute.name.is_some() && attribute.names.is_some() {
                         return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                                      format!("Requested attribute can contain either 'name' or 'names'. Not both.")));
+                                                      "Requested attribute can contain either 'name' or 'names'. Not both.".to_string()));
                     };
                 }
                 self = self.set_requested_attributes_as_vec(requested_attributes)?;

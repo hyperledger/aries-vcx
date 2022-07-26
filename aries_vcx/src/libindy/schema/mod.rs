@@ -33,14 +33,14 @@ impl Schema {
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err.into())
+            .map_err(|err| err)
             .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
     }
 
     pub fn from_str(data: &str) -> VcxResult<Schema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
-            .map_err(|err| err.into())
+            .map_err(|err| err)
             .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
     }
 

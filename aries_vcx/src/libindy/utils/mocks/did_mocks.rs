@@ -34,7 +34,7 @@ impl DidMocks {
     }
 
     pub fn has_did_mock_responses() -> bool {
-        DID_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+        !DID_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn clear_mocks() {

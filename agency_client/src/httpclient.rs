@@ -51,7 +51,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             .send()
             .await
             .map_err(|err| {
-                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("HTTP Client could not connect with {}, err: {}", url, err.to_string()))
+                AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("HTTP Client could not connect with {}, err: {}", url, err))
             })?;
 
     let content_length = response.content_length();
@@ -61,11 +61,11 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             if response_status.is_success() {
                 Ok(payload.into_bytes())
             } else {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed due to non-success HTTP status: {}, response body: {}", url, response_status.to_string(), payload)))
+                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed due to non-success HTTP status: {}, response body: {}", url, response_status, payload)))
             }
         }
         Err(error) => {
-            Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, content-length header: {:?}, error: {:?}", url, response_status.to_string(), content_length, error)))
+            Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, content-length header: {:?}, error: {:?}", url, response_status, content_length, error)))
         }
     }
 }

@@ -30,6 +30,6 @@ pub fn kind_to_error_message(kind: &AgencyClientErrorKind) -> String {
         AgencyClientErrorKind::InvalidHttpResponse => "Invalid HTTP response.".into(),
         AgencyClientErrorKind::CreateAgent => "Failed to create agency client".into(),
         AgencyClientErrorKind::UnknownLibndyError => "Unknown libindy error".into(),
-        AgencyClientErrorKind::LibndyError(e) => format!("Libindy error with code {}", e).into(),
+        AgencyClientErrorKind::LibndyError(e) => format!("Libindy error with code {}", e),
     }
 }

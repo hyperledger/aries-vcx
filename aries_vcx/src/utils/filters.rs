@@ -15,7 +15,7 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
                     match serde_json::from_str::<serde_json::Value>(&content) {
                         Ok(value) => match value.get("name") {
                             Some(name) => match name.as_str() {
-                                Some(name) if name.to_string() == String::from(match_name) => Some(presentation_request),
+                                Some(name) if *name == *match_name => Some(presentation_request),
                                 _ => None // Not a string or not equal
                             }
                             _ => None // No name field found in the content
@@ -37,7 +37,7 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
         .into_iter()
         .filter_map(|credential_offer| {
             match &credential_offer.comment {
-                Some(comment) if String::from(comment) == String::from(match_comment) => Some(credential_offer),
+                Some(comment) if *comment == *match_comment => Some(credential_offer),
                 _ => None
             }
         })
