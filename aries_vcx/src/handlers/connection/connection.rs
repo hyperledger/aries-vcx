@@ -80,10 +80,9 @@ pub enum Actor {
 }
 
 impl Connection {
-    pub async fn create(source_id: &str, autohop_enabled: bool, agency_client: &AgencyClient) -> VcxResult<Self> {
+    pub async fn create(source_id: &str, wallet_handle: WalletHandle, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Self> {
         trace!("Connection::create >>> source_id: {}", source_id);
-        // todo: Would be cleaner to pass wallet_handle as argument instead of reading off AgencyClient
-        let pairwise_info = PairwiseInfo::create(agency_client.get_wallet_handle()).await?;
+        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
         let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         Ok(Self {
             cloud_agent_info,
@@ -92,9 +91,9 @@ impl Connection {
         })
     }
 
-    pub async fn create_with_invite(source_id: &str, invitation: Invitation, autohop_enabled: bool, agency_client: &AgencyClient) -> VcxResult<Self> {
+    pub async fn create_with_invite(source_id: &str, wallet_handle: WalletHandle, agency_client: &AgencyClient, invitation: Invitation, autohop_enabled: bool) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>> source_id: {}, invitation: {:?}", source_id, invitation);
-        let pairwise_info = PairwiseInfo::create(agency_client.get_wallet_handle()).await?;
+        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
         let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         let mut connection = Self {
             cloud_agent_info,
@@ -182,15 +181,6 @@ impl Connection {
     pub fn cloud_agent_info(&self) -> CloudAgentInfo {
         self.cloud_agent_info.clone()
     }
-
-    // pub fn bootstrap_agent_info(&self) -> Option<&PairwiseInfo> {
-    //     match &self.connection_sm {
-    //         SmConnection::Inviter(sm_inviter) => {
-    //             sm_inviter.prev_agent_info()
-    //         }
-    //         SmConnection::Invitee(_sm_invitee) => None
-    //     }
-    // }
 
     pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
@@ -355,19 +345,6 @@ impl Connection {
         }
     }
 
-    // fn _get_bootstrap_agent_messages(&self, remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
-    //     let expected_sender_vk = match remote_vk {
-    //         Ok(vk) => vk,
-    //         Err(_) => return Ok(None)
-    //     };
-    //     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-    //         trace!("Connection::_get_bootstrap_agent_messages >>> Inviter found no message to handle on main connection agent. Will check bootstrap agent.");
-    //         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-    //         return Ok(Some((messages, bootstrap_agent_info.clone())));
-    //     }
-    //     Ok(None)
-    // }
-
     fn _update_state(&mut self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: AgencyClient) -> BoxFuture<'_, VcxResult<()>> {
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
@@ -404,18 +381,8 @@ impl Connection {
                 self.cloud_agent_info().clone().update_message_status(agency_client, self.pairwise_info(), uid).await?;
             }
             None => {
-                // Todo: Restore lookup into bootstrap cloud agent
-                // self.bootstrap_agent_info()
-                // if let Some((messages, bootstrap_agent_info)) = self._get_bootstrap_agent_messages(self.remote_vk(), )? {
-                //     if let Some((uid, message)) = self.find_message_to_handle(messages) {
-                //         trace!("Connection::update_state >>> handling message found on bootstrap agent uid: {:?}", uid);
-                //         self._update_state(Some(message))?;
-                //         bootstrap_agent_info.update_message_status(uid)?;
-                //     }
-                // } else {
                 trace!("Connection::update_state >>> trying to update state without message");
                 self._update_state(wallet_handle, None, agency_client.clone()).await?;
-                // }
             }
         }
         Ok(())
@@ -851,7 +818,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_invite("abc", Invitation::Pairwise(_pairwise_invitation()), true, &agency_client).await.unwrap();
+        let connection = Connection::create_with_invite("abc", WalletHandle(0), &agency_client, Invitation::Pairwise(_pairwise_invitation()), true).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
 
@@ -860,7 +827,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_invite("abc", Invitation::Public(_public_invitation()), true, &agency_client).await.unwrap();
+        let connection = Connection::create_with_invite("abc", WalletHandle(0), &agency_client, Invitation::Public(_public_invitation()), true).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
     }
 
@@ -871,13 +838,13 @@ mod tests {
         enable_agency_mocks();
 
         let pub_inv = _public_invitation_random_id();
-        let mut connection = Connection::create_with_invite("abcd", Invitation::Public(pub_inv.clone()), true, &agency_client).await.unwrap();
+        let mut connection = Connection::create_with_invite("abcd", WalletHandle(0), &agency_client, Invitation::Public(pub_inv.clone()), true).await.unwrap();
         connection.connect(WalletHandle(0), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
         assert_ne!(connection.get_thread_id(), pub_inv.id.0);
 
         let pw_inv = _pairwise_invitation_random_id();
-        let mut connection = Connection::create_with_invite("dcba", Invitation::Pairwise(pw_inv.clone()), true, &agency_client).await.unwrap();
+        let mut connection = Connection::create_with_invite("dcba", WalletHandle(0), &agency_client, Invitation::Pairwise(pw_inv.clone()), true).await.unwrap();
         connection.connect(WalletHandle(0), &agency_client).await.unwrap();
         assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Requested));
         assert_eq!(connection.get_thread_id(), pw_inv.id.0);
@@ -934,7 +901,7 @@ mod tests {
     async fn test_serialize_deserialize() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create("test_serialize_deserialize", true, &_dummy_agency_client()).await.unwrap();
+        let connection = Connection::create("test_serialize_deserialize", WalletHandle(0), &_dummy_agency_client(), true).await.unwrap();
         let first_string = connection.to_string().unwrap();
 
         let connection2 = Connection::from_string(&first_string).unwrap();
@@ -947,7 +914,7 @@ mod tests {
     async fn test_serialize_deserialize_serde() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create("test_serialize_deserialize", true, &_dummy_agency_client()).await.unwrap();
+        let connection = Connection::create("test_serialize_deserialize", WalletHandle(0), &_dummy_agency_client(), true).await.unwrap();
         let first_string = serde_json::to_string(&connection).unwrap();
 
         let connection: Connection = serde_json::from_str(&first_string).unwrap();

@@ -96,7 +96,7 @@ impl OutOfBandReceiver {
 
     pub async fn build_connection(&self, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
-        Connection::create_with_invite(&self.oob.id.0, Invitation::OutOfBand(self.oob.clone()), autohop_enabled, agency_client).await
+        Connection::create_with_invite(&self.oob.id.0, agency_client.get_wallet_handle(), agency_client, Invitation::OutOfBand(self.oob.clone()), autohop_enabled).await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
