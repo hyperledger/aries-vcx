@@ -100,7 +100,7 @@ impl OutOfBandSender {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::messages::connection::did::Did;
-    use crate::messages::connection::service::FullService;
+    use crate::messages::connection::service::AriesService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
 
@@ -114,14 +114,14 @@ mod unit_tests {
     }
 
     fn _create_service() -> ServiceResolvable {
-        ServiceResolvable::FullService(FullService::create()
+        ServiceResolvable::AriesService(AriesService::create()
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())))
     }
 
     #[test]
-    fn test_append_full_service_object_to_oob_services() {
+    fn test_append_aries_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
         let service = _create_service();

@@ -23,7 +23,7 @@ mod integration_tests {
     use aries_vcx::libindy::utils::ledger::{add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request};
     use aries_vcx::libindy::utils::signus::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
     use aries_vcx::messages::connection::did::Did;
-    use aries_vcx::messages::connection::service::FullService;
+    use aries_vcx::messages::connection::service::AriesService;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
 
@@ -80,7 +80,7 @@ mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let expect_service = FullService::default();
+        let expect_service = AriesService::default();
         add_service(setup.wallet_handle, &did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&Did::new(&did).unwrap()).await.unwrap();

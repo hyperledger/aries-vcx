@@ -65,7 +65,7 @@ impl OutOfBandInvitation {
 mod test {
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;
-    use crate::messages::connection::service::FullService;
+    use crate::messages::connection::service::AriesService;
     use crate::utils::devsetup::SetupMocks;
     use crate::utils::mockdata::mockdata_oob;
 
@@ -78,7 +78,7 @@ mod test {
             .set_label("test")
             .set_goal("test")
             .set_goal_code(&GoalCode::P2PMessaging)
-            .append_service(&ServiceResolvable::FullService(FullService::default()));
+            .append_service(&ServiceResolvable::AriesService(AriesService::default()));
         let serialized_oob = oob_sender.to_string().unwrap();
         assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
         let deserialized_sender_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();

@@ -57,7 +57,7 @@ mod integration_tests {
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
             .set_goal("To exchange message")
-            .append_service(&ServiceResolvable::FullService(service))
+            .append_service(&ServiceResolvable::AriesService(service))
             .append_handshake_protocol(&HandshakeProtocol::ConnectionV1).unwrap()
             .append_a2a_message(request_sender.to_a2a_message()).unwrap();
         let oob_msg = oob_sender.to_a2a_message();
@@ -118,7 +118,7 @@ mod integration_tests {
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
             .set_goal("To exchange message")
-            .append_service(&ServiceResolvable::FullService(service));
+            .append_service(&ServiceResolvable::AriesService(service));
         let oob_msg = oob_sender.to_a2a_message();
 
         consumer.activate().await.unwrap();
@@ -147,7 +147,7 @@ mod integration_tests {
             .set_label("test-label")
             .set_goal_code(&GoalCode::P2PMessaging)
             .set_goal("To exchange message")
-            .append_service(&ServiceResolvable::FullService(service));
+            .append_service(&ServiceResolvable::AriesService(service));
         let sender_oob_id = oob_sender.get_id();
         let oob_msg = oob_sender.to_a2a_message();
 

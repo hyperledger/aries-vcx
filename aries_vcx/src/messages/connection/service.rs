@@ -8,21 +8,23 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum ServiceResolvable {
-    FullService(FullService),
+    AriesService(AriesService),
     Did(Did),
 }
 
 impl ServiceResolvable {
-    pub async fn resolve(&self) -> VcxResult<FullService> {
+    pub async fn resolve(&self) -> VcxResult<AriesService> {
         match self {
-            ServiceResolvable::FullService(full_service) => Ok(full_service.clone()),
+            ServiceResolvable::AriesService(service) => Ok(service.clone()),
             ServiceResolvable::Did(did) => ledger::get_service(did).await
         }
     }
 }
 
+// Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
+// Note that is divergence from w3c spec https://w3c.github.io/did-core/#service-properties
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct FullService {
+pub struct AriesService {
     pub id: String,
     #[serde(rename = "type")]
     pub type_: String,
@@ -38,7 +40,7 @@ pub struct FullService {
     pub service_endpoint: String,
 }
 
-impl FullService {
+impl AriesService {
     pub fn create() -> Self {
         Self::default()
     }
@@ -59,9 +61,9 @@ impl FullService {
     }
 }
 
-impl Default for FullService {
-    fn default() -> FullService {
-        FullService {
+impl Default for AriesService {
+    fn default() -> AriesService {
+        AriesService {
             // TODO: FIXME Several services????
             id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
             type_: String::from(SERVICE_TYPE),
@@ -73,7 +75,7 @@ impl Default for FullService {
     }
 }
 
-impl PartialEq for FullService {
+impl PartialEq for AriesService {
     fn eq(&self, other: &Self) -> bool {
         self.recipient_keys == other.recipient_keys &&
             self.routing_keys == other.routing_keys
@@ -89,22 +91,22 @@ pub mod unit_tests {
 
     #[test]
     fn test_service_comparison() {
-        let service1 = FullService::create()
+        let service1 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service2 = FullService::create()
+        let service2 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service3 = FullService::create()
+        let service3 = AriesService::create()
             .set_service_endpoint("bogus_endpoint".to_string())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service4 = FullService::create()
+        let service4 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys_1());
