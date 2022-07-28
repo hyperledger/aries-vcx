@@ -9,7 +9,7 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
 use crate::did_doc::DidDoc;
 use crate::did_doc::service_aries::AriesService;
-use crate::messages::connection::service::ServiceResolvable;
+use crate::handlers::service_resolvable::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]

@@ -6,7 +6,7 @@ use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
-use aries_vcx::messages::connection::service::ServiceResolvable;
+use aries_vcx::handlers::service_resolvable::ServiceResolvable;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;

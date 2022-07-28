@@ -68,7 +68,7 @@ pub mod unit_tests {
     use crate::did_doc::service_aries::AriesService;
     use crate::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
 
-    use crate::messages::connection::service::*;
+    use crate::handlers::service_resolvable::*;
 
     #[test]
     fn test_service_comparison() {
@@ -92,8 +92,8 @@ pub mod unit_tests {
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys_1());
 
-        assert!(service1 == service2);
-        assert!(service1 == service3);
-        assert!(service1 != service4);
+        assert_eq!(service1, service2);
+        assert_eq!(service1, service3);
+        assert_ne!(service1, service4);
     }
 }

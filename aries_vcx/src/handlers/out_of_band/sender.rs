@@ -4,7 +4,7 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::attachment::AttachmentId;
-use crate::messages::connection::service::ServiceResolvable;
+use crate::handlers::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {

@@ -1,9 +1,9 @@
 use url::Url;
-use crate::did_doc::did_doc::{Authentication, CONTEXT, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+use crate::did_doc::model::{Authentication, CONTEXT, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use service_aries::AriesService;
 use crate::utils::validation::validate_verkey;
-pub mod did_doc;
+pub mod model;
 pub mod service_aries;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -250,7 +250,7 @@ impl DidDoc {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::did_doc::DidDoc;
-    use crate::did_doc::did_doc::*;
+    use crate::did_doc::model::*;
     use crate::did_doc::service_aries::AriesService;
 
     pub fn _key_1() -> String {
@@ -410,7 +410,7 @@ pub mod unit_tests {
     use crate::messages::connection::invite::test_utils::_pairwise_invitation;
     use crate::utils::devsetup::SetupEmpty;
 
-    use crate::did_doc::did_doc::*;
+    use crate::did_doc::model::*;
 
     #[test]
     fn test_did_doc_build_works() {

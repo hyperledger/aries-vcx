@@ -8,7 +8,7 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::ack::PleaseAck;
-use crate::did_doc::did_doc::*;
+use crate::did_doc::model::*;
 use crate::did_doc::DidDoc;
 use crate::messages::thread::Thread;
 
