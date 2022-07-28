@@ -70,7 +70,8 @@ impl Response {
     }
 
     pub fn set_keys(mut self, recipient_keys: Vec<String>, routing_keys: Vec<String>) -> Response {
-        self.connection.did_doc.set_keys(recipient_keys, routing_keys);
+        self.connection.did_doc.set_recipient_keys(recipient_keys);
+        self.connection.did_doc.set_routing_keys(routing_keys);
         self
     }
 

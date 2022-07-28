@@ -69,7 +69,7 @@ impl DidDoc {
             });
     }
 
-    pub fn set_keys(&mut self, recipient_keys: Vec<String>, routing_keys: Vec<String>) {
+    pub fn set_recipient_keys(&mut self, recipient_keys: Vec<String>) {
         let mut id = 0;
 
         recipient_keys
@@ -101,7 +101,9 @@ impl DidDoc {
                         service
                     });
             });
+    }
 
+    pub fn set_routing_keys(&mut self, routing_keys: Vec<String>) {
         routing_keys
             .iter()
             .for_each(|key| {
@@ -436,7 +438,8 @@ pub mod unit_tests {
         let mut did_doc: DidDoc = DidDoc::default();
         did_doc.set_id(_did());
         did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_keys(_recipient_keys(), _routing_keys());
+        did_doc.set_recipient_keys(_recipient_keys());
+        did_doc.set_routing_keys(_routing_keys());
 
         assert_eq!(_did_doc(), did_doc);
     }
@@ -523,7 +526,8 @@ pub mod unit_tests {
         let mut did_doc = DidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_keys(_recipient_keys(), _routing_keys());
+        did_doc.set_recipient_keys(_recipient_keys());
+        did_doc.set_routing_keys(_routing_keys());
 
         assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_pairwise_invitation())));
     }

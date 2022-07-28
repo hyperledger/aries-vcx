@@ -45,7 +45,8 @@ impl From<Invitation> for DidDoc {
             }
         };
         did_doc.set_service_endpoint(service_endpoint);
-        did_doc.set_keys(recipient_keys, routing_keys);
+        did_doc.set_recipient_keys(recipient_keys);
+        did_doc.set_routing_keys(routing_keys);
         did_doc
     }
 }
