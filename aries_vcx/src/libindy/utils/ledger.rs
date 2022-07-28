@@ -12,7 +12,7 @@ use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::messages::connection::did::Did;
-use crate::messages::connection::service::AriesService;
+use crate::did_doc::service_aries::AriesService;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;

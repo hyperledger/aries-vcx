@@ -10,7 +10,7 @@ use crate::libindy::utils::ledger::add_service;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
-use crate::messages::connection::service::AriesService;
+use crate::did_doc::service_aries::AriesService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

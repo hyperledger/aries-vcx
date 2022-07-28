@@ -1,5 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::connection::did_doc::*;
+use crate::did_doc::did_doc::*;
+use crate::did_doc::DidDoc;
 use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -55,7 +56,7 @@ threadlike_optional!(Request);
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
 
     use super::*;
 

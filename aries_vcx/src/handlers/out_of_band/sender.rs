@@ -100,7 +100,7 @@ impl OutOfBandSender {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::messages::connection::did::Did;
-    use crate::messages::connection::service::AriesService;
+    use crate::did_doc::service_aries::AriesService;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
 

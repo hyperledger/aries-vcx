@@ -9,7 +9,7 @@ use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
-use crate::messages::connection::did_doc::DidDoc;
+use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;

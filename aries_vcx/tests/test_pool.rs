@@ -23,7 +23,7 @@ mod integration_tests {
     use aries_vcx::libindy::utils::ledger::{add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request};
     use aries_vcx::libindy::utils::signus::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
     use aries_vcx::messages::connection::did::Did;
-    use aries_vcx::messages::connection::service::AriesService;
+    use aries_vcx::did_doc::service_aries::AriesService;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
 

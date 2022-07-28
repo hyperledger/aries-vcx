@@ -65,7 +65,7 @@ impl OutOfBandInvitation {
 mod test {
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;
-    use crate::messages::connection::service::AriesService;
+    use crate::did_doc::service_aries::AriesService;
     use crate::utils::devsetup::SetupMocks;
     use crate::utils::mockdata::mockdata_oob;
 

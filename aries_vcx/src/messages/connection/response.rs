@@ -8,7 +8,8 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::ack::PleaseAck;
-use crate::messages::connection::did_doc::*;
+use crate::did_doc::did_doc::*;
+use crate::did_doc::DidDoc;
 use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -155,7 +156,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::did_doc::test_utils::_did_doc;
+    use crate::did_doc::test_utils::_did_doc;
 
     use super::*;
 
@@ -210,7 +211,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;

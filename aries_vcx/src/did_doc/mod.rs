@@ -1,15 +1,10 @@
-use futures::executor::block_on;
 use url::Url;
-
-use crate::error::prelude::*;
-use crate::libindy::utils::ledger;
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
-use crate::messages::connection::service::AriesService;
+use crate::did_doc::did_doc::{Authentication, CONTEXT, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use service_aries::AriesService;
 use crate::utils::validation::validate_verkey;
-
-pub const CONTEXT: &str = "https://w3id.org/did/v1";
-pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
-pub const KEY_AUTHENTICATION_TYPE: &str = "Ed25519SignatureAuthentication2018";
+pub mod did_doc;
+pub mod service_aries;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct DidDoc {
@@ -23,25 +18,6 @@ pub struct DidDoc {
     #[serde(default)]
     pub authentication: Vec<Authentication>,
     pub service: Vec<AriesService>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct Ed25519PublicKey {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub type_: String,
-    // all list of types: https://w3c-ccg.github.io/ld-cryptosuite-registry/
-    pub controller: String,
-    #[serde(rename = "publicKeyBase58")] // todo: rename to publicKeyMultibase
-    pub public_key_base_58: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct Authentication {
-    #[serde(rename = "type")]
-    pub type_: String,
-    #[serde(rename = "publicKey")]
-    pub public_key: String,
 }
 
 impl Default for DidDoc {
@@ -273,7 +249,9 @@ impl DidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use super::*;
+    use crate::did_doc::DidDoc;
+    use crate::did_doc::did_doc::*;
+    use crate::did_doc::service_aries::AriesService;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -427,11 +405,12 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::messages::a2a::MessageId;
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
+    use crate::did_doc::DidDoc;
     use crate::messages::connection::invite::test_utils::_pairwise_invitation;
     use crate::utils::devsetup::SetupEmpty;
 
-    use super::*;
+    use crate::did_doc::did_doc::*;
 
     #[test]
     fn test_did_doc_build_works() {

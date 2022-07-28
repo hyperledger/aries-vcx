@@ -189,7 +189,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
-    use aries_vcx::messages::connection::service::AriesService;
+    use aries_vcx::did_doc::service_aries::AriesService;
     use aries_vcx::utils::devsetup::SetupMocks;
 
     use super::*;

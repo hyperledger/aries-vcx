@@ -7,8 +7,9 @@ use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::libindy::utils::ledger;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
-use crate::messages::connection::did_doc::DidDoc;
-use crate::messages::connection::service::{AriesService, ServiceResolvable};
+use crate::did_doc::DidDoc;
+use crate::did_doc::service_aries::AriesService;
+use crate::messages::connection::service::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -163,7 +164,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::utils::uuid;
 
     use super::*;
@@ -212,7 +213,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
 
     use super::*;
