@@ -1,5 +1,4 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::did_doc::model::*;
 use crate::did_doc::DidDoc;
 use crate::messages::thread::Thread;
 
