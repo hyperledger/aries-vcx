@@ -975,7 +975,7 @@ jobs:
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
     needs: workflow-setup
-    runs-on: macos-10.15
+    runs-on: macos-11
     env:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
