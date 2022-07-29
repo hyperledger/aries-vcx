@@ -207,13 +207,6 @@ mod integration_tests {
         let mut faber = Faber::setup().await;
         let mut alice = Alice::setup().await;
 
-        // Publish Schema and Credential Definition
-        faber.create_schema().await;
-
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        faber.create_nonrevocable_credential_definition().await;
-
         // Connection
         let invite = faber.create_invite().await;
         alice.accept_invite(&invite).await;
@@ -225,9 +218,9 @@ mod integration_tests {
         // Ping
         faber.ping().await;
 
-        alice.update_state(4).await;
+        alice.handle_messages().await;
 
-        faber.update_state(4).await;
+        faber.handle_messages().await;
 
         let faber_connection_info = faber.connection_info().await;
         assert!(faber_connection_info["their"]["protocols"].as_array().is_none());
