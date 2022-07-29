@@ -29,7 +29,6 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
 }
 
 pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
-    //    assert len(base58.b58decode(ver_key)) == 32
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),

@@ -44,7 +44,6 @@ impl AriesService {
 impl Default for AriesService {
     fn default() -> AriesService {
         AriesService {
-            // TODO: FIXME Several services????
             id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
@@ -64,11 +63,9 @@ impl PartialEq for AriesService {
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod unit_tests {
+mod unit_tests {
     use crate::did_doc::service_aries::AriesService;
     use crate::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
-
-    use crate::handlers::service_resolvable::*;
 
     #[test]
     fn test_service_comparison() {

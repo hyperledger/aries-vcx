@@ -46,7 +46,8 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(wallet_handle: WalletHandle,
                                         mut message: Vec<u8>,
                                         did_doc: &DidDoc) -> VcxResult<Vec<u8>> {
-        let (recipient_keys, routing_keys) = did_doc.resolve_keys();
+        let recipient_keys = did_doc.recipient_keys();
+        let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys.get(0)
             .map(String::from)
@@ -167,7 +168,7 @@ pub mod unit_tests {
 
         let message = A2AMessage::Ack(_ack());
 
-        let envelope = EncryptionEnvelope::create(setup.wallet_handle, &message, Some(&trustee_key), &_did_doc_4()).await.unwrap();
+        let envelope = EncryptionEnvelope::create(setup.wallet_handle, &message, Some(&trustee_key), &_did_doc_empty_routing()).await.unwrap();
         assert_eq!(message, EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0).await.unwrap());
     }
 

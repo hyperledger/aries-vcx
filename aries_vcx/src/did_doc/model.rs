@@ -1,11 +1,12 @@
-use futures::executor::block_on;
-use url::Url;
 
-use crate::error::prelude::*;
-use crate::libindy::utils::ledger;
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
-use crate::did_doc::service_aries::AriesService;
-use crate::utils::validation::validate_verkey;
+use serde::ser::{Serialize, Serializer};
+
+
+
+
+
+
+
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -28,4 +29,42 @@ pub struct Authentication {
     pub type_: String,
     #[serde(rename = "publicKey")]
     pub public_key: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DdoKeyReference {
+    pub did: Option<String>,
+    pub key_id: String,
+}
+
+impl Serialize for DdoKeyReference {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        match &self.did {
+            None => serializer.collect_str(&self.key_id),
+            Some(did) => serializer.collect_str(&format!("{}#{}", did, self.key_id))
+        }
+    }
+}
+
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_test {
+    use crate::did_doc::model::DdoKeyReference;
+    use crate::did_doc::test_utils::_did;
+    use crate::utils::devsetup::SetupEmpty;
+
+    #[test]
+    fn test_key_reference_serialization() {
+        SetupEmpty::init();
+        let key_ref = DdoKeyReference {
+            did: Some(_did()),
+            key_id: "1".to_string(),
+        };
+        let serialized = serde_json::to_string(&key_ref).unwrap();
+        assert_eq!(format!("\"{}#1\"", _did()), serialized)
+    }
 }

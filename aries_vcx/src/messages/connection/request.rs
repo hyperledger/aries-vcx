@@ -1,5 +1,5 @@
-use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::did_doc::DidDoc;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -69,7 +69,7 @@ pub mod unit_tests {
             label: _label(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc(),
+                did_doc: _did_doc_vcx_legacy(),
             },
             thread: None,
         }

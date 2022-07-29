@@ -13,7 +13,7 @@ use crate::global::settings;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::global::settings::init_issuer_config;
 use crate::libindy::utils::mocks::did_mocks::DidMocks;
-use crate::libindy::utils::mocks::pool_mocks::{enable_pool_mocks, PoolMocks};
+use crate::libindy::utils::mocks::pool_mocks::{PoolMocks};
 use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
 use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, WalletConfig};

@@ -34,7 +34,6 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
 }
 
 pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
-    trace!("validate_verkey >>> verkey: {}", verkey);
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),

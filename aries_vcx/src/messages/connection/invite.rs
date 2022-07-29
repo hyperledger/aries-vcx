@@ -68,7 +68,8 @@ pub struct PairwiseInvitation {
 
 impl From<DidDoc> for PairwiseInvitation {
     fn from(did_doc: DidDoc) -> PairwiseInvitation {
-        let (recipient_keys, routing_keys) = did_doc.resolve_keys();
+        let recipient_keys = did_doc.recipient_keys();
+        let routing_keys = did_doc.routing_keys();
 
         PairwiseInvitation::create()
             .set_id(&did_doc.id)
