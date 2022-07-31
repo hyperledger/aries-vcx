@@ -17,15 +17,15 @@ use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::messages::trust_ping::ping::Ping;
-use crate::messages::trust_ping::ping_response::PingResponse;
+
+
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::protocols::connection::util::verify_thread_id;
+use crate::handlers::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -325,42 +325,6 @@ impl SmConnectionInvitee {
             _ => self.state.clone()
         };
         Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_ping<F, T>(self, wallet_handle: WalletHandle, ping: Ping, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        verify_thread_id(&self.get_thread_id(), &A2AMessage::Ping(ping.clone()))?;
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_ping(wallet_handle, &ping, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            _ => self.state.clone()
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_send_ping<F, T>(self, wallet_handle: WalletHandle, comment: Option<String>, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_send_ping(wallet_handle, comment, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            _ => self.state.clone()
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
-        verify_thread_id(&self.get_thread_id(), &A2AMessage::PingResponse(ping_response))?;
-        Ok(self)
     }
 
     pub async fn handle_send_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
@@ -741,9 +705,6 @@ pub mod unit_tests {
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
-
-                did_exchange_sm = did_exchange_sm.handle_ping(_dummy_wallet_handle(), _ping(), _send_message).await.unwrap();
-                assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
             }
 
             #[tokio::test]
@@ -752,18 +713,6 @@ pub mod unit_tests {
                 let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_completed_state().await;
-
-                // Send Ping
-                did_exchange_sm = did_exchange_sm.handle_send_ping(_dummy_wallet_handle(), None, _send_message).await.unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
-
-                // Ping
-                did_exchange_sm = did_exchange_sm.handle_ping(_dummy_wallet_handle(), _ping(), _send_message).await.unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
-
-                // Ping Response
-                did_exchange_sm = did_exchange_sm.handle_ping_response(_ping_response()).unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
 
                 // Discovery Features
                 did_exchange_sm = did_exchange_sm.handle_discover_features(_dummy_wallet_handle(), None, None, _send_message).await.unwrap();

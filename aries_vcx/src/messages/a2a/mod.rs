@@ -95,7 +95,15 @@ impl A2AMessage {
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
             Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
-            _ => true
+            Self::Ping(ping) => ping.from_thread(thread_id),
+            Self::PingResponse(ping) => ping.from_thread(thread_id),
+            Self::ConnectionResponse(m) => m.from_thread(thread_id),
+            Self::CredentialRequest(m) => m.from_thread(thread_id),
+            Self::PresentationRequest(m) => m.from_thread(thread_id),
+            Self::Disclose(m) => m.from_thread(thread_id),
+            Self::OutOfBandHandshakeReuse(m) => m.from_thread(thread_id),
+            Self::OutOfBandHandshakeReuseAccepted(m) => m.from_thread(thread_id),
+            _ => true,
         }
     }
 }

@@ -20,6 +20,8 @@ use crate::handlers::connection::public_agent::PublicAgent;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::did_doc::DidDoc;
+use crate::handlers::trust_ping::TrustPingSender;
+use crate::handlers::trust_ping::util::handle_ping;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
@@ -420,9 +422,6 @@ impl Connection {
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_inviter.handle_problem_report(problem_report)?, None, false)
                         }
-                        A2AMessage::PingResponse(ping_response) => {
-                            (sm_inviter.handle_ping_response(ping_response)?, None, false)
-                        }
                         A2AMessage::OutOfBandHandshakeReuse(reuse) => {
                             (sm_inviter.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, None, false)
                         }
@@ -477,14 +476,8 @@ impl Connection {
                         A2AMessage::Ack(ack) => {
                             (sm_invitee.handle_ack(ack)?, false)
                         }
-                        A2AMessage::Ping(ping) => {
-                            (sm_invitee.handle_ping(wallet_handle, ping, send_message).await?, false)
-                        }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
-                        }
-                        A2AMessage::PingResponse(ping_response) => {
-                            (sm_invitee.handle_ping_response(ping_response)?, false)
                         }
                         A2AMessage::OutOfBandHandshakeReuse(reuse) => {
                             (sm_invitee.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, false)
@@ -494,6 +487,12 @@ impl Connection {
                         }
                         A2AMessage::Disclose(disclose) => {
                             (sm_invitee.handle_disclose(disclose)?, false)
+                        }
+                        A2AMessage::Ping(ping) => {
+                            let did_doc = self.their_did_doc()
+                                .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called _step_invitee on Inviter connection."))?;
+                            handle_ping(wallet_handle, &ping, &self.pairwise_info().pw_vk, &did_doc, send_message).await?;
+                            (sm_invitee.clone(), false)
                         }
                         _ => {
                             (sm_invitee, false)
@@ -603,17 +602,16 @@ impl Connection {
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_ping(&mut self, wallet_handle: WalletHandle, comment: Option<String>) -> VcxResult<()> {
-        trace!("Connection::send_ping >>> comment: {:?}", comment);
-        self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_send_ping(wallet_handle, comment, send_message).await?)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_send_ping(wallet_handle, comment, send_message).await?)
-            }
-        };
-        Ok(())
+    pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, message: &A2AMessage) -> VcxResult<String> {
+        trace!("Connection::send_a2a_message >>> message: {:?}", message);
+        let send_message = self.send_message_closure(wallet_handle)?;
+        send_message(message.clone()).await.map(|_| String::new())
+    }
+
+    pub async fn send_ping(&mut self, wallet_handle: WalletHandle, comment: Option<String>) -> VcxResult<TrustPingSender> {
+        let mut trust_ping = TrustPingSender::build(true, comment);
+        trust_ping.send_ping(self.send_message_closure(wallet_handle)?).await?;
+        Ok(trust_ping)
     }
 
     pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
