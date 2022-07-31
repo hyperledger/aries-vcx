@@ -12,10 +12,8 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use crate::messages::trust_ping::ping::Ping;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
-use crate::protocols::connection::util::handle_ping;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
@@ -46,25 +44,6 @@ impl From<(RespondedState, Response)> for CompleteState {
 }
 
 impl CompleteState {
-    pub async fn handle_send_ping<F, T>(&self,
-                                        wallet_handle: WalletHandle,
-                                        comment: Option<String>,
-                                        pw_vk: &str,
-                                        send_message: F,
-    ) -> VcxResult<()>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let ping =
-            Ping::create()
-                .request_response()
-                .set_comment(comment);
-
-        send_message(wallet_handle, pw_vk.to_string(), self.did_doc.clone(), ping.to_a2a_message()).await.ok();
-        Ok(())
-    }
-
     pub async fn handle_send_handshake_reuse_accepted<F, T>(&self,
                                                             wallet_handle: WalletHandle,
                                                             reuse_msg: OutOfBandHandshakeReuse,
@@ -97,19 +76,6 @@ impl CompleteState {
             .set_parent_thread_id(oob_id);
         send_message(wallet_handle, pw_vk.to_string(), self.did_doc.clone(), reuse_msg.to_a2a_message()).await.ok();
         Ok(())
-    }
-
-    pub async fn handle_ping<F, T>(&self,
-                                   wallet_handle: WalletHandle,
-                                   ping: &Ping,
-                                   pw_vk: &str,
-                                   send_message: F,
-    ) -> VcxResult<()>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        handle_ping(wallet_handle, ping, pw_vk, &self.did_doc, send_message).await
     }
 
     pub async fn handle_discover_features<F, T>(&self,
