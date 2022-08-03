@@ -8,7 +8,7 @@ use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::invite::Invitation;
-use crate::handlers::service_resolvable::ServiceResolvable;
+use crate::utils::service_resolvable::ServiceResolvable;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;

@@ -155,8 +155,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    
-    use crate::did_doc::test_utils::{_did_doc_vcx_legacy};
+    use crate::did_doc::test_utils::_did_doc_vcx_legacy;
 
     use super::*;
 

@@ -3,7 +3,7 @@ use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::attachment::Attachments;
-use crate::handlers::service_resolvable::ServiceResolvable;
+use crate::utils::service_resolvable::ServiceResolvable;
 // TODO: move to messages
 use crate::messages::mime_type::MimeType;
 

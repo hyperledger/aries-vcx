@@ -18,7 +18,7 @@ mod integration_tests {
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::handlers::service_resolvable::ServiceResolvable;
+    use aries_vcx::utils::service_resolvable::ServiceResolvable;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;

@@ -57,6 +57,7 @@ pub mod validation;
 pub mod serialization;
 pub mod encryption_envelope;
 pub mod filters;
+pub mod service_resolvable;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
     let mut path = env::temp_dir();
