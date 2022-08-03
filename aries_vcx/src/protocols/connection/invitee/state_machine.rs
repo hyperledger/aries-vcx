@@ -83,10 +83,6 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
-        InviteeState::from(self.state.clone()) == InviteeState::Initial
-    }
-
     pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviteeFullState) -> Self {
         SmConnectionInvitee {
             source_id,
@@ -112,10 +108,17 @@ impl SmConnectionInvitee {
         &self.state
     }
 
-    pub fn needs_message(&self) -> bool {
+    pub fn is_in_null_state(&self) -> bool {
         match self.state {
-            InviteeFullState::Responded(_) => false,
-            _ => true
+            InviteeFullState::Initial(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_in_final_state(&self) -> bool {
+        match self.state {
+            InviteeFullState::Completed(_) => true,
+            _ => false
         }
     }
 
@@ -146,9 +149,9 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         for (uid, message) in messages {
-            if self.can_handle_message(&message) {
+            if self.can_drive_protocol(&message) {
                 return Some((uid, message));
             }
         }
@@ -178,7 +181,7 @@ impl SmConnectionInvitee {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
+    pub fn can_drive_protocol(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviteeFullState::Requested(_) => {
                 match message {
@@ -191,21 +194,13 @@ impl SmConnectionInvitee {
                         true
                     }
                     _ => {
-                        debug!("Invitee received unexpected message: {:?}", message);
+                        debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
                         false
                     }
                 }
             }
             InviteeFullState::Completed(_) => {
                 match message {
-                    A2AMessage::Ping(_) => {
-                        debug!("Ping message received");
-                        true
-                    }
-                    A2AMessage::PingResponse(_) => {
-                        debug!("PingResponse message received");
-                        true
-                    }
                     A2AMessage::Query(_) => {
                         debug!("Query message received");
                         true
@@ -223,13 +218,13 @@ impl SmConnectionInvitee {
                         true
                     }
                     _ => {
-                        debug!("Unexpected message received in Completed state: {:?}", message);
+                        debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
                         false
                     }
                 }
             }
             _ => {
-                debug!("Unexpected message received: message: {:?}", message);
+                debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
                 false
             }
         }
@@ -763,7 +758,7 @@ pub mod unit_tests {
                         "key_5".to_string() => A2AMessage::Ack(_ack())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -782,7 +777,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::ConnectionResponse(_), message);
                 }
@@ -795,7 +790,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
                 }
@@ -807,7 +802,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::Ack(_ack())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -818,36 +813,6 @@ pub mod unit_tests {
 
                 let connection = invitee_sm().await.to_invitee_completed_state().await;
 
-                // Ping
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::Ping(_ping()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::Ping(_), message);
-                }
-
-                // Ping Response
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::PingResponse(_ping_response()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::PingResponse(_), message);
-                }
-
                 // Query
                 {
                     let messages = map!(
@@ -856,7 +821,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::Query(_query())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::Query(_), message);
                 }
@@ -869,7 +834,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::Disclose(_disclose())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::Disclose(_), message);
                 }

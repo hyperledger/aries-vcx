@@ -41,6 +41,8 @@ describe('send ping, get ping', () => {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)
       throw Error(err)
+    } finally {
+      await sleep(500)
     }
   })
 })

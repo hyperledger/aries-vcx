@@ -172,7 +172,7 @@ mod integration_tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuse message type"); }
         };
-        institution_to_consumer.update_state_with_message(institution.wallet_handle, &institution.agency_client, &A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
+        institution_to_consumer.update_state_with_message(institution.wallet_handle, institution.agency_client.clone(), Some(A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()))).await.unwrap();
 
         consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
@@ -186,7 +186,7 @@ mod integration_tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
         };
-        consumer_to_institution.update_state_with_message(consumer.wallet_handle, &consumer.agency_client, &A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
+        consumer_to_institution.update_state_with_message(consumer.wallet_handle, consumer.agency_client.clone(), Some(A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg))).await.unwrap();
         consumer_to_institution.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
         assert_eq!(consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
     }
@@ -241,6 +241,7 @@ mod integration_tests {
         faber.update_state(4).await;
 
         let faber_connection_info = faber.connection_info().await;
+        warn!("faber_connection_info: {}", faber_connection_info);
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 }

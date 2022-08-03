@@ -545,6 +545,7 @@ pub extern fn vcx_connection_update_state(command_handle: CommandHandle,
             }
         };
         let state = get_state(connection_handle);
+        warn!("vcx_connection_update_state >> return {}", state);
         cb(command_handle, rc, state);
 
         Ok(())
@@ -1512,7 +1513,8 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CONNECTION_REQUEST);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let _rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
+        let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
+        assert_eq!(rc, error::SUCCESS.code_num);
         assert_eq!(cb.receive(TimeoutUtils::some_medium()).unwrap(), VcxStateType::VcxStateRequestReceived as u32);
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();

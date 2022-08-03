@@ -9,8 +9,8 @@ beforeAll(async () => {
   await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
 })
 
-describe('send ping, get ping', () => {
-  it('Faber should send credential to Alice', async () => {
+describe('trustping', () => {
+  it('should exchange trustping between faber and alice', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
       await alice.sendPing()
@@ -19,7 +19,7 @@ describe('send ping, get ping', () => {
       expect(faberMessages1.length).toBe(1)
       expect(JSON.parse(faberMessages1[0].decryptedMsg)['@type'].match(/trust_ping\/1.0\/ping/))
       const pingMsgId = JSON.parse(faberMessages1[0].decryptedMsg)['@id']
-      await faber.updateConnection(4) // sends ping_response for received ping
+      await faber.updateConnection(4)
       const faberMessages2 = await faber.downloadReceivedMessagesV2()
       expect(faberMessages2.length).toBe(0)
 
@@ -27,7 +27,7 @@ describe('send ping, get ping', () => {
       expect(aliceMessages1.length).toBe(1)
       expect(JSON.parse(aliceMessages1[0].decryptedMsg)['@type'].match(/trust_ping\/1.0\/ping_response/))
       expect(JSON.parse(aliceMessages1[0].decryptedMsg)['~thread'].thid).toBe(pingMsgId)
-      await alice.updateConnection(4) // processes received ping_response
+      await alice.updateConnection(4)
       const aliceMessages2 = await alice.downloadReceivedMessagesV2()
       expect(aliceMessages2.length).toBe(0)
     } catch (err) {

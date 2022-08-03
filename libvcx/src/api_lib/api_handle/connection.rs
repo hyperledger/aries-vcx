@@ -6,7 +6,6 @@ use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::connection::Connection;
-use aries_vcx::handlers::trust_ping::TrustPingSender;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
@@ -133,31 +132,29 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize message {} into A2AMessage, err: {:?}", message, err)))?;
-    connection.update_state_with_message(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &message).await?;
+    connection.update_state_with_message(get_main_wallet_handle(), get_main_agency_client().unwrap(), Some(message)).await?;
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
 
-// fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
-//     let expected_sender_vk = match remote_vk {
-//         Ok(vk) => vk,
-//         Err(_) => return Ok(None)
-//     };
-//     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-//         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-//         return Ok(Some((messages, bootstrap_agent_info.clone())));
-//     }
-//     Ok(None)
-// }
-
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let res = match connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
-        Ok(_) => Ok(error::SUCCESS.code_num),
-        Err(err) => Err(err.into())
+    info!("connection::update_state >> connection {} is not in final state, trying to updating state", handle);
+    match connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+        Ok(_) => {}
+        Err(err) => { return Err(err.into()); }
     };
     CONNECTION_MAP.insert(handle, connection)?;
-    res
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    // todo: after update_state and respond_messages are strictily separated, we can adjust implementation of this
+    // to either to update_state or respond_message conditionally on whether we are in final state or not.
+    // todo: we should do breaking change in the future where libvcx update_state function will no longer serve
+    // to respond to message such as ping, etc. hence then the block bellow can be extracted as different function
+    info!("connection::update_state >> connection {} is in final state, trying to respond messages", handle);
+    match connection.respond_messages(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+        Ok(_) => Ok(error::SUCCESS.code_num),
+        Err(err) => Err(err.into())
+    }
 }
 
 pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
