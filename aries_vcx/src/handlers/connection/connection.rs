@@ -20,6 +20,8 @@ use crate::handlers::connection::public_agent::PublicAgent;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::did_doc::DidDoc;
+use crate::handlers::out_of_band::receiver::send_handshake_reuse;
+use crate::handlers::out_of_band::sender::send_handshake_reuse_accepted;
 use crate::handlers::trust_ping::TrustPingSender;
 use crate::handlers::trust_ping::util::handle_ping;
 use crate::messages::connection::invite::Invitation;
@@ -399,11 +401,11 @@ impl Connection {
             match message {
                 A2AMessage::Ping(_) => return Some((uid, message)),
                 A2AMessage::PingResponse(_) => return Some((uid, message)),
+                A2AMessage::OutOfBandHandshakeReuse(_) => return Some((uid, message)),
+                A2AMessage::OutOfBandHandshakeReuseAccepted(_) => return Some((uid, message)),
                 // todo: these should be added after their handling is removed from connection protocol state machine
                 // A2AMessage::Query(_) => {}
                 // A2AMessage::Disclose(_) => {}
-                // A2AMessage::OutOfBandHandshakeReuse(_) => {}
-                // A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {}
                 _ => {}
             }
         }
@@ -411,21 +413,22 @@ impl Connection {
     }
 
     async fn answer_message(&self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
+        let did_doc = self.their_did_doc()
+            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, format!("Can't answer message {:?} because counterparty did doc is not available", message)))?;
         match message {
             A2AMessage::Ping(ping) => {
-                let did_doc = self.their_did_doc()
-                    .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Can't answer Ping because counterparty did doc is not available"))?;
                 handle_ping(wallet_handle, &ping, &self.pairwise_info().pw_vk, &did_doc, send_message).await
             },
+            A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
+                send_handshake_reuse_accepted(wallet_handle, &handshake_reuse, &self.pairwise_info().pw_vk, &did_doc).await
+            }
             // todo: these should be added after their handling is removed from connection protocol state machine
             // A2AMessage::Query(_) => {}
-            // A2AMessage::OutOfBandHandshakeReuse(_) => {}
             _ => {
                 Ok(())
             }
         }
     }
-
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         if self.is_in_null_state() {
@@ -480,9 +483,6 @@ impl Connection {
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_inviter.handle_problem_report(problem_report)?, None, false)
                         }
-                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
-                            (sm_inviter.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, None, false)
-                        }
                         A2AMessage::Query(query) => {
                             (sm_inviter.handle_discovery_query(wallet_handle, query, send_message).await?, None, false)
                         }
@@ -536,9 +536,6 @@ impl Connection {
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
-                        }
-                        A2AMessage::OutOfBandHandshakeReuse(reuse) => {
-                            (sm_invitee.handle_handshake_reuse(wallet_handle, reuse, send_message).await?, false)
                         }
                         A2AMessage::Query(query) => {
                             (sm_invitee.handle_discovery_query(wallet_handle, query, send_message).await?, false)
@@ -675,14 +672,9 @@ impl Connection {
             }
             Err(err) => { return Err(VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize message, err: {:?}", err))); }
         };
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_send_handshake_reuse(wallet_handle, oob, send_message).await?)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_send_handshake_reuse(wallet_handle, oob, send_message).await?)
-            }
-        };
+        let did_doc = self.their_did_doc()
+            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, format!("Can't send handshake-reuse to the counterparty, because their did doc is not available")))?;
+        send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info().pw_vk, &did_doc).await?;
         Ok(())
     }
 
