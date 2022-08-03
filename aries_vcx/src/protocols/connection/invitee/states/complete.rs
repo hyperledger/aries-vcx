@@ -10,8 +10,6 @@ use crate::did_doc::DidDoc;
 use crate::messages::connection::response::Response;
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 
@@ -44,40 +42,6 @@ impl From<(RespondedState, Response)> for CompleteState {
 }
 
 impl CompleteState {
-    pub async fn handle_send_handshake_reuse_accepted<F, T>(&self,
-                                                            wallet_handle: WalletHandle,
-                                                            reuse_msg: OutOfBandHandshakeReuse,
-                                                            pw_vk: &str,
-                                                            send_message: F,
-    ) -> VcxResult<()>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let ack_msg = OutOfBandHandshakeReuseAccepted::default()
-            .set_thread_id(&reuse_msg.get_thread_id())
-            .set_parent_thread_id(&reuse_msg.thread.pthid.ok_or(VcxError::from_msg(VcxErrorKind::InvalidOption, "Parent thread missing"))?);
-        send_message(wallet_handle, pw_vk.to_string(), self.did_doc.clone(), ack_msg.to_a2a_message()).await.ok();
-        Ok(())
-    }
-
-    pub async fn handle_send_handshake_reuse<F, T>(&self,
-                                                   wallet_handle: WalletHandle,
-                                                   oob_id: &str,
-                                                   pw_vk: &str,
-                                                   send_message: F,
-    ) -> VcxResult<()>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let reuse_msg = OutOfBandHandshakeReuse::default()
-            .set_thread_id_matching_id()
-            .set_parent_thread_id(oob_id);
-        send_message(wallet_handle, pw_vk.to_string(), self.did_doc.clone(), reuse_msg.to_a2a_message()).await.ok();
-        Ok(())
-    }
-
     pub async fn handle_discover_features<F, T>(&self,
                                                 wallet_handle: WalletHandle,
                                                 query: Option<String>,

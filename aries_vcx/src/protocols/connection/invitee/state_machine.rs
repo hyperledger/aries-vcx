@@ -16,7 +16,6 @@ use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 
 
 use crate::protocols::connection::invitee::states::complete::CompleteState;
@@ -209,14 +208,6 @@ impl SmConnectionInvitee {
                         debug!("Disclose message received");
                         true
                     }
-                    A2AMessage::OutOfBandHandshakeReuse(_) => {
-                        debug!("OutOfBandHandshakeReuse message received");
-                        true
-                    }
-                    A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {
-                        debug!("OutOfBandHandshakeReuseAccepted message received");
-                        true
-                    }
                     _ => {
                         debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
                         false
@@ -318,40 +309,6 @@ impl SmConnectionInvitee {
                 InviteeFullState::Responded((state, response).into())
             }
             _ => self.state.clone()
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_send_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_handshake_reuse<F, T>(self,
-                                              wallet_handle: WalletHandle,
-                                              reuse_msg: OutOfBandHandshakeReuse,
-                                              send_message: F,
-    ) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_send_handshake_reuse_accepted(wallet_handle, reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
         };
         Ok(Self { state, ..self })
     }
