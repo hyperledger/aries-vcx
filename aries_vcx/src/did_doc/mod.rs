@@ -49,22 +49,21 @@ impl DidDoc {
     }
 
     pub fn set_recipient_keys(&mut self, recipient_keys: Vec<String>) {
-        let mut id = 0;
+        let mut key_id = 0;
 
         recipient_keys
             .iter()
-            .for_each(|key| {
-                id += 1;
+            .for_each(|key_in_base58| {
+                key_id += 1;
 
-                let key_id = id.to_string();
-                let key_reference = DidDoc::build_key_reference(&self.id, &key_id);
+                let key_reference = DidDoc::build_key_reference(&self.id, &key_id.to_string());
 
                 self.public_key.push(
                     Ed25519PublicKey {
                         id: key_reference.clone(),
                         type_: String::from(KEY_TYPE),
                         controller: self.id.clone(),
-                        public_key_base_58: key.clone(),
+                        public_key_base_58: key_in_base58.clone(),
                     });
 
                 self.authentication.push(
@@ -76,7 +75,7 @@ impl DidDoc {
 
                 self.service.get_mut(0)
                     .map(|service| {
-                        service.recipient_keys.push(key_reference);
+                        service.recipient_keys.push(key_in_base58.clone());
                         service
                     });
             });
@@ -357,7 +356,7 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_vcx_new() -> DidDoc {
+    pub fn _did_doc_inlined_recipient_keys() -> DidDoc {
         DidDoc {
             context: String::from(CONTEXT),
             id: _did(),
@@ -369,13 +368,12 @@ pub mod test_utils {
             ],
             service: vec![AriesService {
                 service_endpoint: _service_endpoint(),
-                recipient_keys: vec![_key_reference_1()],
+                recipient_keys: vec![_key_1()],
                 routing_keys: vec![_key_2(), _key_3()],
                 ..Default::default()
             }],
         }
     }
-
 
     pub fn _did_doc_recipient_keys_by_value() -> DidDoc {
         DidDoc {
@@ -433,13 +431,13 @@ mod unit_tests {
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(_routing_keys());
 
-        assert_eq!(_did_doc_vcx_new(), did_doc);
+        assert_eq!(_did_doc_inlined_recipient_keys(), did_doc);
     }
 
     #[test]
     fn test_did_doc_validate_works() {
         _did_doc_vcx_legacy().validate().unwrap();
-        _did_doc_vcx_new().validate().unwrap();
+        _did_doc_inlined_recipient_keys().validate().unwrap();
         _did_doc_recipient_keys_by_value().validate().unwrap();
         _did_doc_empty_routing().validate().unwrap();
     }

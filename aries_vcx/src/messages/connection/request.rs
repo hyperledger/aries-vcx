@@ -69,7 +69,7 @@ pub mod unit_tests {
             label: _label(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc_vcx_new(),
+                did_doc: _did_doc_inlined_recipient_keys(),
             },
             thread: None,
         }
