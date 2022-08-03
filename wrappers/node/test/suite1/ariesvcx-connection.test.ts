@@ -216,7 +216,7 @@ describe('Connection:', () => {
 
   describe('sendPing:', () => {
     it('success: send ping', async () => {
-      const connection = await connectionCreateInviterNull();
+      const connection = await createConnectionInviterRequested();
       await connection.sendPing('ping');
     });
   });

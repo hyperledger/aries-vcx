@@ -85,10 +85,6 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
-        InviterState::from(self.state.clone()) == InviterState::Initial
-    }
-
     pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviterFullState) -> Self {
         Self {
             source_id,
@@ -131,9 +127,9 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         for (uid, message) in messages {
-            if self.can_handle_message(&message) {
+            if self.can_progress_state(&message) {
                 return Some((uid, message));
             }
         }
@@ -151,10 +147,17 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn needs_message(&self) -> bool {
+    pub fn is_in_null_state(&self) -> bool {
         match self.state {
-            InviterFullState::Requested(_) => false,
-            _ => true
+            InviterFullState::Initial(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_in_final_state(&self) -> bool {
+        match self.state {
+            InviterFullState::Completed(_) => true,
+            _ => false
         }
     }
 
@@ -170,7 +173,9 @@ impl SmConnectionInviter {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
+
+
+    pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviterFullState::Invited(_) => {
                 match message {
@@ -198,10 +203,6 @@ impl SmConnectionInviter {
                         debug!("Ping message received");
                         true
                     }
-                    A2AMessage::PingResponse(_) => {
-                        debug!("PingResponse message received");
-                        true
-                    }
                     A2AMessage::ConnectionProblemReport(_) => {
                         debug!("ProblemReport message received");
                         true
@@ -214,14 +215,6 @@ impl SmConnectionInviter {
             }
             InviterFullState::Completed(_) => {
                 match message {
-                    A2AMessage::Ping(_) => {
-                        debug!("Ping message received");
-                        true
-                    }
-                    A2AMessage::PingResponse(_) => {
-                        debug!("PingResponse message received");
-                        true
-                    }
                     A2AMessage::Query(_) => {
                         debug!("Query message received");
                         true
@@ -830,7 +823,7 @@ pub mod unit_tests {
                     "key_5".to_string() => A2AMessage::Ack(_ack())
                 );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -849,7 +842,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::ConnectionRequest(_), message);
                 }
@@ -862,7 +855,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
                 }
@@ -874,7 +867,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::Ack(_ack())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -893,7 +886,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_1", uid);
                     assert_match!(A2AMessage::Ping(_), message);
                 }
@@ -906,7 +899,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::Ack(_), message);
                 }
@@ -918,7 +911,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
                 }
@@ -930,7 +923,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -941,36 +934,6 @@ pub mod unit_tests {
 
                 let connection = inviter_sm().await.to_inviter_completed_state().await;
 
-                // Ping
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::Ping(_ping()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::Ping(_), message);
-                }
-
-                // Ping Response
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::PingResponse(_ping_response()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::PingResponse(_), message);
-                }
-
                 // Query
                 {
                     let messages = map!(
@@ -979,7 +942,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::Query(_query())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::Query(_), message);
                 }
@@ -992,7 +955,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::Disclose(_disclose())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::Disclose(_), message);
                 }

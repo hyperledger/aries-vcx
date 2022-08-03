@@ -250,17 +250,6 @@ impl Connection {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.is_in_null_state()
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.is_in_null_state()
-            }
-        }
-    }
-
     pub fn their_did_doc(&self) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -276,6 +265,28 @@ impl Connection {
         match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc()
+        }
+    }
+
+    pub fn is_in_null_state(&self) -> bool {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.is_in_null_state()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.is_in_null_state()
+            }
+        }
+    }
+
+    pub fn is_in_final_state(&self) -> bool {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                sm_inviter.is_in_final_state()
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                sm_invitee.is_in_final_state()
+            }
         }
     }
 
@@ -325,41 +336,41 @@ impl Connection {
         }
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.find_message_to_handle(messages)
+                sm_inviter.find_message_to_update_state(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.find_message_to_handle(messages)
+                sm_invitee.find_message_to_update_state(messages)
             }
         }
     }
 
-    pub fn needs_message(&self) -> bool {
+    pub fn find_message_to_respond(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.needs_message()
+                sm_inviter.find_message_to_update_state(messages)
             }
             SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.needs_message()
+                sm_invitee.find_message_to_update_state(messages)
             }
         }
     }
 
-    fn _update_state(&mut self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: AgencyClient) -> BoxFuture<'_, VcxResult<()>> {
+    pub fn update_state_with_message(&mut self, wallet_handle: WalletHandle, agency_client: AgencyClient, message: Option<A2AMessage>) -> BoxFuture<'_, VcxResult<()>> {
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
                 SmConnection::Inviter(_) => {
-                    self._step_inviter(wallet_handle, message, &agency_client).await?
+                    self.step_inviter(wallet_handle, message, &agency_client).await?
                 }
                 SmConnection::Invitee(_) => {
-                    self._step_invitee(wallet_handle, message).await?
+                    self.step_invitee(wallet_handle, message).await?
                 }
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                let res = self._update_state(wallet_handle, None, agency_client).await;
+                let res = self.update_state_with_message(wallet_handle, agency_client, None).await;
                 res
             } else {
                 Ok(())
@@ -367,40 +378,87 @@ impl Connection {
         })
     }
 
+    pub async fn respond_messages(&self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()>{
+        if !self.is_in_final_state() {
+            warn!("Connection is not in final state, can't respond messages");
+            return Ok(());
+        }
+        let messages = self.get_messages_noauth(agency_client).await?;
+        match self.find_message_to_handle(messages) {
+            Some((uid, message)) => {
+                self.answer_message(message, wallet_handle).await?;
+                self.update_message_status(&uid, agency_client).await?;
+            }
+            None => {}
+        };
+        Ok(())
+    }
+
+    fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+        for (uid, message) in messages {
+            match message {
+                A2AMessage::Ping(_) => return Some((uid, message)),
+                A2AMessage::PingResponse(_) => return Some((uid, message)),
+                // todo: these should be added after their handling is removed from connection protocol state machine
+                // A2AMessage::Query(_) => {}
+                // A2AMessage::Disclose(_) => {}
+                // A2AMessage::OutOfBandHandshakeReuse(_) => {}
+                // A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {}
+                _ => {}
+            }
+        }
+        None
+    }
+
+    async fn answer_message(&self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
+        match message {
+            A2AMessage::Ping(ping) => {
+                let did_doc = self.their_did_doc()
+                    .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Can't answer Ping because counterparty did doc is not available"))?;
+                handle_ping(wallet_handle, &ping, &self.pairwise_info().pw_vk, &did_doc, send_message).await
+            },
+            // todo: these should be added after their handling is removed from connection protocol state machine
+            // A2AMessage::Query(_) => {}
+            // A2AMessage::OutOfBandHandshakeReuse(_) => {}
+            _ => {
+                Ok(())
+            }
+        }
+    }
+
+
     pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         if self.is_in_null_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
+        // todo: uncomment after trustping, feature discovery, handshake-reuse is not processed by update_state
+        // if self.is_in_final_state() {
+        //     warn!("Connection::update_state :: update state on connection in final state is ignored");
+        //     return Ok(());
+        // }
+        trace!("Connection::update_state >>> before update_state {:?}", self.get_state());
 
         let messages = self.get_messages_noauth(agency_client).await?;
         trace!("Connection::update_state >>> retrieved messages {:?}", messages);
 
-        match self.find_message_to_handle(messages) {
+        match self.find_message_to_update_state(messages) {
             Some((uid, message)) => {
                 trace!("Connection::update_state >>> handling message uid: {:?}", uid);
-                self._update_state(wallet_handle, Some(message), agency_client.clone()).await?;
+                self.update_state_with_message(wallet_handle, agency_client.clone(), Some(message)).await?;
                 self.cloud_agent_info().clone().update_message_status(agency_client, self.pairwise_info(), uid).await?;
             }
             None => {
                 trace!("Connection::update_state >>> trying to update state without message");
-                self._update_state(wallet_handle, None, agency_client.clone()).await?;
+                self.update_state_with_message(wallet_handle, agency_client.clone(), None).await?;
             }
         }
+
+        trace!("Connection::update_state >>> after update_state {:?}", self.get_state());
         Ok(())
     }
 
-    pub async fn update_state_with_message(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, message: &A2AMessage) -> VcxResult<()> {
-        trace!("Connection: update_state_with_message: {:?}", message);
-        if self.is_in_null_state() {
-            warn!("Connection::update_state_with_message :: update state on connection in null state is ignored");
-            return Ok(());
-        }
-        self._update_state(wallet_handle, Some(message.clone()), agency_client.clone()).await?;
-        Ok(())
-    }
-
-    async fn _step_inviter(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: &AgencyClient) -> VcxResult<(Self, bool)> {
+    async fn step_inviter(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>, agency_client: &AgencyClient) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
@@ -459,7 +517,7 @@ impl Connection {
         }
     }
 
-    async fn _step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
+    async fn step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
@@ -487,12 +545,6 @@ impl Connection {
                         }
                         A2AMessage::Disclose(disclose) => {
                             (sm_invitee.handle_disclose(disclose)?, false)
-                        }
-                        A2AMessage::Ping(ping) => {
-                            let did_doc = self.their_did_doc()
-                                .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called _step_invitee on Inviter connection."))?;
-                            handle_ping(wallet_handle, &ping, &self.pairwise_info().pw_vk, &did_doc, send_message).await?;
-                            (sm_invitee.clone(), false)
                         }
                         _ => {
                             (sm_invitee, false)
@@ -850,6 +902,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_with_request() {
+        let _setup = SetupMocks::init();
+        let agency_client = AgencyClient::new();
+        enable_agency_mocks();
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client).await.unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Inviter(InviterState::Requested));
+    }
+
+    #[tokio::test]
+    // todo
+    async fn test_should_find_messages_to_answer() {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
