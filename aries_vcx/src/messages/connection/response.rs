@@ -112,18 +112,20 @@ threadlike!(Response);
 threadlike!(SignedResponse);
 
 impl SignedResponse {
-    pub async fn decode(self, key: &str) -> VcxResult<Response> {
+    pub async fn decode(self, their_vk: &str) -> VcxResult<Response> {
         let signature = base64::decode_config(&self.connection_sig.signature.as_bytes(), base64::URL_SAFE)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
 
         let sig_data = base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
 
-        if !crypto::verify(key, &sig_data, &signature).await? {
+        if !crypto::verify(their_vk, &sig_data, &signature).await? {
             return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "ConnectionResponse signature is invalid for original Invite recipient key"));
         }
 
-        //TODO check sig_data.signer
+        if self.connection_sig.signer != their_vk {
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Signer declared in ConnectionResponse signed response is not matching the actual signer. Connection "));
+        }
 
         let sig_data = &sig_data[8..];
 
@@ -211,11 +213,13 @@ pub mod unit_tests {
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
     use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
+    use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
     #[test]
     fn test_response_build_works() {
+        SetupEmpty::init();
         let response: Response = Response::default()
             .set_did(_did())
             .set_thread_id(&_thread_id())
@@ -227,9 +231,20 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_response_encode_works() {
+        SetupEmpty::init();
         let setup = setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wallet_handle).await;
         let signed_response: SignedResponse = _response().encode(setup.wallet_handle, &trustee_key).await.unwrap();
         assert_eq!(_response(), signed_response.decode(&trustee_key).await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_decode_returns_error_if_signer_differs() {
+        SetupEmpty::init();
+        let setup = setup_wallet().await;
+        let trustee_key = create_trustee_key(setup.wallet_handle).await;
+        let mut signed_response: SignedResponse = _response().encode(setup.wallet_handle, &trustee_key).await.unwrap();
+        signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
+        signed_response.decode(&trustee_key).await.unwrap_err();
     }
 }
