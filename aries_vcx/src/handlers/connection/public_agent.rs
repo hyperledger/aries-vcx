@@ -10,7 +10,7 @@ use crate::libindy::utils::ledger::add_service;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::connection::did::Did;
 use crate::messages::connection::request::Request;
-use crate::messages::connection::service::FullService;
+use crate::did_doc::service_aries::AriesService;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,7 +25,7 @@ impl PublicAgent {
     pub async fn create(wallet_handle: WalletHandle, agency_client: &AgencyClient, source_id: &str, institution_did: &str) -> VcxResult<Self> {
         let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
         let agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
-        let service = FullService::create()
+        let service = AriesService::create()
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys(agency_client)?);
@@ -47,8 +47,8 @@ impl PublicAgent {
         self.institution_did.to_string()
     }
 
-    pub fn service(&self, agency_client: &AgencyClient) -> VcxResult<FullService> {
-        Ok(FullService::create()
+    pub fn service(&self, agency_client: &AgencyClient) -> VcxResult<AriesService> {
+        Ok(AriesService::create()
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
             .set_routing_keys(self.agent_info.routing_keys(agency_client)?))

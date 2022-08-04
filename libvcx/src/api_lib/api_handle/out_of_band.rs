@@ -6,7 +6,7 @@ use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
-use aries_vcx::messages::connection::service::ServiceResolvable;
+use aries_vcx::utils::service_resolvable::ServiceResolvable;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -72,7 +72,7 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let service = serde_json::from_str(service)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied message: {:?}", err)))?;
-    oob = oob.clone().append_service(&ServiceResolvable::FullService(service));
+    oob = oob.clone().append_service(&ServiceResolvable::AriesService(service));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
@@ -189,7 +189,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
-    use aries_vcx::messages::connection::service::FullService;
+    use aries_vcx::did_doc::service_aries::AriesService;
     use aries_vcx::utils::devsetup::SetupMocks;
 
     use super::*;
@@ -205,7 +205,7 @@ pub mod tests {
         }).to_string();
         let oob_handle = create_out_of_band(&config).await.unwrap();
         assert!(oob_handle > 0);
-        let service = ServiceResolvable::FullService(FullService::create()
+        let service = ServiceResolvable::AriesService(AriesService::create()
             .set_service_endpoint("http://example.org/agent".into())
             .set_routing_keys(vec!("12345".into()))
             .set_recipient_keys(vec!("abcde".into())));

@@ -2,13 +2,13 @@ use base64;
 use indy_sys::WalletHandle;
 use time;
 
+use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::libindy::utils::crypto;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::ack::PleaseAck;
-use crate::messages::connection::did_doc::*;
 use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -70,7 +70,8 @@ impl Response {
     }
 
     pub fn set_keys(mut self, recipient_keys: Vec<String>, routing_keys: Vec<String>) -> Response {
-        self.connection.did_doc.set_keys(recipient_keys, routing_keys);
+        self.connection.did_doc.set_recipient_keys(recipient_keys);
+        self.connection.did_doc.set_routing_keys(routing_keys);
         self
     }
 
@@ -154,7 +155,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::did_doc::test_utils::_did_doc;
+    use crate::did_doc::test_utils::_did_doc_vcx_legacy;
 
     use super::*;
 
@@ -184,7 +185,7 @@ pub mod test_utils {
             thread: _thread(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc(),
+                did_doc: _did_doc_vcx_legacy(),
             },
             please_ack: None,
         }
@@ -196,7 +197,7 @@ pub mod test_utils {
             thread: _thread(),
             connection_sig: ConnectionSignature {
                 signature: String::from("yeadfeBWKn09j5XU3ITUE3gPbUDmPNeblviyjrOIDdVMT5WZ8wxMCxQ3OpAnmq1o-Gz0kWib9zr0PLsbGc2jCA=="),
-                sig_data: String::from("MTU3MTg0NzQwM3siZGlkIjoiVnNLVjdnclIxQlVFMjltRzJGbTJrWCIsImRpZF9kb2MiOnsiQGNvbnRleHQiOiJodHRwczovL3czaWQub3JnL2RpZC92MSIsImF1dGhlbnRpY2F0aW9uIjpbeyJwdWJsaWNLZXkiOiJWc0tWN2dyUjFCVUUyOW1HMkZtMmtYIzEiLCJ0eXBlIjoiRWQyNTUxOVNpZ25hdHVyZUF1dGhlbnRpY2F0aW9uMjAxOCJ9XSwiaWQiOiJWc0tWN2dyUjFCVUUyOW1HMkZtMmtYIiwicHVibGljS2V5IjpbeyJpZCI6IjEiLCJvd25lciI6IlZzS1Y3Z3JSMUJVRTI5bUcyRm0ya1giLCJwdWJsaWNLZXlCYXNlNTgiOiI3SjNYczhLUVV0U2ZNenB0ZVVLcThiNDg5bzdENFB4QVkxSjFKQUxDNDF6ayIsInR5cGUiOiJFZDI1NTE5VmVyaWZpY2F0aW9uS2V5MjAxOCJ9LHsiaWQiOiIyIiwib3duZXIiOiJWc0tWN2dyUjFCVUUyOW1HMkZtMmtYIiwicHVibGljS2V5QmFzZTU4IjoiSGV6Y2UyVVdNWjN3VWhWa2gyTGZLU3M4bkR6V3d6czJXaW43RXpOTjNZYVIiLCJ0eXBlIjoiRWQyNTUxOVZlcmlmaWNhdGlvbktleTIwMTgifSx7ImlkIjoiMyIsIm93bmVyIjoiVnNLVjdnclIxQlVFMjltRzJGbTJrWCIsInB1YmxpY0tleUJhc2U1OCI6IjNMWXV4SkJKa25nRGJ2Smo0emp4MTNEQlVkWjJQOTZlTnlid2QybjlMOUFVIiwidHlwZSI6IkVkMjU1MTlWZXJpZmljYXRpb25LZXkyMDE4In1dLCJzZXJ2aWNlIjpbeyJpZCI6ImRpZDpleGFtcGxlOjEyMzQ1Njc4OWFiY2RlZmdoaTtkaWQtY29tbXVuaWNhdGlvbiIsInByaW9yaXR5IjowLCJyZWNpcGllbnRLZXlzIjpbIlZzS1Y3Z3JSMUJVRTI5bUcyRm0ya1gjMSJdLCJyb3V0aW5nS2V5cyI6WyJWc0tWN2dyUjFCVUUyOW1HMkZtMmtYIzIiLCJWc0tWN2dyUjFCVUUyOW1HMkZtMmtYIzMiXSwic2VydmljZUVuZHBvaW50IjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwIiwidHlwZSI6ImRpZC1jb21tdW5pY2F0aW9uIn1dfX0="),
+                sig_data: serde_json::to_string(&_did_doc_vcx_legacy()).unwrap(),
                 signer: _key(),
                 ..Default::default()
             },
@@ -208,8 +209,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::did_doc::test_utils::*;
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
-    use crate::messages::connection::did_doc::test_utils::*;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;

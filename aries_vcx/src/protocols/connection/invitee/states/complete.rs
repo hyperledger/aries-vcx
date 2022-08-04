@@ -6,7 +6,7 @@ use indy_sys::WalletHandle;
 use crate::error::prelude::*;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
-use crate::messages::connection::did_doc::DidDoc;
+use crate::did_doc::DidDoc;
 use crate::messages::connection::response::Response;
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::messages::discovery::query::Query;

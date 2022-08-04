@@ -1,5 +1,5 @@
+use crate::did_doc::DidDoc;
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::connection::did_doc::*;
 use crate::messages::thread::Thread;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -43,7 +43,8 @@ impl Request {
     }
 
     pub fn set_keys(mut self, recipient_keys: Vec<String>, routing_keys: Vec<String>) -> Request {
-        self.connection.did_doc.set_keys(recipient_keys, routing_keys);
+        self.connection.did_doc.set_recipient_keys(recipient_keys);
+        self.connection.did_doc.set_routing_keys(routing_keys);
         self
     }
 }
@@ -54,7 +55,7 @@ threadlike_optional!(Request);
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
 
     use super::*;
 
@@ -68,7 +69,7 @@ pub mod unit_tests {
             label: _label(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc(),
+                did_doc: _did_doc_vcx_legacy(),
             },
             thread: None,
         }

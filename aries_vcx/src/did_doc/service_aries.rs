@@ -1,28 +1,10 @@
-use crate::error::prelude::*;
-use crate::libindy::utils::ledger;
-use crate::messages::connection::did::Did;
-
 pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum ServiceResolvable {
-    FullService(FullService),
-    Did(Did),
-}
-
-impl ServiceResolvable {
-    pub async fn resolve(&self) -> VcxResult<FullService> {
-        match self {
-            ServiceResolvable::FullService(full_service) => Ok(full_service.clone()),
-            ServiceResolvable::Did(did) => ledger::get_service(did).await
-        }
-    }
-}
-
+// Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
+// Note that is divergence from w3c spec https://w3c.github.io/did-core/#service-properties
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct FullService {
+pub struct AriesService {
     pub id: String,
     #[serde(rename = "type")]
     pub type_: String,
@@ -38,7 +20,7 @@ pub struct FullService {
     pub service_endpoint: String,
 }
 
-impl FullService {
+impl AriesService {
     pub fn create() -> Self {
         Self::default()
     }
@@ -59,10 +41,9 @@ impl FullService {
     }
 }
 
-impl Default for FullService {
-    fn default() -> FullService {
-        FullService {
-            // TODO: FIXME Several services????
+impl Default for AriesService {
+    fn default() -> AriesService {
+        AriesService {
             id: format!("did:example:123456789abcdefghi;{}", SERVICE_SUFFIX),
             type_: String::from(SERVICE_TYPE),
             priority: 0,
@@ -73,7 +54,7 @@ impl Default for FullService {
     }
 }
 
-impl PartialEq for FullService {
+impl PartialEq for AriesService {
     fn eq(&self, other: &Self) -> bool {
         self.recipient_keys == other.recipient_keys &&
             self.routing_keys == other.routing_keys
@@ -82,35 +63,34 @@ impl PartialEq for FullService {
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod unit_tests {
-    use crate::messages::connection::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
-
-    use super::*;
+mod unit_tests {
+    use crate::did_doc::service_aries::AriesService;
+    use crate::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
 
     #[test]
     fn test_service_comparison() {
-        let service1 = FullService::create()
+        let service1 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service2 = FullService::create()
+        let service2 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service3 = FullService::create()
+        let service3 = AriesService::create()
             .set_service_endpoint("bogus_endpoint".to_string())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys());
 
-        let service4 = FullService::create()
+        let service4 = AriesService::create()
             .set_service_endpoint(_service_endpoint())
             .set_recipient_keys(_recipient_keys())
             .set_routing_keys(_routing_keys_1());
 
-        assert!(service1 == service2);
-        assert!(service1 == service3);
-        assert!(service1 != service4);
+        assert_eq!(service1, service2);
+        assert_eq!(service1, service3);
+        assert_ne!(service1, service4);
     }
 }

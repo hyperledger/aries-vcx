@@ -4,9 +4,12 @@ use futures::executor::block_on;
 
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::OutOfBandInvitation;
+use crate::libindy::utils::ledger;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
-use crate::messages::connection::service::ServiceResolvable;
+use crate::did_doc::DidDoc;
+use crate::did_doc::service_aries::AriesService;
+use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
@@ -14,6 +17,39 @@ pub enum Invitation {
     Pairwise(PairwiseInvitation),
     Public(PublicInvitation),
     OutOfBand(OutOfBandInvitation),
+}
+
+// TODO: Make into TryFrom
+impl From<Invitation> for DidDoc {
+    fn from(invitation: Invitation) -> DidDoc {
+        let mut did_doc: DidDoc = DidDoc::default();
+        let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+            Invitation::Public(invitation) => {
+                did_doc.set_id(invitation.did.to_string());
+                let service = block_on(ledger::get_service(&invitation.did)).unwrap_or_else(|err| {
+                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    AriesService::default()
+                });
+                (service.service_endpoint, service.recipient_keys, service.routing_keys)
+            }
+            Invitation::Pairwise(invitation) => {
+                did_doc.set_id(invitation.id.0.clone());
+                (invitation.service_endpoint.clone(), invitation.recipient_keys, invitation.routing_keys)
+            }
+            Invitation::OutOfBand(invitation) => {
+                did_doc.set_id(invitation.id.0.clone());
+                let service = block_on(invitation.services[0].resolve()).unwrap_or_else(|err| {
+                    error!("Failed to obtain service definition from the ledger: {}", err);
+                    AriesService::default()
+                });
+                (service.service_endpoint, service.recipient_keys, service.routing_keys)
+            }
+        };
+        did_doc.set_service_endpoint(service_endpoint);
+        did_doc.set_recipient_keys(recipient_keys);
+        did_doc.set_routing_keys(routing_keys);
+        did_doc
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -28,6 +64,19 @@ pub struct PairwiseInvitation {
     pub routing_keys: Vec<String>,
     #[serde(rename = "serviceEndpoint")]
     pub service_endpoint: String,
+}
+
+impl From<DidDoc> for PairwiseInvitation {
+    fn from(did_doc: DidDoc) -> PairwiseInvitation {
+        let recipient_keys = did_doc.recipient_keys();
+        let routing_keys = did_doc.routing_keys();
+
+        PairwiseInvitation::create()
+            .set_id(&did_doc.id)
+            .set_service_endpoint(did_doc.get_endpoint())
+            .set_recipient_keys(recipient_keys)
+            .set_routing_keys(routing_keys)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -102,12 +151,12 @@ impl PublicInvitation {
 
 impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
     type Error = VcxError;
-    fn try_from(service: &ServiceResolvable) -> Result<Self, Self::Error> {
-        let full_service = block_on(service.resolve())?;
+    fn try_from(service_resolvable: &ServiceResolvable) -> Result<Self, Self::Error> {
+        let service = block_on(service_resolvable.resolve())?;
         Ok(Self::create()
-            .set_recipient_keys(full_service.recipient_keys)
-            .set_routing_keys(full_service.routing_keys)
-            .set_service_endpoint(full_service.service_endpoint))
+            .set_recipient_keys(service.recipient_keys)
+            .set_routing_keys(service.routing_keys)
+            .set_service_endpoint(service.service_endpoint))
     }
 }
 
@@ -116,7 +165,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::utils::uuid;
 
     use super::*;
@@ -165,7 +214,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
 
     use super::*;
@@ -188,5 +237,16 @@ pub mod unit_tests {
             .set_public_did(&_did()).unwrap();
 
         assert_eq!(_public_invitation(), invitation);
+    }
+
+    #[test]
+    fn test_did_doc_from_invitation_works() {
+        let mut did_doc = DidDoc::default();
+        did_doc.set_id(MessageId::id().0);
+        did_doc.set_service_endpoint(_service_endpoint());
+        did_doc.set_recipient_keys(_recipient_keys());
+        did_doc.set_routing_keys(_routing_keys());
+
+        assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_pairwise_invitation())));
     }
 }

@@ -9,7 +9,7 @@ use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
-use crate::messages::connection::did_doc::DidDoc;
+use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
@@ -508,7 +508,7 @@ pub mod unit_tests {
     pub mod invitee {
         use indy_sys::WalletHandle;
 
-        use crate::messages::connection::did_doc::test_utils::_service_endpoint;
+        use crate::did_doc::test_utils::_service_endpoint;
         use crate::messages::connection::response::{Response, SignedResponse};
 
         use super::*;

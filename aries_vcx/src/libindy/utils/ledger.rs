@@ -12,7 +12,7 @@ use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::messages::connection::did::Did;
-use crate::messages::connection::service::FullService;
+use crate::did_doc::service_aries::AriesService;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
@@ -270,7 +270,7 @@ pub async fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
     libindy_submit_request(&get_attrib_req).await
 }
 
-pub async fn get_service(did: &Did) -> VcxResult<FullService> {
+pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
     let attr_resp = get_attr(&did.to_string(), "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
@@ -284,7 +284,7 @@ pub async fn get_service(did: &Did) -> VcxResult<FullService> {
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
 }
 
-pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &FullService) -> VcxResult<String> {
+pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
     add_attr(wallet_handle, did, &attrib_json).await
 }

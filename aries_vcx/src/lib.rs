@@ -42,6 +42,7 @@ pub mod libindy;
 pub mod protocols;
 pub mod actors;
 pub mod global;
+pub mod did_doc;
 
  #[cfg(test)]
 pub mod test {

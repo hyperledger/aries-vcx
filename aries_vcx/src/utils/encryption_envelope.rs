@@ -7,7 +7,7 @@ use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::crypto;
 use crate::messages::a2a::A2AMessage;
-use crate::messages::connection::did_doc::DidDoc;
+use crate::did_doc::DidDoc;
 use crate::messages::forward::Forward;
 
 #[derive(Debug)]
@@ -46,7 +46,8 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(wallet_handle: WalletHandle,
                                         mut message: Vec<u8>,
                                         did_doc: &DidDoc) -> VcxResult<Vec<u8>> {
-        let (recipient_keys, routing_keys) = did_doc.resolve_keys();
+        let recipient_keys = did_doc.recipient_keys();
+        let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys.get(0)
             .map(String::from)
@@ -142,7 +143,7 @@ pub mod unit_tests {
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup::create_trustee_key;
     use crate::messages::ack::test_utils::_ack;
-    use crate::messages::connection::did_doc::test_utils::*;
+    use crate::did_doc::test_utils::*;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
@@ -167,7 +168,7 @@ pub mod unit_tests {
 
         let message = A2AMessage::Ack(_ack());
 
-        let envelope = EncryptionEnvelope::create(setup.wallet_handle, &message, Some(&trustee_key), &_did_doc_4()).await.unwrap();
+        let envelope = EncryptionEnvelope::create(setup.wallet_handle, &message, Some(&trustee_key), &_did_doc_empty_routing()).await.unwrap();
         assert_eq!(message, EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0).await.unwrap());
     }
 
@@ -182,7 +183,8 @@ pub mod unit_tests {
 
         let mut did_doc = DidDoc::default();
         did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_keys(_recipient_keys(), vec![key_1.clone(), key_2.clone()]);
+        did_doc.set_recipient_keys(_recipient_keys());
+        did_doc.set_routing_keys(vec![key_1.clone(), key_2.clone()]);
 
         let ack = A2AMessage::Ack(_ack());
 
@@ -221,7 +223,7 @@ pub mod unit_tests {
         let sender_key = test_setup::create_key(sender_wallet.wallet_handle).await;
 
         let mut did_doc = DidDoc::default();
-        did_doc.set_keys(vec![recipient_key], vec![]);
+        did_doc.set_recipient_keys(vec![recipient_key]);
 
         let ack = A2AMessage::Ack(_ack());
         let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key), &did_doc).await.unwrap();
@@ -239,7 +241,7 @@ pub mod unit_tests {
         let sender_key_2 = test_setup::create_key(sender_wallet.wallet_handle).await;
 
         let mut did_doc = DidDoc::default();
-        did_doc.set_keys(vec![recipient_key], vec![]);
+        did_doc.set_recipient_keys(vec![recipient_key]);
 
         let ack = A2AMessage::Ack(_ack());
         let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key_2), &did_doc).await.unwrap();
