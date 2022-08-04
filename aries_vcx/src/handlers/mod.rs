@@ -12,6 +12,7 @@ pub mod proof_presentation;
 pub mod out_of_band;
 pub mod trust_ping;
 pub mod util;
+pub mod discovery;
 
 impl From<ConnectionState> for u32 {
     fn from(state: ConnectionState) -> u32 {

@@ -139,22 +139,24 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    info!("connection::update_state >> connection {} is not in final state, trying to updating state", handle);
-    match connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
-        Ok(_) => {}
-        Err(err) => { return Err(err.into()); }
+    let res = if connection.is_in_final_state() {
+        info!("connection::update_state >> connection {} is in final state, trying to respond messages", handle);
+        match connection.find_and_handle_message(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+            Ok(_) => Ok(error::SUCCESS.code_num),
+            Err(err) => Err(err.into())
+        }
+    } else {
+        info!("connection::update_state >> connection {} is not in final state, trying to updating state", handle);
+        match connection.find_message_and_update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+            Ok(_) => Ok(error::SUCCESS.code_num),
+            Err(err) => Err(err.into())
+        }
     };
+    // todo: would be nice if find_message_and_update_state and find_and_handle_message signal in their
+    // return value whether the connection has been modified or not.
     CONNECTION_MAP.insert(handle, connection)?;
-    let connection = CONNECTION_MAP.get_cloned(handle)?;
-    // todo: after update_state and respond_messages are strictily separated, we can adjust implementation of this
-    // to either to update_state or respond_message conditionally on whether we are in final state or not.
-    // todo: we should do breaking change in the future where libvcx update_state function will no longer serve
-    // to respond to message such as ping, etc. hence then the block bellow can be extracted as different function
-    info!("connection::update_state >> connection {} is in final state, trying to respond messages", handle);
-    match connection.respond_messages(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
-        Ok(_) => Ok(error::SUCCESS.code_num),
-        Err(err) => Err(err.into())
-    }
+    res
+
 }
 
 pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
@@ -245,8 +247,8 @@ pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_discovery_features(get_main_wallet_handle(), query.map(String::from), comment.map(String::from)).await?;
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.send_discovery_query(get_main_wallet_handle(), query.map(String::from), comment.map(String::from)).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 

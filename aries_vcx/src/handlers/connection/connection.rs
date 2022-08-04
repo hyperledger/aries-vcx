@@ -2,6 +2,7 @@ use core::fmt;
 use std::clone::Clone;
 use std::collections::HashMap;
 
+
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
 use indy_sys::WalletHandle;
@@ -13,20 +14,22 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
+use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::basic_message::message::BasicMessage;
-use crate::did_doc::DidDoc;
+use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::out_of_band::receiver::send_handshake_reuse;
 use crate::handlers::out_of_band::sender::send_handshake_reuse_accepted;
 use crate::handlers::trust_ping::TrustPingSender;
 use crate::handlers::trust_ping::util::handle_ping;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;
-use crate::messages::discovery::disclose::ProtocolDescriptor;
+use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -338,18 +341,7 @@ impl Connection {
         }
     }
 
-    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
-        match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                sm_inviter.find_message_to_update_state(messages)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                sm_invitee.find_message_to_update_state(messages)
-            }
-        }
-    }
-
-    pub fn find_message_to_respond(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 sm_inviter.find_message_to_update_state(messages)
@@ -380,15 +372,15 @@ impl Connection {
         })
     }
 
-    pub async fn respond_messages(&self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()>{
+    pub async fn find_and_handle_message(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         if !self.is_in_final_state() {
-            warn!("Connection is not in final state, can't respond messages");
+            warn!("Connection::find_and_handle_message >> connection is not in final state, skipping");
             return Ok(());
         }
         let messages = self.get_messages_noauth(agency_client).await?;
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
-                self.answer_message(message, wallet_handle).await?;
+                self.handle_message(message, wallet_handle).await?;
                 self.update_message_status(&uid, agency_client).await?;
             }
             None => {}
@@ -399,47 +391,58 @@ impl Connection {
     fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         for (uid, message) in messages {
             match message {
-                A2AMessage::Ping(_) => return Some((uid, message)),
-                A2AMessage::PingResponse(_) => return Some((uid, message)),
-                A2AMessage::OutOfBandHandshakeReuse(_) => return Some((uid, message)),
-                A2AMessage::OutOfBandHandshakeReuseAccepted(_) => return Some((uid, message)),
-                // todo: these should be added after their handling is removed from connection protocol state machine
-                // A2AMessage::Query(_) => {}
-                // A2AMessage::Disclose(_) => {}
+                A2AMessage::Ping(_)
+                | A2AMessage::PingResponse(_)
+                | A2AMessage::OutOfBandHandshakeReuse(_)
+                | A2AMessage::OutOfBandHandshakeReuseAccepted(_)
+                | A2AMessage::Query(_)
+                | A2AMessage::Disclose(_) => return Some((uid, message)),
                 _ => {}
             }
         }
         None
     }
 
-    async fn answer_message(&self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
+    async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, format!("Can't answer message {:?} because counterparty did doc is not available", message)))?;
+        let pw_vk = &self.pairwise_info().pw_vk;
         match message {
             A2AMessage::Ping(ping) => {
-                handle_ping(wallet_handle, &ping, &self.pairwise_info().pw_vk, &did_doc, send_message).await
-            },
-            A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
-                send_handshake_reuse_accepted(wallet_handle, &handshake_reuse, &self.pairwise_info().pw_vk, &did_doc).await
+                info!("Answering ping, thread: {}", ping.get_thread_id());
+                handle_ping(wallet_handle, &ping, pw_vk, &did_doc, send_message).await?;
             }
-            // todo: these should be added after their handling is removed from connection protocol state machine
-            // A2AMessage::Query(_) => {}
+            A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
+                info!("Answering OutOfBandHandshakeReuse message, thread: {}", handshake_reuse.get_thread_id());
+                send_handshake_reuse_accepted(wallet_handle, &handshake_reuse, pw_vk, &did_doc).await?;
+            }
+            A2AMessage::Query(query) => {
+                let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
+                info!("Answering discovery protocol query, @id: {}, with supported protocols: {:?}", query.id.0, &supported_protocols);
+                respond_discovery_query(wallet_handle, query, &did_doc, pw_vk, supported_protocols).await?;
+            }
+            A2AMessage::Disclose(disclose) => {
+                info!("Handling disclose message, thread: {}", disclose.get_thread_id());
+                self.connection_sm = self.handle_disclose(disclose).await?;
+            }
             _ => {
-                Ok(())
+                // todo: implement to_string for A2AMessage, printing only type of the message, not entire payload
+                // todo: attempt to print @id / thread_id of the message
+                info!("Message of type {:?} will not be answered", message);
             }
         }
+        Ok(())
     }
 
-    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
+    pub async fn find_message_and_update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         if self.is_in_null_state() {
             warn!("Connection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
-        // todo: uncomment after trustping, feature discovery, handshake-reuse is not processed by update_state
-        // if self.is_in_final_state() {
-        //     warn!("Connection::update_state :: update state on connection in final state is ignored");
-        //     return Ok(());
-        // }
+        if self.is_in_final_state() {
+            warn!("Connection::update_state :: update state on connection in final state is ignored");
+            return Ok(());
+        }
         trace!("Connection::update_state >>> before update_state {:?}", self.get_state());
 
         let messages = self.get_messages_noauth(agency_client).await?;
@@ -449,7 +452,7 @@ impl Connection {
             Some((uid, message)) => {
                 trace!("Connection::update_state >>> handling message uid: {:?}", uid);
                 self.update_state_with_message(wallet_handle, agency_client.clone(), Some(message)).await?;
-                self.cloud_agent_info().clone().update_message_status(agency_client, self.pairwise_info(), uid).await?;
+                self.cloud_agent_info().update_message_status(agency_client, self.pairwise_info(), uid).await?;
             }
             None => {
                 trace!("Connection::update_state >>> trying to update state without message");
@@ -482,9 +485,6 @@ impl Connection {
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_inviter.handle_problem_report(problem_report)?, None, false)
-                        }
-                        A2AMessage::Query(query) => {
-                            (sm_inviter.handle_discovery_query(wallet_handle, query, send_message).await?, None, false)
                         }
                         A2AMessage::Disclose(disclose) => {
                             (sm_inviter.handle_disclose(disclose)?, None, false)
@@ -537,9 +537,6 @@ impl Connection {
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
                         }
-                        A2AMessage::Query(query) => {
-                            (sm_invitee.handle_discovery_query(wallet_handle, query, send_message).await?, false)
-                        }
                         A2AMessage::Disclose(disclose) => {
                             (sm_invitee.handle_disclose(disclose)?, false)
                         }
@@ -561,6 +558,17 @@ impl Connection {
             SmConnection::Inviter(_) => {
                 Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid operation, called \
                 _step_invitee on Inviter connection."))
+            }
+        }
+    }
+
+    async fn handle_disclose(&self, disclose: Disclose) -> VcxResult<SmConnection> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                Ok(SmConnection::Inviter(sm_inviter.clone().handle_disclose(disclose)?))
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                Ok(SmConnection::Invitee(sm_invitee.clone().handle_disclose(disclose)?))
             }
         }
     }
@@ -665,6 +673,7 @@ impl Connection {
 
     pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
         trace!("Connection::send_handshake_reuse >>>");
+        // todo: oob_msg argument should be typed OutOfBandInvitation, not string
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
                 A2AMessage::OutOfBandInvitation(oob) => oob,
@@ -683,16 +692,11 @@ impl Connection {
         self.cloud_agent_info().destroy(agency_client, self.pairwise_info()).await
     }
 
-    pub async fn send_discovery_features(&mut self, wallet_handle: WalletHandle, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
+    pub async fn send_discovery_query(&self, wallet_handle: WalletHandle, query: Option<String>, comment: Option<String>) -> VcxResult<()> {
         trace!("Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}", query, comment);
-        self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(sm_inviter.clone().handle_discover_features(wallet_handle, query, comment, send_message).await?)
-            }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(sm_invitee.clone().handle_discover_features(wallet_handle, query, comment, send_message).await?)
-            }
-        };
+        let did_doc = self.their_did_doc()
+            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, format!("Can't send handshake-reuse to the counterparty, because their did doc is not available")))?;
+        send_discovery_query(wallet_handle, query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
         Ok(())
     }
 
@@ -850,7 +854,10 @@ mod tests {
     use crate::handlers::connection::public_agent::test_utils::_public_agent;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id};
     use crate::messages::connection::request::unit_tests::_request;
-    use crate::utils::devsetup::SetupMocks;
+    use crate::messages::connection::response::test_utils::_signed_response;
+    use crate::messages::discovery::disclose::test_utils::_disclose;
+    use crate::messages::discovery::query::test_utils::_query;
+    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
     use crate::utils::mockdata::mockdata_connection::{CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED, CONNECTION_SM_INVITER_COMPLETED};
 
     use super::*;
@@ -972,5 +979,37 @@ mod tests {
         let connection: Connection = serde_json::from_str(&first_string).unwrap();
         let second_string = serde_json::to_string(&connection).unwrap();
         assert_eq!(first_string, second_string);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_find_message_to_handle_from_completed_state() {
+        let _setup = SetupIndyMocks::init();
+
+        let connection = Connection::from_string(CONNECTION_SM_INVITER_COMPLETED).unwrap();
+        // Query
+        {
+            let messages = map!(
+                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
+                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
+                        "key_3".to_string() => A2AMessage::Query(_query())
+                    );
+
+            let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+            assert_eq!("key_3", uid);
+            assert_match!(A2AMessage::Query(_), message);
+        }
+        // Disclose
+        {
+            let messages = map!(
+                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
+                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
+                        "key_3".to_string() => A2AMessage::Disclose(_disclose())
+                    );
+
+            let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+            assert_eq!("key_3", uid);
+            assert_match!(A2AMessage::Disclose(_), message);
+        }
     }
 }

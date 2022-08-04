@@ -4,28 +4,27 @@ use std::future::Future;
 
 use indy_sys::WalletHandle;
 
+use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-use crate::handlers::out_of_band::OutOfBandInvitation;
+
+use crate::handlers::trust_ping::util::handle_ping;
+use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
-use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::messages::discovery::query::Query;
-use crate::messages::trust_ping::ping::Ping;
 
+use crate::messages::trust_ping::ping::Ping;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::handlers::trust_ping::util::handle_ping;
-use crate::handlers::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter
@@ -173,65 +172,21 @@ impl SmConnectionInviter {
     }
 
 
-
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviterFullState::Invited(_) => {
                 match message {
-                    A2AMessage::ConnectionRequest(_) => {
-                        debug!("Inviter received ConnectionRequest message");
-                        true
-                    }
-                    A2AMessage::ConnectionProblemReport(_) => {
-                        debug!("Inviter received ProblemReport message");
-                        true
-                    }
-                    _ => {
-                        debug!("Inviter received unexpected message: {:?}", message);
-                        false
-                    }
+                    A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                    _ => false
                 }
             }
             InviterFullState::Responded(_) => {
                 match message {
-                    A2AMessage::Ack(_) => {
-                        debug!("Ack message received");
-                        true
-                    }
-                    A2AMessage::Ping(_) => {
-                        debug!("Ping message received");
-                        true
-                    }
-                    A2AMessage::ConnectionProblemReport(_) => {
-                        debug!("ProblemReport message received");
-                        true
-                    }
-                    _ => {
-                        debug!("Unexpected message received in Responded state: {:?}", message);
-                        false
-                    }
+                    A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                    _ => false
                 }
             }
-            InviterFullState::Completed(_) => {
-                match message {
-                    A2AMessage::Query(_) => {
-                        debug!("Query message received");
-                        true
-                    }
-                    A2AMessage::Disclose(_) => {
-                        debug!("Disclose message received");
-                        true
-                    }
-                    _ => {
-                        debug!("Unexpected message received in Completed state: {:?}", message);
-                        false
-                    }
-                }
-            }
-            _ => {
-                debug!("Unexpected message received: message: {:?}", message);
-                false
-            }
+            _ => false
         }
     }
 
@@ -330,36 +285,6 @@ impl SmConnectionInviter {
             _ => state
         };
         Ok(Self { state, pairwise_info, ..self })
-    }
-
-    pub async fn handle_discover_features<F, T>(self, wallet_handle: WalletHandle, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_discover_features(wallet_handle, query_, comment, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_discovery_query<F, T>(self, wallet_handle: WalletHandle, query: Query, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_discovery_query(wallet_handle, query, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
@@ -473,8 +398,8 @@ pub mod unit_tests {
     use crate::messages::connection::problem_report::unit_tests::_problem_report;
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::unit_tests::_disclose;
-    use crate::messages::discovery::query::unit_tests::_query;
+    use crate::messages::discovery::disclose::test_utils::_disclose;
+    use crate::messages::discovery::query::test_utils::_query;
     use crate::messages::trust_ping::ping::unit_tests::_ping;
     use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
     use crate::test::source_id;
@@ -735,14 +660,6 @@ pub mod unit_tests {
                 did_exchange_sm = did_exchange_sm.handle_ping(_dummy_wallet_handle(), _ping(), _send_message).await.unwrap();
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
-                // Discovery Features
-                did_exchange_sm = did_exchange_sm.handle_discover_features(_dummy_wallet_handle(), None, None, _send_message).await.unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
-                // Query
-                did_exchange_sm = did_exchange_sm.handle_discovery_query(_dummy_wallet_handle(), _query(), _send_message).await.unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
                 // Disclose
                 assert!(did_exchange_sm.get_remote_protocols().is_none());
 
@@ -763,6 +680,7 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
+            use crate::messages::discovery::query::test_utils::_query_string;
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -890,35 +808,20 @@ pub mod unit_tests {
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
-            async fn test_find_message_to_handle_from_completed_state() {
+            async fn test_should_not_find_processable_message_in_complete_state() {
                 let _setup = SetupIndyMocks::init();
-
                 let connection = inviter_sm().await.to_inviter_completed_state().await;
-
-                // Query
                 {
                     let messages = map!(
                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::Query(_query())
-                    );
-
-                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Query(_), message);
-                }
-
-                // Disclose
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
+                        "key_3".to_string() => A2AMessage::Query(_query()),
+                        "key_3".to_string() => A2AMessage::Ping(_ping()),
+                        "key_3".to_string() => A2AMessage::Ack(_ack()),
                         "key_3".to_string() => A2AMessage::Disclose(_disclose())
                     );
 
-                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Disclose(_), message);
+                    assert!(connection.find_message_to_update_state(messages).is_none())
                 }
             }
         }

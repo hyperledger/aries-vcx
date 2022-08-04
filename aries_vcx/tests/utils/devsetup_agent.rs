@@ -227,7 +227,7 @@ pub mod test_utils {
         pub async fn create_invite(&mut self) -> String {
             self.activate().await.unwrap();
             self.connection.connect(self.wallet_handle, &self.agency_client).await.unwrap();
-            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_message_and_update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(ConnectionState::Inviter(InviterState::Invited), self.connection.get_state());
 
             json!(self.connection.get_invite_details().unwrap()).to_string()
@@ -242,13 +242,13 @@ pub mod test_utils {
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_message_and_update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.respond_messages(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_and_handle_message(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
@@ -259,7 +259,7 @@ pub mod test_utils {
 
         pub async fn discovery_features(&mut self) {
             self.activate().await.unwrap();
-            self.connection.send_discovery_features(self.wallet_handle, None, None).await.unwrap();
+            self.connection.send_discovery_query(self.wallet_handle, None, None).await.unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
@@ -378,19 +378,19 @@ pub mod test_utils {
             self.activate().await.unwrap();
             self.connection = Connection::create_with_invite("faber", self.wallet_handle, &self.agency_client, serde_json::from_str(invite).unwrap(), true).await.unwrap();
             self.connection.connect(self.wallet_handle, &self.agency_client).await.unwrap();
-            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_message_and_update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(ConnectionState::Invitee(InviteeState::Requested), self.connection.get_state());
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.update_state(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_message_and_update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
-            self.connection.respond_messages(self.wallet_handle, &self.agency_client).await.unwrap();
+            self.connection.find_and_handle_message(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 

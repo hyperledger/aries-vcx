@@ -69,7 +69,7 @@ mod integration_tests {
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver.build_connection(&consumer.agency_client, true).await.unwrap();
         conn_receiver.connect(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
-        conn_receiver.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
+        conn_receiver.find_message_and_update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
         assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
@@ -187,7 +187,7 @@ mod integration_tests {
             _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
         };
         consumer_to_institution.update_state_with_message(consumer.wallet_handle, consumer.agency_client.clone(), Some(A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg))).await.unwrap();
-        consumer_to_institution.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
+        consumer_to_institution.find_message_and_update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
         assert_eq!(consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
     }
 

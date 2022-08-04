@@ -41,13 +41,12 @@ impl Disclose {
 }
 
 #[cfg(test)]
-#[cfg(feature = "general_test")]
-pub mod unit_tests {
+pub mod test_utils {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 
-    fn _protocol_descriptor() -> ProtocolDescriptor {
+    pub fn _protocol_descriptor() -> ProtocolDescriptor {
         ProtocolDescriptor { pid: String::from("https://didcomm.org/"), roles: None }
     }
 
@@ -58,6 +57,15 @@ pub mod unit_tests {
             thread: Some(_thread()),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::connection::response::test_utils::*;
+    use crate::messages::discovery::disclose::test_utils::{_disclose, _protocol_descriptor};
+
+    use super::*;
 
     #[test]
     fn test_disclose_build_works() {

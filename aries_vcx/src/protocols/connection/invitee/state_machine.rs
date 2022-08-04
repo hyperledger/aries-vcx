@@ -5,7 +5,7 @@ use std::future::Future;
 use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::handlers::out_of_band::OutOfBandInvitation;
+
 use crate::messages::a2a::A2AMessage;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
@@ -15,7 +15,7 @@ use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::messages::discovery::query::Query;
+
 
 
 use crate::protocols::connection::invitee::states::complete::CompleteState;
@@ -150,7 +150,7 @@ impl SmConnectionInvitee {
 
     pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         for (uid, message) in messages {
-            if self.can_drive_protocol(&message) {
+            if self.can_progress_state(&message) {
                 return Some((uid, message));
             }
         }
@@ -180,44 +180,15 @@ impl SmConnectionInvitee {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn can_drive_protocol(&self, message: &A2AMessage) -> bool {
+    pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviteeFullState::Requested(_) => {
                 match message {
-                    A2AMessage::ConnectionResponse(_) => {
-                        debug!("Invitee received ConnectionResponse message");
-                        true
-                    }
-                    A2AMessage::ConnectionProblemReport(_) => {
-                        debug!("Invitee received ProblemReport message");
-                        true
-                    }
-                    _ => {
-                        debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
-                        false
-                    }
+                    A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                    _ => false
                 }
             }
-            InviteeFullState::Completed(_) => {
-                match message {
-                    A2AMessage::Query(_) => {
-                        debug!("Query message received");
-                        true
-                    }
-                    A2AMessage::Disclose(_) => {
-                        debug!("Disclose message received");
-                        true
-                    }
-                    _ => {
-                        debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
-                        false
-                    }
-                }
-            }
-            _ => {
-                debug!("Inspected message cannot be used to drive connection protocol. Message: {:?}", message);
-                false
-            }
+            _ => false
         }
     }
 
@@ -313,36 +284,6 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_discover_features<F, T>(self, wallet_handle: WalletHandle, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_discover_features(wallet_handle, query_, comment, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            _ => self.state.clone()
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_discovery_query<F, T>(self, wallet_handle: WalletHandle, query: Query, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviteeFullState::Completed(state) => {
-                state.handle_discovery_query(wallet_handle, query, &self.pairwise_info.pw_vk, send_message).await?;
-                InviteeFullState::Completed(state)
-            }
-            _ => self.state.clone()
-        };
-        Ok(Self { state, ..self })
-    }
-
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let Self { state, .. } = self;
         let state = match state {
@@ -408,8 +349,8 @@ pub mod unit_tests {
     use crate::messages::connection::problem_report::unit_tests::_problem_report;
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::unit_tests::_disclose;
-    use crate::messages::discovery::query::unit_tests::_query;
+    use crate::messages::discovery::disclose::test_utils::_disclose;
+    use crate::messages::discovery::query::test_utils::_query;
     use crate::messages::trust_ping::ping::unit_tests::_ping;
     use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
     use crate::test::source_id;
@@ -616,7 +557,7 @@ pub mod unit_tests {
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
 
-                did_exchange_sm = did_exchange_sm.handle_discovery_query(_dummy_wallet_handle(), _query(), _send_message).await.unwrap();
+                did_exchange_sm = did_exchange_sm.handle_disclose(_disclose()).unwrap();
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
             }
 
@@ -665,14 +606,6 @@ pub mod unit_tests {
                 let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_completed_state().await;
-
-                // Discovery Features
-                did_exchange_sm = did_exchange_sm.handle_discover_features(_dummy_wallet_handle(), None, None, _send_message).await.unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
-
-                // Query
-                did_exchange_sm = did_exchange_sm.handle_discovery_query(_dummy_wallet_handle(), _query(), _send_message).await.unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
 
                 // Disclose
                 assert!(did_exchange_sm.get_remote_protocols().is_none());
@@ -760,40 +693,6 @@ pub mod unit_tests {
                     );
 
                     assert!(connection.find_message_to_update_state(messages).is_none());
-                }
-            }
-
-            #[tokio::test]
-            #[cfg(feature = "general_test")]
-            async fn test_find_message_to_handle_from_completed_state() {
-                let _setup = SetupIndyMocks::init();
-
-                let connection = invitee_sm().await.to_invitee_completed_state().await;
-
-                // Query
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::Query(_query())
-                    );
-
-                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Query(_), message);
-                }
-
-                // Disclose
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::Disclose(_disclose())
-                    );
-
-                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Disclose(_), message);
                 }
             }
         }
