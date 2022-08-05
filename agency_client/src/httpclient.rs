@@ -4,7 +4,7 @@ use std::time::Duration;
 use async_std::sync::RwLock;
 use reqwest;
 use reqwest::Client;
-use reqwest::header::CONTENT_TYPE;
+use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 
 use crate::{AgencyMockDecrypted, mocking};
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
@@ -49,6 +49,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
         client.post(url)
             .body(body_content.to_owned())
             .header(CONTENT_TYPE, "application/ssi-agent-wire")
+            .header(USER_AGENT, "reqwest")
             .send()
             .await
             .map_err(|err| {
