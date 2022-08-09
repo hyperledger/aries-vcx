@@ -30,6 +30,7 @@ impl Query {
     }
 }
 
+#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use super::*;
 

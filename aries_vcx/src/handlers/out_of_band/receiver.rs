@@ -1,6 +1,5 @@
 use std::clone::Clone;
 
-
 use indy_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
@@ -16,7 +15,6 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::utils::send_message;

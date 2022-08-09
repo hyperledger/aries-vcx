@@ -140,23 +140,20 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let res = if connection.is_in_final_state() {
-        info!("connection::update_state >> connection {} is in final state, trying to respond messages", handle);
+        info!("connection::update_state >> connection {} is in final state, trying to respond to messages", handle);
         match connection.find_and_handle_message(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
             Ok(_) => Ok(error::SUCCESS.code_num),
             Err(err) => Err(err.into())
         }
     } else {
-        info!("connection::update_state >> connection {} is not in final state, trying to updating state", handle);
+        info!("connection::update_state >> connection {} is not in final state, trying to update state", handle);
         match connection.find_message_and_update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
             Ok(_) => Ok(error::SUCCESS.code_num),
             Err(err) => Err(err.into())
         }
     };
-    // todo: would be nice if find_message_and_update_state and find_and_handle_message signal in their
-    // return value whether the connection has been modified or not.
     CONNECTION_MAP.insert(handle, connection)?;
     res
-
 }
 
 pub async fn delete_connection(handle: u32) -> VcxResult<u32> {

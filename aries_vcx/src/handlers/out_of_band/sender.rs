@@ -23,12 +23,11 @@ pub async fn send_handshake_reuse_accepted(wallet_handle: WalletHandle,
                                            did_doc: &DidDoc) -> VcxResult<()>
 {
     let thread_id = handshake_reuse.get_thread_id();
-    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidOption, "Parent thread missing"))?;
+    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(VcxError::from_msg(VcxErrorKind::InvalidOption, "Parent thread id missing"))?;
     let ack_msg = OutOfBandHandshakeReuseAccepted::default()
         .set_thread_id(&thread_id)
         .set_parent_thread_id(pthread_id);
-    send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), ack_msg.to_a2a_message()).await.ok();
-    Ok(())
+    send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), ack_msg.to_a2a_message()).await
 }
 
 impl OutOfBandSender {

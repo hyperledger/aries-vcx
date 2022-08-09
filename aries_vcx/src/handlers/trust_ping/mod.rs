@@ -1,7 +1,4 @@
-
-
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-
 use crate::messages::a2a::MessageId;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
@@ -9,6 +6,7 @@ use crate::protocols::SendClosure;
 use crate::utils::uuid;
 
 pub mod util;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
@@ -67,7 +65,6 @@ mod unit_tests {
     use crate::handlers::trust_ping::TrustPingSender;
     use crate::handlers::trust_ping::util::build_ping_response;
     use crate::messages::a2a::A2AMessage;
-    
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;
 
@@ -103,8 +100,8 @@ mod unit_tests {
         sender1.handle_ping_response(&ping_response).unwrap_err();
     }
 
-    #[tokio::test]
-    async fn test_should_build_ping_with_comment() {
+    #[test]
+    fn test_should_build_ping_with_comment() {
         let _setup = SetupMocks::init();
         let sender1 = TrustPingSender::build(false, Some("hello".to_string()));
         assert_eq!(sender1.get_ping().comment, Some("hello".to_string()))
