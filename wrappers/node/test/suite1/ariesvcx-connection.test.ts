@@ -216,14 +216,14 @@ describe('Connection:', () => {
 
   describe('sendPing:', () => {
     it('success: send ping', async () => {
-      const connection = await connectionCreateInviterNull();
+      const connection = await createConnectionInviterRequested();
       await connection.sendPing('ping');
     });
   });
 
   describe('sendDiscoveryFeatures:', () => {
     it('success: send discovery features', async () => {
-      const connection = await connectionCreateInviterNull();
+      const connection = await createConnectionInviterRequested();
       await connection.sendDiscoveryFeatures('*', 'comment');
     });
   });

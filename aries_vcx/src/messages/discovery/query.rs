@@ -30,17 +30,15 @@ impl Query {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-pub mod unit_tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use super::*;
 
-    fn _query_string() -> String {
+    pub fn _query_string() -> String {
         String::from("https://didcomm.org/")
     }
 
-
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("I'm wondering if we can...")
     }
 
@@ -51,6 +49,14 @@ pub mod unit_tests {
             comment: Some(_comment()),
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::discovery::query::test_utils::{_comment, _query, _query_string};
+
+    use super::*;
 
     #[test]
     fn test_query_build_works() {

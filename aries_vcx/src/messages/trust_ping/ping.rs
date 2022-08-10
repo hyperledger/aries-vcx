@@ -8,15 +8,17 @@ pub struct Ping {
     #[serde(default)]
     pub response_requested: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
 }
 
 impl Ping {
-    pub fn create() -> Ping {
-        Ping::default()
+    pub fn create(thread_id: MessageId) -> Ping {
+        let mut ping = Ping::default();
+        ping.id = thread_id;
+        ping
     }
 
     pub fn set_comment(mut self, comment: Option<String>) -> Ping {
@@ -24,8 +26,8 @@ impl Ping {
         self
     }
 
-    pub fn request_response(mut self) -> Ping {
-        self.response_requested = true;
+    pub fn set_request_response(mut self, request_response: bool) -> Ping {
+        self.response_requested = request_response;
         self
     }
 }

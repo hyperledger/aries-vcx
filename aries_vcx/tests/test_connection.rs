@@ -69,7 +69,7 @@ mod integration_tests {
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver.build_connection(&consumer.agency_client, true).await.unwrap();
         conn_receiver.connect(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
-        conn_receiver.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
+        conn_receiver.find_message_and_update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
         assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
@@ -172,7 +172,7 @@ mod integration_tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuse message type"); }
         };
-        institution_to_consumer.update_state_with_message(institution.wallet_handle, &institution.agency_client, &A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
+        institution_to_consumer.handle_message(A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()), institution.wallet_handle).await.unwrap();
 
         consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
@@ -186,8 +186,7 @@ mod integration_tests {
             }
             _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
         };
-        consumer_to_institution.update_state_with_message(consumer.wallet_handle, &consumer.agency_client, &A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
-        consumer_to_institution.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
+        consumer_to_institution.find_and_handle_message(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
         assert_eq!(consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
     }
 
@@ -236,11 +235,12 @@ mod integration_tests {
         // Discovery Features
         faber.discovery_features().await;
 
-        alice.update_state(4).await;
+        alice.handle_messages().await;
 
-        faber.update_state(4).await;
+        faber.handle_messages().await;
 
         let faber_connection_info = faber.connection_info().await;
+        warn!("faber_connection_info: {}", faber_connection_info);
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 }

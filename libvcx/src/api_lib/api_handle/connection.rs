@@ -132,28 +132,25 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize message {} into A2AMessage, err: {:?}", message, err)))?;
-    connection.update_state_with_message(get_main_wallet_handle(), &get_main_agency_client().unwrap(), &message).await?;
+    connection.update_state_with_message(get_main_wallet_handle(), get_main_agency_client().unwrap(), Some(message)).await?;
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
 
-// fn get_bootstrap_agent_messages(remote_vk: VcxResult<String>, bootstrap_agent_info: Option<&PairwiseInfo>) -> VcxResult<Option<(HashMap<String, A2AMessage>, PairwiseInfo)>> {
-//     let expected_sender_vk = match remote_vk {
-//         Ok(vk) => vk,
-//         Err(_) => return Ok(None)
-//     };
-//     if let Some(bootstrap_agent_info) = bootstrap_agent_info {
-//         let messages = bootstrap_agent_info.get_messages(&expected_sender_vk)?;
-//         return Ok(Some((messages, bootstrap_agent_info.clone())));
-//     }
-//     Ok(None)
-// }
-
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let res = match connection.update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
-        Ok(_) => Ok(error::SUCCESS.code_num),
-        Err(err) => Err(err.into())
+    let res = if connection.is_in_final_state() {
+        info!("connection::update_state >> connection {} is in final state, trying to respond to messages", handle);
+        match connection.find_and_handle_message(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+            Ok(_) => Ok(error::SUCCESS.code_num),
+            Err(err) => Err(err.into())
+        }
+    } else {
+        info!("connection::update_state >> connection {} is not in final state, trying to update state", handle);
+        match connection.find_message_and_update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap()).await {
+            Ok(_) => Ok(error::SUCCESS.code_num),
+            Err(err) => Err(err.into())
+        }
     };
     CONNECTION_MAP.insert(handle, connection)?;
     res
@@ -247,8 +244,8 @@ pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
-    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.send_discovery_features(get_main_wallet_handle(), query.map(String::from), comment.map(String::from)).await?;
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.send_discovery_query(get_main_wallet_handle(), query.map(String::from), comment.map(String::from)).await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 

@@ -567,16 +567,16 @@ pub mod test_utils {
         assert_eq!(conn_requests.len(), 1);
         let mut institution_to_consumer = Connection::create_with_request(faber.wallet_handle, conn_requests.pop().unwrap(), &faber.agent, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Requested), institution_to_consumer.get_state());
-        institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
+        institution_to_consumer.find_message_and_update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
 
         alice.activate().await.unwrap();
-        consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
+        consumer_to_institution.find_message_and_update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
 
         faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
-        institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
+        institution_to_consumer.find_message_and_update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
 
         assert_eq!(institution_to_consumer.get_thread_id(), consumer_to_institution.get_thread_id());
@@ -592,7 +592,7 @@ pub mod test_utils {
         alice.activate().await.unwrap();
         let mut consumer_to_institution = Connection::create_with_invite("institution", alice.wallet_handle, &alice.agency_client, public_invite, true).await.unwrap();
         consumer_to_institution.connect(alice.wallet_handle, &alice.agency_client).await.unwrap();
-        consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
+        consumer_to_institution.find_message_and_update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
 
         let institution_to_consumer = connect_using_request_sent_to_public_agent(alice, institution, &mut consumer_to_institution).await;
         (consumer_to_institution, institution_to_consumer)
@@ -611,27 +611,27 @@ pub mod test_utils {
         let mut consumer_to_institution = Connection::create_with_invite("institution", alice.wallet_handle, &alice.agency_client, details.clone(), true).await.unwrap();
 
         consumer_to_institution.connect(alice.wallet_handle, &alice.agency_client).await.unwrap();
-        consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
+        consumer_to_institution.find_message_and_update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
 
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
         faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
-        institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
+        institution_to_consumer.find_message_and_update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Responded), institution_to_consumer.get_state());
         assert_eq!(thread_id, institution_to_consumer.get_thread_id());
 
         debug!("Consumer is going to complete the connection protocol.");
         alice.activate().await.unwrap();
-        consumer_to_institution.update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
+        consumer_to_institution.find_message_and_update_state(alice.wallet_handle, &alice.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Invitee(InviteeState::Completed), consumer_to_institution.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
         faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
-        institution_to_consumer.update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
+        institution_to_consumer.find_message_and_update_state(faber.wallet_handle, &faber.agency_client).await.unwrap();
         assert_eq!(ConnectionState::Inviter(InviterState::Completed), institution_to_consumer.get_state());
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 

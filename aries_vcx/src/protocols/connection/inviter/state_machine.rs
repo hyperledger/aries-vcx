@@ -4,28 +4,27 @@ use std::future::Future;
 
 use indy_sys::WalletHandle;
 
+use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-use crate::handlers::out_of_band::OutOfBandInvitation;
+
+use crate::handlers::trust_ping::util::handle_ping;
+use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::ack::Ack;
-use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::messages::discovery::query::Query;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+
 use crate::messages::trust_ping::ping::Ping;
-use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::protocols::connection::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter
@@ -84,10 +83,6 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn is_in_null_state(&self) -> bool {
-        InviterState::from(self.state.clone()) == InviterState::Initial
-    }
-
     pub fn from(source_id: String, thread_id: String, pairwise_info: PairwiseInfo, state: InviterFullState) -> Self {
         Self {
             source_id,
@@ -130,9 +125,9 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
+    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         for (uid, message) in messages {
-            if self.can_handle_message(&message) {
+            if self.can_progress_state(&message) {
                 return Some((uid, message));
             }
         }
@@ -150,10 +145,17 @@ impl SmConnectionInviter {
         }
     }
 
-    pub fn needs_message(&self) -> bool {
+    pub fn is_in_null_state(&self) -> bool {
         match self.state {
-            InviterFullState::Requested(_) => false,
-            _ => true
+            InviterFullState::Initial(_) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_in_final_state(&self) -> bool {
+        match self.state {
+            InviterFullState::Completed(_) => true,
+            _ => false
         }
     }
 
@@ -169,84 +171,22 @@ impl SmConnectionInviter {
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
     }
 
-    pub fn can_handle_message(&self, message: &A2AMessage) -> bool {
+
+    pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
             InviterFullState::Invited(_) => {
                 match message {
-                    A2AMessage::ConnectionRequest(_) => {
-                        debug!("Inviter received ConnectionRequest message");
-                        true
-                    }
-                    A2AMessage::ConnectionProblemReport(_) => {
-                        debug!("Inviter received ProblemReport message");
-                        true
-                    }
-                    _ => {
-                        debug!("Inviter received unexpected message: {:?}", message);
-                        false
-                    }
+                    A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                    _ => false
                 }
             }
             InviterFullState::Responded(_) => {
                 match message {
-                    A2AMessage::Ack(_) => {
-                        debug!("Ack message received");
-                        true
-                    }
-                    A2AMessage::Ping(_) => {
-                        debug!("Ping message received");
-                        true
-                    }
-                    A2AMessage::PingResponse(_) => {
-                        debug!("PingResponse message received");
-                        true
-                    }
-                    A2AMessage::ConnectionProblemReport(_) => {
-                        debug!("ProblemReport message received");
-                        true
-                    }
-                    _ => {
-                        debug!("Unexpected message received in Responded state: {:?}", message);
-                        false
-                    }
+                    A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                    _ => false
                 }
             }
-            InviterFullState::Completed(_) => {
-                match message {
-                    A2AMessage::Ping(_) => {
-                        debug!("Ping message received");
-                        true
-                    }
-                    A2AMessage::PingResponse(_) => {
-                        debug!("PingResponse message received");
-                        true
-                    }
-                    A2AMessage::Query(_) => {
-                        debug!("Query message received");
-                        true
-                    }
-                    A2AMessage::Disclose(_) => {
-                        debug!("Disclose message received");
-                        true
-                    }
-                    A2AMessage::OutOfBandHandshakeReuse(_) => {
-                        debug!("OutOfBandHandshakeReuse message received");
-                        true
-                    }
-                    A2AMessage::OutOfBandHandshakeReuseAccepted(_) => {
-                        debug!("OutOfBandHandshakeReuseAccepted message received");
-                        true
-                    }
-                    _ => {
-                        debug!("Unexpected message received in Completed state: {:?}", message);
-                        false
-                    }
-                }
-            }
-            _ => {
-                debug!("Unexpected message received: message: {:?}", message);
-                false
-            }
+            _ => false
         }
     }
 
@@ -335,116 +275,16 @@ impl SmConnectionInviter {
             F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
             T: Future<Output=VcxResult<()>>
     {
+        verify_thread_id(&self.get_thread_id(), &ping.to_a2a_message())?;
         let Self { state, pairwise_info, .. } = self;
         let state = match state {
             InviterFullState::Responded(state) => {
-                state.handle_ping(wallet_handle, &ping, &pairwise_info.pw_vk, send_message).await?;
+                handle_ping(wallet_handle, &ping, &pairwise_info.pw_vk, &state.did_doc, send_message).await?;
                 InviterFullState::Completed((state, ping).into())
-            }
-            InviterFullState::Completed(state) => {
-                state.handle_ping(wallet_handle, &ping, &pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
             }
             _ => state
         };
         Ok(Self { state, pairwise_info, ..self })
-    }
-
-    pub async fn handle_send_ping<F, T>(self,
-                                        wallet_handle: WalletHandle,
-                                        comment: Option<String>,
-                                        send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Responded(state) => {
-                let ping =
-                    Ping::create()
-                        .request_response()
-                        .set_comment(comment);
-
-                send_message(wallet_handle, self.pairwise_info.pw_vk.clone(), state.did_doc.clone(), ping.to_a2a_message()).await.ok();
-                InviterFullState::Responded(state)
-            }
-            InviterFullState::Completed(state) => {
-                state.handle_send_ping(wallet_handle, comment, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub fn handle_ping_response(self, ping_response: PingResponse) -> VcxResult<Self> {
-        let state = match self.state {
-            InviterFullState::Responded(state) => {
-                InviterFullState::Completed((state, ping_response).into())
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_send_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, oob: OutOfBandInvitation, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be sent only in the Completed state, current state: {:?}", s))); }
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_handshake_reuse<F, T>(self, wallet_handle: WalletHandle, reuse_msg: OutOfBandHandshakeReuse, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_send_handshake_reuse_accepted(wallet_handle, reuse_msg, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Handshake reuse can be accepted only from the Completed state, current state: {:?}", s))); }
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_discover_features<F, T>(self, wallet_handle: WalletHandle, query_: Option<String>, comment: Option<String>, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_discover_features(wallet_handle, query_, comment, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
-    }
-
-    pub async fn handle_discovery_query<F, T>(self, wallet_handle: WalletHandle, query: Query, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-    {
-        let state = match self.state {
-            InviterFullState::Completed(state) => {
-                state.handle_discovery_query(wallet_handle, query, &self.pairwise_info.pw_vk, send_message).await?;
-                InviterFullState::Completed(state)
-            }
-            _ => self.state
-        };
-        Ok(Self { state, ..self })
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
@@ -558,8 +398,8 @@ pub mod unit_tests {
     use crate::messages::connection::problem_report::unit_tests::_problem_report;
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::unit_tests::_disclose;
-    use crate::messages::discovery::query::unit_tests::_query;
+    use crate::messages::discovery::disclose::test_utils::_disclose;
+    use crate::messages::discovery::query::test_utils::_query;
     use crate::messages::trust_ping::ping::unit_tests::_ping;
     use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
     use crate::test::source_id;
@@ -816,24 +656,8 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_completed_state().await;
 
-                // Send Ping
-                did_exchange_sm = did_exchange_sm.handle_send_ping(_dummy_wallet_handle(), None, _send_message).await.unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
                 // Ping
                 did_exchange_sm = did_exchange_sm.handle_ping(_dummy_wallet_handle(), _ping(), _send_message).await.unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
-                // Ping Response
-                did_exchange_sm = did_exchange_sm.handle_ping_response(_ping_response()).unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
-                // Discovery Features
-                did_exchange_sm = did_exchange_sm.handle_discover_features(_dummy_wallet_handle(), None, None, _send_message).await.unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
-
-                // Query
-                did_exchange_sm = did_exchange_sm.handle_discovery_query(_dummy_wallet_handle(), _query(), _send_message).await.unwrap();
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
                 // Disclose
@@ -856,6 +680,7 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
+            use crate::messages::discovery::query::test_utils::_query_string;
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -877,7 +702,7 @@ pub mod unit_tests {
                     "key_5".to_string() => A2AMessage::Ack(_ack())
                 );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -896,7 +721,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::ConnectionRequest(_), message);
                 }
@@ -909,7 +734,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_3", uid);
                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
                 }
@@ -921,7 +746,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::Ack(_ack())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
@@ -940,7 +765,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_1", uid);
                     assert_match!(A2AMessage::Ping(_), message);
                 }
@@ -953,7 +778,7 @@ pub mod unit_tests {
                         "key_3".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::Ack(_), message);
                 }
@@ -965,7 +790,7 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::ConnectionProblemReport(_problem_report())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
+                    let (uid, message) = connection.find_message_to_update_state(messages).unwrap();
                     assert_eq!("key_2", uid);
                     assert_match!(A2AMessage::ConnectionProblemReport(_), message);
                 }
@@ -977,71 +802,26 @@ pub mod unit_tests {
                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response())
                     );
 
-                    assert!(connection.find_message_to_handle(messages).is_none());
+                    assert!(connection.find_message_to_update_state(messages).is_none());
                 }
             }
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
-            async fn test_find_message_to_handle_from_completed_state() {
+            async fn test_should_not_find_processable_message_in_complete_state() {
                 let _setup = SetupIndyMocks::init();
-
                 let connection = inviter_sm().await.to_inviter_completed_state().await;
-
-                // Ping
                 {
                     let messages = map!(
                         "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
                         "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::Ping(_ping()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::Ping(_), message);
-                }
-
-                // Ping Response
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::ConnectionProblemReport(_problem_report()),
-                        "key_4".to_string() => A2AMessage::PingResponse(_ping_response()),
-                        "key_5".to_string() => A2AMessage::Ack(_ack())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_4", uid);
-                    assert_match!(A2AMessage::PingResponse(_), message);
-                }
-
-                // Query
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
-                        "key_3".to_string() => A2AMessage::Query(_query())
-                    );
-
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Query(_), message);
-                }
-
-                // Disclose
-                {
-                    let messages = map!(
-                        "key_1".to_string() => A2AMessage::ConnectionRequest(_request()),
-                        "key_2".to_string() => A2AMessage::ConnectionResponse(_signed_response()),
+                        "key_3".to_string() => A2AMessage::Query(_query()),
+                        "key_3".to_string() => A2AMessage::Ping(_ping()),
+                        "key_3".to_string() => A2AMessage::Ack(_ack()),
                         "key_3".to_string() => A2AMessage::Disclose(_disclose())
                     );
 
-                    let (uid, message) = connection.find_message_to_handle(messages).unwrap();
-                    assert_eq!("key_3", uid);
-                    assert_match!(A2AMessage::Disclose(_), message);
+                    assert!(connection.find_message_to_update_state(messages).is_none())
                 }
             }
         }
