@@ -223,7 +223,7 @@ describe('Connection:', () => {
 
   describe('sendDiscoveryFeatures:', () => {
     it('success: send discovery features', async () => {
-      const connection = await connectionCreateInviterNull();
+      const connection = await createConnectionInviterRequested();
       await connection.sendDiscoveryFeatures('*', 'comment');
     });
   });

@@ -246,6 +246,11 @@ pub mod test_utils {
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
+        pub async fn handle_messages(&mut self) {
+            self.activate().await.unwrap();
+            self.connection.find_and_handle_message(self.wallet_handle, &self.agency_client).await.unwrap();
+        }
+
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.activate().await.unwrap();
             self.connection.find_and_handle_message(self.wallet_handle, &self.agency_client).await.unwrap();
@@ -386,6 +391,11 @@ pub mod test_utils {
             self.activate().await.unwrap();
             self.connection.find_message_and_update_state(self.wallet_handle, &self.agency_client).await.unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
+        }
+
+        pub async fn handle_messages(&mut self) {
+            self.activate().await.unwrap();
+            self.connection.find_and_handle_message(self.wallet_handle, &self.agency_client).await.unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {

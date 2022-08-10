@@ -403,7 +403,7 @@ impl Connection {
         None
     }
 
-    async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
+    pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
         let did_doc = self.their_did_doc()
             .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, format!("Can't answer message {:?} because counterparty did doc is not available", message)))?;
         let pw_vk = &self.pairwise_info().pw_vk;
