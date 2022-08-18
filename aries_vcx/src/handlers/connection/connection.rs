@@ -515,16 +515,12 @@ impl Connection {
                                 .await?;
                             (sm_connection, Some(new_cloud_agent), true)
                         }
-                        msg @ A2AMessage::Ack(_) | msg @ A2AMessage::Ping(_) => (
-                            sm_inviter.handle_confirmation_message(&msg).await?,
-                            None,
-                            false,
-                        ),
-                        A2AMessage::ConnectionProblemReport(problem_report) => (
-                            sm_inviter.handle_problem_report(problem_report)?,
-                            None,
-                            false,
-                        ),
+                        msg @ A2AMessage::Ack(_) | msg @ A2AMessage::Ping(_) => {
+                            (sm_inviter.handle_confirmation_message(&msg).await?, None, false)
+                        }
+                        A2AMessage::ConnectionProblemReport(problem_report) => {
+                            (sm_inviter.handle_problem_report(problem_report)?, None, false)
+                        }
                         _ => (sm_inviter.clone(), None, false),
                     },
                     None => {

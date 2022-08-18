@@ -6,7 +6,6 @@ use indy_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-
 use crate::handlers::trust_ping::util::handle_ping;
 use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -17,7 +16,6 @@ use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-
 use crate::messages::trust_ping::ping::Ping;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
@@ -328,9 +326,7 @@ impl SmConnectionInviter {
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let state = match self.state {
-            InviterFullState::Completed(state) => {
-                InviterFullState::Completed((state, disclose.protocols).into())
-            }
+            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.protocols).into()),
             _ => self.state,
         };
         Ok(Self { state, ..self })
@@ -394,8 +390,9 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
-        use super::*;
         use agency_client::messages::update_com_method::ComMethodType::A2A;
+
+        use super::*;
 
         async fn _send_message(
             _wallet_handle: WalletHandle,
@@ -481,6 +478,7 @@ pub mod unit_tests {
 
         mod get_thread_id {
             use super::*;
+            use crate::messages::ack::test_utils::_ack_random_thread;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -512,10 +510,10 @@ pub mod unit_tests {
                     .handle_send_response(_dummy_wallet_handle(), &_send_message)
                     .await
                     .unwrap();
-                inviter
-                    .handle_confirmation_message(&A2AMessage::Ack(_ack_1()))
+                assert!(inviter
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack_random_thread()))
                     .await
-                    .unwrap_err();
+                    .is_err())
             }
         }
 
@@ -535,6 +533,7 @@ pub mod unit_tests {
         }
 
         mod step {
+            use crate::messages::a2a::A2AMessage::Ping;
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -570,7 +569,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
@@ -666,7 +665,7 @@ pub mod unit_tests {
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
@@ -680,7 +679,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
 
@@ -695,7 +694,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ping(_dummy_wallet_handle(), _ping(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ping(_ping()))
                     .await
                     .unwrap();
 
@@ -737,7 +736,14 @@ pub mod unit_tests {
 
                 // Ping
                 did_exchange_sm = did_exchange_sm
-                    .handle_ping(_dummy_wallet_handle(), _ping(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ping(_ping()))
+                    .await
+                    .unwrap();
+                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
+
+                // Ack
+                did_exchange_sm = did_exchange_sm
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
@@ -749,14 +755,6 @@ pub mod unit_tests {
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
                 assert!(did_exchange_sm.get_remote_protocols().is_some());
-
-                // ignore
-                // Ack
-                did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
-                    .await
-                    .unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
                 // Problem Report
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();

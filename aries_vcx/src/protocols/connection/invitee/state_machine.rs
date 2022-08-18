@@ -454,7 +454,7 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 self = self
-                    .handle_connection_response(_response(WalletHandle(0), &key).await)
+                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
                     .unwrap();
                 self = self
                     .handle_send_ack(_dummy_wallet_handle(), &_send_message)
@@ -464,11 +464,11 @@ pub mod unit_tests {
             }
         }
 
-        async fn _response(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
+        async fn _response(wallet_handle: WalletHandle, key: &str, thread_id: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
-                .set_thread_id(&_request().id.0)
+                .set_thread_id(thread_id)
                 .encode(wallet_handle, &key)
                 .await
                 .unwrap()
@@ -520,15 +520,9 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
-                invitee = invitee
+                assert!(invitee
                     .handle_connection_response(_response_1(WalletHandle(0), &key).await)
-                    .unwrap();
-                assert_match!(InviteeState::Responded, invitee.get_state());
-                invitee = invitee
-                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
-                    .await
-                    .unwrap();
-                assert_match!(InviteeState::Initial, invitee.get_state());
+                    .is_err());
             }
         }
 
@@ -563,7 +557,7 @@ pub mod unit_tests {
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
-            async fn test_did_exchange_handle_other_message_from_null_state() {
+            async fn test_did_exchange_wont_sent_connection_request_in_null_state() {
                 let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().await;
@@ -575,11 +569,19 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
+            }
 
-                did_exchange_sm = did_exchange_sm
-                    .handle_connection_response(_response(WalletHandle(0), &key).await)
-                    .unwrap();
-                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_did_exchange_wont_accept_connection_response_in_null_state() {
+                let _setup = SetupIndyMocks::init();
+
+                let did_exchange_sm = invitee_sm().await;
+
+                let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL";
+                assert!(did_exchange_sm
+                    .handle_connection_response(_response(WalletHandle(0), key, &_request().id.0).await)
+                    .is_err());
             }
 
             #[tokio::test]
@@ -621,7 +623,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_connection_response(_response(WalletHandle(0), &key).await)
+                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
                     .unwrap();
                 did_exchange_sm = did_exchange_sm
                     .handle_send_ack(_dummy_wallet_handle(), &_send_message)
