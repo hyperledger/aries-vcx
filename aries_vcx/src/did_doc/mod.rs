@@ -61,7 +61,7 @@ impl DidDoc {
 
                 self.public_key.push(
                     Ed25519PublicKey {
-                        id: key_id,
+                        id: key_reference.clone(),
                         type_: String::from(KEY_TYPE),
                         controller: self.id.clone(),
                         public_key_base_58: key.clone(),
@@ -213,14 +213,13 @@ impl DidDoc {
     }
 
     fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> VcxResult<Ed25519PublicKey> {
-        let public_key = self.public_key.iter().find(|ddo_keys| {
-            match &key_ref.did {
-                None => ddo_keys.id == key_ref.key_id,
-                Some(did) => {
-                    ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id)
+        let public_key = self.public_key.iter()
+            .find(|ddo_keys| {
+                match &key_ref.did {
+                    None => ddo_keys.id == key_ref.key_id,
+                    Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id)
                 }
-            }
-        })
+            })
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to find entry in public_key by key reference: {:?}", key_ref)))?;
         Ok(public_key.clone())
     }
@@ -426,7 +425,6 @@ mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::utils::devsetup::SetupEmpty;
 
-
     #[test]
     fn test_did_doc_build_works() {
         let mut did_doc: DidDoc = DidDoc::default();
@@ -435,7 +433,7 @@ mod unit_tests {
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(_routing_keys());
 
-        assert_eq!(_did_doc_vcx_legacy(), did_doc);
+        assert_eq!(_did_doc_vcx_new(), did_doc);
     }
 
     #[test]
