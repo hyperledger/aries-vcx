@@ -1,7 +1,7 @@
-use indy::WalletHandle;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::MessageStatusCode;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use crate::MessageStatusCode;
+use indy::WalletHandle;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
@@ -48,7 +48,11 @@ impl DownloadedMessageEncrypted {
         })
     }
 
-    pub async fn decrypt_auth(self, wallet_handle: WalletHandle, expected_sender_vk: &str) -> AgencyClientResult<DownloadedMessage> {
+    pub async fn decrypt_auth(
+        self,
+        wallet_handle: WalletHandle,
+        expected_sender_vk: &str,
+    ) -> AgencyClientResult<DownloadedMessage> {
         let decrypted_payload = self._auth_decrypt_v3_message(wallet_handle, expected_sender_vk).await?;
         Ok(DownloadedMessage {
             status_code: self.status_code.clone(),
@@ -57,11 +61,15 @@ impl DownloadedMessageEncrypted {
         })
     }
 
-    async fn _noauth_decrypt_v3_message(&self, wallet_handle: WalletHandle,) -> AgencyClientResult<String> {
+    async fn _noauth_decrypt_v3_message(&self, wallet_handle: WalletHandle) -> AgencyClientResult<String> {
         EncryptionEnvelope::anon_unpack(wallet_handle, self.payload()?).await
     }
 
-    async fn _auth_decrypt_v3_message(&self, wallet_handle: WalletHandle, expected_sender_vk: &str) -> AgencyClientResult<String> {
+    async fn _auth_decrypt_v3_message(
+        &self,
+        wallet_handle: WalletHandle,
+        expected_sender_vk: &str,
+    ) -> AgencyClientResult<String> {
         EncryptionEnvelope::auth_unpack(wallet_handle, self.payload()?, expected_sender_vk).await
     }
 }

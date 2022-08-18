@@ -25,15 +25,23 @@ pub struct OutOfBandReceiver {
     pub oob: OutOfBandInvitation,
 }
 
-pub async fn send_handshake_reuse(wallet_handle: WalletHandle,
-                                  oob_id: &str,
-                                  pw_vk: &str,
-                                  did_doc: &DidDoc) -> VcxResult<()>
-{
+pub async fn send_handshake_reuse(
+    wallet_handle: WalletHandle,
+    oob_id: &str,
+    pw_vk: &str,
+    did_doc: &DidDoc,
+) -> VcxResult<()> {
     let reuse_msg = OutOfBandHandshakeReuse::default()
         .set_thread_id_matching_id()
         .set_parent_thread_id(oob_id);
-    send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), reuse_msg.to_a2a_message()).await.ok();
+    send_message(
+        wallet_handle,
+        pw_vk.to_string(),
+        did_doc.clone(),
+        reuse_msg.to_a2a_message(),
+    )
+    .await
+    .ok();
     Ok(())
 }
 
@@ -42,7 +50,7 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
-            _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat))
+            _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat)),
         }
     }
 
@@ -50,7 +58,10 @@ impl OutOfBandReceiver {
         self.oob.id.0.clone()
     }
 
-    pub async fn connection_exists<'a>(&self, connections: &'a Vec<&'a Connection>) -> VcxResult<Option<&'a Connection>> {
+    pub async fn connection_exists<'a>(
+        &self,
+        connections: &'a Vec<&'a Connection>,
+    ) -> VcxResult<Option<&'a Connection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
@@ -65,10 +76,10 @@ impl OutOfBandReceiver {
                             return Ok(Some(connection));
                         };
                     }
-                    None => break
+                    None => break,
                 }
             }
-        };
+        }
         Ok(None)
     }
 
@@ -80,46 +91,85 @@ impl OutOfBandReceiver {
             match attach.id() {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
-                        let offer: CredentialOffer = serde_json::from_str(&attach_json)
-                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::CredentialOffer(offer.set_parent_thread_id(&self.oob.id.0))));
+                        let offer: CredentialOffer = serde_json::from_str(&attach_json).map_err(|_| {
+                            VcxError::from_msg(
+                                VcxErrorKind::SerializationError,
+                                format!("Failed to deserialize attachment: {}", attach_json),
+                            )
+                        })?;
+                        return Ok(Some(A2AMessage::CredentialOffer(
+                            offer.set_parent_thread_id(&self.oob.id.0),
+                        )));
                     }
                     AttachmentId::CredentialRequest => {
-                        let request: CredentialRequest = serde_json::from_str(&attach_json)
-                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::CredentialRequest(request.set_parent_thread_id(&self.oob.id.0))));
+                        let request: CredentialRequest = serde_json::from_str(&attach_json).map_err(|_| {
+                            VcxError::from_msg(
+                                VcxErrorKind::SerializationError,
+                                format!("Failed to deserialize attachment: {}", attach_json),
+                            )
+                        })?;
+                        return Ok(Some(A2AMessage::CredentialRequest(
+                            request.set_parent_thread_id(&self.oob.id.0),
+                        )));
                     }
                     AttachmentId::Credential => {
-                        let credential: Credential = serde_json::from_str(&attach_json)
-                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::Credential(credential.set_parent_thread_id(&self.oob.id.0))));
+                        let credential: Credential = serde_json::from_str(&attach_json).map_err(|_| {
+                            VcxError::from_msg(
+                                VcxErrorKind::SerializationError,
+                                format!("Failed to deserialize attachment: {}", attach_json),
+                            )
+                        })?;
+                        return Ok(Some(A2AMessage::Credential(
+                            credential.set_parent_thread_id(&self.oob.id.0),
+                        )));
                     }
                     AttachmentId::PresentationRequest => {
-                        let request: PresentationRequest = serde_json::from_str(&attach_json)
-                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
+                        let request: PresentationRequest = serde_json::from_str(&attach_json).map_err(|_| {
+                            VcxError::from_msg(
+                                VcxErrorKind::SerializationError,
+                                format!("Failed to deserialize attachment: {}", attach_json),
+                            )
+                        })?;
                         return Ok(Some(A2AMessage::PresentationRequest(request)));
                     }
                     AttachmentId::Presentation => {
-                        let presentation: Presentation = serde_json::from_str(&attach_json)
-                            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize attachment: {}", attach_json)))?;
-                        return Ok(Some(A2AMessage::Presentation(presentation.set_parent_thread_id(&self.oob.id.0))));
+                        let presentation: Presentation = serde_json::from_str(&attach_json).map_err(|_| {
+                            VcxError::from_msg(
+                                VcxErrorKind::SerializationError,
+                                format!("Failed to deserialize attachment: {}", attach_json),
+                            )
+                        })?;
+                        return Ok(Some(A2AMessage::Presentation(
+                            presentation.set_parent_thread_id(&self.oob.id.0),
+                        )));
                     }
+                },
+                None => {
+                    return Ok(None);
                 }
-                None => { return Ok(None); }
             };
         };
         Ok(None)
     }
 
     pub async fn build_connection(&self, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Connection> {
-        trace!("OutOfBandReceiver::build_connection >>> autohop_enabled: {}", autohop_enabled);
-        Connection::create_with_invite(&self.oob.id.0, agency_client.get_wallet_handle(), agency_client, Invitation::OutOfBand(self.oob.clone()), autohop_enabled).await
+        trace!(
+            "OutOfBandReceiver::build_connection >>> autohop_enabled: {}",
+            autohop_enabled
+        );
+        Connection::create_with_invite(
+            &self.oob.id.0,
+            agency_client.get_wallet_handle(),
+            agency_client,
+            Invitation::OutOfBand(self.oob.clone()),
+            autohop_enabled,
+        )
+        .await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
         self.oob.to_a2a_message()
     }
-
 
     pub fn to_string(&self) -> VcxResult<String> {
         self.oob.to_string()
@@ -127,7 +177,7 @@ impl OutOfBandReceiver {
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBandInvitation::from_string(oob_data)?
+            oob: OutOfBandInvitation::from_string(oob_data)?,
         })
     }
 }

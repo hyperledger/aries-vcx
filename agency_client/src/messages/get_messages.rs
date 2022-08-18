@@ -1,7 +1,7 @@
-use crate::error::AgencyClientResult;
-use crate::messages::message_type::MessageType;
-use crate::messages::a2a_message::A2AMessageKinds;
 use crate::api::downloaded_message::DownloadedMessageEncrypted;
+use crate::error::AgencyClientResult;
+use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 use crate::MessageStatusCode;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -23,8 +23,13 @@ pub struct GetMessages {
 }
 
 impl GetMessages {
-    pub(crate) fn build(kind: A2AMessageKinds, exclude_payload: Option<String>, uids: Option<Vec<String>>,
-                        status_codes: Option<Vec<MessageStatusCode>>, pairwise_dids: Option<Vec<String>>) -> GetMessages {
+    pub(crate) fn build(
+        kind: A2AMessageKinds,
+        exclude_payload: Option<String>,
+        uids: Option<Vec<String>>,
+        status_codes: Option<Vec<MessageStatusCode>>,
+        pairwise_dids: Option<Vec<String>>,
+    ) -> GetMessages {
         GetMessages {
             msg_type: MessageType::build_v2(kind),
             exclude_payload,
@@ -74,10 +79,12 @@ impl GetMessagesBuilder {
     }
 
     pub fn build(&self) -> GetMessages {
-        GetMessages::build(A2AMessageKinds::GetMessages,
-                           self.exclude_payload.clone(),
-                           self.uids.clone(),
-                           self.status_codes.clone(),
-                           self.pairwise_dids.clone())
+        GetMessages::build(
+            A2AMessageKinds::GetMessages,
+            self.exclude_payload.clone(),
+            self.uids.clone(),
+            self.status_codes.clone(),
+            self.pairwise_dids.clone(),
+        )
     }
 }

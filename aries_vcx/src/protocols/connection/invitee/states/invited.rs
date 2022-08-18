@@ -11,6 +11,9 @@ pub struct InvitedState {
 impl From<(InvitedState, Request)> for RequestedState {
     fn from((state, request): (InvitedState, Request)) -> RequestedState {
         trace!("ConnectionInvitee: transit state from InvitedState to RequestedState");
-        RequestedState { request, did_doc: DidDoc::from(state.invitation) }
+        RequestedState {
+            request,
+            did_doc: DidDoc::from(state.invitation),
+        }
     }
 }

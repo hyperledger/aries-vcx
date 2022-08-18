@@ -28,7 +28,8 @@ impl Thread {
     }
 
     pub fn increment_receiver(&mut self, did: &str) {
-        self.received_orders.entry(did.to_string())
+        self.received_orders
+            .entry(did.to_string())
             .and_modify(|e| *e += 1)
             .or_insert(0);
     }
@@ -104,7 +105,7 @@ macro_rules! threadlike_optional (($type:ident) => (
                 if let Some(thid) = &thread.thid {
                     return thid.clone()
                 }
-            }; 
+            };
             self.id.0.clone()
         }
 

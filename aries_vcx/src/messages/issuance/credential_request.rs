@@ -26,7 +26,10 @@ impl CredentialRequest {
     }
 
     pub fn set_requests_attach(mut self, credential_request: String) -> VcxResult<CredentialRequest> {
-        self.requests_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, serde_json::Value::String(credential_request))?;
+        self.requests_attach.add_base64_encoded_json_attachment(
+            AttachmentId::CredentialRequest,
+            serde_json::Value::String(credential_request),
+        )?;
         Ok(self)
     }
 }
@@ -57,7 +60,9 @@ pub mod test_utils {
 
     pub fn _credential_request() -> CredentialRequest {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment())
+            .unwrap();
 
         CredentialRequest {
             id: MessageId::id(),
@@ -69,7 +74,9 @@ pub mod test_utils {
 
     pub fn _credential_request_1() -> CredentialRequest {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment())
+            .unwrap();
 
         CredentialRequest {
             id: MessageId::id(),
@@ -93,7 +100,8 @@ pub mod unit_tests {
         let credential_request: CredentialRequest = CredentialRequest::create()
             .set_comment(_comment())
             .set_thread_id(&thread_id())
-            .set_requests_attach(_attachment().to_string()).unwrap();
+            .set_requests_attach(_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_credential_request(), credential_request);
     }

@@ -24,7 +24,7 @@ impl From<IndyError> for VcxError {
             407 => VcxError::from_msg(VcxErrorKind::CredDefAlreadyCreated, error.message),
             600 => VcxError::from_msg(VcxErrorKind::DuplicationDid, error.message),
             702 => VcxError::from_msg(VcxErrorKind::InsufficientTokenAmount, error.message),
-            error_code => VcxError::from_msg(VcxErrorKind::LibndyError(error_code), error.message)
+            error_code => VcxError::from_msg(VcxErrorKind::LibndyError(error_code), error.message),
         }
     }
 }
@@ -43,7 +43,7 @@ pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
             error!("MAPPING ERROR: {:?} -- {}", n, error::error_message(&n));
             n
         }
-        None => return error::UNKNOWN_LIBINDY_ERROR.code_num
+        None => return error::UNKNOWN_LIBINDY_ERROR.code_num,
     };
 
     if error_code >= error::UNKNOWN_ERROR.code_num {
@@ -63,7 +63,7 @@ pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
         407 => error::CREDENTIAL_DEF_ALREADY_CREATED.code_num,
         600 => error::DID_ALREADY_EXISTS_IN_WALLET.code_num,
         702 => error::INSUFFICIENT_TOKEN_AMOUNT.code_num,
-        error_cde => error_cde
+        error_cde => error_cde,
     }
 }
 

@@ -1,2 +1,2 @@
-pub mod settings;
 pub mod pool;
+pub mod settings;

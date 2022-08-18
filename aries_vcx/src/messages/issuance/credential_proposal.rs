@@ -112,15 +112,18 @@ pub mod test_utils {
         String::from("comment")
     }
 
-    pub fn _schema_id() -> String { String::from("schema:id") }
+    pub fn _schema_id() -> String {
+        String::from("schema:id")
+    }
 
-    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+    pub fn _cred_def_id() -> String {
+        String::from("cred_def_id:id")
+    }
 
     pub fn _credential_preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
 
-        CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain)
+        CredentialPreviewData::new().add_value(name, value, MimeType::Plain)
     }
 
     pub fn _credential_proposal() -> CredentialProposal {

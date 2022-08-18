@@ -26,7 +26,7 @@ impl ProverMessages {
             Self::SetPresentation(presentation) => presentation.from_thread(thread_id),
             Self::PresentationRejectReceived(problem_report) => problem_report.from_thread(thread_id),
             Self::PresentationAckReceived(ack) => ack.from_thread(thread_id),
-            _ => true
+            _ => true,
         }
     }
 }
@@ -34,18 +34,10 @@ impl ProverMessages {
 impl From<A2AMessage> for ProverMessages {
     fn from(msg: A2AMessage) -> Self {
         match msg {
-            A2AMessage::Ack(ack) | A2AMessage::PresentationAck(ack) => {
-                ProverMessages::PresentationAckReceived(ack)
-            }
-            A2AMessage::CommonProblemReport(report) => {
-                ProverMessages::PresentationRejectReceived(report)
-            }
-            A2AMessage::PresentationRequest(request) => {
-                ProverMessages::PresentationRequestReceived(request)
-            }
-            _ => {
-                ProverMessages::Unknown
-            }
+            A2AMessage::Ack(ack) | A2AMessage::PresentationAck(ack) => ProverMessages::PresentationAckReceived(ack),
+            A2AMessage::CommonProblemReport(report) => ProverMessages::PresentationRejectReceived(report),
+            A2AMessage::PresentationRequest(request) => ProverMessages::PresentationRequestReceived(request),
+            _ => ProverMessages::Unknown,
         }
     }
 }

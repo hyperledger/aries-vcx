@@ -10,7 +10,10 @@ impl Did {
         if Self::validate(did) {
             Ok(Self(did.to_string()))
         } else {
-            Err(VcxError::from_msg(VcxErrorKind::InvalidDid, format!("{} is not a valid DID", did)))
+            Err(VcxError::from_msg(
+                VcxErrorKind::InvalidDid,
+                format!("{} is not a valid DID", did),
+            ))
         }
     }
 

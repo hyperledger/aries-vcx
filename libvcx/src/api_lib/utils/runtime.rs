@@ -30,8 +30,12 @@ pub struct ThreadpoolConfig {
 }
 
 pub fn init_threadpool(config: &str) -> VcxResult<()> {
-    let config: ThreadpoolConfig = serde_json::from_str(config)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err)))?;
+    let config: ThreadpoolConfig = serde_json::from_str(config).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err),
+        )
+    })?;
     init_runtime(config);
     Ok(())
 }
@@ -59,14 +63,16 @@ pub fn init_runtime(config: ThreadpoolConfig) {
             THREADPOOL.lock().unwrap().insert(1, rt);
             info!("Tokio runtime with threaded scheduler has been created.");
 
-            unsafe { TP_HANDLE = 1; }
+            unsafe {
+                TP_HANDLE = 1;
+            }
         });
     }
 }
 
 pub fn execute<F>(closure: F)
 where
-    F: FnOnce() -> Result<(), ()> + Send + 'static
+    F: FnOnce() -> Result<(), ()> + Send + 'static,
 {
     if TP_INIT.is_completed() {
         execute_on_tokio(future::lazy(|_| closure()));
@@ -79,17 +85,19 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
     if TP_INIT.is_completed() {
         execute_on_tokio(future);
     } else {
-        thread::spawn(|| { block_on(future) });
+        thread::spawn(|| block_on(future));
     }
 }
 
 fn execute_on_tokio<F>(future: F)
 where
     F: Future + Send + 'static,
-    F::Output: Send + 'static 
+    F::Output: Send + 'static,
 {
     let handle;
-    unsafe { handle = TP_HANDLE; }
+    unsafe {
+        handle = TP_HANDLE;
+    }
     match THREADPOOL.lock().unwrap().get(&handle) {
         Some(rt) => {
             rt.spawn(future);

@@ -56,8 +56,7 @@ impl Default for AriesService {
 
 impl PartialEq for AriesService {
     fn eq(&self, other: &Self) -> bool {
-        self.recipient_keys == other.recipient_keys &&
-            self.routing_keys == other.routing_keys
+        self.recipient_keys == other.recipient_keys && self.routing_keys == other.routing_keys
     }
 }
 

@@ -8,8 +8,8 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::*;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::messages::proof_presentation::presentation_request::*;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
@@ -29,24 +29,40 @@ impl Verifier {
     }
 
     pub fn create_from_request(source_id: String, presentation_request: &PresentationRequestData) -> VcxResult<Self> {
-        trace!("Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}", source_id, presentation_request);
+        trace!(
+            "Verifier::create_from_request >>> source_id: {:?}, presentation_request: {:?}",
+            source_id,
+            presentation_request
+        );
         let verifier_sm = VerifierSM::from_request(&source_id, presentation_request)?;
         Ok(Self { verifier_sm })
     }
 
     pub fn create_from_proposal(source_id: &str, presentation_proposal: &PresentationProposal) -> VcxResult<Self> {
-        trace!("Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}", source_id, presentation_proposal);
-        Ok(Self { verifier_sm: VerifierSM::from_proposal(source_id, presentation_proposal) })
+        trace!(
+            "Issuer::create_from_proposal >>> source_id: {:?}, presentation_proposal: {:?}",
+            source_id,
+            presentation_proposal
+        );
+        Ok(Self {
+            verifier_sm: VerifierSM::from_proposal(source_id, presentation_proposal),
+        })
     }
 
-    pub fn get_source_id(&self) -> String { self.verifier_sm.source_id() }
+    pub fn get_source_id(&self) -> String {
+        self.verifier_sm.source_id()
+    }
 
-    pub fn get_state(&self) -> VerifierState { self.verifier_sm.get_state() }
+    pub fn get_state(&self) -> VerifierState {
+        self.verifier_sm.get_state()
+    }
 
-    pub async fn handle_message(&mut self,
-                                wallet_handle: WalletHandle,
-                                message: VerifierMessages,
-                                send_message: Option<SendClosure>) -> VcxResult<()> {
+    pub async fn handle_message(
+        &mut self,
+        wallet_handle: WalletHandle,
+        message: VerifierMessages,
+        send_message: Option<SendClosure>,
+    ) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
         self.step(wallet_handle, message, send_message).await
     }
@@ -62,12 +78,28 @@ impl Verifier {
 
     pub async fn send_ack(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
-        self.step(wallet_handle, VerifierMessages::SendPresentationAck(), Some(send_message)).await
+        self.step(
+            wallet_handle,
+            VerifierMessages::SendPresentationAck(),
+            Some(send_message),
+        )
+        .await
     }
 
-    pub fn set_request(&mut self, presentation_request_data: PresentationRequestData, comment: Option<String>) -> VcxResult<()> {
-        trace!("Verifier::set_request >>> presentation_request_data: {:?}, comment: ${:?}", presentation_request_data, comment);
-        self.verifier_sm = self.verifier_sm.clone().set_request(&presentation_request_data, comment)?;
+    pub fn set_request(
+        &mut self,
+        presentation_request_data: PresentationRequestData,
+        comment: Option<String>,
+    ) -> VcxResult<()> {
+        trace!(
+            "Verifier::set_request >>> presentation_request_data: {:?}, comment: ${:?}",
+            presentation_request_data,
+            comment
+        );
+        self.verifier_sm = self
+            .verifier_sm
+            .clone()
+            .set_request(&presentation_request_data, comment)?;
         Ok(())
     }
 
@@ -110,12 +142,17 @@ impl Verifier {
         Ok(self.verifier_sm.thread_id())
     }
 
-    pub async fn step(&mut self,
-                      wallet_handle: WalletHandle,
-                      message: VerifierMessages,
-                      send_message: Option<SendClosure>)
-                      -> VcxResult<()> {
-        self.verifier_sm = self.verifier_sm.clone().step(wallet_handle, message, send_message).await?;
+    pub async fn step(
+        &mut self,
+        wallet_handle: WalletHandle,
+        message: VerifierMessages,
+        send_message: Option<SendClosure>,
+    ) -> VcxResult<()> {
+        self.verifier_sm = self
+            .verifier_sm
+            .clone()
+            .step(wallet_handle, message, send_message)
+            .await?;
         Ok(())
     }
 
@@ -127,14 +164,31 @@ impl Verifier {
         self.verifier_sm.find_message_to_handle(messages)
     }
 
-    pub async fn decline_presentation_proposal<'a>(&'a mut self, wallet_handle: WalletHandle, send_message: SendClosure, reason: &'a str) -> VcxResult<()> {
+    pub async fn decline_presentation_proposal<'a>(
+        &'a mut self,
+        wallet_handle: WalletHandle,
+        send_message: SendClosure,
+        reason: &'a str,
+    ) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
-        self.step(wallet_handle, VerifierMessages::RejectPresentationProposal(reason.to_string()), Some(send_message)).await
+        self.step(
+            wallet_handle,
+            VerifierMessages::RejectPresentationProposal(reason.to_string()),
+            Some(send_message),
+        )
+        .await
     }
 
-    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<VerifierState> {
+    pub async fn update_state(
+        &mut self,
+        wallet_handle: WalletHandle,
+        agency_client: &AgencyClient,
+        connection: &Connection,
+    ) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
-        if !self.progressable_by_message() { return Ok(self.get_state()); }
+        if !self.progressable_by_message() {
+            return Ok(self.get_state());
+        }
         let send_message = connection.send_message_closure(wallet_handle)?;
 
         let messages = connection.get_messages(agency_client).await?;
@@ -164,11 +218,15 @@ mod unit_tests {
     }
 
     async fn _verifier() -> Verifier {
-        let presentation_request_data =
-            PresentationRequestData::create("1").await.unwrap()
-                .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned()).unwrap()
-                .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned()).unwrap()
-                .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string()).unwrap();
+        let presentation_request_data = PresentationRequestData::create("1")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
+            .unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.to_owned())
+            .unwrap()
+            .set_not_revoked_interval(r#"{"support_revocation":false}"#.to_string())
+            .unwrap();
         Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap()
     }
 
@@ -183,15 +241,20 @@ mod unit_tests {
 
         async fn to_finished_state(&mut self) {
             self.to_presentation_request_sent_state().await;
-            self.step(_dummy_wallet_handle(), VerifierMessages::VerifyPresentation(_presentation()), _send_message()).await.unwrap();
+            self.step(
+                _dummy_wallet_handle(),
+                VerifierMessages::VerifyPresentation(_presentation()),
+                _send_message(),
+            )
+            .await
+            .unwrap();
         }
     }
 
     #[tokio::test]
     async fn test_get_presentation() {
         let _setup = SetupMocks::init();
-        let _mock_builder = MockBuilder::init().
-            set_mock_result_for_validate_indy_proof(Ok(true));
+        let _mock_builder = MockBuilder::init().set_mock_result_for_validate_indy_proof(Ok(true));
         let mut verifier = _verifier().await;
         verifier.to_finished_state().await;
         let presentation = verifier.get_presentation_msg().unwrap();

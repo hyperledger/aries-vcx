@@ -26,21 +26,55 @@ impl Holder {
     }
 
     pub fn create_from_offer(source_id: &str, credential_offer: CredentialOffer) -> VcxResult<Holder> {
-        trace!("Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}", source_id, credential_offer);
+        trace!(
+            "Holder::create_from_offer >>> source_id: {:?}, credential_offer: {:?}",
+            source_id,
+            credential_offer
+        );
         let holder_sm = HolderSM::from_offer(credential_offer, source_id.to_string());
         Ok(Holder { holder_sm })
     }
 
-    pub async fn send_proposal(&mut self, wallet_handle: WalletHandle, credential_proposal: CredentialProposalData, send_message: SendClosure) -> VcxResult<()> {
-        self.step(wallet_handle, CredentialIssuanceAction::CredentialProposalSend(credential_proposal), Some(send_message)).await
+    pub async fn send_proposal(
+        &mut self,
+        wallet_handle: WalletHandle,
+        credential_proposal: CredentialProposalData,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.step(
+            wallet_handle,
+            CredentialIssuanceAction::CredentialProposalSend(credential_proposal),
+            Some(send_message),
+        )
+        .await
     }
 
-    pub async fn send_request(&mut self, wallet_handle: WalletHandle, my_pw_did: String, send_message: SendClosure) -> VcxResult<()> {
-        self.step(wallet_handle, CredentialIssuanceAction::CredentialRequestSend(my_pw_did), Some(send_message)).await
+    pub async fn send_request(
+        &mut self,
+        wallet_handle: WalletHandle,
+        my_pw_did: String,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.step(
+            wallet_handle,
+            CredentialIssuanceAction::CredentialRequestSend(my_pw_did),
+            Some(send_message),
+        )
+        .await
     }
 
-    pub async fn decline_offer<'a>(&'a mut self, wallet_handle: WalletHandle, comment: Option<&'a str>, send_message: SendClosure) -> VcxResult<()> {
-        self.step(wallet_handle, CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)), Some(send_message)).await
+    pub async fn decline_offer<'a>(
+        &'a mut self,
+        wallet_handle: WalletHandle,
+        comment: Option<&'a str>,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.step(
+            wallet_handle,
+            CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)),
+            Some(send_message),
+        )
+        .await
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -103,14 +137,30 @@ impl Holder {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn step(&mut self, wallet_handle: WalletHandle, message: CredentialIssuanceAction, send_message: Option<SendClosure>) -> VcxResult<()> {
-        self.holder_sm = self.holder_sm.clone().handle_message(wallet_handle, message, send_message).await?;
+    pub async fn step(
+        &mut self,
+        wallet_handle: WalletHandle,
+        message: CredentialIssuanceAction,
+        send_message: Option<SendClosure>,
+    ) -> VcxResult<()> {
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .handle_message(wallet_handle, message, send_message)
+            .await?;
         Ok(())
     }
 
-    pub async fn update_state(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient, connection: &Connection) -> VcxResult<HolderState> {
+    pub async fn update_state(
+        &mut self,
+        wallet_handle: WalletHandle,
+        agency_client: &AgencyClient,
+        connection: &Connection,
+    ) -> VcxResult<HolderState> {
         trace!("Holder::update_state >>>");
-        if self.is_terminal_state() { return Ok(self.get_state()); }
+        if self.is_terminal_state() {
+            return Ok(self.get_state());
+        }
         let send_message = connection.send_message_closure(wallet_handle)?;
 
         let messages = connection.get_messages(agency_client).await?;
@@ -130,15 +180,17 @@ pub mod test_utils {
     use crate::handlers::connection::connection::Connection;
     use crate::messages::a2a::A2AMessage;
 
-    pub async fn get_credential_offer_messages(agency_client: &AgencyClient, connection: &Connection) -> VcxResult<String> {
-        let credential_offers: Vec<A2AMessage> = connection.get_messages(agency_client)
+    pub async fn get_credential_offer_messages(
+        agency_client: &AgencyClient,
+        connection: &Connection,
+    ) -> VcxResult<String> {
+        let credential_offers: Vec<A2AMessage> = connection
+            .get_messages(agency_client)
             .await?
             .into_iter()
-            .filter_map(|(_, a2a_message)| {
-                match a2a_message {
-                    A2AMessage::CredentialOffer(_) => Some(a2a_message),
-                    _ => None
-                }
+            .filter_map(|(_, a2a_message)| match a2a_message {
+                A2AMessage::CredentialOffer(_) => Some(a2a_message),
+                _ => None,
             })
             .collect();
 
@@ -175,10 +227,34 @@ pub mod unit_tests {
 
     impl Holder {
         async fn to_finished_state(mut self) -> Holder {
-            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()), _send_message()).await.unwrap();
-            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialOffer(_credential_offer()), _send_message()).await.unwrap();
-            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()), _send_message()).await.unwrap();
-            self.step(_dummy_wallet_handle(), CredentialIssuanceAction::Credential(_credential()), _send_message()).await.unwrap();
+            self.step(
+                _dummy_wallet_handle(),
+                CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()),
+                _send_message(),
+            )
+            .await
+            .unwrap();
+            self.step(
+                _dummy_wallet_handle(),
+                CredentialIssuanceAction::CredentialOffer(_credential_offer()),
+                _send_message(),
+            )
+            .await
+            .unwrap();
+            self.step(
+                _dummy_wallet_handle(),
+                CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
+                _send_message(),
+            )
+            .await
+            .unwrap();
+            self.step(
+                _dummy_wallet_handle(),
+                CredentialIssuanceAction::Credential(_credential()),
+                _send_message(),
+            )
+            .await
+            .unwrap();
             self
         }
     }
@@ -196,34 +272,60 @@ pub mod unit_tests {
         let mut holder = _holder();
         assert_eq!(HolderState::Initial, holder.get_state());
 
-        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder
+            .send_proposal(
+                _dummy_wallet_handle(),
+                _credential_proposal_data(),
+                _send_message().unwrap(),
+            )
+            .await
+            .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder
+            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .await
+            .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_proposal(_dummy_wallet_handle(), _credential_proposal_data(), _send_message().unwrap()).await.unwrap();
+        holder
+            .send_proposal(
+                _dummy_wallet_handle(),
+                _credential_proposal_data(),
+                _send_message().unwrap(),
+            )
+            .await
+            .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder
+            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .await
+            .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
-        holder.send_request(_dummy_wallet_handle(), _my_pw_did(), _send_message().unwrap()).await.unwrap();
+        holder
+            .send_request(_dummy_wallet_handle(), _my_pw_did(), _send_message().unwrap())
+            .await
+            .unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
 
         let messages = map!(
             "key_1".to_string() => A2AMessage::Credential(_credential())
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
-        holder.step(_dummy_wallet_handle(), msg.into(), _send_message()).await.unwrap();
+        holder
+            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .await
+            .unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());
     }
 }

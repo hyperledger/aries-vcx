@@ -25,13 +25,13 @@ use self::utils::validation;
 pub mod utils;
 #[macro_use]
 pub mod agency_client;
-pub mod error;
-pub mod messages;
-pub mod testing;
-pub mod httpclient;
 pub mod api;
 pub mod configuration;
+pub mod error;
+pub mod httpclient;
 mod internal;
+pub mod messages;
+pub mod testing;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {
@@ -44,24 +44,31 @@ impl std::string::ToString for MessageStatusCode {
         match self {
             MessageStatusCode::Received => "MS-103",
             MessageStatusCode::Reviewed => "MS-106",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
 impl Serialize for MessageStatusCode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let value = self.to_string();
         Value::String(value).serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for MessageStatusCode {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         match value.as_str() {
             Some("MS-103") => Ok(MessageStatusCode::Received),
             Some("MS-106") => Ok(MessageStatusCode::Reviewed),
-            _ => Err(de::Error::custom("Unexpected message type."))
+            _ => Err(de::Error::custom("Unexpected message type.")),
         }
     }
 }

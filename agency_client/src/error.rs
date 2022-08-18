@@ -115,8 +115,12 @@ impl fmt::Display for AgencyClientError {
 
 impl AgencyClientError {
     pub fn from_msg<D>(kind: AgencyClientErrorKind, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        AgencyClientError { inner: Context::new(msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        AgencyClientError {
+            inner: Context::new(msg).context(kind),
+        }
     }
 
     pub fn kind(&self) -> AgencyClientErrorKind {
@@ -124,14 +128,22 @@ impl AgencyClientError {
     }
 
     pub fn extend<D>(self, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
         let kind = self.kind();
-        AgencyClientError { inner: self.inner.map(|_| msg).context(kind) }
+        AgencyClientError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 
     pub fn map<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        AgencyClientError { inner: self.inner.map(|_| msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        AgencyClientError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 }
 
@@ -161,7 +173,7 @@ impl From<IndyError> for AgencyClientError {
             213 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationWalletRecord, error.message),
             404 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationMasterSecret, error.message),
             600 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationDid, error.message),
-            error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message)
+            error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message),
         }
     }
 }

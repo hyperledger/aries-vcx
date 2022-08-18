@@ -14,7 +14,7 @@ impl ServiceResolvable {
     pub async fn resolve(&self) -> VcxResult<AriesService> {
         match self {
             ServiceResolvable::AriesService(service) => Ok(service.clone()),
-            ServiceResolvable::Did(did) => ledger::get_service(did).await
+            ServiceResolvable::Did(did) => ledger::get_service(did).await,
         }
     }
 }

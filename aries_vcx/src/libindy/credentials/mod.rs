@@ -18,8 +18,14 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
                             Some(x) => x,
                             None => {
-                                warn!("Cannot encode attribute: {}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
-                                return Err(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, "Attribute value not found"));
+                                warn!(
+                                    "Cannot encode attribute: {}",
+                                    error::INVALID_ATTRIBUTES_STRUCTURE.message
+                                );
+                                return Err(VcxError::from_msg(
+                                    VcxErrorKind::InvalidAttributesStructure,
+                                    "Attribute value not found",
+                                ));
                             }
                         };
 
@@ -30,7 +36,10 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                     // anything else is an error
                     _ => {
                         warn!("Invalid Json for Attribute data");
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Json for Attribute data"));
+                        return Err(VcxError::from_msg(
+                            VcxErrorKind::InvalidJson,
+                            "Invalid Json for Attribute data",
+                        ));
                     }
                 };
 
@@ -41,42 +50,63 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                 });
 
                 dictionary.insert(attr.to_string(), attrib_values);
-            };
-            serde_json::to_string_pretty(&dictionary)
-                .map_err(|err| {
-                    warn!("Invalid Json for Attribute data");
-                    VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
-                })
+            }
+            serde_json::to_string_pretty(&dictionary).map_err(|err| {
+                warn!("Invalid Json for Attribute data");
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidJson,
+                    format!("Invalid Json for Attribute data: {}", err),
+                )
+            })
         }
-        Err(_err) => { // TODO: Check error type
+        Err(_err) => {
+            // TODO: Check error type
             match serde_json::from_str::<Vec<serde_json::Value>>(attributes) {
                 Ok(mut attributes) => {
                     for cred_value in attributes.iter_mut() {
-                        let name = cred_value.get("name").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'name' field in cred_value: {:?}", cred_value)))?;
-                        let value = cred_value.get("value").ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("No 'value' field in cred_value: {:?}", cred_value)))?;
-                        let encoded = encode(value.as_str().ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Failed to convert value {:?} to string", value)))?)?;
+                        let name = cred_value.get("name").ok_or(VcxError::from_msg(
+                            VcxErrorKind::InvalidAttributesStructure,
+                            format!("No 'name' field in cred_value: {:?}", cred_value),
+                        ))?;
+                        let value = cred_value.get("value").ok_or(VcxError::from_msg(
+                            VcxErrorKind::InvalidAttributesStructure,
+                            format!("No 'value' field in cred_value: {:?}", cred_value),
+                        ))?;
+                        let encoded = encode(value.as_str().ok_or(VcxError::from_msg(
+                            VcxErrorKind::InvalidAttributesStructure,
+                            format!("Failed to convert value {:?} to string", value),
+                        ))?)?;
                         let attrib_values = json!({
                             "raw": value,
                             "encoded": encoded
                         });
                         let name = name
                             .as_str()
-                            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Failed to convert attribute name {:?} to string", cred_value)))?
+                            .ok_or(VcxError::from_msg(
+                                VcxErrorKind::InvalidAttributesStructure,
+                                format!("Failed to convert attribute name {:?} to string", cred_value),
+                            ))?
                             .to_string();
                         dictionary.insert(name, attrib_values);
-                    };
-                    serde_json::to_string_pretty(&dictionary)
-                        .map_err(|err| {
-                            warn!("Invalid Json for Attribute data");
-                            VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Json for Attribute data: {}", err))
-                        })
+                    }
+                    serde_json::to_string_pretty(&dictionary).map_err(|err| {
+                        warn!("Invalid Json for Attribute data");
+                        VcxError::from_msg(
+                            VcxErrorKind::InvalidJson,
+                            format!("Invalid Json for Attribute data: {}", err),
+                        )
+                    })
                 }
-                Err(err) => return Err(VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, format!("Attribute value not found: {:?}", err)))
+                Err(err) => {
+                    return Err(VcxError::from_msg(
+                        VcxErrorKind::InvalidAttributesStructure,
+                        format!("Attribute value not found: {:?}", err),
+                    ))
+                }
             }
         }
     }
 }
-
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
@@ -113,8 +143,7 @@ pub mod unit_tests {
                 "raw": "UT"
             }
         });
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2":["101 Wilson Lane"],
+        static TEST_CREDENTIAL_DATA: &str = r#"{"address2":["101 Wilson Lane"],
             "zip":["87121"],
             "state":["UT"],
             "city":["SLC"],
@@ -138,14 +167,16 @@ pub mod unit_tests {
             }
         });
 
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2":["101 Wilson Lane"]}"#;
+        static TEST_CREDENTIAL_DATA: &str = r#"{"address2":["101 Wilson Lane"]}"#;
 
         let expected_json = serde_json::to_string_pretty(&expected).unwrap();
 
         let results_json = encode_attributes(TEST_CREDENTIAL_DATA).unwrap();
 
-        assert_eq!(expected_json, results_json, "encode_attributes failed to return expected results");
+        assert_eq!(
+            expected_json, results_json,
+            "encode_attributes failed to return expected results"
+        );
     }
 
     #[test]
@@ -175,8 +206,7 @@ pub mod unit_tests {
             }
         });
 
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"[
+        static TEST_CREDENTIAL_DATA: &str = r#"[
             {"name": "address2", "value": "101 Wilson Lane"},
             {"name": "zip", "value": "87121"},
             {"name": "state", "value": "UT"},
@@ -217,8 +247,7 @@ pub mod unit_tests {
             }
         });
 
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2":"101 Wilson Lane",
+        static TEST_CREDENTIAL_DATA: &str = r#"{"address2":"101 Wilson Lane",
             "zip":"87121",
             "state":"UT",
             "city":"SLC",
@@ -242,14 +271,16 @@ pub mod unit_tests {
             }
         });
 
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2": "101 Wilson Lane"}"#;
+        static TEST_CREDENTIAL_DATA: &str = r#"{"address2": "101 Wilson Lane"}"#;
 
         let expected_json = serde_json::to_string_pretty(&expected).unwrap();
 
         let results_json = encode_attributes(TEST_CREDENTIAL_DATA).unwrap();
 
-        assert_eq!(expected_json, results_json, "encode_attributes failed to return expected results");
+        assert_eq!(
+            expected_json, results_json,
+            "encode_attributes failed to return expected results"
+        );
     }
 
     #[test]
@@ -281,9 +312,7 @@ pub mod unit_tests {
             }
         });
 
-
-        static TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2":["101 Wilson Lane"],
+        static TEST_CREDENTIAL_DATA: &str = r#"{"address2":["101 Wilson Lane"],
             "zip":"87121",
             "state":"UT",
             "city":["SLC"],
@@ -300,8 +329,7 @@ pub mod unit_tests {
     fn test_encode_bad_format_returns_error() {
         let _setup = SetupDefaults::init();
 
-        static BAD_TEST_CREDENTIAL_DATA: &str =
-            r#"{"format doesnt make sense"}"#;
+        static BAD_TEST_CREDENTIAL_DATA: &str = r#"{"format doesnt make sense"}"#;
 
         assert!(encode_attributes(BAD_TEST_CREDENTIAL_DATA).is_err())
     }
@@ -310,8 +338,7 @@ pub mod unit_tests {
     fn test_encode_old_format_empty_array_error() {
         let _setup = SetupDefaults::init();
 
-        static BAD_TEST_CREDENTIAL_DATA: &str =
-            r#"{"address2":[]}"#;
+        static BAD_TEST_CREDENTIAL_DATA: &str = r#"{"address2":[]}"#;
 
         assert!(encode_attributes(BAD_TEST_CREDENTIAL_DATA).is_err())
     }

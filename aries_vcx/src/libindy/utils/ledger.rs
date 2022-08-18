@@ -6,13 +6,13 @@ use indy::ledger;
 use indy_sys::WalletHandle;
 use serde_json;
 
+use crate::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::pool::get_main_pool_handle;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;
 use crate::messages::connection::did::Did;
-use crate::did_doc::service_aries::AriesService;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
@@ -29,9 +29,19 @@ pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, reques
         .await
 }
 
-pub async fn libindy_sign_and_submit_request(wallet_handle: WalletHandle, issuer_did: &str, request_json: &str) -> VcxResult<String> {
-    trace!("libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}", issuer_did, request_json);
-    if settings::indy_mocks_enabled() { return Ok(r#"{"rc":"success"}"#.to_string()); }
+pub async fn libindy_sign_and_submit_request(
+    wallet_handle: WalletHandle,
+    issuer_did: &str,
+    request_json: &str,
+) -> VcxResult<String> {
+    trace!(
+        "libindy_sign_and_submit_request >>> issuer_did: {}, request_json: {}",
+        issuer_did,
+        request_json
+    );
+    if settings::indy_mocks_enabled() {
+        return Ok(r#"{"rc":"success"}"#.to_string());
+    }
     if PoolMocks::has_pool_mock_responses() {
         warn!("libindy_sign_and_submit_request >> retrieving pool mock response");
         return Ok(PoolMocks::get_next_pool_response());
@@ -54,43 +64,56 @@ pub async fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
 }
 
 pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> VcxResult<String> {
-    trace!("libindy_build_schema_request >>> submitter_did: {}, data: {}", submitter_did, data);
+    trace!(
+        "libindy_build_schema_request >>> submitter_did: {}, data: {}",
+        submitter_did,
+        data
+    );
     ledger::build_schema_request(submitter_did, data)
         .map_err(VcxError::from)
         .await
 }
 
-pub async fn libindy_build_create_credential_def_txn(submitter_did: &str,
-                                                     credential_def_json: &str) -> VcxResult<String> {
-    trace!("libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}", submitter_did, credential_def_json);
+pub async fn libindy_build_create_credential_def_txn(
+    submitter_did: &str,
+    credential_def_json: &str,
+) -> VcxResult<String> {
+    trace!(
+        "libindy_build_create_credential_def_txn >>> submitter_did: {}, credential_def_json: {}",
+        submitter_did,
+        credential_def_json
+    );
     ledger::build_cred_def_request(submitter_did, credential_def_json)
         .map_err(VcxError::from)
         .await
 }
 
 pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string()); }
+    if settings::indy_mocks_enabled() {
+        return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string());
+    }
 
     let did = generate_random_did();
 
-    let get_author_agreement_request = ledger::build_get_txn_author_agreement_request(Some(&did), None)
-        .await?;
+    let get_author_agreement_request = ledger::build_get_txn_author_agreement_request(Some(&did), None).await?;
 
     let get_author_agreement_response = libindy_submit_request(&get_author_agreement_request).await?;
 
     let get_author_agreement_response = serde_json::from_str::<serde_json::Value>(&get_author_agreement_response)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
 
-    let mut author_agreement_data = get_author_agreement_response["result"]["data"].as_object()
+    let mut author_agreement_data = get_author_agreement_response["result"]["data"]
+        .as_object()
         .map_or(json!({}), |data| json!(data));
 
-    let get_acceptance_mechanism_request = ledger::build_get_acceptance_mechanisms_request(Some(&did), None, None)
-        .await?;
+    let get_acceptance_mechanism_request =
+        ledger::build_get_acceptance_mechanisms_request(Some(&did), None, None).await?;
 
     let get_acceptance_mechanism_response = libindy_submit_request(&get_acceptance_mechanism_request).await?;
 
-    let get_acceptance_mechanism_response = serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
+    let get_acceptance_mechanism_response =
+        serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
 
     if let Some(aml) = get_acceptance_mechanism_response["result"]["data"]["aml"].as_object() {
         author_agreement_data["aml"] = json!(aml);
@@ -102,14 +125,16 @@ pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
 pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxResult<String> {
     trace!("append_txn_author_agreement_to_request >>> request_json: ...");
     if let Some(author_agreement) = utils::author_agreement::get_txn_author_agreement()? {
-        ledger::append_txn_author_agreement_acceptance_to_request(request_json,
-                                                                  author_agreement.text.as_deref(),
-                                                                  author_agreement.version.as_deref(),
-                                                                  author_agreement.taa_digest.as_deref(),
-                                                                  &author_agreement.acceptance_mechanism_type,
-                                                                  author_agreement.time_of_acceptance)
-            .map_err(VcxError::from)
-            .await
+        ledger::append_txn_author_agreement_acceptance_to_request(
+            request_json,
+            author_agreement.text.as_deref(),
+            author_agreement.version.as_deref(),
+            author_agreement.taa_digest.as_deref(),
+            &author_agreement.acceptance_mechanism_type,
+            author_agreement.time_of_acceptance,
+        )
+        .map_err(VcxError::from)
+        .await
     } else {
         Ok(request_json.to_string())
     }
@@ -121,14 +146,26 @@ pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -
         .await
 }
 
-pub async fn libindy_build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
+pub async fn libindy_build_attrib_request(
+    submitter_did: &str,
+    target_did: &str,
+    hash: Option<&str>,
+    raw: Option<&str>,
+    enc: Option<&str>,
+) -> VcxResult<String> {
     ledger::build_attrib_request(submitter_did, target_did, hash, raw, enc)
         .map_err(VcxError::from)
         .await
 }
 
-pub async fn libindy_build_get_auth_rule_request(submitter_did: Option<&str>, txn_type: Option<&str>, action: Option<&str>, field: Option<&str>,
-                                                 old_value: Option<&str>, new_value: Option<&str>) -> VcxResult<String> {
+pub async fn libindy_build_get_auth_rule_request(
+    submitter_did: Option<&str>,
+    txn_type: Option<&str>,
+    action: Option<&str>,
+    field: Option<&str>,
+    old_value: Option<&str>,
+    new_value: Option<&str>,
+) -> VcxResult<String> {
     ledger::build_get_auth_rule_request(submitter_did, txn_type, action, field, old_value, new_value)
         .map_err(VcxError::from)
         .await
@@ -140,7 +177,13 @@ pub async fn libindy_build_get_nym_request(submitter_did: Option<&str>, did: &st
         .await
 }
 
-pub async fn libindy_build_nym_request(submitter_did: &str, target_did: &str, verkey: Option<&str>, data: Option<&str>, role: Option<&str>) -> VcxResult<String> {
+pub async fn libindy_build_nym_request(
+    submitter_did: &str,
+    target_did: &str,
+    verkey: Option<&str>,
+    data: Option<&str>,
+    role: Option<&str>,
+) -> VcxResult<String> {
     if PoolMocks::has_pool_mock_responses() {
         warn!("libindy_build_nym_request >> retrieving pool mock response");
         Ok(PoolMocks::get_next_pool_response())
@@ -159,7 +202,9 @@ pub async fn get_nym(did: &str) -> VcxResult<String> {
 }
 
 pub async fn get_role(did: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok(settings::DEFAULT_ROLE.to_string()); }
+    if settings::indy_mocks_enabled() {
+        return Ok(settings::DEFAULT_ROLE.to_string());
+    }
 
     let get_nym_resp = get_nym(did).await?;
     let get_nym_resp: serde_json::Value = serde_json::from_str(&get_nym_resp)
@@ -175,7 +220,11 @@ pub fn parse_response(response: &str) -> VcxResult<Response> {
         .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize transaction response")
 }
 
-pub async fn libindy_get_schema(wallet_handle: WalletHandle, submitter_did: &str, schema_id: &str) -> VcxResult<String> {
+pub async fn libindy_get_schema(
+    wallet_handle: WalletHandle,
+    submitter_did: &str,
+    schema_id: &str,
+) -> VcxResult<String> {
     let pool_handle = get_main_pool_handle()?;
 
     cache::get_schema(pool_handle, wallet_handle, submitter_did, schema_id, "{}")
@@ -192,7 +241,12 @@ pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cre
 pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<String> {
     let pool_handle = get_main_pool_handle()?;
     let submitter_did = generate_random_did();
-    trace!("libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}", pool_handle, wallet_handle, submitter_did);
+    trace!(
+        "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
+        pool_handle,
+        wallet_handle,
+        submitter_did
+    );
 
     cache::get_cred_def(pool_handle, wallet_handle, &submitter_did, cred_def_id, "{}")
         .await
@@ -200,19 +254,22 @@ pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str
 }
 
 pub async fn set_endorser(wallet_handle: WalletHandle, request: &str, endorser: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() { return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string()); }
+    if settings::indy_mocks_enabled() {
+        return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string());
+    }
 
     let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
-    let request = ledger::append_request_endorser(request, endorser)
-        .await?;
+    let request = ledger::append_request_endorser(request, endorser).await?;
 
     multisign_request(wallet_handle, &did, &request).await
 }
 
 pub async fn endorse_transaction(wallet_handle: WalletHandle, transaction_json: &str) -> VcxResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
-    if settings::indy_mocks_enabled() { return Ok(()); }
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
 
     let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
@@ -223,7 +280,10 @@ pub async fn endorse_transaction(wallet_handle: WalletHandle, transaction_json: 
 
     match parse_response(&response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(VcxErrorKind::PostMessageFailed, format!("{:?}", res.reason))),
+        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(
+            VcxErrorKind::PostMessageFailed,
+            format!("{:?}", res.reason),
+        )),
     }
 }
 
@@ -231,25 +291,53 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
     let transaction: Request = serde_json::from_str(transaction_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("{:?}", err)))?;
 
-    let transaction_endorser = transaction.endorser
-        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidJson, "Transaction cannot be endorsed: endorser DID is not set."))?;
+    let transaction_endorser = transaction.endorser.ok_or(VcxError::from_msg(
+        VcxErrorKind::InvalidJson,
+        "Transaction cannot be endorsed: endorser DID is not set.",
+    ))?;
 
     if transaction_endorser != _did {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                      format!("Transaction cannot be endorsed: transaction endorser DID `{}` and sender DID `{}` are different", transaction_endorser, _did)));
+        return Err(VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!(
+                "Transaction cannot be endorsed: transaction endorser DID `{}` and sender DID `{}` are different",
+                transaction_endorser, _did
+            ),
+        ));
     }
 
     let identifier = transaction.identifier.as_str();
-    if transaction.signature.is_none() && !transaction.signatures.as_ref().map(|signatures| signatures.contains_key(identifier)).unwrap_or(false) {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson,
-                                      "Transaction cannot be endorsed: the author must sign the transaction.".to_string()));
+    if transaction.signature.is_none()
+        && !transaction
+            .signatures
+            .as_ref()
+            .map(|signatures| signatures.contains_key(identifier))
+            .unwrap_or(false)
+    {
+        return Err(VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            "Transaction cannot be endorsed: the author must sign the transaction.".to_string(),
+        ));
     }
 
     Ok(())
 }
 
-pub async fn build_attrib_request(submitter_did: &str, target_did: &str, hash: Option<&str>, raw: Option<&str>, enc: Option<&str>) -> VcxResult<String> {
-    trace!("build_attrib_request >>> submitter_did: {}, target_did: {}, hash: {:?}, raw: {:?}, enc: {:?}", submitter_did, target_did, hash, raw, enc);
+pub async fn build_attrib_request(
+    submitter_did: &str,
+    target_did: &str,
+    hash: Option<&str>,
+    raw: Option<&str>,
+    enc: Option<&str>,
+) -> VcxResult<String> {
+    trace!(
+        "build_attrib_request >>> submitter_did: {}, target_did: {}, hash: {:?}, raw: {:?}, enc: {:?}",
+        submitter_did,
+        target_did,
+        hash,
+        raw,
+        enc
+    );
     if settings::indy_mocks_enabled() {
         return Ok("{}".into());
     }
@@ -280,8 +368,12 @@ pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
             data["service"].to_string()
         }
     };
-    serde_json::from_str(&ser_service)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to deserialize service read from the ledger: {:?}", err)))
+    serde_json::from_str(&ser_service).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::SerializationError,
+            format!("Failed to deserialize service read from the ledger: {:?}", err),
+        )
+    })
 }
 
 pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &AriesService) -> VcxResult<String> {
@@ -312,15 +404,16 @@ mod test {
         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_ok());
 
         // no author signature
-        let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
+        let transaction =
+            r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
         assert!(_verify_transaction_can_be_endorsed(transaction, "NcYxiDXkpYi6ov5FcYDi1e").is_err());
 
         // different endorser did
-        let transaction = r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
+        let transaction =
+            r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
     }
 }
-
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -384,10 +477,14 @@ pub async fn add_new_did(wallet_handle: WalletHandle, role: Option<&str>) -> (St
     let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
-    let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role).await.unwrap();
+    let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role)
+        .await
+        .unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle, &institution_did, &req_nym).await.unwrap();
+    libindy_sign_and_submit_request(wallet_handle, &institution_did, &req_nym)
+        .await
+        .unwrap();
     (did, verkey)
 }

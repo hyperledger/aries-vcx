@@ -15,7 +15,7 @@ impl CStringUtils {
         unsafe {
             match CStr::from_ptr(cstr).to_str() {
                 Ok(str) => Ok(Some(str.to_string())),
-                Err(err) => Err(err)
+                Err(err) => Err(err),
             }
         }
     }
@@ -27,7 +27,7 @@ impl CStringUtils {
         unsafe {
             match CStr::from_ptr(cstr).to_str() {
                 Ok(s) => Ok(Some(s)),
-                Err(err) => Err(err)
+                Err(err) => Err(err),
             }
         }
     }
@@ -52,7 +52,7 @@ macro_rules! check_useful_c_str {
             set_current_error_vcx(&err);
             return err.into();
         }
-    }
+    };
 }
 
 macro_rules! check_useful_opt_c_str {
@@ -63,9 +63,9 @@ macro_rules! check_useful_opt_c_str {
                 let err = VcxError::from_msg($e, "Invalid pointer has been passed");
                 set_current_error_vcx(&err);
                 return err.into();
-             }
+            }
         };
-    }
+    };
 }
 
 macro_rules! check_useful_c_byte_array {
@@ -82,7 +82,7 @@ macro_rules! check_useful_c_byte_array {
         }
         let $ptr = unsafe { std::slice::from_raw_parts($ptr, $len as usize) };
         let $ptr = $ptr.to_vec();
-    }
+    };
 }
 
 //Returnable pointer is valid only before first vector modification

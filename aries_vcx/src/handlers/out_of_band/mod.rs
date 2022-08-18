@@ -1,7 +1,7 @@
 use crate::a2a_message;
 use crate::error::prelude::*;
-use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_type::MessageType;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::Attachments;
 use crate::utils::service_resolvable::ServiceResolvable;
 // TODO: move to messages
@@ -50,22 +50,30 @@ a2a_message!(OutOfBandInvitation);
 
 impl OutOfBandInvitation {
     pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Cannot serialize out of band message: {:?}", err)))
+        serde_json::to_string(&self).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                format!("Cannot serialize out of band message: {:?}", err),
+            )
+        })
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<OutOfBandInvitation> {
-        serde_json::from_str(oob_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize out of band message: {:?}", err)))
+        serde_json::from_str(oob_data).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize out of band message: {:?}", err),
+            )
+        })
     }
 }
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
+    use crate::did_doc::service_aries::AriesService;
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;
-    use crate::did_doc::service_aries::AriesService;
     use crate::utils::devsetup::SetupMocks;
     use crate::utils::mockdata::mockdata_oob;
 
@@ -80,7 +88,10 @@ mod test {
             .set_goal_code(&GoalCode::P2PMessaging)
             .append_service(&ServiceResolvable::AriesService(AriesService::default()));
         let serialized_oob = oob_sender.to_string().unwrap();
-        assert_eq!(serialized_oob, mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", ""));
+        assert_eq!(
+            serialized_oob,
+            mockdata_oob::ARIES_OOB_MESSAGE.replace("\n", "").replace(" ", "")
+        );
         let deserialized_sender_oob = OutOfBandSender::from_string(&serialized_oob).unwrap();
         assert_eq!(oob_sender, deserialized_sender_oob);
         assert_eq!(oob_sender.to_a2a_message(), deserialized_sender_oob.to_a2a_message());

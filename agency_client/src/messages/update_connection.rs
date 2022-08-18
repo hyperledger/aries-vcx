@@ -1,8 +1,8 @@
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 
 #[derive(Clone, Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -21,7 +21,10 @@ pub enum ConnectionStatus {
 }
 
 impl Serialize for ConnectionStatus {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let value = match self {
             ConnectionStatus::AlreadyConnected => "CS-101",
             ConnectionStatus::NotConnected => "CS-102",
@@ -32,13 +35,16 @@ impl Serialize for ConnectionStatus {
 }
 
 impl<'de> Deserialize<'de> for ConnectionStatus {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         match value.as_str() {
             Some("CS-101") => Ok(ConnectionStatus::AlreadyConnected),
             Some("CS-102") => Ok(ConnectionStatus::NotConnected),
             Some("CS-103") => Ok(ConnectionStatus::Deleted),
-            _ => Err(de::Error::custom("Unexpected message type."))
+            _ => Err(de::Error::custom("Unexpected message type.")),
         }
     }
 }

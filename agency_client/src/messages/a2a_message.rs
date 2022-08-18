@@ -1,12 +1,12 @@
 use serde::{de, Deserialize, Deserializer};
 use serde_json::Value;
 
-use crate::messages::message_type::{MessageFamilies, MessageType};
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::create_key::{CreateKey, CreateKeyResponse};
 use crate::messages::forward::ForwardV2;
 use crate::messages::get_messages::{GetMessages, GetMessagesResponse};
+use crate::messages::message_type::{MessageFamilies, MessageType};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
 use crate::messages::update_com_method::{ComMethodUpdated, UpdateComMethod};
 use crate::messages::update_connection::{UpdateConnection, UpdateConnectionResponse};
@@ -44,7 +44,10 @@ pub enum Client2AgencyMessage {
 }
 
 impl<'de> Deserialize<'de> for Client2AgencyMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
         let message_type: MessageType = serde_json::from_value(value["@type"].clone()).map_err(de::Error::custom)?;
 
@@ -58,92 +61,58 @@ impl<'de> Deserialize<'de> for Client2AgencyMessage {
         };
 
         match message_type.type_.as_str() {
-            "FWD" => {
-                ForwardV2::deserialize(value)
-                    .map(Client2AgencyMessage::Forward)
-                    .map_err(de::Error::custom)
-            }
-            "CONNECT" => {
-                Connect::deserialize(value)
-                    .map(Client2AgencyMessage::Connect)
-                    .map_err(de::Error::custom)
-            }
-            "CONNECTED" => {
-                ConnectResponse::deserialize(value)
-                    .map(Client2AgencyMessage::ConnectResponse)
-                    .map_err(de::Error::custom)
-            }
-            "SIGNUP" => {
-                SignUp::deserialize(value)
-                    .map(Client2AgencyMessage::SignUp)
-                    .map_err(de::Error::custom)
-            }
-            "SIGNED_UP" => {
-                SignUpResponse::deserialize(value)
-                    .map(Client2AgencyMessage::SignUpResponse)
-                    .map_err(de::Error::custom)
-            }
-            "CREATE_AGENT" => {
-                CreateAgent::deserialize(value)
-                    .map(Client2AgencyMessage::CreateAgent)
-                    .map_err(de::Error::custom)
-            }
-            "AGENT_CREATED" => {
-                CreateAgentResponse::deserialize(value)
-                    .map(Client2AgencyMessage::CreateAgentResponse)
-                    .map_err(de::Error::custom)
-            }
-            "CREATE_KEY" => {
-                CreateKey::deserialize(value)
-                    .map(Client2AgencyMessage::CreateKey)
-                    .map_err(de::Error::custom)
-            }
-            "KEY_CREATED" => {
-                CreateKeyResponse::deserialize(value)
-                    .map(Client2AgencyMessage::CreateKeyResponse)
-                    .map_err(de::Error::custom)
-            }
-            "GET_MSGS" => {
-                GetMessages::deserialize(value)
-                    .map(Client2AgencyMessage::GetMessages)
-                    .map_err(de::Error::custom)
-            }
-            "MSGS" => {
-                GetMessagesResponse::deserialize(value)
-                    .map(Client2AgencyMessage::GetMessagesResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_CONN_STATUS" => {
-                UpdateConnection::deserialize(value)
-                    .map(Client2AgencyMessage::UpdateConnection)
-                    .map_err(de::Error::custom)
-            }
-            "CONN_STATUS_UPDATED" => {
-                UpdateConnectionResponse::deserialize(value)
-                    .map(Client2AgencyMessage::UpdateConnectionResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_MSG_STATUS_BY_CONNS" => {
-                UpdateMessageStatusByConnections::deserialize(value)
-                    .map(Client2AgencyMessage::UpdateMessageStatusByConnections)
-                    .map_err(de::Error::custom)
-            }
-            "MSG_STATUS_UPDATED_BY_CONNS" => {
-                UpdateMessageStatusByConnectionsResponse::deserialize(value)
-                    .map(Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse)
-                    .map_err(de::Error::custom)
-            }
-            "UPDATE_COM_METHOD" => {
-                UpdateComMethod::deserialize(value)
-                    .map(Client2AgencyMessage::UpdateComMethod)
-                    .map_err(de::Error::custom)
-            }
-            "COM_METHOD_UPDATED" => {
-                ComMethodUpdated::deserialize(value)
-                    .map(Client2AgencyMessage::ComMethodUpdated)
-                    .map_err(de::Error::custom)
-            }
-            _ => Err(de::Error::custom("Unexpected @type field structure."))
+            "FWD" => ForwardV2::deserialize(value)
+                .map(Client2AgencyMessage::Forward)
+                .map_err(de::Error::custom),
+            "CONNECT" => Connect::deserialize(value)
+                .map(Client2AgencyMessage::Connect)
+                .map_err(de::Error::custom),
+            "CONNECTED" => ConnectResponse::deserialize(value)
+                .map(Client2AgencyMessage::ConnectResponse)
+                .map_err(de::Error::custom),
+            "SIGNUP" => SignUp::deserialize(value)
+                .map(Client2AgencyMessage::SignUp)
+                .map_err(de::Error::custom),
+            "SIGNED_UP" => SignUpResponse::deserialize(value)
+                .map(Client2AgencyMessage::SignUpResponse)
+                .map_err(de::Error::custom),
+            "CREATE_AGENT" => CreateAgent::deserialize(value)
+                .map(Client2AgencyMessage::CreateAgent)
+                .map_err(de::Error::custom),
+            "AGENT_CREATED" => CreateAgentResponse::deserialize(value)
+                .map(Client2AgencyMessage::CreateAgentResponse)
+                .map_err(de::Error::custom),
+            "CREATE_KEY" => CreateKey::deserialize(value)
+                .map(Client2AgencyMessage::CreateKey)
+                .map_err(de::Error::custom),
+            "KEY_CREATED" => CreateKeyResponse::deserialize(value)
+                .map(Client2AgencyMessage::CreateKeyResponse)
+                .map_err(de::Error::custom),
+            "GET_MSGS" => GetMessages::deserialize(value)
+                .map(Client2AgencyMessage::GetMessages)
+                .map_err(de::Error::custom),
+            "MSGS" => GetMessagesResponse::deserialize(value)
+                .map(Client2AgencyMessage::GetMessagesResponse)
+                .map_err(de::Error::custom),
+            "UPDATE_CONN_STATUS" => UpdateConnection::deserialize(value)
+                .map(Client2AgencyMessage::UpdateConnection)
+                .map_err(de::Error::custom),
+            "CONN_STATUS_UPDATED" => UpdateConnectionResponse::deserialize(value)
+                .map(Client2AgencyMessage::UpdateConnectionResponse)
+                .map_err(de::Error::custom),
+            "UPDATE_MSG_STATUS_BY_CONNS" => UpdateMessageStatusByConnections::deserialize(value)
+                .map(Client2AgencyMessage::UpdateMessageStatusByConnections)
+                .map_err(de::Error::custom),
+            "MSG_STATUS_UPDATED_BY_CONNS" => UpdateMessageStatusByConnectionsResponse::deserialize(value)
+                .map(Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse)
+                .map_err(de::Error::custom),
+            "UPDATE_COM_METHOD" => UpdateComMethod::deserialize(value)
+                .map(Client2AgencyMessage::UpdateComMethod)
+                .map_err(de::Error::custom),
+            "COM_METHOD_UPDATED" => ComMethodUpdated::deserialize(value)
+                .map(Client2AgencyMessage::ComMethodUpdated)
+                .map_err(de::Error::custom),
+            _ => Err(de::Error::custom("Unexpected @type field structure.")),
         }
     }
 }
@@ -217,23 +186,29 @@ impl A2AMessageKinds {
 
 #[cfg(test)]
 mod test {
-    use serde_json::json;
     use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
     use crate::messages::get_messages::GetMessages;
     use crate::testing::test_utils::SetupMocks;
+    use serde_json::json;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_serialize_deserialize_agency_message() {
         let _setup = SetupMocks::init();
         let msg = Client2AgencyMessage::GetMessages(GetMessages::build(
-            A2AMessageKinds::GetMessages, Some("foo".into()), Some(vec!["abcd".into()]), None, None));
+            A2AMessageKinds::GetMessages,
+            Some("foo".into()),
+            Some(vec!["abcd".into()]),
+            None,
+            None,
+        ));
         let serialized = serde_json::to_string(&msg).unwrap();
         let expected = serde_json::to_string(&json!({
-        "@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS",
-        "excludePayload":"foo",
-        "uids":["abcd"]
-    })).unwrap();
+            "@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS",
+            "excludePayload":"foo",
+            "uids":["abcd"]
+        }))
+        .unwrap();
         assert_eq!(serialized, expected);
 
         let deserialized: Client2AgencyMessage = serde_json::from_str(&serialized).unwrap();

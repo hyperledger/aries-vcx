@@ -6,7 +6,8 @@ use crate::testing::test_settings::{disable_agency_test_mode, enable_agency_test
 lazy_static! {
     static ref AGENCY_MOCK: Mutex<AgencyMock> = Mutex::new(AgencyMock::default());
     static ref AGENCY_MOCK_DECRYPTED_RESPONSES: Mutex<AgencyMockDecrypted> = Mutex::new(AgencyMockDecrypted::default());
-    static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> = Mutex::new(AgencyMockDecryptedMessages::default());
+    static ref AGENCY_MOCK_DECRYPTED_MESSAGES: Mutex<AgencyMockDecryptedMessages> =
+        Mutex::new(AgencyMockDecryptedMessages::default());
     static ref HTTPCLIENT_MOCK_RESPONSES: Mutex<HttpClientMockResponse> = Mutex::new(HttpClientMockResponse::default());
 }
 
@@ -62,7 +63,11 @@ impl AgencyMockDecrypted {
     pub fn set_next_decrypted_response(body: &str) {
         if agency_mocks_enabled() {
             trace!("Mocks enabled, setting next decrypted response");
-            AGENCY_MOCK_DECRYPTED_RESPONSES.lock().unwrap().responses.push(body.into());
+            AGENCY_MOCK_DECRYPTED_RESPONSES
+                .lock()
+                .unwrap()
+                .responses
+                .push(body.into());
         }
     }
 
@@ -83,7 +88,11 @@ impl AgencyMockDecrypted {
     pub fn set_next_decrypted_message(message: &str) {
         if agency_mocks_enabled() {
             trace!("Mocks enabled, getting next decrypted message");
-            AGENCY_MOCK_DECRYPTED_MESSAGES.lock().unwrap().messages.push(message.into());
+            AGENCY_MOCK_DECRYPTED_MESSAGES
+                .lock()
+                .unwrap()
+                .messages
+                .push(message.into());
         }
     }
 
@@ -104,14 +113,14 @@ impl AgencyMockDecrypted {
 pub fn agency_mocks_enabled() -> bool {
     match get_config_agency_test_mode().ok() {
         None => false,
-        Some(value) => value == "true" || value == "agency"
+        Some(value) => value == "true" || value == "agency",
     }
 }
 
 pub fn agency_decrypted_mocks_enabled() -> bool {
     match get_config_agency_test_mode().ok() {
         None => false,
-        Some(value) => value == "true"
+        Some(value) => value == "true",
     }
 }
 

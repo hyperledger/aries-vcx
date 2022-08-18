@@ -1,5 +1,5 @@
-use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct SignUp {

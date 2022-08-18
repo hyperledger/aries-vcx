@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
-use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
 
@@ -124,8 +124,12 @@ impl PresentationProposalData {
     }
 
     pub fn add_attribute_string(mut self, attr: &str) -> VcxResult<Self> {
-        let attr: Attribute = serde_json::from_str(attr)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied attribute: {:?}", err)))?;
+        let attr: Attribute = serde_json::from_str(attr).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize supplied attribute: {:?}", err),
+            )
+        })?;
         self.attributes.push(attr);
         Ok(self)
     }
@@ -141,8 +145,12 @@ impl PresentationProposalData {
     }
 
     pub fn add_predicate_string(mut self, pred: &str) -> VcxResult<Self> {
-        let pred: Predicate = serde_json::from_str(pred)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied predicate: {:?}", err)))?;
+        let pred: Predicate = serde_json::from_str(pred).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize supplied predicate: {:?}", err),
+            )
+        })?;
         self.predicates.push(pred);
         Ok(self)
     }

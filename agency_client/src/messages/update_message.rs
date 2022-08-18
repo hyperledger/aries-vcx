@@ -1,6 +1,6 @@
 use crate::error::AgencyClientResult;
-use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 use crate::MessageStatusCode;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]

@@ -26,9 +26,13 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub fn get_source_id(&self) -> &String { &self.source_id }
+    pub fn get_source_id(&self) -> &String {
+        &self.source_id
+    }
 
-    pub fn get_schema_id(&self) -> &String { &self.schema_id }
+    pub fn get_schema_id(&self) -> &String {
+        &self.schema_id
+    }
 
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
@@ -51,5 +55,7 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub fn get_state(&self) -> u32 { self.state as u32 }
+    pub fn get_state(&self) -> u32 {
+        self.state as u32
+    }
 }

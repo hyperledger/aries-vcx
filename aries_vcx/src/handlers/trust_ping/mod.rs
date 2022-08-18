@@ -7,7 +7,6 @@ use crate::utils::uuid;
 
 pub mod util;
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
     ping: Ping,
@@ -38,7 +37,10 @@ impl TrustPingSender {
 
     pub async fn send_ping(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.ping_sent {
-            return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Ping message has already been sent"));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Ping message has already been sent",
+            ));
         }
         send_message(self.ping.to_a2a_message()).await?;
         self.ping_sent = true;
@@ -62,8 +64,8 @@ impl TrustPingSender {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::error::VcxResult;
-    use crate::handlers::trust_ping::TrustPingSender;
     use crate::handlers::trust_ping::util::build_ping_response;
+    use crate::handlers::trust_ping::TrustPingSender;
     use crate::messages::a2a::A2AMessage;
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;

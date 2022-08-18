@@ -2,13 +2,13 @@ use std::convert::TryFrom;
 
 use futures::executor::block_on;
 
+use crate::did_doc::service_aries::AriesService;
+use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::libindy::utils::ledger;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
-use crate::did_doc::DidDoc;
-use crate::did_doc::service_aries::AriesService;
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -34,7 +34,11 @@ impl From<Invitation> for DidDoc {
             }
             Invitation::Pairwise(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
-                (invitation.service_endpoint.clone(), invitation.recipient_keys, invitation.routing_keys)
+                (
+                    invitation.service_endpoint.clone(),
+                    invitation.recipient_keys,
+                    invitation.routing_keys,
+                )
             }
             Invitation::OutOfBand(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
@@ -92,7 +96,7 @@ impl Invitation {
         match self {
             Self::Pairwise(invite) => Ok(invite.id.0.clone()),
             Self::Public(invite) => Ok(invite.id.0.clone()),
-            Self::OutOfBand(invite) => Ok(invite.id.0.clone())
+            Self::OutOfBand(invite) => Ok(invite.id.0.clone()),
         }
     }
 }
@@ -234,7 +238,8 @@ pub mod unit_tests {
     fn test_public_invite_build_works() {
         let invitation: PublicInvitation = PublicInvitation::default()
             .set_label(&_label())
-            .set_public_did(&_did()).unwrap();
+            .set_public_did(&_did())
+            .unwrap();
 
         assert_eq!(_public_invitation(), invitation);
     }

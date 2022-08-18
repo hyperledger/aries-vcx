@@ -16,29 +16,44 @@ pub struct PresentationRequestSentState {
 }
 
 impl PresentationRequestSentState {
-    pub async fn verify_presentation(&self,
-                                     wallet_handle: WalletHandle,
-                                     presentation: &Presentation,
-                                     thread_id: &str) -> VcxResult<()> {
+    pub async fn verify_presentation(
+        &self,
+        wallet_handle: WalletHandle,
+        presentation: &Presentation,
+        thread_id: &str,
+    ) -> VcxResult<()> {
         if !settings::indy_mocks_enabled() && !presentation.from_thread(thread_id) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle proof presentation: thread id does not match: {:?}", presentation.thread)));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!(
+                    "Cannot handle proof presentation: thread id does not match: {:?}",
+                    presentation.thread
+                ),
+            ));
         };
 
-        let valid = validate_indy_proof(wallet_handle,
-                                        &presentation.presentations_attach.content()?,
-                                        &self.presentation_request.request_presentations_attach.content()?).await?;
+        let valid = validate_indy_proof(
+            wallet_handle,
+            &presentation.presentations_attach.content()?,
+            &self.presentation_request.request_presentations_attach.content()?,
+        )
+        .await?;
 
         if !valid {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, "Presentation verification failed"));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidProof,
+                "Presentation verification failed",
+            ));
         }
 
         Ok(())
     }
 }
 
-
 impl From<(PresentationRequestSentState, Presentation, RevocationStatus)> for FinishedState {
-    fn from((state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus)) -> Self {
+    fn from(
+        (state, presentation, was_revoked): (PresentationRequestSentState, Presentation, RevocationStatus),
+    ) -> Self {
         trace!("transit state from PresentationRequestSentState to FinishedState");
         FinishedState {
             presentation_request: Some(state.presentation_request),

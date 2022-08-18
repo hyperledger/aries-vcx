@@ -31,16 +31,15 @@ pub struct DdoKeyReference {
 
 impl Serialize for DdoKeyReference {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         match &self.did {
             None => serializer.collect_str(&self.key_id),
-            Some(did) => serializer.collect_str(&format!("{}#{}", did, self.key_id))
+            Some(did) => serializer.collect_str(&format!("{}#{}", did, self.key_id)),
         }
     }
 }
-
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]

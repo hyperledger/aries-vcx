@@ -1,25 +1,40 @@
 use crate::agency_client::AgencyClient;
-use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::create_key::CreateKeyBuilder;
 use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
 use crate::messages::update_connection::DeleteConnectionBuilder;
-use crate::testing::{mocking, test_constants};
 use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
+use crate::testing::{mocking, test_constants};
+use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 impl AgencyClient {
-    pub async fn delete_connection_agent(&self, _pw_did: &str, to_pw_vk: &str, agent_did: &str, agent_vk: &str) -> AgencyClientResult<()> {
+    pub async fn delete_connection_agent(
+        &self,
+        _pw_did: &str,
+        to_pw_vk: &str,
+        agent_did: &str,
+        agent_vk: &str,
+    ) -> AgencyClientResult<()> {
         trace!("send_delete_connection_message >>>");
-        let message = DeleteConnectionBuilder::create()
-            .build();
+        let message = DeleteConnectionBuilder::create().build();
 
-        let data = self.prepare_message_for_connection_agent(vec![Client2AgencyMessage::UpdateConnection(message)], to_pw_vk, agent_did, agent_vk).await?;
+        let data = self
+            .prepare_message_for_connection_agent(
+                vec![Client2AgencyMessage::UpdateConnection(message)],
+                to_pw_vk,
+                agent_did,
+                agent_vk,
+            )
+            .await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::UpdateConnectionResponse(_) => Ok(()),
-            _ => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of UpdateConnectionResponse"))
+            _ => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidHttpResponse,
+                "Message does not match any variant of UpdateConnectionResponse",
+            )),
         }
     }
 
@@ -38,13 +53,15 @@ impl AgencyClient {
 
         let agent_pwdid = self.get_agent_pwdid();
 
-        let data = self.prepare_message_for_agent(&Client2AgencyMessage::CreateKey(message), &agent_pwdid).await?;
+        let data = self
+            .prepare_message_for_agent(&Client2AgencyMessage::CreateKey(message), &agent_pwdid)
+            .await?;
         let response = self.post_to_agency(&data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
             Client2AgencyMessage::CreateKeyResponse(res) => Ok((res.for_did, res.for_verkey)),
-            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse))
+            _ => Err(AgencyClientError::from(AgencyClientErrorKind::InvalidHttpResponse)),
         }
     }
 

@@ -43,19 +43,13 @@ impl DidMocks {
 }
 
 pub fn did_mocks_enabled() -> bool {
-    ENABLED_MOCKS
-        .read().unwrap()
-        .contains(CONFIG_DID_MOCKS)
+    ENABLED_MOCKS.read().unwrap().contains(CONFIG_DID_MOCKS)
 }
 
 pub fn enable_did_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .insert(CONFIG_DID_MOCKS.to_string());
+    ENABLED_MOCKS.write().unwrap().insert(CONFIG_DID_MOCKS.to_string());
 }
 
 pub fn disable_did_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .remove(CONFIG_DID_MOCKS);
+    ENABLED_MOCKS.write().unwrap().remove(CONFIG_DID_MOCKS);
 }

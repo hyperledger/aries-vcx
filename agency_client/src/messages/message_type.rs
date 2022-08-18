@@ -2,8 +2,8 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::a2a_message::A2AMessageKinds;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::messages::a2a_message::A2AMessageKinds;
 
 const DID: &str = "did:sov:123456789abcdefghi1234";
 
@@ -42,7 +42,7 @@ impl MessageFamilies {
             MessageFamilies::Onboarding => "1.0",
             MessageFamilies::Pairwise => "1.0",
             MessageFamilies::Configs => "1.0",
-            _ => "1.0"
+            _ => "1.0",
         }
     }
 }
@@ -54,7 +54,7 @@ impl From<String> for MessageFamilies {
             "onboarding" => MessageFamilies::Onboarding,
             "pairwise" => MessageFamilies::Pairwise,
             "configs" => MessageFamilies::Configs,
-            family => MessageFamilies::Unknown(family.to_string())
+            family => MessageFamilies::Unknown(family.to_string()),
         }
     }
 }
@@ -66,20 +66,22 @@ impl ::std::string::ToString for MessageFamilies {
             MessageFamilies::Onboarding => "onboarding".to_string(),
             MessageFamilies::Pairwise => "pairwise".to_string(),
             MessageFamilies::Configs => "configs".to_string(),
-            MessageFamilies::Unknown(family) => family.to_string()
+            MessageFamilies::Unknown(family) => family.to_string(),
         }
     }
 }
 
-
 pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(String, String, String, String)> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?x)
+        static ref RE: Regex = Regex::new(
+            r"(?x)
             (?P<did>[\d\w:]*);
             (?P<spec>.*)/
             (?P<family>.*)/
             (?P<version>.*)/
-            (?P<type>.*)").unwrap();
+            (?P<type>.*)"
+        )
+        .unwrap();
     }
 
     RE.captures(message_type)
@@ -90,15 +92,26 @@ pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(Stri
             let type_ = cap.name("type").as_ref().map(Match::as_str);
 
             match (did, family, version, type_) {
-                (Some(did), Some(family), Some(version), Some(type_)) =>
-                    Some((did.to_string(), family.to_string(), version.to_string(), type_.to_string())),
-                _ => None
+                (Some(did), Some(family), Some(version), Some(type_)) => Some((
+                    did.to_string(),
+                    family.to_string(),
+                    version.to_string(),
+                    type_.to_string(),
+                )),
+                _ => None,
             }
-        }).ok_or(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidOption, "Cannot parse @type"))
+        })
+        .ok_or(AgencyClientError::from_msg(
+            AgencyClientErrorKind::InvalidOption,
+            "Cannot parse @type",
+        ))
 }
 
 impl<'de> Deserialize<'de> for MessageType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
         match value.as_str() {
@@ -111,14 +124,23 @@ impl<'de> Deserialize<'de> for MessageType {
                     type_,
                 })
             }
-            _ => Err(de::Error::custom("Unexpected @type field structure."))
+            _ => Err(de::Error::custom("Unexpected @type field structure.")),
         }
     }
 }
 
 impl Serialize for MessageType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        let value = Value::String(format!("{};spec/{}/{}/{}", self.did, self.family.to_string(), self.version, self.type_));
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let value = Value::String(format!(
+            "{};spec/{}/{}/{}",
+            self.did,
+            self.family.to_string(),
+            self.version,
+            self.type_
+        ));
         value.serialize(serializer)
     }
 }

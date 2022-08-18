@@ -5,9 +5,9 @@ use time;
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::libindy::utils::crypto;
-use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::thread::Thread;
 
@@ -114,18 +114,34 @@ threadlike!(SignedResponse);
 
 impl SignedResponse {
     pub async fn decode(self, their_vk: &str) -> VcxResult<Response> {
-        let signature = base64::decode_config(&self.connection_sig.signature.as_bytes(), base64::URL_SAFE)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
+        let signature =
+            base64::decode_config(&self.connection_sig.signature.as_bytes(), base64::URL_SAFE).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidJson,
+                    format!("Cannot decode ConnectionResponse: {:?}", err),
+                )
+            })?;
 
-        let sig_data = base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot decode ConnectionResponse: {:?}", err)))?;
+        let sig_data =
+            base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidJson,
+                    format!("Cannot decode ConnectionResponse: {:?}", err),
+                )
+            })?;
 
         if !crypto::verify(their_vk, &sig_data, &signature).await? {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "ConnectionResponse signature is invalid for original Invite recipient key"));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                "ConnectionResponse signature is invalid for original Invite recipient key",
+            ));
         }
 
         if self.connection_sig.signer != their_vk {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Signer declared in ConnectionResponse signed response is not matching the actual signer. Connection "));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                "Signer declared in ConnectionResponse signed response is not matching the actual signer. Connection ",
+            ));
         }
 
         let sig_data = &sig_data[8..];
@@ -157,7 +173,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::{_did_doc_inlined_recipient_keys};
+    use crate::did_doc::test_utils::_did_doc_inlined_recipient_keys;
 
     use super::*;
 
@@ -198,7 +214,9 @@ pub mod test_utils {
             id: MessageId::id(),
             thread: _thread(),
             connection_sig: ConnectionSignature {
-                signature: String::from("yeadfeBWKn09j5XU3ITUE3gPbUDmPNeblviyjrOIDdVMT5WZ8wxMCxQ3OpAnmq1o-Gz0kWib9zr0PLsbGc2jCA=="),
+                signature: String::from(
+                    "yeadfeBWKn09j5XU3ITUE3gPbUDmPNeblviyjrOIDdVMT5WZ8wxMCxQ3OpAnmq1o-Gz0kWib9zr0PLsbGc2jCA==",
+                ),
                 sig_data: serde_json::to_string(&_did_doc_inlined_recipient_keys()).unwrap(),
                 signer: _key(),
                 ..Default::default()

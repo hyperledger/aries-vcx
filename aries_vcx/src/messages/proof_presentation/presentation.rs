@@ -30,7 +30,8 @@ impl Presentation {
     }
 
     pub fn set_presentations_attach(mut self, presentations: String) -> VcxResult<Presentation> {
-        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
+        self.presentations_attach
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
         Ok(self)
     }
 }
@@ -56,7 +57,9 @@ pub mod test_utils {
 
     pub fn _presentation() -> Presentation {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment())
+            .unwrap();
 
         Presentation {
             id: MessageId::id(),
@@ -69,7 +72,9 @@ pub mod test_utils {
 
     pub fn _presentation_1() -> Presentation {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment())
+            .unwrap();
 
         Presentation {
             id: MessageId::id(),
@@ -95,7 +100,8 @@ pub mod unit_tests {
             .set_comment(_comment())
             .ask_for_ack()
             .set_thread_id(&thread_id())
-            .set_presentations_attach(_attachment().to_string()).unwrap();
+            .set_presentations_attach(_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_presentation(), presentation);
     }

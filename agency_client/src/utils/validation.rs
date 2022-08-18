@@ -22,12 +22,16 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
         let check_did = String::from(did);
         match check_did.from_base58() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidDid, "Invalid DID length"))
-            }
+            Ok(_) => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidDid,
+                "Invalid DID length",
+            )),
             Err(x) => {
                 warn!("Err({:?})", x);
-                return Err(AgencyClientError::from_msg(AgencyClientErrorKind::NotBase58, format!("Invalid DID: {}", x)));
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::NotBase58,
+                    format!("Invalid DID: {}", x),
+                ));
             }
         }
     }
@@ -37,8 +41,14 @@ pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(_) => Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidVerkey, "Invalid Verkey length")),
-        Err(x) => Err(AgencyClientError::from_msg(AgencyClientErrorKind::NotBase58, format!("Invalid Verkey: {}", x))),
+        Ok(_) => Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::InvalidVerkey,
+            "Invalid Verkey length",
+        )),
+        Err(x) => Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::NotBase58,
+            format!("Invalid Verkey: {}", x),
+        )),
     }
 }
 
@@ -54,7 +64,7 @@ mod tests {
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         match validate_did(&to_did) {
             Err(_) => panic!("Should be valid did"),
-            Ok(x) => assert_eq!(x, to_did.to_string())
+            Ok(x) => assert_eq!(x, to_did.to_string()),
         }
     }
 
@@ -84,7 +94,7 @@ mod tests {
         let verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
             Err(_) => panic!("Should be valid verkey"),
-            Ok(x) => assert_eq!(x, verkey)
+            Ok(x) => assert_eq!(x, verkey),
         }
     }
 

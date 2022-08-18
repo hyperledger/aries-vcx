@@ -6,8 +6,8 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
@@ -53,47 +53,72 @@ use crate::api_lib::utils::runtime::execute_async;
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_provision_cloud_agent(command_handle: CommandHandle,
-                                        agency_config: *const c_char,
-                                        cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_provision_cloud_agent(
+    command_handle: CommandHandle,
+    agency_config: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, config: *const c_char)>,
+) -> u32 {
     info!("vcx_provision_cloud_agent >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(agency_config, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_provision_cloud_agent(command_handle: {}, agency_config: {})", command_handle, agency_config);
+    trace!(
+        "vcx_provision_cloud_agent(command_handle: {}, agency_config: {})",
+        command_handle,
+        agency_config
+    );
 
     let agency_config = match serde_json::from_str::<AgentProvisionConfig>(&agency_config) {
         Ok(agency_config) => agency_config,
         Err(err) => {
-            error!("vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}", err);
+            error!(
+                "vcx_provision_cloud_agent >>> invalid agency configuration; err: {:?}",
+                err
+            );
             return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match aries_vcx::utils::provision::provision_cloud_agent(&mut get_main_agency_client().unwrap(), get_main_wallet_handle(), &agency_config).await {
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL", command_handle, err);
-                cb(command_handle, err.into(), ptr::null_mut());
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match aries_vcx::utils::provision::provision_cloud_agent(
+                &mut get_main_agency_client().unwrap(),
+                get_main_wallet_handle(),
+                &agency_config,
+            )
+            .await
+            {
+                Err(err) => {
+                    set_current_error_vcx(&err);
+                    error!(
+                        "vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: NULL",
+                        command_handle, err
+                    );
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+                Ok(agency_config) => {
+                    let agency_config = json!(&agency_config).to_string();
+                    trace!(
+                        "vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
+                        command_handle,
+                        error::SUCCESS.message,
+                        agency_config
+                    );
+                    let msg = CStringUtils::string_to_cstring(agency_config);
+                    cb(command_handle, 0, msg.as_ptr());
+                }
             }
-            Ok(agency_config) => {
-                let agency_config = json!(&agency_config).to_string();
-                trace!("vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
-                       command_handle, error::SUCCESS.message, agency_config);
-                let msg = CStringUtils::string_to_cstring(agency_config);
-                cb(command_handle, 0, msg.as_ptr());
-            }
+            Ok(())
         }
-        Ok(())
-    }.boxed());
+        .boxed(),
+    );
 
     error::SUCCESS.code_num
 }
 
 #[no_mangle]
-pub extern fn vcx_set_next_agency_response(message_index: u32) {
+pub extern "C" fn vcx_set_next_agency_response(message_index: u32) {
     info!("vcx_set_next_agency_response >>>");
 
     let message = match message_index {
@@ -142,11 +167,13 @@ pub extern fn vcx_set_next_agency_response(message_index: u32) {
 /// Error code as a u32
 #[no_mangle]
 #[deprecated(since = "0.20.0", note = "Deprecated in favor of vcx_connection_messages_download.")]
-pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
-                                       conn_handles: *const c_char,
-                                       message_statuses: *const c_char,
-                                       uids: *const c_char,
-                                       cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_v2_messages_download(
+    command_handle: CommandHandle,
+    conn_handles: *const c_char,
+    message_statuses: *const c_char,
+    uids: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, messages: *const c_char)>,
+) -> u32 {
     info!("vcx_v2_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
@@ -162,7 +189,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
 
     let conn_handles = match parse_connection_handles(conn_handles) {
         Ok(handles) => handles,
-        Err(err) => return err.into()
+        Err(err) => return err.into(),
     };
 
     let message_statuses = if !message_statuses.is_null() {
@@ -176,7 +203,7 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(_err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()
+        Err(_err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into(),
     };
 
     let uids = if !uids.is_null() {
@@ -188,40 +215,58 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
         None
     };
 
-    trace!("vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
-           command_handle, message_statuses, uids);
+    trace!(
+        "vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
+        command_handle,
+        message_statuses,
+        uids
+    );
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match connection::download_messages(conn_handles, message_statuses, uids).await {
-            Ok(err) => {
-                match serde_json::to_string(&err) {
-                    Ok(err) => {
-                        trace!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                               command_handle, error::SUCCESS.message, err);
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match connection::download_messages(conn_handles, message_statuses, uids).await {
+                Ok(err) => {
+                    match serde_json::to_string(&err) {
+                        Ok(err) => {
+                            trace!(
+                                "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                                command_handle,
+                                error::SUCCESS.message,
+                                err
+                            );
 
-                        let msg = CStringUtils::string_to_cstring(err);
-                        cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                    }
-                    Err(err) => {
-                        let err = VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot serialize messages: {}", err));
-                        error!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                              command_handle, err, "null");
+                            let msg = CStringUtils::string_to_cstring(err);
+                            cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                        }
+                        Err(err) => {
+                            let err = VcxError::from_msg(
+                                VcxErrorKind::InvalidJson,
+                                format!("Cannot serialize messages: {}", err),
+                            );
+                            error!(
+                                "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                                command_handle, err, "null"
+                            );
 
-                        cb(command_handle, err.into(), ptr::null_mut());
-                    }
-                };
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                      command_handle, err, "null");
+                            cb(command_handle, err.into(), ptr::null_mut());
+                        }
+                    };
+                }
+                Err(err) => {
+                    set_current_error_vcx(&err);
+                    error!(
+                        "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                        command_handle, err, "null"
+                    );
 
-                cb(command_handle, err.into(), ptr::null_mut());
-            }
-        };
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
 
-        Ok(())
-    }.boxed());
+            Ok(())
+        }
+        .boxed(),
+    );
 
     error::SUCCESS.code_num
 }
@@ -248,24 +293,33 @@ pub extern fn vcx_v2_messages_download(command_handle: CommandHandle,
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
-                                         message_status: *const c_char,
-                                         msg_json: *const c_char,
-                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+pub extern "C" fn vcx_messages_update_status(
+    command_handle: CommandHandle,
+    message_status: *const c_char,
+    msg_json: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+) -> u32 {
     info!("vcx_messages_update_status >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(message_status, VcxErrorKind::InvalidOption);
     check_useful_c_str!(msg_json, VcxErrorKind::InvalidOption);
 
-    trace!("vcx_messages_set_status(command_handle: {}, message_status: {:?}, uids: {:?})",
-           command_handle, message_status, msg_json);
+    trace!(
+        "vcx_messages_set_status(command_handle: {}, message_status: {:?}, uids: {:?})",
+        command_handle,
+        message_status,
+        msg_json
+    );
 
     let status_code: MessageStatusCode = match ::serde_json::from_str(&format!("\"{}\"", message_status)) {
         Ok(status_code) => status_code,
         Err(err) => {
             set_current_error(&err);
-            error!("vcx_messages_update_status >>> Cannot deserialize MessageStatusCode: {:?}", err);
+            error!(
+                "vcx_messages_update_status >>> Cannot deserialize MessageStatusCode: {:?}",
+                err
+            );
             return error::INVALID_CONFIGURATION.code_num;
         }
     };
@@ -274,33 +328,43 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
         Ok(status_code) => status_code,
         Err(err) => {
             set_current_error(&err);
-            error!("vcx_messages_update_status >>> Cannot deserialize UIDsByConn: {:?}", err);
+            error!(
+                "vcx_messages_update_status >>> Cannot deserialize UIDsByConn: {:?}",
+                err
+            );
             return error::INVALID_CONFIGURATION.code_num;
         }
     };
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(async move {
-        match agency_update_messages(status_code, uids_by_conns).await {
-            Ok(()) => {
-                trace!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match agency_update_messages(status_code, uids_by_conns).await {
+                Ok(()) => {
+                    trace!(
+                        "vcx_messages_set_status_cb(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
 
-                cb(command_handle, error::SUCCESS.code_num);
-            }
-            Err(err) => {
-                error!("vcx_messages_set_status_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                    cb(command_handle, error::SUCCESS.code_num);
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_messages_set_status_cb(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
 
-                cb(command_handle, err.into());
-            }
-        };
+                    cb(command_handle, err.into());
+                }
+            };
 
-        Ok(())
-    }.boxed());
+            Ok(())
+        }
+        .boxed(),
+    );
 
     error::SUCCESS.code_num
 }
-
 
 /// Set the pool handle before calling vcx_init_minimal
 ///
@@ -311,8 +375,12 @@ pub extern fn vcx_messages_update_status(command_handle: CommandHandle,
 /// #Returns
 /// Error code as u32
 #[no_mangle]
-pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
-    if handle <= 0 { aries_vcx::global::pool::set_main_pool_handle(None); } else { aries_vcx::global::pool::set_main_pool_handle(Some(handle)); }
+pub extern "C" fn vcx_pool_set_handle(handle: i32) -> i32 {
+    if handle <= 0 {
+        aries_vcx::global::pool::set_main_pool_handle(None);
+    } else {
+        aries_vcx::global::pool::set_main_pool_handle(Some(handle));
+    }
 
     handle
 }
@@ -328,27 +396,37 @@ pub extern fn vcx_pool_set_handle(handle: i32) -> i32 {
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
-pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
-                                      transaction: *const c_char,
-                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+pub extern "C" fn vcx_endorse_transaction(
+    command_handle: CommandHandle,
+    transaction: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+) -> u32 {
     info!("vcx_endorse_transaction >>>");
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_endorse_transaction(command_handle: {}, transaction: {})",
-           command_handle, transaction);
+    trace!(
+        "vcx_endorse_transaction(command_handle: {}, transaction: {})",
+        command_handle,
+        transaction
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &transaction).await {
             Ok(()) => {
-                trace!("vcx_endorse_transaction(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
+                trace!(
+                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
+                    command_handle,
+                    error::SUCCESS.message
+                );
 
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
-                error!("vcx_endorse_transaction(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!(
+                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
+                    command_handle, err
+                );
 
                 cb(command_handle, err.into());
             }
@@ -361,9 +439,11 @@ pub extern fn vcx_endorse_transaction(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
-                                did: *const c_char,
-                                cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+pub extern "C" fn vcx_rotate_verkey(
+    command_handle: CommandHandle,
+    did: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+) -> u32 {
     info!("vcx_rotate_verkey >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
@@ -373,13 +453,15 @@ pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), &did).await {
             Ok(()) => {
-                trace!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
+                trace!(
+                    "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
+                    command_handle,
+                    error::SUCCESS.message
+                );
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
-                error!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})", command_handle, err);
 
                 cb(command_handle, err.into());
             }
@@ -392,26 +474,38 @@ pub extern fn vcx_rotate_verkey(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_rotate_verkey_start(command_handle: CommandHandle,
-                                      did: *const c_char,
-                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, temp_vk: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_rotate_verkey_start(
+    command_handle: CommandHandle,
+    did: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, temp_vk: *const c_char)>,
+) -> u32 {
     info!("vcx_rotate_verkey_start >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_rotate_verkey_start(command_handle: {}, did: {})", command_handle, did);
+    trace!(
+        "vcx_rotate_verkey_start(command_handle: {}, did: {})",
+        command_handle,
+        did
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::signus::libindy_replace_keys_start(get_main_wallet_handle(), &did).await {
             Ok(temp_vk) => {
-                trace!("vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
-                       command_handle, error::SUCCESS.message, temp_vk);
+                trace!(
+                    "vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
+                    command_handle,
+                    error::SUCCESS.message,
+                    temp_vk
+                );
                 let temp_vk = CStringUtils::string_to_cstring(temp_vk);
                 cb(command_handle, error::SUCCESS.code_num, temp_vk.as_ptr());
             }
             Err(err) => {
-                error!("vcx_rotate_verkey_start_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!(
+                    "vcx_rotate_verkey_start_cb(command_handle: {}, rc: {})",
+                    command_handle, err
+                );
 
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -424,27 +518,39 @@ pub extern fn vcx_rotate_verkey_start(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_rotate_verkey_apply(command_handle: CommandHandle,
-                                      did: *const c_char,
-                                      temp_vk: *const c_char,
-                                      cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32)>) -> u32 {
+pub extern "C" fn vcx_rotate_verkey_apply(
+    command_handle: CommandHandle,
+    did: *const c_char,
+    temp_vk: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+) -> u32 {
     info!("vcx_rotate_verkey_apply >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_str!(temp_vk, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_rotate_verkey_apply(command_handle: {}, did: {}, temp_vk: {:?})", command_handle, did, temp_vk);
+    trace!(
+        "vcx_rotate_verkey_apply(command_handle: {}, did: {}, temp_vk: {:?})",
+        command_handle,
+        did,
+        temp_vk
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), &did, &temp_vk).await {
             Ok(()) => {
-                trace!("vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
-                       command_handle, error::SUCCESS.message);
+                trace!(
+                    "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
+                    command_handle,
+                    error::SUCCESS.message
+                );
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
-                error!("vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!(
+                    "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
+                    command_handle, err
+                );
 
                 cb(command_handle, err.into());
             }
@@ -457,26 +563,38 @@ pub extern fn vcx_rotate_verkey_apply(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
-                                         did: *const c_char,
-                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_get_verkey_from_wallet(
+    command_handle: CommandHandle,
+    did: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>,
+) -> u32 {
     info!("vcx_get_verkey_from_wallet >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_get_verkey_from_wallet(command_handle: {}, did: {})", command_handle, did);
+    trace!(
+        "vcx_get_verkey_from_wallet(command_handle: {}, did: {})",
+        command_handle,
+        did
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::signus::get_verkey_from_wallet(get_main_wallet_handle(), &did).await {
             Ok(verkey) => {
-                trace!("vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
-                       command_handle, error::SUCCESS.message, verkey);
+                trace!(
+                    "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
+                    command_handle,
+                    error::SUCCESS.message,
+                    verkey
+                );
                 let verkey = CStringUtils::string_to_cstring(verkey);
                 cb(command_handle, error::SUCCESS.code_num, verkey.as_ptr());
             }
             Err(err) => {
-                error!("vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!(
+                    "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {})",
+                    command_handle, err
+                );
 
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -489,26 +607,38 @@ pub extern fn vcx_get_verkey_from_wallet(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
-                                         did: *const c_char,
-                                         cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_get_verkey_from_ledger(
+    command_handle: CommandHandle,
+    did: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, verkey: *const c_char)>,
+) -> u32 {
     info!("vcx_get_verkey_from_ledger >>>");
 
     check_useful_c_str!(did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_get_verkey_from_ledger(command_handle: {}, did: {})", command_handle, did);
+    trace!(
+        "vcx_get_verkey_from_ledger(command_handle: {}, did: {})",
+        command_handle,
+        did
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(&did).await {
             Ok(verkey) => {
-                trace!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
-                       command_handle, error::SUCCESS.message, verkey);
+                trace!(
+                    "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
+                    command_handle,
+                    error::SUCCESS.message,
+                    verkey
+                );
                 let verkey = CStringUtils::string_to_cstring(verkey);
                 cb(command_handle, error::SUCCESS.code_num, verkey.as_ptr());
             }
             Err(err) => {
-                error!("vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!(
+                    "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {})",
+                    command_handle, err
+                );
 
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -521,27 +651,42 @@ pub extern fn vcx_get_verkey_from_ledger(command_handle: CommandHandle,
 }
 
 #[no_mangle]
-pub extern fn vcx_get_ledger_txn(command_handle: CommandHandle,
-                                 submitter_did: *const c_char,
-                                 seq_no: i32,
-                                 cb: Option<extern fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>) -> u32 {
+pub extern "C" fn vcx_get_ledger_txn(
+    command_handle: CommandHandle,
+    submitter_did: *const c_char,
+    seq_no: i32,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, txn: *const c_char)>,
+) -> u32 {
     info!("vcx_get_ledger_txn >>>");
 
     check_useful_opt_c_str!(submitter_did, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    trace!("vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})", command_handle, submitter_did);
+    trace!(
+        "vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})",
+        command_handle,
+        submitter_did
+    );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(get_main_wallet_handle(), submitter_did.as_deref(), seq_no).await {
+        match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(
+            get_main_wallet_handle(),
+            submitter_did.as_deref(),
+            seq_no,
+        )
+        .await
+        {
             Ok(txn) => {
-                trace!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
-                       command_handle, error::SUCCESS.message, txn);
+                trace!(
+                    "vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
+                    command_handle,
+                    error::SUCCESS.message,
+                    txn
+                );
                 let txn = CStringUtils::string_to_cstring(txn);
                 cb(command_handle, error::SUCCESS.code_num, txn.as_ptr());
             }
             Err(err) => {
-                error!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {})",
-                      command_handle, err);
+                error!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {})", command_handle, err);
 
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -569,9 +714,11 @@ mod tests {
 
     fn _vcx_agent_provision_async_c_closure(config: &str) -> Result<Option<String>, u32> {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        let rc = vcx_provision_cloud_agent(cb.command_handle,
-                                           CString::new(config).unwrap().into_raw(),
-                                           Some(cb.get_callback()));
+        let rc = vcx_provision_cloud_agent(
+            cb.command_handle,
+            CString::new(config).unwrap().into_raw(),
+            Some(cb.get_callback()),
+        );
         if rc != error::SUCCESS.code_num {
             return Err(rc);
         }
@@ -601,7 +748,8 @@ mod tests {
         let config = json!({
             "agency_did":"Ab8TvZa3Q19VNkQVzAWVL7",
             "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf"
-        }).to_string();
+        })
+        .to_string();
 
         let err = _vcx_agent_provision_async_c_closure(&config).unwrap_err();
         assert_eq!(err, error::INVALID_CONFIGURATION.code_num);
@@ -615,14 +763,15 @@ mod tests {
         AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
 
         let status = CString::new("MS-103").unwrap().into_raw();
-        let json = CString::new(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#).unwrap().into_raw();
+        let json = CString::new(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#)
+            .unwrap()
+            .into_raw();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
-        assert_eq!(vcx_messages_update_status(cb.command_handle,
-                                              status,
-                                              json,
-                                              Some(cb.get_callback())),
-                   error::SUCCESS.code_num);
+        assert_eq!(
+            vcx_messages_update_status(cb.command_handle, status, json, Some(cb.get_callback())),
+            error::SUCCESS.code_num
+        );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 }

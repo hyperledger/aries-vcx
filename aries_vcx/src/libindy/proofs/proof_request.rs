@@ -22,7 +22,6 @@ pub struct ProofRequestData {
     pub non_revoked: Option<NonRevokedInterval>,
 }
 
-
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
@@ -38,12 +37,18 @@ impl ProofRequestData {
         match serde_json::from_str::<HashMap<String, AttrInfo>>(&requested_attrs) {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(_err) => {
-                let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err)))?;
+                let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs).map_err(|err| {
+                    VcxError::from_msg(
+                        VcxErrorKind::InvalidJson,
+                        format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err),
+                    )
+                })?;
                 for attribute in requested_attributes.iter() {
                     if attribute.name.is_some() && attribute.names.is_some() {
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidProofRequest,
-                                                      "Requested attribute can contain either 'name' or 'names'. Not both.".to_string()));
+                        return Err(VcxError::from_msg(
+                            VcxErrorKind::InvalidProofRequest,
+                            "Requested attribute can contain either 'name' or 'names'. Not both.".to_string(),
+                        ));
                     };
                 }
                 self = self.set_requested_attributes_as_vec(requested_attributes)?;
@@ -61,10 +66,17 @@ impl ProofRequestData {
         Ok(self)
     }
 
-
     pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
-        let requested_predicates: Vec<PredicateInfo> = ::serde_json::from_str(&requested_predicates)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Requested Predicates: {:?}, err: {:?}", requested_predicates, err)))?;
+        let requested_predicates: Vec<PredicateInfo> =
+            ::serde_json::from_str(&requested_predicates).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidJson,
+                    format!(
+                        "Invalid Requested Predicates: {:?}, err: {:?}",
+                        requested_predicates, err
+                    ),
+                )
+            })?;
 
         self.requested_predicates = requested_predicates
             .into_iter()
@@ -75,12 +87,16 @@ impl ProofRequestData {
     }
 
     pub fn set_not_revoked_interval(mut self, non_revoc_interval: String) -> VcxResult<Self> {
-        let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval)
-            .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid Revocation Interval: {:?}", non_revoc_interval)))?;
+        let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval).map_err(|_| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Invalid Revocation Interval: {:?}", non_revoc_interval),
+            )
+        })?;
 
         self.non_revoked = match (non_revoc_interval.from, non_revoc_interval.to) {
             (None, None) => None,
-            (from, to) => Some(NonRevokedInterval { from, to })
+            (from, to) => Some(NonRevokedInterval { from, to }),
         };
 
         Ok(self)
@@ -128,10 +144,15 @@ mod unit_tests {
     async fn test_proof_request_msg() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create("Test").await.unwrap()
-            .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into()).unwrap()
-            .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap()
-            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
+        let request = ProofRequestData::create("Test")
+            .await
+            .unwrap()
+            .set_not_revoked_interval(r#"{"from":1100000000, "to": 1600000000}"#.into())
+            .unwrap()
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.into())
+            .unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into())
+            .unwrap();
 
         let serialized_msg = serde_json::to_string(&request).unwrap();
         warn!("serialized_msg: {}", serialized_msg);
@@ -148,8 +169,11 @@ mod unit_tests {
     async fn test_requested_attrs_constructed_correctly() {
         let _setup = SetupDefaults::init();
 
-        let request = ProofRequestData::create("").await.unwrap()
-            .set_requested_attributes_as_string(REQUESTED_ATTRS.into()).unwrap();
+        let request = ProofRequestData::create("")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(REQUESTED_ATTRS.into())
+            .unwrap();
         assert_eq!(request.requested_attributes, _expected_req_attrs());
     }
 
@@ -160,8 +184,11 @@ mod unit_tests {
         let expected_req_attrs = _expected_req_attrs();
         let req_attrs_string = serde_json::to_string(&expected_req_attrs).unwrap();
 
-        let request = ProofRequestData::create("").await.unwrap()
-            .set_requested_attributes_as_string(req_attrs_string).unwrap();
+        let request = ProofRequestData::create("")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(req_attrs_string)
+            .unwrap();
         assert_eq!(request.requested_attributes, expected_req_attrs);
     }
 
@@ -170,7 +197,8 @@ mod unit_tests {
         let _setup = SetupDefaults::init();
 
         let mut check_predicates: HashMap<String, PredicateInfo> = HashMap::new();
-        let attr_info1: PredicateInfo = serde_json::from_str(r#"{
+        let attr_info1: PredicateInfo = serde_json::from_str(
+            r#"{
             "name": "age",
             "p_type": "GE",
             "p_value": 22,
@@ -192,11 +220,16 @@ mod unit_tests {
                     "cred_def_id": "66Fh8yBzrpJQmNyZzgoTqB:3:CL:1766"
                 }
             ]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
         check_predicates.insert("predicate_0".to_string(), attr_info1);
 
-        let request = ProofRequestData::create("").await.unwrap()
-            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into()).unwrap();
+        let request = ProofRequestData::create("")
+            .await
+            .unwrap()
+            .set_requested_predicates_as_string(REQUESTED_PREDICATES.into())
+            .unwrap();
         assert_eq!(request.requested_predicates, check_predicates);
     }
 
@@ -213,10 +246,13 @@ mod unit_tests {
           "restrictions": [{"schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11" }]
         });
 
-        let requested_attrs = json!([ attr_info, attr_info_2 ]).to_string();
+        let requested_attrs = json!([attr_info, attr_info_2]).to_string();
 
-        let request = ProofRequestData::create("").await.unwrap()
-            .set_requested_attributes_as_string(requested_attrs.into()).unwrap();
+        let request = ProofRequestData::create("")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(requested_attrs.into())
+            .unwrap();
 
         let mut expected_req_attrs: HashMap<String, AttrInfo> = HashMap::new();
         expected_req_attrs.insert("attribute_0".to_string(), serde_json::from_value(attr_info).unwrap());
@@ -234,10 +270,13 @@ mod unit_tests {
           "restrictions": [{"schema_id": "6XFh8yBzrpJQmNyZzgoTqB:2:schema_name:0.0.11"}]
         });
 
-        let requested_attrs = json!([ attr_info ]).to_string();
+        let requested_attrs = json!([attr_info]).to_string();
 
-        let err = ProofRequestData::create("").await.unwrap()
-            .set_requested_attributes_as_string(requested_attrs.into()).unwrap_err();
+        let err = ProofRequestData::create("")
+            .await
+            .unwrap()
+            .set_requested_attributes_as_string(requested_attrs.into())
+            .unwrap_err();
 
         assert_eq!(VcxErrorKind::InvalidProofRequest, err.kind());
     }
