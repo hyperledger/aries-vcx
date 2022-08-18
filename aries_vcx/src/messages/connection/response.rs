@@ -157,7 +157,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::_did_doc_vcx_new;
+    use crate::did_doc::test_utils::{_did_doc_inlined_recipient_keys};
 
     use super::*;
 
@@ -187,7 +187,7 @@ pub mod test_utils {
             thread: _thread(),
             connection: ConnectionData {
                 did: _did(),
-                did_doc: _did_doc_vcx_new(),
+                did_doc: _did_doc_inlined_recipient_keys(),
             },
             please_ack: None,
         }
@@ -199,7 +199,7 @@ pub mod test_utils {
             thread: _thread(),
             connection_sig: ConnectionSignature {
                 signature: String::from("yeadfeBWKn09j5XU3ITUE3gPbUDmPNeblviyjrOIDdVMT5WZ8wxMCxQ3OpAnmq1o-Gz0kWib9zr0PLsbGc2jCA=="),
-                sig_data: serde_json::to_string(&_did_doc_vcx_new()).unwrap(),
+                sig_data: serde_json::to_string(&_did_doc_inlined_recipient_keys()).unwrap(),
                 signer: _key(),
                 ..Default::default()
             },
