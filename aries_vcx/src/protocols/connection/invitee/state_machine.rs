@@ -4,9 +4,9 @@ use std::future::Future;
 
 use indy_sys::WalletHandle;
 
-use crate::error::prelude::*;
-
 use crate::did_doc::DidDoc;
+use crate::error::prelude::*;
+use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::ack::Ack;
@@ -15,8 +15,6 @@ use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-
-use crate::handlers::util::verify_thread_id;
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
@@ -317,14 +315,14 @@ impl SmConnectionInvitee {
     }
 
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
-        let Self { state, .. } = self;
-        let state = match state {
+        let state = match self.state {
             InviteeFullState::Completed(state) => InviteeFullState::Completed((state, disclose.protocols).into()),
-            _ => state.clone(),
+            _ => self.state,
         };
         Ok(Self { state, ..self })
     }
 
+    // todo: send ack is validaiting connection response, should be moved to handle_connection_response
     pub async fn handle_send_ack<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
     where
         F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
@@ -371,10 +369,6 @@ impl SmConnectionInvitee {
             _ => self.state.clone(),
         };
         Ok(Self { state, ..self })
-    }
-
-    pub fn handle_ack(self, _ack: Ack) -> VcxResult<Self> {
-        Ok(self)
     }
 
     pub fn get_thread_id(&self) -> String {
@@ -466,7 +460,6 @@ pub mod unit_tests {
                     .handle_send_ack(_dummy_wallet_handle(), &_send_message)
                     .await
                     .unwrap();
-                self = self.handle_ack(_ack()).unwrap();
                 self
             }
         }
@@ -583,7 +576,9 @@ pub mod unit_tests {
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
 
-                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_connection_response(_response(WalletHandle(0), &key).await)
+                    .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
@@ -643,9 +638,6 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_invited_state();
 
-                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
-                assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
-
                 did_exchange_sm = did_exchange_sm.handle_disclose(_disclose()).unwrap();
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
             }
@@ -688,7 +680,7 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
-                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
+                did_exchange_sm = did_exchange_sm.handle_disclose(_disclose()).unwrap();
                 assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
             }
 
@@ -706,11 +698,6 @@ pub mod unit_tests {
                 assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
 
                 assert!(did_exchange_sm.get_remote_protocols().is_some());
-
-                // ignore
-                // Ack
-                did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
-                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
 
                 // Problem Report
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();

@@ -515,20 +515,16 @@ impl Connection {
                                 .await?;
                             (sm_connection, Some(new_cloud_agent), true)
                         }
-                        A2AMessage::Ack(ack) => (
-                            sm_inviter.handle_ack(wallet_handle, ack, send_message).await?,
+                        msg @ A2AMessage::Ack(_) | msg @ A2AMessage::Ping(_) => (
+                            sm_inviter.handle_confirmation_message(&msg).await?,
                             None,
                             false,
                         ),
-                        A2AMessage::Ping(ping) => (
-                            sm_inviter.handle_ping(wallet_handle, ping, send_message).await?,
+                        A2AMessage::ConnectionProblemReport(problem_report) => (
+                            sm_inviter.handle_problem_report(problem_report)?,
                             None,
                             false,
                         ),
-                        A2AMessage::ConnectionProblemReport(problem_report) => {
-                            (sm_inviter.handle_problem_report(problem_report)?, None, false)
-                        }
-                        A2AMessage::Disclose(disclose) => (sm_inviter.handle_disclose(disclose)?, None, false),
                         _ => (sm_inviter.clone(), None, false),
                     },
                     None => {
@@ -574,11 +570,9 @@ impl Connection {
                         A2AMessage::ConnectionResponse(response) => {
                             (sm_invitee.handle_connection_response(response)?, true)
                         }
-                        A2AMessage::Ack(ack) => (sm_invitee.handle_ack(ack)?, false),
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
                         }
-                        A2AMessage::Disclose(disclose) => (sm_invitee.handle_disclose(disclose)?, false),
                         _ => (sm_invitee, false),
                     },
                     None => (sm_invitee.handle_send_ack(wallet_handle, &send_message).await?, false),

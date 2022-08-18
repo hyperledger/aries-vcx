@@ -282,37 +282,6 @@ impl SmConnectionInviter {
         })
     }
 
-    pub async fn handle_ping<F, T>(self, wallet_handle: WalletHandle, ping: Ping, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
-        verify_thread_id(&self.get_thread_id(), &ping.to_a2a_message())?;
-        let Self {
-            state, pairwise_info, ..
-        } = self;
-        let state = match state {
-            InviterFullState::Responded(state) => {
-                handle_ping(wallet_handle, &ping, &pairwise_info.pw_vk, &state.did_doc, send_message).await?;
-                InviterFullState::Completed((state, ping).into())
-            }
-            _ => state,
-        };
-        Ok(Self {
-            state,
-            pairwise_info,
-            ..self
-        })
-    }
-
-    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
-        let state = match self.state {
-            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.protocols).into()),
-            _ => self.state,
-        };
-        Ok(Self { state, ..self })
-    }
-
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Responded(_) => InviterFullState::Initial((problem_report).into()),
@@ -357,41 +326,25 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_ack<F, T>(self, wallet_handle: WalletHandle, msg_ack: Ack, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
-        let Self {
-            state, pairwise_info, ..
-        } = self.clone();
-        let state = match state {
-            InviterFullState::Responded(state) => {
-                if !msg_ack.from_thread(&self.get_thread_id()) {
-                    let problem_report = ProblemReport::create()
-                        .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(format!(
-                            "Cannot handle ack: thread id does not match: {:?}",
-                            msg_ack.thread
-                        ))
-                        .set_thread_id(&self.get_thread_id()); // TODO: Maybe set sender's thread id?
-
-                    send_message(
-                        wallet_handle,
-                        pairwise_info.pw_vk.clone(),
-                        state.did_doc.clone(),
-                        problem_report.to_a2a_message(),
-                    )
-                    .await
-                    .ok();
-                    InviterFullState::Initial((state, problem_report).into())
-                } else {
-                    InviterFullState::Completed((state, msg_ack).into())
-                }
+    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
+        let state = match self.state {
+            InviterFullState::Completed(state) => {
+                InviterFullState::Completed((state, disclose.protocols).into())
             }
-            _ => state,
+            _ => self.state,
         };
         Ok(Self { state, ..self })
+    }
+
+    pub async fn handle_confirmation_message(self, msg: &A2AMessage) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id(), msg)?;
+        match self.state {
+            InviterFullState::Responded(state) => Ok(Self {
+                state: InviterFullState::Completed(state.into()),
+                ..self
+            }),
+            _ => Ok(self),
+        }
     }
 
     pub fn get_thread_id(&self) -> String {
@@ -442,6 +395,7 @@ pub mod unit_tests {
 
     pub mod inviter {
         use super::*;
+        use agency_client::messages::update_com_method::ComMethodType::A2A;
 
         async fn _send_message(
             _wallet_handle: WalletHandle,
@@ -518,7 +472,7 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 self = self
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 self
@@ -558,11 +512,10 @@ pub mod unit_tests {
                     .handle_send_response(_dummy_wallet_handle(), &_send_message)
                     .await
                     .unwrap();
-                inviter = inviter
-                    .handle_ack(_dummy_wallet_handle(), _ack_1(), _send_message)
+                inviter
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack_1()))
                     .await
-                    .unwrap();
-                assert_match!(InviterState::Initial, inviter.get_state());
+                    .unwrap_err();
             }
         }
 
