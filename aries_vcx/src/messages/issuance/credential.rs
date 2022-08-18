@@ -45,7 +45,8 @@ impl Credential {
     }
 
     pub fn set_credential(mut self, credential: String) -> VcxResult<Credential> {
-        self.credentials_attach.add_base64_encoded_json_attachment(AttachmentId::Credential, ::serde_json::Value::String(credential))?;
+        self.credentials_attach
+            .add_base64_encoded_json_attachment(AttachmentId::Credential, ::serde_json::Value::String(credential))?;
         Ok(self)
     }
 }
@@ -77,7 +78,9 @@ pub mod test_utils {
 
     pub fn _credential() -> Credential {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Credential, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::Credential, _attachment())
+            .unwrap();
 
         Credential {
             id: MessageId::id(),
@@ -102,7 +105,8 @@ pub mod unit_tests {
         let credential: Credential = Credential::create()
             .set_comment(_comment())
             .set_thread_id(&thread_id())
-            .set_credential(_attachment().to_string()).unwrap();
+            .set_credential(_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_credential(), credential);
     }

@@ -22,7 +22,10 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
             }
             Err(x) => {
                 warn!("Err(x)");
-                return Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid DID: {}", x)));
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::NotBase58,
+                    format!("Invalid DID: {}", x),
+                ));
             }
         }
     }
@@ -33,13 +36,15 @@ pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
         Ok(_) => Err(VcxError::from_msg(VcxErrorKind::InvalidVerkey, "Invalid Verkey length")),
-        Err(x) => Err(VcxError::from_msg(VcxErrorKind::NotBase58, format!("Invalid Verkey: {}", x))),
+        Err(x) => Err(VcxError::from_msg(
+            VcxErrorKind::NotBase58,
+            format!("Invalid Verkey: {}", x),
+        )),
     }
 }
 
 pub fn validate_nonce(nonce: &str) -> VcxResult<String> {
-    let nonce = BigNum::from_dec_str(nonce)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidNonce, err))?;
+    let nonce = BigNum::from_dec_str(nonce).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidNonce, err))?;
     if nonce.num_bits() > 80 {
         return Err(VcxError::from_msg(VcxErrorKind::InvalidNonce, "Invalid Nonce length"));
     }
@@ -71,7 +76,7 @@ mod unit_tests {
         let to_did = "8XFh8yBzrpJQmNyZzgoTqB";
         match validate_did(&to_did) {
             Err(_) => panic!("Should be valid did"),
-            Ok(x) => assert_eq!(x, to_did.to_string())
+            Ok(x) => assert_eq!(x, to_did.to_string()),
         }
     }
 
@@ -104,7 +109,7 @@ mod unit_tests {
         let verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
             Err(_) => panic!("Should be valid verkey"),
-            Ok(x) => assert_eq!(x, verkey)
+            Ok(x) => assert_eq!(x, verkey),
         }
     }
 

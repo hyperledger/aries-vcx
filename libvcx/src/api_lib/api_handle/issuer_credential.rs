@@ -30,17 +30,27 @@ pub fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    if credential.is_terminal_state() { return Ok(credential.get_state().into()); }
+    if credential.is_terminal_state() {
+        return Ok(credential.get_state().into());
+    }
     let send_message = connection::send_message_closure(connection_handle)?;
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(&message)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Cannot update state: Message deserialization failed: {:?}", err)))?;
-        credential.step(get_main_wallet_handle(), message.into(), Some(send_message)).await?;
+        let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidOption,
+                format!("Cannot update state: Message deserialization failed: {:?}", err),
+            )
+        })?;
+        credential
+            .step(get_main_wallet_handle(), message.into(), Some(send_message))
+            .await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(get_main_wallet_handle(), msg.into(), Some(send_message)).await?;
+            credential
+                .step(get_main_wallet_handle(), msg.into(), Some(send_message))
+                .await?;
             connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -50,9 +60,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 }
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        Ok(credential.get_state().into())
-    })
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_state().into()))
 }
 
 pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
@@ -62,7 +70,8 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.release(handle)
+    ISSUER_CREDENTIAL_MAP
+        .release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle)))
 }
 
@@ -76,27 +85,40 @@ pub fn is_valid_handle(handle: u32) -> bool {
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        serde_json::to_string(&IssuerCredentials::V3(credential.clone()))
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, format!("cannot serialize IssuerCredential credentialect: {:?}", err)))
+        serde_json::to_string(&IssuerCredentials::V3(credential.clone())).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("cannot serialize IssuerCredential credentialect: {:?}", err),
+            )
+        })
     })
 }
 
 pub fn from_string(credential_data: &str) -> VcxResult<u32> {
-    let issuer_credential: IssuerCredentials = serde_json::from_str(credential_data)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize IssuerCredential: {:?}", err)))?;
+    let issuer_credential: IssuerCredentials = serde_json::from_str(credential_data).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize IssuerCredential: {:?}", err),
+        )
+    })?;
 
     match issuer_credential {
-        IssuerCredentials::V3(credential) => ISSUER_CREDENTIAL_MAP.add(credential)
+        IssuerCredentials::V3(credential) => ISSUER_CREDENTIAL_MAP.add(credential),
     }
 }
 
-pub async fn build_credential_offer_msg_v2(credential_handle: u32,
-                                           cred_def_handle: u32,
-                                           rev_reg_handle: u32,
-                                           credential_json: &str,
-                                           comment: Option<&str>) -> VcxResult<()> {
+pub async fn build_credential_offer_msg_v2(
+    credential_handle: u32,
+    cred_def_handle: u32,
+    rev_reg_handle: u32,
+    credential_json: &str,
+    comment: Option<&str>,
+) -> VcxResult<()> {
     if !credential_def::check_is_published(cred_def_handle)? {
-        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot issue credential of specified credential definition has not been published on the ledger")));
+        return Err(VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot issue credential of specified credential definition has not been published on the ledger"),
+        ));
     };
     // todo: add check if rev reg was published
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
@@ -117,7 +139,13 @@ pub async fn build_credential_offer_msg_v2(credential_handle: u32,
             tails_file: None,
         }
     };
-    credential.build_credential_offer_msg(get_main_wallet_handle(), offer_info.clone(), comment.map(|s| s.to_string())).await?;
+    credential
+        .build_credential_offer_msg(
+            get_main_wallet_handle(),
+            offer_info.clone(),
+            comment.map(|s| s.to_string()),
+        )
+        .await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
 
@@ -128,9 +156,7 @@ pub fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
 }
 
 pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        Ok(credential.get_credential_offer_msg()?)
-    })
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
 pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> VcxResult<u32> {
@@ -142,12 +168,21 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
 }
 
 pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<String> {
-    Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Not implemented yet")) // TODO: implement
+    Err(VcxError::from_msg(
+        VcxErrorKind::ActionNotSupported,
+        "Not implemented yet",
+    ))
+    // TODO: implement
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.send_credential(get_main_wallet_handle(), connection::send_message_closure(connection_handle)?).await?;
+    credential
+        .send_credential(
+            get_main_wallet_handle(),
+            connection::send_message_closure(connection_handle)?,
+        )
+        .await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -155,20 +190,28 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
 pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.revoke_credential(get_main_wallet_handle(), true).await.map_err(|err| err.into())
+    credential
+        .revoke_credential(get_main_wallet_handle(), true)
+        .await
+        .map_err(|err| err.into())
 }
 
 pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
-    credential.revoke_credential(get_main_wallet_handle(), false).await.map_err(|err| err.into())
+    credential
+        .revoke_credential(get_main_wallet_handle(), false)
+        .await
+        .map_err(|err| err.into())
 }
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
-    serde_json::from_str(s)
-        .map_err(|_| {
-            warn!("{}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
-            VcxError::from_msg(VcxErrorKind::InvalidAttributesStructure, error::INVALID_ATTRIBUTES_STRUCTURE.message)
-        })
+    serde_json::from_str(s).map_err(|_| {
+        warn!("{}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
+        VcxError::from_msg(
+            VcxErrorKind::InvalidAttributesStructure,
+            error::INVALID_ATTRIBUTES_STRUCTURE.message,
+        )
+    })
 }
 
 pub fn get_credential_attributes(_handle: u32) -> VcxResult<String> {
@@ -182,9 +225,7 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 }
 
 pub fn is_revokable(handle: u32) -> VcxResult<bool> {
-    ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
-        Ok(credential.is_revokable())
-    })
+    ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.is_revokable()))
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
@@ -255,8 +296,15 @@ pub mod tests {
         let credential_handle = _issuer_credential_create();
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None).await.unwrap();
-        assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
+        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None)
+            .await
+            .unwrap();
+        assert_eq!(
+            send_credential_offer_v2(credential_handle, connection_handle)
+                .await
+                .unwrap(),
+            error::SUCCESS.code_num
+        );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -273,12 +321,16 @@ pub mod tests {
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap_err();
+        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
+            .await
+            .unwrap_err();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
+        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
+            .await
+            .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));
     }
 
@@ -310,12 +362,24 @@ pub mod tests {
         let connection_handle = build_test_connection_inviter_requested().await;
         let credential_handle = _issuer_credential_create();
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
-        assert_eq!(send_credential_offer_v2(credential_handle, connection_handle).await.unwrap(), error::SUCCESS.code_num);
+        build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
+            .await
+            .unwrap();
+        assert_eq!(
+            send_credential_offer_v2(credential_handle, connection_handle)
+                .await
+                .unwrap(),
+            error::SUCCESS.code_num
+        );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
-        issuer_credential::update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle).await.unwrap();
-        assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::RequestReceived));
+        issuer_credential::update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
+            .await
+            .unwrap();
+        assert_eq!(
+            get_state(credential_handle).unwrap(),
+            u32::from(IssuerState::RequestReceived)
+        );
     }
 
     #[tokio::test]
@@ -326,8 +390,13 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_cred = _issuer_credential_create();
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None).await.unwrap();
-        assert_eq!(send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(), error::SUCCESS.code_num);
+        build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
+            .await
+            .unwrap();
+        assert_eq!(
+            send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(),
+            error::SUCCESS.code_num
+        );
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message
@@ -347,11 +416,26 @@ pub mod tests {
         let h4 = _issuer_credential_create();
         let h5 = _issuer_credential_create();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
+        assert_eq!(
+            release(h1).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
+        assert_eq!(
+            release(h2).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
+        assert_eq!(
+            release(h3).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
+        assert_eq!(
+            release(h4).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
+        assert_eq!(
+            release(h5).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
     }
 
     #[tokio::test]
@@ -360,6 +444,9 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
-        assert_eq!(release(0).unwrap_err().kind(), VcxErrorKind::InvalidIssuerCredentialHandle);
+        assert_eq!(
+            release(0).unwrap_err().kind(),
+            VcxErrorKind::InvalidIssuerCredentialHandle
+        );
     }
 }

@@ -1,25 +1,33 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
+use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
-    pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> = ObjectCache::<CredentialDef>::new("credential-defs-cache");
+    pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> =
+        ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
-pub async fn create(source_id: String,
-                    schema_id: String,
-                    issuer_did: String,
-                    tag: String,
-                    support_revocation: bool) -> VcxResult<u32> {
+pub async fn create(
+    source_id: String,
+    schema_id: String,
+    issuer_did: String,
+    tag: String,
+    support_revocation: bool,
+) -> VcxResult<u32> {
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)
         .tag(tag)
         .build()
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidConfiguration, format!("Failed build credential config using provided parameters: {:?}", err)))?;
+        .map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidConfiguration,
+                format!("Failed build credential config using provided parameters: {:?}", err),
+            )
+        })?;
     let cred_def = CredentialDef::create(get_main_wallet_handle(), source_id, config, support_revocation).await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
@@ -40,9 +48,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn to_string(handle: u32) -> VcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |cd| {
-        cd.to_string().map_err(|err| err.into())
-    })
+    CREDENTIALDEF_MAP.get(handle, |cd| cd.to_string().map_err(|err| err.into()))
 }
 
 pub fn from_string(data: &str) -> VcxResult<u32> {
@@ -51,19 +57,16 @@ pub fn from_string(data: &str) -> VcxResult<u32> {
 }
 
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_source_id().clone())
-    })
+    CREDENTIALDEF_MAP.get(handle, |c| Ok(c.get_source_id().clone()))
 }
 
 pub fn get_cred_def_id(handle: u32) -> VcxResult<String> {
-    CREDENTIALDEF_MAP.get(handle, |c| {
-        Ok(c.get_cred_def_id())
-    })
+    CREDENTIALDEF_MAP.get(handle, |c| Ok(c.get_cred_def_id()))
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
-    CREDENTIALDEF_MAP.release(handle)
+    CREDENTIALDEF_MAP
+        .release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle)))
 }
 
@@ -79,38 +82,28 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
 }
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
-    CREDENTIALDEF_MAP.get(handle, |s| {
-        Ok(s.get_state())
-    })
+    CREDENTIALDEF_MAP.get(handle, |s| Ok(s.get_state()))
 }
 
 pub fn check_is_published(handle: u32) -> VcxResult<bool> {
-    CREDENTIALDEF_MAP.get(handle, |s| {
-        Ok(PublicEntityStateType::Published == s.state)
-    })
+    CREDENTIALDEF_MAP.get(handle, |s| Ok(PublicEntityStateType::Published == s.state))
 }
 
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
-    use std::{
-        thread::sleep,
-        time::Duration,
-    };
+    use std::{thread::sleep, time::Duration};
 
     use aries_vcx::global::settings;
     use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
-    use aries_vcx::utils::{
-        constants::SCHEMA_ID,
-        get_temp_dir_path,
-    };
     use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::{constants::SCHEMA_ID, get_temp_dir_path};
 
-    use crate::api_lib::api_handle::{revocation_registry, schema};
     use crate::api_lib::api_handle::revocation_registry::RevocationRegistryConfig;
+    use crate::api_lib::api_handle::{revocation_registry, schema};
     use crate::api_lib::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
@@ -121,11 +114,15 @@ pub mod tests {
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let cred_def_handle = create("1".to_string(),
-                                     schema_id,
-                                     issuer_did.clone(),
-                                     "tag_1".to_string(),
-                                     false).await.unwrap();
+        let cred_def_handle = create(
+            "1".to_string(),
+            schema_id,
+            issuer_did.clone(),
+            "tag_1".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
         publish(cred_def_handle).await.unwrap();
         (schema_handle, cred_def_handle)
     }
@@ -142,7 +139,8 @@ pub mod tests {
     async fn create_revocable_cred_def_and_check_tails_location() {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
-        let (schema_id, _) = create_and_write_test_schema(get_main_wallet_handle(), utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) =
+            create_and_write_test_schema(get_main_wallet_handle(), utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()
@@ -152,11 +150,9 @@ pub mod tests {
             .build()
             .unwrap();
         let revocation_details = serde_json::to_string(&revocation_details).unwrap();
-        let handle_cred_def = create("1".to_string(),
-                                     schema_id,
-                                     issuer_did.clone(),
-                                     "tag1".to_string(),
-                                     true).await.unwrap();
+        let handle_cred_def = create("1".to_string(), schema_id, issuer_did.clone(), "tag1".to_string(), true)
+            .await
+            .unwrap();
         publish(handle_cred_def).await.unwrap();
 
         let rev_reg_config = RevocationRegistryConfig {
@@ -215,7 +211,10 @@ pub mod tests {
         let credentialdef2: CredentialDef = CredentialDef::from_string(&new_credentialdef_data).unwrap();
 
         assert_eq!(credentialdef1, credentialdef2);
-        assert_eq!(CredentialDef::from_string("{}").unwrap_err().kind(), aries_vcx::error::VcxErrorKind::CreateCredDef);
+        assert_eq!(
+            CredentialDef::from_string("{}").unwrap_err().kind(),
+            aries_vcx::error::VcxErrorKind::CreateCredDef
+        );
     }
 
     #[tokio::test]
@@ -224,11 +223,51 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
-        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
-        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
-        let h3 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
-        let h4 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
-        let h5 = create("SourceId".to_string(), SCHEMA_ID.to_string(), issuer_did.clone(), "tag".to_string(), false).await.unwrap();
+        let h1 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            issuer_did.clone(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
+        let h2 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            issuer_did.clone(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
+        let h3 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            issuer_did.clone(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
+        let h4 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            issuer_did.clone(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
+        let h5 = create(
+            "SourceId".to_string(),
+            SCHEMA_ID.to_string(),
+            issuer_did.clone(),
+            "tag".to_string(),
+            false,
+        )
+        .await
+        .unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidCredDefHandle);

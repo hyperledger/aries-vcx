@@ -12,20 +12,22 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
-    use std::thread;
-    use std::time::Duration;
-    use indyrs::ledger::append_request_endorser;
+    use aries_vcx::did_doc::service_aries::AriesService;
     use aries_vcx::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::set_config_value;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::libindy::utils::ledger::{add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request};
+    use aries_vcx::libindy::utils::ledger::{
+        add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
+    };
     use aries_vcx::libindy::utils::signus::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
     use aries_vcx::messages::connection::did::Did;
-    use aries_vcx::did_doc::service_aries::AriesService;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
+    use indyrs::ledger::append_request_endorser;
+    use std::thread;
+    use std::time::Duration;
 
     #[tokio::test]
     async fn test_open_close_pool() {
@@ -37,7 +39,8 @@ mod integration_tests {
     #[tokio::test]
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
-        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        let (_, _, cred_def_id, cred_def_json, _) =
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
 
         let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, &cred_def_id).await.unwrap();
 
@@ -70,7 +73,9 @@ mod integration_tests {
 
         let schema_request = libindy_build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
         let schema_request = append_request_endorser(&schema_request, &endorser_did).await.unwrap();
-        let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request).await.unwrap();
+        let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request)
+            .await
+            .unwrap();
 
         endorse_transaction(setup.wallet_handle, &schema_request).await.unwrap();
     }

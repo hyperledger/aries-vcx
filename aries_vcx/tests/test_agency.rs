@@ -43,35 +43,80 @@ mod integration_tests {
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
         institution.activate().await.unwrap();
-        faber_to_alice.send_generic_message(institution.wallet_handle, "Hello Alice").await.unwrap();
-        faber_to_alice.send_generic_message(institution.wallet_handle, "How are you Alice?").await.unwrap();
+        faber_to_alice
+            .send_generic_message(institution.wallet_handle, "Hello Alice")
+            .await
+            .unwrap();
+        faber_to_alice
+            .send_generic_message(institution.wallet_handle, "How are you Alice?")
+            .await
+            .unwrap();
 
         consumer.activate().await.unwrap();
-        alice_to_faber.send_generic_message(consumer.wallet_handle, "Hello Faber").await.unwrap();
+        alice_to_faber
+            .send_generic_message(consumer.wallet_handle, "Hello Faber")
+            .await
+            .unwrap();
 
         thread::sleep(Duration::from_millis(100));
 
         institution.activate().await.unwrap();
-        let msgs = faber_to_alice.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let msgs = faber_to_alice
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(msgs.len(), 2);
-        let ack_msg = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("https://didcomm.org/notification/1.0/ack")).unwrap();
+        let ack_msg = msgs
+            .iter()
+            .find(|msg| {
+                msg.decrypted_msg
+                    .clone()
+                    .contains("https://didcomm.org/notification/1.0/ack")
+            })
+            .unwrap();
         assert_eq!(ack_msg.status_code, MessageStatusCode::Reviewed);
-        let hello_msg = msgs.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
+        let hello_msg = msgs
+            .iter()
+            .find(|msg| msg.decrypted_msg.clone().contains("Hello Faber"))
+            .unwrap();
         assert_eq!(hello_msg.status_code, MessageStatusCode::Received);
 
-        let received = faber_to_alice.download_messages(&institution.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let received = faber_to_alice
+            .download_messages(
+                &institution.agency_client,
+                Some(vec![MessageStatusCode::Received]),
+                None,
+            )
+            .await
+            .unwrap();
         assert_eq!(received.len(), 1);
-        received.iter().find(|msg| msg.decrypted_msg.clone().contains("Hello Faber")).unwrap();
+        received
+            .iter()
+            .find(|msg| msg.decrypted_msg.clone().contains("Hello Faber"))
+            .unwrap();
 
-        let msgs_by_uid = faber_to_alice.download_messages(&institution.agency_client, None, Some(vec![hello_msg.uid.clone()])).await.unwrap();
+        let msgs_by_uid = faber_to_alice
+            .download_messages(&institution.agency_client, None, Some(vec![hello_msg.uid.clone()]))
+            .await
+            .unwrap();
         assert_eq!(msgs_by_uid.len(), 1);
         assert_eq!(msgs_by_uid[0].uid, hello_msg.uid);
 
-        let double_filter = faber_to_alice.download_messages(&institution.agency_client, Some(vec![MessageStatusCode::Received]), Some(vec![hello_msg.uid.clone()])).await.unwrap();
+        let double_filter = faber_to_alice
+            .download_messages(
+                &institution.agency_client,
+                Some(vec![MessageStatusCode::Received]),
+                Some(vec![hello_msg.uid.clone()]),
+            )
+            .await
+            .unwrap();
         assert_eq!(double_filter.len(), 1);
         assert_eq!(double_filter[0].uid, hello_msg.uid);
 
-        let msgs = faber_to_alice.download_messages(&institution.agency_client, None, Some(vec!["abcd123".into()])).await.unwrap();
+        let msgs = faber_to_alice
+            .download_messages(&institution.agency_client, None, Some(vec!["abcd123".into()]))
+            .await
+            .unwrap();
         assert_eq!(msgs.len(), 0);
     }
 
@@ -95,7 +140,9 @@ mod integration_tests {
         info!("test_connection_send_works:: Test if Send Message works");
         {
             faber.activate().await.unwrap();
-            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(message.to_a2a_message()).await.unwrap();
+            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(message.to_a2a_message())
+                .await
+                .unwrap();
         }
 
         {
@@ -110,7 +157,7 @@ mod integration_tests {
 
             match received_message {
                 A2AMessage::Ack(received_message) => assert_eq!(message, received_message.clone()),
-                _ => assert!(false)
+                _ => assert!(false),
             }
         }
 
@@ -118,11 +165,15 @@ mod integration_tests {
         {
             alice.activate().await.unwrap();
 
-            let message = alice.connection.get_message_by_id(&uid.clone(), &alice.agency_client).await.unwrap();
+            let message = alice
+                .connection
+                .get_message_by_id(&uid.clone(), &alice.agency_client)
+                .await
+                .unwrap();
 
             match message {
                 A2AMessage::Ack(ack) => assert_eq!(_ack(), ack),
-                _ => assert!(false)
+                _ => assert!(false),
             }
         }
 
@@ -130,7 +181,11 @@ mod integration_tests {
         {
             alice.activate().await.unwrap();
 
-            alice.connection.update_message_status(&uid, &alice.agency_client).await.unwrap();
+            alice
+                .connection
+                .update_message_status(&uid, &alice.agency_client)
+                .await
+                .unwrap();
             let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
             assert_eq!(0, messages.len());
         }
@@ -140,7 +195,11 @@ mod integration_tests {
             faber.activate().await.unwrap();
 
             let basic_message = r#"Hi there"#;
-            faber.connection.send_generic_message(faber.wallet_handle, basic_message).await.unwrap();
+            faber
+                .connection
+                .send_generic_message(faber.wallet_handle, basic_message)
+                .await
+                .unwrap();
 
             alice.activate().await.unwrap();
 
@@ -152,9 +211,13 @@ mod integration_tests {
 
             match message {
                 A2AMessage::BasicMessage(message) => assert_eq!(basic_message, message.content),
-                _ => assert!(false)
+                _ => assert!(false),
             }
-            alice.connection.update_message_status(&uid, &alice.agency_client).await.unwrap();
+            alice
+                .connection
+                .update_message_status(&uid, &alice.agency_client)
+                .await
+                .unwrap();
         }
 
         info!("test_connection_send_works:: Test if Download Messages");
@@ -162,15 +225,26 @@ mod integration_tests {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.activate().await.unwrap();
-            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(credential_offer.to_a2a_message()).await.unwrap();
+            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(credential_offer.to_a2a_message())
+                .await
+                .unwrap();
 
             alice.activate().await.unwrap();
 
-            let msgs = alice.connection.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+            let msgs = alice
+                .connection
+                .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .await
+                .unwrap();
             let message: DownloadedMessage = msgs[0].clone();
-            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer =
+                serde_json::from_str(&message.decrypted_msg).unwrap();
 
-            alice.connection.update_message_status(&message.uid, &alice.agency_client).await.unwrap();
+            alice
+                .connection
+                .update_message_status(&message.uid, &alice.agency_client)
+                .await
+                .unwrap();
         }
     }
 
@@ -181,26 +255,54 @@ mod integration_tests {
         let mut institution = Faber::setup().await;
         let mut consumer1 = Alice::setup().await;
         let mut consumer2 = Alice::setup().await;
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution).await;
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
+        let (consumer1_to_institution, institution_to_consumer1) =
+            create_connected_connections(&mut consumer1, &mut institution).await;
+        let (consumer2_to_institution, institution_to_consumer2) =
+            create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1.activate().await.unwrap();
-        consumer1_to_institution.send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1").await.unwrap();
+        consumer1_to_institution
+            .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
+            .await
+            .unwrap();
         consumer2.activate().await.unwrap();
-        consumer2_to_institution.send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2").await.unwrap();
+        consumer2_to_institution
+            .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
+            .await
+            .unwrap();
 
         institution.activate().await.unwrap();
 
-        let consumer1_msgs = institution_to_consumer1.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let consumer1_msgs = institution_to_consumer1
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(consumer1_msgs.len(), 2);
 
-        let consumer2_msgs = institution_to_consumer2.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let consumer2_msgs = institution_to_consumer2
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(consumer2_msgs.len(), 2);
 
-        let consumer1_received_msgs = institution_to_consumer1.download_messages(&institution.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let consumer1_received_msgs = institution_to_consumer1
+            .download_messages(
+                &institution.agency_client,
+                Some(vec![MessageStatusCode::Received]),
+                None,
+            )
+            .await
+            .unwrap();
         assert_eq!(consumer1_received_msgs.len(), 1);
 
-        let consumer1_reviewed_msgs = institution_to_consumer1.download_messages(&institution.agency_client, Some(vec![MessageStatusCode::Reviewed]), None).await.unwrap();
+        let consumer1_reviewed_msgs = institution_to_consumer1
+            .download_messages(
+                &institution.agency_client,
+                Some(vec![MessageStatusCode::Reviewed]),
+                None,
+            )
+            .await
+            .unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
     }
 
@@ -212,31 +314,69 @@ mod integration_tests {
         let mut alice = Alice::setup().await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
-        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 1").await.unwrap();
-        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 2").await.unwrap();
-        faber_to_alice.send_generic_message(faber.wallet_handle, "Hello 3").await.unwrap();
+        faber_to_alice
+            .send_generic_message(faber.wallet_handle, "Hello 1")
+            .await
+            .unwrap();
+        faber_to_alice
+            .send_generic_message(faber.wallet_handle, "Hello 2")
+            .await
+            .unwrap();
+        faber_to_alice
+            .send_generic_message(faber.wallet_handle, "Hello 3")
+            .await
+            .unwrap();
 
         thread::sleep(Duration::from_millis(100));
         alice.activate().await.unwrap();
 
-        let received = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let received = alice_to_faber
+            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .await
+            .unwrap();
         assert_eq!(received.len(), 3);
         let uid = received[0].uid.clone();
 
-        let reviewed = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None).await.unwrap();
+        let reviewed = alice_to_faber
+            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
+            .await
+            .unwrap();
         let reviewed_count_before = reviewed.len();
 
         let pairwise_did = alice_to_faber.pairwise_info().pw_did.clone();
-        alice.agency_client.update_messages(MessageStatusCode::Reviewed, vec![UIDsByConn { pairwise_did: pairwise_did.clone(), uids: vec![uid.clone()] }]).await.unwrap();
+        alice
+            .agency_client
+            .update_messages(
+                MessageStatusCode::Reviewed,
+                vec![UIDsByConn {
+                    pairwise_did: pairwise_did.clone(),
+                    uids: vec![uid.clone()],
+                }],
+            )
+            .await
+            .unwrap();
 
-        let received = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let received = alice_to_faber
+            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .await
+            .unwrap();
         assert_eq!(received.len(), 2);
 
-        let reviewed = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None).await.unwrap();
+        let reviewed = alice_to_faber
+            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
+            .await
+            .unwrap();
         let reviewed_count_after = reviewed.len();
         assert_eq!(reviewed_count_after, reviewed_count_before + 1);
 
-        let specific_review = alice_to_faber.download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), Some(vec![uid.clone()])).await.unwrap();
+        let specific_review = alice_to_faber
+            .download_messages(
+                &alice.agency_client,
+                Some(vec![MessageStatusCode::Reviewed]),
+                Some(vec![uid.clone()]),
+            )
+            .await
+            .unwrap();
         assert_eq!(specific_review[0].uid, uid);
     }
 
@@ -247,19 +387,33 @@ mod integration_tests {
         let mut institution = Faber::setup().await;
         let mut consumer1 = Alice::setup().await;
         let mut consumer2 = Alice::setup().await;
-        let (consumer1_to_institution, institution_to_consumer1) = create_connected_connections(&mut consumer1, &mut institution).await;
-        let (consumer2_to_institution, institution_to_consumer2) = create_connected_connections(&mut consumer2, &mut institution).await;
+        let (consumer1_to_institution, institution_to_consumer1) =
+            create_connected_connections(&mut consumer1, &mut institution).await;
+        let (consumer2_to_institution, institution_to_consumer2) =
+            create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1.activate().await.unwrap();
-        consumer1_to_institution.send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1").await.unwrap();
+        consumer1_to_institution
+            .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
+            .await
+            .unwrap();
         consumer2.activate().await.unwrap();
-        consumer2_to_institution.send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2").await.unwrap();
+        consumer2_to_institution
+            .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
+            .await
+            .unwrap();
 
         institution.activate().await.unwrap();
-        let consumer1_msgs = institution_to_consumer1.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let consumer1_msgs = institution_to_consumer1
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(consumer1_msgs.len(), 2);
 
-        let consumer2_msgs = institution_to_consumer2.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let consumer2_msgs = institution_to_consumer2
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(consumer2_msgs.len(), 2);
     }
 
@@ -285,11 +439,13 @@ mod integration_tests {
         let agency_did = "VsKV7grR1BUE29mG2Fm2kX";
         let agency_vk = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
         let (my_did, my_vk) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
-        client.provision_cloud_agent(wallet_handle, &my_did, &my_vk, agency_did, agency_vk, agency_url).await.unwrap();
+        client
+            .provision_cloud_agent(wallet_handle, &my_did, &my_vk, agency_did, agency_vk, agency_url)
+            .await
+            .unwrap();
         let config = client.get_config().unwrap();
         client.configure(&config);
         client.update_agent_webhook("https://example.org").await.unwrap();
-        close_wallet(wallet_handle)
-            .await.unwrap();
+        close_wallet(wallet_handle).await.unwrap();
     }
 }

@@ -18,7 +18,6 @@ pub struct ProtocolDescriptor {
     pub roles: Option<Vec<Actors>>,
 }
 
-
 threadlike_optional!(Disclose);
 
 impl Disclose {
@@ -47,7 +46,10 @@ pub mod test_utils {
     use super::*;
 
     pub fn _protocol_descriptor() -> ProtocolDescriptor {
-        ProtocolDescriptor { pid: String::from("https://didcomm.org/"), roles: None }
+        ProtocolDescriptor {
+            pid: String::from("https://didcomm.org/"),
+            roles: None,
+        }
     }
 
     pub fn _disclose() -> Disclose {
@@ -69,8 +71,7 @@ pub mod unit_tests {
 
     #[test]
     fn test_disclose_build_works() {
-        let mut disclose: Disclose = Disclose::default()
-            .set_thread_id(&_thread_id());
+        let mut disclose: Disclose = Disclose::default().set_thread_id(&_thread_id());
 
         disclose.add_protocol(_protocol_descriptor());
 

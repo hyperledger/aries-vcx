@@ -7,7 +7,6 @@ pub struct CredentialSentState {
     pub revocation_info_v1: Option<RevocationInfoV1>,
 }
 
-
 impl From<CredentialSentState> for FinishedState {
     fn from(state: CredentialSentState) -> Self {
         trace!("SM is now in Finished state");

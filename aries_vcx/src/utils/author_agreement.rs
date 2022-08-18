@@ -16,11 +16,13 @@ pub struct TxnAuthorAgreementAcceptanceData {
     pub time_of_acceptance: u64,
 }
 
-pub fn set_txn_author_agreement(text: Option<String>,
-                                version: Option<String>,
-                                taa_digest: Option<String>,
-                                acc_mech_type: String,
-                                time_of_acceptance: u64) -> VcxResult<()> {
+pub fn set_txn_author_agreement(
+    text: Option<String>,
+    version: Option<String>,
+    taa_digest: Option<String>,
+    acc_mech_type: String,
+    time_of_acceptance: u64,
+) -> VcxResult<()> {
     let meta = TxnAuthorAgreementAcceptanceData {
         text,
         version,
@@ -29,8 +31,7 @@ pub fn set_txn_author_agreement(text: Option<String>,
         time_of_acceptance,
     };
 
-    let meta = serde_json::to_string(&meta)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, err))?;
+    let meta = serde_json::to_string(&meta).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidOption, err))?;
 
     settings::set_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT, &meta)?;
 
@@ -41,11 +42,11 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
     trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {
-            let meta: TxnAuthorAgreementAcceptanceData = serde_json::from_str(&value)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
+            let meta: TxnAuthorAgreementAcceptanceData =
+                serde_json::from_str(&value).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidState, err))?;
             Ok(Some(meta))
         }
-        Err(_) => Ok(None)
+        Err(_) => Ok(None),
     }
 }
 
@@ -67,11 +68,14 @@ mod unit_tests {
 
         assert!(settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
 
-        set_txn_author_agreement(Some(TEXT.to_string()),
-                                 Some(VERSION.to_string()),
-                                 None,
-                                 ACCEPTANCE_MECHANISM.to_string(),
-                                 TIME_OF_ACCEPTANCE).unwrap();
+        set_txn_author_agreement(
+            Some(TEXT.to_string()),
+            Some(VERSION.to_string()),
+            None,
+            ACCEPTANCE_MECHANISM.to_string(),
+            TIME_OF_ACCEPTANCE,
+        )
+        .unwrap();
 
         assert!(settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT).is_ok());
     }
@@ -80,11 +84,14 @@ mod unit_tests {
     fn get_txn_author_agreement_works() {
         let _setup = SetupDefaults::init();
 
-        set_txn_author_agreement(Some(TEXT.to_string()),
-                                 Some(VERSION.to_string()),
-                                 None,
-                                 ACCEPTANCE_MECHANISM.to_string(),
-                                 TIME_OF_ACCEPTANCE).unwrap();
+        set_txn_author_agreement(
+            Some(TEXT.to_string()),
+            Some(VERSION.to_string()),
+            None,
+            ACCEPTANCE_MECHANISM.to_string(),
+            TIME_OF_ACCEPTANCE,
+        )
+        .unwrap();
 
         let meta = get_txn_author_agreement().unwrap().unwrap();
 

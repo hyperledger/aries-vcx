@@ -35,7 +35,10 @@ impl CredentialOffer {
     }
 
     pub fn set_offers_attach(mut self, credential_offer: &str) -> VcxResult<CredentialOffer> {
-        self.offers_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, ::serde_json::Value::String(credential_offer.to_string()))?;
+        self.offers_attach.add_base64_encoded_json_attachment(
+            AttachmentId::CredentialOffer,
+            ::serde_json::Value::String(credential_offer.to_string()),
+        )?;
         Ok(self)
     }
 
@@ -59,7 +62,12 @@ pub struct OfferInfo {
 }
 
 impl OfferInfo {
-    pub fn new(credential_json: String, cred_def_id: String, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+    pub fn new(
+        credential_json: String,
+        cred_def_id: String,
+        rev_reg_id: Option<String>,
+        tails_file: Option<String>,
+    ) -> Self {
         Self {
             credential_json,
             cred_def_id,
@@ -95,8 +103,7 @@ pub mod test_utils {
 
     pub fn _preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
-        CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain)
+        CredentialPreviewData::new().add_value(name, value, MimeType::Plain)
     }
 
     pub fn thread() -> Thread {
@@ -111,7 +118,9 @@ pub mod test_utils {
         thread().thid.unwrap()
     }
 
-    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+    pub fn _cred_def_id() -> String {
+        String::from("cred_def_id:id")
+    }
 
     pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
@@ -123,7 +132,9 @@ pub mod test_utils {
 
     pub fn _credential_offer() -> CredentialOffer {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment())
+            .unwrap();
 
         CredentialOffer {
             id: MessageId::id(),
@@ -167,7 +178,8 @@ pub mod unit_tests {
             .set_comment(_comment())
             .set_thread_id(&_thread_id())
             .set_credential_preview_data(_preview_data())
-            .set_offers_attach(&_attachment().to_string()).unwrap();
+            .set_offers_attach(&_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_credential_offer(), credential_offer);
     }

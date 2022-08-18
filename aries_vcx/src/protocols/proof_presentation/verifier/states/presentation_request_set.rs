@@ -16,7 +16,7 @@ impl From<PresentationRequestSetState> for PresentationRequestSentState {
     fn from(state: PresentationRequestSetState) -> Self {
         trace!("transit state from PresentationRequestSetState to PresentationRequestSentState");
         PresentationRequestSentState {
-            presentation_request: state.presentation_request
+            presentation_request: state.presentation_request,
         }
     }
 }

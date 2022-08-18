@@ -78,8 +78,10 @@ mod tests {
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
 
         CreateKeyBuilder::create()
-            .for_did(for_did).unwrap()
-            .for_verkey(for_verkey).unwrap();
+            .for_did(for_did)
+            .unwrap()
+            .for_verkey(for_verkey)
+            .unwrap();
     }
 
     #[async_std::test]
@@ -100,10 +102,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
         let for_did = "11235yBzrpJQmNyZzgoT";
-        let res = CreateKeyBuilder::create()
-            .for_did(for_did)
-            .unwrap_err();
+        let res = CreateKeyBuilder::create().for_did(for_did).unwrap_err();
         assert_eq!(res.kind(), AgencyClientErrorKind::InvalidDid);
     }
 }
-

@@ -17,16 +17,16 @@ impl ProtocolRegistry {
 
         for family in MessageFamilies::iter() {
             match family {
-                family @ MessageFamilies::Routing |
-                family @ MessageFamilies::ReportProblem |
-                family @ MessageFamilies::Notification |
-                family @ MessageFamilies::Connections |
-                family @ MessageFamilies::CredentialIssuance |
-                family @ MessageFamilies::PresentProof |
-                family @ MessageFamilies::TrustPing |
-                family @ MessageFamilies::Basicmessage |
-                family @ MessageFamilies::DiscoveryFeatures |
-                family @ MessageFamilies::OutOfBand => registry.add_protocol(&actors, family),
+                family @ MessageFamilies::Routing
+                | family @ MessageFamilies::ReportProblem
+                | family @ MessageFamilies::Notification
+                | family @ MessageFamilies::Connections
+                | family @ MessageFamilies::CredentialIssuance
+                | family @ MessageFamilies::PresentProof
+                | family @ MessageFamilies::TrustPing
+                | family @ MessageFamilies::Basicmessage
+                | family @ MessageFamilies::DiscoveryFeatures
+                | family @ MessageFamilies::OutOfBand => registry.add_protocol(&actors, family),
                 MessageFamilies::Signature => {}
                 MessageFamilies::Unknown(_) => {}
             }
@@ -37,36 +37,41 @@ impl ProtocolRegistry {
 
     pub fn add_protocol(&mut self, actors: &Vec<Actors>, family: MessageFamilies) {
         match family.actors() {
-            None => {
-                self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: None })
-            }
-            Some((actor_1, actor_2)) => {
-                match (actors.contains(&actor_1), actors.contains(&actor_2)) {
-                    (true, true) => {
-                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: None })
-                    }
-                    (true, false) => {
-                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_1]) })
-                    }
-                    (false, true) => {
-                        self.protocols.push(ProtocolDescriptor { pid: family.id(), roles: Some(vec![actor_2]) })
-                    }
-                    (false, false) => {}
-                }
-            }
+            None => self.protocols.push(ProtocolDescriptor {
+                pid: family.id(),
+                roles: None,
+            }),
+            Some((actor_1, actor_2)) => match (actors.contains(&actor_1), actors.contains(&actor_2)) {
+                (true, true) => self.protocols.push(ProtocolDescriptor {
+                    pid: family.id(),
+                    roles: None,
+                }),
+                (true, false) => self.protocols.push(ProtocolDescriptor {
+                    pid: family.id(),
+                    roles: Some(vec![actor_1]),
+                }),
+                (false, true) => self.protocols.push(ProtocolDescriptor {
+                    pid: family.id(),
+                    roles: Some(vec![actor_2]),
+                }),
+                (false, false) => {}
+            },
         }
     }
 
     pub fn get_protocols_for_query(&self, query: Option<&str>) -> Vec<ProtocolDescriptor> {
         match query {
             Some(query_) if query_ == "*" => self.protocols.clone(),
-            Some(query_) => {
-                match Regex::new(query_) {
-                    Ok(re) => self.protocols.iter().filter(|protocol| re.is_match(&protocol.pid)).cloned().collect(),
-                    Err(_) => vec![]
-                }
-            }
-            None => self.protocols.clone()
+            Some(query_) => match Regex::new(query_) {
+                Ok(re) => self
+                    .protocols
+                    .iter()
+                    .filter(|protocol| re.is_match(&protocol.pid))
+                    .cloned()
+                    .collect(),
+                Err(_) => vec![],
+            },
+            None => self.protocols.clone(),
         }
     }
 
@@ -85,14 +90,25 @@ pub mod unit_tests {
 
     fn _protocols() -> Vec<ProtocolDescriptor> {
         vec![
-            ProtocolDescriptor { pid: "protocol_1.0_test".to_string(), roles: None },
-            ProtocolDescriptor { pid: "protocol_1.0_some".to_string(), roles: None },
-            ProtocolDescriptor { pid: "0_test.0_test".to_string(), roles: None },
+            ProtocolDescriptor {
+                pid: "protocol_1.0_test".to_string(),
+                roles: None,
+            },
+            ProtocolDescriptor {
+                pid: "protocol_1.0_some".to_string(),
+                roles: None,
+            },
+            ProtocolDescriptor {
+                pid: "0_test.0_test".to_string(),
+                roles: None,
+            },
         ]
     }
 
     fn _protocol_registry() -> ProtocolRegistry {
-        ProtocolRegistry { protocols: _protocols() }
+        ProtocolRegistry {
+            protocols: _protocols(),
+        }
     }
 
     #[test]
@@ -131,8 +147,14 @@ pub mod unit_tests {
         let protocols = registry.get_protocols_for_query(Some("protocol_1.0*"));
 
         let expected_protocols = vec![
-            ProtocolDescriptor { pid: "protocol_1.0_test".to_string(), roles: None },
-            ProtocolDescriptor { pid: "protocol_1.0_some".to_string(), roles: None },
+            ProtocolDescriptor {
+                pid: "protocol_1.0_test".to_string(),
+                roles: None,
+            },
+            ProtocolDescriptor {
+                pid: "protocol_1.0_some".to_string(),
+                roles: None,
+            },
         ];
         assert_eq!(expected_protocols, protocols);
     }
@@ -145,9 +167,10 @@ pub mod unit_tests {
 
         let protocols = registry.get_protocols_for_query(Some("protocol_1.0_test"));
 
-        let expected_protocols = vec![
-            ProtocolDescriptor { pid: "protocol_1.0_test".to_string(), roles: None },
-        ];
+        let expected_protocols = vec![ProtocolDescriptor {
+            pid: "protocol_1.0_test".to_string(),
+            roles: None,
+        }];
         assert_eq!(expected_protocols, protocols);
     }
 
@@ -172,15 +195,17 @@ pub mod unit_tests {
         assert!(!protocols.is_empty());
 
         let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections"));
-        let expected_protocols = vec![
-            ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: None },
-        ];
+        let expected_protocols = vec![ProtocolDescriptor {
+            pid: MessageFamilies::Connections.id(),
+            roles: None,
+        }];
         assert_eq!(expected_protocols, protocols);
 
         let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections/1.0"));
-        let expected_protocols = vec![
-            ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: None },
-        ];
+        let expected_protocols = vec![ProtocolDescriptor {
+            pid: MessageFamilies::Connections.id(),
+            roles: None,
+        }];
         assert_eq!(expected_protocols, protocols);
     }
 
@@ -194,9 +219,10 @@ pub mod unit_tests {
 
         let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections/1.0"));
 
-        let expected_protocols = vec![
-            ProtocolDescriptor { pid: MessageFamilies::Connections.id(), roles: Some(vec![Actors::Invitee]) },
-        ];
+        let expected_protocols = vec![ProtocolDescriptor {
+            pid: MessageFamilies::Connections.id(),
+            roles: Some(vec![Actors::Invitee]),
+        }];
         assert_eq!(expected_protocols, protocols);
     }
 }

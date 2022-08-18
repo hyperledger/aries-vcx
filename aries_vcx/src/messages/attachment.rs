@@ -24,7 +24,12 @@ impl Attachments {
         self.0.push(attachment);
     }
 
-    pub fn add_json_attachment(&mut self, id: AttachmentId, json: serde_json::Value, encoding: AttachmentEncoding) -> VcxResult<()> {
+    pub fn add_json_attachment(
+        &mut self,
+        id: AttachmentId,
+        json: serde_json::Value,
+        encoding: AttachmentEncoding,
+    ) -> VcxResult<()> {
         let json: Json = Json::new(id, json, encoding)?;
         self.add(Attachment::JSON(json));
         Ok(())
@@ -37,7 +42,10 @@ impl Attachments {
     pub fn content(&self) -> VcxResult<String> {
         match self.get() {
             Some(Attachment::JSON(ref attach)) => attach.get_data(),
-            _ => Err(VcxError::from_msg(VcxErrorKind::InvalidJson, "Unsupported Attachment type"))
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                "Unsupported Attachment type",
+            )),
         }
     }
 }
@@ -54,7 +62,7 @@ impl Attachment {
     pub fn id(&self) -> Option<AttachmentId> {
         match self {
             Self::JSON(json) => Some(json.id.clone()),
-            Self::Blank => None
+            Self::Blank => None,
         }
     }
 }
@@ -83,28 +91,21 @@ pub enum AttachmentId {
 impl Json {
     pub fn new(id: AttachmentId, json: serde_json::Value, encoding: AttachmentEncoding) -> VcxResult<Json> {
         let data: AttachmentData = match encoding {
-            AttachmentEncoding::Base64 => {
-                AttachmentData::Base64(
-                    base64::encode(&
-                        match json {
-                            serde_json::Value::Object(obj) => {
-                                serde_json::to_string(&obj)
-                                    .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Attachment Json".to_string()))?
-                            }
-                            serde_json::Value::String(str) => str,
-                            val => return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Unsupported Json value: {:?}", val)))
-                        }
-                    )
-                )
-            }
-            AttachmentEncoding::Json => {
-                AttachmentData::Json(json)
-            }
+            AttachmentEncoding::Base64 => AttachmentData::Base64(base64::encode(&match json {
+                serde_json::Value::Object(obj) => serde_json::to_string(&obj).map_err(|_| {
+                    VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Attachment Json".to_string())
+                })?,
+                serde_json::Value::String(str) => str,
+                val => {
+                    return Err(VcxError::from_msg(
+                        VcxErrorKind::InvalidJson,
+                        format!("Unsupported Json value: {:?}", val),
+                    ))
+                }
+            })),
+            AttachmentEncoding::Json => AttachmentData::Json(json),
         };
-        Ok(Json {
-            id,
-            data,
-        })
+        Ok(Json { id, data })
     }
 
     pub fn get_data(&self) -> VcxResult<String> {
@@ -136,9 +137,8 @@ impl AttachmentData {
             AttachmentData::Base64(s) => {
                 base64::decode(s).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
             }
-            AttachmentData::Json(json) => {
-                serde_json::to_vec(&json).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
-            }
+            AttachmentData::Json(json) => serde_json::to_vec(&json)
+                .map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment")),
         }
     }
 }
@@ -155,7 +155,10 @@ pub mod unit_tests {
     #[test]
     fn test_create_json_attachment_works_base64() {
         let json_attachment: Json = Json::new(AttachmentId::Credential, _json(), AttachmentEncoding::Base64).unwrap();
-        assert_eq!(vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125], json_attachment.data.get_bytes().unwrap());
+        assert_eq!(
+            vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125],
+            json_attachment.data.get_bytes().unwrap()
+        );
         assert_eq!(_json().to_string(), json_attachment.get_data().unwrap());
     }
 
@@ -174,7 +177,9 @@ pub mod unit_tests {
 
         {
             let mut attachments = Attachments::new();
-            attachments.add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Base64).unwrap();
+            attachments
+                .add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Base64)
+                .unwrap();
             assert_eq!(_json().to_string(), attachments.content().unwrap());
         }
     }
@@ -185,7 +190,10 @@ pub mod unit_tests {
         let bytes = json_attachment.data.get_bytes().unwrap();
         println!("{:?}", bytes);
 
-        assert_eq!(vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125], json_attachment.data.get_bytes().unwrap());
+        assert_eq!(
+            vec![123, 34, 102, 105, 101, 108, 100, 34, 58, 34, 118, 97, 108, 117, 101, 34, 125],
+            json_attachment.data.get_bytes().unwrap()
+        );
         assert_eq!(_json().to_string(), json_attachment.get_data().unwrap());
     }
 
@@ -204,7 +212,9 @@ pub mod unit_tests {
 
         {
             let mut attachments = Attachments::new();
-            attachments.add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Json).unwrap();
+            attachments
+                .add_json_attachment(AttachmentId::Credential, _json(), AttachmentEncoding::Json)
+                .unwrap();
             assert_eq!(_json().to_string(), attachments.content().unwrap());
         }
     }

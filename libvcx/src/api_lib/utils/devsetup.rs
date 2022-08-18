@@ -12,9 +12,7 @@ impl SetupGlobalsWalletPoolAgency {
         let setup = SetupWalletPoolAgency::init().await;
         set_main_wallet_handle(setup.wallet_handle);
         set_main_agency_client(setup.agency_client.clone());
-        SetupGlobalsWalletPoolAgency {
-            setup
-        }
+        SetupGlobalsWalletPoolAgency { setup }
     }
 }
 

@@ -47,4 +47,3 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {}
 }
-

@@ -5,20 +5,23 @@ use indy_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
+use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::utils;
 use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
-use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::global::settings::init_issuer_config;
+use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
 use crate::libindy::utils::mocks::did_mocks::DidMocks;
-use crate::libindy::utils::mocks::pool_mocks::{PoolMocks};
-use crate::libindy::utils::pool::PoolConfig;
+use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, WalletConfig};
+use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::wallet::wallet_configure_issuer;
+use crate::libindy::utils::wallet::{
+    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
+    WalletConfig,
+};
 use crate::libindy::wallet::open_wallet;
+use crate::utils;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
@@ -118,7 +121,6 @@ impl Drop for SetupMocks {
     }
 }
 
-
 impl SetupLibraryWallet {
     pub async fn init() -> SetupLibraryWallet {
         init_test_logging();
@@ -139,7 +141,10 @@ impl SetupLibraryWallet {
         };
 
         let wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
-        SetupLibraryWallet { wallet_config, wallet_handle }
+        SetupLibraryWallet {
+            wallet_config,
+            wallet_handle,
+        }
     }
 }
 
@@ -169,7 +174,10 @@ impl TestSetupCreateWallet {
         };
         create_indy_wallet(&wallet_config).await.unwrap();
 
-        TestSetupCreateWallet { wallet_config, skip_cleanup: false }
+        TestSetupCreateWallet {
+            wallet_config,
+            skip_cleanup: false,
+        }
     }
 
     pub fn skip_cleanup(mut self) -> TestSetupCreateWallet {
@@ -181,7 +189,8 @@ impl TestSetupCreateWallet {
 impl Drop for TestSetupCreateWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
+            futures::executor::block_on(delete_wallet(&self.wallet_config))
+                .unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
         }
         reset_global_state();
     }
@@ -192,14 +201,20 @@ impl SetupPoolConfig {
         init_test_logging();
 
         create_test_ledger_config().await;
-        let genesis_path = utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap().to_string();
+        let genesis_path = utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+            .to_str()
+            .unwrap()
+            .to_string();
         let pool_config = PoolConfig {
             genesis_path,
             pool_name: None,
             pool_config: None,
         };
 
-        SetupPoolConfig { skip_cleanup: false, pool_config }
+        SetupPoolConfig {
+            skip_cleanup: false,
+            pool_config,
+        }
     }
 
     pub fn skip_cleanup(mut self) -> SetupPoolConfig {
@@ -238,7 +253,13 @@ impl SetupWalletPoolAgency {
         init_test_logging();
         set_test_configs();
         let (institution_did, wallet_handle, agency_client) = setup_issuer_wallet_and_agency_client().await;
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
+        settings::set_config_value(
+            settings::CONFIG_GENESIS_PATH,
+            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
         open_test_pool().await;
         SetupWalletPoolAgency {
             agency_client,
@@ -260,7 +281,13 @@ impl SetupWalletPool {
         init_test_logging();
         set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
+        settings::set_config_value(
+            settings::CONFIG_GENESIS_PATH,
+            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
         open_test_pool().await;
         SetupWalletPool {
             institution_did,
@@ -299,7 +326,13 @@ impl SetupLibraryAgencyV2 {
         debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
         init_test_logging();
 
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH).to_str().unwrap()).unwrap();
+        settings::set_config_value(
+            settings::CONFIG_GENESIS_PATH,
+            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
         open_test_pool().await;
         debug!("SetupLibraryAgencyV2 init >> completed");
         SetupLibraryAgencyV2
@@ -315,14 +348,13 @@ impl Drop for SetupLibraryAgencyV2 {
 
 #[macro_export]
 macro_rules! assert_match {
-    ($pattern:pat, $var:expr) => (
+    ($pattern:pat, $var:expr) => {
         assert!(match $var {
             $pattern => true,
-            _ => false
+            _ => false,
         })
-    );
+    };
 }
-
 
 pub const AGENCY_ENDPOINT: &'static str = "http://localhost:8080";
 pub const AGENCY_DID: &'static str = "VsKV7grR1BUE29mG2Fm2kX";
@@ -366,7 +398,9 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
     let mut agency_client = AgencyClient::new();
-    provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent).await.unwrap();
+    provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
+        .await
+        .unwrap();
 
     (config_issuer.institution_did, wallet_handle, agency_client)
 }

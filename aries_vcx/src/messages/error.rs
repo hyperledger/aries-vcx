@@ -42,10 +42,7 @@ impl ProblemReport {
     }
 
     pub fn set_description(mut self, code: u32) -> Self {
-        self.description = Some(Description {
-            en: None,
-            code,
-        });
+        self.description = Some(Description { en: None, code });
         self
     }
 
@@ -84,7 +81,6 @@ impl Default for WhoRetries {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FixHint {
     en: String,
@@ -108,7 +104,9 @@ pub mod test_utils {
 
     use super::*;
 
-    pub fn _code() -> u32 { 0 }
+    pub fn _code() -> u32 {
+        0
+    }
 
     pub fn _comment() -> Option<String> {
         Some(String::from("test comment"))
@@ -118,7 +116,10 @@ pub mod test_utils {
         ProblemReport {
             id: MessageId::id(),
             thread: Some(_thread()),
-            description: Some(Description { en: None, code: _code() }),
+            description: Some(Description {
+                en: None,
+                code: _code(),
+            }),
             who_retries: None,
             tracking_uri: None,
             escalation_uri: None,

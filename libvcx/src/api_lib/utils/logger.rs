@@ -4,13 +4,16 @@ extern crate env_logger;
 extern crate libc;
 extern crate log;
 
+use chrono::format::{DelayedFormat, StrftimeItems};
 use std::env;
 use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
-use chrono::format::{DelayedFormat, StrftimeItems};
 
-pub use aries_vcx::indy_sys::{CVoid, logger::{EnabledCB, FlushCB, LogCB}};
+pub use aries_vcx::indy_sys::{
+    logger::{EnabledCB, FlushCB, LogCB},
+    CVoid,
+};
 use aries_vcx::libindy;
 
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -19,8 +22,8 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
-use self::env_logger::Builder as EnvLoggerBuilder;
 use self::env_logger::fmt::Formatter;
+use self::env_logger::Builder as EnvLoggerBuilder;
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
 use crate::chrono::Local;
@@ -40,7 +43,12 @@ pub enum LoggerState {
 impl LoggerState {
     pub fn get(&self) -> (*const CVoid, Option<EnabledCB>, Option<LogCB>, Option<FlushCB>) {
         match self {
-            LoggerState::Default => (ptr::null(), Some(LibvcxDefaultLogger::enabled), Some(LibvcxDefaultLogger::log), Some(LibvcxDefaultLogger::flush)),
+            LoggerState::Default => (
+                ptr::null(),
+                Some(LibvcxDefaultLogger::enabled),
+                Some(LibvcxDefaultLogger::log),
+                Some(LibvcxDefaultLogger::flush),
+            ),
             LoggerState::Custom => unsafe { (CONTEXT, ENABLED_CB, LOG_CB, FLUSH_CB) },
         }
     }
@@ -55,14 +63,28 @@ pub struct LibvcxLogger {
 
 impl LibvcxLogger {
     fn new(context: *const CVoid, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>) -> Self {
-        LibvcxLogger { context, enabled, log, flush }
+        LibvcxLogger {
+            context,
+            enabled,
+            log,
+            flush,
+        }
     }
 
-    pub fn init(context: *const CVoid, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>) -> VcxResult<()> {
+    pub fn init(
+        context: *const CVoid,
+        enabled: Option<EnabledCB>,
+        log: LogCB,
+        flush: Option<FlushCB>,
+    ) -> VcxResult<()> {
         trace!("LibvcxLogger::init >>>");
         let logger = LibvcxLogger::new(context, enabled, log, flush);
-        log::set_boxed_logger(Box::new(logger))
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting logger failed with: {}", err)))?;
+        log::set_boxed_logger(Box::new(logger)).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::LoggingError,
+                format!("Setting logger failed with: {}", err),
+            )
+        })?;
         log::set_max_level(LevelFilter::Trace);
         libindy::utils::logger::set_logger(log::logger())
             .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::LoggingError, "Setting logger failed"))?;
@@ -89,11 +111,10 @@ impl log::Log for LibvcxLogger {
             let level = metadata.level() as u32;
             let target = CString::new(metadata.target()).unwrap();
 
-            enabled_cb(self.context,
-                       level,
-                       target.as_ptr(),
-            )
-        } else { true }
+            enabled_cb(self.context, level, target.as_ptr())
+        } else {
+            true
+        }
     }
 
     fn log(&self, record: &Record) {
@@ -107,13 +128,14 @@ impl log::Log for LibvcxLogger {
         let file = record.file().map(|a| CString::new(a).unwrap());
         let line = record.line().unwrap_or(0);
 
-        log_cb(self.context,
-               level,
-               target.as_ptr(),
-               message.as_ptr(),
-               module_path.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
-               file.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
-               line,
+        log_cb(
+            self.context,
+            level,
+            target.as_ptr(),
+            message.as_ptr(),
+            module_path.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
+            file.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
+            line,
         )
     }
 
@@ -135,32 +157,35 @@ impl log::Log for LibvcxLogger {
 //WARN	Designates potentially harmful situations.
 pub struct LibvcxDefaultLogger;
 
-
 fn _get_timestamp<'a>() -> DelayedFormat<StrftimeItems<'a>> {
     Local::now().format("%Y-%m-%d %H:%M:%S.%f")
 }
 
 fn text_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let level = buf.default_styled_level(record.level());
-    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
-             _get_timestamp(),
-             level,
-             record.target(),
-             record.file().get_or_insert(""),
-             record.line().get_or_insert(0),
-             record.args()
+    writeln!(
+        buf,
+        "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
+        _get_timestamp(),
+        level,
+        record.target(),
+        record.file().get_or_insert(""),
+        record.line().get_or_insert(0),
+        record.args()
     )
 }
 
 fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result<()> {
     let level = record.level();
-    writeln!(buf, "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
-             _get_timestamp(),
-             level,
-             record.target(),
-             record.file().get_or_insert(""),
-             record.line().get_or_insert(0),
-             record.args()
+    writeln!(
+        buf,
+        "{} | {:>5} | {:<30} | {:>35}:{:<4} | {}",
+        _get_timestamp(),
+        level,
+        record.target(),
+        record.file().get_or_insert(""),
+        record.line().get_or_insert(0),
+        record.args()
     )
 }
 
@@ -171,7 +196,7 @@ impl LibvcxDefaultLogger {
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
-                let log_filter = match pattern.as_ref() {
+            let log_filter = match pattern.as_ref() {
                 Some(val) => match val.to_lowercase().as_ref() {
                     "error" => Filter::default().with_min_level(log::Level::Error),
                     "warn" => Filter::default().with_min_level(log::Level::Warn),
@@ -180,53 +205,56 @@ impl LibvcxDefaultLogger {
                     "trace" => Filter::default().with_min_level(log::Level::Trace),
                     _ => Filter::default().with_min_level(log::Level::Error),
                 },
-                None => Filter::default().with_min_level(log::Level::Error)
+                None => Filter::default().with_min_level(log::Level::Error),
             };
 
             //Set logging to off when deploying production android app.
             #[cfg(target_os = "android")]
-                android_logger::init_once(log_filter);
+            android_logger::init_once(log_filter);
             info!("Logging for Android");
         } else {
             let formatter = match env::var("RUST_LOG_FORMATTER") {
                 Ok(val) => match val.as_str() {
                     "text_no_color" => text_no_color_format,
-                    _ => text_format
-                }
-                _ => text_format
+                    _ => text_format,
+                },
+                _ => text_format,
             };
             EnvLoggerBuilder::new()
                 .format(formatter)
                 .filter(None, LevelFilter::Off)
                 .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
                 .try_init()
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err)))?;
+                .map_err(|err| {
+                    VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                })?;
         }
-        libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str))
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::LoggingError, format!("Setting default logger failed: {:?}", err)))
+        libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str)).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::LoggingError,
+                format!("Setting default logger failed: {:?}", err),
+            )
+        })
     }
 
-    extern fn enabled(_context: *const CVoid,
-                      level: u32,
-                      target: *const c_char) -> bool {
+    extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {
         let level = get_level(level);
         let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
 
-        let metadata: Metadata = Metadata::builder()
-            .level(level)
-            .target(target)
-            .build();
+        let metadata: Metadata = Metadata::builder().level(level).target(target).build();
 
         log::logger().enabled(&metadata)
     }
 
-    extern fn log(_context: *const CVoid,
-                  level: u32,
-                  target: *const c_char,
-                  args: *const c_char,
-                  module_path: *const c_char,
-                  file: *const c_char,
-                  line: u32) {
+    extern "C" fn log(
+        _context: *const CVoid,
+        level: u32,
+        target: *const c_char,
+        args: *const c_char,
+        module_path: *const c_char,
+        file: *const c_char,
+        line: u32,
+    ) {
         let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
         let args = CStringUtils::c_str_to_str(args).unwrap().unwrap();
         let module_path = CStringUtils::c_str_to_str(module_path).unwrap();
@@ -246,7 +274,7 @@ impl LibvcxDefaultLogger {
         );
     }
 
-    extern fn flush(_context: *const CVoid) {
+    extern "C" fn flush(_context: *const CVoid) {
         log::logger().flush()
     }
 }
@@ -272,17 +300,21 @@ mod tests {
 
     static mut COUNT: u32 = 0;
 
-    extern fn custom_enabled(_context: *const CVoid, _level: u32, _target: *const c_char) -> bool { true }
+    extern "C" fn custom_enabled(_context: *const CVoid, _level: u32, _target: *const c_char) -> bool {
+        true
+    }
 
-    extern fn custom_flush(_context: *const CVoid) {}
+    extern "C" fn custom_flush(_context: *const CVoid) {}
 
-    extern fn custom_log(_context: *const CVoid,
-                         _level: u32,
-                         _target: *const c_char,
-                         _message: *const c_char,
-                         _module_path: *const c_char,
-                         _file: *const c_char,
-                         _line: u32) {
+    extern "C" fn custom_log(
+        _context: *const CVoid,
+        _level: u32,
+        _target: *const c_char,
+        _message: *const c_char,
+        _module_path: *const c_char,
+        _file: *const c_char,
+        _line: u32,
+    ) {
         unsafe { COUNT = COUNT + 1 }
     }
 
@@ -307,10 +339,13 @@ mod tests {
     #[test]
     #[cfg(feature = "general_test")]
     fn test_custom_logger() {
-        LibvcxLogger::init(get_custom_context(),
-                           Some(custom_enabled),
-                           custom_log,
-                           Some(custom_flush)).unwrap();
+        LibvcxLogger::init(
+            get_custom_context(),
+            Some(custom_enabled),
+            custom_log,
+            Some(custom_flush),
+        )
+        .unwrap();
         error!("error level message"); // first call of log function
         unsafe {
             assert_eq!(COUNT, 2) // second-time log function was called inside libindy

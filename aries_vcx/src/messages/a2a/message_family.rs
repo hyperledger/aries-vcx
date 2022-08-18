@@ -33,7 +33,7 @@ impl MessageFamilies {
             MessageFamilies::DiscoveryFeatures => "1.0",
             MessageFamilies::Basicmessage => "1.0",
             MessageFamilies::OutOfBand => "1.1",
-            MessageFamilies::Unknown(_) => "1.0"
+            MessageFamilies::Unknown(_) => "1.0",
         }
     }
 
@@ -54,7 +54,7 @@ impl MessageFamilies {
             MessageFamilies::DiscoveryFeatures => Some((Actors::Sender, Actors::Receiver)),
             MessageFamilies::Basicmessage => Some((Actors::Sender, Actors::Receiver)),
             MessageFamilies::OutOfBand => Some((Actors::Sender, Actors::Receiver)),
-            MessageFamilies::Unknown(_) => None
+            MessageFamilies::Unknown(_) => None,
         }
     }
 }
@@ -73,7 +73,7 @@ impl From<String> for MessageFamilies {
             "discover-features" => MessageFamilies::DiscoveryFeatures,
             "basicmessage" => MessageFamilies::Basicmessage,
             "out-of-band" => MessageFamilies::OutOfBand,
-            family => MessageFamilies::Unknown(family.to_string())
+            family => MessageFamilies::Unknown(family.to_string()),
         }
     }
 }
@@ -92,7 +92,7 @@ impl ::std::string::ToString for MessageFamilies {
             MessageFamilies::DiscoveryFeatures => "discover-features".to_string(),
             MessageFamilies::Basicmessage => "basicmessage".to_string(),
             MessageFamilies::OutOfBand => "out-of-band".to_string(),
-            MessageFamilies::Unknown(family) => family.to_string()
+            MessageFamilies::Unknown(family) => family.to_string(),
         }
     }
 }

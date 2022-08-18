@@ -73,7 +73,9 @@ pub enum VcxErrorKind {
     CredDefAlreadyCreated,
     #[fail(display = "Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[fail(display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[fail(
+        display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
     RevDeltaNotFound,
 
     // Revocation
@@ -268,8 +270,12 @@ impl fmt::Display for VcxError {
 
 impl VcxError {
     pub fn from_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        VcxError { inner: Context::new(msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        VcxError {
+            inner: Context::new(msg).context(kind),
+        }
     }
 
     pub fn kind(&self) -> VcxErrorKind {
@@ -277,19 +283,29 @@ impl VcxError {
     }
 
     pub fn extend<D>(self, msg: D) -> VcxError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
         let kind = self.kind();
-        VcxError { inner: self.inner.map(|_| msg).context(kind) }
+        VcxError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 
     pub fn map<D>(self, kind: VcxErrorKind, msg: D) -> VcxError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        VcxError { inner: self.inner.map(|_| msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        VcxError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 }
 
 pub fn err_msg<D>(kind: VcxErrorKind, msg: D) -> VcxError
-    where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
+where
+    D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+{
     VcxError::from_msg(kind, msg)
 }
 
@@ -344,7 +360,9 @@ impl From<AgencyClientErrorKind> for VcxErrorKind {
 
 impl<T> From<sync::PoisonError<T>> for VcxError {
     fn from(_: sync::PoisonError<T>) -> Self {
-        VcxError { inner: Context::new(Backtrace::new()).context(VcxErrorKind::PoisonedLock) }
+        VcxError {
+            inner: Context::new(Backtrace::new()).context(VcxErrorKind::PoisonedLock),
+        }
     }
 }
 
@@ -358,25 +376,41 @@ pub type VcxResult<T> = Result<T, VcxError>;
 
 /// Extension methods for `Result`.
 pub trait VcxResultExt<T, E> {
-    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxResult<T> where D: fmt::Display + Send + Sync + 'static;
+    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxResult<T>
+    where
+        D: fmt::Display + Send + Sync + 'static;
 }
 
-impl<T, E> VcxResultExt<T, E> for Result<T, E> where E: Fail
+impl<T, E> VcxResultExt<T, E> for Result<T, E>
+where
+    E: Fail,
 {
-    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxResult<T> where D: fmt::Display + Send + Sync + 'static {
+    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxResult<T>
+    where
+        D: fmt::Display + Send + Sync + 'static,
+    {
         self.map_err(|err| err.context(msg).context(kind).into())
     }
 }
 
 /// Extension methods for `Error`.
 pub trait VcxErrorExt {
-    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxError where D: fmt::Display + Send + Sync + 'static;
+    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxError
+    where
+        D: fmt::Display + Send + Sync + 'static;
 }
 
-impl<E> VcxErrorExt for E where E: Fail
+impl<E> VcxErrorExt for E
+where
+    E: Fail,
 {
-    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxError where D: fmt::Display + Send + Sync + 'static {
-        self.context(format!("\n{}: {}", std::any::type_name::<E>(), msg)).context(kind).into()
+    fn to_vcx<D>(self, kind: VcxErrorKind, msg: D) -> VcxError
+    where
+        D: fmt::Display + Send + Sync + 'static,
+    {
+        self.context(format!("\n{}: {}", std::any::type_name::<E>(), msg))
+            .context(kind)
+            .into()
     }
 }
 
@@ -480,7 +514,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num,
             VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
             VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num,
-            VcxErrorKind::CreateAgent => error::CREATE_AGENT.code_num
+            VcxErrorKind::CreateAgent => error::CREATE_AGENT.code_num,
         }
     }
 }
@@ -516,12 +550,16 @@ impl From<u32> for VcxErrorKind {
             _ if { error::INVALID_REV_REG_DEF_CREATION.code_num == code } => VcxErrorKind::CreateRevRegDef,
             _ if { error::INVALID_CREDENTIAL_HANDLE.code_num == code } => VcxErrorKind::InvalidCredentialHandle,
             _ if { error::CREATE_CREDENTIAL_REQUEST_ERROR.code_num == code } => VcxErrorKind::CreateCredentialRequest,
-            _ if { error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num == code } => VcxErrorKind::InvalidIssuerCredentialHandle,
+            _ if { error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num == code } => {
+                VcxErrorKind::InvalidIssuerCredentialHandle
+            }
             _ if { error::INVALID_CREDENTIAL_REQUEST.code_num == code } => VcxErrorKind::InvalidCredentialRequest,
             _ if { error::INVALID_CREDENTIAL_JSON.code_num == code } => VcxErrorKind::InvalidCredential,
             _ if { error::INSUFFICIENT_TOKEN_AMOUNT.code_num == code } => VcxErrorKind::InsufficientTokenAmount,
             _ if { error::INVALID_PROOF_HANDLE.code_num == code } => VcxErrorKind::InvalidProofHandle,
-            _ if { error::INVALID_DISCLOSED_PROOF_HANDLE.code_num == code } => VcxErrorKind::InvalidDisclosedProofHandle,
+            _ if { error::INVALID_DISCLOSED_PROOF_HANDLE.code_num == code } => {
+                VcxErrorKind::InvalidDisclosedProofHandle
+            }
             _ if { error::INVALID_PROOF.code_num == code } => VcxErrorKind::InvalidProof,
             _ if { error::INVALID_SCHEMA.code_num == code } => VcxErrorKind::InvalidSchema,
             _ if { error::INVALID_PROOF_CREDENTIAL_DATA.code_num == code } => VcxErrorKind::InvalidProofCredentialData,

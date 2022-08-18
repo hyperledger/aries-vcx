@@ -1,4 +1,4 @@
- #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
+#![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 #![crate_name = "aries_vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
@@ -36,15 +36,15 @@ extern crate derive_builder;
 pub mod utils;
 #[macro_use]
 pub mod handlers;
-pub mod messages;
-pub mod error;
-pub mod libindy;
-pub mod protocols;
 pub mod actors;
-pub mod global;
 pub mod did_doc;
+pub mod error;
+pub mod global;
+pub mod libindy;
+pub mod messages;
+pub mod protocols;
 
- #[cfg(test)]
+#[cfg(test)]
 pub mod test {
     pub fn source_id() -> String {
         String::from("test source id")

@@ -17,7 +17,10 @@ pub struct RespondedState {
 
 impl From<(RespondedState, ProblemReport)> for InitialState {
     fn from((_state, problem_report): (RespondedState, ProblemReport)) -> InitialState {
-        trace!("ConnectionInviter: transit state from RespondedState to InitialState, problem_report: {:?}", problem_report);
+        trace!(
+            "ConnectionInviter: transit state from RespondedState to InitialState, problem_report: {:?}",
+            problem_report
+        );
         InitialState::new(Some(problem_report))
     }
 }
@@ -25,20 +28,32 @@ impl From<(RespondedState, ProblemReport)> for InitialState {
 impl From<(RespondedState, Ack)> for CompleteState {
     fn from((state, _ack): (RespondedState, Ack)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.did_doc, thread_id: Some(state.signed_response.get_thread_id()), protocols: None }
+        CompleteState {
+            did_doc: state.did_doc,
+            thread_id: Some(state.signed_response.get_thread_id()),
+            protocols: None,
+        }
     }
 }
 
 impl From<(RespondedState, Ping)> for CompleteState {
     fn from((state, _ping): (RespondedState, Ping)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.did_doc, thread_id: Some(state.signed_response.get_thread_id()), protocols: None }
+        CompleteState {
+            did_doc: state.did_doc,
+            thread_id: Some(state.signed_response.get_thread_id()),
+            protocols: None,
+        }
     }
 }
 
 impl From<(RespondedState, PingResponse)> for CompleteState {
     fn from((state, _ping_response): (RespondedState, PingResponse)) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState { did_doc: state.did_doc, thread_id: Some(state.signed_response.get_thread_id()), protocols: None }
+        CompleteState {
+            did_doc: state.did_doc,
+            thread_id: Some(state.signed_response.get_thread_id()),
+            protocols: None,
+        }
     }
 }

@@ -6,25 +6,23 @@ use indy_sys::WalletHandle;
 
 use crate::error::prelude::*;
 
-use crate::messages::a2a::A2AMessage;
-use crate::messages::a2a::protocol_registry::ProtocolRegistry;
-use crate::messages::ack::Ack;
 use crate::did_doc::DidDoc;
+use crate::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::ack::Ack;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-
-
+use crate::handlers::util::verify_thread_id;
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::handlers::util::verify_thread_id;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -54,9 +52,7 @@ pub enum InviteeState {
 
 impl PartialEq for SmConnectionInvitee {
     fn eq(&self, other: &Self) -> bool {
-        self.source_id == other.source_id &&
-            self.pairwise_info == other.pairwise_info &&
-            self.state == other.state
+        self.source_id == other.source_id && self.pairwise_info == other.pairwise_info && self.state == other.state
     }
 }
 
@@ -67,7 +63,7 @@ impl From<InviteeFullState> for InviteeState {
             InviteeFullState::Invited(_) => InviteeState::Invited,
             InviteeFullState::Requested(_) => InviteeState::Requested,
             InviteeFullState::Responded(_) => InviteeState::Responded,
-            InviteeFullState::Completed(_) => InviteeState::Completed
+            InviteeFullState::Completed(_) => InviteeState::Completed,
         }
     }
 }
@@ -110,14 +106,14 @@ impl SmConnectionInvitee {
     pub fn is_in_null_state(&self) -> bool {
         match self.state {
             InviteeFullState::Initial(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn is_in_final_state(&self) -> bool {
         match self.state {
             InviteeFullState::Completed(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -144,7 +140,7 @@ impl SmConnectionInvitee {
     pub fn get_invitation(&self) -> Option<&Invitation> {
         match self.state {
             InviteeFullState::Invited(ref state) => Some(&state.invitation),
-            _ => None
+            _ => None,
         }
     }
 
@@ -164,60 +160,77 @@ impl SmConnectionInvitee {
     pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
         match self.state {
             InviteeFullState::Completed(ref state) => state.protocols.clone(),
-            _ => None
+            _ => None,
         }
     }
 
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id)
-            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection DID is not set"))
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Remote Connection DID is not set",
+            ))
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
         self.their_did_doc()
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
-            .ok_or(VcxError::from_msg(VcxErrorKind::NotReady, "Remote Connection Verkey is not set"))
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Remote Connection Verkey is not set",
+            ))
     }
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
-            InviteeFullState::Requested(_) => {
-                match message {
-                    A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_) => true,
-                    _ => false
-                }
-            }
-            _ => false
+            InviteeFullState::Requested(_) => match message {
+                A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_) => true,
+                _ => false,
+            },
+            _ => false,
         }
     }
 
-    async fn _send_ack<F, T>(&self,
-                             wallet_handle: WalletHandle,
-                             did_doc: &DidDoc,
-                             request: &Request,
-                             response: &SignedResponse,
-                             pairwise_info: &PairwiseInfo,
-                             send_message: F) -> VcxResult<Response>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
-
+    async fn _send_ack<F, T>(
+        &self,
+        wallet_handle: WalletHandle,
+        did_doc: &DidDoc,
+        request: &Request,
+        response: &SignedResponse,
+        pairwise_info: &PairwiseInfo,
+        send_message: F,
+    ) -> VcxResult<Response>
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
-        let remote_vk: String = did_doc.recipient_keys().get(0).cloned()
-            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Cannot handle response: remote verkey not found"))?;
+        let remote_vk: String = did_doc.recipient_keys().get(0).cloned().ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidState,
+            "Cannot handle response: remote verkey not found",
+        ))?;
 
         let response = response.clone().decode(&remote_vk).await?;
 
         if !response.from_thread(&request.get_thread_id()) {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot handle response: thread id does not match: {:?}", response.thread)));
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!(
+                    "Cannot handle response: thread id does not match: {:?}",
+                    response.thread
+                ),
+            ));
         }
 
-        let message = Ack::create()
-            .set_thread_id(&self.thread_id)
-            .to_a2a_message();
+        let message = Ack::create().set_thread_id(&self.thread_id).to_a2a_message();
 
-        send_message(wallet_handle, pairwise_info.pw_vk.clone(), response.connection.did_doc.clone(), message).await?;
+        send_message(
+            wallet_handle,
+            pairwise_info.pw_vk.clone(),
+            response.connection.did_doc.clone(),
+            message,
+        )
+        .await?;
         Ok(response)
     }
 
@@ -225,19 +238,34 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
-            s => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, format!("Cannot handle inviation: not in Initial state, current state: {:?}", s))); }
+            s => {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    format!("Cannot handle inviation: not in Initial state, current state: {:?}", s),
+                ));
+            }
         };
-        Ok(Self { state, thread_id: invitation.get_id()?, ..self })
+        Ok(Self {
+            state,
+            thread_id: invitation.get_id()?,
+            ..self
+        })
     }
 
-    pub async fn handle_connect<F, T>(self, wallet_handle: WalletHandle, routing_keys: Vec<String>, service_endpoint: String, send_message: F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
+    pub async fn handle_connect<F, T>(
+        self,
+        wallet_handle: WalletHandle,
+        routing_keys: Vec<String>,
+        service_endpoint: String,
+        send_message: F,
+    ) -> VcxResult<Self>
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let recipient_keys = vec!(self.pairwise_info.pw_vk.clone());
+                let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
                 let request = Request::create()
                     .set_label(self.source_id.to_string())
                     .set_did(self.pairwise_info.pw_did.to_string())
@@ -249,37 +277,41 @@ impl SmConnectionInvitee {
                             .clone()
                             .set_parent_thread_id(&self.thread_id)
                             .set_thread_id_matching_id(),
-                        request.id.0.clone()
+                        request.id.0.clone(),
                     ),
-                    Invitation::Pairwise(_) => (
-                        request
-                            .set_thread_id(&self.thread_id),
-                        self.get_thread_id()
-                    ),
+                    Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.get_thread_id()),
                     Invitation::OutOfBand(invite) => (
                         request
                             .clone()
                             .set_parent_thread_id(&invite.id.0)
                             .set_thread_id_matching_id(),
-                        request.id.0.clone()
-                    )
+                        request.id.0.clone(),
+                    ),
                 };
                 let ddo = DidDoc::from(state.invitation.clone());
-                send_message(wallet_handle, self.pairwise_info.pw_vk.clone(), ddo, request.to_a2a_message()).await?;
+                send_message(
+                    wallet_handle,
+                    self.pairwise_info.pw_vk.clone(),
+                    ddo,
+                    request.to_a2a_message(),
+                )
+                .await?;
                 (InviteeFullState::Requested((state.clone(), request).into()), thread_id)
             }
-            _ => (self.state.clone(), self.get_thread_id())
+            _ => (self.state.clone(), self.get_thread_id()),
         };
-        Ok(Self { state, thread_id, ..self })
+        Ok(Self {
+            state,
+            thread_id,
+            ..self
+        })
     }
 
     pub fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
-            InviteeFullState::Requested(state) => {
-                InviteeFullState::Responded((state, response).into())
-            }
-            _ => self.state.clone()
+            InviteeFullState::Requested(state) => InviteeFullState::Responded((state, response).into()),
+            _ => self.state.clone(),
         };
         Ok(Self { state, ..self })
     }
@@ -287,47 +319,56 @@ impl SmConnectionInvitee {
     pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
         let Self { state, .. } = self;
         let state = match state {
-            InviteeFullState::Completed(state) => {
-                InviteeFullState::Completed((state, disclose.protocols).into())
-            }
-            _ => state.clone()
+            InviteeFullState::Completed(state) => InviteeFullState::Completed((state, disclose.protocols).into()),
+            _ => state.clone(),
         };
         Ok(Self { state, ..self })
     }
 
     pub async fn handle_send_ack<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
         let state = match self.state {
-            InviteeFullState::Responded(ref state) => {
-                match self._send_ack(wallet_handle, &state.did_doc, &state.request, &state.response, &self.pairwise_info, send_message).await {
-                    Ok(response) => InviteeFullState::Completed((state.clone(), response).into()),
-                    Err(err) => {
-                        let problem_report = ProblemReport::create()
-                            .set_problem_code(ProblemCode::ResponseProcessingError)
-                            .set_explain(err.to_string())
-                            .set_thread_id(&self.thread_id);
-                        send_message(wallet_handle, self.pairwise_info.pw_vk.clone(), state.did_doc.clone(), problem_report.to_a2a_message()).await.ok();
-                        InviteeFullState::Initial((state.clone(), problem_report).into())
-                    }
+            InviteeFullState::Responded(ref state) => match self
+                ._send_ack(
+                    wallet_handle,
+                    &state.did_doc,
+                    &state.request,
+                    &state.response,
+                    &self.pairwise_info,
+                    send_message,
+                )
+                .await
+            {
+                Ok(response) => InviteeFullState::Completed((state.clone(), response).into()),
+                Err(err) => {
+                    let problem_report = ProblemReport::create()
+                        .set_problem_code(ProblemCode::ResponseProcessingError)
+                        .set_explain(err.to_string())
+                        .set_thread_id(&self.thread_id);
+                    send_message(
+                        wallet_handle,
+                        self.pairwise_info.pw_vk.clone(),
+                        state.did_doc.clone(),
+                        problem_report.to_a2a_message(),
+                    )
+                    .await
+                    .ok();
+                    InviteeFullState::Initial((state.clone(), problem_report).into())
                 }
-            }
-            _ => self.state.clone()
+            },
+            _ => self.state.clone(),
         };
         Ok(Self { state, ..self })
     }
 
     pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(_state) => {
-                InviteeFullState::Initial(InitialState::new(None))
-            }
-            InviteeFullState::Invited(_state) => {
-                InviteeFullState::Initial(InitialState::new(None))
-            }
-            _ => self.state.clone()
+            InviteeFullState::Requested(_state) => InviteeFullState::Initial(InitialState::new(None)),
+            InviteeFullState::Invited(_state) => InviteeFullState::Initial(InitialState::new(None)),
+            _ => self.state.clone(),
         };
         Ok(Self { state, ..self })
     }
@@ -370,7 +411,12 @@ pub mod unit_tests {
 
         use super::*;
 
-        async fn _send_message(_wallet_handle: WalletHandle, _pv_wk: String, _did_doc: DidDoc, _a2a_message: A2AMessage) -> VcxResult<()> {
+        async fn _send_message(
+            _wallet_handle: WalletHandle,
+            _pv_wk: String,
+            _did_doc: DidDoc,
+            _a2a_message: A2AMessage,
+        ) -> VcxResult<()> {
             VcxResult::Ok(())
         }
 
@@ -381,28 +427,45 @@ pub mod unit_tests {
 
         impl SmConnectionInvitee {
             pub fn to_invitee_invited_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+                self = self
+                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
+                    .unwrap();
                 self
             }
 
             pub async fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
-                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                self = self
+                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
+                    .unwrap();
+                let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message).await.unwrap();
+                self = self
+                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .await
+                    .unwrap();
                 self
             }
 
             pub async fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
 
-                self = self.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+                self = self
+                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
+                    .unwrap();
 
-                let routing_keys: Vec<String> = vec!(key.clone());
+                let routing_keys: Vec<String> = vec![key.clone()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message).await.unwrap();
-                self = self.handle_connection_response(_response(WalletHandle(0), &key).await).unwrap();
-                self = self.handle_send_ack(_dummy_wallet_handle(), &_send_message).await.unwrap();
+                self = self
+                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .await
+                    .unwrap();
+                self = self
+                    .handle_connection_response(_response(WalletHandle(0), &key).await)
+                    .unwrap();
+                self = self
+                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .await
+                    .unwrap();
                 self = self.handle_ack(_ack()).unwrap();
                 self
             }
@@ -413,7 +476,9 @@ pub mod unit_tests {
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id(&_request().id.0)
-                .encode(wallet_handle, &key).await.unwrap()
+                .encode(wallet_handle, &key)
+                .await
+                .unwrap()
         }
 
         async fn _response_1(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
@@ -421,7 +486,9 @@ pub mod unit_tests {
                 .set_service_endpoint(_service_endpoint())
                 .set_keys(vec![key.to_string()], vec![])
                 .set_thread_id("testid_1")
-                .encode(wallet_handle, &key).await.unwrap()
+                .encode(wallet_handle, &key)
+                .await
+                .unwrap()
         }
 
         mod new {
@@ -449,15 +516,25 @@ pub mod unit_tests {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 let mut invitee = invitee_sm().await;
 
-                invitee = invitee.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+                invitee = invitee
+                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
+                    .unwrap();
 
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                invitee = invitee.handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message).await.unwrap();
+                invitee = invitee
+                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .await
+                    .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
-                invitee = invitee.handle_connection_response(_response_1(WalletHandle(0), &key).await).unwrap();
+                invitee = invitee
+                    .handle_connection_response(_response_1(WalletHandle(0), &key).await)
+                    .unwrap();
                 assert_match!(InviteeState::Responded, invitee.get_state());
-                invitee = invitee.handle_send_ack(_dummy_wallet_handle(), &_send_message).await.unwrap();
+                invitee = invitee
+                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .await
+                    .unwrap();
                 assert_match!(InviteeState::Initial, invitee.get_state());
             }
         }
@@ -484,7 +561,9 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await;
 
-                did_exchange_sm = did_exchange_sm.handle_invitation(Invitation::Pairwise(_pairwise_invitation())).unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
+                    .unwrap();
 
                 assert_match!(InviteeFullState::Invited(_), did_exchange_sm.state);
             }
@@ -496,9 +575,12 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await;
 
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message).await.unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .await
+                    .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm.handle_ack(_ack()).unwrap();
@@ -512,9 +594,12 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_invited_state();
 
-                let routing_keys: Vec<String> = vec!("verkey123".into());
+                let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message).await.unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .await
+                    .unwrap();
 
                 assert_match!(InviteeFullState::Requested(_), did_exchange_sm.state);
             }
@@ -540,12 +625,16 @@ pub mod unit_tests {
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
-                did_exchange_sm = did_exchange_sm.handle_connection_response(_response(WalletHandle(0), &key).await).unwrap();
-                did_exchange_sm = did_exchange_sm.handle_send_ack(_dummy_wallet_handle(), &_send_message).await.unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_connection_response(_response(WalletHandle(0), &key).await)
+                    .unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .await
+                    .unwrap();
 
                 assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
             }
-
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -572,7 +661,10 @@ pub mod unit_tests {
                 signed_response.connection_sig.signature = String::from("other");
 
                 did_exchange_sm = did_exchange_sm.handle_connection_response(signed_response).unwrap();
-                did_exchange_sm = did_exchange_sm.handle_send_ack(_dummy_wallet_handle(), &_send_message).await.unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .await
+                    .unwrap();
 
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
@@ -706,8 +798,14 @@ pub mod unit_tests {
                 let _setup = SetupMocks::init();
 
                 assert_eq!(InviteeState::Initial, invitee_sm().await.get_state());
-                assert_eq!(InviteeState::Invited, invitee_sm().await.to_invitee_invited_state().get_state());
-                assert_eq!(InviteeState::Requested, invitee_sm().await.to_invitee_requested_state().await.get_state());
+                assert_eq!(
+                    InviteeState::Invited,
+                    invitee_sm().await.to_invitee_invited_state().get_state()
+                );
+                assert_eq!(
+                    InviteeState::Requested,
+                    invitee_sm().await.to_invitee_requested_state().await.get_state()
+                );
             }
         }
     }

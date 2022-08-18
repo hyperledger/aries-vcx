@@ -15,17 +15,24 @@ pub struct PresentationRequestReceived {
     pub presentation_request: PresentationRequest,
 }
 
-
 impl PresentationRequestReceived {
     pub fn new(presentation_request: PresentationRequest) -> Self {
         Self { presentation_request }
     }
 
-    pub async fn build_presentation(&self, wallet_handle: WalletHandle, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        generate_indy_proof(wallet_handle,
-                            credentials,
-                            self_attested_attrs,
-                            &self.presentation_request.request_presentations_attach.content()?).await
+    pub async fn build_presentation(
+        &self,
+        wallet_handle: WalletHandle,
+        credentials: &str,
+        self_attested_attrs: &str,
+    ) -> VcxResult<String> {
+        generate_indy_proof(
+            wallet_handle,
+            credentials,
+            self_attested_attrs,
+            &self.presentation_request.request_presentations_attach.content()?,
+        )
+        .await
     }
 }
 

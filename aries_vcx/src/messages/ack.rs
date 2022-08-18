@@ -86,9 +86,7 @@ pub mod unit_tests {
 
     #[test]
     fn test_ack_build_works() {
-        let ack: Ack = Ack::default()
-            .set_status(AckStatus::Fail)
-            .set_thread_id(&_thread_id());
+        let ack: Ack = Ack::default().set_status(AckStatus::Fail).set_thread_id(&_thread_id());
 
         assert_eq!(_ack(), ack);
     }

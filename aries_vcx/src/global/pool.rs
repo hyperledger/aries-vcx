@@ -2,8 +2,8 @@ use std::sync::RwLock;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 use crate::libindy::utils::pool::PoolConfig;
+use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -15,8 +15,12 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 }
 
 pub fn get_main_pool_handle() -> VcxResult<i32> {
-    POOL_HANDLE.read()
-        .or(Err(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened")))?
+    POOL_HANDLE
+        .read()
+        .or(Err(VcxError::from_msg(
+            VcxErrorKind::NoPoolOpen,
+            "There is no pool opened",
+        )))?
         .ok_or(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened"))
 }
 
@@ -24,11 +28,21 @@ pub fn is_main_pool_open() -> bool {
     get_main_pool_handle().is_ok()
 }
 
-pub fn reset_main_pool_handle() { set_main_pool_handle(None); }
+pub fn reset_main_pool_handle() {
+    set_main_pool_handle(None);
+}
 
 pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
-    let pool_name = config.pool_name.clone().unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-    trace!("open_pool >>> pool_name: {}, path: {}, pool_config: {:?}", pool_name, config.genesis_path, config.pool_config);
+    let pool_name = config
+        .pool_name
+        .clone()
+        .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+    trace!(
+        "open_pool >>> pool_name: {}, path: {}, pool_config: {:?}",
+        pool_name,
+        config.genesis_path,
+        config.pool_config
+    );
 
     create_pool_ledger_config(&pool_name, &config.genesis_path)
         .await
