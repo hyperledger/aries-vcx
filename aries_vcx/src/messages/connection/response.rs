@@ -174,6 +174,7 @@ impl Default for ConnectionSignature {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::did_doc::test_utils::_did_doc_inlined_recipient_keys;
+    use crate::utils::uuid::uuid;
 
     use super::*;
 
@@ -187,6 +188,10 @@ pub mod test_utils {
 
     pub fn _thread() -> Thread {
         Thread::new().set_thid(String::from("testid"))
+    }
+
+    pub fn _thread_random() -> Thread {
+        Thread::new().set_thid(uuid())
     }
 
     pub fn _thread_1() -> Thread {

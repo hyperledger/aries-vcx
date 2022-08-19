@@ -55,7 +55,7 @@ macro_rules! please_ack (($type:ident) => (
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::response::test_utils::{_thread, _thread_1};
+    use crate::messages::connection::response::test_utils::{_thread, _thread_1, _thread_random};
 
     use super::*;
 
@@ -64,6 +64,14 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread(),
+        }
+    }
+
+    pub fn _ack_random_thread() -> Ack {
+        Ack {
+            id: MessageId::id(),
+            status: AckStatus::Ok,
+            thread: _thread_random(),
         }
     }
 

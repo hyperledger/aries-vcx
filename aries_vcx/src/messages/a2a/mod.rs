@@ -1,5 +1,5 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use log;
 
@@ -105,7 +105,24 @@ impl A2AMessage {
             Self::Disclose(m) => m.from_thread(thread_id),
             Self::OutOfBandHandshakeReuse(m) => m.from_thread(thread_id),
             Self::OutOfBandHandshakeReuseAccepted(m) => m.from_thread(thread_id),
-            _ => true,
+            Self::Forward(_) => false,
+            Self::ConnectionInvitationPairwise(_) => false,
+            Self::ConnectionInvitationPublic(_) => false,
+            Self::Query(_) => false,
+            Self::OutOfBandInvitation(_) => false,
+            Self::BasicMessage(m) => m.from_thread(thread_id),
+            Self::Generic(m) => {
+                return match m.as_object() {
+                    None => false,
+                    Some(msg) => match msg.get("~thread") {
+                        None => false,
+                        Some(thread) => match thread["thid"].as_str() {
+                            None => false,
+                            Some(thid) => thid == thread_id,
+                        },
+                    },
+                }
+            }
         }
     }
 }

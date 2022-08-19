@@ -1,6 +1,7 @@
 use std::clone::Clone;
 
 use crate::did_doc::DidDoc;
+use crate::messages::a2a::A2AMessage;
 use crate::messages::ack::Ack;
 use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;
@@ -25,30 +26,8 @@ impl From<(RespondedState, ProblemReport)> for InitialState {
     }
 }
 
-impl From<(RespondedState, Ack)> for CompleteState {
-    fn from((state, _ack): (RespondedState, Ack)) -> CompleteState {
-        trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState {
-            did_doc: state.did_doc,
-            thread_id: Some(state.signed_response.get_thread_id()),
-            protocols: None,
-        }
-    }
-}
-
-impl From<(RespondedState, Ping)> for CompleteState {
-    fn from((state, _ping): (RespondedState, Ping)) -> CompleteState {
-        trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState {
-            did_doc: state.did_doc,
-            thread_id: Some(state.signed_response.get_thread_id()),
-            protocols: None,
-        }
-    }
-}
-
-impl From<(RespondedState, PingResponse)> for CompleteState {
-    fn from((state, _ping_response): (RespondedState, PingResponse)) -> CompleteState {
+impl From<RespondedState> for CompleteState {
+    fn from(state: RespondedState) -> CompleteState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
         CompleteState {
             did_doc: state.did_doc,

@@ -6,7 +6,6 @@ use indy_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-
 use crate::handlers::trust_ping::util::handle_ping;
 use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -17,7 +16,6 @@ use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-
 use crate::messages::trust_ping::ping::Ping;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
@@ -207,7 +205,7 @@ impl SmConnectionInviter {
         .await
     }
 
-    pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
+    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
                 let invite: PairwiseInvitation = PairwiseInvitation::create()
@@ -282,37 +280,6 @@ impl SmConnectionInviter {
         })
     }
 
-    pub async fn handle_ping<F, T>(self, wallet_handle: WalletHandle, ping: Ping, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
-        verify_thread_id(&self.get_thread_id(), &ping.to_a2a_message())?;
-        let Self {
-            state, pairwise_info, ..
-        } = self;
-        let state = match state {
-            InviterFullState::Responded(state) => {
-                handle_ping(wallet_handle, &ping, &pairwise_info.pw_vk, &state.did_doc, send_message).await?;
-                InviterFullState::Completed((state, ping).into())
-            }
-            _ => state,
-        };
-        Ok(Self {
-            state,
-            pairwise_info,
-            ..self
-        })
-    }
-
-    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
-        let state = match self.state {
-            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.protocols).into()),
-            _ => self.state,
-        };
-        Ok(Self { state, ..self })
-    }
-
     pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Responded(_) => InviterFullState::Initial((problem_report).into()),
@@ -357,41 +324,23 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_ack<F, T>(self, wallet_handle: WalletHandle, msg_ack: Ack, send_message: F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
-        let Self {
-            state, pairwise_info, ..
-        } = self.clone();
-        let state = match state {
-            InviterFullState::Responded(state) => {
-                if !msg_ack.from_thread(&self.get_thread_id()) {
-                    let problem_report = ProblemReport::create()
-                        .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(format!(
-                            "Cannot handle ack: thread id does not match: {:?}",
-                            msg_ack.thread
-                        ))
-                        .set_thread_id(&self.get_thread_id()); // TODO: Maybe set sender's thread id?
-
-                    send_message(
-                        wallet_handle,
-                        pairwise_info.pw_vk.clone(),
-                        state.did_doc.clone(),
-                        problem_report.to_a2a_message(),
-                    )
-                    .await
-                    .ok();
-                    InviterFullState::Initial((state, problem_report).into())
-                } else {
-                    InviterFullState::Completed((state, msg_ack).into())
-                }
-            }
-            _ => state,
+    pub fn handle_disclose(self, disclose: Disclose) -> VcxResult<Self> {
+        let state = match self.state {
+            InviterFullState::Completed(state) => InviterFullState::Completed((state, disclose.protocols).into()),
+            _ => self.state,
         };
         Ok(Self { state, ..self })
+    }
+
+    pub async fn handle_confirmation_message(self, msg: &A2AMessage) -> VcxResult<Self> {
+        verify_thread_id(&self.get_thread_id(), msg)?;
+        match self.state {
+            InviterFullState::Responded(state) => Ok(Self {
+                state: InviterFullState::Completed(state.into()),
+                ..self
+            }),
+            _ => Ok(self),
+        }
     }
 
     pub fn get_thread_id(&self) -> String {
@@ -441,6 +390,8 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
+        use agency_client::messages::update_com_method::ComMethodType::A2A;
+
         use super::*;
 
         async fn _send_message(
@@ -461,14 +412,14 @@ pub mod unit_tests {
             fn to_inviter_invited_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
                 self
             }
 
             async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
@@ -494,7 +445,7 @@ pub mod unit_tests {
             async fn to_inviter_completed_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
@@ -518,7 +469,7 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 self = self
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 self
@@ -527,6 +478,7 @@ pub mod unit_tests {
 
         mod get_thread_id {
             use super::*;
+            use crate::messages::ack::test_utils::_ack_random_thread;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -535,7 +487,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 let mut inviter = inviter_sm().await;
-                inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
+                inviter = inviter.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
@@ -558,11 +510,10 @@ pub mod unit_tests {
                     .handle_send_response(_dummy_wallet_handle(), &_send_message)
                     .await
                     .unwrap();
-                inviter = inviter
-                    .handle_ack(_dummy_wallet_handle(), _ack_1(), _send_message)
+                assert!(inviter
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack_random_thread()))
                     .await
-                    .unwrap();
-                assert_match!(InviterState::Initial, inviter.get_state());
+                    .is_err())
             }
         }
 
@@ -582,6 +533,7 @@ pub mod unit_tests {
         }
 
         mod step {
+            use crate::messages::a2a::A2AMessage::Ping;
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -604,7 +556,7 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
             }
@@ -617,7 +569,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
@@ -709,11 +661,11 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
@@ -727,7 +679,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
 
@@ -742,7 +694,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_responded_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_ping(_dummy_wallet_handle(), _ping(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ping(_ping()))
                     .await
                     .unwrap();
 
@@ -770,7 +722,7 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
             }
@@ -784,7 +736,14 @@ pub mod unit_tests {
 
                 // Ping
                 did_exchange_sm = did_exchange_sm
-                    .handle_ping(_dummy_wallet_handle(), _ping(), _send_message)
+                    .handle_confirmation_message(&A2AMessage::Ping(_ping()))
+                    .await
+                    .unwrap();
+                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
+
+                // Ack
+                did_exchange_sm = did_exchange_sm
+                    .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
@@ -796,14 +755,6 @@ pub mod unit_tests {
                 assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
                 assert!(did_exchange_sm.get_remote_protocols().is_some());
-
-                // ignore
-                // Ack
-                did_exchange_sm = did_exchange_sm
-                    .handle_ack(_dummy_wallet_handle(), _ack(), _send_message)
-                    .await
-                    .unwrap();
-                assert_match!(InviterFullState::Completed(_), did_exchange_sm.state);
 
                 // Problem Report
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
