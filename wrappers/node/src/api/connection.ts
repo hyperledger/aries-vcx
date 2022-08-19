@@ -456,6 +456,50 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     }
   }
 
+    /**
+     *
+     * Answers message if it there's "easy" way to do so (ping, disclose query, handshake-reuse)
+     *
+     * Example:
+     * ```
+     * await object.handleMessage(message)
+     * ```
+     * @returns {Promise<void>}
+     */
+    public async handleMessage(message: string) {
+        try {
+            const commandHandle = 0;
+            const state = await createFFICallbackPromise<number>(
+                (resolve, reject, cb) => {
+                    const rc = rustAPI().vcx_connection_handle_message(
+                        commandHandle,
+                        this.handle,
+                        message,
+                        cb,
+                    );
+                    if (rc) {
+                        reject(rc);
+                    }
+                },
+                (resolve, reject) =>
+                    ffi.Callback(
+                        'void',
+                        ['uint32', 'uint32'],
+                        (handle: number, err: number) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve();
+                        },
+                    ),
+            );
+            return state;
+        } catch (err) {
+            throw new VCXInternalError(err);
+        }
+    }
+
+
   /**
    *
    * Communicates with the agent service for polling and setting the state of the entity.

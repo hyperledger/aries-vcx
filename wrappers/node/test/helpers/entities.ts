@@ -25,46 +25,7 @@ import {
   Schema,
 } from 'src'
 import * as uuid from 'uuid';
-
-const ARIES_CONNECTION_REQUEST = {
-  '@id': 'b5517062-303f-4267-9a29-09bc89497c06',
-  '@type': 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request',
-  connection: {
-    DID: '2RjtVytftf9Psbh3E8jqyq',
-    DIDDoc: {
-      '@context': 'https://w3id.org/did/v1',
-      authentication: [
-        {
-          publicKey: '2RjtVytftf9Psbh3E8jqyq#1',
-          type: 'Ed25519SignatureAuthentication2018',
-        },
-      ],
-      id: '2RjtVytftf9Psbh3E8jqyq',
-      publicKey: [
-        {
-          controller: '2RjtVytftf9Psbh3E8jqyq',
-          id: '1',
-          publicKeyBase58: 'n6ZJrPGhbkLxQBxH11BvQHSKch58sx3MAqDTkUG4GmK',
-          type: 'Ed25519VerificationKey2018',
-        },
-      ],
-      service: [
-        {
-          id: 'did:example:123456789abcdefghi;indy',
-          priority: 0,
-          recipientKeys: ['2RjtVytftf9Psbh3E8jqyq#1'],
-          routingKeys: [
-            'AKnC8qR9xsZZEBY7mdV6fzjmmtKxeegrNatpz4jSJhrH',
-            'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR',
-          ],
-          serviceEndpoint: 'http://localhost:8080/agency/msg',
-          type: 'IndyAgent',
-        },
-      ],
-    },
-  },
-  label: 'alice-157ea14b-4b7c-48a5-b536-d4ed6e027b84',
-};
+import {ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST} from './mockdata'
 
 export const dataConnectionCreate = (): IConnectionCreateData => ({
   id: `testConnectionId-${uuid.v4()}`,
@@ -93,6 +54,14 @@ export const createConnectionInviterRequested = async (
 ): Promise<Connection> => {
   const connection = await createConnectionInviterInvited(data);
   await connection.updateStateWithMessage(JSON.stringify(ARIES_CONNECTION_REQUEST));
+  return connection;
+};
+
+export const createConnectionInviterFinished = async (
+    data = dataConnectionCreate(),
+): Promise<Connection> => {
+  const connection = await createConnectionInviterRequested()
+  await connection.updateStateWithMessage(JSON.stringify(ARIES_CONNECTION_ACK));
   return connection;
 };
 

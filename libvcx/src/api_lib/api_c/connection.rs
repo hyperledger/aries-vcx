@@ -689,6 +689,59 @@ pub extern "C" fn vcx_connection_update_state_with_message(
     error::SUCCESS.code_num
 }
 
+/// Update the state of the connection based on the given message.
+///
+/// #Params
+/// command_handle: command handle to map callback to user context.
+///
+/// connection_handle: was provided during creation. Used to identify connection object
+///
+/// message: message to process.
+///
+/// cb: Callback that provides most current state of the connection and error status of request
+///
+/// #Returns
+/// Error code as a u32
+#[no_mangle]
+pub extern "C" fn vcx_connection_handle_message(
+    command_handle: CommandHandle,
+    connection_handle: u32,
+    message: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+) -> u32 {
+    info!("vcx_connection_handle_message >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+
+    let source_id = get_source_id(connection_handle).unwrap_or_default();
+    trace!(
+        "vcx_connection_handle_message(command_handle: {}, connection_handle: {}), source_id: {:?}",
+        command_handle,
+        connection_handle,
+        source_id
+    );
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        let rc = match handle_message(connection_handle, &message).await {
+            Ok(err) => {
+                trace!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, error::SUCCESS.message, connection_handle, source_id);
+                err
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, err, connection_handle, source_id);
+                err.into()
+            }
+        };
+
+        cb(command_handle, rc);
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
 /// Returns the current internal state of the connection. Does NOT query agency for state updates.
 ///     Possible states:
 ///         1 - Initialized

@@ -128,6 +128,15 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function handleMessage (ariesMsg) {
+    logger.info(`Faber is going to try handle incoming messages`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function buildLedgerPrimitivesV2 (revocationDetails) {
     await vcxAgent.agentInitVcx()
 
@@ -329,6 +338,7 @@ module.exports.createFaber = async function createFaber () {
     createOobProofRequest,
     createConnectionFromReceivedRequest,
     updateConnection,
+    handleMessage,
     sendConnectionResponse,
     sendCredentialOfferV2,
     createOobCredOffer,
