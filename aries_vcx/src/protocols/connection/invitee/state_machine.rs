@@ -250,7 +250,7 @@ impl SmConnectionInvitee {
         })
     }
 
-    pub async fn handle_connect<F, T>(
+    pub async fn send_connection_request<F, T>(
         self,
         wallet_handle: WalletHandle,
         routing_keys: Vec<String>,
@@ -434,7 +434,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
-                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 self
@@ -450,7 +450,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec![key.clone()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
-                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 self = self
@@ -516,7 +516,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee
-                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
@@ -565,7 +565,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
@@ -594,7 +594,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .handle_connect(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
 

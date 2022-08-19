@@ -205,7 +205,7 @@ impl SmConnectionInviter {
         .await
     }
 
-    pub fn handle_connect(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
+    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
                 let invite: PairwiseInvitation = PairwiseInvitation::create()
@@ -412,14 +412,14 @@ pub mod unit_tests {
             fn to_inviter_invited_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
                 self
             }
 
             async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
@@ -445,7 +445,7 @@ pub mod unit_tests {
             async fn to_inviter_completed_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                self = self.handle_connect(routing_keys, service_endpoint).unwrap();
+                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
@@ -487,7 +487,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 let mut inviter = inviter_sm().await;
-                inviter = inviter.handle_connect(routing_keys, service_endpoint).unwrap();
+                inviter = inviter.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
@@ -556,7 +556,7 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
             }
@@ -661,7 +661,7 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm
@@ -722,7 +722,7 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.handle_connect(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
 
                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
             }

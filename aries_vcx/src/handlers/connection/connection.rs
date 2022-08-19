@@ -602,14 +602,14 @@ impl Connection {
     pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().handle_connect(
+            SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
                 self.cloud_agent_info.routing_keys(agency_client)?,
                 self.cloud_agent_info.service_endpoint(agency_client)?,
             )?),
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
                     .clone()
-                    .handle_connect(
+                    .send_connection_request(
                         wallet_handle,
                         self.cloud_agent_info.routing_keys(agency_client)?,
                         self.cloud_agent_info.service_endpoint(agency_client)?,
