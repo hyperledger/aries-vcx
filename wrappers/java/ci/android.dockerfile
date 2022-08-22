@@ -33,7 +33,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ruby \
         ruby-dev \
         rubygems \
-    && gem install --no-ri --no-rdoc rake fpm \
+    && gem install --no-ri --no-rdoc public_suffix -v 4.0.7 \
+    && gem install --no-ri --no-rdoc rake \
     && rm -rf /var/lib/apt/lists/*
 
 # Install JDK
