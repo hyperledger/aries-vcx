@@ -1,5 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
