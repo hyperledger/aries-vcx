@@ -173,6 +173,22 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
     Ok(error::SUCCESS.code_num)
 }
 
+pub async fn handle_message(handle: u32, message: &str) -> VcxResult<u32> {
+    let mut connection = CONNECTION_MAP.get_cloned(handle)?;
+    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!(
+                "Failed to deserialize message {} into A2AMessage, err: {:?}",
+                message, err
+            ),
+        )
+    })?;
+    connection.handle_message(message, get_main_wallet_handle()).await?;
+    CONNECTION_MAP.insert(handle, connection)?;
+    Ok(error::SUCCESS.code_num)
+}
+
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let res = if connection.is_in_final_state() {

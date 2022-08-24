@@ -19,17 +19,13 @@ describe('trustping', () => {
       expect(faberMessages1.length).toBe(1)
       expect(JSON.parse(faberMessages1[0].decryptedMsg)['@type'].match(/trust_ping\/1.0\/ping/))
       const pingMsgId = JSON.parse(faberMessages1[0].decryptedMsg)['@id']
-      await faber.updateConnection(4)
-      const faberMessages2 = await faber.downloadReceivedMessagesV2()
-      expect(faberMessages2.length).toBe(0)
+      await faber.handleMessage(faberMessages1[0].decryptedMsg)
 
       const aliceMessages1 = await alice.downloadReceivedMessagesV2()
       expect(aliceMessages1.length).toBe(1)
       expect(JSON.parse(aliceMessages1[0].decryptedMsg)['@type'].match(/trust_ping\/1.0\/ping_response/))
       expect(JSON.parse(aliceMessages1[0].decryptedMsg)['~thread'].thid).toBe(pingMsgId)
-      await alice.updateConnection(4)
-      const aliceMessages2 = await alice.downloadReceivedMessagesV2()
-      expect(aliceMessages2.length).toBe(0)
+      await alice.handleMessage(aliceMessages1[0].decryptedMsg)
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)

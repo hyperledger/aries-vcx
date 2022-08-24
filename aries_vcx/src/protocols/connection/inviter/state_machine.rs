@@ -556,7 +556,9 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .create_invitation(routing_keys, service_endpoint)
+                    .unwrap();
 
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
             }
@@ -661,7 +663,9 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .create_invitation(routing_keys, service_endpoint)
+                    .unwrap();
                 assert_match!(InviterFullState::Invited(_), did_exchange_sm.state);
 
                 did_exchange_sm = did_exchange_sm
@@ -722,7 +726,9 @@ pub mod unit_tests {
 
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
-                did_exchange_sm = did_exchange_sm.create_invitation(routing_keys, service_endpoint).unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .create_invitation(routing_keys, service_endpoint)
+                    .unwrap();
 
                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
             }
