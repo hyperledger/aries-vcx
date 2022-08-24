@@ -2,6 +2,8 @@ use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -13,7 +15,14 @@ pub struct CredentialRequest {
     pub requests_attach: Attachments,
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(CredentialRequest);
+a2a_message!(CredentialRequest);
+timing_optional!(CredentialRequest);
 
 impl CredentialRequest {
     pub fn create() -> Self {
@@ -33,9 +42,6 @@ impl CredentialRequest {
         Ok(self)
     }
 }
-
-threadlike_optional!(CredentialRequest);
-a2a_message!(CredentialRequest);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -69,6 +75,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread()),
+            timing: None
         }
     }
 
@@ -83,6 +90,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread_1()),
+            timing: None
         }
     }
 }

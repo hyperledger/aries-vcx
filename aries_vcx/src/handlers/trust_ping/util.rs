@@ -16,7 +16,7 @@ pub(super) fn build_ping_response(ping: &Ping) -> PingResponse {
         .as_ref()
         .and_then(|thread| thread.thid.clone())
         .unwrap_or(ping.id.0.clone());
-    PingResponse::create().set_thread_id(&thread_id)
+    PingResponse::create().set_out_time().set_thread_id(&thread_id)
 }
 
 pub async fn handle_ping<F, T>(

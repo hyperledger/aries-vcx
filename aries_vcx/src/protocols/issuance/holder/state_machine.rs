@@ -243,7 +243,7 @@ impl HolderSM {
                     match result {
                         Ok((cred_id, rev_reg_def_json)) => {
                             if credential.please_ack.is_some() {
-                                let ack = CredentialAck::create().set_thread_id(&thread_id);
+                                let ack = CredentialAck::create().set_out_time().set_thread_id(&thread_id);
                                 send_message.ok_or(VcxError::from_msg(
                                     VcxErrorKind::InvalidState,
                                     "Attempted to call undefined send_message callback",
@@ -521,7 +521,7 @@ async fn _make_credential_request(
         create_credential_request(wallet_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     Ok((
-        CredentialRequest::create().set_requests_attach(req)?,
+        CredentialRequest::create().set_out_time().set_requests_attach(req)?,
         req_meta,
         cred_def_json,
     ))

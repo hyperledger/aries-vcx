@@ -4,6 +4,7 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
 use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationRequest {
@@ -20,18 +21,17 @@ pub struct PresentationRequest {
     pub timing: Option<Timing>,
 }
 
+timing_optional!(PresentationRequest);
+threadlike_optional!(PresentationRequest);
+a2a_message!(PresentationRequest);
+
 impl PresentationRequest {
     pub fn create() -> Self {
-        PresentationRequest::default().set_timing()
+        PresentationRequest::default()
     }
 
     pub fn set_id(mut self, id: String) -> Self {
         self.id = MessageId(id);
-        self
-    }
-
-    pub fn set_timing(mut self) -> Self {
-        self.timing = Some(Timing::new().set_current_time());
         self
     }
 
@@ -72,9 +72,6 @@ impl PresentationRequest {
         })
     }
 }
-
-threadlike_optional!(PresentationRequest);
-a2a_message!(PresentationRequest);
 
 pub type PresentationRequestData = ProofRequestData;
 
@@ -132,7 +129,7 @@ pub mod unit_tests {
     #[test]
     fn test_presentation_request_build_works() {
         let presentation_request: PresentationRequest = PresentationRequest::create()
-            .set_timing()
+            .set_out_time()
             .set_comment(_comment())
             .set_request_presentations_attach(&_presentation_request_data())
             .unwrap();

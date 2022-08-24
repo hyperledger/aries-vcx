@@ -1,6 +1,8 @@
 use crate::actors::Actors;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -9,7 +11,13 @@ pub struct Disclose {
     pub protocols: Vec<ProtocolDescriptor>,
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(Disclose);
+timing_optional!(Disclose);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProtocolDescriptor {
@@ -17,8 +25,6 @@ pub struct ProtocolDescriptor {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<Actors>>,
 }
-
-threadlike_optional!(Disclose);
 
 impl Disclose {
     pub fn create() -> Disclose {
@@ -57,6 +63,7 @@ pub mod test_utils {
             id: MessageId::id(),
             protocols: vec![_protocol_descriptor()],
             thread: Some(_thread()),
+            timing: None
         }
     }
 }

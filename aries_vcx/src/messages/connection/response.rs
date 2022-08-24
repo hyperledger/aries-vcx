@@ -10,6 +10,8 @@ use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -21,6 +23,9 @@ pub struct Response {
     pub please_ack: Option<PleaseAck>,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -30,6 +35,10 @@ pub struct ConnectionData {
     #[serde(rename = "DIDDoc")]
     pub did_doc: DidDoc,
 }
+
+please_ack!(Response);
+threadlike!(Response);
+timing_optional!(Response);
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct SignedResponse {
@@ -42,7 +51,13 @@ pub struct SignedResponse {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike!(SignedResponse);
+timing_optional!(SignedResponse);
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionSignature {
@@ -102,15 +117,12 @@ impl Response {
             thread: self.thread.clone(),
             connection_sig,
             please_ack: self.please_ack.clone(),
+            timing: None
         };
 
         Ok(signed_response)
     }
 }
-
-please_ack!(Response);
-threadlike!(Response);
-threadlike!(SignedResponse);
 
 impl SignedResponse {
     pub async fn decode(self, their_vk: &str) -> VcxResult<Response> {
@@ -154,6 +166,7 @@ impl SignedResponse {
             thread: self.thread,
             connection,
             please_ack: self.please_ack,
+            timing: self.timing
         })
     }
 }
@@ -211,6 +224,7 @@ pub mod test_utils {
                 did_doc: _did_doc_inlined_recipient_keys(),
             },
             please_ack: None,
+            timing: None
         }
     }
 
@@ -227,6 +241,7 @@ pub mod test_utils {
                 ..Default::default()
             },
             please_ack: None,
+            timing: None
         }
     }
 }

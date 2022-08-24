@@ -512,7 +512,7 @@ async fn _create_credential(
         tails_file.clone(),
     )
     .await?;
-    let credential = Credential::create().set_credential(ser_credential)?;
+    let credential = Credential::create().set_out_time().set_credential(ser_credential)?;
     Ok((credential, cred_rev_id))
 }
 

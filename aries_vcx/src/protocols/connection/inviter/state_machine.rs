@@ -255,6 +255,7 @@ impl SmConnectionInviter {
                 Ok(signed_response) => InviterFullState::Requested((request, signed_response.clone()).into()),
                 Err(err) => {
                     let problem_report = ProblemReport::create()
+                        .set_out_time()
                         .set_problem_code(ProblemCode::RequestProcessingError)
                         .set_explain(err.to_string())
                         .set_thread_id(&thread_id);
@@ -303,6 +304,7 @@ impl SmConnectionInviter {
                         // todo: we should distinguish errors - probably should not send problem report
                         //       if we just lost internet connectivity
                         let problem_report = ProblemReport::create()
+                            .set_out_time()
                             .set_problem_code(ProblemCode::RequestProcessingError)
                             .set_explain(err.to_string())
                             .set_thread_id(&self.thread_id);
@@ -359,6 +361,7 @@ impl SmConnectionInviter {
         request.connection.did_doc.validate()?;
         let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
         Response::create()
+            .set_out_time()
             .set_did(new_pairwise_info.pw_did.to_string())
             .set_service_endpoint(new_service_endpoint)
             .set_keys(new_recipient_keys, new_routing_keys)

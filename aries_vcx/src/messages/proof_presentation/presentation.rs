@@ -3,6 +3,8 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -17,7 +19,15 @@ pub struct Presentation {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(Presentation);
+please_ack!(Presentation);
+threadlike!(Presentation);
+a2a_message!(Presentation);
 
 impl Presentation {
     pub fn create() -> Self {
@@ -35,11 +45,6 @@ impl Presentation {
         Ok(self)
     }
 }
-
-please_ack!(Presentation);
-threadlike!(Presentation);
-a2a_message!(Presentation);
-
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::messages::connection::response::test_utils::_thread_1;
@@ -67,6 +72,7 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: thread(),
             please_ack: Some(PleaseAck {}),
+            timing: None
         }
     }
 
@@ -82,6 +88,7 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: _thread_1(),
             please_ack: Some(PleaseAck {}),
+            timing: None
         }
     }
 }

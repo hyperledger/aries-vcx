@@ -106,6 +106,7 @@ impl Issuer {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = libindy_issuer_create_credential_offer(wallet_handle, &offer_info.cred_def_id).await?;
         let cred_offer_msg = CredentialOffer::create()
+            .set_out_time()
             .set_id(&self.issuer_sm.thread_id()?)
             .set_offers_attach(&libindy_cred_offer)?
             .set_credential_preview_data(credential_preview)

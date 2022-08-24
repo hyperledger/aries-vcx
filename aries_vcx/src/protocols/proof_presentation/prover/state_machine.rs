@@ -175,6 +175,7 @@ impl ProverSM {
                 {
                     Ok(presentation) => {
                         let presentation = Presentation::create()
+                            .set_out_time()
                             .ask_for_ack()
                             .set_thread_id(&thread_id)
                             .set_presentations_attach(presentation)?;

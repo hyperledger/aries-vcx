@@ -265,6 +265,7 @@ impl SmConnectionInvitee {
             InviteeFullState::Invited(ref state) => {
                 let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
                 let request = Request::create()
+                    .set_out_time()
                     .set_label(self.source_id.to_string())
                     .set_did(self.pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint)
@@ -343,6 +344,7 @@ impl SmConnectionInvitee {
                 Ok(response) => InviteeFullState::Completed((state.clone(), response).into()),
                 Err(err) => {
                     let problem_report = ProblemReport::create()
+                        .set_out_time()
                         .set_problem_code(ProblemCode::ResponseProcessingError)
                         .set_explain(err.to_string())
                         .set_thread_id(&self.thread_id);

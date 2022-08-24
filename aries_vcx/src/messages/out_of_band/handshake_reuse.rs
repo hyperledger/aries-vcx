@@ -1,5 +1,7 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct OutOfBandHandshakeReuse {
@@ -7,7 +9,11 @@ pub struct OutOfBandHandshakeReuse {
     pub id: MessageId,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 threadlike!(OutOfBandHandshakeReuse);
 a2a_message!(OutOfBandHandshakeReuse);
+timing_optional!(OutOfBandHandshakeReuse);

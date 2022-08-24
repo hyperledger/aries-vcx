@@ -147,6 +147,7 @@ impl VerifierSM {
             | VerifierFullState::PresentationRequestSet(_)
             | VerifierFullState::PresentationProposalReceived(_) => {
                 let presentation_request = PresentationRequest::create()
+                    .set_out_time()
                     .set_id(thread_id.clone())
                     .set_comment(comment)
                     .set_request_presentations_attach(request_data)?;
@@ -264,7 +265,7 @@ impl VerifierSM {
                 {
                     Ok(()) => {
                         if presentation.please_ack.is_some() {
-                            let ack = PresentationAck::create().set_thread_id(&state.presentation_request.id.0);
+                            let ack = PresentationAck::create().set_out_time().set_thread_id(&state.presentation_request.id.0);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -308,7 +309,7 @@ impl VerifierSM {
             },
             VerifierFullState::Finished(state) => {
                 if matches!(message, VerifierMessages::SendPresentationAck()) {
-                    let ack = PresentationAck::create().set_thread_id(&thread_id);
+                    let ack = PresentationAck::create().set_out_time().set_thread_id(&thread_id);
                     send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",

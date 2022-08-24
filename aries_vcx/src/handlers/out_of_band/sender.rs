@@ -29,6 +29,7 @@ pub async fn send_handshake_reuse_accepted(
         "Parent thread id missing",
     ))?;
     let ack_msg = OutOfBandHandshakeReuseAccepted::default()
+        .set_out_time()
         .set_thread_id(&thread_id)
         .set_parent_thread_id(pthread_id);
     send_message(

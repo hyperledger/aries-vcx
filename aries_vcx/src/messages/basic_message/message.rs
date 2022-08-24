@@ -3,6 +3,8 @@ use chrono::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::localization::Localization;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct BasicMessage {
@@ -15,9 +17,13 @@ pub struct BasicMessage {
     pub l10n: Option<Localization>,
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 threadlike_optional!(BasicMessage);
+timing_optional!(BasicMessage);
 
 impl BasicMessage {
     pub fn create() -> BasicMessage {

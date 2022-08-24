@@ -691,19 +691,20 @@ impl Connection {
         }))
     }
 
-    fn parse_generic_message(message: &str) -> A2AMessage {
+    fn build_basic_message(message: &str) -> A2AMessage {
         match ::serde_json::from_str::<A2AMessage>(message) {
             Ok(a2a_message) => a2a_message,
             Err(_) => BasicMessage::create()
                 .set_content(message.to_string())
                 .set_time()
+                .set_out_time()
                 .to_a2a_message(),
         }
     }
 
     pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
         trace!("Connection::send_generic_message >>> message: {:?}", message);
-        let message = Self::parse_generic_message(message);
+        let message = Self::build_basic_message(message);
         let send_message = self.send_message_closure(wallet_handle)?;
         send_message(message).await.map(|_| String::new())
     }

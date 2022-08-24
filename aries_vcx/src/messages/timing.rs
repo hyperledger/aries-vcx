@@ -28,7 +28,7 @@ impl Timing {
         self
     }
 
-    pub fn set_current_time(mut self) -> Timing {
+    pub fn set_out_time_to_now(mut self) -> Timing {
         self.set_time(Utc::now())
     }
 
@@ -42,6 +42,16 @@ impl Default for Timing {
         Timing { out_time: None }
     }
 }
+
+#[macro_export]
+macro_rules! timing_optional (($type:ident) => (
+    impl $type {
+        pub fn set_out_time(mut self) -> Self {
+            self.timing = Some(Timing::new().set_out_time_to_now());
+            self
+        }
+    }
+));
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
@@ -64,7 +74,7 @@ pub mod unit_tests {
     fn test_sets_gets_current_time() {
         let t1 = Utc::now();
         thread::sleep(Duration::from_millis(10));
-        let timing = Timing::new().set_current_time();
+        let timing = Timing::new().set_out_time_to_now();
         thread::sleep(Duration::from_millis(10));
         let t2 = Utc::now();
 

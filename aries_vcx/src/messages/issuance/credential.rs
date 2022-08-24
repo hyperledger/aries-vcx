@@ -3,6 +3,8 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct Credential {
@@ -17,7 +19,15 @@ pub struct Credential {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+please_ack!(Credential);
+threadlike!(Credential);
+a2a_message!(Credential);
+timing_optional!(Credential);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialData {
@@ -50,10 +60,6 @@ impl Credential {
         Ok(self)
     }
 }
-
-please_ack!(Credential);
-threadlike!(Credential);
-a2a_message!(Credential);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -88,6 +94,7 @@ pub mod test_utils {
             thread: thread(),
             credentials_attach: attachment,
             please_ack: None,
+            timing: None
         }
     }
 }

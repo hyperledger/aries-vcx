@@ -18,6 +18,7 @@ impl TrustPingSender {
     pub fn build(request_response: bool, comment: Option<String>) -> TrustPingSender {
         // todo : Remove different Default implementation for MessageId in tests, then we can remove this override
         let ping = Ping::create(MessageId(uuid::uuid()))
+            .set_out_time()
             .set_request_response(request_response)
             .set_comment(comment);
         Self {

@@ -32,6 +32,7 @@ pub async fn send_handshake_reuse(
     did_doc: &DidDoc,
 ) -> VcxResult<()> {
     let reuse_msg = OutOfBandHandshakeReuse::default()
+        .set_out_time()
         .set_thread_id_matching_id()
         .set_parent_thread_id(oob_id);
     send_message(
