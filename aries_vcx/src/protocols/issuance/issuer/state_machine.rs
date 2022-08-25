@@ -637,7 +637,6 @@ pub mod unit_tests {
         }
     }
 
-    // todo: add tests for building messages
     mod build_messages {
         use crate::messages::a2a::MessageId;
         use crate::messages::issuance::CredentialPreviewData;
@@ -647,7 +646,7 @@ pub mod unit_tests {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_issues_build_credential_offer() {
+        fn test_issuer_build_credential_offer() {
             let _setup = SetupMocks::init();
             let msg = build_credential_offer(
                 "12345",

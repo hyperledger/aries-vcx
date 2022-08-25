@@ -8,6 +8,7 @@ use crate::libindy::utils::anoncreds::{
     libindy_prover_store_credential,
 };
 use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::messages::ack::Ack;
 use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_ack::CredentialAck;
@@ -54,6 +55,17 @@ impl Default for HolderFullState {
     fn default() -> Self {
         Self::OfferReceived(OfferReceivedState::default())
     }
+}
+
+//todo: should set thread id
+fn build_credential_request_msg(credential_request: String) -> VcxResult<CredentialRequest> {
+    CredentialRequest::create()
+        .set_out_time()
+        .set_requests_attach(credential_request)
+}
+
+fn build_credential_ack(thread_id: &str) -> Ack {
+    CredentialAck::create().set_out_time().set_thread_id(&thread_id)
 }
 
 impl HolderSM {
@@ -243,7 +255,7 @@ impl HolderSM {
                     match result {
                         Ok((cred_id, rev_reg_def_json)) => {
                             if credential.please_ack.is_some() {
-                                let ack = CredentialAck::create().set_out_time().set_thread_id(&thread_id);
+                                let ack = build_credential_ack(&thread_id);
                                 send_message.ok_or(VcxError::from_msg(
                                     VcxErrorKind::InvalidState,
                                     "Attempted to call undefined send_message callback",
@@ -520,11 +532,8 @@ async fn _make_credential_request(
     let (req, req_meta, _cred_def_id, cred_def_json) =
         create_credential_request(wallet_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
-    Ok((
-        CredentialRequest::create().set_out_time().set_requests_attach(req)?,
-        req_meta,
-        cred_def_json,
-    ))
+    let credential_request_msg = build_credential_request_msg(req)?;
+    Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
 #[cfg(test)]
@@ -599,6 +608,45 @@ mod test {
 
             assert_match!(HolderFullState::OfferReceived(_), holder_sm.state);
             assert_eq!(source_id(), holder_sm.get_source_id());
+        }
+    }
+
+    mod build_messages {
+        use crate::messages::a2a::MessageId;
+        use crate::messages::issuance::CredentialPreviewData;
+        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
+        use crate::utils::constants::LIBINDY_CRED_OFFER;
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_holder_build_credential_request_msg() {
+            let _setup = SetupMocks::init();
+            let msg = build_credential_request_msg("{}".into()).unwrap();
+
+            assert_eq!(msg.id, MessageId("testid".into()));
+            // assert!(msg.thread.is_none()); // should set thread_id
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
+        }
+
+        #[tokio::test]
+        #[cfg(feature = "general_test")]
+        async fn test_holder_build_credential_ack() {
+            let _setup = SetupMocks::init();
+
+            let msg = build_credential_ack("12345");
+
+            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.thread.thid.unwrap(), "12345");
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
     }
 
