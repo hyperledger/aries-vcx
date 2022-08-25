@@ -70,6 +70,18 @@ pub enum RevocationStatus {
     NonRevoked,
 }
 
+fn build_verification_ack(thread_id: &str) -> PresentationAck {
+    PresentationAck::create().set_out_time().set_thread_id(thread_id)
+}
+
+fn build_starting_presentation_request(thread_id: &str, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<PresentationRequest> {
+    PresentationRequest::create()
+        .set_out_time()
+        .set_id(thread_id.into())
+        .set_comment(comment)
+        .set_request_presentations_attach(request_data)
+}
+
 impl VerifierSM {
     pub fn new(source_id: &str) -> Self {
         Self {
@@ -146,11 +158,7 @@ impl VerifierSM {
             VerifierFullState::Initial(_)
             | VerifierFullState::PresentationRequestSet(_)
             | VerifierFullState::PresentationProposalReceived(_) => {
-                let presentation_request = PresentationRequest::create()
-                    .set_out_time()
-                    .set_id(thread_id.clone())
-                    .set_comment(comment)
-                    .set_request_presentations_attach(request_data)?;
+                let presentation_request = build_starting_presentation_request(&thread_id, request_data, comment)?;
                 VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(presentation_request))
             }
             _ => {
@@ -265,7 +273,7 @@ impl VerifierSM {
                 {
                     Ok(()) => {
                         if presentation.please_ack.is_some() {
-                            let ack = PresentationAck::create().set_out_time().set_thread_id(&state.presentation_request.id.0);
+                            let ack = build_verification_ack(&thread_id);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -309,7 +317,8 @@ impl VerifierSM {
             },
             VerifierFullState::Finished(state) => {
                 if matches!(message, VerifierMessages::SendPresentationAck()) {
-                    let ack = PresentationAck::create().set_out_time().set_thread_id(&thread_id);
+                    // let ack = PresentationAck::create().set_out_time().set_thread_id(&thread_id);
+                    let ack = build_verification_ack(&thread_id);
                     send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -506,6 +515,39 @@ pub mod unit_tests {
         }
     }
 
+    mod build_messages {
+        use crate::messages::a2a::MessageId;
+        use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+        use crate::protocols::proof_presentation::verifier::state_machine::{build_starting_presentation_request, build_verification_ack};
+        use crate::utils::devsetup::{SetupMocks, was_in_past};
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_build_verification_ack() {
+            let _setup = SetupMocks::init();
+
+            let msg = build_verification_ack("12345");
+
+            assert_eq!(msg.id, MessageId("testid".into())); // todo: it should generate random uuid even in test
+            assert_eq!(msg.thread.thid, Some("12345".into()));
+            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+        }
+
+        #[tokio::test]
+        #[cfg(feature = "general_test")]
+        async fn test_build_presentation_request() {
+            let _setup = SetupMocks::init();
+
+            let presentation_request_data = PresentationRequestData::create("1").await.unwrap();
+            let msg = build_starting_presentation_request("12345", &presentation_request_data, Some("foobar".into())).unwrap();
+
+            assert_eq!(msg.id, MessageId("12345".into()));
+            assert!(msg.thread.is_none());
+            assert_eq!(msg.comment, Some("foobar".into()));
+            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+        }
+    }
+
     mod new {
         use super::*;
 
@@ -533,6 +575,8 @@ pub mod unit_tests {
     }
 
     mod step {
+        use std::time::Duration;
+        use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
 
         use super::*;
@@ -556,6 +600,22 @@ pub mod unit_tests {
 
             warn!("verifier_sm.state = ${:?}", verifier_sm.state);
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+        }
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_presentation_request_should_have_set_timing() {
+            let _setup = SetupMocks::init();
+
+            let mut verifier_sm = _verifier_sm();
+            verifier_sm = verifier_sm.set_request(&_presentation_request_data(), None).unwrap();
+
+            warn!("verifier_sm.state = ${:?}", verifier_sm.state);
+            assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
+
+            let msg_presentation_request = verifier_sm.presentation_request().unwrap();
+            let out_time = msg_presentation_request.timing.unwrap().out_time.unwrap();
+            assert!(was_in_past(&out_time, chrono::Duration::seconds(1)).unwrap());
         }
 
         #[tokio::test]
