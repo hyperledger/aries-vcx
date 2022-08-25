@@ -410,7 +410,7 @@ pub mod test_a2a_serialization {
             label: "foobar".to_string(),
             connection: Default::default(),
             thread: None,
-            timing: None
+            timing: None,
         });
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 

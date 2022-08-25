@@ -224,7 +224,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             thread: Some(_thread()),
             presentation_proposal: _presentation_preview(),
-            timing: None
+            timing: None,
         }
     }
 }

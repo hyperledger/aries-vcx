@@ -148,7 +148,7 @@ pub mod test_utils {
             credential_preview: _preview_data(),
             offers_attach: attachment,
             thread: Some(_thread()),
-            timing: None
+            timing: None,
         }
     }
 

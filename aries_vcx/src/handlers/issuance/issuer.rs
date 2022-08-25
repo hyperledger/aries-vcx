@@ -105,7 +105,12 @@ impl Issuer {
     ) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = libindy_issuer_create_credential_offer(wallet_handle, &offer_info.cred_def_id).await?;
-        self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(&libindy_cred_offer, credential_preview, comment, &offer_info)?;
+        self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
+            &libindy_cred_offer,
+            credential_preview,
+            comment,
+            &offer_info,
+        )?;
         Ok(())
     }
 

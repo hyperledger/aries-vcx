@@ -72,7 +72,7 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: thread(),
             please_ack: Some(PleaseAck {}),
-            timing: None
+            timing: None,
         }
     }
 
@@ -88,7 +88,7 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: _thread_1(),
             please_ack: Some(PleaseAck {}),
-            timing: None
+            timing: None,
         }
     }
 }

@@ -111,7 +111,12 @@ fn build_credential_message(libindy_credential: String) -> VcxResult<Credential>
     Credential::create().set_out_time().set_credential(libindy_credential)
 }
 
-fn build_credential_offer(thread_id: &str, credential_offer: &str, credential_preview: CredentialPreviewData, comment: Option<String>) -> VcxResult<CredentialOffer> {
+fn build_credential_offer(
+    thread_id: &str,
+    credential_offer: &str,
+    credential_preview: CredentialPreviewData,
+    comment: Option<String>,
+) -> VcxResult<CredentialOffer> {
     let msg = CredentialOffer::create()
         .set_out_time()
         .set_id(&thread_id)
@@ -296,7 +301,13 @@ impl IssuerSM {
         }
     }
 
-    pub fn build_credential_offer_msg(self, credential_offer: &str, credential_preview: CredentialPreviewData, comment: Option<String>, offer_info: &OfferInfo) -> VcxResult<Self> {
+    pub fn build_credential_offer_msg(
+        self,
+        credential_offer: &str,
+        credential_preview: CredentialPreviewData,
+        comment: Option<String>,
+        offer_info: &OfferInfo,
+    ) -> VcxResult<Self> {
         let Self {
             state,
             source_id,
@@ -579,7 +590,14 @@ pub mod unit_tests {
 
         fn to_offer_sent_state(mut self) -> IssuerSM {
             let cred_info = _offer_info();
-            self = self.build_credential_offer_msg(LIBINDY_CRED_OFFER, CredentialPreviewData::new(), Some("foo".into()), &cred_info).unwrap();
+            self = self
+                .build_credential_offer_msg(
+                    LIBINDY_CRED_OFFER,
+                    CredentialPreviewData::new(),
+                    Some("foo".into()),
+                    &cred_info,
+                )
+                .unwrap();
             self = self.mark_credential_offer_msg_sent().unwrap();
             self
         }
@@ -625,17 +643,27 @@ pub mod unit_tests {
         use crate::messages::issuance::CredentialPreviewData;
         use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer};
         use crate::utils::constants::LIBINDY_CRED_OFFER;
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
         fn test_issues_build_credential_offer() {
             let _setup = SetupMocks::init();
-            let msg = build_credential_offer("12345", LIBINDY_CRED_OFFER, CredentialPreviewData::new(), Some("foo".into())).unwrap();
+            let msg = build_credential_offer(
+                "12345",
+                LIBINDY_CRED_OFFER,
+                CredentialPreviewData::new(),
+                Some("foo".into()),
+            )
+            .unwrap();
 
             assert_eq!(msg.id, MessageId("12345".into()));
             assert!(msg.thread.is_none());
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
 
         #[tokio::test]
@@ -647,7 +675,11 @@ pub mod unit_tests {
 
             assert_eq!(msg.id, MessageId("testid".into()));
             assert!(msg.thread.thid.is_none()); // todo: should have thread_id
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
     }
 
@@ -706,7 +738,14 @@ pub mod unit_tests {
             let mut issuer_sm = _issuer_sm();
             let cred_offer = CredentialOffer::create().set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
-            issuer_sm = issuer_sm.build_credential_offer_msg(LIBINDY_CRED_OFFER, CredentialPreviewData::new(), Some("foo".into()), &cred_info).unwrap();
+            issuer_sm = issuer_sm
+                .build_credential_offer_msg(
+                    LIBINDY_CRED_OFFER,
+                    CredentialPreviewData::new(),
+                    Some("foo".into()),
+                    &cred_info,
+                )
+                .unwrap();
             issuer_sm = issuer_sm.mark_credential_offer_msg_sent().unwrap();
 
             assert_match!(IssuerFullState::OfferSent(_), issuer_sm.state);
@@ -1023,7 +1062,12 @@ pub mod unit_tests {
             let cred_offer = CredentialOffer::create().set_offers_attach(LIBINDY_CRED_OFFER).unwrap();
             let cred_info = _offer_info();
 
-            let res1 = issuer_sm.build_credential_offer_msg(LIBINDY_CRED_OFFER, CredentialPreviewData::new(), Some("foo".into()), &cred_info);
+            let res1 = issuer_sm.build_credential_offer_msg(
+                LIBINDY_CRED_OFFER,
+                CredentialPreviewData::new(),
+                Some("foo".into()),
+                &cred_info,
+            );
             assert!(res1.is_err());
         }
 

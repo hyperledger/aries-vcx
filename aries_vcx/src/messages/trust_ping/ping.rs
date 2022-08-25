@@ -58,7 +58,7 @@ pub mod unit_tests {
             response_requested: false,
             thread: Some(_thread()),
             comment: Some(_comment()),
-            timing: None
+            timing: None,
         }
     }
 
@@ -68,7 +68,7 @@ pub mod unit_tests {
             response_requested: false,
             thread: None,
             comment: Some(_comment()),
-            timing: None
+            timing: None,
         }
     }
 

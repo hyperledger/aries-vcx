@@ -75,7 +75,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread()),
-            timing: None
+            timing: None,
         }
     }
 
@@ -90,7 +90,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread_1()),
-            timing: None
+            timing: None,
         }
     }
 }

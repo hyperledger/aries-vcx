@@ -47,7 +47,7 @@ pub mod unit_tests {
             id: MessageId::id(),
             thread: _thread(),
             comment: Some(_comment()),
-            timing: None
+            timing: None,
         }
     }
 

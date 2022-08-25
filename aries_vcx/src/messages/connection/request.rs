@@ -78,7 +78,7 @@ pub mod unit_tests {
                 did_doc: _did_doc_inlined_recipient_keys(),
             },
             thread: None,
-            timing: None
+            timing: None,
         }
     }
 

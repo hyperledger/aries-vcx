@@ -84,7 +84,7 @@ pub mod unit_tests {
             explain: Some(_explain()),
             localization: None,
             thread: _thread(),
-            timing: None
+            timing: None,
         }
     }
 

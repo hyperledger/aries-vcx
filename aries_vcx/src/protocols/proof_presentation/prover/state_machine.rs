@@ -550,8 +550,10 @@ pub mod unit_tests {
     mod build_messages {
         use crate::messages::a2a::MessageId;
         use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
-        use crate::protocols::proof_presentation::prover::state_machine::{build_presentation_message, build_problem_report};
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
+        use crate::protocols::proof_presentation::prover::state_machine::{
+            build_presentation_message, build_problem_report,
+        };
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -562,7 +564,11 @@ pub mod unit_tests {
 
             assert_eq!(msg.id, MessageId("testid".into()));
             assert_eq!(msg.thread.thid, Some("12345".into()));
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
 
         #[tokio::test]
@@ -574,7 +580,11 @@ pub mod unit_tests {
             assert_eq!(msg.id, MessageId("testid".into()));
             assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));
             assert_eq!(msg.comment, Some("foobar".into()));
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
     }
 

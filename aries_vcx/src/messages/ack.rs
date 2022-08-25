@@ -15,7 +15,6 @@ pub struct Ack {
     pub timing: Option<Timing>,
 }
 
-
 threadlike!(Ack);
 a2a_message!(Ack);
 timing_optional!(Ack);
@@ -71,7 +70,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread(),
-            timing: None
+            timing: None,
         }
     }
 
@@ -80,7 +79,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Ok,
             thread: _thread_random(),
-            timing: None
+            timing: None,
         }
     }
 
@@ -89,7 +88,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread_1(),
-            timing: None
+            timing: None,
         }
     }
 }

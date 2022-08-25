@@ -117,7 +117,7 @@ impl Response {
             thread: self.thread.clone(),
             connection_sig,
             please_ack: self.please_ack.clone(),
-            timing: None
+            timing: None,
         };
 
         Ok(signed_response)
@@ -166,7 +166,7 @@ impl SignedResponse {
             thread: self.thread,
             connection,
             please_ack: self.please_ack,
-            timing: self.timing
+            timing: self.timing,
         })
     }
 }
@@ -224,7 +224,7 @@ pub mod test_utils {
                 did_doc: _did_doc_inlined_recipient_keys(),
             },
             please_ack: None,
-            timing: None
+            timing: None,
         }
     }
 
@@ -241,7 +241,7 @@ pub mod test_utils {
                 ..Default::default()
             },
             please_ack: None,
-            timing: None
+            timing: None,
         }
     }
 }

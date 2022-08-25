@@ -1,13 +1,13 @@
+use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
-use chrono::{Duration, DateTime, Utc};
 
 use indy_sys::WalletHandle;
 
+use crate::error::VcxResult;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
-use crate::error::VcxResult;
 
 use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
@@ -466,21 +466,21 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
     Ok(threshold > diff)
 }
 
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use std::ops::{Add, Sub};
-    use std::thread;
+    use crate::utils::devsetup::was_in_past;
     use chrono::Duration;
     use chrono::{DateTime, SecondsFormat, Utc};
-    use crate::utils::devsetup::was_in_past;
+    use std::ops::{Add, Sub};
+    use std::thread;
 
     #[test]
     #[cfg(feature = "general_test")]
     fn test_is_past_timestamp() {
         let now = Utc::now();
-        let past1ms_rfc3339 = now.sub(Duration::milliseconds(1))
+        let past1ms_rfc3339 = now
+            .sub(Duration::milliseconds(1))
             .to_rfc3339_opts(SecondsFormat::Millis, true);
         assert!(was_in_past(&past1ms_rfc3339, Duration::milliseconds(10)).unwrap())
     }

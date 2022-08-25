@@ -54,7 +54,7 @@ pub mod test_utils {
             id: MessageId::id(),
             query: Some(_query_string()),
             comment: Some(_comment()),
-            timing: None
+            timing: None,
         }
     }
 }

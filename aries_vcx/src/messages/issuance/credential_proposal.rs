@@ -140,7 +140,7 @@ pub mod test_utils {
             schema_id: _schema_id(),
             thread: Some(thread()),
             cred_def_id: _cred_def_id(),
-            timing: None
+            timing: None,
         }
     }
 

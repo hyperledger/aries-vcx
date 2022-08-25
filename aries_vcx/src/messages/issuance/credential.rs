@@ -94,7 +94,7 @@ pub mod test_utils {
             thread: thread(),
             credentials_attach: attachment,
             please_ack: None,
-            timing: None
+            timing: None,
         }
     }
 }

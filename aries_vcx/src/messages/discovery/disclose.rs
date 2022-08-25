@@ -63,7 +63,7 @@ pub mod test_utils {
             id: MessageId::id(),
             protocols: vec![_protocol_descriptor()],
             thread: Some(_thread()),
-            timing: None
+            timing: None,
         }
     }
 }

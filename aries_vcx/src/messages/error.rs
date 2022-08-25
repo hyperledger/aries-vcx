@@ -135,7 +135,7 @@ pub mod test_utils {
             location: None,
             problem_items: None,
             comment: _comment(),
-            timing: None
+            timing: None,
         }
     }
 }

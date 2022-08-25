@@ -188,7 +188,7 @@ pub mod test_utils {
             recipient_keys: _recipient_keys(),
             routing_keys: _routing_keys(),
             service_endpoint: _service_endpoint(),
-            timing: None
+            timing: None,
         }
     }
 

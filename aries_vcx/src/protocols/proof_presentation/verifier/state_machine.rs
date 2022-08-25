@@ -74,7 +74,11 @@ fn build_verification_ack(thread_id: &str) -> PresentationAck {
     PresentationAck::create().set_out_time().set_thread_id(thread_id)
 }
 
-fn build_starting_presentation_request(thread_id: &str, request_data: &PresentationRequestData, comment: Option<String>) -> VcxResult<PresentationRequest> {
+fn build_starting_presentation_request(
+    thread_id: &str,
+    request_data: &PresentationRequestData,
+    comment: Option<String>,
+) -> VcxResult<PresentationRequest> {
     PresentationRequest::create()
         .set_out_time()
         .set_id(thread_id.into())
@@ -518,8 +522,10 @@ pub mod unit_tests {
     mod build_messages {
         use crate::messages::a2a::MessageId;
         use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
-        use crate::protocols::proof_presentation::verifier::state_machine::{build_starting_presentation_request, build_verification_ack};
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
+        use crate::protocols::proof_presentation::verifier::state_machine::{
+            build_starting_presentation_request, build_verification_ack,
+        };
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -530,7 +536,11 @@ pub mod unit_tests {
 
             assert_eq!(msg.id, MessageId("testid".into())); // todo: it should generate random uuid even in test
             assert_eq!(msg.thread.thid, Some("12345".into()));
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
 
         #[tokio::test]
@@ -539,12 +549,17 @@ pub mod unit_tests {
             let _setup = SetupMocks::init();
 
             let presentation_request_data = PresentationRequestData::create("1").await.unwrap();
-            let msg = build_starting_presentation_request("12345", &presentation_request_data, Some("foobar".into())).unwrap();
+            let msg = build_starting_presentation_request("12345", &presentation_request_data, Some("foobar".into()))
+                .unwrap();
 
             assert_eq!(msg.id, MessageId("12345".into()));
             assert!(msg.thread.is_none());
             assert_eq!(msg.comment, Some("foobar".into()));
-            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+            assert!(was_in_past(
+                &msg.timing.unwrap().out_time.unwrap(),
+                chrono::Duration::milliseconds(100)
+            )
+            .unwrap());
         }
     }
 
@@ -575,9 +590,9 @@ pub mod unit_tests {
     }
 
     mod step {
-        use std::time::Duration;
         use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
+        use std::time::Duration;
 
         use super::*;
 
