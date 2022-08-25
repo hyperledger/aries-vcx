@@ -523,7 +523,7 @@ pub mod unit_tests {
 
         #[test]
         #[cfg(feature = "general_test")]
-        fn test_build_verification_ack() {
+        fn test_verifier_build_verification_ack() {
             let _setup = SetupMocks::init();
 
             let msg = build_verification_ack("12345");
@@ -535,7 +535,7 @@ pub mod unit_tests {
 
         #[tokio::test]
         #[cfg(feature = "general_test")]
-        async fn test_build_presentation_request() {
+        async fn test_verifier_build_presentation_request() {
             let _setup = SetupMocks::init();
 
             let presentation_request_data = PresentationRequestData::create("1").await.unwrap();

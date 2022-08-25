@@ -52,6 +52,21 @@ pub enum ProverFullState {
     Finished(FinishedState),
 }
 
+fn build_presentation_message(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
+    Presentation::create()
+        .set_out_time()
+        .ask_for_ack()
+        .set_thread_id(&thread_id)
+        .set_presentations_attach(presentation_attachment)
+}
+
+fn build_problem_report(thread_id: &str, comment: &str) -> ProblemReport {
+    ProblemReport::create()
+        .set_out_time()
+        .set_comment(Some(comment.into()))
+        .set_thread_id(&thread_id)
+}
+
 impl Default for ProverFullState {
     fn default() -> Self {
         Self::PresentationRequestReceived(PresentationRequestReceived::default())
@@ -174,19 +189,11 @@ impl ProverSM {
                     .await
                 {
                     Ok(presentation) => {
-                        let presentation = Presentation::create()
-                            .set_out_time()
-                            .ask_for_ack()
-                            .set_thread_id(&thread_id)
-                            .set_presentations_attach(presentation)?;
-
+                        let presentation = build_presentation_message(&thread_id, presentation)?;
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     Err(err) => {
-                        let problem_report = ProblemReport::create()
-                            .set_comment(Some(err.to_string()))
-                            .set_thread_id(&thread_id);
-
+                        let problem_report = build_problem_report(&thread_id, &err.to_string());
                         ProverFullState::PresentationPreparationFailed((state, problem_report).into())
                     }
                 },
@@ -306,9 +313,7 @@ impl ProverSM {
         reason: &'a str,
         thread_id: &'a str,
     ) -> VcxResult<ProblemReport> {
-        let problem_report = ProblemReport::create()
-            .set_comment(Some(reason.to_string()))
-            .set_thread_id(thread_id);
+        let problem_report = build_problem_report(thread_id, reason);
         send_message(problem_report.to_a2a_message()).await?;
         Ok(problem_report)
     }
@@ -319,6 +324,7 @@ impl ProverSM {
         thread_id: &str,
     ) -> VcxResult<()> {
         let proposal = PresentationProposal::create()
+            .set_out_time()
             .set_presentation_preview(preview)
             .set_thread_id(thread_id);
         send_message(proposal.to_a2a_message()).await
@@ -539,6 +545,37 @@ pub mod unit_tests {
 
     fn _self_attested() -> String {
         json!({}).to_string()
+    }
+
+    mod build_messages {
+        use crate::messages::a2a::MessageId;
+        use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+        use crate::protocols::proof_presentation::prover::state_machine::{build_presentation_message, build_problem_report};
+        use crate::utils::devsetup::{SetupMocks, was_in_past};
+
+        #[test]
+        #[cfg(feature = "general_test")]
+        fn test_prover_build_presentation_message() {
+            let _setup = SetupMocks::init();
+
+            let msg = build_presentation_message("12345", "{}".into()).unwrap();
+
+            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.thread.thid, Some("12345".into()));
+            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+        }
+
+        #[tokio::test]
+        #[cfg(feature = "general_test")]
+        async fn test_prover_build_problem_report() {
+            let _setup = SetupMocks::init();
+            let msg = build_problem_report("12345", "foobar".into());
+
+            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));
+            assert_eq!(msg.comment, Some("foobar".into()));
+            assert!(was_in_past(&msg.timing.unwrap().out_time.unwrap(), chrono::Duration::milliseconds(100)).unwrap());
+        }
     }
 
     mod new {
