@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 
-use chrono::{DateTime, NaiveDateTime, SecondsFormat, TimeZone, Utc};
+
+use chrono::{DateTime, SecondsFormat, TimeZone, Utc};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Timing {
@@ -28,7 +28,7 @@ impl Timing {
         self
     }
 
-    pub fn set_out_time_to_now(mut self) -> Timing {
+    pub fn set_out_time_to_now(self) -> Timing {
         self.set_time(Utc::now())
     }
 

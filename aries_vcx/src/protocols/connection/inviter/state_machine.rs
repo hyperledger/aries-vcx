@@ -6,17 +6,17 @@ use indy_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-use crate::handlers::trust_ping::util::handle_ping;
+
 use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::ack::Ack;
+
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::messages::trust_ping::ping::Ping;
+
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
