@@ -3,9 +3,8 @@ use crate::messages::a2a::MessageId;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::SendClosure;
+use crate::protocols::trustping::build_ping;
 use crate::utils::uuid;
-
-pub mod util;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
@@ -17,10 +16,7 @@ pub struct TrustPingSender {
 impl TrustPingSender {
     pub fn build(request_response: bool, comment: Option<String>) -> TrustPingSender {
         // todo : Remove different Default implementation for MessageId in tests, then we can remove this override
-        let ping = Ping::create(MessageId(uuid::uuid()))
-            .set_out_time()
-            .set_request_response(request_response)
-            .set_comment(comment);
+        let ping = build_ping(request_response, comment);
         Self {
             ping,
             ping_sent: false,
@@ -65,10 +61,10 @@ impl TrustPingSender {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::error::VcxResult;
-    use crate::handlers::trust_ping::util::build_ping_response;
     use crate::handlers::trust_ping::TrustPingSender;
     use crate::messages::a2a::A2AMessage;
     use crate::protocols::SendClosure;
+    use crate::protocols::trustping::build_ping_response;
     use crate::utils::devsetup::SetupMocks;
 
     pub fn _send_message() -> SendClosure {

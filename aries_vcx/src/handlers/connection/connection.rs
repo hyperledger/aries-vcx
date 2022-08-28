@@ -19,7 +19,6 @@ use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
-use crate::handlers::trust_ping::util::handle_ping;
 use crate::handlers::trust_ping::TrustPingSender;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::a2a::A2AMessage;
@@ -32,6 +31,7 @@ use crate::protocols::connection::inviter::state_machine::{InviterFullState, Inv
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
 use crate::protocols::SendClosure;
+use crate::protocols::trustping::build_ping_response;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -416,7 +416,15 @@ impl Connection {
         match message {
             A2AMessage::Ping(ping) => {
                 info!("Answering ping, thread: {}", ping.get_thread_id());
-                handle_ping(wallet_handle, &ping, pw_vk, &did_doc, send_message).await?;
+                if ping.response_requested {
+                    send_message(
+                        wallet_handle,
+                        pw_vk.to_string(),
+                        did_doc.clone(),
+                        build_ping_response(&ping).to_a2a_message(),
+                    )
+                        .await?;
+                }
             }
             A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
                 info!(
