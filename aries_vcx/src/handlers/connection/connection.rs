@@ -19,8 +19,6 @@ use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
-use crate::handlers::out_of_band::receiver::send_handshake_reuse;
-use crate::handlers::out_of_band::sender::send_handshake_reuse_accepted;
 use crate::handlers::trust_ping::util::handle_ping;
 use crate::handlers::trust_ping::TrustPingSender;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -32,6 +30,7 @@ use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
 use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
@@ -424,7 +423,9 @@ impl Connection {
                     "Answering OutOfBandHandshakeReuse message, thread: {}",
                     handshake_reuse.get_thread_id()
                 );
-                send_handshake_reuse_accepted(wallet_handle, &handshake_reuse, pw_vk, &did_doc).await?;
+                let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
+                send_message(wallet_handle,pw_vk.to_string(),did_doc.clone(),msg.to_a2a_message())
+                    .await?;
             }
             A2AMessage::Query(query) => {
                 let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
@@ -749,8 +750,12 @@ impl Connection {
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
-        send_handshake_reuse(wallet_handle, &oob.id.0, &self.pairwise_info().pw_vk, &did_doc).await?;
-        Ok(())
+        send_message(
+            wallet_handle,
+            self.pairwise_info().pw_vk.clone(),
+            did_doc.clone(),
+            build_handshake_reuse_msg(&oob).to_a2a_message(),
+        ).await
     }
 
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {

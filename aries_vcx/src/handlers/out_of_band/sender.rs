@@ -9,36 +9,13 @@ use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use crate::protocols::oob::build_handshake_reuse_accepted_msg;
 use crate::utils::send_message;
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
     pub oob: OutOfBandInvitation,
-}
-
-pub async fn send_handshake_reuse_accepted(
-    wallet_handle: WalletHandle,
-    handshake_reuse: &OutOfBandHandshakeReuse,
-    pw_vk: &str,
-    did_doc: &DidDoc,
-) -> VcxResult<()> {
-    let thread_id = handshake_reuse.get_thread_id();
-    let pthread_id = handshake_reuse.thread.pthid.as_deref().ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidOption,
-        "Parent thread id missing",
-    ))?;
-    let ack_msg = OutOfBandHandshakeReuseAccepted::default()
-        .set_out_time()
-        .set_thread_id(&thread_id)
-        .set_parent_thread_id(pthread_id);
-    send_message(
-        wallet_handle,
-        pw_vk.to_string(),
-        did_doc.clone(),
-        ack_msg.to_a2a_message(),
-    )
-    .await
 }
 
 impl OutOfBandSender {

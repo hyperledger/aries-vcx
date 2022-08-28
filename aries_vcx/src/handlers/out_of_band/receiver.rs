@@ -17,33 +17,13 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::oob::build_handshake_reuse_msg;
 use crate::utils::send_message;
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
     pub oob: OutOfBandInvitation,
-}
-
-pub async fn send_handshake_reuse(
-    wallet_handle: WalletHandle,
-    oob_id: &str,
-    pw_vk: &str,
-    did_doc: &DidDoc,
-) -> VcxResult<()> {
-    let reuse_msg = OutOfBandHandshakeReuse::default()
-        .set_out_time()
-        .set_thread_id_matching_id()
-        .set_parent_thread_id(oob_id);
-    send_message(
-        wallet_handle,
-        pw_vk.to_string(),
-        did_doc.clone(),
-        reuse_msg.to_a2a_message(),
-    )
-    .await
-    .ok();
-    Ok(())
 }
 
 impl OutOfBandReceiver {
