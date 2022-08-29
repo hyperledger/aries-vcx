@@ -7,8 +7,8 @@ use indy_sys::WalletHandle;
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
@@ -189,9 +189,9 @@ impl SmConnectionInviter {
         new_pw_vk: String,
         send_message: F,
     ) -> VcxResult<()>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>,
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
         send_message(
             wallet_handle,
@@ -199,7 +199,7 @@ impl SmConnectionInviter {
             state.did_doc.clone(),
             state.signed_response.to_a2a_message(),
         )
-            .await
+        .await
     }
 
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
@@ -228,9 +228,9 @@ impl SmConnectionInviter {
         new_service_endpoint: String,
         send_message: F,
     ) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>,
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
         let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
@@ -252,19 +252,24 @@ impl SmConnectionInviter {
                             request.connection.did_doc,
                             problem_report.to_a2a_message(),
                         )
-                            .await
-                            .ok();
-                        return Ok(Self { state: InviterFullState::Initial((problem_report).into()), ..self });
+                        .await
+                        .ok();
+                        return Ok(Self {
+                            state: InviterFullState::Initial((problem_report).into()),
+                            ..self
+                        });
                     }
                     Ok(_) => {}
                 };
-                let signed_response = self.build_response(
-                    wallet_handle,
-                    &request,
-                    new_pairwise_info,
-                    new_routing_keys,
-                    new_service_endpoint,
-                ).await?;
+                let signed_response = self
+                    .build_response(
+                        wallet_handle,
+                        &request,
+                        new_pairwise_info,
+                        new_routing_keys,
+                        new_service_endpoint,
+                    )
+                    .await?;
                 InviterFullState::Requested((request, signed_response).into())
             }
             _ => self.state,
@@ -287,9 +292,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_send_response<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
-        where
-            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-            T: Future<Output=VcxResult<()>>,
+    where
+        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+        T: Future<Output = VcxResult<()>>,
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
@@ -311,8 +316,8 @@ impl SmConnectionInviter {
                             state.did_doc.clone(),
                             problem_report.to_a2a_message(),
                         )
-                            .await
-                            .ok();
+                        .await
+                        .ok();
                         InviterFullState::Initial((state, problem_report).into())
                     }
                 }
@@ -369,7 +374,7 @@ impl SmConnectionInviter {
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Building connection ack in current state is not allowed",
-            ))
+            )),
         }
     }
 }
@@ -511,13 +516,23 @@ pub mod unit_tests {
                 };
                 let new_routing_keys: Vec<String> = vec!["AC3Gx1RoAz8iYVcfY47gjJ".into()];
                 let new_service_endpoint = String::from("https://example.org/agent");
-                let msg = inviter.build_response(WalletHandle(0), &_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint).await.unwrap();
+                let msg = inviter
+                    .build_response(
+                        WalletHandle(0),
+                        &_request(),
+                        &new_pairwise_info,
+                        new_routing_keys,
+                        new_service_endpoint,
+                    )
+                    .await
+                    .unwrap();
 
                 assert_eq!(msg.id, MessageId("testid".into()));
                 assert!(was_in_past(
                     &msg.timing.unwrap().out_time.unwrap(),
                     chrono::Duration::milliseconds(100),
-                ).unwrap());
+                )
+                .unwrap());
             }
         }
 

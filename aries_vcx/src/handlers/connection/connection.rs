@@ -30,8 +30,8 @@ use crate::protocols::connection::invitee::state_machine::{InviteeFullState, Inv
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
-use crate::protocols::SendClosure;
 use crate::protocols::trustping::build_ping_response;
+use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 
@@ -423,7 +423,7 @@ impl Connection {
                         did_doc.clone(),
                         build_ping_response(&ping).to_a2a_message(),
                     )
-                        .await?;
+                    .await?;
                 }
             }
             A2AMessage::OutOfBandHandshakeReuse(handshake_reuse) => {
@@ -432,8 +432,7 @@ impl Connection {
                     handshake_reuse.get_thread_id()
                 );
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(wallet_handle,pw_vk.to_string(),did_doc.clone(),msg.to_a2a_message())
-                    .await?;
+                send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), msg.to_a2a_message()).await?;
             }
             A2AMessage::Query(query) => {
                 let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
@@ -763,7 +762,8 @@ impl Connection {
             self.pairwise_info().pw_vk.clone(),
             did_doc.clone(),
             build_handshake_reuse_msg(&oob).to_a2a_message(),
-        ).await
+        )
+        .await
     }
 
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {

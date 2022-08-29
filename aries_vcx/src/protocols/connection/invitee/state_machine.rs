@@ -192,7 +192,11 @@ impl SmConnectionInvitee {
     }
 
     // todo: should only build message, logic of thread_id determination should be separate
-    fn build_connection_request_msg(&self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<(Request, String)> {
+    fn build_connection_request_msg(
+        &self,
+        routing_keys: Vec<String>,
+        service_endpoint: String,
+    ) -> VcxResult<(Request, String)> {
         match &self.state {
             InviteeFullState::Invited(state) => {
                 let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
@@ -202,7 +206,7 @@ impl SmConnectionInvitee {
                     .set_did(self.pairwise_info.pw_did.to_string())
                     .set_service_endpoint(service_endpoint.to_string())
                     .set_keys(recipient_keys, routing_keys);
-                let (request, thread_id)= match &state.invitation {
+                let (request, thread_id) = match &state.invitation {
                     Invitation::Public(_) => (
                         request
                             .clone()
@@ -220,23 +224,21 @@ impl SmConnectionInvitee {
                     ),
                 };
                 Ok((request, thread_id))
-            },
+            }
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Building connection request in current state is not allowed",
-            ))
+            )),
         }
     }
 
     fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
         match &self.state {
-            InviteeFullState::Responded(_) => {
-                Ok(Ack::create().set_out_time().set_thread_id(&self.thread_id))
-            },
+            InviteeFullState::Responded(_) => Ok(Ack::create().set_out_time().set_thread_id(&self.thread_id)),
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Building connection ack in current state is not allowed",
-            ))
+            )),
         }
     }
 
@@ -470,7 +472,6 @@ pub mod unit_tests {
                 self
             }
 
-
             pub async fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
 
@@ -531,10 +532,10 @@ pub mod unit_tests {
         }
 
         mod build_messages {
+            use super::*;
             use crate::messages::a2a::MessageId;
             use crate::messages::ack::AckStatus;
             use crate::utils::devsetup::was_in_past;
-            use super::*;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -548,17 +549,22 @@ pub mod unit_tests {
                     .unwrap();
                 let routing_keys: Vec<String> = vec!["ABCD000000QYfNL9XkaJdrQejfztN4XqdsiV4ct30000".to_string()];
                 let service_endpoint = String::from("https://example.org");
-                let (msg, _) = invitee.build_connection_request_msg(routing_keys.clone(), service_endpoint.clone()).unwrap();
+                let (msg, _) = invitee
+                    .build_connection_request_msg(routing_keys.clone(), service_endpoint.clone())
+                    .unwrap();
                 assert_eq!(msg.connection.did_doc.routing_keys(), routing_keys);
-                assert_eq!(msg.connection.did_doc.recipient_keys(), vec![invitee.pairwise_info.pw_vk.clone()]);
+                assert_eq!(
+                    msg.connection.did_doc.recipient_keys(),
+                    vec![invitee.pairwise_info.pw_vk.clone()]
+                );
                 assert_eq!(msg.connection.did_doc.get_endpoint(), service_endpoint.to_string());
                 assert_eq!(msg.id, MessageId("testid".into()));
                 assert!(was_in_past(
                     &msg.timing.unwrap().out_time.unwrap(),
                     chrono::Duration::milliseconds(100)
-                ).unwrap());
+                )
+                .unwrap());
             }
-
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -578,10 +584,10 @@ pub mod unit_tests {
                 assert!(was_in_past(
                     &msg.timing.unwrap().out_time.unwrap(),
                     chrono::Duration::milliseconds(100)
-                ).unwrap());
+                )
+                .unwrap());
             }
         }
-
 
         mod get_thread_id {
             use super::*;
