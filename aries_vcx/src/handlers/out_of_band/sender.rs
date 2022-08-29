@@ -1,16 +1,16 @@
-use indy_sys::WalletHandle;
 
-use crate::did_doc::DidDoc;
+
+
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use crate::protocols::oob::build_handshake_reuse_accepted_msg;
-use crate::utils::send_message;
+
+
+
+
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]

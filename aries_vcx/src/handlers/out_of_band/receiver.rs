@@ -1,10 +1,10 @@
 use std::clone::Clone;
 
-use indy_sys::WalletHandle;
+
 
 use agency_client::agency_client::AgencyClient;
 
-use crate::did_doc::DidDoc;
+
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::out_of_band::OutOfBandInvitation;
@@ -14,11 +14,11 @@ use crate::messages::connection::invite::Invitation;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_request::CredentialRequest;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::protocols::oob::build_handshake_reuse_msg;
-use crate::utils::send_message;
+
+
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]

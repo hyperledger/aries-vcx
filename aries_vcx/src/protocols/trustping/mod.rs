@@ -1,4 +1,4 @@
-use crate::handlers::trust_ping::TrustPingSender;
+
 use crate::messages::a2a::MessageId;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;

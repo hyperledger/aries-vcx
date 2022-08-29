@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::future::Future;
 
 use indy_sys::WalletHandle;
-use url::Url;
+
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;

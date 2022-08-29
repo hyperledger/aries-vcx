@@ -1,10 +1,10 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::messages::a2a::MessageId;
+
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
-use crate::utils::uuid;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
