@@ -531,7 +531,6 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-            use std::str::FromStr;
             use crate::messages::a2a::MessageId;
             use crate::messages::ack::AckStatus;
             use crate::utils::devsetup::was_in_past;

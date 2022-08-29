@@ -117,7 +117,7 @@ impl Response {
             thread: self.thread.clone(),
             connection_sig,
             please_ack: self.please_ack.clone(),
-            timing: None,
+            timing: self.timing.clone(),
         };
 
         Ok(signed_response)

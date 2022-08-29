@@ -6,17 +6,14 @@ use indy_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
-
 use crate::handlers::util::verify_thread_id;
-use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::a2a::{A2AMessage, MessageId};
-
+use crate::messages::a2a::protocol_registry::ProtocolRegistry;
 use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
 use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::{Response, SignedResponse};
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
@@ -192,9 +189,9 @@ impl SmConnectionInviter {
         new_pw_vk: String,
         send_message: F,
     ) -> VcxResult<()>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
+        where
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>,
     {
         send_message(
             wallet_handle,
@@ -202,7 +199,7 @@ impl SmConnectionInviter {
             state.did_doc.clone(),
             state.signed_response.to_a2a_message(),
         )
-        .await
+            .await
     }
 
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
@@ -231,46 +228,45 @@ impl SmConnectionInviter {
         new_service_endpoint: String,
         send_message: F,
     ) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
+        where
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>,
     {
-        let bootstrap_pairwise_info = self.pairwise_info.clone();
         let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
             verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
         };
         let state = match self.state {
-            InviterFullState::Invited(_) | InviterFullState::Initial(_) => match &self
-                .build_response(
+            InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
+                match request.connection.did_doc.validate() {
+                    Err(err) => {
+                        let problem_report = ProblemReport::create()
+                            .set_out_time()
+                            .set_problem_code(ProblemCode::RequestProcessingError)
+                            .set_explain(err.to_string())
+                            .set_thread_id(&thread_id);
+
+                        send_message(
+                            wallet_handle,
+                            self.pairwise_info.pw_vk.clone(),
+                            request.connection.did_doc,
+                            problem_report.to_a2a_message(),
+                        )
+                            .await
+                            .ok();
+                        return Ok(Self { state: InviterFullState::Initial((problem_report).into()), ..self });
+                    }
+                    Ok(_) => {}
+                };
+                let signed_response = self.build_response(
                     wallet_handle,
                     &request,
-                    &bootstrap_pairwise_info,
                     new_pairwise_info,
                     new_routing_keys,
                     new_service_endpoint,
-                )
-                .await
-            {
-                Ok(signed_response) => InviterFullState::Requested((request, signed_response.clone()).into()),
-                Err(err) => {
-                    let problem_report = ProblemReport::create()
-                        .set_out_time()
-                        .set_problem_code(ProblemCode::RequestProcessingError)
-                        .set_explain(err.to_string())
-                        .set_thread_id(&thread_id);
-
-                    send_message(
-                        wallet_handle,
-                        bootstrap_pairwise_info.pw_vk,
-                        request.connection.did_doc,
-                        problem_report.to_a2a_message(),
-                    )
-                    .await
-                    .ok();
-                    InviterFullState::Initial((problem_report).into())
-                }
-            },
+                ).await?;
+                InviterFullState::Requested((request, signed_response).into())
+            }
             _ => self.state,
         };
         Ok(Self {
@@ -291,9 +287,9 @@ impl SmConnectionInviter {
     }
 
     pub async fn handle_send_response<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
+        where
+            F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
+            T: Future<Output=VcxResult<()>>,
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
@@ -315,8 +311,8 @@ impl SmConnectionInviter {
                             state.did_doc.clone(),
                             problem_report.to_a2a_message(),
                         )
-                        .await
-                        .ok();
+                            .await
+                            .ok();
                         InviterFullState::Initial((state, problem_report).into())
                     }
                 }
@@ -353,22 +349,28 @@ impl SmConnectionInviter {
         &self,
         wallet_handle: WalletHandle,
         request: &Request,
-        bootstrap_pairwise_info: &PairwiseInfo,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: String,
     ) -> VcxResult<SignedResponse> {
-        request.connection.did_doc.validate()?;
-        let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-        Response::create()
-            .set_out_time()
-            .set_did(new_pairwise_info.pw_did.to_string())
-            .set_service_endpoint(new_service_endpoint)
-            .set_keys(new_recipient_keys, new_routing_keys)
-            .ask_for_ack()
-            .set_thread_id(&request.get_thread_id())
-            .encode(wallet_handle, &bootstrap_pairwise_info.pw_vk)
-            .await
+        match &self.state {
+            InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
+                let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
+                Response::create()
+                    .set_out_time()
+                    .set_did(new_pairwise_info.pw_did.to_string())
+                    .set_service_endpoint(new_service_endpoint)
+                    .set_keys(new_recipient_keys, new_routing_keys)
+                    .ask_for_ack()
+                    .set_thread_id(&request.get_thread_id())
+                    .encode(wallet_handle, &self.pairwise_info.clone().pw_vk)
+                    .await
+            }
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Building connection ack in current state is not allowed",
+            ))
+        }
     }
 }
 
@@ -419,10 +421,8 @@ pub mod unit_tests {
                 self
             }
 
-            async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
-                let routing_keys: Vec<String> = vec!["verkey123".into()];
-                let service_endpoint = String::from("https://example.org/agent");
-                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
+            async fn to_inviter_requested_state(mut self) -> SmConnectionInviter {
+                self = self.to_inviter_invited_state();
 
                 let new_pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
@@ -445,6 +445,16 @@ pub mod unit_tests {
                 self
             }
 
+            async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
+                self = self.to_inviter_requested_state().await;
+                self = self
+                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
+                    .await
+                    .unwrap();
+                self
+            }
+
+            // todo: try reuse to_inviter_responded_state
             async fn to_inviter_completed_state(mut self) -> SmConnectionInviter {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
@@ -479,9 +489,42 @@ pub mod unit_tests {
             }
         }
 
-        mod get_thread_id {
+        mod build_messages {
+            use std::str::FromStr;
+
+            use crate::messages::a2a::MessageId;
+            use crate::messages::ack::{AckStatus, PleaseAck};
+            use crate::utils::devsetup::was_in_past;
+
             use super::*;
+
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_build_connection_response_msg() {
+                let _setup = SetupMocks::init();
+                let mut inviter = inviter_sm().await;
+                inviter = inviter.to_inviter_invited_state();
+
+                let new_pairwise_info = PairwiseInfo {
+                    pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
+                    pw_vk: "verkey456".to_string(),
+                };
+                let new_routing_keys: Vec<String> = vec!["AC3Gx1RoAz8iYVcfY47gjJ".into()];
+                let new_service_endpoint = String::from("https://example.org/agent");
+                let msg = inviter.build_response(WalletHandle(0), &_request(), &new_pairwise_info, new_routing_keys, new_service_endpoint).await.unwrap();
+
+                assert_eq!(msg.id, MessageId("testid".into()));
+                assert!(was_in_past(
+                    &msg.timing.unwrap().out_time.unwrap(),
+                    chrono::Duration::milliseconds(100),
+                ).unwrap());
+            }
+        }
+
+        mod get_thread_id {
             use crate::messages::ack::test_utils::_ack_random_thread;
+
+            use super::*;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
