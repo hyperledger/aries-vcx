@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::future::Future;
 
 use indy_sys::WalletHandle;
+use url::Url;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -190,6 +191,56 @@ impl SmConnectionInvitee {
         }
     }
 
+    // todo: should only build message, logic of thread_id determination should be separate
+    fn build_connection_request_msg(&self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<(Request, String)> {
+        match &self.state {
+            InviteeFullState::Invited(state) => {
+                let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
+                let request = Request::create()
+                    .set_out_time()
+                    .set_label(self.source_id.to_string())
+                    .set_did(self.pairwise_info.pw_did.to_string())
+                    .set_service_endpoint(service_endpoint.to_string())
+                    .set_keys(recipient_keys, routing_keys);
+                let (request, thread_id)= match &state.invitation {
+                    Invitation::Public(_) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&self.thread_id)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone(),
+                    ),
+                    Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.get_thread_id()),
+                    Invitation::OutOfBand(invite) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&invite.id.0)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone(),
+                    ),
+                };
+                Ok((request, thread_id))
+            },
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Building connection request in current state is not allowed",
+            ))
+        }
+    }
+
+    fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
+        match &self.state {
+            InviteeFullState::Responded(_) => {
+                Ok(Ack::create().set_out_time().set_thread_id(&self.thread_id))
+            },
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Building connection ack in current state is not allowed",
+            ))
+        }
+    }
+
+    // todo: extract response validation to different function
     async fn _send_ack<F, T>(
         &self,
         wallet_handle: WalletHandle,
@@ -220,7 +271,7 @@ impl SmConnectionInvitee {
             ));
         }
 
-        let message = Ack::create().set_thread_id(&self.thread_id).to_a2a_message();
+        let message = self.build_connection_ack_msg()?.to_a2a_message();
 
         send_message(
             wallet_handle,
@@ -263,30 +314,7 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
-                let request = Request::create()
-                    .set_out_time()
-                    .set_label(self.source_id.to_string())
-                    .set_did(self.pairwise_info.pw_did.to_string())
-                    .set_service_endpoint(service_endpoint)
-                    .set_keys(recipient_keys, routing_keys);
-                let (request, thread_id) = match &state.invitation {
-                    Invitation::Public(_) => (
-                        request
-                            .clone()
-                            .set_parent_thread_id(&self.thread_id)
-                            .set_thread_id_matching_id(),
-                        request.id.0.clone(),
-                    ),
-                    Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.get_thread_id()),
-                    Invitation::OutOfBand(invite) => (
-                        request
-                            .clone()
-                            .set_parent_thread_id(&invite.id.0)
-                            .set_thread_id_matching_id(),
-                        request.id.0.clone(),
-                    ),
-                };
+                let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 let ddo = DidDoc::from(state.invitation.clone());
                 send_message(
                     wallet_handle,
@@ -442,6 +470,7 @@ pub mod unit_tests {
                 self
             }
 
+
             pub async fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
 
@@ -466,12 +495,12 @@ pub mod unit_tests {
             }
         }
 
-        async fn _response(wallet_handle: WalletHandle, key: &str, thread_id: &str) -> SignedResponse {
+        async fn _response(wallet_handle: WalletHandle, recipient_key: &str, thread_id: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
-                .set_keys(vec![key.to_string()], vec![])
+                .set_keys(vec![recipient_key.to_string()], vec![])
                 .set_thread_id(thread_id)
-                .encode(wallet_handle, &key)
+                .encode(wallet_handle, &recipient_key)
                 .await
                 .unwrap()
         }
@@ -500,6 +529,60 @@ pub mod unit_tests {
                 assert_eq!(source_id(), invitee_sm.source_id());
             }
         }
+
+        mod build_messages {
+            use std::str::FromStr;
+            use crate::messages::a2a::MessageId;
+            use crate::messages::ack::AckStatus;
+            use crate::utils::devsetup::was_in_past;
+            use super::*;
+
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_build_connection_request_msg() {
+                let _setup = SetupMocks::init();
+                let mut invitee = invitee_sm().await;
+
+                let msg_invitation = _pairwise_invitation();
+                invitee = invitee
+                    .handle_invitation(Invitation::Pairwise(msg_invitation.clone()))
+                    .unwrap();
+                let routing_keys: Vec<String> = vec!["ABCD000000QYfNL9XkaJdrQejfztN4XqdsiV4ct30000".to_string()];
+                let service_endpoint = String::from("https://example.org");
+                let (msg, _) = invitee.build_connection_request_msg(routing_keys.clone(), service_endpoint.clone()).unwrap();
+                assert_eq!(msg.connection.did_doc.routing_keys(), routing_keys);
+                assert_eq!(msg.connection.did_doc.recipient_keys(), vec![invitee.pairwise_info.pw_vk.clone()]);
+                assert_eq!(msg.connection.did_doc.get_endpoint(), service_endpoint.to_string());
+                assert_eq!(msg.id, MessageId("testid".into()));
+                assert!(was_in_past(
+                    &msg.timing.unwrap().out_time.unwrap(),
+                    chrono::Duration::milliseconds(100)
+                ).unwrap());
+            }
+
+
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_build_connection_ack_msg() {
+                let _setup = SetupMocks::init();
+                let mut invitee = invitee_sm().await;
+                invitee = invitee.to_invitee_requested_state().await;
+                let msg_request = &_request();
+                let recipient_key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
+                invitee = invitee
+                    .handle_connection_response(_response(WalletHandle(0), &recipient_key, &msg_request.id.0).await)
+                    .unwrap();
+                let msg = invitee.build_connection_ack_msg().unwrap();
+                assert_eq!(msg.id, MessageId("testid".into()));
+                assert_eq!(msg.thread.thid.unwrap(), msg_request.id.0);
+                assert_eq!(msg.status, AckStatus::Ok);
+                assert!(was_in_past(
+                    &msg.timing.unwrap().out_time.unwrap(),
+                    chrono::Duration::milliseconds(100)
+                ).unwrap());
+            }
+        }
+
 
         mod get_thread_id {
             use super::*;

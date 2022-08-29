@@ -7,7 +7,7 @@ use crate::timing_optional;
 pub struct Ack {
     #[serde(rename = "@id")]
     pub id: MessageId,
-    status: AckStatus,
+    pub status: AckStatus,
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[serde(rename = "~timing")]
