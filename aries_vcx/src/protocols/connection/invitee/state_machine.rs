@@ -416,9 +416,9 @@ pub mod unit_tests {
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
     use crate::messages::discovery::disclose::test_utils::_disclose;
-    use crate::messages::discovery::query::test_utils::_query;
+    
     use crate::messages::trust_ping::ping::unit_tests::_ping;
-    use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
+    
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 

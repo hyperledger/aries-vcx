@@ -97,11 +97,11 @@ macro_rules! timing_optional (($type:ident) => (
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use std::str::FromStr;
+    
     use std::thread;
     use std::time::Duration;
 
-    use crate::messages::connection::response::test_utils::*;
+    
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

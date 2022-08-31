@@ -36,7 +36,7 @@ mod unit_tests {
     #[cfg(feature = "general_test")]
     fn test_build_handshake_reuse_msg() {
         let _setup = SetupMocks::init();
-        let mut msg_invitation = OutOfBandInvitation::default();
+        let msg_invitation = OutOfBandInvitation::default();
         let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
 
         assert_eq!(msg_reuse.id, MessageId("testid".into()));

@@ -549,7 +549,7 @@ pub mod unit_tests {
 
     mod build_messages {
         use crate::messages::a2a::MessageId;
-        use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+        
         use crate::protocols::proof_presentation::prover::state_machine::{
             build_presentation_message, build_problem_report,
         };

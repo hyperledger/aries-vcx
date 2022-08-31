@@ -382,14 +382,14 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::ack::test_utils::{_ack, _ack_1};
+    use crate::messages::ack::test_utils::{_ack};
     use crate::messages::connection::problem_report::unit_tests::_problem_report;
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
     use crate::messages::discovery::disclose::test_utils::_disclose;
     use crate::messages::discovery::query::test_utils::_query;
     use crate::messages::trust_ping::ping::unit_tests::_ping;
-    use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
+    
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -400,7 +400,7 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
-        use agency_client::messages::update_com_method::ComMethodType::A2A;
+        
 
         use super::*;
 
@@ -470,10 +470,10 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-            use std::str::FromStr;
+            
 
             use crate::messages::a2a::MessageId;
-            use crate::messages::ack::{AckStatus, PleaseAck};
+            
             use crate::utils::devsetup::was_in_past;
 
             use super::*;
@@ -546,7 +546,7 @@ pub mod unit_tests {
         }
 
         mod step {
-            use crate::messages::a2a::A2AMessage::Ping;
+            
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -782,7 +782,7 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-            use crate::messages::discovery::query::test_utils::_query_string;
+            
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
