@@ -4,7 +4,6 @@ use std::sync::Once;
 
 use indy_sys::WalletHandle;
 
-use crate::error::VcxResult;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
@@ -459,6 +458,7 @@ impl Drop for TempFile {
     }
 }
 
+#[cfg(feature = "test_utils")]
 pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::ParseResult<bool> {
     let now = Utc::now();
     let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(datetime_rfc3339)?.into();
@@ -469,11 +469,9 @@ pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::Parse
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::utils::devsetup::was_in_past;
-    use chrono::Duration;
-    use chrono::{DateTime, SecondsFormat, Utc};
-    use std::ops::{Add, Sub};
-    use std::thread;
+    use super::*;
+    use chrono::SecondsFormat;
+    use std::ops::Sub;
 
     #[test]
     #[cfg(feature = "general_test")]

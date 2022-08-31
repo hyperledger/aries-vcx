@@ -5,9 +5,9 @@ use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeRe
 
 pub fn build_handshake_reuse_msg(oob_invitation: &OutOfBandInvitation) -> OutOfBandHandshakeReuse {
     OutOfBandHandshakeReuse::default()
-        .set_out_time()
         .set_thread_id_matching_id()
         .set_parent_thread_id(&oob_invitation.id.0)
+        .set_out_time()
 }
 
 pub fn build_handshake_reuse_accepted_msg(
@@ -19,9 +19,9 @@ pub fn build_handshake_reuse_accepted_msg(
         "Parent thread id missing",
     ))?;
     Ok(OutOfBandHandshakeReuseAccepted::default()
-        .set_out_time()
         .set_thread_id(&thread_id)
-        .set_parent_thread_id(pthread_id))
+        .set_parent_thread_id(pthread_id)
+        .set_out_time())
 }
 
 #[cfg(test)]
@@ -37,12 +37,11 @@ mod unit_tests {
     fn test_build_handshake_reuse_msg() {
         let _setup = SetupMocks::init();
         let mut msg_invitation = OutOfBandInvitation::default();
-        msg_invitation.id = MessageId("invitation-id".to_string());
         let msg_reuse = build_handshake_reuse_msg(&msg_invitation);
 
         assert_eq!(msg_reuse.id, MessageId("testid".into()));
         assert_eq!(msg_reuse.id, MessageId(msg_reuse.thread.thid.unwrap()));
-        assert_eq!(msg_reuse.thread.pthid.unwrap(), "invitation-id");
+        assert_eq!(msg_reuse.thread.pthid.unwrap(), msg_invitation.id.0);
         assert!(was_in_past(
             &msg_reuse.timing.unwrap().out_time.unwrap(),
             chrono::Duration::milliseconds(100)
@@ -61,7 +60,7 @@ mod unit_tests {
 
         assert_eq!(msg_reuse_accepted.id, MessageId("testid".into()));
         assert_eq!(msg_reuse_accepted.thread.thid.unwrap(), msg_reuse.id.0);
-        assert_eq!(msg_reuse_accepted.thread.pthid.unwrap(), "invitation-id");
+        assert_eq!(msg_reuse_accepted.thread.pthid.unwrap(), msg_invitation.id.0);
         assert!(was_in_past(
             &msg_reuse_accepted.timing.unwrap().out_time.unwrap(),
             chrono::Duration::milliseconds(100)

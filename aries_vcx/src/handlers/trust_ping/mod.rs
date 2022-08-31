@@ -5,7 +5,6 @@ use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
     ping: Ping,
@@ -15,7 +14,6 @@ pub struct TrustPingSender {
 
 impl TrustPingSender {
     pub fn build(request_response: bool, comment: Option<String>) -> TrustPingSender {
-        // todo : Remove different Default implementation for MessageId in tests, then we can remove this override
         let ping = build_ping(request_response, comment);
         Self {
             ping,

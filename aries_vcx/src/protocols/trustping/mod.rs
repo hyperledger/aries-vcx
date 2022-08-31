@@ -1,15 +1,13 @@
-
 use crate::messages::a2a::MessageId;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
 use crate::utils::uuid;
 
 pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
-    // todo : Remove different Default implementation for MessageId in tests, then we can remove this override
     Ping::create(MessageId(uuid::uuid()))
-        .set_out_time()
         .set_request_response(request_response)
         .set_comment(comment)
+        .set_out_time()
 }
 
 pub fn build_ping_response(ping: &Ping) -> PingResponse {
@@ -18,7 +16,7 @@ pub fn build_ping_response(ping: &Ping) -> PingResponse {
         .as_ref()
         .and_then(|thread| thread.thid.clone())
         .unwrap_or(ping.id.0.clone());
-    PingResponse::create().set_out_time().set_thread_id(&thread_id)
+    PingResponse::create().set_thread_id(&thread_id).set_out_time()
 }
 
 #[cfg(test)]

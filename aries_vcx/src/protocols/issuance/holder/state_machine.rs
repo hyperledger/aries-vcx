@@ -58,14 +58,14 @@ impl Default for HolderFullState {
 }
 
 //todo: should set thread id
-fn build_credential_request_msg(credential_request: String) -> VcxResult<CredentialRequest> {
+fn build_credential_request_msg(credential_request_attach: String) -> VcxResult<CredentialRequest> {
     CredentialRequest::create()
         .set_out_time()
-        .set_requests_attach(credential_request)
+        .set_requests_attach(credential_request_attach)
 }
 
 fn build_credential_ack(thread_id: &str) -> Ack {
-    CredentialAck::create().set_out_time().set_thread_id(&thread_id)
+    CredentialAck::create().set_thread_id(&thread_id).set_out_time()
 }
 
 impl HolderSM {
@@ -613,9 +613,7 @@ mod test {
 
     mod build_messages {
         use crate::messages::a2a::MessageId;
-        use crate::messages::issuance::CredentialPreviewData;
         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
-        use crate::utils::constants::LIBINDY_CRED_OFFER;
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
@@ -624,8 +622,8 @@ mod test {
             let _setup = SetupMocks::init();
             let msg = build_credential_request_msg("{}".into()).unwrap();
 
-            assert_eq!(msg.id, MessageId("testid".into()));
-            // assert!(msg.thread.is_none()); // should set thread_id
+            assert_eq!(msg.id, MessageId::default());
+            assert!(msg.thread.is_none()); // todo: should set thread_id baswed on credential offer msg.
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
                 chrono::Duration::milliseconds(100)
@@ -640,7 +638,7 @@ mod test {
 
             let msg = build_credential_ack("12345");
 
-            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),

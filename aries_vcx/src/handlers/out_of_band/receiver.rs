@@ -1,9 +1,6 @@
 use std::clone::Clone;
 
-
-
 use agency_client::agency_client::AgencyClient;
-
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
@@ -17,7 +14,6 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-
 
 use crate::utils::service_resolvable::ServiceResolvable;
 

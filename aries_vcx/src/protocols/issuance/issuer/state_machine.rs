@@ -107,8 +107,7 @@ async fn _revoke(wallet_handle: WalletHandle, rev_info: &Option<RevocationInfoV1
 }
 
 fn build_credential_message(libindy_credential: String) -> VcxResult<Credential> {
-    // todo: should have thread_id!
-    Credential::create().set_out_time().set_credential(libindy_credential)
+    Ok(Credential::create().set_credential(libindy_credential)?.set_out_time())
 }
 
 fn build_credential_offer(
@@ -117,13 +116,12 @@ fn build_credential_offer(
     credential_preview: CredentialPreviewData,
     comment: Option<String>,
 ) -> VcxResult<CredentialOffer> {
-    let msg = CredentialOffer::create()
-        .set_out_time()
+    Ok(CredentialOffer::create()
         .set_id(&thread_id)
         .set_offers_attach(&credential_offer)?
         .set_credential_preview_data(credential_preview)
-        .set_comment(comment);
-    Ok(msg)
+        .set_comment(comment)
+        .set_out_time())
 }
 
 impl IssuerSM {
@@ -672,7 +670,7 @@ pub mod unit_tests {
 
             let msg = build_credential_message("{}".into()).unwrap();
 
-            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.id, MessageId::default());
             assert!(msg.thread.thid.is_none()); // todo: should have thread_id
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),

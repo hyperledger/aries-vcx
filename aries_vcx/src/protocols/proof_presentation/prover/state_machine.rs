@@ -53,18 +53,18 @@ pub enum ProverFullState {
 }
 
 fn build_presentation_message(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
-    Presentation::create()
-        .set_out_time()
+    Ok(Presentation::create()
         .ask_for_ack()
         .set_thread_id(&thread_id)
-        .set_presentations_attach(presentation_attachment)
+        .set_presentations_attach(presentation_attachment)?
+        .set_out_time())
 }
 
 fn build_problem_report(thread_id: &str, comment: &str) -> ProblemReport {
     ProblemReport::create()
-        .set_out_time()
         .set_comment(Some(comment.into()))
         .set_thread_id(&thread_id)
+        .set_out_time()
 }
 
 impl Default for ProverFullState {
@@ -324,9 +324,9 @@ impl ProverSM {
         thread_id: &str,
     ) -> VcxResult<()> {
         let proposal = PresentationProposal::create()
-            .set_out_time()
             .set_presentation_preview(preview)
-            .set_thread_id(thread_id);
+            .set_thread_id(thread_id)
+            .set_out_time();
         send_message(proposal.to_a2a_message()).await
     }
 
@@ -562,7 +562,7 @@ pub mod unit_tests {
 
             let msg = build_presentation_message("12345", "{}".into()).unwrap();
 
-            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.thid, Some("12345".into()));
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
@@ -575,9 +575,10 @@ pub mod unit_tests {
         #[cfg(feature = "general_test")]
         async fn test_prover_build_problem_report() {
             let _setup = SetupMocks::init();
+
             let msg = build_problem_report("12345", "foobar".into());
 
-            assert_eq!(msg.id, MessageId("testid".into()));
+            assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));
             assert_eq!(msg.comment, Some("foobar".into()));
             assert!(was_in_past(

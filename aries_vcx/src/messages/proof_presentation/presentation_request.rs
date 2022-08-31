@@ -122,6 +122,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::messages::proof_presentation::presentation_request::test_utils::*;
+    use crate::utils::devsetup::was_in_past;
     use chrono::{DateTime, Utc};
 
     use super::*;
@@ -129,10 +130,10 @@ pub mod unit_tests {
     #[test]
     fn test_presentation_request_build_works() {
         let presentation_request: PresentationRequest = PresentationRequest::create()
-            .set_out_time()
             .set_comment(_comment())
             .set_request_presentations_attach(&_presentation_request_data())
-            .unwrap();
+            .unwrap()
+            .set_out_time();
 
         let expected = _presentation_request();
         assert_eq!(expected.id, presentation_request.id);
@@ -143,12 +144,7 @@ pub mod unit_tests {
         );
         assert_eq!(expected.thread, presentation_request.thread);
         assert!(presentation_request.timing.is_some());
-        let out_timestamp: String = presentation_request
-            .timing
-            .unwrap()
-            .get_time_as_iso8601_string()
-            .unwrap()
-            .into();
-        let dt: DateTime<Utc> = DateTime::parse_from_rfc3339(&out_timestamp).unwrap().into();
+        let out_timestamp: String = presentation_request.timing.unwrap().get_out_time().unwrap().into();
+        assert!(was_in_past(&out_timestamp, chrono::Duration::milliseconds(100)).unwrap());
     }
 }

@@ -71,7 +71,7 @@ pub enum RevocationStatus {
 }
 
 fn build_verification_ack(thread_id: &str) -> PresentationAck {
-    PresentationAck::create().set_out_time().set_thread_id(thread_id)
+    PresentationAck::create().set_thread_id(thread_id).set_out_time()
 }
 
 fn build_starting_presentation_request(
@@ -79,11 +79,11 @@ fn build_starting_presentation_request(
     request_data: &PresentationRequestData,
     comment: Option<String>,
 ) -> VcxResult<PresentationRequest> {
-    PresentationRequest::create()
-        .set_out_time()
+    Ok(PresentationRequest::create()
         .set_id(thread_id.into())
         .set_comment(comment)
-        .set_request_presentations_attach(request_data)
+        .set_request_presentations_attach(request_data)?
+        .set_out_time())
 }
 
 impl VerifierSM {
@@ -321,7 +321,6 @@ impl VerifierSM {
             },
             VerifierFullState::Finished(state) => {
                 if matches!(message, VerifierMessages::SendPresentationAck()) {
-                    // let ack = PresentationAck::create().set_out_time().set_thread_id(&thread_id);
                     let ack = build_verification_ack(&thread_id);
                     send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
@@ -534,7 +533,7 @@ pub mod unit_tests {
 
             let msg = build_verification_ack("12345");
 
-            assert_eq!(msg.id, MessageId("testid".into())); // todo: it should generate random uuid even in test
+            assert_eq!(msg.id, MessageId::default()); // todo: it should generate random uuid even in test
             assert_eq!(msg.thread.thid, Some("12345".into()));
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
@@ -613,7 +612,6 @@ pub mod unit_tests {
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.set_request(&_presentation_request_data(), None).unwrap();
 
-            warn!("verifier_sm.state = ${:?}", verifier_sm.state);
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
         }
 
@@ -625,12 +623,11 @@ pub mod unit_tests {
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm.set_request(&_presentation_request_data(), None).unwrap();
 
-            warn!("verifier_sm.state = ${:?}", verifier_sm.state);
             assert_match!(VerifierFullState::PresentationRequestSet(_), verifier_sm.state);
 
             let msg_presentation_request = verifier_sm.presentation_request().unwrap();
             let out_time = msg_presentation_request.timing.unwrap().out_time.unwrap();
-            assert!(was_in_past(&out_time, chrono::Duration::seconds(1)).unwrap());
+            assert!(was_in_past(&out_time, chrono::Duration::milliseconds(100)).unwrap());
         }
 
         #[tokio::test]

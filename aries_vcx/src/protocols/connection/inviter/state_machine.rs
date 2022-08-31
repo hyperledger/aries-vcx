@@ -241,10 +241,10 @@ impl SmConnectionInviter {
                 match request.connection.did_doc.validate() {
                     Err(err) => {
                         let problem_report = ProblemReport::create()
-                            .set_out_time()
                             .set_problem_code(ProblemCode::RequestProcessingError)
                             .set_explain(err.to_string())
-                            .set_thread_id(&thread_id);
+                            .set_thread_id(&thread_id)
+                            .set_out_time();
 
                         send_message(
                             wallet_handle,
@@ -305,10 +305,10 @@ impl SmConnectionInviter {
                         // todo: we should distinguish errors - probably should not send problem report
                         //       if we just lost internet connectivity
                         let problem_report = ProblemReport::create()
-                            .set_out_time()
                             .set_problem_code(ProblemCode::RequestProcessingError)
                             .set_explain(err.to_string())
-                            .set_thread_id(&self.thread_id);
+                            .set_thread_id(&self.thread_id)
+                            .set_out_time();
 
                         send_message(
                             wallet_handle,
@@ -361,15 +361,15 @@ impl SmConnectionInviter {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-                Response::create()
-                    .set_out_time()
+                Ok(Response::create()
                     .set_did(new_pairwise_info.pw_did.to_string())
                     .set_service_endpoint(new_service_endpoint)
                     .set_keys(new_recipient_keys, new_routing_keys)
                     .ask_for_ack()
                     .set_thread_id(&request.get_thread_id())
                     .encode(wallet_handle, &self.pairwise_info.clone().pw_vk)
-                    .await
+                    .await?
+                    .set_out_time())
             }
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -428,7 +428,6 @@ pub mod unit_tests {
 
             async fn to_inviter_requested_state(mut self) -> SmConnectionInviter {
                 self = self.to_inviter_invited_state();
-
                 let new_pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
                 let new_service_endpoint = String::from("https://example.org/agent");
@@ -461,31 +460,7 @@ pub mod unit_tests {
 
             // todo: try reuse to_inviter_responded_state
             async fn to_inviter_completed_state(mut self) -> SmConnectionInviter {
-                let routing_keys: Vec<String> = vec!["verkey123".into()];
-                let service_endpoint = String::from("https://example.org/agent");
-                self = self.create_invitation(routing_keys, service_endpoint).unwrap();
-
-                let new_pairwise_info = PairwiseInfo {
-                    pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
-                    pw_vk: "verkey456".to_string(),
-                };
-                let new_routing_keys: Vec<String> = vec!["AC3Gx1RoAz8iYVcfY47gjJ".into()];
-                let new_service_endpoint = String::from("https://example.org/agent");
-                self = self
-                    .handle_connection_request(
-                        _dummy_wallet_handle(),
-                        _request(),
-                        &new_pairwise_info,
-                        new_routing_keys,
-                        new_service_endpoint,
-                        _send_message,
-                    )
-                    .await
-                    .unwrap();
-                self = self
-                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
-                    .await
-                    .unwrap();
+                self = self.to_inviter_responded_state().await;
                 self = self
                     .handle_confirmation_message(&A2AMessage::Ack(_ack()))
                     .await
@@ -507,9 +482,9 @@ pub mod unit_tests {
             #[cfg(feature = "general_test")]
             async fn test_build_connection_response_msg() {
                 let _setup = SetupMocks::init();
+
                 let mut inviter = inviter_sm().await;
                 inviter = inviter.to_inviter_invited_state();
-
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
                     pw_vk: "verkey456".to_string(),
@@ -527,7 +502,7 @@ pub mod unit_tests {
                     .await
                     .unwrap();
 
-                assert_eq!(msg.id, MessageId("testid".into()));
+                assert_eq!(msg.id, MessageId::default());
                 assert!(was_in_past(
                     &msg.timing.unwrap().out_time.unwrap(),
                     chrono::Duration::milliseconds(100),
@@ -545,32 +520,9 @@ pub mod unit_tests {
             #[cfg(feature = "general_test")]
             async fn ack_fails_with_incorrect_thread_id() {
                 let _setup = SetupMocks::init();
-                let routing_keys: Vec<String> = vec!["verkey123".into()];
-                let service_endpoint = String::from("https://example.org/agent");
-                let mut inviter = inviter_sm().await;
-                inviter = inviter.create_invitation(routing_keys, service_endpoint).unwrap();
 
-                let new_pairwise_info = PairwiseInfo {
-                    pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),
-                    pw_vk: "verkey456".to_string(),
-                };
-                let new_routing_keys: Vec<String> = vec!["AC3Gx1RoAz8iYVcfY47gjJ".into()];
-                let new_service_endpoint = String::from("https://example.org/agent");
-                inviter = inviter
-                    .handle_connection_request(
-                        _dummy_wallet_handle(),
-                        _request(),
-                        &new_pairwise_info,
-                        new_routing_keys,
-                        new_service_endpoint,
-                        _send_message,
-                    )
-                    .await
-                    .unwrap();
-                inviter = inviter
-                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
-                    .await
-                    .unwrap();
+                let inviter = inviter_sm().await.to_inviter_responded_state().await;
+
                 assert!(inviter
                     .handle_confirmation_message(&A2AMessage::Ack(_ack_random_thread()))
                     .await
@@ -605,6 +557,7 @@ pub mod unit_tests {
                 let _setup = SetupIndyMocks::init();
 
                 let did_exchange_sm = inviter_sm().await;
+
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
             }
 
@@ -636,7 +589,6 @@ pub mod unit_tests {
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
-
                 did_exchange_sm = did_exchange_sm.handle_problem_report(_problem_report()).unwrap();
                 assert_match!(InviterFullState::Initial(_), did_exchange_sm.state);
             }

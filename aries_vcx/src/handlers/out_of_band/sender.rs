@@ -1,15 +1,9 @@
-
-
-
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
-
-
-
 
 use crate::utils::service_resolvable::ServiceResolvable;
 
