@@ -1,5 +1,5 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use log;
 
@@ -410,6 +410,7 @@ pub mod test_a2a_serialization {
             label: "foobar".to_string(),
             connection: Default::default(),
             thread: None,
+            timing: None,
         });
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 

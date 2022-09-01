@@ -16,4 +16,5 @@ pub mod mime_type;
 pub mod out_of_band;
 pub mod proof_presentation;
 pub mod status;
+pub mod timing;
 pub mod trust_ping;

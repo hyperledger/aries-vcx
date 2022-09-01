@@ -1,3 +1,4 @@
+use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
 
@@ -454,5 +455,31 @@ impl TempFile {
 impl Drop for TempFile {
     fn drop(&mut self) {
         fs::remove_file(&self.path).unwrap()
+    }
+}
+
+#[cfg(feature = "test_utils")]
+pub fn was_in_past(datetime_rfc3339: &str, threshold: Duration) -> chrono::ParseResult<bool> {
+    let now = Utc::now();
+    let datetime: DateTime<Utc> = DateTime::parse_from_rfc3339(datetime_rfc3339)?.into();
+    let diff = now - datetime;
+    Ok(threshold > diff)
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use super::*;
+    use chrono::SecondsFormat;
+    use std::ops::Sub;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_is_past_timestamp() {
+        let now = Utc::now();
+        let past1ms_rfc3339 = now
+            .sub(Duration::milliseconds(1))
+            .to_rfc3339_opts(SecondsFormat::Millis, true);
+        assert!(was_in_past(&past1ms_rfc3339, Duration::milliseconds(10)).unwrap())
     }
 }

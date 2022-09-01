@@ -6,6 +6,7 @@ use crate::messages::attachment::Attachments;
 use crate::utils::service_resolvable::ServiceResolvable;
 // TODO: move to messages
 use crate::messages::mime_type::MimeType;
+use crate::messages::timing::Timing;
 
 pub mod receiver;
 pub mod sender;
@@ -44,6 +45,9 @@ pub struct OutOfBandInvitation {
     pub services: Vec<ServiceResolvable>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 a2a_message!(OutOfBandInvitation);

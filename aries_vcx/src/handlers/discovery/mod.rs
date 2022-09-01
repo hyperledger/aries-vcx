@@ -14,7 +14,7 @@ pub async fn send_discovery_query(
     did_doc: &DidDoc,
     pw_vk: &str,
 ) -> VcxResult<()> {
-    let query_ = Query::create().set_query(query).set_comment(comment);
+    let query_ = Query::create().set_query(query).set_comment(comment).set_out_time();
     send_message(
         wallet_handle,
         pw_vk.to_string(),
@@ -33,7 +33,8 @@ pub async fn respond_discovery_query(
 ) -> VcxResult<()> {
     let disclose = Disclose::create()
         .set_protocols(supported_protocols)
-        .set_thread_id(&query.id.0.clone());
+        .set_thread_id(&query.id.0.clone())
+        .set_out_time();
 
     send_message(
         wallet_handle,

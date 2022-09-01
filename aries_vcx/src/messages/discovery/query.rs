@@ -1,4 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Query {
@@ -8,7 +10,12 @@ pub struct Query {
     pub query: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(Query);
 
 impl Query {
     pub fn create() -> Query {
@@ -47,6 +54,7 @@ pub mod test_utils {
             id: MessageId::id(),
             query: Some(_query_string()),
             comment: Some(_comment()),
+            timing: None,
         }
     }
 }

@@ -1,5 +1,7 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
@@ -12,6 +14,9 @@ pub struct Ping {
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 impl Ping {
@@ -32,6 +37,7 @@ impl Ping {
     }
 }
 
+timing_optional!(Ping);
 threadlike_optional!(Ping);
 a2a_message!(Ping);
 
@@ -52,6 +58,7 @@ pub mod unit_tests {
             response_requested: false,
             thread: Some(_thread()),
             comment: Some(_comment()),
+            timing: None,
         }
     }
 
@@ -61,6 +68,7 @@ pub mod unit_tests {
             response_requested: false,
             thread: None,
             comment: Some(_comment()),
+            timing: None,
         }
     }
 

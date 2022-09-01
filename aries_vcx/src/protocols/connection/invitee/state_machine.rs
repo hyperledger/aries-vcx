@@ -190,6 +190,58 @@ impl SmConnectionInvitee {
         }
     }
 
+    // todo: should only build message, logic of thread_id determination should be separate
+    fn build_connection_request_msg(
+        &self,
+        routing_keys: Vec<String>,
+        service_endpoint: String,
+    ) -> VcxResult<(Request, String)> {
+        match &self.state {
+            InviteeFullState::Invited(state) => {
+                let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
+                let request = Request::create()
+                    .set_label(self.source_id.to_string())
+                    .set_did(self.pairwise_info.pw_did.to_string())
+                    .set_service_endpoint(service_endpoint.to_string())
+                    .set_keys(recipient_keys, routing_keys)
+                    .set_out_time();
+                let (request, thread_id) = match &state.invitation {
+                    Invitation::Public(_) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&self.thread_id)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone(),
+                    ),
+                    Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.get_thread_id()),
+                    Invitation::OutOfBand(invite) => (
+                        request
+                            .clone()
+                            .set_parent_thread_id(&invite.id.0)
+                            .set_thread_id_matching_id(),
+                        request.id.0.clone(),
+                    ),
+                };
+                Ok((request, thread_id))
+            }
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Building connection request in current state is not allowed",
+            )),
+        }
+    }
+
+    fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
+        match &self.state {
+            InviteeFullState::Responded(_) => Ok(Ack::create().set_out_time().set_thread_id(&self.thread_id)),
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Building connection ack in current state is not allowed",
+            )),
+        }
+    }
+
+    // todo: extract response validation to different function
     async fn _send_ack<F, T>(
         &self,
         wallet_handle: WalletHandle,
@@ -220,7 +272,7 @@ impl SmConnectionInvitee {
             ));
         }
 
-        let message = Ack::create().set_thread_id(&self.thread_id).to_a2a_message();
+        let message = self.build_connection_ack_msg()?.to_a2a_message();
 
         send_message(
             wallet_handle,
@@ -263,30 +315,8 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
-                let request = Request::create()
-                    .set_label(self.source_id.to_string())
-                    .set_did(self.pairwise_info.pw_did.to_string())
-                    .set_service_endpoint(service_endpoint)
-                    .set_keys(recipient_keys, routing_keys);
-                let (request, thread_id) = match &state.invitation {
-                    Invitation::Public(_) => (
-                        request
-                            .clone()
-                            .set_parent_thread_id(&self.thread_id)
-                            .set_thread_id_matching_id(),
-                        request.id.0.clone(),
-                    ),
-                    Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.get_thread_id()),
-                    Invitation::OutOfBand(invite) => (
-                        request
-                            .clone()
-                            .set_parent_thread_id(&invite.id.0)
-                            .set_thread_id_matching_id(),
-                        request.id.0.clone(),
-                    ),
-                };
                 let ddo = DidDoc::from(state.invitation.clone());
+                let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
                     wallet_handle,
                     self.pairwise_info.pw_vk.clone(),
@@ -345,7 +375,8 @@ impl SmConnectionInvitee {
                     let problem_report = ProblemReport::create()
                         .set_problem_code(ProblemCode::ResponseProcessingError)
                         .set_explain(err.to_string())
-                        .set_thread_id(&self.thread_id);
+                        .set_thread_id(&self.thread_id)
+                        .set_out_time();
                     send_message(
                         wallet_handle,
                         self.pairwise_info.pw_vk.clone(),
@@ -385,9 +416,9 @@ pub mod unit_tests {
     use crate::messages::connection::request::unit_tests::_request;
     use crate::messages::connection::response::test_utils::_signed_response;
     use crate::messages::discovery::disclose::test_utils::_disclose;
-    use crate::messages::discovery::query::test_utils::_query;
+    
     use crate::messages::trust_ping::ping::unit_tests::_ping;
-    use crate::messages::trust_ping::ping_response::unit_tests::_ping_response;
+    
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -428,9 +459,7 @@ pub mod unit_tests {
             }
 
             pub async fn to_invitee_requested_state(mut self) -> SmConnectionInvitee {
-                self = self
-                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
-                    .unwrap();
+                self = self.to_invitee_invited_state();
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
@@ -442,17 +471,7 @@ pub mod unit_tests {
 
             pub async fn to_invitee_completed_state(mut self) -> SmConnectionInvitee {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
-
-                self = self
-                    .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
-                    .unwrap();
-
-                let routing_keys: Vec<String> = vec![key.clone()];
-                let service_endpoint = String::from("https://example.org/agent");
-                self = self
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
-                    .await
-                    .unwrap();
+                self = self.to_invitee_requested_state().await;
                 self = self
                     .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
                     .unwrap();
@@ -464,12 +483,12 @@ pub mod unit_tests {
             }
         }
 
-        async fn _response(wallet_handle: WalletHandle, key: &str, thread_id: &str) -> SignedResponse {
+        async fn _response(wallet_handle: WalletHandle, recipient_key: &str, thread_id: &str) -> SignedResponse {
             Response::default()
                 .set_service_endpoint(_service_endpoint())
-                .set_keys(vec![key.to_string()], vec![])
+                .set_keys(vec![recipient_key.to_string()], vec![])
                 .set_thread_id(thread_id)
-                .encode(wallet_handle, &key)
+                .encode(wallet_handle, &recipient_key)
                 .await
                 .unwrap()
         }
@@ -499,6 +518,69 @@ pub mod unit_tests {
             }
         }
 
+        mod build_messages {
+            use super::*;
+            use crate::messages::a2a::MessageId;
+            use crate::messages::ack::AckStatus;
+            use crate::utils::devsetup::was_in_past;
+
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_build_connection_request_msg() {
+                let _setup = SetupMocks::init();
+
+                let mut invitee = invitee_sm().await;
+
+                let msg_invitation = _pairwise_invitation();
+                invitee = invitee
+                    .handle_invitation(Invitation::Pairwise(msg_invitation.clone()))
+                    .unwrap();
+                let routing_keys: Vec<String> = vec!["ABCD000000QYfNL9XkaJdrQejfztN4XqdsiV4ct30000".to_string()];
+                let service_endpoint = String::from("https://example.org");
+                let (msg, _) = invitee
+                    .build_connection_request_msg(routing_keys.clone(), service_endpoint.clone())
+                    .unwrap();
+
+                assert_eq!(msg.connection.did_doc.routing_keys(), routing_keys);
+                assert_eq!(
+                    msg.connection.did_doc.recipient_keys(),
+                    vec![invitee.pairwise_info.pw_vk.clone()]
+                );
+                assert_eq!(msg.connection.did_doc.get_endpoint(), service_endpoint.to_string());
+                assert_eq!(msg.id, MessageId::default());
+                assert!(was_in_past(
+                    &msg.timing.unwrap().out_time.unwrap(),
+                    chrono::Duration::milliseconds(100)
+                )
+                .unwrap());
+            }
+
+            #[tokio::test]
+            #[cfg(feature = "general_test")]
+            async fn test_build_connection_ack_msg() {
+                let _setup = SetupMocks::init();
+
+                let mut invitee = invitee_sm().await;
+                invitee = invitee.to_invitee_requested_state().await;
+                let msg_request = &_request();
+                let recipient_key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
+                invitee = invitee
+                    .handle_connection_response(_response(WalletHandle(0), &recipient_key, &msg_request.id.0).await)
+                    .unwrap();
+
+                let msg = invitee.build_connection_ack_msg().unwrap();
+
+                assert_eq!(msg.id, MessageId::default());
+                assert_eq!(msg.thread.thid.unwrap(), msg_request.id.0);
+                assert_eq!(msg.status, AckStatus::Ok);
+                assert!(was_in_past(
+                    &msg.timing.unwrap().out_time.unwrap(),
+                    chrono::Duration::milliseconds(100)
+                )
+                .unwrap());
+            }
+        }
+
         mod get_thread_id {
             use super::*;
 
@@ -506,13 +588,13 @@ pub mod unit_tests {
             #[cfg(feature = "general_test")]
             async fn handle_response_fails_with_incorrect_thread_id() {
                 let _setup = SetupMocks::init();
+
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 let mut invitee = invitee_sm().await;
 
                 invitee = invitee
                     .handle_invitation(Invitation::Pairwise(_pairwise_invitation()))
                     .unwrap();
-
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee

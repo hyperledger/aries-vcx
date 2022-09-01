@@ -1,14 +1,23 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ack {
     #[serde(rename = "@id")]
     pub id: MessageId,
-    status: AckStatus,
+    pub status: AckStatus,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike!(Ack);
+a2a_message!(Ack);
+timing_optional!(Ack);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AckStatus {
@@ -37,9 +46,6 @@ impl Ack {
     }
 }
 
-threadlike!(Ack);
-a2a_message!(Ack);
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PleaseAck {}
 
@@ -64,6 +70,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread(),
+            timing: None,
         }
     }
 
@@ -72,6 +79,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Ok,
             thread: _thread_random(),
+            timing: None,
         }
     }
 
@@ -80,6 +88,7 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread_1(),
+            timing: None,
         }
     }
 }

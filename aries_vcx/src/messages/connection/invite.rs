@@ -9,6 +9,8 @@ use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::libindy::utils::ledger;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -68,7 +70,12 @@ pub struct PairwiseInvitation {
     pub routing_keys: Vec<String>,
     #[serde(rename = "serviceEndpoint")]
     pub service_endpoint: String,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(PairwiseInvitation);
 
 impl From<DidDoc> for PairwiseInvitation {
     fn from(did_doc: DidDoc) -> PairwiseInvitation {
@@ -181,6 +188,7 @@ pub mod test_utils {
             recipient_keys: _recipient_keys(),
             routing_keys: _routing_keys(),
             service_endpoint: _service_endpoint(),
+            timing: None,
         }
     }
 

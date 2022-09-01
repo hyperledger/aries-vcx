@@ -1,6 +1,8 @@
 use crate::did_doc::DidDoc;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Request {
@@ -11,7 +13,14 @@ pub struct Request {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+a2a_message!(Request, ConnectionRequest);
+threadlike_optional!(Request);
+timing_optional!(Request);
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct ConnectionData {
@@ -49,9 +58,6 @@ impl Request {
     }
 }
 
-a2a_message!(Request, ConnectionRequest);
-threadlike_optional!(Request);
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
@@ -72,6 +78,7 @@ pub mod unit_tests {
                 did_doc: _did_doc_inlined_recipient_keys(),
             },
             thread: None,
+            timing: None,
         }
     }
 

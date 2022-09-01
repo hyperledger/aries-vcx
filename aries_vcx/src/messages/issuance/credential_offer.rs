@@ -4,6 +4,8 @@ use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialOffer {
@@ -17,7 +19,14 @@ pub struct CredentialOffer {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(CredentialOffer);
+a2a_message!(CredentialOffer);
+timing_optional!(CredentialOffer);
 
 impl CredentialOffer {
     pub fn create() -> Self {
@@ -76,9 +85,6 @@ impl OfferInfo {
         }
     }
 }
-
-threadlike_optional!(CredentialOffer);
-a2a_message!(CredentialOffer);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -142,6 +148,7 @@ pub mod test_utils {
             credential_preview: _preview_data(),
             offers_attach: attachment,
             thread: Some(_thread()),
+            timing: None,
         }
     }
 

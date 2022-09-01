@@ -1,12 +1,10 @@
 use std::clone::Clone;
 
 use crate::did_doc::DidDoc;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::ack::Ack;
+
 use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;
-use crate::messages::trust_ping::ping::Ping;
-use crate::messages::trust_ping::ping_response::PingResponse;
+
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 

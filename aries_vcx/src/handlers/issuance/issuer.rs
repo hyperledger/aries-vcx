@@ -8,7 +8,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
-use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use crate::messages::issuance::credential_offer::OfferInfo;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
@@ -105,17 +105,17 @@ impl Issuer {
     ) -> VcxResult<()> {
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
         let libindy_cred_offer = libindy_issuer_create_credential_offer(wallet_handle, &offer_info.cred_def_id).await?;
-        let cred_offer_msg = CredentialOffer::create()
-            .set_id(&self.issuer_sm.thread_id()?)
-            .set_offers_attach(&libindy_cred_offer)?
-            .set_credential_preview_data(credential_preview)
-            .set_comment(comment);
-        self.issuer_sm = self.issuer_sm.clone().set_offer(cred_offer_msg, &offer_info)?;
+        self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
+            &libindy_cred_offer,
+            credential_preview,
+            comment,
+            &offer_info,
+        )?;
         Ok(())
     }
 
     pub fn get_credential_offer_msg(&self) -> VcxResult<A2AMessage> {
-        let offer = self.issuer_sm.get_credential_offer()?;
+        let offer = self.issuer_sm.get_credential_offer_msg()?;
         Ok(offer.to_a2a_message())
     }
 

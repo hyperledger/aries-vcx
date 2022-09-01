@@ -4,6 +4,8 @@ use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -15,7 +17,14 @@ pub struct PresentationProposal {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(PresentationProposal);
+threadlike_optional!(PresentationProposal);
+a2a_message!(PresentationProposal);
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationPreview {
@@ -102,9 +111,6 @@ impl PresentationProposal {
         self
     }
 }
-
-threadlike_optional!(PresentationProposal);
-a2a_message!(PresentationProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct PresentationProposalData {
@@ -218,6 +224,7 @@ pub mod test_utils {
             comment: Some(_comment()),
             thread: Some(_thread()),
             presentation_proposal: _presentation_preview(),
+            timing: None,
         }
     }
 }
