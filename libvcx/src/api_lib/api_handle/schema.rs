@@ -37,7 +37,7 @@ pub async fn create_and_publish_schema(
     );
 
     let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
-    anoncreds::publish_schema(get_main_wallet_handle(), &schema).await?;
+    anoncreds::publish_schema(&issuer_did, get_main_wallet_handle(), &schema).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     debug!("created schema on ledger with id: {}", schema_id);
@@ -76,7 +76,7 @@ pub async fn prepare_schema_for_endorser(
     );
 
     let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
-    let schema_request = anoncreds::build_schema_request(&schema).await?;
+    let schema_request = anoncreds::build_schema_request(&issuer_did, &schema).await?;
     let schema_request = ledger::set_endorser(get_main_wallet_handle(), &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);

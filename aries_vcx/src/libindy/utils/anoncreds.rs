@@ -530,14 +530,12 @@ pub async fn create_schema(submitter_did: &str, name: &str, version: &str, data:
     Ok((id, create_schema))
 }
 
-pub async fn build_schema_request(schema: &str) -> VcxResult<String> {
-    trace!("build_schema_request >>> schema: {}", schema);
+pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxResult<String> {
+    trace!("build_schema_request >>> submitter_did: {}, schema: {}", submitter_did, schema);
 
     if settings::indy_mocks_enabled() {
         return Ok(SCHEMA_TXN.to_string());
     }
-
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let request = libindy_build_schema_request(&submitter_did, schema).await?;
 
@@ -546,14 +544,14 @@ pub async fn build_schema_request(schema: &str) -> VcxResult<String> {
     Ok(request)
 }
 
-pub async fn publish_schema(wallet_handle: WalletHandle, schema: &str) -> VcxResult<()> {
-    trace!("publish_schema >>> schema: {}", schema);
+pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, schema: &str) -> VcxResult<()> {
+    trace!("publish_schema >>> submitter_did: {}, schema: {}", submitter_did, schema);
 
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
 
-    let request = build_schema_request(schema).await?;
+    let request = build_schema_request(submitter_did, schema).await?;
 
     let response = publish_txn_on_ledger(wallet_handle, &request).await?;
 
