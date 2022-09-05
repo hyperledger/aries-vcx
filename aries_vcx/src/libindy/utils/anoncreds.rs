@@ -518,14 +518,12 @@ pub async fn libindy_parse_get_revoc_reg_delta_response(
         .map_err(VcxError::from)
 }
 
-pub async fn create_schema(name: &str, version: &str, data: &str) -> VcxResult<(String, String)> {
-    trace!("create_schema >>> name: {}, version: {}, data: {}", name, version, data);
+pub async fn create_schema(submitter_did: &str, name: &str, version: &str, data: &str) -> VcxResult<(String, String)> {
+    trace!("create_schema >>> submitter_did: {}, name: {}, version: {}, data: {}", submitter_did, name, version, data);
 
     if settings::indy_mocks_enabled() {
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
     }
-
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
 
     let (id, create_schema) = libindy_issuer_create_schema(&submitter_did, name, version, data).await?;
 

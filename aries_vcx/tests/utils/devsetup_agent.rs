@@ -195,7 +195,7 @@ pub mod test_utils {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await.unwrap();
+            let (schema_id, schema) = anoncreds::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
             anoncreds::publish_schema(self.wallet_handle, &schema).await.unwrap();
 
             self.schema = Schema {
