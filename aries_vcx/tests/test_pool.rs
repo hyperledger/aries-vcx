@@ -82,7 +82,7 @@ mod integration_tests {
     async fn test_add_get_service() {
         let setup = SetupWalletPool::init().await;
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
         add_service(setup.wallet_handle, &did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));

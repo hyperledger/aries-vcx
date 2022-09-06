@@ -740,6 +740,7 @@ pub mod test_utils {
 
     pub async fn _create_address_schema(
         wallet_handle: WalletHandle,
+        institution_did: &str
     ) -> (
         String,
         String,
@@ -751,7 +752,6 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
             create_and_store_credential_def(wallet_handle, &institution_did, &attrs_list).await;
         (
@@ -842,7 +842,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle).await;
+            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
