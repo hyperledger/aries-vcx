@@ -1478,12 +1478,11 @@ pub mod integration_tests {
         let (schema_id, _) =
             create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &did, &schema_json, "tag_1", None, Some(true))
+        let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
             .await
             .unwrap();
-        publish_cred_def(setup.wallet_handle, &did, &cred_def_json)
+        publish_cred_def(setup.wallet_handle, &setup.institution_did, &cred_def_json)
             .await
             .unwrap();
     }
@@ -1498,10 +1497,9 @@ pub mod integration_tests {
         let (_, _, cred_def_id, _, _) =
             create_and_store_nonrevocable_credential_def(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS)
                 .await;
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let rc = generate_rev_reg(
             setup.wallet_handle,
-            &did,
+            &setup.institution_did,
             &cred_def_id,
             get_temp_dir_path("path.txt").to_str().unwrap(),
             2,
@@ -1519,23 +1517,22 @@ pub mod integration_tests {
         let (schema_id, _) =
             create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let (cred_def_id, cred_def_json) =
-            generate_cred_def(setup.wallet_handle, &did, &schema_json, "tag_1", None, Some(true))
+            generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
                 .await
                 .unwrap();
-        publish_cred_def(setup.wallet_handle, &did, &cred_def_json)
+        publish_cred_def(setup.wallet_handle, &setup.institution_did, &cred_def_json)
             .await
             .unwrap();
         let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) =
-            generate_rev_reg(setup.wallet_handle, &did, &cred_def_id, "tails.txt", 2, "tag1")
+            generate_rev_reg(setup.wallet_handle, &setup.institution_did, &cred_def_id, "tails.txt", 2, "tag1")
                 .await
                 .unwrap();
-        publish_rev_reg_def(setup.wallet_handle, &did, &rev_reg_def_json)
+        publish_rev_reg_def(setup.wallet_handle, &setup.institution_did, &rev_reg_def_json)
             .await
             .unwrap();
-        publish_rev_reg_delta(setup.wallet_handle, &did, &rev_reg_def_id, &rev_reg_entry_json)
+        publish_rev_reg_delta(setup.wallet_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
             .await
             .unwrap();
     }
@@ -1652,9 +1649,8 @@ pub mod integration_tests {
         let txn = get_ledger_txn(setup.wallet_handle, None, 1).await;
         assert!(txn.is_ok());
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        get_ledger_txn(setup.wallet_handle, Some(&did), 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, Some(&did), 1).await;
+        get_ledger_txn(setup.wallet_handle, Some(&setup.institution_did), 0).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, Some(&setup.institution_did), 1).await;
         assert!(txn.is_ok());
     }
 }

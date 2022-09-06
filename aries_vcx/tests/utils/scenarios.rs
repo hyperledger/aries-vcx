@@ -739,10 +739,9 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
         faber.activate().await.unwrap();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
-            &institution_did,
+            &faber.config_issuer.institution_did,
             &credential_def.cred_def_id,
             &rev_reg.get_tails_dir(),
             10,
@@ -897,8 +896,7 @@ pub mod test_utils {
         request_name: Option<&str>,
     ) -> Verifier {
         institution.activate().await.unwrap();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
+        let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
             institution,
