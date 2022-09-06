@@ -1191,8 +1191,7 @@ pub mod test_utils {
         )
     }
 
-    pub async fn create_indy_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+    pub async fn create_indy_proof(wallet_handle: WalletHandle, did: &str) -> (String, String, String, String) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
             create_and_store_nonrevocable_credential(wallet_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let proof_req = json!({
@@ -1380,7 +1379,7 @@ pub mod integration_tests {
     async fn test_prover_verify_proof() {
         let setup = SetupWalletPool::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle).await;
+        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle, &setup.institution_did).await;
 
         let proof_validation = libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await

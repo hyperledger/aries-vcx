@@ -27,7 +27,7 @@ mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
-        let (_, _, req, _) = create_indy_proof(setup.wallet_handle).await;
+        let (_, _, req, _) = create_indy_proof(setup.wallet_handle, &setup.institution_did).await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create()
