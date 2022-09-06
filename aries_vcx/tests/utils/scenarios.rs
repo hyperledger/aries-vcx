@@ -36,7 +36,7 @@ pub mod test_utils {
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::test_macros::ProofStateType;
 
     pub fn attr_names() -> (String, String, String, String, String) {

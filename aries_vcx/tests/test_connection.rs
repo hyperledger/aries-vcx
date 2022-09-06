@@ -22,7 +22,7 @@ mod integration_tests {
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use aries_vcx::utils::service_resolvable::ServiceResolvable;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::scenarios::test_utils::{
         connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,

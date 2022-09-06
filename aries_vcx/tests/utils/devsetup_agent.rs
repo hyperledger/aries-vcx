@@ -100,9 +100,6 @@ pub mod test_utils {
         None
     }
 
-    #[async_trait::async_trait]
-    pub trait TestAgent {}
-
     pub struct Faber {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
@@ -117,12 +114,6 @@ pub mod test_utils {
         pub wallet_handle: WalletHandle,
         pub agency_client: AgencyClient,
     }
-
-    #[async_trait::async_trait]
-    impl TestAgent for Faber {}
-
-    #[async_trait::async_trait]
-    impl TestAgent for Alice {}
 
     impl Faber {
         pub async fn setup() -> Faber {

@@ -1,6 +1,5 @@
 #![crate_name = "agency_client"]
 extern crate async_std;
-extern crate async_trait;
 extern crate failure;
 extern crate futures;
 extern crate indyrs as indy;
