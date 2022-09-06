@@ -4,6 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::global::settings;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
@@ -835,18 +836,23 @@ pub extern "C" fn vcx_issuer_revoke_credential(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+        Ok(err) => err,
+        Err(err) => return err.into(),
+    };
     info!(
-        "vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}) source_id: {}",
-        command_handle, credential_handle, source_id
+        "vcx_issuer_revoke_credential(command_handle: {}, credential_handle: {}, issuer_did: {}) source_id: {}",
+        command_handle, credential_handle, issuer_did, source_id
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let err = match issuer_credential::revoke_credential(credential_handle).await {
+        let err = match issuer_credential::revoke_credential(credential_handle, &issuer_did).await {
             Ok(()) => {
                 info!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
                     command_handle,
                     credential_handle,
+                    issuer_did,
                     error::SUCCESS.message,
                     source_id
                 );
@@ -855,8 +861,8 @@ pub extern "C" fn vcx_issuer_revoke_credential(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                    command_handle, credential_handle, err, source_id
+                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
+                    command_handle, credential_handle, issuer_did, err, source_id
                 );
                 err.into()
             }
@@ -879,18 +885,23 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
+    let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+        Ok(err) => err,
+        Err(err) => return err.into(),
+    };
     info!(
-        "vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}) source_id: {}",
-        command_handle, credential_handle, source_id
+        "vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}, issuer_did: {}) source_id: {}",
+        command_handle, credential_handle, issuer_did, source_id
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let err = match issuer_credential::revoke_credential_local(credential_handle).await {
+        let err = match issuer_credential::revoke_credential_local(credential_handle, &issuer_did).await {
             Ok(()) => {
                 info!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
+                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
                     command_handle,
                     credential_handle,
+                    issuer_did,
                     error::SUCCESS.message,
                     source_id
                 );
@@ -899,8 +910,8 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                    command_handle, credential_handle, err, source_id
+                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
+                    command_handle, credential_handle, issuer_did, err, source_id
                 );
                 err.into()
             }

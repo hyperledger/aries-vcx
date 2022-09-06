@@ -163,8 +163,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(wallet_handle, publish).await
+    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(wallet_handle, issuer_did, publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -349,10 +349,10 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_cant_revoke_without_revocation_details() {
-        let _setup = SetupMocks::init();
+        let setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), true).await;
+        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), &setup.institution_did, true).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 

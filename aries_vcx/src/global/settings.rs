@@ -108,11 +108,12 @@ pub fn reset_config_values() {
     config.clear();
 }
 
-pub fn set_test_configs() -> u32 {
+pub fn set_test_configs() -> String {
     trace!("set_testing_defaults >>>");
     let mut settings = SETTINGS.write().unwrap();
+    let institution_did = CONFIG_INSTITUTION_DID;
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
-    settings.insert(CONFIG_INSTITUTION_DID.to_string(), DEFAULT_DID.to_string());
+    settings.insert(institution_did.to_string(), DEFAULT_DID.to_string());
     settings.insert(
         CONFIG_PROTOCOL_VERSION.to_string(),
         DEFAULT_PROTOCOL_VERSION.to_string(),
@@ -121,7 +122,7 @@ pub fn set_test_configs() -> u32 {
         CONFIG_WALLET_BACKUP_KEY.to_string(),
         DEFAULT_WALLET_BACKUP_KEY.to_string(),
     );
-    error::SUCCESS.code_num
+    institution_did.to_string()
 }
 
 pub fn get_protocol_version() -> usize {

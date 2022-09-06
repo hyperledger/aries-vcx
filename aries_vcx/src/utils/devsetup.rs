@@ -32,7 +32,9 @@ pub struct SetupEmpty;
 
 pub struct SetupDefaults;
 
-pub struct SetupMocks;
+pub struct SetupMocks {
+    pub institution_did: String
+}
 
 pub struct SetupIndyMocks;
 
@@ -109,10 +111,10 @@ impl Drop for SetupDefaults {
 impl SetupMocks {
     pub fn init() -> SetupMocks {
         init_test_logging();
-        set_test_configs();
+        let institution_did = set_test_configs();
         enable_agency_mocks();
         enable_indy_mocks().unwrap();
-        SetupMocks {}
+        SetupMocks { institution_did }
     }
 }
 

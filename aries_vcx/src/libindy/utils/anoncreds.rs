@@ -827,6 +827,7 @@ pub async fn is_cred_def_on_ledger(issuer_did: Option<&str>, cred_def_id: &str) 
 
 pub async fn revoke_credential(
     wallet_handle: WalletHandle,
+    submitter_did: &str,
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
@@ -834,8 +835,6 @@ pub async fn revoke_credential(
     if settings::indy_mocks_enabled() {
         return Ok(REV_REG_DELTA_JSON.to_string());
     }
-
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
     let delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
     publish_rev_reg_delta(wallet_handle, &submitter_did, rev_reg_id, &delta).await?;
@@ -1631,6 +1630,7 @@ pub mod integration_tests {
 
         revoke_credential(
             setup.wallet_handle,
+            &setup.institution_did,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
             &rev_reg_id,
             &cred_rev_id,

@@ -83,14 +83,14 @@ pub struct IssuerSM {
     state: IssuerFullState,
 }
 
-async fn _revoke(wallet_handle: WalletHandle, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
+async fn _revoke(wallet_handle: WalletHandle, issuer_did: &str, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
     match rev_info {
         Some(rev_info) => {
             if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) =
                 (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file)
             {
                 if publish {
-                    anoncreds::revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+                    anoncreds::revoke_credential(wallet_handle, issuer_did, tails_file, rev_reg_id, cred_rev_id).await?;
                 } else {
                     anoncreds::revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
                 }
@@ -153,12 +153,12 @@ impl IssuerSM {
         }
     }
 
-    pub async fn revoke(&self, wallet_handle: WalletHandle, publish: bool) -> VcxResult<()> {
+    pub async fn revoke(&self, wallet_handle: WalletHandle, issuer_did: &str,  publish: bool) -> VcxResult<()> {
         trace!("Issuer::revoke >>> publish: {}", publish);
 
         match &self.state {
-            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, &state.revocation_info_v1, publish).await,
-            IssuerFullState::Finished(state) => _revoke(wallet_handle, &state.revocation_info_v1, publish).await,
+            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, issuer_did, &state.revocation_info_v1, publish).await,
+            IssuerFullState::Finished(state) => _revoke(wallet_handle, issuer_did, &state.revocation_info_v1, publish).await,
             _ => Err(VcxError::from(VcxErrorKind::NotReady)),
         }
     }

@@ -187,19 +187,19 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     Ok(error::SUCCESS.code_num)
 }
 
-pub async fn revoke_credential(handle: u32) -> VcxResult<()> {
+pub async fn revoke_credential(handle: u32, issuer_did: &str) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential
-        .revoke_credential(get_main_wallet_handle(), true)
+        .revoke_credential(get_main_wallet_handle(), issuer_did, true)
         .await
         .map_err(|err| err.into())
 }
 
-pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
+pub async fn revoke_credential_local(handle: u32, issuer_did: &str) -> VcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential
-        .revoke_credential(get_main_wallet_handle(), false)
+        .revoke_credential(get_main_wallet_handle(), issuer_did, false)
         .await
         .map_err(|err| err.into())
 }
