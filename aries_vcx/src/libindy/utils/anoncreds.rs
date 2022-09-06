@@ -953,28 +953,26 @@ pub mod test_utils {
 
     extern crate serde_json;
 
-    pub async fn create_schema(attr_list: &str) -> (String, String) {
+    pub async fn create_schema(attr_list: &str, submitter_did: &str) -> (String, String) {
         let data = attr_list.to_string();
         let schema_name: String = crate::utils::random::generate_random_schema_name();
         let schema_version: String = crate::utils::random::generate_random_schema_version();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
-        libindy_issuer_create_schema(&institution_did, &schema_name, &schema_version, &data)
+        libindy_issuer_create_schema(&submitter_did, &schema_name, &schema_version, &data)
             .await
             .unwrap()
     }
 
-    pub async fn create_schema_req(schema_json: &str) -> String {
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let request = libindy_build_schema_request(&institution_did, schema_json)
+    pub async fn create_schema_req(schema_json: &str, submitter_did: &str) -> String {
+        let request = libindy_build_schema_request(submitter_did, schema_json)
             .await
             .unwrap();
         append_txn_author_agreement_to_request(&request).await.unwrap()
     }
 
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
-        let (schema_id, schema_json) = create_schema(attr_list).await;
-        let req = create_schema_req(&schema_json).await;
+        let (schema_id, schema_json) = create_schema(attr_list, submitter_did).await;
+        let req = create_schema_req(&schema_json, submitter_did).await;
         publish_txn_on_ledger(wallet_handle, submitter_did, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
@@ -982,10 +980,10 @@ pub mod test_utils {
 
     pub async fn create_and_store_nonrevocable_credential_def(
         wallet_handle: WalletHandle,
+        issuer_did: &str,
         attr_list: &str,
     ) -> (String, String, String, String, CredentialDef) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, &issuer_did, attr_list).await;
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, issuer_did, attr_list).await;
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(issuer_did)
             .schema_id(&schema_id)
@@ -1147,10 +1145,11 @@ pub mod test_utils {
     // todo: extract create_and_store_nonrevocable_credential_def into caller functions
     pub async fn create_and_store_nonrevocable_credential(
         wallet_handle: WalletHandle,
+        issuer_did: &str,
         attr_list: &str,
     ) -> (String, String, String, String, String, String, String, String) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(wallet_handle, attr_list).await;
+            create_and_store_nonrevocable_credential_def(wallet_handle, issuer_did, attr_list).await;
 
         let (offer, req, req_meta) = create_credential_req(wallet_handle, &cred_def_id, &cred_def_json).await;
 
@@ -1194,7 +1193,7 @@ pub mod test_utils {
     pub async fn create_indy_proof(wallet_handle: WalletHandle) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(wallet_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -1263,7 +1262,7 @@ pub mod test_utils {
     ) -> (String, String, String, String) {
         let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(wallet_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -1496,7 +1495,7 @@ pub mod integration_tests {
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
         let (_, _, cred_def_id, _, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS)
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS)
                 .await;
         let rc = generate_rev_reg(
             setup.wallet_handle,
@@ -1577,7 +1576,7 @@ pub mod integration_tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, attrs).await;
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
         let (id, cred_def) = get_cred_def(None, &cred_def_id).await.unwrap();
         assert_eq!(id, cred_def_id);

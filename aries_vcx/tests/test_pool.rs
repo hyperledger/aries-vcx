@@ -40,7 +40,7 @@ mod integration_tests {
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
         let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, &cred_def_id).await.unwrap();
 
