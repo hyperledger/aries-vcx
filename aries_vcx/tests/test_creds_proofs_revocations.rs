@@ -1,4 +1,3 @@
-extern crate async_trait;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -81,7 +80,6 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -122,7 +120,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
 
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -148,7 +145,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
 
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -249,7 +245,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None).await;
 
-        institution.activate().await.unwrap();
         verifier1
             .update_state(
                 institution.wallet_handle,
@@ -322,7 +317,6 @@ mod integration_tests {
         assert_ne!(verifier1, verifier3);
         assert_ne!(verifier2, verifier3);
 
-        institution.activate().await.unwrap();
         verifier1
             .update_state(
                 institution.wallet_handle,
@@ -426,7 +420,6 @@ mod integration_tests {
         assert_eq!(ProverState::PresentationSent, prover.get_state());
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -493,7 +486,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -513,7 +505,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -576,7 +567,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -596,7 +586,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -658,7 +647,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -678,7 +666,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -742,7 +729,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -762,7 +748,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -826,7 +811,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -846,7 +830,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await

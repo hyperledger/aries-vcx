@@ -42,7 +42,6 @@ mod integration_tests {
 
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
-        institution.activate().await.unwrap();
         faber_to_alice
             .send_generic_message(institution.wallet_handle, "Hello Alice")
             .await
@@ -52,7 +51,6 @@ mod integration_tests {
             .await
             .unwrap();
 
-        consumer.activate().await.unwrap();
         alice_to_faber
             .send_generic_message(consumer.wallet_handle, "Hello Faber")
             .await
@@ -60,7 +58,6 @@ mod integration_tests {
 
         thread::sleep(Duration::from_millis(100));
 
-        institution.activate().await.unwrap();
         let msgs = faber_to_alice
             .download_messages(&institution.agency_client, None, None)
             .await
@@ -139,7 +136,6 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Send Message works");
         {
-            faber.activate().await.unwrap();
             faber.connection.send_message_closure(faber.wallet_handle).unwrap()(message.to_a2a_message())
                 .await
                 .unwrap();
@@ -147,7 +143,6 @@ mod integration_tests {
 
         {
             info!("test_connection_send_works:: Test if Get Messages works");
-            alice.activate().await.unwrap();
 
             let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
             assert_eq!(1, messages.len());
@@ -163,8 +158,6 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Get Message by id works");
         {
-            alice.activate().await.unwrap();
-
             let message = alice
                 .connection
                 .get_message_by_id(&uid.clone(), &alice.agency_client)
@@ -179,8 +172,6 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Update Message Status works");
         {
-            alice.activate().await.unwrap();
-
             alice
                 .connection
                 .update_message_status(&uid, &alice.agency_client)
@@ -192,16 +183,12 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Send Basic Message works");
         {
-            faber.activate().await.unwrap();
-
             let basic_message = r#"Hi there"#;
             faber
                 .connection
                 .send_generic_message(faber.wallet_handle, basic_message)
                 .await
                 .unwrap();
-
-            alice.activate().await.unwrap();
 
             let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
             assert_eq!(1, messages.len());
@@ -224,12 +211,9 @@ mod integration_tests {
         {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
-            faber.activate().await.unwrap();
             faber.connection.send_message_closure(faber.wallet_handle).unwrap()(credential_offer.to_a2a_message())
                 .await
                 .unwrap();
-
-            alice.activate().await.unwrap();
 
             let msgs = alice
                 .connection
@@ -260,18 +244,14 @@ mod integration_tests {
         let (consumer2_to_institution, institution_to_consumer2) =
             create_connected_connections(&mut consumer2, &mut institution).await;
 
-        consumer1.activate().await.unwrap();
         consumer1_to_institution
             .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
             .await
             .unwrap();
-        consumer2.activate().await.unwrap();
         consumer2_to_institution
             .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
             .await
             .unwrap();
-
-        institution.activate().await.unwrap();
 
         let consumer1_msgs = institution_to_consumer1
             .download_messages(&institution.agency_client, None, None)
@@ -328,7 +308,6 @@ mod integration_tests {
             .unwrap();
 
         thread::sleep(Duration::from_millis(100));
-        alice.activate().await.unwrap();
 
         let received = alice_to_faber
             .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
@@ -392,18 +371,15 @@ mod integration_tests {
         let (consumer2_to_institution, institution_to_consumer2) =
             create_connected_connections(&mut consumer2, &mut institution).await;
 
-        consumer1.activate().await.unwrap();
         consumer1_to_institution
             .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
             .await
             .unwrap();
-        consumer2.activate().await.unwrap();
         consumer2_to_institution
             .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
             .await
             .unwrap();
 
-        institution.activate().await.unwrap();
         let consumer1_msgs = institution_to_consumer1
             .download_messages(&institution.agency_client, None, None)
             .await

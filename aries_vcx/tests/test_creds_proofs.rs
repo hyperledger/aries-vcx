@@ -1,4 +1,3 @@
-extern crate async_trait;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -355,7 +354,6 @@ mod tests {
             &institution_to_consumer,
         )
         .await;
-        institution.activate().await.unwrap();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let requested_attrs_string = serde_json::to_string(&json!([
         {
@@ -385,7 +383,6 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
         info!("test_proof_should_be_validated :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -415,7 +412,6 @@ mod tests {
             &institution_to_consumer,
         )
         .await;
-        institution.activate().await.unwrap();
         let requested_preds_string = serde_json::to_string(&json!([
         {
             "name": "zip",
@@ -441,7 +437,6 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
         info!("test_proof_with_predicates_should_be_validated :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -475,7 +470,6 @@ mod tests {
             &institution_to_consumer,
         )
         .await;
-        institution.activate().await.unwrap();
         let requested_preds_string = serde_json::to_string(&json!([
         {
             "name": "zip",
@@ -555,7 +549,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer1)
             .await
@@ -575,7 +568,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer2)
             .await
@@ -599,7 +591,6 @@ mod tests {
 
         let (schema_id, cred_def_id, _rev_reg_id, _cred_def, _rev_reg, _credential_handle) =
             issue_address_credential(&mut consumer, &mut issuer, &consumer_to_issuer, &issuer_to_consumer).await;
-        issuer.activate().await.unwrap();
         let request_name1 = Some("request1");
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -610,7 +601,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -630,7 +620,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -675,7 +664,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -699,7 +687,6 @@ mod tests {
         )
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -769,7 +756,6 @@ mod tests {
         assert_eq!(issuance_thread_id, issuer_credential.get_thread_id().unwrap());
 
         info!("test_real_proof :: AS INSTITUTION SEND PROOF REQUEST");
-        institution.activate().await.unwrap();
 
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let restrictions =
@@ -817,7 +803,6 @@ mod tests {
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
 
         info!("test_real_proof :: AS INSTITUTION VALIDATE PROOF");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -882,7 +867,6 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -902,7 +886,6 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -962,7 +945,6 @@ mod tests {
         let mut issuer =
             accept_cred_proposal(&mut institution, &institution_to_consumer, rev_reg_id, Some(tails_file)).await;
         decline_offer(&mut consumer, &consumer_to_institution, &mut holder).await;
-        institution.activate().await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer
             .update_state(
