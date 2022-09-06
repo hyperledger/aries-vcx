@@ -706,7 +706,7 @@ pub mod test_utils {
             .unwrap();
         info!("revoking credential");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, true)
+            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, true)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
@@ -723,7 +723,7 @@ pub mod test_utils {
             .unwrap();
         info!("revoking credential locally");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, false)
+            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, false)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
@@ -739,10 +739,9 @@ pub mod test_utils {
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
         faber.activate().await.unwrap();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
-            &institution_did,
+            &faber.config_issuer.institution_did,
             &credential_def.cred_def_id,
             &rev_reg.get_tails_dir(),
             10,
@@ -759,7 +758,7 @@ pub mod test_utils {
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
         institution.activate().await.unwrap();
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, rev_reg_id.as_str())
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
     }
@@ -777,8 +776,9 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(wallet_handle, &attrs_list).await;
+            create_and_store_credential_def(wallet_handle, &institution_did, &attrs_list).await;
         (
             schema_id,
             schema_json,
@@ -897,8 +897,7 @@ pub mod test_utils {
         request_name: Option<&str>,
     ) -> Verifier {
         institution.activate().await.unwrap();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, None, None);
+        let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
             institution,

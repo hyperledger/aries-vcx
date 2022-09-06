@@ -36,8 +36,8 @@ pub async fn create_and_publish_schema(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await?;
-    anoncreds::publish_schema(get_main_wallet_handle(), &schema).await?;
+    let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
+    anoncreds::publish_schema(&issuer_did, get_main_wallet_handle(), &schema).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     debug!("created schema on ledger with id: {}", schema_id);
@@ -75,9 +75,9 @@ pub async fn prepare_schema_for_endorser(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = anoncreds::create_schema(&name, &version, &data).await?;
-    let schema_request = anoncreds::build_schema_request(&schema).await?;
-    let schema_request = ledger::set_endorser(get_main_wallet_handle(), &schema_request, &endorser).await?;
+    let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
+    let schema_request = anoncreds::build_schema_request(&issuer_did, &schema).await?;
+    let schema_request = ledger::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
@@ -337,7 +337,7 @@ pub mod tests {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(get_main_wallet_handle(), constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(get_main_wallet_handle(), &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
@@ -432,7 +432,7 @@ pub mod tests {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-        let (endorser_did, _) = add_new_did(get_main_wallet_handle(), Some("ENDORSER")).await;
+        let (endorser_did, _) = add_new_did(get_main_wallet_handle(), &setup.setup.institution_did, Some("ENDORSER")).await;
 
         let (schema_handle, schema_request) = prepare_schema_for_endorser(
             "test_vcx_schema_update_state_with_ledger",
@@ -447,8 +447,7 @@ pub mod tests {
         assert_eq!(0, get_state(schema_handle).unwrap());
         assert_eq!(0, update_state(get_main_wallet_handle(), schema_handle).await.unwrap());
 
-        settings::set_config_value(settings::CONFIG_INSTITUTION_DID, &endorser_did);
-        ledger::endorse_transaction(get_main_wallet_handle(), &schema_request)
+        ledger::endorse_transaction(get_main_wallet_handle(), &endorser_did, &schema_request)
             .await
             .unwrap();
 

@@ -26,8 +26,8 @@ mod integration_tests {
     async fn test_retrieve_credentials() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_nonrevocable_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
-        let (_, _, req, _) = create_indy_proof(setup.wallet_handle).await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        let (_, _, req, _) = create_indy_proof(setup.wallet_handle, &setup.institution_did).await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create()
@@ -43,7 +43,7 @@ mod integration_tests {
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
         let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, &cred_def_id).await.unwrap();
 
@@ -88,7 +88,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWalletPool::init().await;
-        create_and_store_nonrevocable_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -143,7 +143,7 @@ mod integration_tests {
     async fn test_generate_proof() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -245,7 +245,7 @@ mod integration_tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -733,7 +733,7 @@ mod tests {
         }
         let attrs_list = attrs_list.to_string();
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def) =
-            create_and_store_nonrevocable_credential_def(institution.wallet_handle, &attrs_list).await;
+            create_and_store_nonrevocable_credential_def(institution.wallet_handle, &institution.config_issuer.institution_did, &attrs_list).await;
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));

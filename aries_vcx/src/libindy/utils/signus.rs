@@ -135,15 +135,14 @@ mod test {
         let setup = SetupInstitutionWallet::init().await;
         enable_pool_mocks();
 
-        let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
-        let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
+        let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();
         assert_eq!(
-            rotate_verkey(setup.wallet_handle, &did).await.unwrap_err().kind(),
+            rotate_verkey(setup.wallet_handle, &setup.institution_did).await.unwrap_err().kind(),
             VcxErrorKind::InvalidLedgerResponse
         );
-        let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
+        let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
     }
 }
