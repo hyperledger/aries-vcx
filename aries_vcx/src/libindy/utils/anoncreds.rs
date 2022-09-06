@@ -1005,6 +1005,7 @@ pub mod test_utils {
 
     pub async fn create_and_store_credential_def(
         wallet_handle: WalletHandle,
+        issuer_did: &str,
         attr_list: &str,
     ) -> (
         String,
@@ -1015,11 +1016,10 @@ pub mod test_utils {
         CredentialDef,
         RevocationRegistry,
     ) {
-        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, &issuer_did, attr_list).await;
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, issuer_did, attr_list).await;
         thread::sleep(Duration::from_millis(500));
         let config = CredentialDefConfigBuilder::default()
-            .issuer_did(&issuer_did)
+            .issuer_did(issuer_did)
             .schema_id(&schema_id)
             .tag("1")
             .build()
@@ -1032,7 +1032,7 @@ pub mod test_utils {
             .unwrap();
         let mut rev_reg = RevocationRegistry::create(
             wallet_handle,
-            &issuer_did,
+            issuer_did,
             &cred_def.cred_def_id,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
             10,
@@ -1096,8 +1096,9 @@ pub mod test_utils {
         String,
         String,
     ) {
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, _) =
-            create_and_store_credential_def(wallet_handle, attr_list).await;
+            create_and_store_credential_def(wallet_handle, &institution_did, attr_list).await;
 
         let (offer, req, req_meta) = create_credential_req(wallet_handle, &cred_def_id, &cred_def_json).await;
 
@@ -1542,7 +1543,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
         let (id, _json) = get_rev_reg_def_json(&rev_reg_id).await.unwrap();
         assert_eq!(id, rev_reg_id);
@@ -1553,7 +1554,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
         let (id, _delta, _timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
         assert_eq!(id, rev_reg_id);
@@ -1564,7 +1565,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
         let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).await.unwrap();
         assert_eq!(id, rev_reg_id);

@@ -776,8 +776,9 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
+        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(wallet_handle, &attrs_list).await;
+            create_and_store_credential_def(wallet_handle, &institution_did, &attrs_list).await;
         (
             schema_id,
             schema_json,
