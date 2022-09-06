@@ -143,7 +143,7 @@ mod integration_tests {
     async fn test_generate_proof() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -245,7 +245,7 @@ mod integration_tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
