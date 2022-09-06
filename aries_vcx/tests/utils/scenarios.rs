@@ -723,7 +723,7 @@ pub mod test_utils {
             .unwrap();
         info!("revoking credential locally");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, true)
+            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, false)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
@@ -758,7 +758,7 @@ pub mod test_utils {
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
         institution.activate().await.unwrap();
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, rev_reg_id.as_str(), &institution.config_issuer.institution_did)
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
     }
