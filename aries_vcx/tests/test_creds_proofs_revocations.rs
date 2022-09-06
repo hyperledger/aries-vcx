@@ -1,4 +1,3 @@
-extern crate async_trait;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -19,7 +18,7 @@ mod integration_tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::utils::devsetup::*;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
@@ -53,9 +52,8 @@ mod integration_tests {
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
 
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let _requested_attrs = requested_attrs(
-            &institution_did,
+            &institution.config_issuer.institution_did,
             &schema_id,
             &cred_def_id,
             None,
@@ -81,7 +79,6 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, None, None).await;
 
         info!("test_basic_revocation :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -122,7 +119,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name1, None).await;
 
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -148,7 +144,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_institution, request_name2, None).await;
 
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -177,7 +172,7 @@ mod integration_tests {
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle).await;
+            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let credential_handle1 = _exchange_credential(
@@ -249,7 +244,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer3, &consumer_to_institution3, request_name1, None).await;
 
-        institution.activate().await.unwrap();
         verifier1
             .update_state(
                 institution.wallet_handle,
@@ -322,7 +316,6 @@ mod integration_tests {
         assert_ne!(verifier1, verifier3);
         assert_ne!(verifier2, verifier3);
 
-        institution.activate().await.unwrap();
         verifier1
             .update_state(
                 institution.wallet_handle,
@@ -381,8 +374,7 @@ mod integration_tests {
 
         let from = time_before_revocation - 100;
         let to = time_before_revocation;
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-        let _requested_attrs = requested_attrs(&institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
+        let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
         let interval = json!({"from": from, "to": to}).to_string();
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
@@ -426,7 +418,6 @@ mod integration_tests {
         assert_eq!(ProverState::PresentationSent, prover.get_state());
 
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
-        institution.activate().await.unwrap();
         verifier
             .update_state(
                 institution.wallet_handle,
@@ -453,7 +444,7 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle).await;
+            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -493,7 +484,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -513,7 +503,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -536,7 +525,7 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle).await;
+            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -576,7 +565,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -596,7 +584,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -619,7 +606,7 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle).await;
+            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -658,7 +645,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -678,7 +664,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -701,7 +686,7 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle).await;
+            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -742,7 +727,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -762,7 +746,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -785,7 +768,7 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle).await;
+            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -826,7 +809,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
@@ -846,7 +828,6 @@ mod integration_tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
-        verifier.activate().await.unwrap();
         proof_verifier
             .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
             .await

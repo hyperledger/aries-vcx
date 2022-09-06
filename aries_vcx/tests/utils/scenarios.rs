@@ -36,7 +36,7 @@ pub mod test_utils {
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::test_macros::ProofStateType;
 
     pub fn attr_names() -> (String, String, String, String, String) {
@@ -138,7 +138,6 @@ pub mod test_utils {
         credential_json: &str,
         comment: Option<&str>,
     ) -> Issuer {
-        faber.activate().await.unwrap();
         info!("create_and_send_nonrevocable_cred_offer >> creating issuer credential");
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
@@ -169,7 +168,6 @@ pub mod test_utils {
         credential_json: &str,
         comment: Option<&str>,
     ) -> Issuer {
-        faber.activate().await.unwrap();
         info!("create_and_send_cred_offer >> creating issuer credential");
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
@@ -194,7 +192,6 @@ pub mod test_utils {
 
     pub async fn send_cred_req(alice: &mut Alice, connection: &Connection, comment: Option<&str>) -> Holder {
         info!("send_cred_req >>> switching to consumer");
-        alice.activate().await.unwrap();
         info!("send_cred_req :: getting offers");
         let credential_offers = get_credential_offer_messages(&alice.agency_client, connection)
             .await
@@ -239,7 +236,6 @@ pub mod test_utils {
         cred_def_id: &str,
         comment: &str,
     ) -> Holder {
-        alice.activate().await.unwrap();
         let (address1, address2, city, state, zip) = attr_names();
         let proposal = CredentialProposalData::create()
             .set_schema_id(schema_id.to_string())
@@ -273,7 +269,6 @@ pub mod test_utils {
         cred_def_id: &str,
         comment: &str,
     ) {
-        alice.activate().await.unwrap();
         holder
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
             .await
@@ -308,7 +303,6 @@ pub mod test_utils {
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Issuer {
-        faber.activate().await.unwrap();
         let proposals: Vec<CredentialProposal> = serde_json::from_str(
             &get_credential_proposal_messages(&faber.agency_client, connection)
                 .await
@@ -345,7 +339,6 @@ pub mod test_utils {
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) {
-        faber.activate().await.unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
         issuer
             .update_state(faber.wallet_handle, &faber.agency_client, connection)
@@ -372,7 +365,6 @@ pub mod test_utils {
     }
 
     pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
-        alice.activate().await.unwrap();
         holder
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
             .await
@@ -392,7 +384,6 @@ pub mod test_utils {
     }
 
     pub async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
-        alice.activate().await.unwrap();
         holder
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
             .await
@@ -418,7 +409,6 @@ pub mod test_utils {
         holder_credential: &mut Holder,
         revokable: bool,
     ) {
-        faber.activate().await.unwrap();
         info!("send_credential >>> getting offers");
         let thread_id = issuer_credential.get_thread_id().unwrap();
         assert_eq!(IssuerState::OfferSent, issuer_credential.get_state());
@@ -442,7 +432,6 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(100));
         assert_eq!(thread_id, issuer_credential.get_thread_id().unwrap());
 
-        alice.activate().await.unwrap();
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
         assert_eq!(
@@ -470,7 +459,6 @@ pub mod test_utils {
     }
 
     pub async fn send_proof_proposal(alice: &mut Alice, connection: &Connection, cred_def_id: &str) -> Prover {
-        alice.activate().await.unwrap();
         let attrs = requested_attr_objects(cred_def_id);
         let mut proposal_data = PresentationProposalData::create();
         for attr in attrs.into_iter() {
@@ -496,7 +484,6 @@ pub mod test_utils {
         connection: &Connection,
         cred_def_id: &str,
     ) {
-        alice.activate().await.unwrap();
         prover
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
             .await
@@ -520,7 +507,6 @@ pub mod test_utils {
     }
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
-        faber.activate().await.unwrap();
         verifier
             .update_state(faber.wallet_handle, &faber.agency_client, connection)
             .await
@@ -549,7 +535,6 @@ pub mod test_utils {
     }
 
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
-        faber.activate().await.unwrap();
         let mut verifier = Verifier::create("1").unwrap();
         verifier
             .update_state(faber.wallet_handle, &faber.agency_client, connection)
@@ -569,7 +554,6 @@ pub mod test_utils {
     }
 
     pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
-        alice.activate().await.unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
@@ -586,7 +570,6 @@ pub mod test_utils {
         revocation_interval: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        faber.activate().await.unwrap();
         let presentation_request_data = PresentationRequestData::create(request_name.unwrap_or("name"))
             .await
             .unwrap()
@@ -612,7 +595,6 @@ pub mod test_utils {
         revocation_interval: &str,
         request_name: Option<&str>,
     ) -> PresentationRequest {
-        faber.activate().await.unwrap();
         let presentation_request = PresentationRequestData::create(request_name.unwrap_or("name"))
             .await
             .unwrap()
@@ -627,7 +609,6 @@ pub mod test_utils {
     }
 
     pub async fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> Prover {
-        alice.activate().await.unwrap();
         info!("create_proof >>> getting proof request messages");
         let requests = {
             let _requests = get_proof_request_messages(&alice.agency_client, connection)
@@ -660,7 +641,6 @@ pub mod test_utils {
         connection: &Connection,
         selected_credentials: &str,
     ) {
-        alice.activate().await.unwrap();
         let thread_id = prover.get_thread_id().unwrap();
         info!(
             "generate_and_send_proof >>> generating proof using selected credentials {}",
@@ -687,7 +667,6 @@ pub mod test_utils {
     }
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
-        faber.activate().await.unwrap();
         verifier
             .update_state(faber.wallet_handle, &faber.agency_client, &connection)
             .await
@@ -700,7 +679,6 @@ pub mod test_utils {
     }
 
     pub async fn revoke_credential(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        faber.activate().await.unwrap();
         let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None)
             .await
             .unwrap();
@@ -717,7 +695,6 @@ pub mod test_utils {
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        faber.activate().await.unwrap();
         let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None)
             .await
             .unwrap();
@@ -738,7 +715,6 @@ pub mod test_utils {
         credential_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
-        faber.activate().await.unwrap();
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
             &faber.config_issuer.institution_did,
@@ -757,7 +733,6 @@ pub mod test_utils {
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        institution.activate().await.unwrap();
         libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
@@ -765,6 +740,7 @@ pub mod test_utils {
 
     pub async fn _create_address_schema(
         wallet_handle: WalletHandle,
+        institution_did: &str
     ) -> (
         String,
         String,
@@ -776,7 +752,6 @@ pub mod test_utils {
     ) {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
             create_and_store_credential_def(wallet_handle, &institution_did, &attrs_list).await;
         (
@@ -867,7 +842,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle).await;
+            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
@@ -896,7 +871,6 @@ pub mod test_utils {
         cred_def_id: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        institution.activate().await.unwrap();
         let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, None, None);
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
@@ -916,7 +890,6 @@ pub mod test_utils {
         connection: &Connection,
         requested_values: Option<&str>,
     ) -> String {
-        alice.activate().await.unwrap();
         prover
             .update_state(alice.wallet_handle, &alice.agency_client, connection)
             .await
@@ -945,7 +918,6 @@ pub mod test_utils {
         requested_values: Option<&str>,
         expected_prover_state: ProverState,
     ) {
-        alice.activate().await.unwrap();
         let mut prover = create_proof(alice, consumer_to_institution, request_name).await;
         let selected_credentials_str =
             prover_select_credentials(&mut prover, alice, consumer_to_institution, requested_values).await;
@@ -994,7 +966,6 @@ pub mod test_utils {
         faber: &mut Faber,
         consumer_to_institution: &mut Connection,
     ) -> Connection {
-        faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
         let mut conn_requests = faber
             .agent
@@ -1023,7 +994,6 @@ pub mod test_utils {
             institution_to_consumer.get_state()
         );
 
-        alice.activate().await.unwrap();
         consumer_to_institution
             .find_message_and_update_state(alice.wallet_handle, &alice.agency_client)
             .await
@@ -1033,7 +1003,6 @@ pub mod test_utils {
             consumer_to_institution.get_state()
         );
 
-        faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
         institution_to_consumer
             .find_message_and_update_state(faber.wallet_handle, &faber.agency_client)
@@ -1056,11 +1025,9 @@ pub mod test_utils {
         alice: &mut Alice,
         institution: &mut Faber,
     ) -> (Connection, Connection) {
-        institution.activate().await.unwrap();
         let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
 
-        alice.activate().await.unwrap();
         let mut consumer_to_institution = Connection::create_with_invite(
             "institution",
             alice.wallet_handle,
@@ -1086,7 +1053,6 @@ pub mod test_utils {
 
     pub async fn create_connected_connections(alice: &mut Alice, faber: &mut Faber) -> (Connection, Connection) {
         debug!("Institution is going to create connection.");
-        faber.activate().await.unwrap();
         let mut institution_to_consumer =
             Connection::create("consumer", faber.wallet_handle, &faber.agency_client, true)
                 .await
@@ -1097,7 +1063,6 @@ pub mod test_utils {
             .unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
 
-        alice.activate().await.unwrap();
         debug!("Consumer is going to accept connection invitation.");
         let mut consumer_to_institution = Connection::create_with_invite(
             "institution",
@@ -1121,7 +1086,6 @@ pub mod test_utils {
         let thread_id = consumer_to_institution.get_thread_id();
 
         debug!("Institution is going to process connection request.");
-        faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
         institution_to_consumer
             .find_message_and_update_state(faber.wallet_handle, &faber.agency_client)
@@ -1134,7 +1098,6 @@ pub mod test_utils {
         assert_eq!(thread_id, institution_to_consumer.get_thread_id());
 
         debug!("Consumer is going to complete the connection protocol.");
-        alice.activate().await.unwrap();
         consumer_to_institution
             .find_message_and_update_state(alice.wallet_handle, &alice.agency_client)
             .await
@@ -1146,7 +1109,6 @@ pub mod test_utils {
         assert_eq!(thread_id, consumer_to_institution.get_thread_id());
 
         debug!("Institution is going to complete the connection protocol.");
-        faber.activate().await.unwrap();
         thread::sleep(Duration::from_millis(100));
         institution_to_consumer
             .find_message_and_update_state(faber.wallet_handle, &faber.agency_client)

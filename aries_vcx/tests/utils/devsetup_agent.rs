@@ -100,11 +100,6 @@ pub mod test_utils {
         None
     }
 
-    #[async_trait::async_trait]
-    pub trait TestAgent {
-        async fn activate(&mut self) -> VcxResult<()>;
-    }
-
     pub struct Faber {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
@@ -118,24 +113,6 @@ pub mod test_utils {
         pub agent: PublicAgent,
         pub wallet_handle: WalletHandle,
         pub agency_client: AgencyClient,
-    }
-
-    #[async_trait::async_trait]
-    impl TestAgent for Faber {
-        async fn activate(&mut self) -> VcxResult<()> {
-            settings::reset_config_values();
-            info!("activate >>> Faber initiating issuer config");
-            init_issuer_config(&self.config_issuer)?;
-            Ok(())
-        }
-    }
-
-    #[async_trait::async_trait]
-    impl TestAgent for Alice {
-        async fn activate(&mut self) -> VcxResult<()> {
-            settings::reset_config_values();
-            Ok(())
-        }
     }
 
     impl Faber {
@@ -190,7 +167,6 @@ pub mod test_utils {
         }
 
         pub async fn create_schema(&mut self) {
-            self.activate().await.unwrap();
             let data = r#"["name","date","degree", "empty_param"]"#.to_string();
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
@@ -209,8 +185,6 @@ pub mod test_utils {
         }
 
         pub async fn create_nonrevocable_credential_definition(&mut self) {
-            self.activate().await.unwrap();
-
             let config = CredentialDefConfigBuilder::default()
                 .issuer_did("V4SGRU86Z58d6TV7PBUe6f")
                 .schema_id(self.schema.get_schema_id())
@@ -243,7 +217,6 @@ pub mod test_utils {
         }
 
         pub async fn create_invite(&mut self) -> String {
-            self.activate().await.unwrap();
             self.connection
                 .connect(self.wallet_handle, &self.agency_client)
                 .await
@@ -268,7 +241,6 @@ pub mod test_utils {
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
-            self.activate().await.unwrap();
             self.connection
                 .find_message_and_update_state(self.wallet_handle, &self.agency_client)
                 .await
@@ -277,7 +249,6 @@ pub mod test_utils {
         }
 
         pub async fn handle_messages(&mut self) {
-            self.activate().await.unwrap();
             self.connection
                 .find_and_handle_message(self.wallet_handle, &self.agency_client)
                 .await
@@ -285,7 +256,6 @@ pub mod test_utils {
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
-            self.activate().await.unwrap();
             self.connection
                 .find_and_handle_message(self.wallet_handle, &self.agency_client)
                 .await
@@ -294,12 +264,10 @@ pub mod test_utils {
         }
 
         pub async fn ping(&mut self) {
-            self.activate().await.unwrap();
             self.connection.send_ping(self.wallet_handle, None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
-            self.activate().await.unwrap();
             self.connection
                 .send_discovery_query(self.wallet_handle, None, None)
                 .await
@@ -307,14 +275,11 @@ pub mod test_utils {
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
-            self.activate().await.unwrap();
             let details = self.connection.get_connection_info(&self.agency_client).unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
         pub async fn offer_non_revocable_credential(&mut self) {
-            self.activate().await.unwrap();
-
             let credential_json = json!({
                 "name": "alice",
                 "date": "05-2018",
@@ -346,7 +311,6 @@ pub mod test_utils {
         }
 
         pub async fn send_credential(&mut self) {
-            self.activate().await.unwrap();
             self.issuer_credential
                 .update_state(self.wallet_handle, &self.agency_client, &self.connection)
                 .await
@@ -368,7 +332,6 @@ pub mod test_utils {
         }
 
         pub async fn request_presentation(&mut self) {
-            self.activate().await.unwrap();
             self.verifier = self.create_presentation_request().await;
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
@@ -385,7 +348,6 @@ pub mod test_utils {
         }
 
         pub async fn verify_presentation(&mut self) {
-            self.activate().await.unwrap();
             self.update_proof_state(
                 VerifierState::Finished,
                 aries_vcx::messages::status::Status::Success.code(),
@@ -394,8 +356,6 @@ pub mod test_utils {
         }
 
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
-            self.activate().await.unwrap();
-
             self.verifier
                 .update_state(self.wallet_handle, &self.agency_client, &self.connection)
                 .await
@@ -458,7 +418,6 @@ pub mod test_utils {
         }
 
         pub async fn accept_invite(&mut self, invite: &str) {
-            self.activate().await.unwrap();
             self.connection = Connection::create_with_invite(
                 "faber",
                 self.wallet_handle,
@@ -483,7 +442,6 @@ pub mod test_utils {
         }
 
         pub async fn update_state(&mut self, expected_state: u32) {
-            self.activate().await.unwrap();
             self.connection
                 .find_message_and_update_state(self.wallet_handle, &self.agency_client)
                 .await
@@ -492,7 +450,6 @@ pub mod test_utils {
         }
 
         pub async fn handle_messages(&mut self) {
-            self.activate().await.unwrap();
             self.connection
                 .find_and_handle_message(self.wallet_handle, &self.agency_client)
                 .await
@@ -500,7 +457,6 @@ pub mod test_utils {
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
-            self.activate().await.unwrap();
             self.connection
                 .find_and_handle_message(self.wallet_handle, &self.agency_client)
                 .await
@@ -509,7 +465,6 @@ pub mod test_utils {
         }
 
         pub async fn download_message(&mut self, message_type: PayloadKinds) -> VcxResult<VcxAgencyMessage> {
-            self.activate().await?;
             let _did = self.connection.pairwise_info().pw_did.to_string();
             let messages = self
                 .connection
@@ -523,7 +478,6 @@ pub mod test_utils {
         }
 
         pub async fn accept_offer(&mut self) {
-            self.activate().await.unwrap();
             let offers = get_credential_offer_messages(&self.agency_client, &self.connection)
                 .await
                 .unwrap();
@@ -557,7 +511,6 @@ pub mod test_utils {
         }
 
         pub async fn accept_credential(&mut self) {
-            self.activate().await.unwrap();
             self.credential
                 .update_state(self.wallet_handle, &self.agency_client, &self.connection)
                 .await
@@ -570,7 +523,6 @@ pub mod test_utils {
         }
 
         pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
-            self.activate().await.unwrap();
             let presentation_requests = get_proof_request_messages(&self.agency_client, &self.connection)
                 .await
                 .unwrap();
@@ -582,7 +534,6 @@ pub mod test_utils {
         }
 
         pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
-            self.activate().await.unwrap();
             match self
                 .connection
                 .get_message_by_id(msg_id, &self.agency_client)
@@ -598,7 +549,6 @@ pub mod test_utils {
         }
 
         pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
-            self.activate().await.unwrap();
             match self
                 .connection
                 .get_message_by_id(msg_id, &self.agency_client)
@@ -630,7 +580,6 @@ pub mod test_utils {
         }
 
         pub async fn send_presentation(&mut self) {
-            self.activate().await.unwrap();
             let presentation_request = self.get_proof_request_messages().await;
 
             self.prover = Prover::create_from_request("degree", presentation_request).unwrap();
@@ -654,7 +603,6 @@ pub mod test_utils {
         }
 
         pub async fn ensure_presentation_verified(&mut self) {
-            self.activate().await.unwrap();
             self.prover
                 .update_state(self.wallet_handle, &self.agency_client, &self.connection)
                 .await

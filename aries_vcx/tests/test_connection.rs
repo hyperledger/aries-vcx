@@ -1,4 +1,3 @@
-extern crate async_trait;
 #[macro_use]
 extern crate log;
 extern crate serde;
@@ -23,7 +22,7 @@ mod integration_tests {
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use aries_vcx::utils::service_resolvable::ServiceResolvable;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::scenarios::test_utils::{
         connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,
@@ -45,7 +44,6 @@ mod integration_tests {
             .await
             .unwrap();
 
-        consumer.activate().await.unwrap();
         let consumer_msgs = consumer_to_institution
             .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
@@ -59,7 +57,6 @@ mod integration_tests {
         let mut institution = Faber::setup().await;
         let mut consumer = Alice::setup().await;
 
-        institution.activate().await.unwrap();
         let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
         let service = institution.agent.service(&institution.agency_client).unwrap();
@@ -74,7 +71,6 @@ mod integration_tests {
             .unwrap();
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![];
         let conn = oob_receiver.connection_exists(&conns).await.unwrap();
@@ -125,17 +121,14 @@ mod integration_tests {
             .send_generic_message(institution.wallet_handle, "Hello oob receiver, from oob sender")
             .await
             .unwrap();
-        consumer.activate().await.unwrap();
         conn_receiver
             .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
             .await
             .unwrap();
-        institution.activate().await.unwrap();
         let sender_msgs = conn_sender
             .download_messages(&institution.agency_client, None, None)
             .await
             .unwrap();
-        consumer.activate().await.unwrap();
         let receiver_msgs = conn_receiver
             .download_messages(&consumer.agency_client, None, None)
             .await
@@ -153,7 +146,6 @@ mod integration_tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution.activate().await.unwrap();
         let service = institution.agent.service(&institution.agency_client).unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
@@ -162,7 +154,6 @@ mod integration_tests {
             .append_service(&ServiceResolvable::AriesService(service));
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
         let conn = oob_receiver.connection_exists(&conns).await.unwrap();
@@ -172,7 +163,6 @@ mod integration_tests {
             .await
             .unwrap();
 
-        institution.activate().await.unwrap();
         let msgs = institution_to_consumer
             .download_messages(&institution.agency_client, None, None)
             .await
@@ -189,7 +179,6 @@ mod integration_tests {
         let (mut consumer_to_institution, mut institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution.activate().await.unwrap();
         let service = institution.agent.service(&institution.agency_client).unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
@@ -199,7 +188,6 @@ mod integration_tests {
         let sender_oob_id = oob_sender.get_id();
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
         let conn = oob_receiver.connection_exists(&conns).await.unwrap();
@@ -211,7 +199,6 @@ mod integration_tests {
             .await
             .unwrap();
 
-        institution.activate().await.unwrap();
         let mut msgs = institution_to_consumer
             .download_messages(
                 &institution.agency_client,
@@ -240,7 +227,6 @@ mod integration_tests {
             .await
             .unwrap();
 
-        consumer.activate().await.unwrap();
         let mut msgs = consumer_to_institution
             .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
