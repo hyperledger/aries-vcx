@@ -12,6 +12,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
+use aries_vcx::global::settings;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
@@ -405,18 +406,24 @@ pub extern "C" fn vcx_endorse_transaction(
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+        Ok(err) => err,
+        Err(err) => return err.into(),
+    };
     trace!(
-        "vcx_endorse_transaction(command_handle: {}, transaction: {})",
+        "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, transaction: {})",
         command_handle,
+        issuer_did,
         transaction
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &transaction).await {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &issuer_did, &transaction).await {
             Ok(()) => {
                 trace!(
-                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
+                    "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
                     command_handle,
+                    issuer_did,
                     error::SUCCESS.message
                 );
 
@@ -424,8 +431,8 @@ pub extern "C" fn vcx_endorse_transaction(
             }
             Err(err) => {
                 error!(
-                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
-                    command_handle, err
+                    "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
+                    command_handle, issuer_did, err
                 );
 
                 cb(command_handle, err.into());

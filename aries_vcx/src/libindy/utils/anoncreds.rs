@@ -553,7 +553,7 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, sc
 
     let request = build_schema_request(submitter_did, schema).await?;
 
-    let response = publish_txn_on_ledger(wallet_handle, &request).await?;
+    let response = publish_txn_on_ledger(wallet_handle, submitter_did, &request).await?;
 
     _check_schema_response(&response)?;
 
@@ -621,7 +621,7 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cre
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, &cred_def_req).await?;
+    publish_txn_on_ledger(wallet_handle, issuer_did, &cred_def_req).await?;
     Ok(())
 }
 
@@ -706,7 +706,7 @@ pub async fn publish_rev_reg_def(
         )
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, &rev_reg_def_req).await?;
+    publish_txn_on_ledger(wallet_handle, issuer_did, &rev_reg_def_req).await?;
     Ok(())
 }
 
@@ -754,7 +754,7 @@ pub async fn publish_rev_reg_delta(
         rev_reg_entry_json
     );
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json).await?;
-    publish_txn_on_ledger(wallet_handle, &request).await
+    publish_txn_on_ledger(wallet_handle, issuer_did, &request).await
 }
 
 pub async fn get_rev_reg_delta_json(
@@ -972,10 +972,10 @@ pub mod test_utils {
         append_txn_author_agreement_to_request(&request).await.unwrap()
     }
 
-    pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, attr_list: &str) -> (String, String) {
+    pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list).await;
         let req = create_schema_req(&schema_json).await;
-        publish_txn_on_ledger(wallet_handle, &req).await.unwrap();
+        publish_txn_on_ledger(wallet_handle, submitter_did, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
@@ -984,9 +984,10 @@ pub mod test_utils {
         wallet_handle: WalletHandle,
         attr_list: &str,
     ) -> (String, String, String, String, CredentialDef) {
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, attr_list).await;
+        let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, &issuer_did, attr_list).await;
         let config = CredentialDefConfigBuilder::default()
-            .issuer_did(settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap())
+            .issuer_did(issuer_did)
             .schema_id(&schema_id)
             .tag("1")
             .build()
@@ -1016,9 +1017,9 @@ pub mod test_utils {
         CredentialDef,
         RevocationRegistry,
     ) {
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, attr_list).await;
-        thread::sleep(Duration::from_millis(500));
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, &issuer_did, attr_list).await;
+        thread::sleep(Duration::from_millis(500));
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(&issuer_did)
             .schema_id(&schema_id)
@@ -1476,7 +1477,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
 
         let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
@@ -1515,7 +1516,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
 
         let (cred_def_id, cred_def_json) =
@@ -1603,7 +1604,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _schema_json) =
-            create_and_write_test_schema(setup.wallet_handle, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let rc = get_schema_json(setup.wallet_handle, &schema_id).await;
 

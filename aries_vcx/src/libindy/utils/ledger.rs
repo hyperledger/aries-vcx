@@ -253,29 +253,25 @@ pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str
         .map_err(VcxError::from)
 }
 
-pub async fn set_endorser(wallet_handle: WalletHandle, request: &str, endorser: &str) -> VcxResult<String> {
+pub async fn set_endorser(wallet_handle: WalletHandle, submitter_did: &str, request: &str, endorser: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::REQUEST_WITH_ENDORSER.to_string());
     }
 
-    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-
     let request = ledger::append_request_endorser(request, endorser).await?;
 
-    multisign_request(wallet_handle, &did, &request).await
+    multisign_request(wallet_handle, &submitter_did, &request).await
 }
 
-pub async fn endorse_transaction(wallet_handle: WalletHandle, transaction_json: &str) -> VcxResult<()> {
+pub async fn endorse_transaction(wallet_handle: WalletHandle, endorser_did: &str, transaction_json: &str) -> VcxResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
 
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
+    _verify_transaction_can_be_endorsed(transaction_json, &endorser_did)?;
 
-    _verify_transaction_can_be_endorsed(transaction_json, &submitter_did)?;
-
-    let transaction = multisign_request(wallet_handle, &submitter_did, transaction_json).await?;
+    let transaction = multisign_request(wallet_handle, &endorser_did, transaction_json).await?;
     let response = libindy_submit_request(&transaction).await?;
 
     match parse_response(&response)? {
@@ -464,26 +460,23 @@ pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
 
-pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, req: &str) -> VcxResult<String> {
-    debug!("publish_txn_on_ledger(req: {}", req);
+pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
+    debug!("publish_txn_on_ledger(submitter_did: {}, req: {}", submitter_did, req);
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
-    let did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID)?;
-    libindy_sign_and_submit_request(wallet_handle, &did, req).await
+    libindy_sign_and_submit_request(wallet_handle, &submitter_did, req).await
 }
 
-pub async fn add_new_did(wallet_handle: WalletHandle, role: Option<&str>) -> (String, String) {
-    let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
-
+pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
     let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
-    let mut req_nym = ledger::build_nym_request(&institution_did, &did, Some(&verkey), None, role)
+    let mut req_nym = ledger::build_nym_request(&submitter_did, &did, Some(&verkey), None, role)
         .await
         .unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle, &institution_did, &req_nym)
+    libindy_sign_and_submit_request(wallet_handle, &submitter_did, &req_nym)
         .await
         .unwrap();
     (did, verkey)

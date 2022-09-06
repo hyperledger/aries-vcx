@@ -4,7 +4,7 @@ use crate::api_lib::global::agency_client::{reset_main_agency_client, set_main_a
 use crate::api_lib::global::wallet::{reset_main_wallet_handle, set_main_wallet_handle};
 
 pub struct SetupGlobalsWalletPoolAgency {
-    setup: SetupWalletPoolAgency,
+    pub setup: SetupWalletPoolAgency,
 }
 
 impl SetupGlobalsWalletPoolAgency {
