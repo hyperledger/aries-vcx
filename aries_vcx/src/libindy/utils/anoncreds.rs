@@ -1062,16 +1062,16 @@ pub mod test_utils {
 
     pub async fn create_credential_req(
         wallet_handle: WalletHandle,
+        did: &str,
         cred_def_id: &str,
         cred_def_json: &str,
     ) -> (String, String, String) {
         let offer = libindy::utils::anoncreds::libindy_issuer_create_credential_offer(wallet_handle, cred_def_id)
             .await
             .unwrap();
-        let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let (req, req_meta) = libindy::utils::anoncreds::libindy_prover_create_credential_req(
             wallet_handle,
-            &institution_did,
+            &did,
             &offer,
             cred_def_json,
         )
@@ -1100,7 +1100,7 @@ pub mod test_utils {
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, _) =
             create_and_store_credential_def(wallet_handle, &institution_did, attr_list).await;
 
-        let (offer, req, req_meta) = create_credential_req(wallet_handle, &cred_def_id, &cred_def_json).await;
+        let (offer, req, req_meta) = create_credential_req(wallet_handle, &institution_did, &cred_def_id, &cred_def_json).await;
 
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
@@ -1152,7 +1152,7 @@ pub mod test_utils {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _) =
             create_and_store_nonrevocable_credential_def(wallet_handle, issuer_did, attr_list).await;
 
-        let (offer, req, req_meta) = create_credential_req(wallet_handle, &cred_def_id, &cred_def_json).await;
+        let (offer, req, req_meta) = create_credential_req(wallet_handle, issuer_did, &cred_def_id, &cred_def_json).await;
 
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
