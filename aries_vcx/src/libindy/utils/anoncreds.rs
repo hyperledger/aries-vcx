@@ -855,8 +855,7 @@ pub async fn revoke_credential_local(
     set_rev_reg_delta_cache(wallet_handle, rev_reg_id, &new_delta).await
 }
 
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
-    let submitter_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
+pub async fn publish_local_revocations(wallet_handle: WalletHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
     if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
         match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
             Ok(_) => publish_rev_reg_delta(wallet_handle, &submitter_did, rev_reg_id, &delta).await,

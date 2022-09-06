@@ -759,7 +759,7 @@ pub mod test_utils {
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
         institution.activate().await.unwrap();
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, rev_reg_id.as_str())
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, rev_reg_id.as_str(), &institution.config_issuer.institution_did)
             .await
             .unwrap();
     }
