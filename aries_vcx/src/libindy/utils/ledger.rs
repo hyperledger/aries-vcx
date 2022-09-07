@@ -31,6 +31,7 @@ pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, reques
 
 pub async fn libindy_sign_and_submit_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     issuer_did: &str,
     request_json: &str,
 ) -> VcxResult<String> {
@@ -46,8 +47,6 @@ pub async fn libindy_sign_and_submit_request(
         warn!("libindy_sign_and_submit_request >> retrieving pool mock response");
         return Ok(PoolMocks::get_next_pool_response());
     };
-
-    let pool_handle = get_main_pool_handle()?;
 
     ledger::sign_and_submit_request(pool_handle, wallet_handle, issuer_did, request_json)
         .map_err(VcxError::from)
@@ -344,7 +343,8 @@ pub async fn build_attrib_request(
 pub async fn add_attr(wallet_handle: WalletHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
     trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
     let attrib_req = build_attrib_request(did, did, None, Some(attrib_json), None).await?;
-    libindy_sign_and_submit_request(wallet_handle, did, &attrib_req).await
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &attrib_req).await
 }
 
 pub async fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
@@ -463,7 +463,8 @@ pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, submitter_did: &
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
-    libindy_sign_and_submit_request(wallet_handle, &submitter_did, req).await
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await
 }
 
 pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
@@ -473,8 +474,9 @@ pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role:
         .unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
+    let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle, &submitter_did, &req_nym)
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
         .await
         .unwrap();
     (did, verkey)

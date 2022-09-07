@@ -899,7 +899,8 @@ pub async fn get_ledger_txn(
     );
     let req = build_get_txn_request(submitter_did, seq_no).await?;
     let res = if let Some(submitter_did) = submitter_did {
-        libindy_sign_and_submit_request(wallet_handle, submitter_did, &req).await?
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+        libindy_sign_and_submit_request(wallet_handle, pool_handle, submitter_did, &req).await?
     } else {
         libindy_submit_request(&req).await?
     };
