@@ -736,7 +736,8 @@ pub mod test_utils {
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
+        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
     }

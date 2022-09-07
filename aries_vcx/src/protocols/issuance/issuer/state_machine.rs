@@ -84,13 +84,14 @@ pub struct IssuerSM {
 }
 
 async fn _revoke(wallet_handle: WalletHandle, issuer_did: &str, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     match rev_info {
         Some(rev_info) => {
             if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) =
                 (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file)
             {
                 if publish {
-                    anoncreds::revoke_credential(wallet_handle, issuer_did, tails_file, rev_reg_id, cred_rev_id).await?;
+                    anoncreds::revoke_credential(wallet_handle, pool_handle, issuer_did, tails_file, rev_reg_id, cred_rev_id).await?;
                 } else {
                     anoncreds::revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
                 }

@@ -831,6 +831,7 @@ pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&
 
 pub async fn revoke_credential(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     submitter_did: &str,
     tails_file: &str,
     rev_reg_id: &str,
@@ -839,8 +840,6 @@ pub async fn revoke_credential(
     if settings::indy_mocks_enabled() {
         return Ok(REV_REG_DELTA_JSON.to_string());
     }
-
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
     publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
 
@@ -860,8 +859,7 @@ pub async fn revoke_credential_local(
     set_rev_reg_delta_cache(wallet_handle, rev_reg_id, &new_delta).await
 }
 
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
     if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
         match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
             Ok(_) => publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await,
@@ -1639,6 +1637,7 @@ pub mod integration_tests {
 
         revoke_credential(
             setup.wallet_handle,
+            setup.pool_handle,
             &setup.institution_did,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
             &rev_reg_id,
