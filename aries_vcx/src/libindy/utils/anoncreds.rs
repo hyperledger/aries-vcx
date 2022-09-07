@@ -717,9 +717,10 @@ pub async fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String
     }
 
     let submitter_did = crate::utils::random::generate_random_did();
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     libindy_build_get_revoc_reg_def_request(&submitter_did, rev_reg_id)
-        .and_then(|req| async move { libindy_submit_request(&req).await })
+        .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_revoc_reg_def_response(&response).await })
         .await
 }
@@ -782,8 +783,9 @@ pub async fn get_rev_reg_delta_json(
         time::get_time().sec
     };
 
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_build_get_revoc_reg_delta_request(&submitter_did, rev_reg_id, from, to)
-        .and_then(|req| async move { libindy_submit_request(&req).await })
+        .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_revoc_reg_delta_response(&response).await })
         .await
 }
@@ -794,9 +796,10 @@ pub async fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String,
     }
 
     let submitter_did = crate::utils::random::generate_random_did();
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     libindy_build_get_revoc_reg_request(&submitter_did, rev_reg_id, timestamp)
-        .and_then(|req| async move { libindy_submit_request(&req).await })
+        .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_revoc_reg_response(&response).await })
         .await
 }
@@ -805,8 +808,9 @@ pub async fn get_cred_def(issuer_did: Option<&str>, cred_def_id: &str) -> VcxRes
     if settings::indy_mocks_enabled() {
         return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
     }
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_build_get_cred_def_request(issuer_did, cred_def_id)
-        .and_then(|req| async move { libindy_submit_request(&req).await })
+        .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_cred_def_response(&response).await })
         .await
 }
@@ -897,12 +901,12 @@ pub async fn get_ledger_txn(
         submitter_did,
         seq_no
     );
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let req = build_get_txn_request(submitter_did, seq_no).await?;
     let res = if let Some(submitter_did) = submitter_did {
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         libindy_sign_and_submit_request(wallet_handle, pool_handle, submitter_did, &req).await?
     } else {
-        libindy_submit_request(&req).await?
+        libindy_submit_request(pool_handle, &req).await?
     };
     _check_response(&res)?;
     Ok(res)
