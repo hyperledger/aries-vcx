@@ -710,14 +710,13 @@ pub async fn publish_rev_reg_def(
     Ok(())
 }
 
-pub async fn get_rev_reg_def_json(rev_reg_id: &str) -> VcxResult<(String, String)> {
+pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_rev_reg_def_json >>> returning mocked value");
         return Ok((REV_REG_ID.to_string(), rev_def_json()));
     }
 
     let submitter_did = crate::utils::random::generate_random_did();
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     libindy_build_get_revoc_reg_def_request(&submitter_did, rev_reg_id)
         .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
@@ -1114,7 +1113,8 @@ pub mod test_utils {
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
-        let (_id, rev_def_json) = get_rev_reg_def_json(&rev_reg_id).await.unwrap();
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        let (_id, rev_def_json) = get_rev_reg_def_json(pool_handle, &rev_reg_id).await.unwrap();
         let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 
         let (cred, cred_rev_id, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(
@@ -1553,7 +1553,7 @@ pub mod integration_tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
-        let (id, _json) = get_rev_reg_def_json(&rev_reg_id).await.unwrap();
+        let (id, _json) = get_rev_reg_def_json(setup.pool_handle, &rev_reg_id).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 

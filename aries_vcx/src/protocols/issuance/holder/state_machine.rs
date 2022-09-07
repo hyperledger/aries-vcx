@@ -476,8 +476,9 @@ async fn _store_credential(
 
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let (_, json) = anoncreds::get_rev_reg_def_json(&rev_reg_id).await?;
+        let (_, json) = anoncreds::get_rev_reg_def_json(pool_handle, &rev_reg_id).await?;
         Some(json)
     } else {
         None

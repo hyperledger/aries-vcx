@@ -160,8 +160,9 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
             .as_ref()
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationDetails))?;
 
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let (id, json) = anoncreds::get_rev_reg_def_json(rev_reg_id)
+            let (id, json) = anoncreds::get_rev_reg_def_json(pool_handle, rev_reg_id)
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
