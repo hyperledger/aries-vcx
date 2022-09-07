@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use futures::future::TryFutureExt;
 use indy::cache;
 use indy::ledger;
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json;
 
 use crate::did_doc::service_aries::AriesService;
@@ -222,11 +222,10 @@ pub fn parse_response(response: &str) -> VcxResult<Response> {
 
 pub async fn libindy_get_schema(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     submitter_did: &str,
     schema_id: &str,
 ) -> VcxResult<String> {
-    let pool_handle = get_main_pool_handle()?;
-
     cache::get_schema(pool_handle, wallet_handle, submitter_did, schema_id, "{}")
         .await
         .map_err(VcxError::from)

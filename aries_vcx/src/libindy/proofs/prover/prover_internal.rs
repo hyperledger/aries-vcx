@@ -34,7 +34,8 @@ pub async fn build_schemas_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
+            let pool_handle = crate::global::pool::get_main_pool_handle()?;
+            let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 

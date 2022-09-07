@@ -2,7 +2,7 @@ use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
@@ -62,6 +62,7 @@ pub struct SetupWalletPoolAgency {
 pub struct SetupWalletPool {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
+    pub pool_handle: PoolHandle
 }
 
 pub struct SetupInstitutionWallet {
@@ -291,10 +292,11 @@ impl SetupWalletPool {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         SetupWalletPool {
             institution_did,
             wallet_handle,
+            pool_handle
         }
     }
 }

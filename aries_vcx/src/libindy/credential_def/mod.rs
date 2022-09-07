@@ -129,7 +129,8 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &schema_id).await?;
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
         let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(
             wallet_handle,
             &issuer_did,

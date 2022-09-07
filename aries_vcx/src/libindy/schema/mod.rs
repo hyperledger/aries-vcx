@@ -49,7 +49,8 @@ impl Schema {
     }
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle) -> VcxResult<u32> {
-        if anoncreds::get_schema_json(wallet_handle, &self.schema_id).await.is_ok() {
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+        if anoncreds::get_schema_json(wallet_handle, pool_handle, &self.schema_id).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

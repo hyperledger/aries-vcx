@@ -1,6 +1,6 @@
 use indy::future::TryFutureExt;
 use indy::{anoncreds, blob_storage, ledger};
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json;
 use serde_json::{map::Map, Value};
 use time;
@@ -560,7 +560,7 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, sc
     Ok(())
 }
 
-pub async fn get_schema_json(wallet_handle: WalletHandle, schema_id: &str) -> VcxResult<(String, String)> {
+pub async fn get_schema_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, schema_id: &str) -> VcxResult<(String, String)> {
     trace!("get_schema_json >>> schema_id: {}", schema_id);
     if settings::indy_mocks_enabled() {
         return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
@@ -568,7 +568,7 @@ pub async fn get_schema_json(wallet_handle: WalletHandle, schema_id: &str) -> Vc
 
     let submitter_did = crate::utils::random::generate_random_did();
 
-    let schema_json = libindy_get_schema(wallet_handle, &submitter_did, schema_id).await?;
+    let schema_json = libindy_get_schema(wallet_handle, pool_handle, &submitter_did, schema_id).await?;
 
     Ok((schema_id.to_string(), schema_json))
 }
@@ -1345,7 +1345,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use indy_sys::WalletHandle;
+    use indy_sys::{WalletHandle, PoolHandle};
 
     use crate::libindy::utils::anoncreds::get_schema_json;
     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
@@ -1354,7 +1354,7 @@ mod unit_tests {
     #[tokio::test]
     async fn from_ledger_schema_id() {
         let _setup = SetupMocks::init();
-        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), SCHEMA_ID).await.unwrap();
+        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), PoolHandle(0), SCHEMA_ID).await.unwrap();
         assert_eq!(&retrieved_schema, SCHEMA_JSON);
         assert_eq!(&id, SCHEMA_ID);
     }
@@ -1477,7 +1477,7 @@ pub mod integration_tests {
 
         let (schema_id, _) =
             create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-        let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
+        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
 
         let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
             .await
@@ -1516,7 +1516,7 @@ pub mod integration_tests {
 
         let (schema_id, _) =
             create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-        let (_, schema_json) = get_schema_json(setup.wallet_handle, &schema_id).await.unwrap();
+        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
 
         let (cred_def_id, cred_def_json) =
             generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
@@ -1605,7 +1605,7 @@ pub mod integration_tests {
         let (schema_id, _schema_json) =
             create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
-        let rc = get_schema_json(setup.wallet_handle, &schema_id).await;
+        let rc = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await;
 
         let (_id, retrieved_schema) = rc.unwrap();
         assert!(retrieved_schema.contains(&schema_id));

@@ -1,4 +1,5 @@
 use indy::{pool, ErrorCode};
+use indy_sys::PoolHandle;
 
 use crate::error::prelude::*;
 use crate::global;
@@ -113,11 +114,11 @@ pub mod test_utils {
         delete(POOL).await.unwrap();
     }
 
-    pub async fn open_test_pool() -> u32 {
+    pub async fn open_test_pool() -> PoolHandle {
         create_test_ledger_config().await;
         let handle = open_pool_ledger(POOL, None).await.unwrap();
         set_main_pool_handle(Some(handle));
-        handle as u32
+        handle
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {
