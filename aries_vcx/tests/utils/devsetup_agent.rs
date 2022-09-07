@@ -192,7 +192,8 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(self.wallet_handle, String::from("test_cred_def"), config, false)
+            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
+            self.cred_def = CredentialDef::create(self.wallet_handle, pool_handle, String::from("test_cred_def"), config, false)
                 .await
                 .unwrap()
                 .publish_cred_def(self.wallet_handle)

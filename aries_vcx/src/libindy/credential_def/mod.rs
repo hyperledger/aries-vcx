@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use std::fmt;
 
 use crate::error::prelude::*;
@@ -115,6 +115,7 @@ async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> V
 impl CredentialDef {
     pub async fn create(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         source_id: String,
         config: CredentialDefConfig,
         support_revocation: bool,
@@ -129,7 +130,6 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
         let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(
             wallet_handle,

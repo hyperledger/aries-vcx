@@ -1,6 +1,7 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
+use aries_vcx::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -28,7 +29,7 @@ pub async fn create(
                 format!("Failed build credential config using provided parameters: {:?}", err),
             )
         })?;
-    let cred_def = CredentialDef::create(get_main_wallet_handle(), source_id, config, support_revocation).await?;
+    let cred_def = CredentialDef::create(get_main_wallet_handle(), get_main_pool_handle()?, source_id, config, support_revocation).await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }

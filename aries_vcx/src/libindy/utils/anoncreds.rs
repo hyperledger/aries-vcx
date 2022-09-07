@@ -991,7 +991,8 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let cred_def = CredentialDef::create(wallet_handle, "1".to_string(), config, false)
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, false)
             .await
             .unwrap()
             .publish_cred_def(wallet_handle)
@@ -1026,7 +1027,8 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let cred_def = CredentialDef::create(wallet_handle, "1".to_string(), config, true)
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, true)
             .await
             .unwrap()
             .publish_cred_def(wallet_handle)
