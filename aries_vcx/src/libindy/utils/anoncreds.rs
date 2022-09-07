@@ -790,13 +790,12 @@ pub async fn get_rev_reg_delta_json(
         .await
 }
 
-pub async fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, String, u64)> {
+pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u64) -> VcxResult<(String, String, u64)> {
     if settings::indy_mocks_enabled() {
         return Ok((REV_REG_ID.to_string(), REV_REG_JSON.to_string(), 1));
     }
 
     let submitter_did = crate::utils::random::generate_random_did();
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     libindy_build_get_revoc_reg_request(&submitter_did, rev_reg_id, timestamp)
         .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
@@ -1575,7 +1574,7 @@ pub mod integration_tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
-        let (id, _rev_reg, _timestamp) = get_rev_reg(&rev_reg_id, time::get_time().sec as u64).await.unwrap();
+        let (id, _rev_reg, _timestamp) = get_rev_reg(setup.pool_handle, &rev_reg_id, time::get_time().sec as u64).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 
