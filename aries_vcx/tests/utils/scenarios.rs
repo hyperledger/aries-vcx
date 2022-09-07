@@ -434,8 +434,9 @@ pub mod test_utils {
 
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
+        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle).await.unwrap(),
+            holder_credential.is_revokable(alice.wallet_handle, pool_handle).await.unwrap(),
             revokable
         );
         holder_credential
@@ -444,7 +445,7 @@ pub mod test_utils {
             .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle).await.unwrap(),
+            holder_credential.is_revokable(alice.wallet_handle, pool_handle).await.unwrap(),
             revokable
         );
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());

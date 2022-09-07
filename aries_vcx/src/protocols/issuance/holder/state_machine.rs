@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds::{
@@ -393,11 +393,11 @@ impl HolderSM {
         Ok(self.thread_id.clone())
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(wallet_handle).await,
-            HolderFullState::OfferReceived(ref state) => state.is_revokable(wallet_handle).await,
+            HolderFullState::ProposalSent(ref state) => state.is_revokable(wallet_handle, pool_handle).await,
+            HolderFullState::OfferReceived(ref state) => state.is_revokable(wallet_handle, pool_handle).await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
@@ -554,6 +554,10 @@ mod test {
 
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
+    }
+
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
     }
 
     fn _holder_sm() -> HolderSM {
@@ -1132,13 +1136,13 @@ mod test {
         #[cfg(feature = "general_test")]
         async fn test_is_revokable() {
             let _setup = SetupMocks::init();
-            assert_eq!(true, _holder_sm().is_revokable(_dummy_wallet_handle()).await.unwrap());
+            assert_eq!(true, _holder_sm().is_revokable(_dummy_wallet_handle(), _dummy_pool_handle()).await.unwrap());
             assert_eq!(
                 true,
                 _holder_sm()
                     .to_request_sent_state()
                     .await
-                    .is_revokable(WalletHandle(0))
+                    .is_revokable(WalletHandle(0), _dummy_pool_handle())
                     .await
                     .unwrap()
             );
@@ -1147,7 +1151,7 @@ mod test {
                 _holder_sm()
                     .to_finished_state()
                     .await
-                    .is_revokable(WalletHandle(0))
+                    .is_revokable(WalletHandle(0), _dummy_pool_handle())
                     .await
                     .unwrap()
             );

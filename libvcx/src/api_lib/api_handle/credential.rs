@@ -3,6 +3,7 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
+use aries_vcx::global::pool::get_main_pool_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
@@ -191,7 +192,7 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 pub async fn is_revokable(handle: u32) -> VcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
     credential
-        .is_revokable(get_main_wallet_handle())
+        .is_revokable(get_main_wallet_handle(), get_main_pool_handle()?)
         .await
         .map_err(|err| err.into())
 }

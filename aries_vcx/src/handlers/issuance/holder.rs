@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -125,8 +125,8 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
-        self.holder_sm.is_revokable(wallet_handle).await
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
+        self.holder_sm.is_revokable(wallet_handle, pool_handle).await
     }
 
     pub async fn delete_credential(&self, wallet_handle: WalletHandle) -> VcxResult<()> {

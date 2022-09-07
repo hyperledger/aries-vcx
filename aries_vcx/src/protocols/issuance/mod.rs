@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
@@ -22,8 +22,7 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
     Ok(())
 }
 
-pub async fn is_cred_def_revokable(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<bool> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+pub async fn is_cred_def_revokable(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<bool> {
     let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await.map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidLedgerResponse,
