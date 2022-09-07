@@ -744,6 +744,7 @@ pub async fn build_rev_reg_delta_request(
 
 pub async fn publish_rev_reg_delta(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     issuer_did: &str,
     rev_reg_id: &str,
     rev_reg_entry_json: &str,
@@ -755,7 +756,6 @@ pub async fn publish_rev_reg_delta(
         rev_reg_entry_json
     );
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &request).await
 }
 
@@ -840,8 +840,9 @@ pub async fn revoke_credential(
         return Ok(REV_REG_DELTA_JSON.to_string());
     }
 
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    publish_rev_reg_delta(wallet_handle, &submitter_did, rev_reg_id, &delta).await?;
+    publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
 
     Ok(delta)
 }
@@ -860,9 +861,10 @@ pub async fn revoke_credential_local(
 }
 
 pub async fn publish_local_revocations(wallet_handle: WalletHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
         match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-            Ok(_) => publish_rev_reg_delta(wallet_handle, &submitter_did, rev_reg_id, &delta).await,
+            Ok(_) => publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await,
             Err(err) => Err(err),
         }
     } else {
@@ -1543,7 +1545,7 @@ pub mod integration_tests {
         publish_rev_reg_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_json)
             .await
             .unwrap();
-        publish_rev_reg_delta(setup.wallet_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
+        publish_rev_reg_delta(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
             .await
             .unwrap();
     }

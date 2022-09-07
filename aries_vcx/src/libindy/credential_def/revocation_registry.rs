@@ -112,7 +112,8 @@ impl RevocationRegistry {
             issuer_did,
             self.rev_reg_id
         );
-        anoncreds::publish_rev_reg_delta(wallet_handle, issuer_did, &self.rev_reg_id, &self.rev_reg_entry)
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+        anoncreds::publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did, &self.rev_reg_id, &self.rev_reg_entry)
             .await
             .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
