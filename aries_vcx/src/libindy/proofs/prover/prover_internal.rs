@@ -179,7 +179,8 @@ pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoPro
                 let pool_handle = crate::global::pool::get_main_pool_handle()?;
                 let (_, rev_reg_def_json) = get_rev_reg_def_json(pool_handle, rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+                let pool_handle = crate::global::pool::get_main_pool_handle()?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,

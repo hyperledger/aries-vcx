@@ -758,12 +758,14 @@ pub async fn publish_rev_reg_delta(
 }
 
 pub async fn get_rev_reg_delta_json(
+    pool_handle: PoolHandle,
     rev_reg_id: &str,
     from: Option<u64>,
     to: Option<u64>,
 ) -> VcxResult<(String, String, u64)> {
     trace!(
-        "get_rev_reg_delta_json >>> rev_reg_id: {}, from: {:?}, to: {:?}",
+        "get_rev_reg_delta_json >>> pool_handle: {:?}, rev_reg_id: {}, from: {:?}, to: {:?}",
+        pool_handle,
         rev_reg_id,
         from,
         to
@@ -782,7 +784,6 @@ pub async fn get_rev_reg_delta_json(
         time::get_time().sec
     };
 
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_build_get_revoc_reg_delta_request(&submitter_did, rev_reg_id, from, to)
         .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_revoc_reg_delta_response(&response).await })
@@ -1564,7 +1565,7 @@ pub mod integration_tests {
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
-        let (id, _delta, _timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (id, _delta, _timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
         assert_eq!(id, rev_reg_id);
     }
 
@@ -1627,8 +1628,8 @@ pub mod integration_tests {
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
             create_and_store_credential(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
-        let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
-        let (_, test_same_delta, test_same_timestamp) = get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
+        let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
+        let (_, test_same_delta, test_same_timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
 
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
@@ -1644,7 +1645,7 @@ pub mod integration_tests {
         .unwrap();
 
         // Delta should change after revocation
-        let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(&rev_reg_id, Some(first_timestamp + 1), None)
+        let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, Some(first_timestamp + 1), None)
             .await
             .unwrap();
 

@@ -679,7 +679,8 @@ pub mod test_utils {
     }
 
     pub async fn revoke_credential(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None)
+        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id.clone(), None, None)
             .await
             .unwrap();
         info!("revoking credential");
@@ -688,14 +689,15 @@ pub mod test_utils {
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
-            libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id, Some(timestamp + 1), None)
+            libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id, Some(timestamp + 1), None)
                 .await
                 .unwrap();
         assert_ne!(delta, delta_after_revoke);
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id.clone(), None, None)
+        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id.clone(), None, None)
             .await
             .unwrap();
         info!("revoking credential locally");
@@ -704,7 +706,7 @@ pub mod test_utils {
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
-            libindy::utils::anoncreds::get_rev_reg_delta_json(&rev_reg_id, Some(timestamp + 1), None)
+            libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id, Some(timestamp + 1), None)
                 .await
                 .unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
