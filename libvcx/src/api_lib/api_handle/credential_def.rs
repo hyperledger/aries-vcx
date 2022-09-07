@@ -77,7 +77,7 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let res = cd.update_state(get_main_wallet_handle()).await?;
+    let res = cd.update_state(get_main_wallet_handle(), get_main_pool_handle()?).await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }

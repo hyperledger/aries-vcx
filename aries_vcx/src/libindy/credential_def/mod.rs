@@ -211,8 +211,7 @@ impl CredentialDef {
         self.source_id = source_id;
     }
 
-    pub async fn update_state(&mut self, wallet_handle: WalletHandle) -> VcxResult<u32> {
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<u32> {
         if (anoncreds::get_cred_def_json(wallet_handle, pool_handle, &self.cred_def_id).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
