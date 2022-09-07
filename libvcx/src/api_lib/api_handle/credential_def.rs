@@ -37,7 +37,7 @@ pub async fn create(
 pub async fn publish(handle: u32) -> VcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        cd = cd.publish_cred_def(get_main_wallet_handle()).await?;
+        cd = cd.publish_cred_def(get_main_wallet_handle(), get_main_pool_handle()?).await?;
     } else {
         info!("publish >>> Credential definition was already published")
     }

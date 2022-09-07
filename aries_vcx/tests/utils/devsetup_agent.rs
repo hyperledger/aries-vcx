@@ -196,7 +196,7 @@ pub mod test_utils {
             self.cred_def = CredentialDef::create(self.wallet_handle, pool_handle, String::from("test_cred_def"), config, false)
                 .await
                 .unwrap()
-                .publish_cred_def(self.wallet_handle)
+                .publish_cred_def(self.wallet_handle, pool_handle)
                 .await
                 .unwrap();
         }

@@ -98,8 +98,7 @@ impl Default for PublicEntityStateType {
     }
 }
 
-async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
     match anoncreds::get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
@@ -160,13 +159,13 @@ impl CredentialDef {
         self.support_revocation
     }
 
-    pub async fn publish_cred_def(self, wallet_handle: WalletHandle) -> VcxResult<Self> {
+    pub async fn publish_cred_def(self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<Self> {
         trace!(
             "publish_cred_def >>> issuer_did: {}, cred_def_id: {}",
             self.issuer_did,
             self.cred_def_id
         );
-        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id).await? {
+        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.cred_def_id).await? {
             return Err(VcxError::from_msg(
                 VcxErrorKind::CredDefAlreadyCreated,
                 format!(

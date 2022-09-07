@@ -998,7 +998,7 @@ pub mod test_utils {
         let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, false)
             .await
             .unwrap()
-            .publish_cred_def(wallet_handle)
+            .publish_cred_def(wallet_handle, pool_handle)
             .await
             .unwrap();
         thread::sleep(Duration::from_millis(1000));
@@ -1034,7 +1034,7 @@ pub mod test_utils {
         let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, true)
             .await
             .unwrap()
-            .publish_cred_def(wallet_handle)
+            .publish_cred_def(wallet_handle, pool_handle)
             .await
             .unwrap();
         let mut rev_reg = RevocationRegistry::create(
