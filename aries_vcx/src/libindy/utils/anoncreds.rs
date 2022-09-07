@@ -625,13 +625,13 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cre
     Ok(())
 }
 
-pub async fn get_cred_def_json(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
+pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_cred_def_json >>> returning mocked value");
         return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
     }
 
-    let cred_def_json = libindy_get_cred_def(wallet_handle, cred_def_id).await?;
+    let cred_def_json = libindy_get_cred_def(wallet_handle, pool_handle, cred_def_id).await?;
 
     Ok((cred_def_id.to_string(), cred_def_json))
 }
@@ -999,7 +999,8 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let (_, cred_def_json) = get_cred_def_json(wallet_handle, &cred_def_id).await.unwrap();
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, &cred_def_id).await.unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
     }
 
@@ -1048,7 +1049,8 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let (_, cred_def_json) = get_cred_def_json(wallet_handle, &cred_def_id).await.unwrap();
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, &cred_def_id).await.unwrap();
         (
             schema_id,
             schema_json,
@@ -1354,7 +1356,7 @@ mod unit_tests {
     #[tokio::test]
     async fn from_ledger_schema_id() {
         let _setup = SetupMocks::init();
-        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), PoolHandle(0), SCHEMA_ID).await.unwrap();
+        let (id, retrieved_schema) = get_schema_json(WalletHandle(0), 1, SCHEMA_ID).await.unwrap();
         assert_eq!(&retrieved_schema, SCHEMA_JSON);
         assert_eq!(&id, SCHEMA_ID);
     }

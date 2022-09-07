@@ -507,7 +507,8 @@ pub async fn create_credential_request(
     prover_did: &str,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, cred_def_id).await?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await?;
 
     libindy_prover_create_credential_req(wallet_handle, prover_did, cred_offer, &cred_def_json)
         .await

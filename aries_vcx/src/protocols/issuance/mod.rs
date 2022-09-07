@@ -23,7 +23,8 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
 }
 
 pub async fn is_cred_def_revokable(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<bool> {
-    let (_, cred_def_json) = get_cred_def_json(wallet_handle, cred_def_id).await.map_err(|err| {
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await.map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidLedgerResponse,
             format!("Failed to obtain credential definition from ledger or cache: {}", err),

@@ -237,8 +237,7 @@ pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cre
         .map_err(VcxError::from)
 }
 
-pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<String> {
-    let pool_handle = get_main_pool_handle()?;
+pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<String> {
     let submitter_did = generate_random_did();
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",

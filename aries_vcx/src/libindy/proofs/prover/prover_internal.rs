@@ -64,7 +64,8 @@ pub async fn build_cred_defs_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id)
+            let pool_handle = crate::global::pool::get_main_pool_handle()?;
+            let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id)
                 .await
                 .map_err(|err| {
                     err.map(

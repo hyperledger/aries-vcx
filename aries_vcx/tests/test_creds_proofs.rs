@@ -44,7 +44,7 @@ mod integration_tests {
         let (_, _, cred_def_id, cred_def_json, _) =
             create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
-        let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, &cred_def_id).await.unwrap();
+        let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, setup.pool_handle, &cred_def_id).await.unwrap();
 
         assert_eq!(id, cred_def_id);
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();

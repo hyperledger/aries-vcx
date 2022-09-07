@@ -103,7 +103,8 @@ pub async fn build_cred_defs_json_verifier(
 
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id).await?;
+            let pool_handle = crate::global::pool::get_main_pool_handle()?;
+            let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id).await?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
                 VcxError::from_msg(
