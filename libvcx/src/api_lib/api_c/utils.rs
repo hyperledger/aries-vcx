@@ -685,9 +685,15 @@ pub extern "C" fn vcx_get_ledger_txn(
         submitter_did
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(
             get_main_wallet_handle(),
+            pool_handle,
             submitter_did.as_deref(),
             seq_no,
         )

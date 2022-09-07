@@ -891,6 +891,7 @@ pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> 
 
 pub async fn get_ledger_txn(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     submitter_did: Option<&str>,
     seq_no: i32,
 ) -> VcxResult<String> {
@@ -899,7 +900,6 @@ pub async fn get_ledger_txn(
         submitter_did,
         seq_no
     );
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let req = build_get_txn_request(submitter_did, seq_no).await?;
     let res = if let Some(submitter_did) = submitter_did {
         libindy_sign_and_submit_request(wallet_handle, pool_handle, submitter_did, &req).await?
@@ -1653,12 +1653,12 @@ pub mod integration_tests {
     #[tokio::test]
     async fn test_get_txn() {
         let setup = SetupWalletPool::init().await;
-        get_ledger_txn(setup.wallet_handle, None, 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, None, 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 0).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 1).await;
         assert!(txn.is_ok());
 
-        get_ledger_txn(setup.wallet_handle, Some(&setup.institution_did), 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, Some(&setup.institution_did), 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 0).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 1).await;
         assert!(txn.is_ok());
     }
 }
