@@ -84,13 +84,12 @@ pub async fn libindy_build_create_credential_def_txn(
         .await
 }
 
-pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
+pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string());
     }
 
     let did = generate_random_did();
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     let get_author_agreement_request = ledger::build_get_txn_author_agreement_request(Some(&did), None).await?;
 

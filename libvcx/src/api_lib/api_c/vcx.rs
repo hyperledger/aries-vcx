@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
+use aries_vcx::global::pool::{is_main_pool_open, open_main_pool, get_main_pool_handle};
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::indy::CommandHandle;
@@ -441,9 +441,14 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
     trace!("vcx_get_ledger_author_agreement(command_handle: {})", command_handle);
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match ledger::libindy_get_txn_author_agreement().await {
+            match ledger::libindy_get_txn_author_agreement(pool_handle).await {
                 Ok(err) => {
                     trace!(
                         "vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
