@@ -685,7 +685,7 @@ pub mod test_utils {
             .unwrap();
         info!("revoking credential");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, true)
+            .revoke_credential(faber.wallet_handle, pool_handle, &faber.config_issuer.institution_did, true)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
@@ -702,7 +702,7 @@ pub mod test_utils {
             .unwrap();
         info!("revoking credential locally");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, &faber.config_issuer.institution_did, false)
+            .revoke_credential(faber.wallet_handle, pool_handle, &faber.config_issuer.institution_did, false)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =

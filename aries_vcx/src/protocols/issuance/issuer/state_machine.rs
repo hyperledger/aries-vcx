@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::credentials::encode_attributes;
@@ -83,8 +83,7 @@ pub struct IssuerSM {
     state: IssuerFullState,
 }
 
-async fn _revoke(wallet_handle: WalletHandle, issuer_did: &str, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+async fn _revoke(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
     match rev_info {
         Some(rev_info) => {
             if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) =
@@ -154,12 +153,11 @@ impl IssuerSM {
         }
     }
 
-    pub async fn revoke(&self, wallet_handle: WalletHandle, issuer_did: &str,  publish: bool) -> VcxResult<()> {
+    pub async fn revoke(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
         trace!("Issuer::revoke >>> publish: {}", publish);
-
         match &self.state {
-            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, issuer_did, &state.revocation_info_v1, publish).await,
-            IssuerFullState::Finished(state) => _revoke(wallet_handle, issuer_did, &state.revocation_info_v1, publish).await,
+            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, pool_handle, issuer_did, &state.revocation_info_v1, publish).await,
+            IssuerFullState::Finished(state) => _revoke(wallet_handle, pool_handle, issuer_did, &state.revocation_info_v1, publish).await,
             _ => Err(VcxError::from(VcxErrorKind::NotReady)),
         }
     }

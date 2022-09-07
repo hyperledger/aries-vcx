@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -163,8 +163,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(wallet_handle, issuer_did, publish).await
+    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(wallet_handle, pool_handle, issuer_did, publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -265,6 +265,10 @@ pub mod unit_tests {
         WalletHandle(0)
     }
 
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
     fn _cred_data() -> String {
         json!({"name": "alice"}).to_string()
     }
@@ -352,7 +356,7 @@ pub mod unit_tests {
         let setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), &setup.institution_did, true).await;
+        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), _dummy_pool_handle(), &setup.institution_did, true).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 
