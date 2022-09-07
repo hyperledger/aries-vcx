@@ -804,19 +804,18 @@ pub async fn get_rev_reg(rev_reg_id: &str, timestamp: u64) -> VcxResult<(String,
         .await
 }
 
-pub async fn get_cred_def(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
+pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
     }
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_build_get_cred_def_request(issuer_did, cred_def_id)
         .and_then(|req| async move { libindy_submit_request(pool_handle, &req).await })
         .and_then(|response| async move { libindy_parse_get_cred_def_response(&response).await })
         .await
 }
 
-pub async fn is_cred_def_on_ledger(issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
-    match get_cred_def(issuer_did, cred_def_id).await {
+pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
+    match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
         Ok(_) => Ok(true),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(false),
         Err(err) => Err(VcxError::from_msg(
@@ -1588,7 +1587,7 @@ pub mod integration_tests {
         let (_, _, cred_def_id, cred_def_json, _) =
             create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
 
-        let (id, cred_def) = get_cred_def(None, &cred_def_id).await.unwrap();
+        let (id, cred_def) = get_cred_def(setup.pool_handle, None, &cred_def_id).await.unwrap();
         assert_eq!(id, cred_def_id);
         assert_eq!(
             serde_json::from_str::<serde_json::Value>(&cred_def).unwrap(),
@@ -1598,10 +1597,10 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_is_cred_def_on_ledger() {
-        let _setup = SetupWalletPool::init().await;
+        let setup = SetupWalletPool::init().await;
 
         assert_eq!(
-            is_cred_def_on_ledger(None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7")
+            is_cred_def_on_ledger(setup.pool_handle, None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7")
                 .await
                 .unwrap(),
             false

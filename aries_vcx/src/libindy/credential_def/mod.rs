@@ -99,7 +99,8 @@ impl Default for PublicEntityStateType {
 }
 
 async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
-    match anoncreds::get_cred_def(Some(issuer_did), cred_def_id).await {
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    match anoncreds::get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
         Err(err) => Err(VcxError::from_msg(
