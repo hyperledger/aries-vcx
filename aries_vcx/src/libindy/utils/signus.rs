@@ -1,6 +1,6 @@
 use indy::did;
 use indy::future::TryFutureExt;
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -41,10 +41,9 @@ pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) 
     }
 }
 
-pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, did: &str, temp_vk: &str) -> VcxResult<()> {
+pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, temp_vk: &str) -> VcxResult<()> {
     let nym_request = ledger::libindy_build_nym_request(did, did, Some(temp_vk), None, None).await?;
     let nym_request = ledger::append_txn_author_agreement_to_request(&nym_request).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let nym_result = ledger::libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         VcxError::from_msg(
@@ -68,9 +67,9 @@ pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, did: &str, temp_vk
     libindy_replace_keys_apply(wallet_handle, did).await
 }
 
-pub async fn rotate_verkey(wallet_handle: WalletHandle, did: &str) -> VcxResult<()> {
+pub async fn rotate_verkey(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str) -> VcxResult<()> {
     let trustee_temp_verkey = libindy_replace_keys_start(wallet_handle, did).await?;
-    rotate_verkey_apply(wallet_handle, did, &trustee_temp_verkey).await
+    rotate_verkey_apply(wallet_handle, pool_handle, did, &trustee_temp_verkey).await
 }
 
 pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) -> VcxResult<()> {
@@ -140,7 +139,7 @@ mod test {
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
         let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();
         assert_eq!(
-            rotate_verkey(setup.wallet_handle, &setup.institution_did).await.unwrap_err().kind(),
+            rotate_verkey(setup.wallet_handle, 1, &setup.institution_did).await.unwrap_err().kind(),
             VcxErrorKind::InvalidLedgerResponse
         );
         let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();

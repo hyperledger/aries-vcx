@@ -13,6 +13,7 @@ use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
+use aries_vcx::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
@@ -457,8 +458,13 @@ pub extern "C" fn vcx_rotate_verkey(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), &did).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), pool_handle, &did).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
@@ -543,8 +549,13 @@ pub extern "C" fn vcx_rotate_verkey_apply(
         temp_vk
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), &did, &temp_vk).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), pool_handle, &did, &temp_vk).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",

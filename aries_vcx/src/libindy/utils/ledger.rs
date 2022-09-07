@@ -8,7 +8,6 @@ use serde_json;
 
 use crate::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
-use crate::global::pool::get_main_pool_handle;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;

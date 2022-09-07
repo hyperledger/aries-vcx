@@ -53,7 +53,7 @@ mod integration_tests {
     async fn test_rotate_verkey() {
         let setup = SetupWalletPool::init().await;
         let (did, verkey) = add_new_did(setup.wallet_handle, &setup.institution_did, None).await;
-        rotate_verkey(setup.wallet_handle, &did).await.unwrap();
+        rotate_verkey(setup.wallet_handle, setup.pool_handle, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));
         let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
         let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
