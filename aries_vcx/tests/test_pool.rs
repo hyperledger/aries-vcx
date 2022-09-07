@@ -83,7 +83,7 @@ mod integration_tests {
 
         let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
-        add_service(setup.wallet_handle, &did, &expect_service).await.unwrap();
+        add_service(setup.wallet_handle, setup.pool_handle, &did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(&Did::new(&did).unwrap()).await.unwrap();
 

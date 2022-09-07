@@ -197,21 +197,6 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
     libindy_submit_request(pool_handle, &get_nym_req).await
 }
 
-pub async fn get_role(did: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(settings::DEFAULT_ROLE.to_string());
-    }
-
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
-    let get_nym_resp = get_nym(pool_handle, did).await?;
-    let get_nym_resp: serde_json::Value = serde_json::from_str(&get_nym_resp)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    let data: serde_json::Value = serde_json::from_str(get_nym_resp["result"]["data"].as_str().unwrap_or("{}"))
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    let role = data["role"].as_str().unwrap_or("null").to_string();
-    Ok(role)
-}
-
 pub fn parse_response(response: &str) -> VcxResult<Response> {
     serde_json::from_str::<Response>(response)
         .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize transaction response")
@@ -338,10 +323,9 @@ pub async fn build_attrib_request(
     Ok(request)
 }
 
-pub async fn add_attr(wallet_handle: WalletHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
+pub async fn add_attr(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
     trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
     let attrib_req = build_attrib_request(did, did, None, Some(attrib_json), None).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &attrib_req).await
 }
 
@@ -369,9 +353,9 @@ pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
     })
 }
 
-pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &AriesService) -> VcxResult<String> {
+pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
-    add_attr(wallet_handle, did, &attrib_json).await
+    add_attr(wallet_handle, pool_handle, did, &attrib_json).await
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
