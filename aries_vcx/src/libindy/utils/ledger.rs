@@ -258,7 +258,7 @@ pub async fn set_endorser(wallet_handle: WalletHandle, submitter_did: &str, requ
     multisign_request(wallet_handle, &submitter_did, &request).await
 }
 
-pub async fn endorse_transaction(wallet_handle: WalletHandle, endorser_did: &str, transaction_json: &str) -> VcxResult<()> {
+pub async fn endorse_transaction(wallet_handle: WalletHandle, pool_handle: PoolHandle, endorser_did: &str, transaction_json: &str) -> VcxResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
     if settings::indy_mocks_enabled() {
         return Ok(());
@@ -267,7 +267,6 @@ pub async fn endorse_transaction(wallet_handle: WalletHandle, endorser_did: &str
     _verify_transaction_can_be_endorsed(transaction_json, &endorser_did)?;
 
     let transaction = multisign_request(wallet_handle, &endorser_did, transaction_json).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let response = libindy_submit_request(pool_handle, &transaction).await?;
 
     match parse_response(&response)? {

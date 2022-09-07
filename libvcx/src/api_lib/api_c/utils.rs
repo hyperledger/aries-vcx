@@ -407,19 +407,24 @@ pub extern "C" fn vcx_endorse_transaction(
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
     let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
         Ok(err) => err,
         Err(err) => return err.into(),
     };
     trace!(
-        "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, transaction: {})",
+        "vcx_endorse_transaction(command_handle: {}, pool_handle: {:?}, issuer_did: {}, transaction: {})",
         command_handle,
+        pool_handle,
         issuer_did,
         transaction
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &issuer_did, &transaction).await {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), pool_handle, &issuer_did, &transaction).await {
             Ok(()) => {
                 trace!(
                     "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",

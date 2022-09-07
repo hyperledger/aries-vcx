@@ -74,7 +74,7 @@ mod integration_tests {
             .await
             .unwrap();
 
-        endorse_transaction(setup.wallet_handle, &endorser_did, &schema_request).await.unwrap();
+        endorse_transaction(setup.wallet_handle, setup.pool_handle, &endorser_did, &schema_request).await.unwrap();
     }
 
     #[tokio::test]

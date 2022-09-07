@@ -448,7 +448,7 @@ pub mod tests {
         assert_eq!(0, get_state(schema_handle).unwrap());
         assert_eq!(0, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
 
-        ledger::endorse_transaction(get_main_wallet_handle(), &endorser_did, &schema_request)
+        ledger::endorse_transaction(get_main_wallet_handle(), setup.setup.pool_handle, &endorser_did, &schema_request)
             .await
             .unwrap();
 
