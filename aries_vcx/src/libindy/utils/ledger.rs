@@ -190,9 +190,8 @@ pub async fn libindy_build_nym_request(
     }
 }
 
-pub async fn get_nym(did: &str) -> VcxResult<String> {
+pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
     let submitter_did = generate_random_did();
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
 
     let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), did).await?;
     libindy_submit_request(pool_handle, &get_nym_req).await
@@ -203,7 +202,8 @@ pub async fn get_role(did: &str) -> VcxResult<String> {
         return Ok(settings::DEFAULT_ROLE.to_string());
     }
 
-    let get_nym_resp = get_nym(did).await?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    let get_nym_resp = get_nym(pool_handle, did).await?;
     let get_nym_resp: serde_json::Value = serde_json::from_str(&get_nym_resp)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
     let data: serde_json::Value = serde_json::from_str(get_nym_resp["result"]["data"].as_str().unwrap_or("{}"))
