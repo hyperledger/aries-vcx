@@ -553,7 +553,8 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, sc
 
     let request = build_schema_request(submitter_did, schema).await?;
 
-    let response = publish_txn_on_ledger(wallet_handle, submitter_did, &request).await?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    let response = publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
 
     _check_schema_response(&response)?;
 
@@ -621,7 +622,8 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cre
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, issuer_did, &cred_def_req).await?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
     Ok(())
 }
 
@@ -706,7 +708,8 @@ pub async fn publish_rev_reg_def(
         )
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, issuer_did, &rev_reg_def_req).await?;
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
     Ok(())
 }
 
@@ -754,7 +757,8 @@ pub async fn publish_rev_reg_delta(
         rev_reg_entry_json
     );
     let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json).await?;
-    publish_txn_on_ledger(wallet_handle, issuer_did, &request).await
+    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &request).await
 }
 
 pub async fn get_rev_reg_delta_json(
@@ -976,7 +980,8 @@ pub mod test_utils {
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list, submitter_did).await;
         let req = create_schema_req(&schema_json, submitter_did).await;
-        publish_txn_on_ledger(wallet_handle, submitter_did, &req).await.unwrap();
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+        publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }

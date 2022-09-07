@@ -440,12 +440,11 @@ pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
 
-pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
+pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
     debug!("publish_txn_on_ledger(submitter_did: {}, req: {}", submitter_did, req);
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await
 }
 
