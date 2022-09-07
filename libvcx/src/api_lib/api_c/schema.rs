@@ -6,6 +6,7 @@ use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
+use aries_vcx::global::pool::get_main_pool_handle;
 use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::error;
 
@@ -460,10 +461,16 @@ pub extern "C" fn vcx_schema_update_state(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     trace!(
-        "vcx_schema_update_state(command_handle: {}, schema_handle: {}) source_id: {}",
+        "vcx_schema_update_state(command_handle: {}, schema_handle: {}, pool_handle: {}) source_id: {}",
         command_handle,
         schema_handle,
+        pool_handle,
         source_id
     );
 
@@ -472,7 +479,7 @@ pub extern "C" fn vcx_schema_update_state(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match schema::update_state(get_main_wallet_handle(), schema_handle).await {
+        match schema::update_state(get_main_wallet_handle(), pool_handle, schema_handle).await {
             Ok(state) => {
                 trace!(
                     "vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",

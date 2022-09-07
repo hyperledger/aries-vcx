@@ -3,7 +3,7 @@ use std::string::ToString;
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::indy::WalletHandle;
+use aries_vcx::indy::{WalletHandle, PoolHandle};
 use aries_vcx::libindy::credential_def::PublicEntityStateType;
 use aries_vcx::libindy::schema::{Schema, SchemaData};
 use aries_vcx::libindy::utils::anoncreds;
@@ -172,9 +172,9 @@ pub fn release_all() {
     SCHEMA_MAP.drain().ok();
 }
 
-pub async fn update_state(wallet_handle: WalletHandle, schema_handle: u32) -> VcxResult<u32> {
+pub async fn update_state(wallet_handle: WalletHandle, pool_handle: PoolHandle, schema_handle: u32) -> VcxResult<u32> {
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
-    let res = schema.update_state(wallet_handle).await?;
+    let res = schema.update_state(wallet_handle, pool_handle).await?;
     SCHEMA_MAP.insert(schema_handle, schema)?;
     Ok(res)
 }
@@ -446,7 +446,7 @@ pub mod tests {
         .await
         .unwrap();
         assert_eq!(0, get_state(schema_handle).unwrap());
-        assert_eq!(0, update_state(get_main_wallet_handle(), schema_handle).await.unwrap());
+        assert_eq!(0, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
 
         ledger::endorse_transaction(get_main_wallet_handle(), &endorser_did, &schema_request)
             .await
@@ -454,7 +454,7 @@ pub mod tests {
 
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
-        assert_eq!(1, update_state(get_main_wallet_handle(), schema_handle).await.unwrap());
+        assert_eq!(1, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
         assert_eq!(1, get_state(schema_handle).unwrap());
     }
 

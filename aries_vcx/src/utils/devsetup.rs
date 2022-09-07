@@ -57,6 +57,7 @@ pub struct SetupWalletPoolAgency {
     pub agency_client: AgencyClient,
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
+    pub pool_handle: PoolHandle
 }
 
 pub struct SetupWalletPool {
@@ -264,11 +265,12 @@ impl SetupWalletPoolAgency {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         SetupWalletPoolAgency {
             agency_client,
             institution_did,
             wallet_handle,
+            pool_handle
         }
     }
 }
