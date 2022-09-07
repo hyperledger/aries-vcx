@@ -38,7 +38,7 @@ pub async fn create_and_publish_schema(
     );
 
     let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
-    anoncreds::publish_schema(&issuer_did, get_main_wallet_handle(), &schema).await?;
+    anoncreds::publish_schema(&issuer_did, get_main_wallet_handle(), get_main_pool_handle()?, &schema).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     debug!("created schema on ledger with id: {}", schema_id);

@@ -174,7 +174,7 @@ impl CredentialDef {
                 ),
             ));
         }
-        anoncreds::publish_cred_def(wallet_handle, &self.issuer_did, &self.cred_def_json).await?;
+        anoncreds::publish_cred_def(wallet_handle, pool_handle, &self.issuer_did, &self.cred_def_json).await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
             ..self

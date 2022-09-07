@@ -544,7 +544,7 @@ pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxResul
     Ok(request)
 }
 
-pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, schema: &str) -> VcxResult<()> {
+pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, pool_handle: PoolHandle, schema: &str) -> VcxResult<()> {
     trace!("publish_schema >>> submitter_did: {}, schema: {}", submitter_did, schema);
 
     if settings::indy_mocks_enabled() {
@@ -553,7 +553,6 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, sc
 
     let request = build_schema_request(submitter_did, schema).await?;
 
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let response = publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
 
     _check_schema_response(&response)?;
@@ -611,7 +610,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
     Ok(cred_def_req)
 }
 
-pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
+pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
     trace!(
         "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
         issuer_did,
@@ -622,7 +621,6 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, issuer_did: &str, cre
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
     Ok(())
 }
@@ -1495,7 +1493,7 @@ pub mod integration_tests {
         let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
             .await
             .unwrap();
-        publish_cred_def(setup.wallet_handle, &setup.institution_did, &cred_def_json)
+        publish_cred_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &cred_def_json)
             .await
             .unwrap();
     }
@@ -1535,7 +1533,7 @@ pub mod integration_tests {
             generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
                 .await
                 .unwrap();
-        publish_cred_def(setup.wallet_handle, &setup.institution_did, &cred_def_json)
+        publish_cred_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &cred_def_json)
             .await
             .unwrap();
         let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) =
