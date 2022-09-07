@@ -645,8 +645,13 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
         did
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(&did).await {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(pool_handle, &did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",

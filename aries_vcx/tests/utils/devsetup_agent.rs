@@ -140,13 +140,14 @@ pub mod test_utils {
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
+            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
                 .unwrap();
             let connection = Connection::create("faber", agency_client.get_wallet_handle(), &agency_client, true)
                 .await
                 .unwrap();
-            let agent = PublicAgent::create(wallet_handle, &agency_client, "faber", &config_issuer.institution_did)
+            let agent = PublicAgent::create(wallet_handle, pool_handle, &agency_client, "faber", &config_issuer.institution_did)
                 .await
                 .unwrap();
             let faber = Faber {

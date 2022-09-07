@@ -92,8 +92,7 @@ pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> V
     }
 }
 
-pub async fn get_verkey_from_ledger(did: &str) -> VcxResult<String> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
+pub async fn get_verkey_from_ledger(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
     let nym_response: String = ledger::get_nym(pool_handle, did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         VcxError::from_msg(

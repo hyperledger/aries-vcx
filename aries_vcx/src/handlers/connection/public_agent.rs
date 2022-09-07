@@ -1,6 +1,6 @@
 use futures::stream::iter;
 use futures::StreamExt;
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -24,6 +24,7 @@ pub struct PublicAgent {
 impl PublicAgent {
     pub async fn create(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         source_id: &str,
         institution_did: &str,
@@ -34,7 +35,6 @@ impl PublicAgent {
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys(agency_client)?);
-            let pool_handle = crate::global::pool::get_main_pool_handle()?;
         add_service(wallet_handle, pool_handle, institution_did, &service).await?;
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);

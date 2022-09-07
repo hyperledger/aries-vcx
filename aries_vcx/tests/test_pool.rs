@@ -56,7 +56,7 @@ mod integration_tests {
         rotate_verkey(setup.wallet_handle, setup.pool_handle, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));
         let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
-        let ledger_verkey = get_verkey_from_ledger(&did).await.unwrap();
+        let ledger_verkey = get_verkey_from_ledger(setup.pool_handle, &did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
     }
