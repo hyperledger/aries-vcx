@@ -106,13 +106,12 @@ impl RevocationRegistry {
         Ok(())
     }
 
-    pub async fn publish_rev_reg_delta(&mut self, wallet_handle: WalletHandle, issuer_did: &str) -> VcxResult<()> {
+    pub async fn publish_rev_reg_delta(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str) -> VcxResult<()> {
         trace!(
             "RevocationRegistry::publish_rev_reg_delta >>> issuer_did:{}, rev_reg_id: {}",
             issuer_did,
             self.rev_reg_id
         );
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         anoncreds::publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did, &self.rev_reg_id, &self.rev_reg_entry)
             .await
             .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
@@ -131,15 +130,15 @@ impl RevocationRegistry {
             tails_url
         );
         self.publish_built_rev_reg_def(wallet_handle, pool_handle, tails_url).await?;
-        self.publish_built_rev_reg_delta(wallet_handle).await
+        self.publish_built_rev_reg_delta(wallet_handle, pool_handle).await
     }
 
-    async fn publish_built_rev_reg_delta(&mut self, wallet_handle: WalletHandle) -> VcxResult<()> {
+    async fn publish_built_rev_reg_delta(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_delta_published() {
             info!("No unpublished revocation registry delta found, nothing to publish")
         } else {
-            self.publish_rev_reg_delta(wallet_handle, issuer_did).await?;
+            self.publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did).await?;
         }
         Ok(())
     }
