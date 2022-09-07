@@ -12,9 +12,10 @@ pub enum ServiceResolvable {
 
 impl ServiceResolvable {
     pub async fn resolve(&self) -> VcxResult<AriesService> {
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         match self {
             ServiceResolvable::AriesService(service) => Ok(service.clone()),
-            ServiceResolvable::Did(did) => ledger::get_service(did).await,
+            ServiceResolvable::Did(did) => ledger::get_service(pool_handle, did).await,
         }
     }
 }

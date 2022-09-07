@@ -329,14 +329,13 @@ pub async fn add_attr(wallet_handle: WalletHandle, pool_handle: PoolHandle, did:
     libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &attrib_req).await
 }
 
-pub async fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
+pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> VcxResult<String> {
     let get_attrib_req = ledger::build_get_attrib_request(None, did, Some(attr_name), None, None).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     libindy_submit_request(pool_handle, &get_attrib_req).await
 }
 
-pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
-    let attr_resp = get_attr(&did.to_string(), "service").await?;
+pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesService> {
+    let attr_resp = get_attr(pool_handle, &did.to_string(), "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),

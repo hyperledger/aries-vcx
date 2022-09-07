@@ -28,7 +28,8 @@ impl From<Invitation> for DidDoc {
         let (service_endpoint, recipient_keys, routing_keys) = match invitation {
             Invitation::Public(invitation) => {
                 did_doc.set_id(invitation.did.to_string());
-                let service = block_on(ledger::get_service(&invitation.did)).unwrap_or_else(|err| {
+                let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
+                let service = block_on(ledger::get_service(pool_handle, &invitation.did)).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
