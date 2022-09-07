@@ -690,6 +690,7 @@ pub async fn build_rev_reg_request(issuer_did: &str, rev_reg_def_json: &str) -> 
 
 pub async fn publish_rev_reg_def(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     issuer_did: &str,
     rev_reg_def: &RevocationRegistryDefinition,
 ) -> VcxResult<()> {
@@ -706,7 +707,6 @@ pub async fn publish_rev_reg_def(
         )
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
     Ok(())
 }
@@ -1050,7 +1050,7 @@ pub mod test_utils {
         .await
         .unwrap();
         rev_reg
-            .publish_revocation_primitives(wallet_handle, TEST_TAILS_URL)
+            .publish_revocation_primitives(wallet_handle, pool_handle, TEST_TAILS_URL)
             .await
             .unwrap();
 
@@ -1540,7 +1540,7 @@ pub mod integration_tests {
             generate_rev_reg(setup.wallet_handle, &setup.institution_did, &cred_def_id, "tails.txt", 2, "tag1")
                 .await
                 .unwrap();
-        publish_rev_reg_def(setup.wallet_handle, &setup.institution_did, &rev_reg_def_json)
+        publish_rev_reg_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_json)
             .await
             .unwrap();
         publish_rev_reg_delta(setup.wallet_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)

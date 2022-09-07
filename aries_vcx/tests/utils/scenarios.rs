@@ -717,6 +717,7 @@ pub mod test_utils {
         credential_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
+        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
             &faber.config_issuer.institution_did,
@@ -728,7 +729,7 @@ pub mod test_utils {
         .await
         .unwrap();
         rev_reg_new
-            .publish_revocation_primitives(faber.wallet_handle, TEST_TAILS_URL)
+            .publish_revocation_primitives(faber.wallet_handle, pool_handle, TEST_TAILS_URL)
             .await
             .unwrap();
         rev_reg_new
