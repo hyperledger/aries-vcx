@@ -448,14 +448,13 @@ pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, pool_handle: Poo
     libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await
 }
 
-pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
+pub async fn add_new_did(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
     let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
     let mut req_nym = ledger::build_nym_request(&submitter_did, &did, Some(&verkey), None, role)
         .await
         .unwrap();
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
-    let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
 
     libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
         .await

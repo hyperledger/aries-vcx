@@ -25,8 +25,8 @@ mod integration_tests {
     async fn test_retrieve_credentials() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
-        let (_, _, req, _) = create_indy_proof(setup.wallet_handle, &setup.institution_did).await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        let (_, _, req, _) = create_indy_proof(setup.wallet_handle, setup.pool_handle, &setup.institution_did).await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create()
@@ -42,7 +42,7 @@ mod integration_tests {
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
         let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, setup.pool_handle, &cred_def_id).await.unwrap();
 
@@ -87,7 +87,7 @@ mod integration_tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWalletPool::init().await;
-        create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -142,7 +142,7 @@ mod integration_tests {
     async fn test_generate_proof() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -246,7 +246,7 @@ mod integration_tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -516,7 +516,7 @@ mod tests {
             create_connected_connections(&mut consumer2, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let _credential_handle1 = _exchange_credential(
@@ -643,7 +643,7 @@ mod tests {
             create_connected_connections(&mut consumer, &mut institution).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let (address1, address, city, state, zip) = attr_names();
         let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
         let _credential_handle = _exchange_credential(
@@ -726,7 +726,7 @@ mod tests {
         }
         let attrs_list = attrs_list.to_string();
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def) =
-            create_and_store_nonrevocable_credential_def(institution.wallet_handle, &institution.config_issuer.institution_did, &attrs_list).await;
+            create_and_store_nonrevocable_credential_def(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, &attrs_list).await;
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
@@ -836,7 +836,7 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -912,7 +912,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -938,7 +938,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         let mut holder = send_cred_proposal(
@@ -973,7 +973,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         let mut holder = send_cred_proposal(
@@ -1030,7 +1030,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -1069,7 +1069,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -1098,7 +1098,7 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(

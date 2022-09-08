@@ -141,7 +141,7 @@ pub mod tests {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(get_main_wallet_handle(), &setup.setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()

@@ -338,7 +338,7 @@ pub mod tests {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(get_main_wallet_handle(), &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
@@ -433,7 +433,7 @@ pub mod tests {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-        let (endorser_did, _) = add_new_did(get_main_wallet_handle(), &setup.setup.institution_did, Some("ENDORSER")).await;
+        let (endorser_did, _) = add_new_did(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, Some("ENDORSER")).await;
 
         let (schema_handle, schema_request) = prepare_schema_for_endorser(
             "test_vcx_schema_update_state_with_ledger",

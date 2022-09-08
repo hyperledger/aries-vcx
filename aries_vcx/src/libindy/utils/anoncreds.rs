@@ -975,10 +975,9 @@ pub mod test_utils {
         append_txn_author_agreement_to_request(&request).await.unwrap()
     }
 
-    pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
+    pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list, submitter_did).await;
         let req = create_schema_req(&schema_json, submitter_did).await;
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
@@ -986,17 +985,17 @@ pub mod test_utils {
 
     pub async fn create_and_store_nonrevocable_credential_def(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         issuer_did: &str,
         attr_list: &str,
     ) -> (String, String, String, String, CredentialDef) {
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, issuer_did, attr_list).await;
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, pool_handle, issuer_did, attr_list).await;
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(issuer_did)
             .schema_id(&schema_id)
             .tag("1")
             .build()
             .unwrap();
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, false)
             .await
             .unwrap()
@@ -1006,13 +1005,13 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, &cred_def_id).await.unwrap();
         (schema_id, schema_json, cred_def_id, cred_def_json, cred_def)
     }
 
     pub async fn create_and_store_credential_def(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         issuer_did: &str,
         attr_list: &str,
     ) -> (
@@ -1024,7 +1023,7 @@ pub mod test_utils {
         CredentialDef,
         RevocationRegistry,
     ) {
-        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, issuer_did, attr_list).await;
+        let (schema_id, schema_json) = create_and_write_test_schema(wallet_handle, pool_handle, issuer_did, attr_list).await;
         thread::sleep(Duration::from_millis(500));
         let config = CredentialDefConfigBuilder::default()
             .issuer_did(issuer_did)
@@ -1032,7 +1031,6 @@ pub mod test_utils {
             .tag("1")
             .build()
             .unwrap();
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let cred_def = CredentialDef::create(wallet_handle, pool_handle, "1".to_string(), config, true)
             .await
             .unwrap()
@@ -1057,7 +1055,6 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(1000));
         let cred_def_id = cred_def.get_cred_def_id();
         thread::sleep(Duration::from_millis(1000));
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, &cred_def_id).await.unwrap();
         (
             schema_id,
@@ -1093,6 +1090,7 @@ pub mod test_utils {
     // todo: extract create_and_store_credential_def into caller functions
     pub async fn create_and_store_credential(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         institution_did: &str,
         attr_list: &str,
     ) -> (
@@ -1108,14 +1106,13 @@ pub mod test_utils {
         String,
     ) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, _) =
-            create_and_store_credential_def(wallet_handle, institution_did, attr_list).await;
+            create_and_store_credential_def(wallet_handle, pool_handle, institution_did, attr_list).await;
 
         let (offer, req, req_meta) = create_credential_req(wallet_handle, institution_did, &cred_def_id, &cred_def_json).await;
 
         /* create cred */
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let (_id, rev_def_json) = get_rev_reg_def_json(pool_handle, &rev_reg_id).await.unwrap();
         let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 
@@ -1157,11 +1154,12 @@ pub mod test_utils {
     // todo: extract create_and_store_nonrevocable_credential_def into caller functions
     pub async fn create_and_store_nonrevocable_credential(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         issuer_did: &str,
         attr_list: &str,
     ) -> (String, String, String, String, String, String, String, String) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(wallet_handle, issuer_did, attr_list).await;
+            create_and_store_nonrevocable_credential_def(wallet_handle, pool_handle, issuer_did, attr_list).await;
 
         let (offer, req, req_meta) = create_credential_req(wallet_handle, issuer_did, &cred_def_id, &cred_def_json).await;
 
@@ -1202,9 +1200,9 @@ pub mod test_utils {
         )
     }
 
-    pub async fn create_indy_proof(wallet_handle: WalletHandle, did: &str) -> (String, String, String, String) {
+    pub async fn create_indy_proof(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str) -> (String, String, String, String) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(wallet_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(wallet_handle, pool_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let proof_req = json!({
            "nonce":"123432421212",
            "name":"proof_req_1",
@@ -1269,11 +1267,12 @@ pub mod test_utils {
 
     pub async fn create_proof_with_predicate(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         did: &str,
         include_predicate_cred: bool,
     ) -> (String, String, String, String) {
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(wallet_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(wallet_handle, pool_handle, &did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -1390,7 +1389,7 @@ pub mod integration_tests {
     async fn test_prover_verify_proof() {
         let setup = SetupWalletPool::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle, &setup.institution_did).await;
+        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle, setup.pool_handle, &setup.institution_did).await;
 
         let proof_validation = libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await
@@ -1403,7 +1402,7 @@ pub mod integration_tests {
     async fn test_prover_verify_proof_with_predicate_success_case() {
         let setup = SetupWalletPool::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, &setup.institution_did, true).await;
+        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, true).await;
 
         let proof_validation = libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await
@@ -1416,7 +1415,7 @@ pub mod integration_tests {
     async fn test_prover_verify_proof_with_predicate_fail_case() {
         let setup = SetupWalletPool::init().await;
 
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, &setup.institution_did, false).await;
+        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, false).await;
 
         libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await
@@ -1470,7 +1469,7 @@ pub mod integration_tests {
         assert!(rc.is_err());
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
-            create_and_store_credential(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let rc = libindy_issuer_revoke_credential(
             setup.wallet_handle,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
@@ -1487,7 +1486,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
 
         let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
@@ -1506,7 +1505,7 @@ pub mod integration_tests {
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
         let (_, _, cred_def_id, _, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS)
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS)
                 .await;
         let rc = generate_rev_reg(
             setup.wallet_handle,
@@ -1526,7 +1525,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
 
         let (cred_def_id, cred_def_json) =
@@ -1553,7 +1552,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, attrs).await;
 
         let (id, _json) = get_rev_reg_def_json(setup.pool_handle, &rev_reg_id).await.unwrap();
         assert_eq!(id, rev_reg_id);
@@ -1564,7 +1563,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, attrs).await;
 
         let (id, _delta, _timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
         assert_eq!(id, rev_reg_id);
@@ -1575,7 +1574,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
+        let (_, _, _, _, rev_reg_id, _, _) = create_and_store_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, attrs).await;
 
         let (id, _rev_reg, _timestamp) = get_rev_reg(setup.pool_handle, &rev_reg_id, time::get_time().sec as u64).await.unwrap();
         assert_eq!(id, rev_reg_id);
@@ -1587,7 +1586,7 @@ pub mod integration_tests {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, &setup.institution_did, attrs).await;
+            create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, attrs).await;
 
         let (id, cred_def) = get_cred_def(setup.pool_handle, None, &cred_def_id).await.unwrap();
         assert_eq!(id, cred_def_id);
@@ -1614,7 +1613,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (schema_id, _schema_json) =
-            create_and_write_test_schema(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let rc = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await;
 
@@ -1627,7 +1626,7 @@ pub mod integration_tests {
         let setup = SetupWalletPool::init().await;
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
-            create_and_store_credential(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
 
         let (_, first_rev_reg_delta, first_timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
         let (_, test_same_delta, test_same_timestamp) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();

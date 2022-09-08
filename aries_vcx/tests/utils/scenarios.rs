@@ -3,7 +3,7 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use indy_sys::WalletHandle;
+    use indy_sys::{WalletHandle, PoolHandle};
     use serde_json::{json, Value};
 
     use aries_vcx::global::settings;
@@ -754,6 +754,7 @@ pub mod test_utils {
 
     pub async fn _create_address_schema(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         institution_did: &str
     ) -> (
         String,
@@ -767,7 +768,7 @@ pub mod test_utils {
         info!("_create_address_schema >>> ");
         let attrs_list = json!(["address1", "address2", "city", "state", "zip"]).to_string();
         let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, cred_def, rev_reg) =
-            create_and_store_credential_def(wallet_handle, &institution_did, &attrs_list).await;
+            create_and_store_credential_def(wallet_handle, pool_handle, &institution_did, &attrs_list).await;
         (
             schema_id,
             schema_json,
@@ -856,7 +857,7 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
