@@ -3,7 +3,7 @@ use std::sync::RwLock;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::libindy::utils::pool::PoolConfig;
-use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, close, delete};
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -58,5 +58,11 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
 
     info!("open_pool ::: Pool Opened Successfully");
 
+    Ok(())
+}
+
+pub async fn close_main_pool() -> VcxResult<()> {
+    info!("close_main_pool ::: Closing main pool");
+    close(get_main_pool_handle()?).await?;
     Ok(())
 }

@@ -313,6 +313,7 @@ mod integration_tests {
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
     use serde_json::Value;
+    use indy_sys::PoolHandle;
 
     use aries_vcx::global::settings;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -1130,19 +1131,21 @@ mod tests {
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
     }
 
-    pub struct Pool {}
+    pub struct Pool {
+        handle: PoolHandle
+    }
 
     impl Pool {
         pub fn open() -> Pool {
-            futures::executor::block_on(libindy::utils::pool::test_utils::open_test_pool());
-            Pool {}
+            let handle = futures::executor::block_on(libindy::utils::pool::test_utils::open_test_pool());
+            Pool { handle }
         }
     }
 
     impl Drop for Pool {
         fn drop(&mut self) {
-            futures::executor::block_on(libindy::utils::pool::close()).unwrap();
-            futures::executor::block_on(libindy::utils::pool::test_utils::delete_test_pool());
+            futures::executor::block_on(libindy::utils::pool::close(self.handle)).unwrap();
+            futures::executor::block_on(libindy::utils::pool::test_utils::delete_test_pool(self.handle));
         }
     }
 

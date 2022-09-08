@@ -60,9 +60,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
     Ok(handle)
 }
 
-pub async fn close() -> VcxResult<()> {
-    let handle = global::pool::get_main_pool_handle()?;
-
+pub async fn close(handle: PoolHandle) -> VcxResult<()> {
     //TODO there was timeout here (before future-based Rust wrapper)
     pool::close_pool_ledger(handle).await?;
 
@@ -104,13 +102,13 @@ pub mod test_utils {
             .unwrap();
     }
 
-    pub async fn delete_named_test_pool(pool_name: &str) {
-        close().await.ok();
+    pub async fn delete_named_test_pool(pool_handle: PoolHandle, pool_name: &str) {
+        close(pool_handle).await.ok();
         delete(pool_name).await.unwrap();
     }
 
-    pub async fn delete_test_pool() {
-        close().await.ok();
+    pub async fn delete_test_pool(pool_handle: PoolHandle) {
+        close(pool_handle).await.ok();
         delete(POOL).await.unwrap();
     }
 

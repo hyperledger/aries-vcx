@@ -71,7 +71,9 @@ pub struct SetupInstitutionWallet {
     pub wallet_handle: WalletHandle,
 }
 
-pub struct SetupLibraryAgencyV2;
+pub struct SetupLibraryAgencyV2 {
+    pub pool_handle: PoolHandle
+}
 
 fn reset_global_state() {
     warn!("reset_global_state >>");
@@ -231,7 +233,6 @@ impl SetupPoolConfig {
 impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            futures::executor::block_on(delete_test_pool());
             reset_main_pool_handle();
         }
         reset_global_state();
@@ -277,7 +278,7 @@ impl SetupWalletPoolAgency {
 
 impl Drop for SetupWalletPoolAgency {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }
@@ -305,7 +306,7 @@ impl SetupWalletPool {
 
 impl Drop for SetupWalletPool {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }
@@ -340,15 +341,17 @@ impl SetupLibraryAgencyV2 {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         debug!("SetupLibraryAgencyV2 init >> completed");
-        SetupLibraryAgencyV2
+        SetupLibraryAgencyV2 {
+            pool_handle
+        }
     }
 }
 
 impl Drop for SetupLibraryAgencyV2 {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }
