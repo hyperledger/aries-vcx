@@ -1,3 +1,5 @@
+use indy_sys::PoolHandle;
+
 use crate::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
@@ -11,8 +13,7 @@ pub enum ServiceResolvable {
 }
 
 impl ServiceResolvable {
-    pub async fn resolve(&self) -> VcxResult<AriesService> {
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+    pub async fn resolve(&self, pool_handle: PoolHandle) -> VcxResult<AriesService> {
         match self {
             ServiceResolvable::AriesService(service) => Ok(service.clone()),
             ServiceResolvable::Did(did) => ledger::get_service(pool_handle, did).await,

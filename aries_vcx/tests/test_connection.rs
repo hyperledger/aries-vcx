@@ -53,7 +53,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
         let mut consumer = Alice::setup().await;
 
@@ -73,7 +73,7 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver
             .build_connection(&consumer.agency_client, true)
@@ -100,12 +100,12 @@ mod integration_tests {
         let (conn_receiver_pw2, _conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution).await;
 
         let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         assert!(*conn.unwrap() == conn_receiver);
 
         let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
@@ -139,7 +139,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
         let mut consumer = Alice::setup().await;
 
@@ -156,7 +156,7 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         conn.unwrap()
             .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
@@ -172,7 +172,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_handshake_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
         let mut institution = Faber::setup().await;
         let mut consumer = Alice::setup().await;
 
@@ -190,7 +190,7 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         let receiver_oob_id = oob_receiver.get_id();
         let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();

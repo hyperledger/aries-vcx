@@ -25,10 +25,10 @@ pub enum Invitation {
 impl From<Invitation> for DidDoc {
     fn from(invitation: Invitation) -> DidDoc {
         let mut did_doc: DidDoc = DidDoc::default();
+        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
         let (service_endpoint, recipient_keys, routing_keys) = match invitation {
             Invitation::Public(invitation) => {
                 did_doc.set_id(invitation.did.to_string());
-                let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
                 let service = block_on(ledger::get_service(pool_handle, &invitation.did)).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
@@ -45,7 +45,7 @@ impl From<Invitation> for DidDoc {
             }
             Invitation::OutOfBand(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
-                let service = block_on(invitation.services[0].resolve()).unwrap_or_else(|err| {
+                let service = block_on(invitation.services[0].resolve(pool_handle)).unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
@@ -164,7 +164,8 @@ impl PublicInvitation {
 impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
     type Error = VcxError;
     fn try_from(service_resolvable: &ServiceResolvable) -> Result<Self, Self::Error> {
-        let service = block_on(service_resolvable.resolve())?;
+        let pool_handle = crate::global::pool::get_main_pool_handle()?;
+        let service = block_on(service_resolvable.resolve(pool_handle))?;
         Ok(Self::create()
             .set_recipient_keys(service.recipient_keys)
             .set_routing_keys(service.routing_keys)

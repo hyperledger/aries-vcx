@@ -7,6 +7,7 @@ use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
 use aries_vcx::utils::service_resolvable::ServiceResolvable;
+use aries_vcx::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -151,7 +152,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
     }
     let connections = conn_map.values().collect();
 
-    if let Some(connection) = oob.connection_exists(&connections).await? {
+    if let Some(connection) = oob.connection_exists(get_main_pool_handle()?, &connections).await? {
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
             Ok((handle, true))
         } else {

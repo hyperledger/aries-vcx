@@ -1,4 +1,5 @@
 use std::clone::Clone;
+use indy_sys::PoolHandle;
 
 use agency_client::agency_client::AgencyClient;
 
@@ -37,6 +38,7 @@ impl OutOfBandReceiver {
 
     pub async fn connection_exists<'a>(
         &self,
+        pool_handle: PoolHandle,
         connections: &'a Vec<&'a Connection>,
     ) -> VcxResult<Option<&'a Connection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
@@ -49,7 +51,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.resolve_service()? == service.resolve().await? {
+                        if did_doc.resolve_service()? == service.resolve(pool_handle).await? {
                             return Ok(Some(connection));
                         };
                     }
