@@ -1215,6 +1215,7 @@ mod tests {
                 .credential
                 .send_request(
                     alice.wallet_handle,
+                    alice.pool_handle,
                     pw_did,
                     alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
                 )
@@ -1306,6 +1307,7 @@ mod tests {
                 .credential
                 .send_request(
                     alice.wallet_handle,
+                    alice.pool_handle,
                     pw_did,
                     alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
                 )

@@ -220,6 +220,7 @@ pub mod test_utils {
         holder
             .send_request(
                 alice.wallet_handle,
+                alice.pool_handle,
                 my_pw_did,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -251,6 +252,7 @@ pub mod test_utils {
         holder
             .send_proposal(
                 alice.wallet_handle,
+                alice.pool_handle,
                 proposal,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -270,7 +272,7 @@ pub mod test_utils {
         comment: &str,
     ) {
         holder
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
@@ -288,6 +290,7 @@ pub mod test_utils {
         holder
             .send_proposal(
                 alice.wallet_handle,
+                alice.pool_handle,
                 proposal,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -366,7 +369,7 @@ pub mod test_utils {
 
     pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         holder
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
@@ -375,6 +378,7 @@ pub mod test_utils {
         holder
             .send_request(
                 alice.wallet_handle,
+                alice.pool_handle,
                 my_pw_did,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -385,13 +389,14 @@ pub mod test_utils {
 
     pub async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
         holder
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         holder
             .decline_offer(
                 alice.wallet_handle,
+                alice.pool_handle,
                 Some("Have a nice day"),
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -440,7 +445,7 @@ pub mod test_utils {
             revokable
         );
         holder_credential
-            .update_state(alice.wallet_handle, &alice.agency_client, consumer_to_issuer)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, consumer_to_issuer)
             .await
             .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());

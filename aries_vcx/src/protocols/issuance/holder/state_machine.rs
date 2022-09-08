@@ -159,6 +159,7 @@ impl HolderSM {
     pub async fn handle_message(
         self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         cim: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<HolderSM> {
@@ -573,6 +574,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -585,6 +587,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -593,6 +596,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -675,6 +679,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -697,6 +702,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -719,6 +725,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialSend(),
                     _send_message(),
                 )
@@ -729,6 +736,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -746,6 +754,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -754,6 +763,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -773,6 +783,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -781,6 +792,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(Credential::create()),
                     _send_message(),
                 )
@@ -803,6 +815,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -811,6 +824,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -833,6 +847,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -842,6 +857,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -852,6 +868,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )
@@ -869,6 +886,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -877,6 +895,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -886,6 +905,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -896,6 +916,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -906,6 +927,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )

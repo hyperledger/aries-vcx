@@ -125,6 +125,7 @@ pub async fn credential_create_with_msgid(
 pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
     let wallet_handle = get_main_wallet_handle();
+    let pool_handle = get_main_pool_handle()?;
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
@@ -139,12 +140,12 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             )
         })?;
         credential
-            .step(wallet_handle, message.into(), Some(send_message))
+            .step(wallet_handle, pool_handle, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(wallet_handle, msg.into(), Some(send_message)).await?;
+            credential.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -231,7 +232,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
     let my_pw_did = connection::get_pw_did(connection_handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
     credential
-        .send_request(get_main_wallet_handle(), my_pw_did, send_message)
+        .send_request(get_main_wallet_handle(), get_main_pool_handle()?, my_pw_did, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
@@ -352,7 +353,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle)?;
     credential
-        .decline_offer(get_main_wallet_handle(), comment, send_message)
+        .decline_offer(get_main_wallet_handle(), get_main_pool_handle()?, comment, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)

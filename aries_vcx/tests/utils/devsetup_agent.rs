@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use indy_sys::WalletHandle;
+    use indy_sys::{WalletHandle, PoolHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -112,6 +112,7 @@ pub mod test_utils {
         pub verifier: Verifier,
         pub agent: PublicAgent,
         pub wallet_handle: WalletHandle,
+        pub pool_handle: PoolHandle,
         pub agency_client: AgencyClient,
     }
 
@@ -152,6 +153,7 @@ pub mod test_utils {
                 .unwrap();
             let faber = Faber {
                 wallet_handle,
+                pool_handle,
                 agency_client,
                 is_active: false,
                 config_wallet,
@@ -172,9 +174,8 @@ pub mod test_utils {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
             let (schema_id, schema) = anoncreds::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, pool_handle, &schema).await.unwrap();
+            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),
@@ -194,11 +195,10 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
-            self.cred_def = CredentialDef::create(self.wallet_handle, pool_handle, String::from("test_cred_def"), config, false)
+            self.cred_def = CredentialDef::create(self.wallet_handle, self.pool_handle, String::from("test_cred_def"), config, false)
                 .await
                 .unwrap()
-                .publish_cred_def(self.wallet_handle, pool_handle)
+                .publish_cred_def(self.wallet_handle, self.pool_handle)
                 .await
                 .unwrap();
         }
@@ -376,6 +376,7 @@ pub mod test_utils {
         pub credential: Holder,
         pub prover: Prover,
         pub wallet_handle: WalletHandle,
+        pub pool_handle: PoolHandle,
         pub agency_client: AgencyClient,
     }
 
@@ -400,6 +401,7 @@ pub mod test_utils {
             };
             create_wallet_with_master_secret(&config_wallet).await.unwrap();
             let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
@@ -409,6 +411,7 @@ pub mod test_utils {
                 .unwrap();
             let alice = Alice {
                 wallet_handle,
+                pool_handle,
                 agency_client,
                 is_active: false,
                 config_wallet,
@@ -505,6 +508,7 @@ pub mod test_utils {
             self.credential
                 .send_request(
                     self.wallet_handle,
+                    self.pool_handle,
                     pw_did,
                     self.connection.send_message_closure(self.wallet_handle).unwrap(),
                 )
@@ -515,7 +519,7 @@ pub mod test_utils {
 
         pub async fn accept_credential(&mut self) {
             self.credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
