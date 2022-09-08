@@ -122,6 +122,7 @@ pub async fn build_cred_defs_json_verifier(
 
 pub async fn build_schemas_json_verifier(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credential_data: &Vec<CredInfoVerifier>,
 ) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
@@ -130,7 +131,6 @@ pub async fn build_schemas_json_verifier(
 
     for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
-            let pool_handle = crate::global::pool::get_main_pool_handle()?;
             let (id, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
@@ -258,7 +258,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(WalletHandle(0), &credentials)
+        let schema_json = build_schemas_json_verifier(WalletHandle(0), 0, &credentials)
             .await
             .unwrap();
 

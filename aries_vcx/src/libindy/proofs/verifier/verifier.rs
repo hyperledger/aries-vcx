@@ -25,7 +25,7 @@ pub async fn validate_indy_proof(
     let credential_defs_json = build_cred_defs_json_verifier(wallet_handle, pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json_verifier(wallet_handle, &credential_data)
+    let schemas_json = build_schemas_json_verifier(wallet_handle, pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
     let rev_reg_defs_json = build_rev_reg_defs_json(&credential_data)
