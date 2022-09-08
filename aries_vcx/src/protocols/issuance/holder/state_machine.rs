@@ -197,7 +197,7 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                    let request = _make_credential_request(wallet_handle, my_pw_did, &state_data.offer).await;
+                    let request = _make_credential_request(wallet_handle, pool_handle, my_pw_did, &state_data.offer).await;
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
                             let cred_request = cred_request.set_thread_id(&thread_id);
@@ -248,6 +248,7 @@ impl HolderSM {
                 CredentialIssuanceAction::Credential(credential) => {
                     let result = _store_credential(
                         wallet_handle,
+                        pool_handle,
                         &credential,
                         &state_data.req_meta,
                         &state_data.cred_def_json,
@@ -464,6 +465,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 
 async fn _store_credential(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credential: &Credential,
     req_meta: &str,
     cred_def_json: &str,
@@ -477,7 +479,6 @@ async fn _store_credential(
 
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
         let (_, json) = anoncreds::get_rev_reg_def_json(pool_handle, &rev_reg_id).await?;
         Some(json)
@@ -505,11 +506,11 @@ async fn _delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxRe
 
 pub async fn create_credential_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     cred_def_id: &str,
     prover_did: &str,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let pool_handle = crate::global::pool::get_main_pool_handle()?;
     let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await?;
 
     libindy_prover_create_credential_req(wallet_handle, prover_did, cred_offer, &cred_def_json)
@@ -520,6 +521,7 @@ pub async fn create_credential_request(
 
 async fn _make_credential_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     my_pw_did: String,
     offer: &CredentialOffer,
 ) -> VcxResult<(CredentialRequest, String, String)> {
@@ -533,7 +535,7 @@ async fn _make_credential_request(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_credential_request(wallet_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
+        create_credential_request(wallet_handle, pool_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = build_credential_request_msg(req)?;
     Ok((credential_request_msg, req_meta, cred_def_json))
