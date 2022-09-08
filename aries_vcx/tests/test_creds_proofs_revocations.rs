@@ -82,6 +82,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -122,6 +123,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -147,6 +149,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -247,6 +250,7 @@ mod integration_tests {
         verifier1
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -255,6 +259,7 @@ mod integration_tests {
         verifier2
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -263,6 +268,7 @@ mod integration_tests {
         verifier3
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -319,6 +325,7 @@ mod integration_tests {
         verifier1
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -327,6 +334,7 @@ mod integration_tests {
         verifier2
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -335,6 +343,7 @@ mod integration_tests {
         verifier3
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -421,6 +430,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -485,7 +495,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -504,7 +514,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -566,7 +576,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -585,7 +595,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -646,7 +656,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -665,7 +675,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -728,7 +738,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -747,7 +757,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -810,7 +820,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -829,7 +839,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::messages::a2a::{A2AMessage, MessageId};
@@ -207,6 +207,7 @@ impl VerifierSM {
     pub async fn step(
         self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<Self> {
@@ -272,7 +273,7 @@ impl VerifierSM {
             },
             VerifierFullState::PresentationRequestSent(state) => match message {
                 VerifierMessages::VerifyPresentation(presentation) => match state
-                    .verify_presentation(wallet_handle, &presentation, &thread_id)
+                    .verify_presentation(wallet_handle, pool_handle, &presentation, &thread_id)
                     .await
                 {
                     Ok(()) => {
@@ -455,6 +456,10 @@ pub mod unit_tests {
         WalletHandle(0)
     }
 
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
     pub fn _verifier_sm() -> VerifierSM {
         VerifierSM::new(&source_id())
     }
@@ -476,6 +481,7 @@ pub mod unit_tests {
             self = self
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     None,
                 )
@@ -488,6 +494,7 @@ pub mod unit_tests {
             self = self
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     None,
                 )
@@ -509,6 +516,7 @@ pub mod unit_tests {
             self = self
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -639,6 +647,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -669,6 +678,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -679,6 +689,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -689,6 +700,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -732,6 +744,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::RejectPresentationProposal(_reason()),
                     _send_message(),
                 )
@@ -755,6 +768,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -765,6 +779,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -784,6 +799,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -805,6 +821,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -831,6 +848,7 @@ pub mod unit_tests {
                 .clone()
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation_1()),
                     _send_message(),
                 )
@@ -848,6 +866,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -867,6 +886,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -890,6 +910,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -899,6 +920,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -909,6 +931,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm
                 .step(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )

@@ -514,7 +514,7 @@ pub mod test_utils {
 
     pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         verifier
-            .update_state(faber.wallet_handle, &faber.agency_client, connection)
+            .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
@@ -543,13 +543,14 @@ pub mod test_utils {
     pub async fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
         let mut verifier = Verifier::create("1").unwrap();
         verifier
-            .update_state(faber.wallet_handle, &faber.agency_client, connection)
+            .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         verifier
             .decline_presentation_proposal(
                 faber.wallet_handle,
+                faber.pool_handle,
                 connection.send_message_closure(faber.wallet_handle).unwrap(),
                 "I don't like Alices",
             )
@@ -674,7 +675,7 @@ pub mod test_utils {
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         verifier
-            .update_state(faber.wallet_handle, &faber.agency_client, &connection)
+            .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, &connection)
             .await
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);

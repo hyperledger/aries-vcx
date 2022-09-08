@@ -343,7 +343,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.verifier
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
 
@@ -360,7 +360,7 @@ pub mod test_utils {
 
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.verifier
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());

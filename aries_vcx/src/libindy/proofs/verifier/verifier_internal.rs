@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json;
 use serde_json::Value;
 
@@ -96,6 +96,7 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
 
 pub async fn build_cred_defs_json_verifier(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credential_data: &Vec<CredInfoVerifier>,
 ) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
@@ -103,7 +104,6 @@ pub async fn build_cred_defs_json_verifier(
 
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let pool_handle = crate::global::pool::get_main_pool_handle()?;
             let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id).await?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
@@ -232,7 +232,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_cred_defs_json_verifier(WalletHandle(0), &credentials)
+        let credential_json = build_cred_defs_json_verifier(WalletHandle(0), 0, &credentials)
             .await
             .unwrap();
 

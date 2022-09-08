@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -60,11 +60,12 @@ impl Verifier {
     pub async fn handle_message(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(wallet_handle, message, send_message).await
+        self.step(wallet_handle, pool_handle, message, send_message).await
     }
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
@@ -76,10 +77,11 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn send_ack(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_ack(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
         self.step(
             wallet_handle,
+            pool_handle,
             VerifierMessages::SendPresentationAck(),
             Some(send_message),
         )
@@ -145,13 +147,14 @@ impl Verifier {
     pub async fn step(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.verifier_sm = self
             .verifier_sm
             .clone()
-            .step(wallet_handle, message, send_message)
+            .step(wallet_handle, pool_handle, message, send_message)
             .await?;
         Ok(())
     }
@@ -167,12 +170,14 @@ impl Verifier {
     pub async fn decline_presentation_proposal<'a>(
         &'a mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         send_message: SendClosure,
         reason: &'a str,
     ) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
         self.step(
             wallet_handle,
+            pool_handle,
             VerifierMessages::RejectPresentationProposal(reason.to_string()),
             Some(send_message),
         )
@@ -182,6 +187,7 @@ impl Verifier {
     pub async fn update_state(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<VerifierState> {
@@ -193,7 +199,7 @@ impl Verifier {
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -203,8 +209,6 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use indy_sys::WalletHandle;
-
     use crate::messages::a2a::A2AMessage;
     use crate::messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
@@ -215,6 +219,10 @@ mod unit_tests {
 
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
+    }
+
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
     }
 
     async fn _verifier() -> Verifier {
@@ -243,6 +251,7 @@ mod unit_tests {
             self.to_presentation_request_sent_state().await;
             self.step(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 VerifierMessages::VerifyPresentation(_presentation()),
                 _send_message(),
             )
