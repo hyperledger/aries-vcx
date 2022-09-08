@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -208,17 +208,17 @@ impl Connection {
         self.cloud_agent_info.clone()
     }
 
-    pub fn remote_did(&self) -> VcxResult<String> {
+    pub fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_did(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(pool_handle),
         }
     }
 
-    pub fn remote_vk(&self) -> VcxResult<String> {
+    pub fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_vk(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(pool_handle),
         }
     }
 
@@ -251,17 +251,17 @@ impl Connection {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(pool_handle),
         }
     }
 
-    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+    pub fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
-            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(pool_handle),
         }
     }
 
@@ -372,6 +372,7 @@ impl Connection {
     pub async fn find_and_handle_message(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if !self.is_in_final_state() {
@@ -381,7 +382,7 @@ impl Connection {
         let messages = self.get_messages_noauth(agency_client).await?;
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
-                self.handle_message(message, wallet_handle).await?;
+                self.handle_message(message, wallet_handle, pool_handle).await?;
                 self.update_message_status(&uid, agency_client).await?;
             }
             None => {}
@@ -404,8 +405,8 @@ impl Connection {
         None
     }
 
-    pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
+    pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<()> {
+        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!(
                 "Can't answer message {:?} because counterparty did doc is not available",
@@ -607,7 +608,7 @@ impl Connection {
         }
     }
 
-    pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
+    pub async fn connect(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
@@ -619,6 +620,7 @@ impl Connection {
                     .clone()
                     .send_connection_request(
                         wallet_handle,
+                        pool_handle,
                         self.cloud_agent_info.routing_keys(agency_client)?,
                         self.cloud_agent_info.service_endpoint(agency_client)?,
                         send_message,
@@ -655,8 +657,8 @@ impl Connection {
         }
     }
 
-    pub async fn get_messages(&self, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
-        let expected_sender_vk = self.get_expected_sender_vk()?;
+    pub async fn get_messages(&self, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
+        let expected_sender_vk = self.get_expected_sender_vk(pool_handle)?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
                 .cloud_agent_info()
@@ -669,8 +671,8 @@ impl Connection {
         }
     }
 
-    fn get_expected_sender_vk(&self) -> VcxResult<String> {
-        self.remote_vk().map_err(|_err| {
+    fn get_expected_sender_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+        self.remote_vk(pool_handle).map_err(|_err| {
             VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Verkey of connection counterparty \
@@ -679,17 +681,17 @@ impl Connection {
         })
     }
 
-    pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
+    pub async fn get_message_by_id(&self, pool_handle: PoolHandle, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
-        let expected_sender_vk = self.get_expected_sender_vk()?;
+        let expected_sender_vk = self.get_expected_sender_vk(pool_handle)?;
         self.cloud_agent_info()
             .get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info())
             .await
     }
 
-    pub fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
+    pub fn send_message_closure(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
@@ -710,30 +712,31 @@ impl Connection {
         }
     }
 
-    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
+    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, message: &str) -> VcxResult<String> {
         trace!("Connection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
-        let send_message = self.send_message_closure(wallet_handle)?;
+        let send_message = self.send_message_closure(wallet_handle, pool_handle)?;
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, message: &A2AMessage) -> VcxResult<String> {
+    pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, message: &A2AMessage) -> VcxResult<String> {
         trace!("Connection::send_a2a_message >>> message: {:?}", message);
-        let send_message = self.send_message_closure(wallet_handle)?;
+        let send_message = self.send_message_closure(wallet_handle, pool_handle)?;
         send_message(message.clone()).await.map(|_| String::new())
     }
 
     pub async fn send_ping(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(wallet_handle)?).await?;
+        trust_ping.send_ping(self.send_message_closure(wallet_handle, pool_handle)?).await?;
         Ok(trust_ping)
     }
 
-    pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
+    pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, oob_msg: &str) -> VcxResult<()> {
         trace!("Connection::send_handshake_reuse >>>");
         // todo: oob_msg argument should be typed OutOfBandInvitation, not string
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
@@ -753,7 +756,7 @@ impl Connection {
                 ));
             }
         };
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
@@ -776,6 +779,7 @@ impl Connection {
     pub async fn send_discovery_query(
         &self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         query: Option<String>,
         comment: Option<String>,
     ) -> VcxResult<()> {
@@ -784,7 +788,7 @@ impl Connection {
             query,
             comment
         );
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
@@ -792,7 +796,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
+    pub fn get_connection_info(&self, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
         let agent_info = self.cloud_agent_info();
@@ -807,7 +811,7 @@ impl Connection {
             protocols: Some(self.get_protocols()),
         };
 
-        let remote = match self.their_did_doc() {
+        let remote = match self.their_did_doc(pool_handle) {
             Some(did_doc) => Some(SideConnectionInfo {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys(),
@@ -835,6 +839,7 @@ impl Connection {
 
     pub async fn download_messages(
         &self,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         status_codes: Option<Vec<MessageStatusCode>>,
         uids: Option<Vec<String>>,
@@ -855,7 +860,7 @@ impl Connection {
                 Ok(msgs)
             }
             _ => {
-                let expected_sender_vk = self.remote_vk()?;
+                let expected_sender_vk = self.remote_vk(pool_handle)?;
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
@@ -1012,6 +1017,10 @@ mod tests {
 
     use super::*;
 
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
     #[tokio::test]
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
@@ -1062,7 +1071,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(WalletHandle(0), &agency_client).await.unwrap();
+        connection.connect(WalletHandle(0), _dummy_pool_handle(), &agency_client).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
@@ -1079,7 +1088,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(WalletHandle(0), &agency_client).await.unwrap();
+        connection.connect(WalletHandle(0), _dummy_pool_handle(), &agency_client).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)

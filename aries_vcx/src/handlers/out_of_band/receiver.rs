@@ -44,7 +44,7 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
-                match connection.bootstrap_did_doc() {
+                match connection.bootstrap_did_doc(pool_handle) {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {
                             if did.to_string() == did_doc.id {

@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use indy_sys::PoolHandle;
 
 use futures::executor::block_on;
 
@@ -21,12 +22,10 @@ pub enum Invitation {
     OutOfBand(OutOfBandInvitation),
 }
 
-// TODO: Make into TryFrom
-impl From<Invitation> for DidDoc {
-    fn from(invitation: Invitation) -> DidDoc {
+impl Invitation {
+    pub fn into_did_doc(&self, pool_handle: PoolHandle) -> VcxResult<DidDoc> {
         let mut did_doc: DidDoc = DidDoc::default();
-        let pool_handle = crate::global::pool::get_main_pool_handle().unwrap();
-        let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+        let (service_endpoint, recipient_keys, routing_keys) = match self {
             Invitation::Public(invitation) => {
                 did_doc.set_id(invitation.did.to_string());
                 let service = block_on(ledger::get_service(pool_handle, &invitation.did)).unwrap_or_else(|err| {
@@ -39,8 +38,8 @@ impl From<Invitation> for DidDoc {
                 did_doc.set_id(invitation.id.0.clone());
                 (
                     invitation.service_endpoint.clone(),
-                    invitation.recipient_keys,
-                    invitation.routing_keys,
+                    invitation.recipient_keys.clone(),
+                    invitation.routing_keys.clone(),
                 )
             }
             Invitation::OutOfBand(invitation) => {
@@ -55,7 +54,7 @@ impl From<Invitation> for DidDoc {
         did_doc.set_service_endpoint(service_endpoint);
         did_doc.set_recipient_keys(recipient_keys);
         did_doc.set_routing_keys(routing_keys);
-        did_doc
+        Ok(did_doc)
     }
 }
 
@@ -161,18 +160,6 @@ impl PublicInvitation {
     }
 }
 
-impl TryFrom<&ServiceResolvable> for PairwiseInvitation {
-    type Error = VcxError;
-    fn try_from(service_resolvable: &ServiceResolvable) -> Result<Self, Self::Error> {
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
-        let service = block_on(service_resolvable.resolve(pool_handle))?;
-        Ok(Self::create()
-            .set_recipient_keys(service.recipient_keys)
-            .set_routing_keys(service.routing_keys)
-            .set_service_endpoint(service.service_endpoint))
-    }
-}
-
 a2a_message!(PairwiseInvitation, ConnectionInvitationPairwise);
 a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
@@ -262,6 +249,6 @@ pub mod unit_tests {
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(_routing_keys());
 
-        assert_eq!(did_doc, DidDoc::from(Invitation::Pairwise(_pairwise_invitation())));
+        assert_eq!(did_doc, Invitation::Pairwise(_pairwise_invitation()).into_did_doc(0).unwrap());
     }
 }

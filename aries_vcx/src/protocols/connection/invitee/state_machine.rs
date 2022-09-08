@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -115,20 +115,20 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
+            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
 
-    pub fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+    pub fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => Some(DidDoc::from(state.invitation.clone())),
+            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
@@ -162,8 +162,8 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn remote_did(&self) -> VcxResult<String> {
-        self.their_did_doc()
+    pub fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+        self.their_did_doc(pool_handle)
             .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -171,8 +171,8 @@ impl SmConnectionInvitee {
             ))
     }
 
-    pub fn remote_vk(&self) -> VcxResult<String> {
-        self.their_did_doc()
+    pub fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+        self.their_did_doc(pool_handle)
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -305,6 +305,7 @@ impl SmConnectionInvitee {
     pub async fn send_connection_request<F, T>(
         self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         routing_keys: Vec<String>,
         service_endpoint: String,
         send_message: F,
@@ -315,7 +316,7 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = DidDoc::from(state.invitation.clone());
+                let ddo = state.invitation.into_did_doc(pool_handle)?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
                     wallet_handle,
@@ -324,7 +325,7 @@ impl SmConnectionInvitee {
                     request.to_a2a_message(),
                 )
                 .await?;
-                (InviteeFullState::Requested((state.clone(), request).into()), thread_id)
+                (InviteeFullState::Requested((state.clone(), request, pool_handle).into()), thread_id)
             }
             _ => (self.state.clone(), self.get_thread_id()),
         };
@@ -436,6 +437,10 @@ pub mod unit_tests {
 
         use super::*;
 
+        fn _dummy_pool_handle() -> PoolHandle {
+            0
+        }
+
         async fn _send_message(
             _wallet_handle: WalletHandle,
             _pv_wk: String,
@@ -463,7 +468,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 self
@@ -598,7 +603,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
@@ -647,7 +652,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
@@ -676,7 +681,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
 

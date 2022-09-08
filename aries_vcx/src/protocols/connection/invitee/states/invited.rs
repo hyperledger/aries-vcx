@@ -1,3 +1,5 @@
+use indy_sys::PoolHandle;
+
 use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;
@@ -8,12 +10,12 @@ pub struct InvitedState {
     pub invitation: Invitation,
 }
 
-impl From<(InvitedState, Request)> for RequestedState {
-    fn from((state, request): (InvitedState, Request)) -> RequestedState {
+impl From<(InvitedState, Request, PoolHandle)> for RequestedState {
+    fn from((state, request, pool_handle): (InvitedState, Request, PoolHandle)) -> RequestedState {
         trace!("ConnectionInvitee: transit state from InvitedState to RequestedState");
         RequestedState {
             request,
-            did_doc: DidDoc::from(state.invitation),
+            did_doc: state.invitation.into_did_doc(pool_handle).unwrap()
         }
     }
 }

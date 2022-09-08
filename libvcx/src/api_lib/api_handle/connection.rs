@@ -5,6 +5,7 @@ use serde_json;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::pool::get_main_pool_handle;
 use aries_vcx::handlers::connection::connection::Connection;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -56,11 +57,11 @@ pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
 }
 
 pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| connection.remote_did().map_err(|err| err.into()))
+    CONNECTION_MAP.get(handle, |connection| connection.remote_did(get_main_pool_handle()?).map_err(|err| err.into()))
 }
 
 pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| connection.remote_vk().map_err(|err| err.into()))
+    CONNECTION_MAP.get(handle, |connection| connection.remote_vk(get_main_pool_handle()?).map_err(|err| err.into()))
 }
 
 pub fn get_thread_id(handle: u32) -> VcxResult<String> {
@@ -138,7 +139,7 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
 pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .send_generic_message(get_main_wallet_handle(), msg)
+        .send_generic_message(get_main_wallet_handle(), get_main_pool_handle()?, msg)
         .await
         .map_err(|err| err.into())
 }
@@ -146,7 +147,7 @@ pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
 pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> VcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .send_handshake_reuse(get_main_wallet_handle(), oob_msg)
+        .send_handshake_reuse(get_main_wallet_handle(), get_main_pool_handle()?, oob_msg)
         .await
         .map_err(|err| err.into())
 }
@@ -184,7 +185,7 @@ pub async fn handle_message(handle: u32, message: &str) -> VcxResult<u32> {
             ),
         )
     })?;
-    connection.handle_message(message, get_main_wallet_handle()).await?;
+    connection.handle_message(message, get_main_wallet_handle(), get_main_pool_handle().unwrap()).await?;
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -197,7 +198,7 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
             handle
         );
         match connection
-            .find_and_handle_message(get_main_wallet_handle(), &get_main_agency_client().unwrap())
+            .find_and_handle_message(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &get_main_agency_client().unwrap())
             .await
         {
             Ok(_) => Ok(error::SUCCESS.code_num),
@@ -230,7 +231,7 @@ pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
 pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .connect(get_main_wallet_handle(), &get_main_agency_client().unwrap())
+        .connect(get_main_wallet_handle(), get_main_pool_handle()?, &get_main_agency_client().unwrap())
         .await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -278,7 +279,7 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
 pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_messages(&get_main_agency_client().unwrap())
+        .get_messages(get_main_pool_handle()?, &get_main_agency_client().unwrap())
         .await
         .map_err(|err| err.into())
 }
@@ -294,7 +295,7 @@ pub async fn update_message_status(handle: u32, uid: &str) -> VcxResult<()> {
 pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_message_by_id(msg_id, &get_main_agency_client().unwrap())
+        .get_message_by_id(get_main_pool_handle()?, msg_id, &get_main_agency_client().unwrap())
         .await
         .map_err(|err| err.into())
 }
@@ -308,7 +309,7 @@ pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 pub fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
     CONNECTION_MAP.get(handle, |connection| {
         connection
-            .send_message_closure(get_main_wallet_handle())
+            .send_message_closure(get_main_wallet_handle(), get_main_pool_handle()?)
             .map_err(|err| err.into())
     })
 }
@@ -316,7 +317,7 @@ pub fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .send_ping(get_main_wallet_handle(), comment.map(String::from))
+        .send_ping(get_main_wallet_handle(), get_main_pool_handle()?, comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
@@ -326,6 +327,7 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
     connection
         .send_discovery_query(
             get_main_wallet_handle(),
+            get_main_pool_handle()?,
             query.map(String::from),
             comment.map(String::from),
         )
@@ -336,7 +338,7 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
 pub fn get_connection_info(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         connection
-            .get_connection_info(&get_main_agency_client().unwrap())
+            .get_connection_info(get_main_pool_handle()?, &get_main_agency_client().unwrap())
             .map_err(|err| err.into())
     })
 }
@@ -403,7 +405,7 @@ pub async fn download_messages(
     }
     for connection in connections {
         let msgs = connection
-            .download_messages(&get_main_agency_client().unwrap(), status_codes.clone(), uids.clone())
+            .download_messages(get_main_pool_handle()?, &get_main_agency_client().unwrap(), status_codes.clone(), uids.clone())
             .await?;
         res.push(MessageByConnection {
             pairwise_did: connection.pairwise_info().pw_did.clone(),

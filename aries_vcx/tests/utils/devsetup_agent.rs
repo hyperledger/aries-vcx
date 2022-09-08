@@ -221,7 +221,7 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(self.wallet_handle, &self.agency_client)
+                .connect(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             self.connection
@@ -253,32 +253,32 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
-            self.connection.send_ping(self.wallet_handle, None).await.unwrap();
+            self.connection.send_ping(self.wallet_handle, self.pool_handle, None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.connection
-                .send_discovery_query(self.wallet_handle, None, None)
+                .send_discovery_query(self.wallet_handle, self.pool_handle, None, None)
                 .await
                 .unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
-            let details = self.connection.get_connection_info(&self.agency_client).unwrap();
+            let details = self.connection.get_connection_info(self.pool_handle, &self.agency_client).unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
@@ -303,11 +303,11 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.issuer_credential
-                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle).unwrap())
+                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
@@ -315,7 +315,7 @@ pub mod test_utils {
 
         pub async fn send_credential(&mut self) {
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
@@ -323,12 +323,12 @@ pub mod test_utils {
             self.issuer_credential
                 .send_credential(
                     self.wallet_handle,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
@@ -339,7 +339,7 @@ pub mod test_utils {
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier
-                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle).unwrap())
+                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
                 .await
                 .unwrap();
             self.verifier
@@ -434,7 +434,7 @@ pub mod test_utils {
             .await
             .unwrap();
             self.connection
-                .connect(self.wallet_handle, &self.agency_client)
+                .connect(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             self.connection
@@ -457,14 +457,14 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -474,7 +474,7 @@ pub mod test_utils {
             let _did = self.connection.pairwise_info().pw_did.to_string();
             let messages = self
                 .connection
-                .download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .download_messages(self.pool_handle, &self.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap();
             filter_messages(messages, message_type).await.ok_or(VcxError::from_msg(
@@ -484,7 +484,7 @@ pub mod test_utils {
         }
 
         pub async fn accept_offer(&mut self) {
-            let offers = get_credential_offer_messages(&self.agency_client, &self.connection)
+            let offers = get_credential_offer_messages(self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
@@ -510,7 +510,7 @@ pub mod test_utils {
                     self.wallet_handle,
                     self.pool_handle,
                     pw_did,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();
@@ -530,7 +530,7 @@ pub mod test_utils {
         }
 
         pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
-            let presentation_requests = get_proof_request_messages(&self.agency_client, &self.connection)
+            let presentation_requests = get_proof_request_messages(self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             let presentation_request =
@@ -543,7 +543,7 @@ pub mod test_utils {
         pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
             match self
                 .connection
-                .get_message_by_id(msg_id, &self.agency_client)
+                .get_message_by_id(self.pool_handle, msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
@@ -558,7 +558,7 @@ pub mod test_utils {
         pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
             match self
                 .connection
-                .get_message_by_id(msg_id, &self.agency_client)
+                .get_message_by_id(self.pool_handle, msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
@@ -603,7 +603,7 @@ pub mod test_utils {
                 .send_presentation(
                     self.wallet_handle,
                     self.pool_handle,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();

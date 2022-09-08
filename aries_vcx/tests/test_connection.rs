@@ -40,12 +40,12 @@ mod integration_tests {
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
         institution_to_consumer
-            .send_generic_message(institution.wallet_handle, "Hello Alice, Faber here")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "Hello Alice, Faber here")
             .await
             .unwrap();
 
         let consumer_msgs = consumer_to_institution
-            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(consumer_msgs.len(), 1);
@@ -80,7 +80,7 @@ mod integration_tests {
             .await
             .unwrap();
         conn_receiver
-            .connect(consumer.wallet_handle, &consumer.agency_client)
+            .connect(consumer.wallet_handle, consumer.pool_handle, &consumer.agency_client)
             .await
             .unwrap();
         conn_receiver
@@ -118,19 +118,19 @@ mod integration_tests {
         }
 
         conn_sender
-            .send_generic_message(institution.wallet_handle, "Hello oob receiver, from oob sender")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "Hello oob receiver, from oob sender")
             .await
             .unwrap();
         conn_receiver
-            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .send_generic_message(consumer.wallet_handle, consumer.pool_handle, "Hello oob sender, from oob receiver")
             .await
             .unwrap();
         let sender_msgs = conn_sender
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         let receiver_msgs = conn_receiver
-            .download_messages(&consumer.agency_client, None, None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(sender_msgs.len(), 2);
@@ -159,12 +159,12 @@ mod integration_tests {
         let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         conn.unwrap()
-            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .send_generic_message(consumer.wallet_handle, consumer.pool_handle, "Hello oob sender, from oob receiver")
             .await
             .unwrap();
 
         let msgs = institution_to_consumer
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(msgs.len(), 2);
@@ -195,12 +195,13 @@ mod integration_tests {
         let receiver_oob_id = oob_receiver.get_id();
         let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
         conn.unwrap()
-            .send_handshake_reuse(consumer.wallet_handle, &receiver_msg)
+            .send_handshake_reuse(consumer.wallet_handle, consumer.pool_handle, &receiver_msg)
             .await
             .unwrap();
 
         let mut msgs = institution_to_consumer
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Received]),
                 None,
@@ -223,12 +224,13 @@ mod integration_tests {
             .handle_message(
                 A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()),
                 institution.wallet_handle,
+                institution.pool_handle
             )
             .await
             .unwrap();
 
         let mut msgs = consumer_to_institution
-            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(msgs.len(), 1);
@@ -244,12 +246,12 @@ mod integration_tests {
             }
         };
         consumer_to_institution
-            .find_and_handle_message(consumer.wallet_handle, &consumer.agency_client)
+            .find_and_handle_message(consumer.wallet_handle, consumer.pool_handle, &consumer.agency_client)
             .await
             .unwrap();
         assert_eq!(
             consumer_to_institution
-                .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap()
                 .len(),

@@ -195,9 +195,9 @@ impl Verifier {
         if !self.progressable_by_message() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle)?;
+        let send_message = connection.send_message_closure(wallet_handle, pool_handle)?;
 
-        let messages = connection.get_messages(agency_client).await?;
+        let messages = connection.get_messages(pool_handle, agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;

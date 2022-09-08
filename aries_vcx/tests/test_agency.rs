@@ -42,23 +42,23 @@ mod integration_tests {
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
         faber_to_alice
-            .send_generic_message(institution.wallet_handle, "Hello Alice")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "Hello Alice")
             .await
             .unwrap();
         faber_to_alice
-            .send_generic_message(institution.wallet_handle, "How are you Alice?")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "How are you Alice?")
             .await
             .unwrap();
 
         alice_to_faber
-            .send_generic_message(consumer.wallet_handle, "Hello Faber")
+            .send_generic_message(consumer.wallet_handle, consumer.pool_handle, "Hello Faber")
             .await
             .unwrap();
 
         thread::sleep(Duration::from_millis(100));
 
         let msgs = faber_to_alice
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(msgs.len(), 2);
@@ -79,6 +79,7 @@ mod integration_tests {
 
         let received = faber_to_alice
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Received]),
                 None,
@@ -92,7 +93,7 @@ mod integration_tests {
             .unwrap();
 
         let msgs_by_uid = faber_to_alice
-            .download_messages(&institution.agency_client, None, Some(vec![hello_msg.uid.clone()]))
+            .download_messages(institution.pool_handle, &institution.agency_client, None, Some(vec![hello_msg.uid.clone()]))
             .await
             .unwrap();
         assert_eq!(msgs_by_uid.len(), 1);
@@ -100,6 +101,7 @@ mod integration_tests {
 
         let double_filter = faber_to_alice
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Received]),
                 Some(vec![hello_msg.uid.clone()]),
@@ -110,7 +112,7 @@ mod integration_tests {
         assert_eq!(double_filter[0].uid, hello_msg.uid);
 
         let msgs = faber_to_alice
-            .download_messages(&institution.agency_client, None, Some(vec!["abcd123".into()]))
+            .download_messages(institution.pool_handle, &institution.agency_client, None, Some(vec!["abcd123".into()]))
             .await
             .unwrap();
         assert_eq!(msgs.len(), 0);
@@ -135,7 +137,7 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Send Message works");
         {
-            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(message.to_a2a_message())
+            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap()(message.to_a2a_message())
                 .await
                 .unwrap();
         }
@@ -143,7 +145,7 @@ mod integration_tests {
         {
             info!("test_connection_send_works:: Test if Get Messages works");
 
-            let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
+            let messages = alice.connection.get_messages(alice.pool_handle, &alice.agency_client).await.unwrap();
             assert_eq!(1, messages.len());
 
             uid = messages.keys().next().unwrap().clone();
@@ -159,7 +161,7 @@ mod integration_tests {
         {
             let message = alice
                 .connection
-                .get_message_by_id(&uid.clone(), &alice.agency_client)
+                .get_message_by_id(alice.pool_handle, &uid.clone(), &alice.agency_client)
                 .await
                 .unwrap();
 
@@ -176,7 +178,7 @@ mod integration_tests {
                 .update_message_status(&uid, &alice.agency_client)
                 .await
                 .unwrap();
-            let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
+            let messages = alice.connection.get_messages(alice.pool_handle, &alice.agency_client).await.unwrap();
             assert_eq!(0, messages.len());
         }
 
@@ -185,11 +187,11 @@ mod integration_tests {
             let basic_message = r#"Hi there"#;
             faber
                 .connection
-                .send_generic_message(faber.wallet_handle, basic_message)
+                .send_generic_message(faber.wallet_handle, faber.pool_handle, basic_message)
                 .await
                 .unwrap();
 
-            let messages = alice.connection.get_messages(&alice.agency_client).await.unwrap();
+            let messages = alice.connection.get_messages(alice.pool_handle, &alice.agency_client).await.unwrap();
             assert_eq!(1, messages.len());
 
             let uid = messages.keys().next().unwrap().clone();
@@ -210,13 +212,13 @@ mod integration_tests {
         {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
-            faber.connection.send_message_closure(faber.wallet_handle).unwrap()(credential_offer.to_a2a_message())
+            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap()(credential_offer.to_a2a_message())
                 .await
                 .unwrap();
 
             let msgs = alice
                 .connection
-                .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .download_messages(alice.pool_handle, &alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap();
             let message: DownloadedMessage = msgs[0].clone();
@@ -244,28 +246,29 @@ mod integration_tests {
             create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1_to_institution
-            .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
+            .send_generic_message(consumer1.wallet_handle, consumer1.pool_handle, "Hello Institution from consumer1")
             .await
             .unwrap();
         consumer2_to_institution
-            .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
+            .send_generic_message(consumer2.wallet_handle, consumer2.pool_handle, "Hello Institution from consumer2")
             .await
             .unwrap();
 
         let consumer1_msgs = institution_to_consumer1
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(consumer1_msgs.len(), 2);
 
         let consumer2_msgs = institution_to_consumer2
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(consumer2_msgs.len(), 2);
 
         let consumer1_received_msgs = institution_to_consumer1
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Received]),
                 None,
@@ -276,6 +279,7 @@ mod integration_tests {
 
         let consumer1_reviewed_msgs = institution_to_consumer1
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Reviewed]),
                 None,
@@ -294,29 +298,29 @@ mod integration_tests {
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
         faber_to_alice
-            .send_generic_message(faber.wallet_handle, "Hello 1")
+            .send_generic_message(faber.wallet_handle, faber.pool_handle, "Hello 1")
             .await
             .unwrap();
         faber_to_alice
-            .send_generic_message(faber.wallet_handle, "Hello 2")
+            .send_generic_message(faber.wallet_handle, faber.pool_handle, "Hello 2")
             .await
             .unwrap();
         faber_to_alice
-            .send_generic_message(faber.wallet_handle, "Hello 3")
+            .send_generic_message(faber.wallet_handle, faber.pool_handle, "Hello 3")
             .await
             .unwrap();
 
         thread::sleep(Duration::from_millis(100));
 
         let received = alice_to_faber
-            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(alice.pool_handle, &alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(received.len(), 3);
         let uid = received[0].uid.clone();
 
         let reviewed = alice_to_faber
-            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
+            .download_messages(alice.pool_handle, &alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
             .await
             .unwrap();
         let reviewed_count_before = reviewed.len();
@@ -335,13 +339,13 @@ mod integration_tests {
             .unwrap();
 
         let received = alice_to_faber
-            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(alice.pool_handle, &alice.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(received.len(), 2);
 
         let reviewed = alice_to_faber
-            .download_messages(&alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
+            .download_messages(alice.pool_handle, &alice.agency_client, Some(vec![MessageStatusCode::Reviewed]), None)
             .await
             .unwrap();
         let reviewed_count_after = reviewed.len();
@@ -349,6 +353,7 @@ mod integration_tests {
 
         let specific_review = alice_to_faber
             .download_messages(
+                alice.pool_handle,
                 &alice.agency_client,
                 Some(vec![MessageStatusCode::Reviewed]),
                 Some(vec![uid.clone()]),
@@ -371,22 +376,22 @@ mod integration_tests {
             create_connected_connections(&mut consumer2, &mut institution).await;
 
         consumer1_to_institution
-            .send_generic_message(consumer1.wallet_handle, "Hello Institution from consumer1")
+            .send_generic_message(consumer1.wallet_handle, consumer1.pool_handle, "Hello Institution from consumer1")
             .await
             .unwrap();
         consumer2_to_institution
-            .send_generic_message(consumer2.wallet_handle, "Hello Institution from consumer2")
+            .send_generic_message(consumer2.wallet_handle, consumer2.pool_handle, "Hello Institution from consumer2")
             .await
             .unwrap();
 
         let consumer1_msgs = institution_to_consumer1
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(consumer1_msgs.len(), 2);
 
         let consumer2_msgs = institution_to_consumer2
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(consumer2_msgs.len(), 2);
