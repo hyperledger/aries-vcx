@@ -149,7 +149,7 @@ pub async fn build_schemas_json_verifier(
     Ok(schemas_json.to_string())
 }
 
-pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_rev_reg_defs_json(pool_handle: PoolHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
     let mut rev_reg_defs_json = json!({});
@@ -160,7 +160,6 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
             .as_ref()
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationDetails))?;
 
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
             let (id, json) = anoncreds::get_rev_reg_def_json(pool_handle, rev_reg_id)
                 .await
@@ -175,7 +174,7 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
     Ok(rev_reg_defs_json.to_string())
 }
 
-pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_rev_reg_json(pool_handle: PoolHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
     let mut rev_regs_json = json!({});
@@ -191,7 +190,6 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
             .as_ref()
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationTimestamp))?;
 
-        let pool_handle = crate::global::pool::get_main_pool_handle()?;
         if rev_regs_json.get(rev_reg_id).is_none() {
             let (id, json, timestamp) = anoncreds::get_rev_reg(pool_handle, rev_reg_id, timestamp.to_owned())
                 .await
@@ -284,7 +282,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_defs_json = build_rev_reg_defs_json(&credentials).await.unwrap();
+        let rev_reg_defs_json = build_rev_reg_defs_json(0, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
@@ -308,7 +306,7 @@ pub mod unit_tests {
             timestamp: Some(2),
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(&credentials).await.unwrap();
+        let rev_reg_json = build_rev_reg_json(0, &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(REV_REG_JSON).unwrap();
         let expected = json!({REV_REG_ID:{"1":json}}).to_string();

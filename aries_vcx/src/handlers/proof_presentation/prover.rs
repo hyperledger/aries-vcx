@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -57,6 +57,7 @@ impl Prover {
     pub async fn generate_presentation(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         credentials: String,
         self_attested_attrs: String,
     ) -> VcxResult<()> {
@@ -67,6 +68,7 @@ impl Prover {
         );
         self.step(
             wallet_handle,
+            pool_handle,
             ProverMessages::PreparePresentation((credentials, self_attested_attrs)),
             None,
         )
@@ -79,30 +81,32 @@ impl Prover {
         Ok(json!(proof).to_string())
     }
 
-    pub async fn set_presentation(&mut self, wallet_handle: WalletHandle, presentation: Presentation) -> VcxResult<()> {
+    pub async fn set_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        self.step(wallet_handle, ProverMessages::SetPresentation(presentation), None)
+        self.step(wallet_handle, pool_handle, ProverMessages::SetPresentation(presentation), None)
             .await
     }
 
     pub async fn send_proposal(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         proposal_data: PresentationProposalData,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
         self.step(
             wallet_handle,
+            pool_handle,
             ProverMessages::PresentationProposalSend(proposal_data),
             Some(send_message),
         )
         .await
     }
 
-    pub async fn send_presentation(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle,send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.step(wallet_handle, ProverMessages::SendPresentation, Some(send_message))
+        self.step(wallet_handle, pool_handle, ProverMessages::SendPresentation, Some(send_message))
             .await
     }
 
@@ -117,11 +121,12 @@ impl Prover {
     pub async fn handle_message(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(wallet_handle, message, send_message).await
+        self.step(wallet_handle, pool_handle, message, send_message).await
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
@@ -157,13 +162,14 @@ impl Prover {
     pub async fn step(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.prover_sm = self
             .prover_sm
             .clone()
-            .step(wallet_handle, message, send_message)
+            .step(wallet_handle, pool_handle, message, send_message)
             .await?;
         Ok(())
     }
@@ -171,6 +177,7 @@ impl Prover {
     pub async fn decline_presentation_request(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         send_message: SendClosure,
         reason: Option<String>,
         proposal: Option<String>,
@@ -184,6 +191,7 @@ impl Prover {
             (Some(reason), None) => {
                 self.step(
                     wallet_handle,
+                    pool_handle,
                     ProverMessages::RejectPresentationRequest(reason),
                     Some(send_message),
                 )
@@ -199,6 +207,7 @@ impl Prover {
 
                 self.step(
                     wallet_handle,
+                    pool_handle,
                     ProverMessages::ProposePresentation(presentation_preview),
                     Some(send_message),
                 )
@@ -218,6 +227,7 @@ impl Prover {
     pub async fn update_state(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<ProverState> {
@@ -229,7 +239,7 @@ impl Prover {
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

@@ -192,6 +192,7 @@ mod integration_tests {
         let generated_proof = proof
             .generate_presentation(
                 setup.wallet_handle,
+                setup.pool_handle,
                 selected_credentials.to_string(),
                 self_attested.to_string(),
             )
@@ -233,6 +234,7 @@ mod integration_tests {
         let generated_proof = proof
             .generate_presentation(
                 setup.wallet_handle,
+                setup.pool_handle,
                 selected_credentials.to_string(),
                 self_attested.to_string(),
             )
@@ -298,6 +300,7 @@ mod integration_tests {
         let generated_proof = proof
             .generate_presentation(
                 setup.wallet_handle,
+                setup.pool_handle,
                 selected_credentials.to_string(),
                 self_attested.to_string(),
             )
@@ -1174,185 +1177,187 @@ mod tests {
 
         // Credential Presentation
         faber.request_presentation().await;
-        alice.send_presentation().await;
-        faber.verify_presentation().await;
-        alice.ensure_presentation_verified().await;
-    }
-
-    #[tokio::test]
-    async fn aries_demo_create_with_message_id_flow() {
-        let _setup = SetupEmpty::init();
-        let _pool = Pool::open();
-
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
-
-        // Publish Schema and Credential Definition
-        faber.create_schema().await;
-
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        faber.create_nonrevocable_credential_definition().await;
-
-        // Connection
-        let invite = faber.create_invite().await;
-        alice.accept_invite(&invite).await;
-
-        faber.update_state(3).await;
-        alice.update_state(4).await;
-        faber.update_state(4).await;
-
-        /*
-         Create with message id flow
-        */
-
-        // Credential issuance
-        faber.offer_non_revocable_credential().await;
-
-        // Alice creates Credential object with message id
-        {
-            let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
-            let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).await.unwrap();
-            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
-
-            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-            alice
-                .credential
-                .send_request(
-                    alice.wallet_handle,
-                    alice.pool_handle,
-                    pw_did,
-                    alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+            alice.send_presentation().await;
+            faber.verify_presentation().await;
+            alice.ensure_presentation_verified().await;
         }
 
-        faber.send_credential().await;
-        alice.accept_credential().await;
+        #[tokio::test]
+        async fn aries_demo_create_with_message_id_flow() {
+            let _setup = SetupEmpty::init();
+            let _pool = Pool::open();
 
-        // Credential Presentation
-        faber.request_presentation().await;
+            let mut faber = Faber::setup().await;
+            let mut alice = Alice::setup().await;
 
-        // Alice creates Presentation object with message id
-        {
-            let message = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
-            let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).await.unwrap();
-            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
+            // Publish Schema and Credential Definition
+            faber.create_schema().await;
 
-            let credentials = alice.get_credentials_for_presentation().await;
+            std::thread::sleep(std::time::Duration::from_secs(2));
 
-            alice
-                .prover
-                .generate_presentation(alice.wallet_handle, credentials.to_string(), String::from("{}"))
-                .await
-                .unwrap();
-            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
+            faber.create_nonrevocable_credential_definition().await;
 
-            alice
-                .prover
-                .send_presentation(
-                    alice.wallet_handle,
-                    alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
+            // Connection
+            let invite = faber.create_invite().await;
+            alice.accept_invite(&invite).await;
+
+            faber.update_state(3).await;
+            alice.update_state(4).await;
+            faber.update_state(4).await;
+
+            /*
+             Create with message id flow
+            */
+
+            // Credential issuance
+            faber.offer_non_revocable_credential().await;
+
+            // Alice creates Credential object with message id
+            {
+                let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
+                let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).await.unwrap();
+                alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
+
+                let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+                alice
+                    .credential
+                    .send_request(
+                        alice.wallet_handle,
+                        alice.pool_handle,
+                        pw_did,
+                        alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+            }
+
+            faber.send_credential().await;
+            alice.accept_credential().await;
+
+            // Credential Presentation
+            faber.request_presentation().await;
+
+            // Alice creates Presentation object with message id
+            {
+                let message = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
+                let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).await.unwrap();
+                alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
+
+                let credentials = alice.get_credentials_for_presentation().await;
+
+                alice
+                    .prover
+                    .generate_presentation(alice.wallet_handle, alice.pool_handle, credentials.to_string(), String::from("{}"))
+                    .await
+                    .unwrap();
+                assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
+
+                alice
+                    .prover
+                    .send_presentation(
+                        alice.wallet_handle,
+                        alice.pool_handle,
+                        alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
+            }
+
+            faber.verify_presentation().await;
         }
 
-        faber.verify_presentation().await;
-    }
+        #[tokio::test]
+        async fn aries_demo_download_message_flow() {
+            SetupEmpty::init();
+            let _pool = Pool::open();
 
-    #[tokio::test]
-    async fn aries_demo_download_message_flow() {
-        SetupEmpty::init();
-        let _pool = Pool::open();
+            let mut faber = Faber::setup().await;
+            let mut alice = Alice::setup().await;
 
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+            // Publish Schema and Credential Definition
+            faber.create_schema().await;
 
-        // Publish Schema and Credential Definition
-        faber.create_schema().await;
+            std::thread::sleep(std::time::Duration::from_secs(2));
 
-        std::thread::sleep(std::time::Duration::from_secs(2));
+            faber.create_nonrevocable_credential_definition().await;
 
-        faber.create_nonrevocable_credential_definition().await;
+            // Connection
+            let invite = faber.create_invite().await;
+            alice.accept_invite(&invite).await;
 
-        // Connection
-        let invite = faber.create_invite().await;
-        alice.accept_invite(&invite).await;
+            faber.update_state(3).await;
+            alice.update_state(4).await;
+            faber.update_state(4).await;
 
-        faber.update_state(3).await;
-        alice.update_state(4).await;
-        faber.update_state(4).await;
+            /*
+             Create with message flow
+            */
 
-        /*
-         Create with message flow
-        */
+            // Credential issuance
+            faber.offer_non_revocable_credential().await;
 
-        // Credential issuance
-        faber.offer_non_revocable_credential().await;
+            // Alice creates Credential object with Offer
+            {
+                let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
 
-        // Alice creates Credential object with Offer
-        {
-            let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
+                let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+                alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
-            let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
-            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
+                alice
+                    .connection
+                    .update_message_status(&message.uid, &alice.agency_client)
+                    .await
+                    .unwrap();
 
-            alice
-                .connection
-                .update_message_status(&message.uid, &alice.agency_client)
-                .await
-                .unwrap();
+                let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+                alice
+                    .credential
+                    .send_request(
+                        alice.wallet_handle,
+                        alice.pool_handle,
+                        pw_did,
+                        alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+            }
 
-            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-            alice
-                .credential
-                .send_request(
-                    alice.wallet_handle,
-                    alice.pool_handle,
-                    pw_did,
-                    alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
-        }
+            faber.send_credential().await;
+            alice.accept_credential().await;
 
-        faber.send_credential().await;
-        alice.accept_credential().await;
+            // Credential Presentation
+            faber.request_presentation().await;
 
-        // Credential Presentation
-        faber.request_presentation().await;
+            // Alice creates Presentation object with Proof Request
+            {
+                let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
 
-        // Alice creates Presentation object with Proof Request
-        {
-            let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
+                let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
+                alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 
-            let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
-            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
+                alice
+                    .connection
+                    .update_message_status(&agency_msg.uid, &alice.agency_client)
+                    .await
+                    .unwrap();
 
-            alice
-                .connection
-                .update_message_status(&agency_msg.uid, &alice.agency_client)
-                .await
-                .unwrap();
+                let credentials = alice.get_credentials_for_presentation().await;
 
-            let credentials = alice.get_credentials_for_presentation().await;
+                alice
+                    .prover
+                    .generate_presentation(alice.wallet_handle, alice.pool_handle, credentials.to_string(), String::from("{}"))
+                    .await
+                    .unwrap();
+                assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            alice
-                .prover
-                .generate_presentation(alice.wallet_handle, credentials.to_string(), String::from("{}"))
-                .await
-                .unwrap();
-            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
-
-            alice
-                .prover
-                .send_presentation(
-                    alice.wallet_handle,
+                alice
+                    .prover
+                    .send_presentation(
+                        alice.wallet_handle,
+                        alice.pool_handle,
                     alice.connection.send_message_closure(alice.wallet_handle).unwrap(),
                 )
                 .await

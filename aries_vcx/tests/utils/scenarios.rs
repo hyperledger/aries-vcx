@@ -474,6 +474,7 @@ pub mod test_utils {
         prover
             .send_proposal(
                 alice.wallet_handle,
+                alice.pool_handle,
                 proposal_data,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -491,7 +492,7 @@ pub mod test_utils {
         cred_def_id: &str,
     ) {
         prover
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);
@@ -503,6 +504,7 @@ pub mod test_utils {
         prover
             .send_proposal(
                 alice.wallet_handle,
+                alice.pool_handle,
                 proposal_data,
                 connection.send_message_closure(alice.wallet_handle).unwrap(),
             )
@@ -563,7 +565,7 @@ pub mod test_utils {
     pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::Failed);
@@ -654,7 +656,7 @@ pub mod test_utils {
             selected_credentials
         );
         prover
-            .generate_presentation(alice.wallet_handle, selected_credentials.into(), "{}".to_string())
+            .generate_presentation(alice.wallet_handle, alice.pool_handle, selected_credentials.into(), "{}".to_string())
             .await
             .unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
@@ -663,6 +665,7 @@ pub mod test_utils {
             prover
                 .send_presentation(
                     alice.wallet_handle,
+                    alice.pool_handle,
                     connection.send_message_closure(alice.wallet_handle).unwrap(),
                 )
                 .await
@@ -902,7 +905,7 @@ pub mod test_utils {
         requested_values: Option<&str>,
     ) -> String {
         prover
-            .update_state(alice.wallet_handle, &alice.agency_client, connection)
+            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
             .unwrap();
         assert_eq!(prover.get_state(), ProverState::PresentationRequestReceived);

@@ -594,7 +594,7 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(self.wallet_handle, credentials.to_string(), String::from("{}"))
+                .generate_presentation(self.wallet_handle, self.pool_handle, credentials.to_string(), String::from("{}"))
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
@@ -602,6 +602,7 @@ pub mod test_utils {
             self.prover
                 .send_presentation(
                     self.wallet_handle,
+                    self.pool_handle,
                     self.connection.send_message_closure(self.wallet_handle).unwrap(),
                 )
                 .await
@@ -611,7 +612,7 @@ pub mod test_utils {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.prover
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(

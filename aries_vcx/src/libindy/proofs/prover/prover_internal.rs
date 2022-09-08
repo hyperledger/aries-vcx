@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -24,6 +24,7 @@ pub struct CredInfoProver {
 
 pub async fn build_schemas_json_prover(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
@@ -34,7 +35,6 @@ pub async fn build_schemas_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let pool_handle = crate::global::pool::get_main_pool_handle()?;
             let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
@@ -54,6 +54,7 @@ pub async fn build_schemas_json_prover(
 
 pub async fn build_cred_defs_json_prover(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
@@ -64,7 +65,6 @@ pub async fn build_cred_defs_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let pool_handle = crate::global::pool::get_main_pool_handle()?;
             let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id)
                 .await
                 .map_err(|err| {
@@ -156,7 +156,7 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
@@ -176,10 +176,8 @@ pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoPro
                     (None, None)
                 };
 
-                let pool_handle = crate::global::pool::get_main_pool_handle()?;
                 let (_, rev_reg_def_json) = get_rev_reg_def_json(pool_handle, rev_reg_id).await?;
 
-                let pool_handle = crate::global::pool::get_main_pool_handle()?;
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
@@ -268,10 +266,16 @@ pub fn build_requested_credentials_json(
 #[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod pool_tests {
+    use indy_sys::PoolHandle;
+
     use crate::libindy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
     use crate::utils::devsetup::SetupWalletPool;
     use crate::utils::get_temp_dir_path;
+
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
 
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
@@ -279,7 +283,7 @@ pub mod pool_tests {
 
         // empty vector
         assert_eq!(
-            build_rev_states_json(Vec::new().as_mut()).await.unwrap(),
+            build_rev_states_json(_dummy_pool_handle(), Vec::new().as_mut()).await.unwrap(),
             "{}".to_string()
         );
 
@@ -296,7 +300,7 @@ pub mod pool_tests {
             timestamp: None,
         };
         assert_eq!(
-            build_rev_states_json(vec![cred1].as_mut()).await.unwrap(),
+            build_rev_states_json(_dummy_pool_handle(), vec![cred1].as_mut()).await.unwrap(),
             "{}".to_string()
         );
     }
@@ -317,6 +321,11 @@ pub mod unit_tests {
     };
 
     use super::*;
+
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -363,7 +372,7 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(WalletHandle(0), &creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -382,7 +391,7 @@ pub mod unit_tests {
             tails_file: None,
             timestamp: None,
         }];
-        let err_kind = build_cred_defs_json_prover(setup.wallet_handle, &credential_ids)
+        let err_kind = build_cred_defs_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
             .await
             .unwrap_err()
             .kind();
@@ -405,7 +414,7 @@ pub mod unit_tests {
             timestamp: None,
         }];
         assert_eq!(
-            build_schemas_json_prover(setup.wallet_handle, &credential_ids)
+            build_schemas_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
                 .await
                 .unwrap_err()
                 .kind(),
@@ -418,7 +427,7 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         assert_eq!(
-            build_schemas_json_prover(WalletHandle(0), &Vec::new()).await.unwrap(),
+            build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &Vec::new()).await.unwrap(),
             "{}".to_string()
         );
 
@@ -446,7 +455,7 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(WalletHandle(0), &creds).await.unwrap();
+        let schemas = build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds).await.unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -747,7 +756,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(cred_info.as_mut()).await.unwrap();
+        let states = build_rev_states_json(_dummy_pool_handle(), cred_info.as_mut()).await.unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);
