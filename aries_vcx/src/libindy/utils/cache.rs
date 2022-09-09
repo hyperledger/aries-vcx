@@ -6,25 +6,25 @@ use crate::libindy::utils::wallet::{
     add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value,
 };
 
-static CACHE_TYPE: &str = "cache";
-static REV_REG_DELTA_CACHE_PREFIX: &str = "rev_reg_delta:";
+static WALLET_RECORD_TYPE: &str = "cache";
+static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
 
 ///
-/// Returns the rev reg delta cache.
+/// Returns stored revocation registry delta record
 ///
 /// # Arguments
 /// `rev_reg_id`: revocation registry id
 ///
 /// # Returns
 /// Revocation registry delta json as a string
-pub async fn get_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &str) -> Option<String> {
-    debug!("Getting rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
+pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> Option<String> {
+    debug!("Getting get_rev_reg_delta for rev_reg_id {}", rev_reg_id);
 
-    let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
+    let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
 
     match get_wallet_record(
         wallet_handle,
-        CACHE_TYPE,
+        WALLET_RECORD_TYPE,
         &wallet_id,
         &json!({"retrieveType": false, "retrieveValue": true, "retrieveTags": false}).to_string(),
     )
@@ -59,24 +59,23 @@ pub async fn get_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &s
 
 ///
 ///
-/// Saves rev reg delta cache.
-/// Errors are silently ignored.
+/// Rewrites or creates revocation registry delta record
 ///
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
 ///
-pub async fn set_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxResult<()> {
+pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxResult<()> {
     debug!(
-        "Setting rev_reg_delta_cache for rev_reg_id {}, cache {}",
+        "Setting set_rev_reg_delta for rev_reg_id {}, cache {}",
         rev_reg_id, cache
     );
     match serde_json::to_string(cache) {
         Ok(json) => {
-            let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
-            match update_wallet_record_value(wallet_handle, CACHE_TYPE, &wallet_id, &json)
+            let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
+            match update_wallet_record_value(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json)
                 .await
-                .or(add_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id, &json, None).await)
+                .or(add_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id, &json, None).await)
             {
                 Ok(_) => Ok(()),
                 Err(err) => Err(err),
@@ -88,19 +87,19 @@ pub async fn set_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &s
 
 ///
 ///
-/// Clears the cache
+/// Clears the stored reovcation registry delta record
 /// Errors are silently ignored.
 ///
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
 /// `cache`: Cache object.
 ///
-pub async fn clear_rev_reg_delta_cache(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
-    debug!("Clearing rev_reg_delta_cache for rev_reg_id {}", rev_reg_id);
-    if let Some(last_delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
+pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
+    debug!("Clearing clear_rev_reg_delta for rev_reg_id {}", rev_reg_id);
+    if let Some(last_delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
         debug!("Got last delta = {}", last_delta);
-        let wallet_id = format!("{}{}", REV_REG_DELTA_CACHE_PREFIX, rev_reg_id);
-        delete_wallet_record(wallet_handle, CACHE_TYPE, &wallet_id).await?;
+        let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
+        delete_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id).await?;
         debug!("Record with id {} deleted", wallet_id);
         Ok(last_delta)
     } else {

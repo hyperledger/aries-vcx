@@ -149,7 +149,7 @@ pub enum VcxErrorKind {
     CreatePoolConfig,
     #[fail(display = "Connection to Pool Ledger.")]
     PoolLedgerConnect,
-    #[fail(display = "Invalid response from ledger for paid transaction")]
+    #[fail(display = "Ledger rejected submitted request.")]
     InvalidLedgerResponse,
     #[fail(display = "No Pool open. Can't return handle.")]
     NoPoolOpen,

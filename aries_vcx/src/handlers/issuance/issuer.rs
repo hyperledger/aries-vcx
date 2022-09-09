@@ -163,6 +163,7 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
+    // todo: eliminate publish parameter - only revoke locally, leave it to caller to publish accumulated deltas
     pub async fn revoke_credential(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
         self.issuer_sm.revoke(wallet_handle, pool_handle, issuer_did, publish).await
     }

@@ -828,6 +828,7 @@ pub extern "C" fn vcx_issuer_credential_release(credential_handle: u32) -> u32 {
 /// #Returns
 /// Error code as a u32
 #[no_mangle]
+#[deprecated(note = "Use combination of vcx_issuer_revoke_credential_local and vcx_revocation_registry_publish_revocations instead")]
 pub extern "C" fn vcx_issuer_revoke_credential(
     command_handle: CommandHandle,
     credential_handle: u32,

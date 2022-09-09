@@ -7,8 +7,8 @@ use time;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
-use crate::libindy::utils::ledger::publish_txn_on_ledger;
+use crate::libindy::utils::cache::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
+use crate::libindy::utils::ledger::sign_and_submit_to_ledger;
 use crate::libindy::utils::ledger::*;
 use crate::libindy::utils::LibindyMock;
 use crate::utils;
@@ -553,7 +553,7 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, po
 
     let request = build_schema_request(submitter_did, schema).await?;
 
-    let response = publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
 
     _check_schema_response(&response)?;
 
@@ -621,7 +621,8 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHand
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
+    _check_response(&response)?;
     Ok(())
 }
 
@@ -707,7 +708,8 @@ pub async fn publish_rev_reg_def(
         )
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
+    _check_response(&response)?;
     Ok(())
 }
 
@@ -747,16 +749,18 @@ pub async fn publish_rev_reg_delta(
     pool_handle: PoolHandle,
     issuer_did: &str,
     rev_reg_id: &str,
-    rev_reg_entry_json: &str,
+    revoc_reg_delta_json: &str,
 ) -> VcxResult<String> {
     trace!(
-        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}",
+        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
         issuer_did,
         rev_reg_id,
-        rev_reg_entry_json
+        revoc_reg_delta_json
     );
-    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &request).await
+    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &request).await?;
+    _check_response(&response)?;
+    Ok(response)
 }
 
 pub async fn get_rev_reg_delta_json(
@@ -836,14 +840,13 @@ pub async fn revoke_credential(
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
-) -> VcxResult<String> {
+) -> VcxResult<()> {
     if settings::indy_mocks_enabled() {
-        return Ok(REV_REG_DELTA_JSON.to_string());
+        return Ok(());
     }
-    let delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
-
-    Ok(delta)
+    revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+    publish_local_revocations(wallet_handle, pool_handle, submitter_did, rev_reg_id).await?;
+    Ok(())
 }
 
 pub async fn revoke_credential_local(
@@ -852,19 +855,25 @@ pub async fn revoke_credential_local(
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxResult<()> {
-    let mut new_delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    if let Some(old_delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-        new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str()).await?;
+    let mut new_delta_json = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+    info!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
+    if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
+        info!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
+        new_delta_json = libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
+        info!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
     }
-    set_rev_reg_delta_cache(wallet_handle, rev_reg_id, &new_delta).await
+    set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
 }
 
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
-    if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-        match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-            Ok(_) => publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await,
-            Err(err) => Err(err),
+pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
+    if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
+        publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
+        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}", rev_reg_id);
+        match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
+            Ok(_) => info!("publish_local_revocations >>> rev_reg_delta cache cleared for rev_reg_id {}", rev_reg_id),
+            Err(err) => error!("publish_local_revocations >>> rev_reg_delta cache clear failed for rev_reg_id {}: {}", rev_reg_id, err)
         }
+        Ok(())
     } else {
         Err(VcxError::from(VcxErrorKind::RevDeltaNotFound))
     }
@@ -977,7 +986,8 @@ pub mod test_utils {
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list, submitter_did).await;
         let req = create_schema_req(&schema_json, submitter_did).await;
-        publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
+        let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
+        _check_response(&response).unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }

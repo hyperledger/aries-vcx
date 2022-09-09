@@ -188,6 +188,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     Ok(error::SUCCESS.code_num)
 }
 
+#[deprecated(note = "Use combination of issuer_credential::revoke_credential_local and revocation_registry::publish_revocations instead")]
 pub async fn revoke_credential(handle: u32, issuer_did: &str) -> VcxResult<()> {
     trace!("revoke_credential >>> handle: {}", handle);
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
