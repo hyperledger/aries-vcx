@@ -83,7 +83,8 @@ async function runFaber (options) {
     const schemaAttrs = getAliceSchemaAttrs()
     await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
     if (options.revocation === true) {
-      await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredId)
+      await vcxAgent.serviceCredIssuer.revokeCredentialLocal(issuerCredId)
+      await revReg.publishRevocations()
     }
 
     logger.info('#19 Create a Proof object')

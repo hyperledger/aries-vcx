@@ -90,10 +90,10 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     await sendCredentialAndProgress(issuerCredId, connectionId)
   }
 
-  async function revokeCredential (issuerCredId) {
+  async function revokeCredentialLocal (issuerCredId) {
     const issuerCred = await loadIssuerCredential(issuerCredId)
     logger.info(`Revoking credential ${issuerCredId}`)
-    await issuerCred.revokeCredential()
+    await issuerCred.revokeCredentialLocal()
   }
 
   async function getRevRegId (issuerCredId) {
@@ -155,7 +155,7 @@ module.exports.createServiceCredIssuer = function createServiceCredIssuer ({ log
     waitForCredentialAck,
     sendCredentialAndProgress,
     sendOfferAndCredential,
-    revokeCredential,
+    revokeCredentialLocal,
     credentialUpdate,
     getVcxCredentialIssuer,
 
