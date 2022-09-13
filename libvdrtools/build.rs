@@ -6,6 +6,9 @@ use std::path::PathBuf;
 
 #[cfg(feature = "cheqd")]
 use walkdir::WalkDir;
+#[cfg(feature = "cheqd")]
+use std::path::PathBuf;
+
 
 fn main() {
     let target = env::var("TARGET").unwrap();
@@ -78,6 +81,7 @@ fn main() {
 
 #[cfg(feature = "cheqd")]
 const COSMOS_SDK_DIR: &str = "cosmos-sdk-go";
+
 #[cfg(feature = "cheqd")]
 const CHEQDCOSMOS_DIR: &str = "cheqd-node";
 
