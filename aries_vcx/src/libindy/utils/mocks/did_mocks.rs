@@ -34,7 +34,7 @@ impl DidMocks {
     }
 
     pub fn has_did_mock_responses() -> bool {
-        DID_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+        !DID_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn clear_mocks() {
@@ -43,19 +43,13 @@ impl DidMocks {
 }
 
 pub fn did_mocks_enabled() -> bool {
-    ENABLED_MOCKS
-        .read().unwrap()
-        .contains(CONFIG_DID_MOCKS)
+    ENABLED_MOCKS.read().unwrap().contains(CONFIG_DID_MOCKS)
 }
 
 pub fn enable_did_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .insert(CONFIG_DID_MOCKS.to_string());
+    ENABLED_MOCKS.write().unwrap().insert(CONFIG_DID_MOCKS.to_string());
 }
 
 pub fn disable_did_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .remove(CONFIG_DID_MOCKS);
+    ENABLED_MOCKS.write().unwrap().remove(CONFIG_DID_MOCKS);
 }

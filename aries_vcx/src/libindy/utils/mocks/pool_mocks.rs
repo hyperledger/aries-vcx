@@ -34,7 +34,7 @@ impl PoolMocks {
     }
 
     pub fn has_pool_mock_responses() -> bool {
-        POOL_MOCK_RESPONSES.lock().unwrap().responses.len() > 0
+        !POOL_MOCK_RESPONSES.lock().unwrap().responses.is_empty()
     }
 
     pub fn clear_mocks() {
@@ -43,19 +43,13 @@ impl PoolMocks {
 }
 
 pub fn pool_mocks_enabled() -> bool {
-    ENABLED_MOCKS
-        .read().unwrap()
-        .contains(CONFIG_POOL_MOCKS)
+    ENABLED_MOCKS.read().unwrap().contains(CONFIG_POOL_MOCKS)
 }
 
 pub fn enable_pool_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .insert(CONFIG_POOL_MOCKS.to_string());
+    ENABLED_MOCKS.write().unwrap().insert(CONFIG_POOL_MOCKS.to_string());
 }
 
 pub fn disable_pool_mocks() {
-    ENABLED_MOCKS
-        .write().unwrap()
-        .remove(CONFIG_POOL_MOCKS);
+    ENABLED_MOCKS.write().unwrap().remove(CONFIG_POOL_MOCKS);
 }

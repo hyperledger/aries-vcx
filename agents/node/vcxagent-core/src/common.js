@@ -15,6 +15,29 @@ async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   }
 }
 
+async function getAgencyConfig (agencyUrl, logger) {
+  let agencyDid, agencyVerkey
+  const agencyInfoPath = `${agencyUrl}/agency`
+  logger.info(`Obtaining agency DID and verkey info from ${agencyInfoPath}`)
+  try {
+    const { data } = await axios.get(agencyInfoPath)
+    agencyDid = data.DID
+    agencyVerkey = data.verKey
+    if (!agencyDid || !agencyVerkey) {
+      throw Error(`Agency returned unexpected DID and verkey format: ${JSON.stringify(data)}`)
+    }
+  } catch (err) {
+    logger.warn(`Failed to obtain DID and verkey from agency with error ${err}. Defaults will be used.`)
+    agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
+    agencyVerkey = 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR'
+  }
+  return {
+    agency_endpoint: agencyUrl,
+    agency_did: agencyDid,
+    agency_verkey: agencyVerkey
+  }
+}
+
 async function pollFunction (fn, actionDescription, logger, attemptsThreshold = 10, timeoutMs = 2000) {
   let { result, isFinished } = await fn()
   let attempts = 1
@@ -68,3 +91,4 @@ function getRandomInt (min, max) {
 module.exports.waitUntilAgencyIsReady = waitUntilAgencyIsReady
 module.exports.pollFunction = pollFunction
 module.exports.getSampleSchemaData = getSampleSchemaData
+module.exports.getAgencyConfig = getAgencyConfig

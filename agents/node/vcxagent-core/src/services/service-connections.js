@@ -82,6 +82,13 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return state
   }
 
+  async function handleMessage (connectionId, ariesMsg) {
+    const connection = await loadConnection(connectionId)
+    const state = await connection.handleMessage(ariesMsg)
+    await saveConnection(connectionId, connection)
+    return state
+  }
+
   async function connectionAutoupdate (connectionId, updateAttemptsThreshold = 20, timeoutMs = 500) {
     const connection = await loadConnection(connectionId)
     await _progressConnectionToAcceptedState(connection, updateAttemptsThreshold, timeoutMs)
@@ -187,6 +194,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     // universal
     connectionAutoupdate,
     connectionUpdate,
+    handleMessage,
     getConnectionPwDid,
 
     signData,

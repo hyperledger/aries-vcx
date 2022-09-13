@@ -1,5 +1,6 @@
 export * from './api/init';
 export * from './api/credential-def';
+export * from './api/revocation-registry';
 export * from './api/common';
 export * from './api/connection';
 export * from './api/vcx-mock';

@@ -1,13 +1,13 @@
-use crate::messages::a2a::message_type::MessageType;
-use crate::messages::a2a::message_family::MessageFamilies;
-use crate::messages::mime_type::MimeType;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::messages::a2a::message_family::MessageFamilies;
+use crate::messages::a2a::message_type::MessageType;
+use crate::messages::mime_type::MimeType;
 
 pub mod credential;
+pub mod credential_ack;
 pub mod credential_offer;
 pub mod credential_proposal;
 pub mod credential_request;
-pub mod credential_ack;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct CredentialPreviewData {
@@ -23,21 +23,23 @@ impl CredentialPreviewData {
 
     pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialPreviewData {
         let data_value = match mime_type {
-            MimeType::Plain => {
-                CredentialValue {
-                    name: name.to_string(),
-                    value: value.to_string(),
-                    _type: None,
-                }
-            }
+            MimeType::Plain => CredentialValue {
+                name: name.to_string(),
+                value: value.to_string(),
+                _type: None,
+            },
         };
         self.attributes.push(data_value);
         self
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self.attributes)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed serialize credential preview attributes\nError: {}", err)))
+        serde_json::to_string(&self.attributes).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                format!("Failed serialize credential preview attributes\nError: {}", err),
+            )
+        })
     }
 }
 
@@ -60,7 +62,8 @@ impl Default for CredentialPreviewData {
 }
 
 #[cfg(test)]
-pub mod test {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use crate::messages::ack;
     use crate::messages::error;
     use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
@@ -70,6 +73,6 @@ pub mod test {
     }
 
     pub fn _problem_report() -> error::ProblemReport {
-        error::tests::_problem_report().set_thread_id(&_credential_offer().id.0)
+        error::test_utils::_problem_report().set_thread_id(&_credential_offer().id.0)
     }
 }

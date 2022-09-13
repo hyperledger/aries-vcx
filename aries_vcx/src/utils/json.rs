@@ -27,8 +27,11 @@ pub fn mapped_key_rewrite<T: KeyMatch>(val: Value, remap: &Vec<(T, String)>) -> 
     _mapped_key_rewrite(val, &mut context, remap)
 }
 
-
-fn _mapped_key_rewrite<T: KeyMatch>(val: Value, context: &mut Vec<String>, remap: &Vec<(T, String)>) -> VcxResult<Value> {
+fn _mapped_key_rewrite<T: KeyMatch>(
+    val: Value,
+    context: &mut Vec<String>,
+    remap: &Vec<(T, String)>,
+) -> VcxResult<Value> {
     if let Value::Object(mut map) = val {
         let mut keys: Vec<String> = _collect_keys(&map);
 
@@ -37,7 +40,6 @@ fn _mapped_key_rewrite<T: KeyMatch>(val: Value, context: &mut Vec<String>, remap
                 warn!("Unexpected key value mutation");
                 VcxError::from_msg(VcxErrorKind::InvalidJson, "Unexpected key value mutation")
             })?;
-
 
             let mut new_k = k;
             for matcher in remap {
@@ -67,15 +69,14 @@ fn _collect_keys(map: &Map<String, Value>) -> Vec<String> {
     rtn
 }
 
-
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "general_test")]
+mod unit_tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn simple() {
-        let simple_map = vec!(("d".to_string(), "devin".to_string()));
+        let simple_map = vec![("d".to_string(), "devin".to_string())];
         let simple = json!({"d":"d"});
         let expected = json!({"devin":"d"});
         let transformed = mapped_key_rewrite(simple, &simple_map).unwrap();

@@ -8,10 +8,12 @@ pub fn encode(s: &str) -> VcxResult<String> {
         Ok(val) => Ok(val.to_string()),
         Err(_) => {
             let hash = sha256(s.as_bytes());
-            let bignum = BigNum::from_slice(&hash)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::EncodeError, format!("Cannot encode string: {}", err)))?;
+            let bignum = BigNum::from_slice(&hash).map_err(|err| {
+                VcxError::from_msg(VcxErrorKind::EncodeError, format!("Cannot encode string: {}", err))
+            })?;
 
-            let encoded = bignum.to_dec_str()
+            let encoded = bignum
+                .to_dec_str()
                 .map_err(|err| VcxError::from_msg(VcxErrorKind::EncodeError, format!("Cannot encode string: {}", err)))?
                 .to_string();
 
@@ -21,11 +23,11 @@ pub fn encode(s: &str) -> VcxResult<String> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 mod test {
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_encoding() {
         // number
         {

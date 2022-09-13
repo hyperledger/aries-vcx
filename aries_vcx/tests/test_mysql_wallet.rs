@@ -24,9 +24,7 @@ mod test_utils {
 
         let url = format!("mysql://root:mysecretpassword@localhost:3306/{}", db_name);
         let mut connection = MySqlConnection::connect(&url).await?;
-        let res = sqlx::migrate!("./migrations")
-            .run(&mut connection)
-            .await;
+        let res = sqlx::migrate!("./migrations").run(&mut connection).await;
         debug!("Create tables result: {:?}", res);
         Ok(db_name)
     }
@@ -35,11 +33,16 @@ mod test_utils {
 #[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
-    use aries_vcx::init::{init_issuer_config, open_as_main_wallet};
-    use aries_vcx::libindy::utils::wallet::{close_main_wallet, configure_issuer_wallet, create_wallet, WalletConfig, WalletConfigBuilder};
-    use aries_vcx::settings;
+    use agency_client::agency_client::AgencyClient;
+    use agency_client::configuration::AgentProvisionConfig;
+    use aries_vcx::global::settings;
+    use aries_vcx::global::settings::init_issuer_config;
+    use aries_vcx::libindy::utils::wallet::{
+        close_wallet, create_wallet_with_master_secret, wallet_configure_issuer, WalletConfig, WalletConfigBuilder,
+    };
+    use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
-    use aries_vcx::utils::provision::{AgentProvisionConfig, AgentProvisionConfigBuilder, provision_cloud_agent};
+    use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
 
     use crate::test_utils::setup_mysql_walletdb;
@@ -54,11 +57,13 @@ mod dbtests {
             "port": 3306 as u32,
             "db_name": db_name,
             "default_connection_limit": 50 as u32
-        }).to_string();
+        })
+        .to_string();
         let storage_credentials = json!({
             "user": "root",
             "pass": "mysecretpassword"
-        }).to_string();
+        })
+        .to_string();
         let enterprise_seed = "000000000000000000000000Trustee1";
         let config_wallet: WalletConfig = WalletConfigBuilder::default()
             .wallet_name(format!("faber_wallet_{}", uuid::Uuid::new_v4()))
@@ -69,17 +74,21 @@ mod dbtests {
             .storage_credentials(storage_credentials)
             .build()
             .unwrap();
-        let config_provision_agent: AgentProvisionConfig = AgentProvisionConfigBuilder::default()
-            .agency_did(AGENCY_DID.to_string())
-            .agency_verkey(AGENCY_VERKEY.to_string())
-            .agency_endpoint(AGENCY_ENDPOINT.to_string())
-            .build()
-            .unwrap();
-        create_wallet(&config_wallet).await.unwrap();
-        open_as_main_wallet(&config_wallet).await.unwrap();
-        let config_issuer = configure_issuer_wallet(enterprise_seed).await.unwrap();
+        let config_provision_agent: AgentProvisionConfig = AgentProvisionConfig {
+            agency_did: AGENCY_DID.to_string(),
+            agency_verkey: AGENCY_VERKEY.to_string(),
+            agency_endpoint: AGENCY_ENDPOINT.to_string(),
+            agent_seed: None,
+        };
+        // create_main_wallet(&config_wallet).await.unwrap();
+        create_wallet_with_master_secret(&config_wallet).await.unwrap();
+        let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+        let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
-        provision_cloud_agent(&config_provision_agent).await.unwrap();
-        close_main_wallet().await.unwrap();
+        let mut agency_client = AgencyClient::new();
+        provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
+            .await
+            .unwrap();
+        close_wallet(wallet_handle).await.unwrap();
     }
 }

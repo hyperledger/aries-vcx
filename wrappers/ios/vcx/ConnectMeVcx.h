@@ -274,11 +274,6 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
 
 - (int)vcxShutdown:(BOOL *)deleteWallet;
 
-- (void)downloadMessages:(NSString *)messageStatus
-                    uid_s:(NSString *)uid_s
-                  pwdids:(NSString *)pwdids
-              completion:(void (^)(NSError *error, NSString* messages))completion;
-
 - (void)downloadMessagesV2:(NSString *)connectionHandles
             messageStatus:(NSString *)messageStatus
                     uid_s:(NSString *)uid_s

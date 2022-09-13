@@ -1,5 +1,7 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ping {
@@ -8,15 +10,20 @@ pub struct Ping {
     #[serde(default)]
     pub response_requested: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    comment: Option<String>,
+    pub comment: Option<String>,
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 impl Ping {
-    pub fn create() -> Ping {
-        Ping::default()
+    pub fn create(thread_id: MessageId) -> Ping {
+        let mut ping = Ping::default();
+        ping.id = thread_id;
+        ping
     }
 
     pub fn set_comment(mut self, comment: Option<String>) -> Ping {
@@ -24,17 +31,19 @@ impl Ping {
         self
     }
 
-    pub fn request_response(mut self) -> Ping {
-        self.response_requested = true;
+    pub fn set_request_response(mut self, request_response: bool) -> Ping {
+        self.response_requested = request_response;
         self
     }
 }
 
+timing_optional!(Ping);
 threadlike_optional!(Ping);
 a2a_message!(Ping);
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
@@ -49,6 +58,7 @@ pub mod tests {
             response_requested: false,
             thread: Some(_thread()),
             comment: Some(_comment()),
+            timing: None,
         }
     }
 
@@ -58,11 +68,11 @@ pub mod tests {
             response_requested: false,
             thread: None,
             comment: Some(_comment()),
+            timing: None,
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ping_build_works() {
         let ping: Ping = Ping::default()
             .set_comment(Some(_comment()))

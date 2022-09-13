@@ -21,10 +21,10 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate time;
-extern crate uuid;
-extern crate tokio;
 extern crate async_std;
+extern crate time;
+extern crate tokio;
+extern crate uuid;
 
 #[macro_use]
 pub mod api_lib;

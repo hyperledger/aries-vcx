@@ -1,6 +1,8 @@
+use crate::actors::Actors;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
-use crate::settings::Actors;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Disclose {
@@ -9,7 +11,13 @@ pub struct Disclose {
     pub protocols: Vec<ProtocolDescriptor>,
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(Disclose);
+timing_optional!(Disclose);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProtocolDescriptor {
@@ -17,9 +25,6 @@ pub struct ProtocolDescriptor {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<Actors>>,
 }
-
-
-threadlike_optional!(Disclose);
 
 impl Disclose {
     pub fn create() -> Disclose {
@@ -41,13 +46,16 @@ impl Disclose {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub mod test_utils {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 
-    fn _protocol_descriptor() -> ProtocolDescriptor {
-        ProtocolDescriptor { pid: String::from("https://didcomm.org/"), roles: None }
+    pub fn _protocol_descriptor() -> ProtocolDescriptor {
+        ProtocolDescriptor {
+            pid: String::from("https://didcomm.org/"),
+            roles: None,
+        }
     }
 
     pub fn _disclose() -> Disclose {
@@ -55,14 +63,22 @@ pub mod tests {
             id: MessageId::id(),
             protocols: vec![_protocol_descriptor()],
             thread: Some(_thread()),
+            timing: None,
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::connection::response::test_utils::*;
+    use crate::messages::discovery::disclose::test_utils::{_disclose, _protocol_descriptor};
+
+    use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_disclose_build_works() {
-        let mut disclose: Disclose = Disclose::default()
-            .set_thread_id(&_thread_id());
+        let mut disclose: Disclose = Disclose::default().set_thread_id(&_thread_id());
 
         disclose.add_protocol(_protocol_descriptor());
 

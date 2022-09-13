@@ -3,7 +3,7 @@ use std::fmt;
 use failure::{Backtrace, Context, Fail};
 use indy::IndyError;
 
-use crate::utils::error_utils;
+use crate::utils::error_utils::kind_to_error_message;
 
 pub mod prelude {
     pub use super::*;
@@ -75,8 +75,6 @@ pub enum AgencyClientErrorKind {
     #[fail(display = "Failed to create agency client")]
     CreateAgent,
 
-    #[fail(display = "Common error {}", 0)]
-    Common(u32),
     #[fail(display = "Libndy error {}", 0)]
     LibndyError(u32),
     #[fail(display = "Unknown libindy error")]
@@ -117,8 +115,12 @@ impl fmt::Display for AgencyClientError {
 
 impl AgencyClientError {
     pub fn from_msg<D>(kind: AgencyClientErrorKind, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        AgencyClientError { inner: Context::new(msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        AgencyClientError {
+            inner: Context::new(msg).context(kind),
+        }
     }
 
     pub fn kind(&self) -> AgencyClientErrorKind {
@@ -126,105 +128,34 @@ impl AgencyClientError {
     }
 
     pub fn extend<D>(self, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
         let kind = self.kind();
-        AgencyClientError { inner: self.inner.map(|_| msg).context(kind) }
+        AgencyClientError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 
     pub fn map<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientError
-        where D: fmt::Display + fmt::Debug + Send + Sync + 'static {
-        AgencyClientError { inner: self.inner.map(|_| msg).context(kind) }
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        AgencyClientError {
+            inner: self.inner.map(|_| msg).context(kind),
+        }
     }
 }
 
 impl From<AgencyClientErrorKind> for AgencyClientError {
     fn from(kind: AgencyClientErrorKind) -> AgencyClientError {
-        AgencyClientError::from_msg(kind, error_utils::error_message(&kind.clone().into()))
+        AgencyClientError::from_msg(kind, kind_to_error_message(&kind))
     }
 }
 
 impl From<Context<AgencyClientErrorKind>> for AgencyClientError {
     fn from(inner: Context<AgencyClientErrorKind>) -> AgencyClientError {
         AgencyClientError { inner }
-    }
-}
-
-impl From<AgencyClientError> for u32 {
-    fn from(code: AgencyClientError) -> u32 {
-        code.kind().into()
-    }
-}
-
-impl From<AgencyClientErrorKind> for u32 {
-    fn from(code: AgencyClientErrorKind) -> u32 {
-        match code {
-            AgencyClientErrorKind::InvalidState => error_utils::INVALID_STATE.code_num,
-            AgencyClientErrorKind::InvalidConfiguration => error_utils::INVALID_CONFIGURATION.code_num,
-            AgencyClientErrorKind::InvalidJson => error_utils::INVALID_JSON.code_num,
-            AgencyClientErrorKind::InvalidOption => error_utils::INVALID_OPTION.code_num,
-            AgencyClientErrorKind::InvalidMessagePack => error_utils::INVALID_MSGPACK.code_num,
-            AgencyClientErrorKind::IOError => error_utils::IOERROR.code_num,
-            AgencyClientErrorKind::LibindyInvalidStructure => error_utils::LIBINDY_INVALID_STRUCTURE.code_num,
-            AgencyClientErrorKind::TimeoutLibindy => error_utils::TIMEOUT_LIBINDY_ERROR.code_num,
-            AgencyClientErrorKind::InvalidLibindyParam => error_utils::INVALID_LIBINDY_PARAM.code_num,
-            AgencyClientErrorKind::InvalidWalletHandle => error_utils::INVALID_WALLET_HANDLE.code_num,
-            AgencyClientErrorKind::DuplicationWallet => error_utils::WALLET_ALREADY_EXISTS.code_num,
-            AgencyClientErrorKind::WalletNotFound => error_utils::WALLET_NOT_FOUND.code_num,
-            AgencyClientErrorKind::WalletRecordNotFound => error_utils::WALLET_RECORD_NOT_FOUND.code_num,
-            AgencyClientErrorKind::DuplicationWalletRecord => error_utils::DUPLICATE_WALLET_RECORD.code_num,
-            AgencyClientErrorKind::WalletAlreadyOpen => error_utils::WALLET_ALREADY_OPEN.code_num,
-            AgencyClientErrorKind::DuplicationMasterSecret => error_utils::DUPLICATE_MASTER_SECRET.code_num,
-            AgencyClientErrorKind::DuplicationDid => error_utils::DID_ALREADY_EXISTS_IN_WALLET.code_num,
-            AgencyClientErrorKind::PostMessageFailed => error_utils::POST_MSG_FAILURE.code_num,
-            AgencyClientErrorKind::UnknownError => error_utils::UNKNOWN_ERROR.code_num,
-            AgencyClientErrorKind::InvalidDid => error_utils::INVALID_DID.code_num,
-            AgencyClientErrorKind::InvalidVerkey => error_utils::INVALID_VERKEY.code_num,
-            AgencyClientErrorKind::InvalidUrl => error_utils::INVALID_URL.code_num,
-            AgencyClientErrorKind::MissingWalletKey => error_utils::MISSING_WALLET_KEY.code_num,
-            AgencyClientErrorKind::SerializationError => error_utils::SERIALIZATION_ERROR.code_num,
-            AgencyClientErrorKind::NotBase58 => error_utils::NOT_BASE58.code_num,
-            AgencyClientErrorKind::InvalidHttpResponse => error_utils::INVALID_HTTP_RESPONSE.code_num,
-            AgencyClientErrorKind::UnknownLibndyError => error_utils::UNKNOWN_LIBINDY_ERROR.code_num,
-            AgencyClientErrorKind::CreateAgent => error_utils::CREATE_AGENT.code_num,
-            AgencyClientErrorKind::Common(num) => num,
-            AgencyClientErrorKind::LibndyError(num) => num,
-        }
-    }
-}
-
-impl From<u32> for AgencyClientErrorKind {
-    fn from(code: u32) -> AgencyClientErrorKind {
-        match code {
-            _ if { error_utils::INVALID_STATE.code_num == code } => AgencyClientErrorKind::InvalidState,
-            _ if { error_utils::INVALID_CONFIGURATION.code_num == code } => AgencyClientErrorKind::InvalidConfiguration,
-            _ if { error_utils::INVALID_JSON.code_num == code } => AgencyClientErrorKind::InvalidJson,
-            _ if { error_utils::INVALID_OPTION.code_num == code } => AgencyClientErrorKind::InvalidOption,
-            _ if { error_utils::INVALID_MSGPACK.code_num == code } => AgencyClientErrorKind::InvalidMessagePack,
-            _ if { error_utils::IOERROR.code_num == code } => AgencyClientErrorKind::IOError,
-            _ if { error_utils::LIBINDY_INVALID_STRUCTURE.code_num == code } => AgencyClientErrorKind::LibindyInvalidStructure,
-            _ if { error_utils::TIMEOUT_LIBINDY_ERROR.code_num == code } => AgencyClientErrorKind::TimeoutLibindy,
-            _ if { error_utils::INVALID_LIBINDY_PARAM.code_num == code } => AgencyClientErrorKind::InvalidLibindyParam,
-            _ if { error_utils::INVALID_WALLET_HANDLE.code_num == code } => AgencyClientErrorKind::InvalidWalletHandle,
-            _ if { error_utils::WALLET_ALREADY_EXISTS.code_num == code } => AgencyClientErrorKind::DuplicationWallet,
-            _ if { error_utils::WALLET_NOT_FOUND.code_num == code } => AgencyClientErrorKind::WalletNotFound,
-            _ if { error_utils::WALLET_RECORD_NOT_FOUND.code_num == code } => AgencyClientErrorKind::WalletRecordNotFound,
-            _ if { error_utils::DUPLICATE_WALLET_RECORD.code_num == code } => AgencyClientErrorKind::DuplicationWalletRecord,
-            _ if { error_utils::WALLET_ALREADY_OPEN.code_num == code } => AgencyClientErrorKind::WalletAlreadyOpen,
-            _ if { error_utils::DUPLICATE_MASTER_SECRET.code_num == code } => AgencyClientErrorKind::DuplicationMasterSecret,
-            _ if { error_utils::DID_ALREADY_EXISTS_IN_WALLET.code_num == code } => AgencyClientErrorKind::DuplicationDid,
-            _ if { error_utils::POST_MSG_FAILURE.code_num == code } => AgencyClientErrorKind::PostMessageFailed,
-            _ if { error_utils::UNKNOWN_ERROR.code_num == code } => AgencyClientErrorKind::UnknownError,
-            _ if { error_utils::INVALID_DID.code_num == code } => AgencyClientErrorKind::InvalidDid,
-            _ if { error_utils::INVALID_VERKEY.code_num == code } => AgencyClientErrorKind::InvalidVerkey,
-            _ if { error_utils::INVALID_URL.code_num == code } => AgencyClientErrorKind::InvalidUrl,
-            _ if { error_utils::MISSING_WALLET_KEY.code_num == code } => AgencyClientErrorKind::MissingWalletKey,
-            _ if { error_utils::SERIALIZATION_ERROR.code_num == code } => AgencyClientErrorKind::SerializationError,
-            _ if { error_utils::NOT_BASE58.code_num == code } => AgencyClientErrorKind::NotBase58,
-            _ if { error_utils::INVALID_HTTP_RESPONSE.code_num == code } => AgencyClientErrorKind::InvalidHttpResponse,
-            _ if { error_utils::UNKNOWN_LIBINDY_ERROR.code_num == code } => AgencyClientErrorKind::UnknownLibndyError,
-            _ if { error_utils::CREATE_AGENT.code_num == code } => AgencyClientErrorKind::CreateAgent,
-            _ => AgencyClientErrorKind::UnknownError,
-        }
     }
 }
 
@@ -242,33 +173,9 @@ impl From<IndyError> for AgencyClientError {
             213 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationWalletRecord, error.message),
             404 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationMasterSecret, error.message),
             600 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationDid, error.message),
-            error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message)
+            error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message),
         }
     }
 }
 
 pub type AgencyClientResult<T> = Result<T, AgencyClientError>;
-
-/// Extension methods for `Result`.
-pub trait VcxResultExt<T, E> {
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientResult<T> where D: fmt::Display + Send + Sync + 'static;
-}
-
-impl<T, E> VcxResultExt<T, E> for Result<T, E> where E: Fail
-{
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientResult<T> where D: fmt::Display + Send + Sync + 'static {
-        self.map_err(|err| err.context(msg).context(kind).into())
-    }
-}
-
-/// Extension methods for `Error`.
-pub trait VcxErrorExt {
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientError where D: fmt::Display + Send + Sync + 'static;
-}
-
-impl<E> VcxErrorExt for E where E: Fail
-{
-    fn to_vcx<D>(self, kind: AgencyClientErrorKind, msg: D) -> AgencyClientError where D: fmt::Display + Send + Sync + 'static {
-        self.context(format!("\n{}: {}", std::any::type_name::<E>(), msg)).context(kind).into()
-    }
-}

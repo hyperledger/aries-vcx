@@ -2,6 +2,8 @@ use crate::error::VcxResult;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialRequest {
@@ -13,7 +15,14 @@ pub struct CredentialRequest {
     pub requests_attach: Attachments,
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(CredentialRequest);
+a2a_message!(CredentialRequest);
+timing_optional!(CredentialRequest);
 
 impl CredentialRequest {
     pub fn create() -> Self {
@@ -26,13 +35,13 @@ impl CredentialRequest {
     }
 
     pub fn set_requests_attach(mut self, credential_request: String) -> VcxResult<CredentialRequest> {
-        self.requests_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, serde_json::Value::String(credential_request))?;
+        self.requests_attach.add_base64_encoded_json_attachment(
+            AttachmentId::CredentialRequest,
+            serde_json::Value::String(credential_request),
+        )?;
         Ok(self)
     }
 }
-
-threadlike_optional!(CredentialRequest);
-a2a_message!(CredentialRequest);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -57,43 +66,50 @@ pub mod test_utils {
 
     pub fn _credential_request() -> CredentialRequest {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment())
+            .unwrap();
 
         CredentialRequest {
             id: MessageId::id(),
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread()),
+            timing: None,
         }
     }
 
     pub fn _credential_request_1() -> CredentialRequest {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialRequest, _attachment())
+            .unwrap();
 
         CredentialRequest {
             id: MessageId::id(),
             comment: Some(_comment()),
             requests_attach: attachment,
             thread: Some(thread_1()),
+            timing: None,
         }
     }
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::issuance::credential_offer::test_utils::thread_id;
     use crate::messages::issuance::credential_request::test_utils::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_request_build_works() {
         let credential_request: CredentialRequest = CredentialRequest::create()
             .set_comment(_comment())
             .set_thread_id(&thread_id())
-            .set_requests_attach(_attachment().to_string()).unwrap();
+            .set_requests_attach(_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_credential_request(), credential_request);
     }

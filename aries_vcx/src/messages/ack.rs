@@ -1,14 +1,23 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Ack {
     #[serde(rename = "@id")]
     pub id: MessageId,
-    status: AckStatus,
+    pub status: AckStatus,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike!(Ack);
+a2a_message!(Ack);
+timing_optional!(Ack);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AckStatus {
@@ -37,9 +46,6 @@ impl Ack {
     }
 }
 
-threadlike!(Ack);
-a2a_message!(Ack);
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PleaseAck {}
 
@@ -55,7 +61,7 @@ macro_rules! please_ack (($type:ident) => (
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::connection::response::test_utils::{_thread, _thread_1};
+    use crate::messages::connection::response::test_utils::{_thread, _thread_1, _thread_random};
 
     use super::*;
 
@@ -64,6 +70,16 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread(),
+            timing: None,
+        }
+    }
+
+    pub fn _ack_random_thread() -> Ack {
+        Ack {
+            id: MessageId::id(),
+            status: AckStatus::Ok,
+            thread: _thread_random(),
+            timing: None,
         }
     }
 
@@ -72,23 +88,22 @@ pub mod test_utils {
             id: MessageId::id(),
             status: AckStatus::Fail,
             thread: _thread_1(),
+            timing: None,
         }
     }
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::ack::test_utils::_ack;
     use crate::messages::connection::response::test_utils::_thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ack_build_works() {
-        let ack: Ack = Ack::default()
-            .set_status(AckStatus::Fail)
-            .set_thread_id(&_thread_id());
+        let ack: Ack = Ack::default().set_status(AckStatus::Fail).set_thread_id(&_thread_id());
 
         assert_eq!(_ack(), ack);
     }

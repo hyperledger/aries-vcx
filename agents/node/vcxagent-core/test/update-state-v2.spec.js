@@ -14,8 +14,9 @@ describe('test update state', () => {
   it('Faber should send credential to Alice', async () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
-      await faber.buildLedgerPrimitives()
-      await faber.sendCredentialOffer()
+      const tailsDir = `${__dirname}/tmp/faber/tails`
+      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
+      await faber.sendCredentialOfferV2()
       await alice.acceptCredentialOffer()
 
       await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
@@ -24,7 +25,7 @@ describe('test update state', () => {
       await faber.receiveCredentialAck()
 
       const request = await faber.requestProofFromAlice()
-      await alice.sendHolderProof(JSON.parse(request))
+      await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir)
       await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
       await alice.updateStateHolderProofV2(ProverStateType.Finished)
     } catch (err) {

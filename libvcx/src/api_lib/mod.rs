@@ -4,7 +4,7 @@ use std::fmt;
 pub mod utils;
 pub mod api_c;
 pub mod api_handle;
-
+pub mod global;
 
 /// This macro allows the VcxStateType to be
 /// serialized within serde as an integer (represented as
@@ -111,7 +111,6 @@ pub struct VcxStatus {
     pub status: libc::c_int,
     pub msg: *mut libc::c_char,
 }
-
 
 #[cfg(test)]
 mod tests {

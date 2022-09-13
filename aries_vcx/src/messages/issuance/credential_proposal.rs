@@ -2,6 +2,8 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialProposal {
@@ -15,7 +17,14 @@ pub struct CredentialProposal {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(CredentialProposal);
+a2a_message!(CredentialProposal);
+timing_optional!(CredentialProposal);
 
 impl CredentialProposal {
     pub fn create() -> Self {
@@ -47,9 +56,6 @@ impl CredentialProposal {
         self
     }
 }
-
-threadlike_optional!(CredentialProposal);
-a2a_message!(CredentialProposal);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialProposalData {
@@ -112,15 +118,18 @@ pub mod test_utils {
         String::from("comment")
     }
 
-    pub fn _schema_id() -> String { String::from("schema:id") }
+    pub fn _schema_id() -> String {
+        String::from("schema:id")
+    }
 
-    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+    pub fn _cred_def_id() -> String {
+        String::from("cred_def_id:id")
+    }
 
     pub fn _credential_preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
 
-        CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain)
+        CredentialPreviewData::new().add_value(name, value, MimeType::Plain)
     }
 
     pub fn _credential_proposal() -> CredentialProposal {
@@ -131,6 +140,7 @@ pub mod test_utils {
             schema_id: _schema_id(),
             thread: Some(thread()),
             cred_def_id: _cred_def_id(),
+            timing: None,
         }
     }
 
@@ -145,14 +155,14 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::issuance::credential_offer::test_utils::{_value, thread_id};
     use crate::messages::issuance::credential_proposal::test_utils::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_proposal_build_works() {
         let (name, value) = _value();
 

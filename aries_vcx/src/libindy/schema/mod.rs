@@ -1,3 +1,5 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
 use crate::libindy::credential_def::PublicEntityStateType;
 use crate::libindy::utils::anoncreds;
@@ -24,30 +26,36 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub fn get_source_id(&self) -> &String { &self.source_id }
+    pub fn get_source_id(&self) -> &String {
+        &self.source_id
+    }
 
-    pub fn get_schema_id(&self) -> &String { &self.schema_id }
+    pub fn get_schema_id(&self) -> &String {
+        &self.schema_id
+    }
 
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err.into())
+            .map_err(|err| err)
             .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
     }
 
     pub fn from_str(data: &str) -> VcxResult<Schema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
-            .map_err(|err| err.into())
+            .map_err(|err| err)
             .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
     }
 
-    pub async fn update_state(&mut self) -> VcxResult<u32> {
-        if anoncreds::get_schema_json(&self.schema_id).await.is_ok() {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle) -> VcxResult<u32> {
+        if anoncreds::get_schema_json(wallet_handle, &self.schema_id).await.is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
     }
 
-    pub fn get_state(&self) -> u32 { self.state as u32 }
+    pub fn get_state(&self) -> u32 {
+        self.state as u32
+    }
 }

@@ -3,6 +3,7 @@ const {
   createWallet, openMainWallet, closeMainWallet,
   configureIssuerWallet
 } = require('@hyperledger/node-vcx-wrapper')
+const axios = require('axios')
 
 async function initRustApiAndLogger (logLevel) {
   const rustApi = initRustAPI()
@@ -18,7 +19,7 @@ async function initRustapi (logLevel = 'vcx=error', num_threads = 4) {
   await initThreadpool({ num_threads })
 }
 
-async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, walletExtraConfigs, logger) {
+async function provisionAgentInAgency (agentName, genesisPath, agencyConfig, seed, walletExtraConfigs, logger) {
   logger.info('Provisioning cloud agent')
   if (!agentName) {
     throw Error('agentName not specified')
@@ -26,8 +27,8 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
   if (!genesisPath) {
     throw Error('genesisPath not specified')
   }
-  if (!agencyUrl) {
-    throw Error('agencyUrl not specified')
+  if (!agencyConfig) {
+    throw Error('agencyConfig not specified')
   }
   if (!seed) {
     throw Error('seed not specified')
@@ -48,12 +49,6 @@ async function provisionAgentInAgency (agentName, genesisPath, agencyUrl, seed, 
     }
   }
   logger.info(`Using wallet config ${JSON.stringify(walletConfig)}`)
-
-  let agencyConfig = {
-    agency_endpoint: agencyUrl,
-    agency_did: 'VsKV7grR1BUE29mG2Fm2kX',
-    agency_verkey: 'Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR'
-  }
 
   logger.debug(`Creating wallet with config: ${JSON.stringify(walletConfig, null, 2)}`)
   await createWallet(walletConfig)

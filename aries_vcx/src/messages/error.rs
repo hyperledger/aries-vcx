@@ -2,11 +2,13 @@ use std::collections::HashMap;
 
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
     #[serde(rename = "@id")]
-    id: MessageId,
+    pub id: MessageId,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
@@ -34,6 +36,9 @@ pub struct ProblemReport {
     pub problem_items: Option<HashMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 impl ProblemReport {
@@ -42,10 +47,7 @@ impl ProblemReport {
     }
 
     pub fn set_description(mut self, code: u32) -> Self {
-        self.description = Some(Description {
-            en: None,
-            code,
-        });
+        self.description = Some(Description { en: None, code });
         self
     }
 
@@ -56,6 +58,7 @@ impl ProblemReport {
 }
 
 threadlike_optional!(ProblemReport);
+timing_optional!(ProblemReport);
 a2a_message!(ProblemReport, CommonProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -84,7 +87,6 @@ impl Default for WhoRetries {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FixHint {
     en: String,
@@ -102,14 +104,17 @@ pub enum Impact {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
 
-    fn _code() -> u32 { 0 }
+    pub fn _code() -> u32 {
+        0
+    }
 
-    fn _comment() -> Option<String> {
+    pub fn _comment() -> Option<String> {
         Some(String::from("test comment"))
     }
 
@@ -117,7 +122,10 @@ pub mod tests {
         ProblemReport {
             id: MessageId::id(),
             thread: Some(_thread()),
-            description: Some(Description { en: None, code: _code() }),
+            description: Some(Description {
+                en: None,
+                code: _code(),
+            }),
             who_retries: None,
             tracking_uri: None,
             escalation_uri: None,
@@ -127,11 +135,20 @@ pub mod tests {
             location: None,
             problem_items: None,
             comment: _comment(),
+            timing: None,
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::connection::response::test_utils::_thread_id;
+    use crate::messages::error::test_utils::{_code, _comment, _problem_report};
+
+    use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_comment(_comment())

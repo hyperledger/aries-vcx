@@ -1,11 +1,12 @@
-use serde::{de, Deserialize, Deserializer, ser, Serialize, Serializer};
+use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::messages::connection::invite::{PublicInvitation, PairwiseInvitation};
 use log;
 
+use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::ack::Ack;
 use crate::messages::basic_message::message::BasicMessage;
+use crate::messages::connection::invite::{PairwiseInvitation, PublicInvitation};
 use crate::messages::connection::problem_report::ProblemReport as ConnectionProblemReport;
 use crate::messages::connection::request::Request;
 use crate::messages::connection::response::SignedResponse;
@@ -17,14 +18,13 @@ use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
+use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::trust_ping::ping::Ping;
 use crate::messages::trust_ping::ping_response::PingResponse;
-use crate::handlers::out_of_band::OutOfBandInvitation;
-use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -87,7 +87,9 @@ impl A2AMessage {
         match self {
             Self::Presentation(presentation) => presentation.from_thread(thread_id),
             // Self::PingResponse(ping_response) => ping_response.from_thread(thread_id),
-            Self::ConnectionProblemReport(connection_problem_report) => connection_problem_report.from_thread(thread_id),
+            Self::ConnectionProblemReport(connection_problem_report) => {
+                connection_problem_report.from_thread(thread_id)
+            }
             Self::ConnectionRequest(request) => request.from_thread(thread_id),
             Self::CommonProblemReport(common_problem_report) => common_problem_report.from_thread(thread_id),
             Self::CredentialOffer(credential_offer) => credential_offer.from_thread(thread_id),
@@ -95,13 +97,41 @@ impl A2AMessage {
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
             Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
-            _ => true
+            Self::Ping(ping) => ping.from_thread(thread_id),
+            Self::PingResponse(ping) => ping.from_thread(thread_id),
+            Self::ConnectionResponse(m) => m.from_thread(thread_id),
+            Self::CredentialRequest(m) => m.from_thread(thread_id),
+            Self::PresentationRequest(m) => m.from_thread(thread_id),
+            Self::Disclose(m) => m.from_thread(thread_id),
+            Self::OutOfBandHandshakeReuse(m) => m.from_thread(thread_id),
+            Self::OutOfBandHandshakeReuseAccepted(m) => m.from_thread(thread_id),
+            Self::Forward(_) => false,
+            Self::ConnectionInvitationPairwise(_) => false,
+            Self::ConnectionInvitationPublic(_) => false,
+            Self::Query(_) => false,
+            Self::OutOfBandInvitation(_) => false,
+            Self::BasicMessage(m) => m.from_thread(thread_id),
+            Self::Generic(m) => {
+                return match m.as_object() {
+                    None => false,
+                    Some(msg) => match msg.get("~thread") {
+                        None => false,
+                        Some(thread) => match thread["thid"].as_str() {
+                            None => false,
+                            Some(thid) => thid == thread_id,
+                        },
+                    },
+                }
+            }
         }
     }
 }
 
 impl<'de> Deserialize<'de> for A2AMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
         if log::log_enabled!(log::Level::Trace) {
@@ -114,129 +144,99 @@ impl<'de> Deserialize<'de> for A2AMessage {
 
         let message_type: MessageType = match serde_json::from_value(value["@type"].clone()) {
             Ok(message_type) => message_type,
-            Err(_) => return Ok(A2AMessage::Generic(value))
+            Err(_) => return Ok(A2AMessage::Generic(value)),
         };
 
         match (message_type.family, message_type.msg_type.as_str()) {
-            (MessageFamilies::Routing, A2AMessage::FORWARD) => {
-                Forward::deserialize(value)
-                    .map(|msg| A2AMessage::Forward(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::Routing, A2AMessage::FORWARD) => Forward::deserialize(value)
+                .map(A2AMessage::Forward)
+                .map_err(de::Error::custom),
             (MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION) => {
                 PairwiseInvitation::deserialize(value.clone())
-                    .map_or(PublicInvitation::deserialize(value)
-                            .map(|msg| A2AMessage::ConnectionInvitationPublic(msg)), |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)))
+                    .map_or(
+                        PublicInvitation::deserialize(value).map(A2AMessage::ConnectionInvitationPublic),
+                        |msg| Ok(A2AMessage::ConnectionInvitationPairwise(msg)),
+                    )
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST) => {
-                Request::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionRequest(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE) => {
-                SignedResponse::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionResponse(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::TrustPing, A2AMessage::PING) => {
-                Ping::deserialize(value)
-                    .map(|msg| A2AMessage::Ping(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::TrustPing, A2AMessage::PING_RESPONSE) => {
-                PingResponse::deserialize(value)
-                    .map(|msg| A2AMessage::PingResponse(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST) => Request::deserialize(value)
+                .map(A2AMessage::ConnectionRequest)
+                .map_err(de::Error::custom),
+            (MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE) => SignedResponse::deserialize(value)
+                .map(A2AMessage::ConnectionResponse)
+                .map_err(de::Error::custom),
+            (MessageFamilies::TrustPing, A2AMessage::PING) => Ping::deserialize(value)
+                .map(A2AMessage::Ping)
+                .map_err(de::Error::custom),
+            (MessageFamilies::TrustPing, A2AMessage::PING_RESPONSE) => PingResponse::deserialize(value)
+                .map(A2AMessage::PingResponse)
+                .map_err(de::Error::custom),
             (MessageFamilies::Connections, A2AMessage::CONNECTION_PROBLEM_REPORT) => {
                 ConnectionProblemReport::deserialize(value)
-                    .map(|msg| A2AMessage::ConnectionProblemReport(msg))
+                    .map(A2AMessage::ConnectionProblemReport)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::Notification, A2AMessage::ACK) => {
-                Ack::deserialize(value)
-                    .map(|msg| A2AMessage::Ack(msg))
-                    .map_err(de::Error::custom)
+                Ack::deserialize(value).map(A2AMessage::Ack).map_err(de::Error::custom)
             }
-            (MessageFamilies::ReportProblem, A2AMessage::PROBLEM_REPORT) => {
-                CommonProblemReport::deserialize(value)
-                    .map(|msg| A2AMessage::CommonProblemReport(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL) => {
-                Credential::deserialize(value)
-                    .map(|msg| A2AMessage::Credential(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::ReportProblem, A2AMessage::PROBLEM_REPORT) => CommonProblemReport::deserialize(value)
+                .map(A2AMessage::CommonProblemReport)
+                .map_err(de::Error::custom),
+            (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL) => Credential::deserialize(value)
+                .map(A2AMessage::Credential)
+                .map_err(de::Error::custom),
             (MessageFamilies::CredentialIssuance, A2AMessage::PROPOSE_CREDENTIAL) => {
                 CredentialProposal::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialProposal(msg))
+                    .map(A2AMessage::CredentialProposal)
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL_OFFER) => {
-                CredentialOffer::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialOffer(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL_OFFER) => CredentialOffer::deserialize(value)
+                .map(A2AMessage::CredentialOffer)
+                .map_err(de::Error::custom),
             (MessageFamilies::CredentialIssuance, A2AMessage::REQUEST_CREDENTIAL) => {
                 CredentialRequest::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialRequest(msg))
+                    .map(A2AMessage::CredentialRequest)
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::CredentialIssuance, A2AMessage::ACK) => {
-                Ack::deserialize(value)
-                    .map(|msg| A2AMessage::CredentialAck(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::CredentialIssuance, A2AMessage::ACK) => Ack::deserialize(value)
+                .map(A2AMessage::CredentialAck)
+                .map_err(de::Error::custom),
             (MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION) => {
                 PresentationProposal::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationProposal(msg))
+                    .map(A2AMessage::PresentationProposal)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::PresentProof, A2AMessage::REQUEST_PRESENTATION) => {
                 PresentationRequest::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationRequest(msg))
+                    .map(A2AMessage::PresentationRequest)
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::PresentProof, A2AMessage::PRESENTATION) => {
-                Presentation::deserialize(value)
-                    .map(|msg| A2AMessage::Presentation(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::PresentProof, A2AMessage::ACK) => {
-                Ack::deserialize(value)
-                    .map(|msg| A2AMessage::PresentationAck(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY) => {
-                Query::deserialize(value)
-                    .map(|msg| A2AMessage::Query(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE) => {
-                Disclose::deserialize(value)
-                    .map(|msg| A2AMessage::Disclose(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE) => {
-                BasicMessage::deserialize(value)
-                    .map(|msg| A2AMessage::BasicMessage(msg))
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION) => {
-                OutOfBandInvitation::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandInvitation(msg))
-                    .map_err(de::Error::custom)
-            }
+            (MessageFamilies::PresentProof, A2AMessage::PRESENTATION) => Presentation::deserialize(value)
+                .map(A2AMessage::Presentation)
+                .map_err(de::Error::custom),
+            (MessageFamilies::PresentProof, A2AMessage::ACK) => Ack::deserialize(value)
+                .map(A2AMessage::PresentationAck)
+                .map_err(de::Error::custom),
+            (MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY) => Query::deserialize(value)
+                .map(A2AMessage::Query)
+                .map_err(de::Error::custom),
+            (MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE) => Disclose::deserialize(value)
+                .map(A2AMessage::Disclose)
+                .map_err(de::Error::custom),
+            (MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE) => BasicMessage::deserialize(value)
+                .map(A2AMessage::BasicMessage)
+                .map_err(de::Error::custom),
+            (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION) => OutOfBandInvitation::deserialize(value)
+                .map(A2AMessage::OutOfBandInvitation)
+                .map_err(de::Error::custom),
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE) => {
                 OutOfBandHandshakeReuse::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandHandshakeReuse(msg))
+                    .map(A2AMessage::OutOfBandHandshakeReuse)
                     .map_err(de::Error::custom)
             }
             (MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED) => {
                 OutOfBandHandshakeReuseAccepted::deserialize(value)
-                    .map(|msg| A2AMessage::OutOfBandHandshakeReuseAccepted(msg))
+                    .map(A2AMessage::OutOfBandHandshakeReuseAccepted)
                     .map_err(de::Error::custom)
             }
             (_, other_type) => {
@@ -247,7 +247,10 @@ impl<'de> Deserialize<'de> for A2AMessage {
     }
 }
 
-fn set_a2a_message_type<T>(msg: T, family: MessageFamilies, name: &str) -> Result<serde_json::Value, serde_json::Error> where T: Serialize {
+fn set_a2a_message_type<T>(msg: T, family: MessageFamilies, name: &str) -> Result<serde_json::Value, serde_json::Error>
+where
+    T: Serialize,
+{
     let mut value = ::serde_json::to_value(msg)?;
     let type_ = ::serde_json::to_value(MessageType::build(family, name))?;
     value.as_object_mut().unwrap().insert("@type".into(), type_);
@@ -255,35 +258,83 @@ fn set_a2a_message_type<T>(msg: T, family: MessageFamilies, name: &str) -> Resul
 }
 
 impl Serialize for A2AMessage {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let value = match self {
             A2AMessage::Forward(msg) => set_a2a_message_type(msg, MessageFamilies::Routing, A2AMessage::FORWARD),
-            A2AMessage::ConnectionInvitationPairwise(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION),
-            A2AMessage::ConnectionInvitationPublic(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION),
-            A2AMessage::ConnectionRequest(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST),
-            A2AMessage::ConnectionResponse(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE),
-            A2AMessage::ConnectionProblemReport(msg) => set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_PROBLEM_REPORT),
+            A2AMessage::ConnectionInvitationPairwise(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION)
+            }
+            A2AMessage::ConnectionInvitationPublic(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_INVITATION)
+            }
+            A2AMessage::ConnectionRequest(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_REQUEST)
+            }
+            A2AMessage::ConnectionResponse(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_RESPONSE)
+            }
+            A2AMessage::ConnectionProblemReport(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Connections, A2AMessage::CONNECTION_PROBLEM_REPORT)
+            }
             A2AMessage::Ping(msg) => set_a2a_message_type(msg, MessageFamilies::TrustPing, A2AMessage::PING),
-            A2AMessage::PingResponse(msg) => set_a2a_message_type(msg, MessageFamilies::TrustPing, A2AMessage::PING_RESPONSE),
+            A2AMessage::PingResponse(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::TrustPing, A2AMessage::PING_RESPONSE)
+            }
             A2AMessage::Ack(msg) => set_a2a_message_type(msg, MessageFamilies::Notification, A2AMessage::ACK),
-            A2AMessage::CommonProblemReport(msg) => set_a2a_message_type(msg, MessageFamilies::ReportProblem, A2AMessage::PROBLEM_REPORT),
-            A2AMessage::CredentialOffer(msg) => set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL_OFFER),
-            A2AMessage::Credential(msg) => set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL),
-            A2AMessage::CredentialProposal(msg) => set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::PROPOSE_CREDENTIAL),
-            A2AMessage::CredentialRequest(msg) => set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::REQUEST_CREDENTIAL),
-            A2AMessage::CredentialAck(msg) => set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::ACK),
-            A2AMessage::PresentationProposal(msg) => set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION),
-            A2AMessage::PresentationRequest(msg) => set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::REQUEST_PRESENTATION),
-            A2AMessage::Presentation(msg) => set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PRESENTATION),
-            A2AMessage::PresentationAck(msg) => set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::ACK),
+            A2AMessage::CommonProblemReport(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::ReportProblem, A2AMessage::PROBLEM_REPORT)
+            }
+            A2AMessage::CredentialOffer(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL_OFFER)
+            }
+            A2AMessage::Credential(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::CREDENTIAL)
+            }
+            A2AMessage::CredentialProposal(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::PROPOSE_CREDENTIAL)
+            }
+            A2AMessage::CredentialRequest(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::REQUEST_CREDENTIAL)
+            }
+            A2AMessage::CredentialAck(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::ACK)
+            }
+            A2AMessage::PresentationProposal(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION)
+            }
+            A2AMessage::PresentationRequest(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::REQUEST_PRESENTATION)
+            }
+            A2AMessage::Presentation(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PRESENTATION)
+            }
+            A2AMessage::PresentationAck(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::ACK)
+            }
             A2AMessage::Query(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::QUERY),
-            A2AMessage::Disclose(msg) => set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE),
-            A2AMessage::BasicMessage(msg) => set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE),
-            A2AMessage::OutOfBandInvitation(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION),
-            A2AMessage::OutOfBandHandshakeReuse(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE),
-            A2AMessage::OutOfBandHandshakeReuseAccepted(msg) => set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED),
-            A2AMessage::Generic(msg) => Ok(msg.clone())
-        }.map_err(ser::Error::custom)?;
+            A2AMessage::Disclose(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::DiscoveryFeatures, A2AMessage::DISCLOSE)
+            }
+            A2AMessage::BasicMessage(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::Basicmessage, A2AMessage::BASIC_MESSAGE)
+            }
+            A2AMessage::OutOfBandInvitation(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_INVITATION)
+            }
+            A2AMessage::OutOfBandHandshakeReuse(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::OutOfBand, A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE)
+            }
+            A2AMessage::OutOfBandHandshakeReuseAccepted(msg) => set_a2a_message_type(
+                msg,
+                MessageFamilies::OutOfBand,
+                A2AMessage::OUT_OF_BAND_HANDSHAKE_REUSE_ACCEPTED,
+            ),
+            A2AMessage::Generic(msg) => Ok(msg.clone()),
+        }
+        .map_err(ser::Error::custom)?;
 
         value.serialize(serializer)
     }
@@ -341,31 +392,35 @@ impl A2AMessage {
 }
 
 #[cfg(test)]
+#[cfg(feature = "general_test")]
 pub mod test_a2a_serialization {
     use serde_json::Value;
 
     use crate::messages::a2a::{A2AMessage, MessageId};
     use crate::messages::ack::{Ack, AckStatus};
     use crate::messages::connection::request::Request;
-    use crate::utils::devsetup::SetupDefaults;
     use crate::messages::forward::Forward;
+    use crate::utils::devsetup::SetupDefaults;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialization_deserialization_connection_request() {
         let _setup = SetupDefaults::init();
         let a2a_msg = A2AMessage::ConnectionRequest(Request {
             id: Default::default(),
             label: "foobar".to_string(),
             connection: Default::default(),
-            thread: None
+            thread: None,
+            timing: None,
         });
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
         // serialization
         let val: Value = serde_json::from_str(&serialized).unwrap();
         assert_eq!(val["@id"], Value::String("testid".into()));
-        assert_eq!(val["@type"], Value::String("https://didcomm.org/connections/1.0/request".into()));
+        assert_eq!(
+            val["@type"],
+            Value::String("https://didcomm.org/connections/1.0/request".into())
+        );
         assert_eq!(val["label"], Value::String("foobar".into()));
         assert_eq!(val["connection"]["DID"], Value::String("".into()));
         assert!(val["connection"]["DIDDoc"].is_object());
@@ -376,12 +431,14 @@ pub mod test_a2a_serialization {
             assert_eq!(request.id, MessageId("testid".into()));
             assert_eq!(request.label, "foobar");
         } else {
-            panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
+            panic!(
+                "The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ",
+                a2a_msg
+            )
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialize_deserialize_connection_ack() {
         let _setup = SetupDefaults::init();
         let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok).set_thread_id("threadid"));
@@ -390,7 +447,10 @@ pub mod test_a2a_serialization {
         // serialization
         let val: Value = serde_json::from_str(&serialized).unwrap();
         assert_eq!(val["@id"], Value::String("testid".into()));
-        assert_eq!(val["@type"], Value::String("https://didcomm.org/notification/1.0/ack".into()));
+        assert_eq!(
+            val["@type"],
+            Value::String("https://didcomm.org/notification/1.0/ack".into())
+        );
         assert_eq!(val["status"], Value::String("OK".into()));
         assert!(val["~thread"].is_object());
 
@@ -400,7 +460,10 @@ pub mod test_a2a_serialization {
             assert_eq!(ack.id, MessageId("testid".into()));
             assert_eq!(ack.thread.sender_order, 0);
         } else {
-            panic!("The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ", a2a_msg)
+            panic!(
+                "The message was expected to be deserialized as ConnectionRequest, but was not. Deserialized: {:?} ",
+                a2a_msg
+            )
         }
     }
 
@@ -409,20 +472,23 @@ pub mod test_a2a_serialization {
     // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
     fn test_serialize_forward_message_to_legacy_format() {
         let _setup = SetupDefaults::init();
-        let a2a_msg = A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(),  "{}".as_bytes().to_vec()).unwrap());
+        let a2a_msg =
+            A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(), "{}".as_bytes().to_vec()).unwrap());
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
         // serialization
         let val: Value = serde_json::from_str(&serialized).unwrap();
-        assert_eq!(val["@type"], Value::String("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward".into()));
+        assert_eq!(
+            val["@type"],
+            Value::String("did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward".into())
+        );
+        assert_eq!(val["@id"], Value::String("testid".into()));
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_deserialize_connection_ack_legacy() {
         let _setup = SetupDefaults::init();
-        let msg =
-            r#"{
+        let msg = r#"{
             "@id": "testid",
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack",
             "status": "OK",
@@ -441,11 +507,9 @@ pub mod test_a2a_serialization {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_deserialization_connection_request_legacy() {
         let _setup = SetupDefaults::init();
-        let msg =
-            r#"{
+        let msg = r#"{
             "@id": "testid",
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request",
             "connection": {
@@ -481,19 +545,19 @@ pub mod test_a2a_serialization {
 
 #[macro_export]
 macro_rules! a2a_message {
-    ($type:ident) => (
+    ($type:ident) => {
         impl $type {
             pub fn to_a2a_message(&self) -> A2AMessage {
                 A2AMessage::$type(self.clone()) // TODO: THINK how to avoid clone
             }
         }
-    );
+    };
 
-    ($type:ident, $a2a_message_kind:ident) => (
+    ($type:ident, $a2a_message_kind:ident) => {
         impl $type {
             pub fn to_a2a_message(&self) -> A2AMessage {
                 A2AMessage::$a2a_message_kind(self.clone()) // TODO: THINK how to avoid clone
             }
         }
-    );
+    };
 }

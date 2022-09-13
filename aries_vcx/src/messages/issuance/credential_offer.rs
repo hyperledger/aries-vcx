@@ -4,6 +4,8 @@ use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct CredentialOffer {
@@ -17,7 +19,14 @@ pub struct CredentialOffer {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike_optional!(CredentialOffer);
+a2a_message!(CredentialOffer);
+timing_optional!(CredentialOffer);
 
 impl CredentialOffer {
     pub fn create() -> Self {
@@ -35,7 +44,10 @@ impl CredentialOffer {
     }
 
     pub fn set_offers_attach(mut self, credential_offer: &str) -> VcxResult<CredentialOffer> {
-        self.offers_attach.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, ::serde_json::Value::String(credential_offer.to_string()))?;
+        self.offers_attach.add_base64_encoded_json_attachment(
+            AttachmentId::CredentialOffer,
+            ::serde_json::Value::String(credential_offer.to_string()),
+        )?;
         Ok(self)
     }
 
@@ -55,22 +67,24 @@ pub struct OfferInfo {
     pub credential_json: String,
     pub cred_def_id: String,
     pub rev_reg_id: Option<String>,
-    pub tails_file: Option<String>
+    pub tails_file: Option<String>,
 }
 
 impl OfferInfo {
-    pub fn new(credential_json: String, cred_def_id: String, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+    pub fn new(
+        credential_json: String,
+        cred_def_id: String,
+        rev_reg_id: Option<String>,
+        tails_file: Option<String>,
+    ) -> Self {
         Self {
             credential_json,
             cred_def_id,
             rev_reg_id,
-            tails_file
+            tails_file,
         }
     }
 }
-
-threadlike_optional!(CredentialOffer);
-a2a_message!(CredentialOffer);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
@@ -95,8 +109,7 @@ pub mod test_utils {
 
     pub fn _preview_data() -> CredentialPreviewData {
         let (name, value) = _value();
-        CredentialPreviewData::new()
-            .add_value(name, value, MimeType::Plain)
+        CredentialPreviewData::new().add_value(name, value, MimeType::Plain)
     }
 
     pub fn thread() -> Thread {
@@ -111,7 +124,9 @@ pub mod test_utils {
         thread().thid.unwrap()
     }
 
-    pub fn _cred_def_id() -> String { String::from("cred_def_id:id") }
+    pub fn _cred_def_id() -> String {
+        String::from("cred_def_id:id")
+    }
 
     pub fn _rev_reg_id() -> String {
         String::from("TEST_REV_REG_ID")
@@ -120,10 +135,12 @@ pub mod test_utils {
     pub fn _tails_file() -> String {
         String::from("TEST_TAILS_FILE")
     }
-    
+
     pub fn _credential_offer() -> CredentialOffer {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::CredentialOffer, _attachment())
+            .unwrap();
 
         CredentialOffer {
             id: MessageId::id(),
@@ -131,6 +148,7 @@ pub mod test_utils {
             credential_preview: _preview_data(),
             offers_attach: attachment,
             thread: Some(_thread()),
+            timing: None,
         }
     }
 
@@ -139,7 +157,7 @@ pub mod test_utils {
             credential_json: _preview_data().to_string().unwrap(),
             cred_def_id: _cred_def_id(),
             rev_reg_id: Some(_rev_reg_id()),
-            tails_file: Some(_tails_file())
+            tails_file: Some(_tails_file()),
         }
     }
 
@@ -148,26 +166,27 @@ pub mod test_utils {
             credential_json: _preview_data().to_string().unwrap(),
             cred_def_id: _cred_def_id(),
             rev_reg_id: None,
-            tails_file: None
+            tails_file: None,
         }
     }
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::_thread_id;
     use crate::messages::issuance::credential_offer::test_utils::*;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_offer_build_works() {
         let credential_offer: CredentialOffer = CredentialOffer::create()
             .set_comment(_comment())
             .set_thread_id(&_thread_id())
             .set_credential_preview_data(_preview_data())
-            .set_offers_attach(&_attachment().to_string()).unwrap();
+            .set_offers_attach(&_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_credential_offer(), credential_offer);
     }

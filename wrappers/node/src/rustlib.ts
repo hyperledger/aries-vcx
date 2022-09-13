@@ -37,6 +37,7 @@ export const FFI_PROOF_HANDLE = 'uint32';
 export const FFI_CREDENTIALDEF_HANDLE = 'uint32';
 export const FFI_SCHEMA_HANDLE = 'uint32';
 export const FFI_OOB_HANDLE = 'uint32';
+export const FFI_REV_REG_HANDLE = 'uint32';
 export const FFI_AGENT_HANDLE = 'uint32';
 export const FFI_PAYMENT_HANDLE = 'uint32';
 export const FFI_POINTER = 'pointer';
@@ -188,6 +189,12 @@ export interface IFFIEntryPoint {
     message: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_handle_message: (
+      commandId: number,
+      handle: number,
+      message: string,
+      cb: ICbRef,
+  ) => number;
   vcx_connection_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_invite_details: (
     commandId: number,
@@ -248,13 +255,6 @@ export interface IFFIEntryPoint {
     uids: string,
     cb: ICbRef,
   ) => number;
-  vcx_messages_download: (
-    commandId: number,
-    status: string,
-    uids: string,
-    pwdids: string,
-    cb: ICbRef,
-  ) => number;
 
   // issuer
   vcx_issuer_credential_release: (handle: number) => number;
@@ -300,14 +300,6 @@ export interface IFFIEntryPoint {
     myPwDid: string,
     cb: ICbRef,
   ) => number;
-  vcx_issuer_send_credential_offer: (
-    commandId: number,
-    credentialHandle: number,
-    credentialDefHandle: number,
-    connectionHandle: number,
-    credentialData: string,
-    cb: ICbRef,
-  ) => number;
   vcx_issuer_send_credential_offer_v2: (
       commandId: number,
       credentialHandle: number,
@@ -319,10 +311,11 @@ export interface IFFIEntryPoint {
       credentialHandle: number,
       cb: ICbRef,
   ) => number;
-  vcx_issuer_build_credential_offer_msg: (
+  vcx_issuer_build_credential_offer_msg_v2: (
       commandId: number,
       credentialHandle: number,
       credentialDefHandle: number,
+      revRegHandle: number,
       credentialData: string,
       comment: string,
       cb: ICbRef,
@@ -512,13 +505,13 @@ export interface IFFIEntryPoint {
   vcx_set_next_agency_response: (messageIndex: number) => void;
 
   // credentialdef
-  vcx_credentialdef_create_and_store: (
+  vcx_credentialdef_create_v2: (
     commandId: number,
     sourceId: string,
     schemaId: string,
     issuerDid: string | null,
     tag: string,
-    revocationDetails: string,
+    support_revocation: boolean,
     cb: ICbRef,
   ) => number;
   vcx_credentialdef_publish: (commandId: number, handle: number, tailsUrl: string | null, cb: ICbRef) => number;
@@ -528,15 +521,6 @@ export interface IFFIEntryPoint {
   vcx_credentialdef_get_cred_def_id: (commandId: number, handle: number, cb: ICbRef) => string;
   vcx_credentialdef_update_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_credentialdef_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
-  vcx_credentialdef_rotate_rev_reg_def: (
-    commandId: number,
-    handle: number,
-    details: string,
-    cb: ICbRef,
-  ) => string;
-  vcx_credentialdef_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
-  vcx_credentialdef_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
-  vcx_credentialdef_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
 
   // schema
   vcx_schema_get_attributes: (
@@ -594,6 +578,15 @@ export interface IFFIEntryPoint {
   vcx_out_of_band_receiver_release: (handle: number) => number;
   vcx_out_of_band_receiver_connection_exists: (commandId: number, handle: number, handles: string, cb: ICbRef) => number;
   vcx_out_of_band_receiver_build_connection: (commandId: number, handle: number, cb: ICbRef) => number;
+
+  vcx_revocation_registry_create: (commandId: number, config: string, cb: ICbRef) => number;
+  vcx_revocation_registry_publish: (commandId: number, handle: number, tailsUrl: string, cb: ICbRef) => number;
+  vcx_revocation_registry_publish_revocations: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_get_rev_reg_id: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_get_tails_hash: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
+  vcx_revocation_registry_release: (handle: number) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -740,6 +733,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_connection_handle_message: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_connection_get_state: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
@@ -807,11 +804,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ],
 
-  vcx_messages_download: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ],
-
   // issuer
   vcx_issuer_credential_deserialize: [
     FFI_ERROR_CODE,
@@ -871,10 +863,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
-  vcx_issuer_send_credential_offer: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ],
   vcx_issuer_send_credential_offer_v2: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
@@ -883,9 +871,9 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
-  vcx_issuer_build_credential_offer_msg: [
+  vcx_issuer_build_credential_offer_msg_v2: [
     FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_issuer_get_credential_offer_msg: [
     FFI_ERROR_CODE,
@@ -1110,7 +1098,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   ],
 
   // credentialDef
-  vcx_credentialdef_create_and_store: [
+  vcx_credentialdef_create_v2: [
     FFI_ERROR_CODE,
     [
       FFI_COMMAND_HANDLE,
@@ -1118,7 +1106,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_STRING_DATA,
       FFI_STRING_DATA,
       FFI_STRING_DATA,
-      FFI_STRING_DATA,
+      FFI_BOOL,
       FFI_CALLBACK_PTR,
     ],
   ],
@@ -1149,22 +1137,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_credentialdef_get_state: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
-  ],
-  vcx_credentialdef_rotate_rev_reg_def: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIALDEF_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
-  ],
-  vcx_credentialdef_publish_revocations: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
-  ],
-  vcx_credentialdef_get_tails_hash: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
-  ],
-  vcx_credentialdef_get_rev_reg_id: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
@@ -1262,7 +1234,24 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_out_of_band_sender_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
   vcx_out_of_band_receiver_release: [FFI_ERROR_CODE, [FFI_OOB_HANDLE]],
   vcx_out_of_band_receiver_connection_exists: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
-  vcx_out_of_band_receiver_build_connection: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]]
+  vcx_out_of_band_receiver_build_connection: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_OOB_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_create: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_publish: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_publish_revocations: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR],
+  ],
+  vcx_revocation_registry_get_rev_reg_id: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_get_tails_hash: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],
 };
 
 let _rustAPI: IFFIEntryPoint;

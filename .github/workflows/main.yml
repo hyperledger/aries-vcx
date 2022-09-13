@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.58.0
+          toolchain: 1.62.1
       - name: Set outputs
         id: mainstep
         run: |
@@ -131,7 +131,7 @@ jobs:
           echo "::set-output name=CACHE_KEY_ALPINE_CORE::$ALPINE_CORE_DOCKERFILE_HASH"
 
           echo "::set-output name=DOCKER_IMG_NAME_ALPINE_CORE::alpine-core"
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.0.0"
+          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$LIBVCX_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX_TESTER::libvcx-tester:LIBVCX_TESTER_HASH"
@@ -947,14 +947,6 @@ jobs:
                                 cd $HOME/wrappers/node && npm install && npm run compile && \
                                 cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
 
-      - name: Run wrapper demo with legacy initialization
-        run: |
-          set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:legacy)'
-
       - name: Run integration tests
         run: |
           set -x
@@ -983,7 +975,7 @@ jobs:
   # TODO: Add tests of iOS build
   publish-ios-wrapper:
     needs: workflow-setup
-    runs-on: macos-10.15
+    runs-on: macos-11
     env:
       LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}

@@ -15,9 +15,7 @@ pub fn build_string(ptr: *const c_char) -> Option<String> {
         return None;
     }
 
-    let cstr: &CStr = unsafe {
-        CStr::from_ptr(ptr)
-    };
+    let cstr: &CStr = unsafe { CStr::from_ptr(ptr) };
 
     match cstr.to_str() {
         Ok(s) => Some(s.to_string()),
@@ -29,9 +27,7 @@ pub fn build_string(ptr: *const c_char) -> Option<String> {
 }
 
 pub fn build_buf(ptr: *const u8, len: u32) -> Vec<u8> {
-    let data = unsafe {
-        slice::from_raw_parts(ptr, len as usize)
-    };
+    let data = unsafe { slice::from_raw_parts(ptr, len as usize) };
 
     data.to_vec()
 }

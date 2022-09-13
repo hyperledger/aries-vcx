@@ -65,6 +65,15 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function handleMessage (ariesMsg) {
+    logger.info(`Alice is going to try handle incoming messages`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function acceptCredentialOffer () {
     await vcxAgent.agentInitVcx()
     logger.info('Alice accepting credential offer')
@@ -201,6 +210,7 @@ module.exports.createAlice = async function createAlice () {
     createOrReuseConnectionUsingOobMsg,
     acceptOobCredentialOffer,
     updateConnection,
+    handleMessage,
     acceptCredentialOffer,
     updateStateCredentialV2,
     sendHolderProof,

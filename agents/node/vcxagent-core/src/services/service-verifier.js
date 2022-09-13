@@ -2,6 +2,7 @@ const {
   Proof, VerifierStateType
 } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
+const assert = require('assert')
 
 module.exports.createServiceVerifier = function createServiceVerifier ({ logger, loadConnection, saveProof, loadProof, listProofIds }) {
   async function createProof (proofId, proofData) {
@@ -17,11 +18,11 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     const proof = await Proof.create(proofData)
     const presentationRequest = await proof.getProofRequestMessage()
     const state1 = await proof.getState()
-    expect(state1).toBe(VerifierStateType.PresentationRequestSet)
+    assert.equal(state1, VerifierStateType.PresentationRequestSet)
 
     await proof.markPresentationRequestMsgSent()
     const state2 = await proof.getState()
-    expect(state2).toBe(VerifierStateType.PresentationRequestSent)
+    assert.equal(state2, VerifierStateType.PresentationRequestSent)
 
     await saveProof(proofId, proof)
     return presentationRequest

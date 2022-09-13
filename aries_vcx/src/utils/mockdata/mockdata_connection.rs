@@ -46,7 +46,6 @@ pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
     }
 }"#;
 
-
 // Alice sends connection request to Faber
 pub const ARIES_CONNECTION_REQUEST: &str = r#"
 {
@@ -375,4 +374,3 @@ pub const DEFAULT_SERIALIZED_CONNECTION: &str = r#"
     }
   }
 }"#;
-

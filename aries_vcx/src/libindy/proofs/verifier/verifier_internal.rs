@@ -1,9 +1,10 @@
+use indy_sys::WalletHandle;
 use serde_json;
 use serde_json::Value;
 
 use crate::error::prelude::*;
+use crate::global::settings;
 use crate::libindy::utils::anoncreds;
-use crate::settings;
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -17,27 +18,33 @@ pub struct CredInfoVerifier {
 pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
     let mut rtn = Vec::new();
 
-    let credentials: Value = serde_json::from_str(&proof)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize libndy proof: {}", err)))?;
+    let credentials: Value = serde_json::from_str(proof).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize libndy proof: {}", err),
+        )
+    })?;
 
     if let Value::Array(ref identifiers) = credentials["identifiers"] {
         for identifier in identifiers {
-            if let (Some(schema_id), Some(cred_def_id)) = (identifier["schema_id"].as_str(),
-                                                           identifier["cred_def_id"].as_str()) {
-                let rev_reg_id = identifier["rev_reg_id"]
-                    .as_str()
-                    .map(|x| x.to_string());
+            if let (Some(schema_id), Some(cred_def_id)) =
+                (identifier["schema_id"].as_str(), identifier["cred_def_id"].as_str())
+            {
+                let rev_reg_id = identifier["rev_reg_id"].as_str().map(|x| x.to_string());
 
                 let timestamp = identifier["timestamp"].as_u64();
-                rtn.push(
-                    CredInfoVerifier {
-                        schema_id: schema_id.to_string(),
-                        cred_def_id: cred_def_id.to_string(),
-                        rev_reg_id,
-                        timestamp,
-                    }
-                );
-            } else { return Err(VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, "Cannot get identifiers")); }
+                rtn.push(CredInfoVerifier {
+                    schema_id: schema_id.to_string(),
+                    cred_def_id: cred_def_id.to_string(),
+                    rev_reg_id,
+                    timestamp,
+                });
+            } else {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidProofCredentialData,
+                    "Cannot get identifiers",
+                ));
+            }
         }
     }
 
@@ -45,40 +52,65 @@ pub fn get_credential_info(proof: &str) -> VcxResult<Vec<CredInfoVerifier>> {
 }
 
 pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
-    if settings::indy_mocks_enabled() { return Ok(()); }
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
 
-    let proof: Value = serde_json::from_str(proof_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize libndy proof: {}", err)))?;
+    let proof: Value = serde_json::from_str(proof_json).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize libndy proof: {}", err),
+        )
+    })?;
 
     let revealed_attrs = match proof["requested_proof"]["revealed_attrs"].as_object() {
         Some(revealed_attrs) => revealed_attrs,
-        None => return Ok(())
+        None => return Ok(()),
     };
 
     for (attr1_referent, info) in revealed_attrs.iter() {
-        let raw = info["raw"].as_str().ok_or(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Cannot get raw value for \"{}\" attribute", attr1_referent)))?;
-        let encoded_ = info["encoded"].as_str().ok_or(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Cannot get encoded value for \"{}\" attribute", attr1_referent)))?;
+        let raw = info["raw"].as_str().ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidProof,
+            format!("Cannot get raw value for \"{}\" attribute", attr1_referent),
+        ))?;
+        let encoded_ = info["encoded"].as_str().ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidProof,
+            format!("Cannot get encoded value for \"{}\" attribute", attr1_referent),
+        ))?;
 
-        let expected_encoded = encode(&raw)?;
+        let expected_encoded = encode(raw)?;
 
-        if expected_encoded != encoded_.to_string() {
-            return Err(VcxError::from_msg(VcxErrorKind::InvalidProof, format!("Encoded values are different. Expected: {}. From Proof: {}", expected_encoded, encoded_)));
+        if expected_encoded != *encoded_ {
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidProof,
+                format!(
+                    "Encoded values are different. Expected: {}. From Proof: {}",
+                    expected_encoded, encoded_
+                ),
+            ));
         }
     }
 
     Ok(())
 }
 
-pub async fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_cred_defs_json_verifier(
+    wallet_handle: WalletHandle,
+    credential_data: &Vec<CredInfoVerifier>,
+) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
     let mut credential_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let (id, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id).await?;
+            let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id).await?;
 
-            let credential_def = serde_json::from_str(&credential_def)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
+            let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidProofCredentialData,
+                    format!("Cannot deserialize credential definition: {}", err),
+                )
+            })?;
 
             credential_json[id] = credential_def;
         }
@@ -87,19 +119,26 @@ pub async fn build_cred_defs_json_verifier(credential_data: &Vec<CredInfoVerifie
     Ok(credential_json.to_string())
 }
 
-pub async fn build_schemas_json_verifier(credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_schemas_json_verifier(
+    wallet_handle: WalletHandle,
+    credential_data: &Vec<CredInfoVerifier>,
+) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
     let mut schemas_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
-            let (id, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+            let (id, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
-            let schema_val = serde_json::from_str(&schema_json)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
+            let schema_val = serde_json::from_str(&schema_json).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidSchema,
+                    format!("Cannot deserialize schema: {}", err),
+                )
+            })?;
 
             schemas_json[id] = schema_val;
         }
@@ -113,7 +152,7 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
 
     let mut rev_reg_defs_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         let rev_reg_id = cred_info
             .rev_reg_id
             .as_ref()
@@ -124,8 +163,7 @@ pub async fn build_rev_reg_defs_json(credential_data: &Vec<CredInfoVerifier>) ->
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
-            let rev_reg_def_json = serde_json::from_str(&json)
-                .or(Err(VcxError::from(VcxErrorKind::InvalidSchema)))?;
+            let rev_reg_def_json = serde_json::from_str(&json).or(Err(VcxError::from(VcxErrorKind::InvalidSchema)))?;
 
             rev_reg_defs_json[id] = rev_reg_def_json;
         }
@@ -139,7 +177,7 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
 
     let mut rev_regs_json = json!({});
 
-    for ref cred_info in credential_data.iter() {
+    for cred_info in credential_data.iter() {
         let rev_reg_id = cred_info
             .rev_reg_id
             .as_ref()
@@ -155,10 +193,9 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
-            let rev_reg_json: Value = serde_json::from_str(&json)
-                .or(Err(VcxError::from(VcxErrorKind::InvalidJson)))?;
+            let rev_reg_json: Value = serde_json::from_str(&json).or(Err(VcxError::from(VcxErrorKind::InvalidJson)))?;
 
-            let rev_reg_json = json!({timestamp.to_string(): rev_reg_json});
+            let rev_reg_json = json!({ timestamp.to_string(): rev_reg_json });
             rev_regs_json[id] = rev_reg_json;
         }
     }
@@ -167,14 +204,14 @@ pub async fn build_rev_reg_json(credential_data: &Vec<CredInfoVerifier>) -> VcxR
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
 
     use super::*;
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_cred_defs_json_verifier_with_multiple_credentials() {
         let _setup = SetupMocks::init();
 
@@ -191,15 +228,16 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_cred_defs_json_verifier(&credentials).await.unwrap();
+        let credential_json = build_cred_defs_json_verifier(WalletHandle(0), &credentials)
+            .await
+            .unwrap();
 
         let json: Value = serde_json::from_str(CRED_DEF_JSON).unwrap();
-        let expected = json!({CRED_DEF_ID:json}).to_string();
+        let expected = json!({ CRED_DEF_ID: json }).to_string();
         assert_eq!(credential_json, expected);
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_schemas_json_verifier_with_multiple_schemas() {
         let _setup = SetupMocks::init();
 
@@ -216,15 +254,16 @@ pub mod tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(&credentials).await.unwrap();
+        let schema_json = build_schemas_json_verifier(WalletHandle(0), &credentials)
+            .await
+            .unwrap();
 
         let json: Value = serde_json::from_str(SCHEMA_JSON).unwrap();
-        let expected = json!({SCHEMA_ID:json}).to_string();
+        let expected = json!({ SCHEMA_ID: json }).to_string();
         assert_eq!(schema_json, expected);
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_reg_defs_json() {
         let _setup = SetupMocks::init();
 
@@ -244,12 +283,11 @@ pub mod tests {
         let rev_reg_defs_json = build_rev_reg_defs_json(&credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
-        let expected = json!({REV_REG_ID:json}).to_string();
+        let expected = json!({ REV_REG_ID: json }).to_string();
         assert_eq!(rev_reg_defs_json, expected);
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_reg_json() {
         let _setup = SetupMocks::init();
 

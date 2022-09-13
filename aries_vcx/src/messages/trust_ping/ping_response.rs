@@ -1,5 +1,7 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PingResponse {
@@ -9,6 +11,9 @@ pub struct PingResponse {
     comment: Option<String>,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
 
 impl PingResponse {
@@ -22,11 +27,13 @@ impl PingResponse {
     }
 }
 
+timing_optional!(PingResponse);
 threadlike!(PingResponse);
 a2a_message!(PingResponse);
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
@@ -40,11 +47,11 @@ pub mod tests {
             id: MessageId::id(),
             thread: _thread(),
             comment: Some(_comment()),
+            timing: None,
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_ping_response_build_works() {
         let ping_response: PingResponse = PingResponse::default()
             .set_comment(_comment())

@@ -1,6 +1,8 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::localization::Localization;
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ProblemReport {
@@ -16,7 +18,14 @@ pub struct ProblemReport {
     pub localization: Option<Localization>,
     #[serde(rename = "~thread")]
     pub thread: Thread,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+threadlike!(ProblemReport);
+a2a_message!(ProblemReport, ConnectionProblemReport);
+timing_optional!(ProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ProblemCode {
@@ -47,9 +56,6 @@ impl ProblemReport {
     }
 }
 
-threadlike!(ProblemReport);
-a2a_message!(ProblemReport, ConnectionProblemReport);
-
 impl Default for ProblemCode {
     fn default() -> ProblemCode {
         ProblemCode::Empty
@@ -57,7 +63,8 @@ impl Default for ProblemCode {
 }
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::messages::connection::response::test_utils::*;
 
     use super::*;
@@ -77,11 +84,11 @@ pub mod tests {
             explain: Some(_explain()),
             localization: None,
             thread: _thread(),
+            timing: None,
         }
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_problem_report_build_works() {
         let report: ProblemReport = ProblemReport::default()
             .set_problem_code(_problem_code())

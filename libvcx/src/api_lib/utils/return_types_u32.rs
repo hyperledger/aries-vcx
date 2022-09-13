@@ -45,7 +45,7 @@ pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T
                 warn!("Channel to libindy was disconnected unexpectedly");
                 Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
             }
-        }
+        },
     }
 }
 
@@ -70,7 +70,7 @@ impl Return_U32 {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32) {
         callback::call_cb_u32
     }
 
@@ -101,7 +101,7 @@ impl Return_U32_U32 {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: u32) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: u32) {
         callback::call_cb_u32_u32
     }
 
@@ -133,7 +133,7 @@ impl Return_U32_I32 {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: i32) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: i32) {
         callback::call_cb_u32_i32
     }
 
@@ -165,7 +165,7 @@ impl Return_U32_STR {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char) {
         callback::call_cb_u32_str
     }
 
@@ -197,7 +197,9 @@ impl Return_U32_U32_STR {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: u32, arg3: *const c_char) {
+    pub fn get_callback(
+        &self,
+    ) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: u32, arg3: *const c_char) {
         callback::call_cb_u32_u32_str
     }
 
@@ -229,10 +231,9 @@ impl Return_U32_STR_STR {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle,
-                                            arg1: u32,
-                                            arg2: *const c_char,
-                                            arg3: *const c_char) {
+    pub fn get_callback(
+        &self,
+    ) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char, arg3: *const c_char) {
         callback::call_cb_u32_str_str
     }
 
@@ -266,7 +267,7 @@ impl Return_U32_BOOL {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: bool) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: bool) {
         callback::call_cb_u32_bool
     }
 
@@ -299,7 +300,7 @@ impl Return_U32_BIN {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, *const u8, u32) {
+    pub fn get_callback(&self) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, *const u8, u32) {
         callback::call_cb_u32_bin
     }
 
@@ -331,7 +332,9 @@ impl Return_U32_OPTSTR_BIN {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char, arg3: *const u8, arg4: u32) {
+    pub fn get_callback(
+        &self,
+    ) -> extern "C" fn(command_handle: CommandHandle, arg1: u32, arg2: *const c_char, arg3: *const u8, arg4: u32) {
         callback::call_cb_u32_str_bin
     }
 
@@ -352,9 +355,10 @@ pub struct Return_U32_U32_STR_STR_STR {
 impl Return_U32_U32_STR_STR_STR {
     pub fn new() -> Result<Return_U32_U32_STR_STR_STR, u32> {
         let (sender, receiver) = channel();
-        let closure: Box<dyn FnMut(u32, u32, Option<String>, Option<String>, Option<String>) + Send> = Box::new(move |err, arg1, arg2, arg3, arg4| {
-            sender.send((err, arg1, arg2, arg3, arg4)).unwrap_or_else(log_error);
-        });
+        let closure: Box<dyn FnMut(u32, u32, Option<String>, Option<String>, Option<String>) + Send> =
+            Box::new(move |err, arg1, arg2, arg3, arg4| {
+                sender.send((err, arg1, arg2, arg3, arg4)).unwrap_or_else(log_error);
+            });
 
         let command_handle = insert_closure(closure, callback::CALLBACKS_U32_U32_STR_STR_STR.deref());
 
@@ -364,11 +368,23 @@ impl Return_U32_U32_STR_STR_STR {
         })
     }
 
-    pub fn get_callback(&self) -> extern fn(command_handle: CommandHandle, arg1: u32, arg2: u32, arg3: *const c_char, arg4: *const c_char, arg5: *const c_char) {
+    pub fn get_callback(
+        &self,
+    ) -> extern "C" fn(
+        command_handle: CommandHandle,
+        arg1: u32,
+        arg2: u32,
+        arg3: *const c_char,
+        arg4: *const c_char,
+        arg5: *const c_char,
+    ) {
         callback::call_cb_u32_u32_str_str_str
     }
 
-    pub fn receive(&self, timeout: Option<Duration>) -> Result<(u32, Option<String>, Option<String>, Option<String>), u32> {
+    pub fn receive(
+        &self,
+        timeout: Option<Duration>,
+    ) -> Result<(u32, Option<String>, Option<String>, Option<String>), u32> {
         let (err, arg1, arg2, arg3, arg4) = receive(&self.receiver, timeout)?;
 
         map_indy_error((arg1, arg2, arg3, arg4), err)
@@ -441,4 +457,3 @@ mod tests {
         assert!(val.is_err());
     }
 }
-

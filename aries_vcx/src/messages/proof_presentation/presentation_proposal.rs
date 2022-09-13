@@ -1,9 +1,11 @@
-use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::error::prelude::*;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
+use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::mime_type::MimeType;
 use crate::messages::thread::Thread;
-use crate::error::prelude::*;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationProposal {
@@ -15,7 +17,14 @@ pub struct PresentationProposal {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(PresentationProposal);
+threadlike_optional!(PresentationProposal);
+a2a_message!(PresentationProposal);
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct PresentationPreview {
@@ -46,12 +55,12 @@ impl Attribute {
 
     pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
         self.cred_def_id = Some(cred_def_id.to_string());
-        self 
+        self
     }
 
     pub fn set_value(mut self, value: &str) -> Self {
         self.value = Some(value.to_string());
-        self 
+        self
     }
 }
 
@@ -74,7 +83,7 @@ impl Predicate {
 
     pub fn set_cred_def_id(mut self, cred_def_id: &str) -> Self {
         self.cred_def_id = Some(cred_def_id.to_string());
-        self 
+        self
     }
 }
 
@@ -103,9 +112,6 @@ impl PresentationProposal {
     }
 }
 
-threadlike_optional!(PresentationProposal);
-a2a_message!(PresentationProposal);
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 pub struct PresentationProposalData {
     pub attributes: Vec<Attribute>,
@@ -124,8 +130,12 @@ impl PresentationProposalData {
     }
 
     pub fn add_attribute_string(mut self, attr: &str) -> VcxResult<Self> {
-        let attr: Attribute = serde_json::from_str(attr)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied attribute: {:?}", err)))?;
+        let attr: Attribute = serde_json::from_str(attr).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize supplied attribute: {:?}", err),
+            )
+        })?;
         self.attributes.push(attr);
         Ok(self)
     }
@@ -141,8 +151,12 @@ impl PresentationProposalData {
     }
 
     pub fn add_predicate_string(mut self, pred: &str) -> VcxResult<Self> {
-        let pred: Predicate = serde_json::from_str(pred)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize supplied predicate: {:?}", err)))?;
+        let pred: Predicate = serde_json::from_str(pred).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize supplied predicate: {:?}", err),
+            )
+        })?;
         self.predicates.push(pred);
         Ok(self)
     }
@@ -155,7 +169,7 @@ impl From<PresentationProposalData> for PresentationProposal {
             presentation_proposal: PresentationPreview {
                 attributes: data.attributes,
                 predicates: data.predicates,
-                _type: default_presentation_preview_type()
+                _type: default_presentation_preview_type(),
             },
             ..Self::default()
         }
@@ -165,6 +179,7 @@ impl From<PresentationProposalData> for PresentationProposal {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::messages::connection::response::test_utils::_thread;
+
     use super::*;
 
     fn _attachment() -> ::serde_json::Value {
@@ -185,7 +200,7 @@ pub mod test_utils {
                 referent: None,
             }],
             predicates: vec![],
-            comment: Some(String::from("comment"))
+            comment: Some(String::from("comment")),
         }
     }
 
@@ -209,20 +224,20 @@ pub mod test_utils {
             comment: Some(_comment()),
             thread: Some(_thread()),
             presentation_proposal: _presentation_preview(),
+            timing: None,
         }
     }
 }
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation_proposal::test_utils::*;
     use crate::messages::proof_presentation::presentation_request::test_utils::thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_proposal_build_works() {
         let presentation_proposal: PresentationProposal = PresentationProposal::default()
             .set_comment(_comment())

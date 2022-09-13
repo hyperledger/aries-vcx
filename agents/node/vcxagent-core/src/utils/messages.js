@@ -28,10 +28,10 @@ async function parseDownloadMessagesResult (msgs) {
 
 module.exports.getMessagesForConnection = async function getMessagesForConnection (
   connection,
-  filterStatuses = ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'],
+  filterStatuses = ['MS-103', 'MS-106'],
   filterUids = []
 ) {
-  filterStatuses = filterStatuses || ['MS-102', 'MS-103', 'MS-104', 'MS-105', 'MS-106'] // explicit null or undefined interpreted as "no filter"
+  filterStatuses = filterStatuses || ['MS-103', 'MS-106'] // explicit null or undefined interpreted as "no filter"
   const downloadInstructions = {
     status: await maybeJoinWithComma(filterStatuses),
     uids: await maybeJoinWithComma(filterUids)

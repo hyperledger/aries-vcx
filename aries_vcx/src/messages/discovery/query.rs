@@ -1,4 +1,6 @@
 use crate::messages::a2a::{A2AMessage, MessageId};
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Query {
@@ -8,7 +10,12 @@ pub struct Query {
     pub query: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(Query);
 
 impl Query {
     pub fn create() -> Query {
@@ -30,16 +37,15 @@ impl Query {
     }
 }
 
-#[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use super::*;
 
-    fn _query_string() -> String {
+    pub fn _query_string() -> String {
         String::from("https://didcomm.org/")
     }
 
-
-    fn _comment() -> String {
+    pub fn _comment() -> String {
         String::from("I'm wondering if we can...")
     }
 
@@ -48,11 +54,19 @@ pub mod tests {
             id: MessageId::id(),
             query: Some(_query_string()),
             comment: Some(_comment()),
+            timing: None,
         }
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use crate::messages::discovery::query::test_utils::{_comment, _query, _query_string};
+
+    use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_query_build_works() {
         let query: Query = Query::default()
             .set_query(Some(_query_string()))

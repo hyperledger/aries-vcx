@@ -1,18 +1,18 @@
 const { VerifierStateType, ProofState, Proof } = require('@hyperledger/node-vcx-wrapper')
 const sleepPromise = require('sleep-promise')
 const { runScript } = require('./script-common')
-const { testTailsUrl } = require('../src/common')
 const logger = require('./logger')('Faber')
 const assert = require('assert')
 const uuid = require('uuid')
 const express = require('express')
 const bodyParser = require('body-parser')
 const { getFaberProofDataWithNonRevocation } = require('../test/utils/data')
-const { createVcxAgent, initRustapi, getSampleSchemaData, buildRevocationDetails } = require('../src/index')
+const { createVcxAgent, initRustapi, getSampleSchemaData } = require('../src/index')
 const { getAliceSchemaAttrs, getFaberCredDefName } = require('../test/utils/data')
 require('@hyperledger/node-vcx-wrapper')
 const { getStorageInfoMysql } = require('./wallet-common')
 const sleep = require('sleep-promise')
+const { testTailsUrl } = require('../src')
 
 const tailsDir = '/tmp/tails'
 
@@ -48,11 +48,9 @@ async function runFaber (options) {
 
     const schemaId = await vcxAgent.serviceLedgerSchema.createSchema(getSampleSchemaData())
     await sleep(500)
-    await vcxAgent.serviceLedgerCredDef.createCredentialDefinition(schemaId, getFaberCredDefName(), buildRevocationDetails({
-      supportRevocation: true,
-      tailsDir,
-      maxCreds: 5
-    }), testTailsUrl)
+    const vcxCredDef = await vcxAgent.serviceLedgerCredDef.createCredentialDefinitionV2(schemaId, getFaberCredDefName(), true, 'tag1')
+    const issuerDid = vcxAgent.getInstitutionDid()
+    const { revReg, revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(issuerDid, await vcxCredDef.getCredDefId(), 1, tailsDir, 5, testTailsUrl)
 
     await vcxAgent.serviceConnections.inviterConnectionCreateAndAccept(connectionId, (invitationString) => {
       logger.info('\n\n**invite details**')
@@ -83,8 +81,8 @@ async function runFaber (options) {
 
     logger.info('Faber is going to send credential offer')
     const schemaAttrs = getAliceSchemaAttrs()
-    await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, connectionId, credDefId, schemaAttrs)
-    if (options.revocation) {
+    await vcxAgent.serviceCredIssuer.sendOfferAndCredential(issuerCredId, revRegId, connectionId, credDefId, schemaAttrs)
+    if (options.revocation === true) {
       await vcxAgent.serviceCredIssuer.revokeCredential(issuerCredId)
     }
 

@@ -16,7 +16,7 @@ INDY_SDK_DIR=$OUTPUT_DIR/vdr-tools
 setup() {
     echo "ios/ci/build.sh: running setup()"
     echo "Setup rustup"
-    rustup default 1.58.0
+    rustup default 1.62.1
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
@@ -47,7 +47,6 @@ setup() {
     which autoconf &>/dev/null || brew install autoconf
     which cmake &>/dev/null || brew install cmake
     which wget &>/dev/null || brew install wget
-    which truncate &>/dev/null || brew install truncate
     brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
@@ -78,6 +77,9 @@ build_crypto() {
     echo "ios/ci/build.sh: running build_crypto()"
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
+        cd $OUTPUT_DIR/OpenSSL-for-iPhone
+        git checkout b77ace70b2594de69c88d0748326d2a1190bbac1
+        cd -
     fi
 
     pushd $OUTPUT_DIR/OpenSSL-for-iPhone

@@ -1,7 +1,7 @@
 [package]
 
 name = "libvcx"
-version = "0.35.0"
+version = "0.41.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
 description = "Absa's fork of HL LibVCX"
@@ -14,9 +14,10 @@ path = "src/lib.rs"
 crate-type = ["staticlib","rlib", "cdylib"]
 
 [features]
-pool_tests = ["tokio/rt", "tokio/macros"]
-agency_tests = ["tokio/rt", "tokio/macros"]
-general_test = ["tokio/rt", "tokio/macros"]
+test_utils = []
+pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
+agency_tests = ["test_utils", "tokio/rt", "tokio/macros"]
+general_test = ["test_utils", "tokio/rt", "tokio/macros"]
 to_restore = []
 fatal_warnings = []
 

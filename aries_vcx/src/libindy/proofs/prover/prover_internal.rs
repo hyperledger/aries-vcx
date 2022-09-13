@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indy_sys::WalletHandle;
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -21,18 +22,28 @@ pub struct CredInfoProver {
     pub timestamp: Option<u64>,
 }
 
-pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
-    trace!("build_schemas_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
+pub async fn build_schemas_json_prover(
+    wallet_handle: WalletHandle,
+    credentials_identifiers: &Vec<CredInfoProver>,
+) -> VcxResult<String> {
+    trace!(
+        "build_schemas_json_prover >>> credentials_identifiers: {:?}",
+        credentials_identifiers
+    );
     let mut rtn: Value = json!({});
 
-    for ref cred_info in credentials_identifiers {
+    for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(&cred_info.schema_id)
+            let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
-            let schema_json = serde_json::from_str(&schema_json)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidSchema, format!("Cannot deserialize schema: {}", err)))?;
+            let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidSchema,
+                    format!("Cannot deserialize schema: {}", err),
+                )
+            })?;
 
             rtn[cred_info.schema_id.to_owned()] = schema_json;
         }
@@ -40,18 +51,33 @@ pub async fn build_schemas_json_prover(credentials_identifiers: &Vec<CredInfoPro
     Ok(rtn.to_string())
 }
 
-pub async fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoProver>) -> VcxResult<String> {
-    trace!("build_cred_defs_json_prover >>> credentials_identifiers: {:?}", credentials_identifiers);
+pub async fn build_cred_defs_json_prover(
+    wallet_handle: WalletHandle,
+    credentials_identifiers: &Vec<CredInfoProver>,
+) -> VcxResult<String> {
+    trace!(
+        "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
+        credentials_identifiers
+    );
     let mut rtn: Value = json!({});
 
-    for ref cred_info in credentials_identifiers {
+    for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(&cred_info.cred_def_id)
+            let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, &cred_info.cred_def_id)
                 .await
-                .map_err(|err| err.map(VcxErrorKind::InvalidProofCredentialData, "Cannot get credential definition"))?;
+                .map_err(|err| {
+                    err.map(
+                        VcxErrorKind::InvalidProofCredentialData,
+                        "Cannot get credential definition",
+                    )
+                })?;
 
-            let credential_def = serde_json::from_str(&credential_def)
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Cannot deserialize credential definition: {}", err)))?;
+            let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidProofCredentialData,
+                    format!("Cannot deserialize credential definition: {}", err),
+                )
+            })?;
 
             rtn[cred_info.cred_def_id.to_owned()] = credential_def;
         }
@@ -60,18 +86,27 @@ pub async fn build_cred_defs_json_prover(credentials_identifiers: &Vec<CredInfoP
 }
 
 pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestData) -> VcxResult<Vec<CredInfoProver>> {
-    trace!("credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}", credentials, proof_req);
+    trace!(
+        "credential_def_identifiers >>> credentials: {:?}, proof_req: {:?}",
+        credentials,
+        proof_req
+    );
     let mut rtn = Vec::new();
 
-    let credentials: Value = serde_json::from_str(credentials)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize credentials: {}", err)))?;
+    let credentials: Value = serde_json::from_str(credentials).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize credentials: {}", err),
+        )
+    })?;
 
     if let Value::Object(ref attrs) = credentials["attrs"] {
         for (requested_attr, value) in attrs {
-            if let (Some(referent), Some(schema_id), Some(cred_def_id)) =
-            (value["credential"]["cred_info"]["referent"].as_str(),
-             value["credential"]["cred_info"]["schema_id"].as_str(),
-             value["credential"]["cred_info"]["cred_def_id"].as_str()) {
+            if let (Some(referent), Some(schema_id), Some(cred_def_id)) = (
+                value["credential"]["cred_info"]["referent"].as_str(),
+                value["credential"]["cred_info"]["schema_id"].as_str(),
+                value["credential"]["cred_info"]["cred_def_id"].as_str(),
+            ) {
                 let rev_reg_id = value["credential"]["cred_info"]["rev_reg_id"]
                     .as_str()
                     .map(|x| x.to_string());
@@ -80,24 +115,25 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     .as_str()
                     .map(|x| x.to_string());
 
-                let tails_file = value["tails_file"]
-                    .as_str()
-                    .map(|x| x.to_string());
+                let tails_file = value["tails_file"].as_str().map(|x| x.to_string());
 
-                rtn.push(
-                    CredInfoProver {
-                        requested_attr: requested_attr.to_string(),
-                        referent: referent.to_string(),
-                        schema_id: schema_id.to_string(),
-                        cred_def_id: cred_def_id.to_string(),
-                        revocation_interval: _get_revocation_interval(&requested_attr, &proof_req)?,
-                        timestamp: None,
-                        rev_reg_id,
-                        cred_rev_id,
-                        tails_file,
-                    }
-                );
-            } else { return Err(VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, "Cannot get identifiers")); }
+                rtn.push(CredInfoProver {
+                    requested_attr: requested_attr.to_string(),
+                    referent: referent.to_string(),
+                    schema_id: schema_id.to_string(),
+                    cred_def_id: cred_def_id.to_string(),
+                    revocation_interval: _get_revocation_interval(requested_attr, proof_req)?,
+                    timestamp: None,
+                    rev_reg_id,
+                    cred_rev_id,
+                    tails_file,
+                });
+            } else {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidProofCredentialData,
+                    "Cannot get identifiers",
+                ));
+            }
         }
     }
 
@@ -111,43 +147,55 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
         // Handle case for predicates
         Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
     } else {
-        Err(VcxError::from_msg(VcxErrorKind::InvalidProofCredentialData, format!("Attribute not found for: {}", attr_name)))
+        Err(VcxError::from_msg(
+            VcxErrorKind::InvalidProofCredentialData,
+            format!("Attribute not found for: {}", attr_name),
+        ))
     }
 }
 
 pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
-    trace!("build_rev_states_json >> credentials_identifiers: {:?}", credentials_identifiers);
+    trace!(
+        "build_rev_states_json >> credentials_identifiers: {:?}",
+        credentials_identifiers
+    );
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
     for cred_info in credentials_identifiers.iter_mut() {
         if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_file)) =
-        (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_file) {
-            if rtn.get(&rev_reg_id).is_none() { // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
-                let (from, to) = if let Some(ref interval) = cred_info.revocation_interval
-                { (interval.from, interval.to) } else { (None, None) };
+            (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_file)
+        {
+            if rtn.get(&rev_reg_id).is_none() {
+                // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
+                let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
+                    (interval.from, interval.to)
+                } else {
+                    (None, None)
+                };
 
-                let (_, rev_reg_def_json) = get_rev_reg_def_json(&rev_reg_id).await?;
+                let (_, rev_reg_def_json) = get_rev_reg_def_json(rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(
-                    &rev_reg_id,
-                    from,
-                    to,
-                ).await?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
                 let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
-                    &cred_rev_id,
-                    &tails_file,
-                ).await?;
+                    cred_rev_id,
+                    tails_file,
+                )
+                .await?;
 
-                let rev_state_json: Value = serde_json::from_str(&rev_state_json)
-                    .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize RevocationState: {}", err)))?;
+                let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
+                    VcxError::from_msg(
+                        VcxErrorKind::InvalidJson,
+                        format!("Cannot deserialize RevocationState: {}", err),
+                    )
+                })?;
 
                 // TODO: proover should be able to create multiple states of same revocation policy for different timestamps
                 // see ticket IS-1108
-                rtn[rev_reg_id.to_string()] = json!({timestamp.to_string(): rev_state_json});
+                rtn[rev_reg_id.to_string()] = json!({ timestamp.to_string(): rev_state_json });
                 cred_info.timestamp = Some(timestamp);
 
                 // Cache timestamp for future attributes that have the same rev_reg_id
@@ -165,10 +213,17 @@ pub async fn build_rev_states_json(credentials_identifiers: &mut Vec<CredInfoPro
     Ok(rtn.to_string())
 }
 
-pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoProver>,
-                                        self_attested_attrs: &str,
-                                        proof_req: &ProofRequestData) -> VcxResult<String> {
-    trace!("build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: {:?}, proof_req: {:?}", credentials_identifiers, self_attested_attrs, proof_req);
+pub fn build_requested_credentials_json(
+    credentials_identifiers: &Vec<CredInfoProver>,
+    self_attested_attrs: &str,
+    proof_req: &ProofRequestData,
+) -> VcxResult<String> {
+    trace!(
+        "build_requested_credentials_json >> credentials_identifiers: {:?}, self_attested_attrs: {:?}, proof_req: {:?}",
+        credentials_identifiers,
+        self_attested_attrs,
+        proof_req
+    );
     let mut rtn: Value = json!({
           "self_attested_attributes":{},
           "requested_attributes":{},
@@ -176,16 +231,17 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
     });
     // do same for predicates and self_attested
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
-        for ref cred_info in credentials_identifiers {
+        for cred_info in credentials_identifiers {
             if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
-                let insert_val = json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
+                let insert_val =
+                    json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
         }
     }
 
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
-        for ref cred_info in credentials_identifiers {
+        for cred_info in credentials_identifiers {
             if let Some(_) = proof_req.requested_predicates.get(&cred_info.requested_attr) {
                 let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
@@ -194,26 +250,67 @@ pub fn build_requested_credentials_json(credentials_identifiers: &Vec<CredInfoPr
     }
 
     // handle if the attribute is not revealed
-    let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize self attested attributes: {}", err)))?;
+    let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize self attested attributes: {}", err),
+        )
+    })?;
     rtn["self_attested_attributes"] = self_attested_attrs;
 
     Ok(rtn.to_string())
 }
 
+#[cfg(feature = "pool_tests")]
+#[cfg(test)]
+pub mod pool_tests {
+    use crate::libindy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
+    use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
+    use crate::utils::devsetup::SetupWalletPool;
+    use crate::utils::get_temp_dir_path;
+
+    #[tokio::test]
+    async fn test_build_rev_states_json_empty() {
+        let _setup = SetupWalletPool::init().await;
+
+        // empty vector
+        assert_eq!(
+            build_rev_states_json(Vec::new().as_mut()).await.unwrap(),
+            "{}".to_string()
+        );
+
+        // no rev_reg_id
+        let cred1 = CredInfoProver {
+            requested_attr: "height_1".to_string(),
+            referent: LICENCE_CRED_ID.to_string(),
+            schema_id: SCHEMA_ID.to_string(),
+            cred_def_id: CRED_DEF_ID.to_string(),
+            rev_reg_id: None,
+            cred_rev_id: Some(CRED_REV_ID.to_string()),
+            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+            revocation_interval: None,
+            timestamp: None,
+        };
+        assert_eq!(
+            build_rev_states_json(vec![cred1].as_mut()).await.unwrap(),
+            "{}".to_string()
+        );
+    }
+}
 
 #[cfg(test)]
-pub mod tests {
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
     use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
+    use crate::utils::devsetup::*;
     use crate::utils::{
-        constants::{ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID,
-                    ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
-                    CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID,
-                    REV_STATE_JSON, SCHEMA_ID, TAILS_DIR},
+        constants::{
+            ADDRESS_CRED_DEF_ID, ADDRESS_CRED_ID, ADDRESS_CRED_REV_ID, ADDRESS_REV_REG_ID, ADDRESS_SCHEMA_ID,
+            CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, REV_REG_ID, REV_STATE_JSON, SCHEMA_ID, TAILS_DIR,
+        },
         get_temp_dir_path,
     };
-    use crate::utils::devsetup::*;
 
     use super::*;
 
@@ -228,13 +325,13 @@ pub mod tests {
                 "height_1": { "name": "height" }
             },
             "requested_predicates": {},
-        }).to_string();
+        })
+        .to_string();
 
         serde_json::from_str(&proof_req).unwrap()
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_credential_def() {
         let _setup = SetupMocks::init();
 
@@ -262,16 +359,14 @@ pub mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(&creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(WalletHandle(0), &creds).await.unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_credential_def_fails() {
-        let _setup = SetupLibraryWallet::init();
-
+        let setup = SetupLibraryWallet::init().await;
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
@@ -283,13 +378,16 @@ pub mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_cred_defs_json_prover(&credential_ids).await.unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        let err_kind = build_cred_defs_json_prover(setup.wallet_handle, &credential_ids)
+            .await
+            .unwrap_err()
+            .kind();
+        assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_schemas_fails() {
-        let _setup = SetupLibraryWallet::init();
+        let setup = SetupLibraryWallet::init().await;
 
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
@@ -302,15 +400,23 @@ pub mod tests {
             tails_file: None,
             timestamp: None,
         }];
-        assert_eq!(build_schemas_json_prover(&credential_ids).await.unwrap_err().kind(), VcxErrorKind::InvalidSchema);
+        assert_eq!(
+            build_schemas_json_prover(setup.wallet_handle, &credential_ids)
+                .await
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidSchema
+        );
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_find_schemas() {
         let _setup = SetupMocks::init();
 
-        assert_eq!(build_schemas_json_prover(&Vec::new()).await.unwrap(), "{}".to_string());
+        assert_eq!(
+            build_schemas_json_prover(WalletHandle(0), &Vec::new()).await.unwrap(),
+            "{}".to_string()
+        );
 
         let cred1 = CredInfoProver {
             requested_attr: "height_1".to_string(),
@@ -336,13 +442,12 @@ pub mod tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(&creds).await.unwrap();
+        let schemas = build_schemas_json_prover(WalletHandle(0), &creds).await.unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers() {
         let _setup = SetupDefaults::init();
 
@@ -353,7 +458,10 @@ pub mod tests {
             cred_def_id: CRED_DEF_ID.to_string(),
             rev_reg_id: Some(REV_REG_ID.to_string()),
             cred_rev_id: Some(CRED_REV_ID.to_string()),
-            revocation_interval: Some(NonRevokedInterval { from: Some(123), to: Some(456) }),
+            revocation_interval: Some(NonRevokedInterval {
+                from: Some(123),
+                to: Some(456),
+            }),
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
         };
@@ -364,7 +472,10 @@ pub mod tests {
             cred_def_id: ADDRESS_CRED_DEF_ID.to_string(),
             rev_reg_id: Some(ADDRESS_REV_REG_ID.to_string()),
             cred_rev_id: Some(ADDRESS_CRED_REV_ID.to_string()),
-            revocation_interval: Some(NonRevokedInterval { from: None, to: Some(987) }),
+            revocation_interval: Some(NonRevokedInterval {
+                from: None,
+                to: Some(987),
+            }),
             tails_file: None,
             timestamp: None,
         };
@@ -420,24 +531,38 @@ pub mod tests {
             },
             "requested_predicates": {},
             "non_revoked": {"to": 987}
-        }).to_string();
+        })
+        .to_string();
 
-        let creds = credential_def_identifiers(&selected_credentials.to_string(), &serde_json::from_str(&proof_req).unwrap()).unwrap();
+        let creds = credential_def_identifiers(
+            &selected_credentials.to_string(),
+            &serde_json::from_str(&proof_req).unwrap(),
+        )
+        .unwrap();
         assert_eq!(creds, vec![cred1, cred2]);
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_credential_def_identifiers_failure() {
         let _setup = SetupDefaults::init();
 
         // selected credentials has incorrect json
-        assert_eq!(credential_def_identifiers("", &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidJson);
-
+        assert_eq!(
+            credential_def_identifiers("", &proof_req_no_interval())
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidJson
+        );
 
         // No Creds
-        assert_eq!(credential_def_identifiers("{}", &proof_req_no_interval()).unwrap(), Vec::new());
-        assert_eq!(credential_def_identifiers(r#"{"attrs":{}}"#, &proof_req_no_interval()).unwrap(), Vec::new());
+        assert_eq!(
+            credential_def_identifiers("{}", &proof_req_no_interval()).unwrap(),
+            Vec::new()
+        );
+        assert_eq!(
+            credential_def_identifiers(r#"{"attrs":{}}"#, &proof_req_no_interval()).unwrap(),
+            Vec::new()
+        );
 
         // missing cred info
         let selected_credentials: Value = json!({
@@ -445,7 +570,12 @@ pub mod tests {
               "height_1":{ "interval":null }
            }
         });
-        assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(
+            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidProofCredentialData
+        );
 
         // Optional Revocation
         let mut selected_credentials: Value = json!({
@@ -481,11 +611,17 @@ pub mod tests {
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
         }];
-        assert_eq!(&credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(), &creds);
+        assert_eq!(
+            &credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(),
+            &creds
+        );
 
         // rev_reg_id is null
         selected_credentials["attrs"]["height_1"]["cred_info"]["rev_reg_id"] = serde_json::Value::Null;
-        assert_eq!(&credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(), &creds);
+        assert_eq!(
+            &credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(),
+            &creds
+        );
 
         // Missing schema ID
         let mut selected_credentials: Value = json!({
@@ -510,15 +646,24 @@ pub mod tests {
               },
            }
         });
-        assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(
+            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidProofCredentialData
+        );
 
         // Schema Id is null
         selected_credentials["attrs"]["height_1"]["cred_info"]["schema_id"] = serde_json::Value::Null;
-        assert_eq!(credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(
+            credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidProofCredentialData
+        );
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_build_requested_credentials() {
         let _setup = SetupMocks::init();
 
@@ -548,7 +693,8 @@ pub mod tests {
         let self_attested_attrs = json!({
             "self_attested_attr_3": "my self attested 1",
             "self_attested_attr_4": "my self attested 2",
-        }).to_string();
+        })
+        .to_string();
 
         let test: Value = json!({
               "self_attested_attributes":{
@@ -582,7 +728,6 @@ pub mod tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_build_rev_states_json() {
         let _setup = SetupMocks::init();
 
@@ -605,31 +750,7 @@ pub mod tests {
         assert!(cred_info[0].timestamp.is_some());
     }
 
-    #[cfg(feature = "pool_tests")]
-    #[tokio::test]
-    async fn test_build_rev_states_json_empty() {
-        let _setup = SetupWithWalletAndAgency::init().await;
-
-        // empty vector
-        assert_eq!(build_rev_states_json(Vec::new().as_mut()).await.unwrap(), "{}".to_string());
-
-        // no rev_reg_id
-        let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
-            cred_def_id: CRED_DEF_ID.to_string(),
-            rev_reg_id: None,
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-        };
-        assert_eq!(build_rev_states_json(vec![cred1].as_mut()).await.unwrap(), "{}".to_string());
-    }
-
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_get_credential_intervals_from_proof_req() {
         let _setup = SetupDefaults::init();
 
@@ -650,17 +771,29 @@ pub mod tests {
         let proof_req: ProofRequestData = serde_json::from_value(proof_req).unwrap();
 
         // Attribute not found in proof req
-        assert_eq!(_get_revocation_interval("not here", &proof_req).unwrap_err().kind(), VcxErrorKind::InvalidProofCredentialData);
+        assert_eq!(
+            _get_revocation_interval("not here", &proof_req).unwrap_err().kind(),
+            VcxErrorKind::InvalidProofCredentialData
+        );
 
         // attribute interval overrides proof request interval
-        let interval = Some(NonRevokedInterval { from: Some(123), to: Some(456) });
+        let interval = Some(NonRevokedInterval {
+            from: Some(123),
+            to: Some(456),
+        });
         assert_eq!(_get_revocation_interval("address1_1", &proof_req).unwrap(), interval);
 
         // when attribute interval is None, defaults to proof req interval
-        let interval = Some(NonRevokedInterval { from: Some(098), to: Some(123) });
+        let interval = Some(NonRevokedInterval {
+            from: Some(098),
+            to: Some(123),
+        });
         assert_eq!(_get_revocation_interval("zip_2", &proof_req).unwrap(), interval);
 
         // No interval provided for attribute or proof req
-        assert_eq!(_get_revocation_interval("address1_1", &proof_req_no_interval()).unwrap(), None);
+        assert_eq!(
+            _get_revocation_interval("address1_1", &proof_req_no_interval()).unwrap(),
+            None
+        );
     }
 }

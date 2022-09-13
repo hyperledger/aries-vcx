@@ -1,14 +1,15 @@
-use crate::handlers::out_of_band::{OutOfBandInvitation, GoalCode, HandshakeProtocol};
-use crate::messages::attachment::AttachmentId;
-use crate::messages::connection::service::ServiceResolvable;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::a2a::message_type::MessageType;
-use crate::messages::a2a::message_family::MessageFamilies;
 use crate::error::prelude::*;
+use crate::handlers::out_of_band::{GoalCode, HandshakeProtocol, OutOfBandInvitation};
+use crate::messages::a2a::message_family::MessageFamilies;
+use crate::messages::a2a::message_type::MessageType;
+use crate::messages::a2a::A2AMessage;
+use crate::messages::attachment::AttachmentId;
+
+use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
-    pub oob: OutOfBandInvitation
+    pub oob: OutOfBandInvitation,
 }
 
 impl OutOfBandSender {
@@ -47,13 +48,15 @@ impl OutOfBandSender {
     pub fn append_handshake_protocol(mut self, protocol: &HandshakeProtocol) -> VcxResult<Self> {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
-            HandshakeProtocol::DidExchangeV1 => { return Err(VcxError::from(VcxErrorKind::ActionNotSupported)) }
+            HandshakeProtocol::DidExchangeV1 => {
+                return Err(VcxError::from(VcxErrorKind::ActionNotSupported));
+            }
         };
         match self.oob.handshake_protocols {
             Some(ref mut protocols) => {
                 protocols.push(new_protocol);
             }
-            None =>  {
+            None => {
                 self.oob.handshake_protocols = Some(vec![new_protocol]);
             }
         };
@@ -65,18 +68,18 @@ impl OutOfBandSender {
             a2a_msg @ A2AMessage::PresentationRequest(_) => {
                 (AttachmentId::PresentationRequest, json!(&a2a_msg).to_string())
             }
-            a2a_msg @ A2AMessage::CredentialOffer(_) => {
-                 (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string())
-            }
+            a2a_msg @ A2AMessage::CredentialOffer(_) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
                 return Err(VcxError::from_msg(
                     VcxErrorKind::InvalidMessageFormat,
-                    format!("Appended message type {:?} is not allowed.", msg))
-                )
+                    format!("Appended message type {:?} is not allowed.", msg),
+                ));
             }
         };
-        self.oob.requests_attach.add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
+        self.oob
+            .requests_attach
+            .add_base64_encoded_json_attachment(attach_id, ::serde_json::Value::String(attach))?;
         Ok(self)
     }
 
@@ -90,18 +93,18 @@ impl OutOfBandSender {
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {
         Ok(Self {
-            oob: OutOfBandInvitation::from_string(oob_data)?
+            oob: OutOfBandInvitation::from_string(oob_data)?,
         })
     }
 }
 
-
 #[cfg(test)]
-mod tests {
-    use crate::messages::connection::service::FullService;
+#[cfg(feature = "general_test")]
+mod unit_tests {
+    use crate::did_doc::service_aries::AriesService;
+    use crate::messages::connection::did::Did;
     use crate::messages::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
-    use crate::messages::connection::did::Did;
 
     use super::*;
 
@@ -113,20 +116,20 @@ mod tests {
     }
 
     fn _create_service() -> ServiceResolvable {
-        ServiceResolvable::FullService(FullService::create()
-            .set_service_endpoint("http://example.org/agent".into())
-            .set_routing_keys(vec!("12345".into()))
-            .set_recipient_keys(vec!("abcde".into())))
+        ServiceResolvable::AriesService(
+            AriesService::create()
+                .set_service_endpoint("http://example.org/agent".into())
+                .set_routing_keys(vec!["12345".into()])
+                .set_recipient_keys(vec!["abcde".into()]),
+        )
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
-    fn test_append_full_service_object_to_oob_services() {
+    fn test_append_aries_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
         let service = _create_service();
-        let oob = _create_oob()
-            .append_service(&service);
+        let oob = _create_oob().append_service(&service);
         let resolved_service = oob.get_services();
 
         assert_eq!(resolved_service.len(), 1);
@@ -134,13 +137,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
         let service = ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
-        let oob = _create_oob()
-            .append_service(&service);
+        let oob = _create_oob().append_service(&service);
         let resolved_service = oob.get_services();
 
         assert_eq!(resolved_service.len(), 1);
@@ -148,7 +149,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_oob_sender_to_a2a_message() {
         let _setup = SetupMocks::init();
 

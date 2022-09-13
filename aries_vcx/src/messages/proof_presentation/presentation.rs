@@ -3,6 +3,8 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::ack::PleaseAck;
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;
+use crate::messages::timing::Timing;
+use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Presentation {
@@ -17,7 +19,15 @@ pub struct Presentation {
     #[serde(rename = "~please_ack")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub please_ack: Option<PleaseAck>,
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
 }
+
+timing_optional!(Presentation);
+please_ack!(Presentation);
+threadlike!(Presentation);
+a2a_message!(Presentation);
 
 impl Presentation {
     pub fn create() -> Self {
@@ -30,19 +40,15 @@ impl Presentation {
     }
 
     pub fn set_presentations_attach(mut self, presentations: String) -> VcxResult<Presentation> {
-        self.presentations_attach.add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
+        self.presentations_attach
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
         Ok(self)
     }
 }
-
-please_ack!(Presentation);
-threadlike!(Presentation);
-a2a_message!(Presentation);
-
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
     use crate::messages::connection::response::test_utils::_thread_1;
+    use crate::messages::proof_presentation::presentation_request::test_utils::thread;
 
     use super::*;
 
@@ -56,7 +62,9 @@ pub mod test_utils {
 
     pub fn _presentation() -> Presentation {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment())
+            .unwrap();
 
         Presentation {
             id: MessageId::id(),
@@ -64,12 +72,15 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: thread(),
             please_ack: Some(PleaseAck {}),
+            timing: None,
         }
     }
 
     pub fn _presentation_1() -> Presentation {
         let mut attachment = Attachments::new();
-        attachment.add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment()).unwrap();
+        attachment
+            .add_base64_encoded_json_attachment(AttachmentId::Presentation, _attachment())
+            .unwrap();
 
         Presentation {
             id: MessageId::id(),
@@ -77,26 +88,27 @@ pub mod test_utils {
             presentations_attach: attachment,
             thread: _thread_1(),
             please_ack: Some(PleaseAck {}),
+            timing: None,
         }
     }
 }
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
-pub mod tests {
+pub mod unit_tests {
     use crate::messages::proof_presentation::presentation::test_utils::*;
     use crate::messages::proof_presentation::presentation_request::test_utils::thread_id;
 
     use super::*;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_presentation_build_works() {
         let presentation: Presentation = Presentation::default()
             .set_comment(_comment())
             .ask_for_ack()
             .set_thread_id(&thread_id())
-            .set_presentations_attach(_attachment().to_string()).unwrap();
+            .set_presentations_attach(_attachment().to_string())
+            .unwrap();
 
         assert_eq!(_presentation(), presentation);
     }

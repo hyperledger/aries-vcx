@@ -1,3 +1,5 @@
+use indy_sys::WalletHandle;
+
 use crate::error::prelude::*;
 use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
@@ -22,25 +24,37 @@ impl From<(OfferReceivedState, String, String)> for RequestSentState {
 
 impl OfferReceivedState {
     pub fn new(offer: CredentialOffer) -> Self {
-        OfferReceivedState {
-            offer,
-        }
+        OfferReceivedState { offer }
     }
 
     pub fn get_attributes(&self) -> VcxResult<String> {
         let mut new_map = serde_json::map::Map::new();
         self.offer.credential_preview.attributes.iter().for_each(|attribute| {
-            new_map.insert(attribute.name.clone(), serde_json::Value::String(attribute.value.clone()));
+            new_map.insert(
+                attribute.name.clone(),
+                serde_json::Value::String(attribute.value.clone()),
+            );
         });
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub async fn is_revokable(&self) -> VcxResult<bool> {
-        let offer = self.offer.offers_attach.content()
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to get credential offer attachment content: {}", err)))?;
-        let cred_def_id = parse_cred_def_id_from_cred_offer(&offer)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Failed to parse credential definition id from credential offer: {}", err)))?;
-        is_cred_def_revokable(&cred_def_id).await
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
+        let offer = self.offer.offers_attach.content().map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Failed to get credential offer attachment content: {}", err),
+            )
+        })?;
+        let cred_def_id = parse_cred_def_id_from_cred_offer(&offer).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!(
+                    "Failed to parse credential definition id from credential offer: {}",
+                    err
+                ),
+            )
+        })?;
+        is_cred_def_revokable(wallet_handle, &cred_def_id).await
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {
