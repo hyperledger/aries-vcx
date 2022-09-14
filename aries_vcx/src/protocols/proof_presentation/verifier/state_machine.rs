@@ -11,6 +11,7 @@ use crate::messages::proof_presentation::presentation_ack::PresentationAck;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
 use crate::messages::status::Status;
+use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use crate::protocols::proof_presentation::verifier::states::initial::InitialVerifierState;
@@ -253,9 +254,7 @@ impl VerifierSM {
                             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
                         None => state.presentation_proposal.id.0,
                     };
-                    let problem_report = ProblemReport::create()
-                        .set_comment(Some(reason.to_string()))
-                        .set_thread_id(&thread_id);
+                    let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
                     send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -291,9 +290,8 @@ impl VerifierSM {
                         )
                     }
                     Err(err) => {
-                        let problem_report = ProblemReport::create()
-                            .set_comment(Some(err.to_string()))
-                            .set_thread_id(&thread_id);
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                        error!("Presentation was not verified, sending problem report: {:?}", problem_report);
                         send_message.ok_or(VcxError::from_msg(
                             VcxErrorKind::InvalidState,
                             "Attempted to call undefined send_message callback",

@@ -9,6 +9,7 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::messages::status::Status;
+use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::initial::InitialProverState;
@@ -52,19 +53,12 @@ pub enum ProverFullState {
     Finished(FinishedState),
 }
 
-fn build_presentation_message(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
+fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     Ok(Presentation::create()
         .ask_for_ack()
         .set_thread_id(&thread_id)
         .set_presentations_attach(presentation_attachment)?
         .set_out_time())
-}
-
-fn build_problem_report(thread_id: &str, comment: &str) -> ProblemReport {
-    ProblemReport::create()
-        .set_comment(Some(comment.into()))
-        .set_thread_id(&thread_id)
-        .set_out_time()
 }
 
 impl Default for ProverFullState {
@@ -190,11 +184,12 @@ impl ProverSM {
                     .await
                 {
                     Ok(presentation) => {
-                        let presentation = build_presentation_message(&thread_id, presentation)?;
+                        let presentation = build_presentation_msg(&thread_id, presentation)?;
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     Err(err) => {
-                        let problem_report = build_problem_report(&thread_id, &err.to_string());
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                        error!("Failed bo build presentation, sending problem report: {:?}", problem_report);
                         ProverFullState::PresentationPreparationFailed((state, problem_report).into())
                     }
                 },
@@ -314,7 +309,7 @@ impl ProverSM {
         reason: &'a str,
         thread_id: &'a str,
     ) -> VcxResult<ProblemReport> {
-        let problem_report = build_problem_report(thread_id, reason);
+        let problem_report = build_problem_report_msg(Some(reason.to_string()), thread_id);
         send_message(problem_report.to_a2a_message()).await?;
         Ok(problem_report)
     }
@@ -562,10 +557,9 @@ pub mod unit_tests {
 
     mod build_messages {
         use crate::messages::a2a::MessageId;
-        
-        use crate::protocols::proof_presentation::prover::state_machine::{
-            build_presentation_message, build_problem_report,
-        };
+        use crate::protocols::common::build_problem_report_msg;
+
+        use crate::protocols::proof_presentation::prover::state_machine::build_presentation_msg;
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
@@ -573,7 +567,7 @@ pub mod unit_tests {
         fn test_prover_build_presentation_message() {
             let _setup = SetupMocks::init();
 
-            let msg = build_presentation_message("12345", "{}".into()).unwrap();
+            let msg = build_presentation_msg("12345", "{}".into()).unwrap();
 
             assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.thid, Some("12345".into()));
@@ -589,7 +583,7 @@ pub mod unit_tests {
         async fn test_prover_build_problem_report() {
             let _setup = SetupMocks::init();
 
-            let msg = build_problem_report("12345", "foobar".into());
+            let msg = build_problem_report_msg( Some("foobar".into()), "12345");
 
             assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));
