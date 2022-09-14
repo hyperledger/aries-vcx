@@ -25,12 +25,12 @@ describe('test tails distribution', () => {
       const port = 5468
       const tailsUrlId = uuid.v4()
       const tailsUrl = `http://127.0.0.1:${port}/${tailsUrlId}`
-      await faber.buildLedgerPrimitivesV2(buildRevocationDetails({ supportRevocation: true, tailsDir: `${__dirname}/tmp/faber/tails`, maxCreds: 5, tailsUrl }))
-      await faber.sendCredentialOfferV2()
+      await faber.buildLedgerPrimitives(buildRevocationDetails({ supportRevocation: true, tailsDir: `${__dirname}/tmp/faber/tails`, maxCreds: 5, tailsUrl }))
+      await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
-      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.updateStateCredential(IssuerStateType.RequestReceived)
       await faber.sendCredential()
-      await alice.updateStateCredentialV2(HolderStateType.Finished)
+      await alice.updateStateCredential(HolderStateType.Finished)
 
       const faberTailsHash = await faber.getTailsHash()
       const app = express()
@@ -48,8 +48,8 @@ describe('test tails distribution', () => {
 
       const request = await faber.requestProofFromAlice()
       await alice.sendHolderProof(JSON.parse(request), revRegId => aliceTailsFileDir)
-      await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
-      await alice.updateStateHolderProofV2(ProverStateType.Finished)
+      await faber.updateStateVerifierProof(VerifierStateType.Finished)
+      await alice.updateStateHolderProof(ProverStateType.Finished)
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       if (server) {

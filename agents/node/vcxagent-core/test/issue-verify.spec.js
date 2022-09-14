@@ -15,19 +15,20 @@ describe('test update state', () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
       const tailsDir = `${__dirname}/tmp/faber/tails`
-      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
-      await faber.sendCredentialOfferV2()
+      await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+      await faber.rotateRevReg(tailsDir, 5)
+      await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
 
-      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.updateStateCredential(IssuerStateType.RequestReceived)
       await faber.sendCredential()
-      await alice.updateStateCredentialV2(HolderStateType.Finished)
+      await alice.updateStateCredential(HolderStateType.Finished)
       await faber.receiveCredentialAck()
 
       const request = await faber.requestProofFromAlice()
       await alice.sendHolderProof(JSON.parse(request), revRegId => tailsDir)
-      await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
-      await alice.updateStateHolderProofV2(ProverStateType.Finished)
+      await faber.updateStateVerifierProof(VerifierStateType.Finished)
+      await alice.updateStateHolderProof(ProverStateType.Finished)
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)
