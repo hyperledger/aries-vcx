@@ -27,22 +27,30 @@ the library into 3 pieces.
 - ✅ `libvcx` - adds memory management and C bindings on top of `aries-vcx` - making it consumable
    on Android, iOS and any programming language.
 
-# Phase 2 - In progress 🚧
-- 🚧 Migration from `libindy` to its fork [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools).
-- 🚧 Concise `aries-vcx` crate API and start publishing on crates.io
-- 🚧 Implement testing backchannel for aries-vcx. [WIP](https://github.com/hyperledger/aries-agent-test-harness/pull/243)
-- Support for public DID-based connection invitations
-- Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
+# Phase 2 - Done ✅
+- ✅ Migration from `libindy` to its fork [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools).
+- ✅ Removal of blocking calls to `vdr-tools`
+- ✅ Support for public DID-based connection invitations
+- ✅ Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
+- ✅ Implement testing backchannel for aries-vcx. [Test runs](https://github.com/hyperledger/aries-agent-test-harness/actions)
+- ✅ Removal of global state from `aries-vcx`
+- ✅ Support wallet multi-tenancy on aries-vcx level
 
-# Future work 
+# Phase 2 - In progress 🚧 / Planned 
+- 🚧 Update C API / public-agents API to enable for receiving messages from public directly, without mediator intermediary
+- Update connection protocol implementation to make use of mediator optional
+- Call `vdr-tools` directly via Rust API; remove FFI between `aries-vcx --- vdr-tools`
+- Extract `aries-vcx::protocols` module as `aries-protocols` crate
+- Extract `aries-vcx::messages` module as `aries-messages` crate
+- Extract `aries-vcx::did_doc` module as `did-doc` crate
+- 🚧 Concise `aries-vcx` public crate API
+- Publish crates on crates.io
+- Implement `aries-vcx - AFJ` test harness back-channel pair
+- Implement `did-exchange` protocol
 
-### AIP 2.0
-Our current priority is to get satisfying AIP1.0 results
-  on [aries-agent-test-harness](https://github.com/hyperledger/aries-agent-test-harness) tests, 
-  followed by support for AIP 2.0 in the future.
-  
-### Multitenancy 
-AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this capability is on our roadmap.
+# Phase 3
+- Use `indy-vdr` to facilitate ledger calls
+- Implement Rust issuer/verifier web service on top of aries-vcx
 
 # Future vision architecture diagram
-# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_180821.png"/>
+# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_150922.png"/>

@@ -39,7 +39,7 @@ all these demos depends on.
 # Project architecture
 The architecture is evolving - you can compare the diagram below with diagram under [roadmap](./roadmap.md).
 
-# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_now_180821.png"/>
+# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_now_150922.png"/>
 
 # Artifacts
 Number of artifacts are built for every CI run (unless it's coming from a forked repository due to limitations of Github Actions). 
