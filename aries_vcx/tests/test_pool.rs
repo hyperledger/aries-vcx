@@ -12,7 +12,6 @@ pub mod utils;
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
     use aries_vcx::did_doc::service_aries::AriesService;
-    use aries_vcx::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::set_config_value;
     use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
@@ -30,9 +29,8 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_open_close_pool() {
-        let _setup = SetupWalletPool::init().await;
-
-        assert!(get_main_pool_handle().unwrap() > 0);
+        let setup = SetupWalletPool::init().await;
+        assert!(setup.pool_handle > 0);
     }
 
     #[tokio::test]
