@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::verifier::verifier_internal::{
@@ -10,6 +10,7 @@ use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_pro
 
 pub async fn validate_indy_proof(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     proof_json: &str,
     proof_req_json: &str,
 ) -> VcxResult<bool> {
@@ -21,16 +22,16 @@ pub async fn validate_indy_proof(
 
     let credential_data = get_credential_info(proof_json)?;
 
-    let credential_defs_json = build_cred_defs_json_verifier(wallet_handle, &credential_data)
+    let credential_defs_json = build_cred_defs_json_verifier(wallet_handle, pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let schemas_json = build_schemas_json_verifier(wallet_handle, &credential_data)
+    let schemas_json = build_schemas_json_verifier(wallet_handle, pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let rev_reg_defs_json = build_rev_reg_defs_json(&credential_data)
+    let rev_reg_defs_json = build_rev_reg_defs_json(pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
-    let rev_regs_json = build_rev_reg_json(&credential_data)
+    let rev_regs_json = build_rev_reg_json(pool_handle, &credential_data)
         .await
         .unwrap_or(json!({}).to_string());
 
@@ -113,7 +114,7 @@ pub mod unit_tests {
         .unwrap();
 
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json.to_string())
+            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json.to_string())
                 .await
                 .unwrap(),
             true
@@ -155,7 +156,7 @@ pub mod unit_tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -181,7 +182,7 @@ pub mod unit_tests {
         .await
         .unwrap();
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json)
+            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
                 .await
                 .unwrap_err()
                 .kind(),
@@ -191,7 +192,7 @@ pub mod unit_tests {
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
         proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json.to_string())
+            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json.to_string())
                 .await
                 .unwrap(),
             true
@@ -234,7 +235,7 @@ pub mod unit_tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(setup.wallet_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -260,7 +261,7 @@ pub mod unit_tests {
         .await
         .unwrap();
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json)
+            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
                 .await
                 .unwrap(),
             true
@@ -272,7 +273,7 @@ pub mod unit_tests {
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
             assert_eq!(
-                validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json)
+                validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
                     .await
                     .unwrap_err()
                     .kind(),
@@ -285,7 +286,7 @@ pub mod unit_tests {
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
             assert_eq!(
-                validate_indy_proof(setup.wallet_handle, &prover_proof_json, &proof_req_json)
+                validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
                     .await
                     .unwrap_err()
                     .kind(),

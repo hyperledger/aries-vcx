@@ -32,9 +32,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_basic_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -82,6 +82,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -93,9 +94,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_local_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -122,6 +123,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -147,6 +149,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -158,11 +161,11 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_batch_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
-        let mut consumer2 = Alice::setup().await;
-        let mut consumer3 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
+        let mut consumer2 = Alice::setup(setup.pool_handle).await;
+        let mut consumer3 = Alice::setup(setup.pool_handle).await;
         let (consumer_to_institution1, institution_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut institution).await;
         let (consumer_to_institution2, institution_to_consumer2) =
@@ -172,7 +175,7 @@ mod integration_tests {
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let credential_handle1 = _exchange_credential(
@@ -247,6 +250,7 @@ mod integration_tests {
         verifier1
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -255,6 +259,7 @@ mod integration_tests {
         verifier2
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -263,6 +268,7 @@ mod integration_tests {
         verifier3
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -319,6 +325,7 @@ mod integration_tests {
         verifier1
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -327,6 +334,7 @@ mod integration_tests {
         verifier2
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -335,6 +343,7 @@ mod integration_tests {
         verifier3
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -351,9 +360,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revoked_credential_might_still_work() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -421,6 +430,7 @@ mod integration_tests {
         verifier
             .update_state(
                 institution.wallet_handle,
+                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -435,16 +445,16 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_first() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -485,7 +495,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -504,7 +514,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -516,16 +526,16 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_second() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -566,7 +576,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -585,7 +595,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -597,16 +607,16 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -646,7 +656,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -665,7 +675,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -677,16 +687,16 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_first() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -728,7 +738,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -747,7 +757,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -759,16 +769,16 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_second() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -810,7 +820,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -829,7 +839,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(

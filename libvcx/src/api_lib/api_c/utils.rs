@@ -13,6 +13,7 @@ use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
+use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
@@ -378,9 +379,9 @@ pub extern "C" fn vcx_messages_update_status(
 #[no_mangle]
 pub extern "C" fn vcx_pool_set_handle(handle: i32) -> i32 {
     if handle <= 0 {
-        aries_vcx::global::pool::set_main_pool_handle(None);
+        crate::api_lib::global::pool::set_main_pool_handle(None);
     } else {
-        aries_vcx::global::pool::set_main_pool_handle(Some(handle));
+        crate::api_lib::global::pool::set_main_pool_handle(Some(handle));
     }
 
     handle
@@ -406,19 +407,24 @@ pub extern "C" fn vcx_endorse_transaction(
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
     let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
         Ok(err) => err,
         Err(err) => return err.into(),
     };
     trace!(
-        "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, transaction: {})",
+        "vcx_endorse_transaction(command_handle: {}, pool_handle: {:?}, issuer_did: {}, transaction: {})",
         command_handle,
+        pool_handle,
         issuer_did,
         transaction
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), &issuer_did, &transaction).await {
+        match aries_vcx::libindy::utils::ledger::endorse_transaction(get_main_wallet_handle(), pool_handle, &issuer_did, &transaction).await {
             Ok(()) => {
                 trace!(
                     "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
@@ -457,8 +463,13 @@ pub extern "C" fn vcx_rotate_verkey(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), &did).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey(get_main_wallet_handle(), pool_handle, &did).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
@@ -543,8 +554,13 @@ pub extern "C" fn vcx_rotate_verkey_apply(
         temp_vk
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), &did, &temp_vk).await {
+        match aries_vcx::libindy::utils::signus::rotate_verkey_apply(get_main_wallet_handle(), pool_handle, &did, &temp_vk).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
@@ -629,8 +645,13 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
         did
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(&did).await {
+        match aries_vcx::libindy::utils::signus::get_verkey_from_ledger(pool_handle, &did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
@@ -674,9 +695,15 @@ pub extern "C" fn vcx_get_ledger_txn(
         submitter_did
     );
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match aries_vcx::libindy::utils::anoncreds::get_ledger_txn(
             get_main_wallet_handle(),
+            pool_handle,
             submitter_did.as_deref(),
             seq_no,
         )

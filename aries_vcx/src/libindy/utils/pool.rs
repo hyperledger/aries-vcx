@@ -1,7 +1,7 @@
 use indy::{pool, ErrorCode};
+use indy_sys::PoolHandle;
 
 use crate::error::prelude::*;
-use crate::global;
 use crate::global::settings;
 
 pub async fn set_protocol_version() -> VcxResult<()> {
@@ -59,27 +59,15 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResul
     Ok(handle)
 }
 
-pub async fn close() -> VcxResult<()> {
-    let handle = global::pool::get_main_pool_handle()?;
-
+pub async fn close(handle: PoolHandle) -> VcxResult<()> {
     //TODO there was timeout here (before future-based Rust wrapper)
     pool::close_pool_ledger(handle).await?;
-
-    global::pool::reset_main_pool_handle();
-
     Ok(())
 }
 
 pub async fn delete(pool_name: &str) -> VcxResult<()> {
     trace!("delete >>> pool_name: {}", pool_name);
-
-    if settings::indy_mocks_enabled() {
-        global::pool::set_main_pool_handle(None);
-        return Ok(());
-    }
-
     pool::delete_pool_ledger(pool_name).await?;
-
     Ok(())
 }
 
@@ -88,7 +76,6 @@ pub mod test_utils {
     use std::fs;
     use std::io::Write;
 
-    use crate::global::pool::set_main_pool_handle;
     use crate::utils::{
         constants::{GENESIS_PATH, POOL},
         get_temp_dir_path,
@@ -103,21 +90,20 @@ pub mod test_utils {
             .unwrap();
     }
 
-    pub async fn delete_named_test_pool(pool_name: &str) {
-        close().await.ok();
+    pub async fn delete_named_test_pool(pool_handle: PoolHandle, pool_name: &str) {
+        close(pool_handle).await.ok();
         delete(pool_name).await.unwrap();
     }
 
-    pub async fn delete_test_pool() {
-        close().await.ok();
+    pub async fn delete_test_pool(pool_handle: PoolHandle) {
+        close(pool_handle).await.unwrap();
         delete(POOL).await.unwrap();
     }
 
-    pub async fn open_test_pool() -> u32 {
+    pub async fn open_test_pool() -> PoolHandle {
         create_test_ledger_config().await;
         let handle = open_pool_ledger(POOL, None).await.unwrap();
-        set_main_pool_handle(Some(handle));
-        handle as u32
+        handle
     }
 
     pub fn get_txns(test_pool_ip: &str) -> Vec<String> {

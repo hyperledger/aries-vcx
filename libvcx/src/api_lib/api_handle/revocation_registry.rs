@@ -2,6 +2,7 @@ use aries_vcx::error::prelude::*;
 use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
 use aries_vcx::libindy::utils::anoncreds;
 use aries_vcx::libindy::utils::anoncreds::RevocationRegistryDefinition;
+use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -44,7 +45,7 @@ pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
 pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     rev_reg
-        .publish_revocation_primitives(get_main_wallet_handle(), tails_url)
+        .publish_revocation_primitives(get_main_wallet_handle(), get_main_pool_handle()?, tails_url)
         .await?;
     REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
@@ -54,7 +55,7 @@ pub async fn publish_revocations(handle: u32, submitter_did: &str) -> VcxResult<
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
     let rev_reg_id = rev_reg.get_rev_reg_id();
     // TODO: Check result
-    anoncreds::publish_local_revocations(get_main_wallet_handle(), submitter_did, &rev_reg_id).await?;
+    anoncreds::publish_local_revocations(get_main_wallet_handle(), get_main_pool_handle()?, submitter_did, &rev_reg_id).await?;
     Ok(())
 }
 

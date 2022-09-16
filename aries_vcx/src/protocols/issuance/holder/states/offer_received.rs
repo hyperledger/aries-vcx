@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::messages::issuance::credential_offer::CredentialOffer;
@@ -38,7 +38,7 @@ impl OfferReceivedState {
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
         let offer = self.offer.offers_attach.content().map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
@@ -54,7 +54,7 @@ impl OfferReceivedState {
                 ),
             )
         })?;
-        is_cred_def_revokable(wallet_handle, &cred_def_id).await
+        is_cred_def_revokable(wallet_handle, pool_handle, &cred_def_id).await
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {

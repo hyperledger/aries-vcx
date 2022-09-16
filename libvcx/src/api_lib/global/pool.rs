@@ -1,9 +1,10 @@
 use std::sync::RwLock;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::global::settings;
-use crate::libindy::utils::pool::PoolConfig;
-use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger};
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::global::settings;
+use aries_vcx::libindy::utils::pool::PoolConfig;
+use aries_vcx::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, close};
+use aries_vcx::indy::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -15,6 +16,9 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 }
 
 pub fn get_main_pool_handle() -> VcxResult<i32> {
+    if settings::indy_mocks_enabled() {
+        return Ok(INVALID_POOL_HANDLE)
+    }
     POOL_HANDLE
         .read()
         .or(Err(VcxError::from_msg(
@@ -58,5 +62,11 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
 
     info!("open_pool ::: Pool Opened Successfully");
 
+    Ok(())
+}
+
+pub async fn close_main_pool() -> VcxResult<()> {
+    info!("close_main_pool ::: Closing main pool");
+    close(get_main_pool_handle()?).await?;
     Ok(())
 }

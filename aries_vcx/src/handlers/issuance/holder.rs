@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -38,11 +38,13 @@ impl Holder {
     pub async fn send_proposal(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         credential_proposal: CredentialProposalData,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.step(
             wallet_handle,
+            pool_handle,
             CredentialIssuanceAction::CredentialProposalSend(credential_proposal),
             Some(send_message),
         )
@@ -52,11 +54,13 @@ impl Holder {
     pub async fn send_request(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.step(
             wallet_handle,
+            pool_handle,
             CredentialIssuanceAction::CredentialRequestSend(my_pw_did),
             Some(send_message),
         )
@@ -66,11 +70,13 @@ impl Holder {
     pub async fn decline_offer<'a>(
         &'a mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         comment: Option<&'a str>,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.step(
             wallet_handle,
+            pool_handle,
             CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)),
             Some(send_message),
         )
@@ -125,8 +131,8 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
-        self.holder_sm.is_revokable(wallet_handle).await
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
+        self.holder_sm.is_revokable(wallet_handle, pool_handle).await
     }
 
     pub async fn delete_credential(&self, wallet_handle: WalletHandle) -> VcxResult<()> {
@@ -140,13 +146,14 @@ impl Holder {
     pub async fn step(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         message: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .handle_message(wallet_handle, message, send_message)
+            .handle_message(wallet_handle, pool_handle, message, send_message)
             .await?;
         Ok(())
     }
@@ -154,6 +161,7 @@ impl Holder {
     pub async fn update_state(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<HolderState> {
@@ -161,11 +169,11 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle)?;
+        let send_message = connection.send_message_closure(wallet_handle, pool_handle)?;
 
-        let messages = connection.get_messages(agency_client).await?;
+        let messages = connection.get_messages(pool_handle, agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -174,6 +182,8 @@ impl Holder {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use indy_sys::PoolHandle;
+
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
@@ -181,11 +191,12 @@ pub mod test_utils {
     use crate::messages::a2a::A2AMessage;
 
     pub async fn get_credential_offer_messages(
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<String> {
         let credential_offers: Vec<A2AMessage> = connection
-            .get_messages(agency_client)
+            .get_messages(pool_handle, agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, a2a_message)| match a2a_message {
@@ -213,6 +224,10 @@ pub mod unit_tests {
         WalletHandle(0)
     }
 
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
     pub fn _send_message() -> Option<SendClosure> {
         Some(Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) })))
     }
@@ -229,6 +244,7 @@ pub mod unit_tests {
         async fn to_finished_state(mut self) -> Holder {
             self.step(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()),
                 _send_message(),
             )
@@ -236,6 +252,7 @@ pub mod unit_tests {
             .unwrap();
             self.step(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                 _send_message(),
             )
@@ -243,6 +260,7 @@ pub mod unit_tests {
             .unwrap();
             self.step(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                 _send_message(),
             )
@@ -250,6 +268,7 @@ pub mod unit_tests {
             .unwrap();
             self.step(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 CredentialIssuanceAction::Credential(_credential()),
                 _send_message(),
             )
@@ -275,6 +294,7 @@ pub mod unit_tests {
         holder
             .send_proposal(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 _credential_proposal_data(),
                 _send_message().unwrap(),
             )
@@ -287,7 +307,7 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .step(_dummy_wallet_handle(), _dummy_pool_handle(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
@@ -295,6 +315,7 @@ pub mod unit_tests {
         holder
             .send_proposal(
                 _dummy_wallet_handle(),
+                _dummy_pool_handle(),
                 _credential_proposal_data(),
                 _send_message().unwrap(),
             )
@@ -307,13 +328,13 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .step(_dummy_wallet_handle(), _dummy_pool_handle(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
         holder
-            .send_request(_dummy_wallet_handle(), _my_pw_did(), _send_message().unwrap())
+            .send_request(_dummy_wallet_handle(), _dummy_pool_handle(), _my_pw_did(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
@@ -323,7 +344,7 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(_dummy_wallet_handle(), msg.into(), _send_message())
+            .step(_dummy_wallet_handle(), _dummy_pool_handle(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());

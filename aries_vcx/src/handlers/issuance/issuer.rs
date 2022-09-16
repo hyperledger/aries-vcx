@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -163,8 +163,8 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(wallet_handle, issuer_did, publish).await
+    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
+        self.issuer_sm.revoke(wallet_handle, pool_handle, issuer_did, publish).await
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -204,6 +204,7 @@ impl Issuer {
     pub async fn update_state(
         &mut self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<IssuerState> {
@@ -211,9 +212,8 @@ impl Issuer {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle)?;
-
-        let messages = connection.get_messages(agency_client).await?;
+        let send_message = connection.send_message_closure(wallet_handle, pool_handle)?;
+        let messages = connection.get_messages(pool_handle, agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(wallet_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
@@ -225,6 +225,7 @@ impl Issuer {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
+    use indy_sys::PoolHandle;
 
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
@@ -232,11 +233,12 @@ pub mod test_utils {
     use crate::messages::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
+        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<String> {
         let credential_proposals: Vec<CredentialProposal> = connection
-            .get_messages(agency_client)
+            .get_messages(pool_handle, agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, message)| match message {
@@ -263,6 +265,10 @@ pub mod unit_tests {
 
     fn _dummy_wallet_handle() -> WalletHandle {
         WalletHandle(0)
+    }
+
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
     }
 
     fn _cred_data() -> String {
@@ -352,7 +358,7 @@ pub mod unit_tests {
         let setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), &setup.institution_did, true).await;
+        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), _dummy_pool_handle(), &setup.institution_did, true).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
     }
 

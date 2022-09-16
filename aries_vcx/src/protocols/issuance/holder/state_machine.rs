@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds::{
@@ -159,6 +159,7 @@ impl HolderSM {
     pub async fn handle_message(
         self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         cim: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<HolderSM> {
@@ -196,7 +197,7 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                    let request = _make_credential_request(wallet_handle, my_pw_did, &state_data.offer).await;
+                    let request = _make_credential_request(wallet_handle, pool_handle, my_pw_did, &state_data.offer).await;
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
                             let cred_request = cred_request.set_thread_id(&thread_id);
@@ -247,6 +248,7 @@ impl HolderSM {
                 CredentialIssuanceAction::Credential(credential) => {
                     let result = _store_credential(
                         wallet_handle,
+                        pool_handle,
                         &credential,
                         &state_data.req_meta,
                         &state_data.cred_def_json,
@@ -393,11 +395,11 @@ impl HolderSM {
         Ok(self.thread_id.clone())
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
         match self.state {
             HolderFullState::Initial(ref state) => state.is_revokable(),
-            HolderFullState::ProposalSent(ref state) => state.is_revokable(wallet_handle).await,
-            HolderFullState::OfferReceived(ref state) => state.is_revokable(wallet_handle).await,
+            HolderFullState::ProposalSent(ref state) => state.is_revokable(wallet_handle, pool_handle).await,
+            HolderFullState::OfferReceived(ref state) => state.is_revokable(wallet_handle, pool_handle).await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
         }
@@ -463,6 +465,7 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
 
 async fn _store_credential(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credential: &Credential,
     req_meta: &str,
     cred_def_json: &str,
@@ -477,7 +480,7 @@ async fn _store_credential(
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let (_, json) = anoncreds::get_rev_reg_def_json(&rev_reg_id).await?;
+        let (_, json) = anoncreds::get_rev_reg_def_json(pool_handle, &rev_reg_id).await?;
         Some(json)
     } else {
         None
@@ -503,11 +506,12 @@ async fn _delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxRe
 
 pub async fn create_credential_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     cred_def_id: &str,
     prover_did: &str,
     cred_offer: &str,
 ) -> VcxResult<(String, String, String, String)> {
-    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, cred_def_id).await?;
+    let (cred_def_id, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await?;
 
     libindy_prover_create_credential_req(wallet_handle, prover_did, cred_offer, &cred_def_json)
         .await
@@ -517,6 +521,7 @@ pub async fn create_credential_request(
 
 async fn _make_credential_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     my_pw_did: String,
     offer: &CredentialOffer,
 ) -> VcxResult<(CredentialRequest, String, String)> {
@@ -530,7 +535,7 @@ async fn _make_credential_request(
     trace!("Parsed cred offer attachment: {}", cred_offer);
     let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
     let (req, req_meta, _cred_def_id, cred_def_json) =
-        create_credential_request(wallet_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
+        create_credential_request(wallet_handle, pool_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     let credential_request_msg = build_credential_request_msg(req)?;
     Ok((credential_request_msg, req_meta, cred_def_json))
@@ -554,6 +559,10 @@ mod test {
         WalletHandle(0)
     }
 
+    fn _dummy_pool_handle() -> PoolHandle {
+        0
+    }
+
     fn _holder_sm() -> HolderSM {
         HolderSM::from_offer(_credential_offer(), source_id())
     }
@@ -567,6 +576,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -579,6 +589,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -587,6 +598,7 @@ mod test {
             self = self
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -669,6 +681,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -691,6 +704,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -713,6 +727,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialSend(),
                     _send_message(),
                 )
@@ -723,6 +738,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -740,6 +756,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -748,6 +765,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -767,6 +785,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -775,6 +794,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(Credential::create()),
                     _send_message(),
                 )
@@ -797,6 +817,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -805,6 +826,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -827,6 +849,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -836,6 +859,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -846,6 +870,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )
@@ -863,6 +888,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -871,6 +897,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -880,6 +907,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -890,6 +918,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -900,6 +929,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     _dummy_wallet_handle(),
+                    _dummy_pool_handle(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )
@@ -1130,13 +1160,13 @@ mod test {
         #[cfg(feature = "general_test")]
         async fn test_is_revokable() {
             let _setup = SetupMocks::init();
-            assert_eq!(true, _holder_sm().is_revokable(_dummy_wallet_handle()).await.unwrap());
+            assert_eq!(true, _holder_sm().is_revokable(_dummy_wallet_handle(), _dummy_pool_handle()).await.unwrap());
             assert_eq!(
                 true,
                 _holder_sm()
                     .to_request_sent_state()
                     .await
-                    .is_revokable(WalletHandle(0))
+                    .is_revokable(WalletHandle(0), _dummy_pool_handle())
                     .await
                     .unwrap()
             );
@@ -1145,7 +1175,7 @@ mod test {
                 _holder_sm()
                     .to_finished_state()
                     .await
-                    .is_revokable(WalletHandle(0))
+                    .is_revokable(WalletHandle(0), _dummy_pool_handle())
                     .await
                     .unwrap()
             );

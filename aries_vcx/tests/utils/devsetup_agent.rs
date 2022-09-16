@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use indy_sys::WalletHandle;
+    use indy_sys::{WalletHandle, PoolHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -112,11 +112,12 @@ pub mod test_utils {
         pub verifier: Verifier,
         pub agent: PublicAgent,
         pub wallet_handle: WalletHandle,
+        pub pool_handle: PoolHandle,
         pub agency_client: AgencyClient,
     }
 
     impl Faber {
-        pub async fn setup() -> Faber {
+        pub async fn setup(pool_handle: PoolHandle) -> Faber {
             settings::reset_config_values();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
@@ -146,11 +147,12 @@ pub mod test_utils {
             let connection = Connection::create("faber", agency_client.get_wallet_handle(), &agency_client, true)
                 .await
                 .unwrap();
-            let agent = PublicAgent::create(wallet_handle, &agency_client, "faber", &config_issuer.institution_did)
+            let agent = PublicAgent::create(wallet_handle, pool_handle, &agency_client, "faber", &config_issuer.institution_did)
                 .await
                 .unwrap();
             let faber = Faber {
                 wallet_handle,
+                pool_handle,
                 agency_client,
                 is_active: false,
                 config_wallet,
@@ -172,7 +174,7 @@ pub mod test_utils {
             let version: String = String::from("1.0");
 
             let (schema_id, schema) = anoncreds::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, &schema).await.unwrap();
+            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),
@@ -192,10 +194,10 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(self.wallet_handle, String::from("test_cred_def"), config, false)
+            self.cred_def = CredentialDef::create(self.wallet_handle, self.pool_handle, String::from("test_cred_def"), config, false)
                 .await
                 .unwrap()
-                .publish_cred_def(self.wallet_handle)
+                .publish_cred_def(self.wallet_handle, self.pool_handle)
                 .await
                 .unwrap();
         }
@@ -218,7 +220,7 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(self.wallet_handle, &self.agency_client)
+                .connect(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             self.connection
@@ -250,32 +252,32 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
         }
 
         pub async fn ping(&mut self) {
-            self.connection.send_ping(self.wallet_handle, None).await.unwrap();
+            self.connection.send_ping(self.wallet_handle, self.pool_handle, None).await.unwrap();
         }
 
         pub async fn discovery_features(&mut self) {
             self.connection
-                .send_discovery_query(self.wallet_handle, None, None)
+                .send_discovery_query(self.wallet_handle, self.pool_handle, None, None)
                 .await
                 .unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
-            let details = self.connection.get_connection_info(&self.agency_client).unwrap();
+            let details = self.connection.get_connection_info(self.pool_handle, &self.agency_client).unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
@@ -300,11 +302,11 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.issuer_credential
-                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle).unwrap())
+                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::OfferSent, self.issuer_credential.get_state());
@@ -312,7 +314,7 @@ pub mod test_utils {
 
         pub async fn send_credential(&mut self) {
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::RequestReceived, self.issuer_credential.get_state());
@@ -320,12 +322,12 @@ pub mod test_utils {
             self.issuer_credential
                 .send_credential(
                     self.wallet_handle,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();
             self.issuer_credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(IssuerState::CredentialSent, self.issuer_credential.get_state());
@@ -336,11 +338,11 @@ pub mod test_utils {
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier
-                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle).unwrap())
+                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
                 .await
                 .unwrap();
             self.verifier
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
 
@@ -357,7 +359,7 @@ pub mod test_utils {
 
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
             self.verifier
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
@@ -373,11 +375,12 @@ pub mod test_utils {
         pub credential: Holder,
         pub prover: Prover,
         pub wallet_handle: WalletHandle,
+        pub pool_handle: PoolHandle,
         pub agency_client: AgencyClient,
     }
 
     impl Alice {
-        pub async fn setup() -> Alice {
+        pub async fn setup(pool_handle: PoolHandle) -> Alice {
             settings::reset_config_values();
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -406,6 +409,7 @@ pub mod test_utils {
                 .unwrap();
             let alice = Alice {
                 wallet_handle,
+                pool_handle,
                 agency_client,
                 is_active: false,
                 config_wallet,
@@ -428,7 +432,7 @@ pub mod test_utils {
             .await
             .unwrap();
             self.connection
-                .connect(self.wallet_handle, &self.agency_client)
+                .connect(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             self.connection
@@ -451,14 +455,14 @@ pub mod test_utils {
 
         pub async fn handle_messages(&mut self) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
         }
 
         pub async fn respond_messages(&mut self, expected_state: u32) {
             self.connection
-                .find_and_handle_message(self.wallet_handle, &self.agency_client)
+                .find_and_handle_message(self.wallet_handle, self.pool_handle, &self.agency_client)
                 .await
                 .unwrap();
             assert_eq!(expected_state, u32::from(self.connection.get_state()));
@@ -468,7 +472,7 @@ pub mod test_utils {
             let _did = self.connection.pairwise_info().pw_did.to_string();
             let messages = self
                 .connection
-                .download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .download_messages(self.pool_handle, &self.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap();
             filter_messages(messages, message_type).await.ok_or(VcxError::from_msg(
@@ -478,7 +482,7 @@ pub mod test_utils {
         }
 
         pub async fn accept_offer(&mut self) {
-            let offers = get_credential_offer_messages(&self.agency_client, &self.connection)
+            let offers = get_credential_offer_messages(self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             let offer = serde_json::from_str::<Vec<::serde_json::Value>>(&offers).unwrap()[0].clone();
@@ -502,8 +506,9 @@ pub mod test_utils {
             self.credential
                 .send_request(
                     self.wallet_handle,
+                    self.pool_handle,
                     pw_did,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();
@@ -512,7 +517,7 @@ pub mod test_utils {
 
         pub async fn accept_credential(&mut self) {
             self.credential
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
@@ -523,7 +528,7 @@ pub mod test_utils {
         }
 
         pub async fn get_proof_request_messages(&mut self) -> PresentationRequest {
-            let presentation_requests = get_proof_request_messages(&self.agency_client, &self.connection)
+            let presentation_requests = get_proof_request_messages(self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             let presentation_request =
@@ -536,7 +541,7 @@ pub mod test_utils {
         pub async fn get_proof_request_by_msg_id(&mut self, msg_id: &str) -> VcxResult<PresentationRequest> {
             match self
                 .connection
-                .get_message_by_id(msg_id, &self.agency_client)
+                .get_message_by_id(self.pool_handle, msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
@@ -551,7 +556,7 @@ pub mod test_utils {
         pub async fn get_credential_offer_by_msg_id(&mut self, msg_id: &str) -> VcxResult<CredentialOffer> {
             match self
                 .connection
-                .get_message_by_id(msg_id, &self.agency_client)
+                .get_message_by_id(self.pool_handle, msg_id, &self.agency_client)
                 .await
                 .unwrap()
             {
@@ -587,7 +592,7 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(self.wallet_handle, credentials.to_string(), String::from("{}"))
+                .generate_presentation(self.wallet_handle, self.pool_handle, credentials.to_string(), String::from("{}"))
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
@@ -595,7 +600,8 @@ pub mod test_utils {
             self.prover
                 .send_presentation(
                     self.wallet_handle,
-                    self.connection.send_message_closure(self.wallet_handle).unwrap(),
+                    self.pool_handle,
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
                 )
                 .await
                 .unwrap();
@@ -604,7 +610,7 @@ pub mod test_utils {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.prover
-                .update_state(self.wallet_handle, &self.agency_client, &self.connection)
+                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(

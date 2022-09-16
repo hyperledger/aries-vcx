@@ -3,12 +3,11 @@ use std::collections::HashMap;
 use futures::future::TryFutureExt;
 use indy::cache;
 use indy::ledger;
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use serde_json;
 
 use crate::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
-use crate::global::pool::get_main_pool_handle;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;
@@ -31,6 +30,7 @@ pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, reques
 
 pub async fn libindy_sign_and_submit_request(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     issuer_did: &str,
     request_json: &str,
 ) -> VcxResult<String> {
@@ -47,17 +47,13 @@ pub async fn libindy_sign_and_submit_request(
         return Ok(PoolMocks::get_next_pool_response());
     };
 
-    let pool_handle = get_main_pool_handle()?;
-
     ledger::sign_and_submit_request(pool_handle, wallet_handle, issuer_did, request_json)
         .map_err(VcxError::from)
         .await
 }
 
-pub async fn libindy_submit_request(request_json: &str) -> VcxResult<String> {
+pub async fn libindy_submit_request(pool_handle: PoolHandle, request_json: &str) -> VcxResult<String> {
     trace!("libindy_submit_request >>> request_json: {}", request_json);
-    let pool_handle = get_main_pool_handle()?;
-
     ledger::submit_request(pool_handle, request_json)
         .map_err(VcxError::from)
         .await
@@ -88,7 +84,7 @@ pub async fn libindy_build_create_credential_def_txn(
         .await
 }
 
-pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
+pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(utils::constants::DEFAULT_AUTHOR_AGREEMENT.to_string());
     }
@@ -97,7 +93,7 @@ pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
 
     let get_author_agreement_request = ledger::build_get_txn_author_agreement_request(Some(&did), None).await?;
 
-    let get_author_agreement_response = libindy_submit_request(&get_author_agreement_request).await?;
+    let get_author_agreement_response = libindy_submit_request(pool_handle, &get_author_agreement_request).await?;
 
     let get_author_agreement_response = serde_json::from_str::<serde_json::Value>(&get_author_agreement_response)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
@@ -109,7 +105,7 @@ pub async fn libindy_get_txn_author_agreement() -> VcxResult<String> {
     let get_acceptance_mechanism_request =
         ledger::build_get_acceptance_mechanisms_request(Some(&did), None, None).await?;
 
-    let get_acceptance_mechanism_response = libindy_submit_request(&get_acceptance_mechanism_request).await?;
+    let get_acceptance_mechanism_response = libindy_submit_request(pool_handle, &get_acceptance_mechanism_request).await?;
 
     let get_acceptance_mechanism_response =
         serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response)
@@ -194,25 +190,11 @@ pub async fn libindy_build_nym_request(
     }
 }
 
-pub async fn get_nym(did: &str) -> VcxResult<String> {
+pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
     let submitter_did = generate_random_did();
 
     let get_nym_req = libindy_build_get_nym_request(Some(&submitter_did), did).await?;
-    libindy_submit_request(&get_nym_req).await
-}
-
-pub async fn get_role(did: &str) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(settings::DEFAULT_ROLE.to_string());
-    }
-
-    let get_nym_resp = get_nym(did).await?;
-    let get_nym_resp: serde_json::Value = serde_json::from_str(&get_nym_resp)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    let data: serde_json::Value = serde_json::from_str(get_nym_resp["result"]["data"].as_str().unwrap_or("{}"))
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    let role = data["role"].as_str().unwrap_or("null").to_string();
-    Ok(role)
+    libindy_submit_request(pool_handle, &get_nym_req).await
 }
 
 pub fn parse_response(response: &str) -> VcxResult<Response> {
@@ -222,11 +204,10 @@ pub fn parse_response(response: &str) -> VcxResult<Response> {
 
 pub async fn libindy_get_schema(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     submitter_did: &str,
     schema_id: &str,
 ) -> VcxResult<String> {
-    let pool_handle = get_main_pool_handle()?;
-
     cache::get_schema(pool_handle, wallet_handle, submitter_did, schema_id, "{}")
         .await
         .map_err(VcxError::from)
@@ -238,8 +219,7 @@ pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cre
         .map_err(VcxError::from)
 }
 
-pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, cred_def_id: &str) -> VcxResult<String> {
-    let pool_handle = get_main_pool_handle()?;
+pub async fn libindy_get_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<String> {
     let submitter_did = generate_random_did();
     trace!(
         "libindy_get_cred_def >>> pool_handle: {}, wallet_handle: {:?}, submitter_did: {}",
@@ -263,7 +243,7 @@ pub async fn set_endorser(wallet_handle: WalletHandle, submitter_did: &str, requ
     multisign_request(wallet_handle, &submitter_did, &request).await
 }
 
-pub async fn endorse_transaction(wallet_handle: WalletHandle, endorser_did: &str, transaction_json: &str) -> VcxResult<()> {
+pub async fn endorse_transaction(wallet_handle: WalletHandle, pool_handle: PoolHandle, endorser_did: &str, transaction_json: &str) -> VcxResult<()> {
     //TODO Potentially VCX should handle case when endorser would like to pay fee
     if settings::indy_mocks_enabled() {
         return Ok(());
@@ -272,7 +252,7 @@ pub async fn endorse_transaction(wallet_handle: WalletHandle, endorser_did: &str
     _verify_transaction_can_be_endorsed(transaction_json, &endorser_did)?;
 
     let transaction = multisign_request(wallet_handle, &endorser_did, transaction_json).await?;
-    let response = libindy_submit_request(&transaction).await?;
+    let response = libindy_submit_request(pool_handle, &transaction).await?;
 
     match parse_response(&response)? {
         Response::Reply(_) => Ok(()),
@@ -343,19 +323,19 @@ pub async fn build_attrib_request(
     Ok(request)
 }
 
-pub async fn add_attr(wallet_handle: WalletHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
+pub async fn add_attr(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, attrib_json: &str) -> VcxResult<String> {
     trace!("add_attr >>> did: {}, attrib_json: {}", did, attrib_json);
     let attrib_req = build_attrib_request(did, did, None, Some(attrib_json), None).await?;
-    libindy_sign_and_submit_request(wallet_handle, did, &attrib_req).await
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &attrib_req).await
 }
 
-pub async fn get_attr(did: &str, attr_name: &str) -> VcxResult<String> {
+pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> VcxResult<String> {
     let get_attrib_req = ledger::build_get_attrib_request(None, did, Some(attr_name), None, None).await?;
-    libindy_submit_request(&get_attrib_req).await
+    libindy_submit_request(pool_handle, &get_attrib_req).await
 }
 
-pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
-    let attr_resp = get_attr(&did.to_string(), "service").await?;
+pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesService> {
+    let attr_resp = get_attr(pool_handle, &did.to_string(), "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),
@@ -372,9 +352,9 @@ pub async fn get_service(did: &Did) -> VcxResult<AriesService> {
     })
 }
 
-pub async fn add_service(wallet_handle: WalletHandle, did: &str, service: &AriesService) -> VcxResult<String> {
+pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
-    add_attr(wallet_handle, did, &attrib_json).await
+    add_attr(wallet_handle, pool_handle, did, &attrib_json).await
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
@@ -460,15 +440,15 @@ pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
 
-pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
+pub async fn publish_txn_on_ledger(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
     debug!("publish_txn_on_ledger(submitter_did: {}, req: {}", submitter_did, req);
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
-    libindy_sign_and_submit_request(wallet_handle, &submitter_did, req).await
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await
 }
 
-pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
+pub async fn add_new_did(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
     let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
     let mut req_nym = ledger::build_nym_request(&submitter_did, &did, Some(&verkey), None, role)
         .await
@@ -476,7 +456,7 @@ pub async fn add_new_did(wallet_handle: WalletHandle, submitter_did: &str, role:
 
     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle, &submitter_did, &req_nym)
+    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
         .await
         .unwrap();
     (did, verkey)

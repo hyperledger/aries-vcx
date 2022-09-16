@@ -2,13 +2,12 @@ use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
 
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
@@ -44,7 +43,6 @@ pub struct TestSetupCreateWallet {
 }
 
 pub struct SetupPoolConfig {
-    skip_cleanup: bool,
     pub pool_config: PoolConfig,
 }
 
@@ -57,11 +55,13 @@ pub struct SetupWalletPoolAgency {
     pub agency_client: AgencyClient,
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
+    pub pool_handle: PoolHandle
 }
 
 pub struct SetupWalletPool {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
+    pub pool_handle: PoolHandle
 }
 
 pub struct SetupInstitutionWallet {
@@ -69,14 +69,15 @@ pub struct SetupInstitutionWallet {
     pub wallet_handle: WalletHandle,
 }
 
-pub struct SetupLibraryAgencyV2;
+pub struct SetupLibraryAgencyV2 {
+    pub pool_handle: PoolHandle
+}
 
 fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
-    reset_main_pool_handle();
     disable_indy_mocks().unwrap();
     settings::reset_config_values();
 }
@@ -215,23 +216,13 @@ impl SetupPoolConfig {
         };
 
         SetupPoolConfig {
-            skip_cleanup: false,
             pool_config,
         }
-    }
-
-    pub fn skip_cleanup(mut self) -> SetupPoolConfig {
-        self.skip_cleanup = true;
-        self
     }
 }
 
 impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
-        if self.skip_cleanup == false {
-            futures::executor::block_on(delete_test_pool());
-            reset_main_pool_handle();
-        }
         reset_global_state();
     }
 }
@@ -263,18 +254,19 @@ impl SetupWalletPoolAgency {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         SetupWalletPoolAgency {
             agency_client,
             institution_did,
             wallet_handle,
+            pool_handle
         }
     }
 }
 
 impl Drop for SetupWalletPoolAgency {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }
@@ -291,17 +283,18 @@ impl SetupWalletPool {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         SetupWalletPool {
             institution_did,
             wallet_handle,
+            pool_handle
         }
     }
 }
 
 impl Drop for SetupWalletPool {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }
@@ -336,15 +329,17 @@ impl SetupLibraryAgencyV2 {
                 .unwrap(),
         )
         .unwrap();
-        open_test_pool().await;
+        let pool_handle = open_test_pool().await;
         debug!("SetupLibraryAgencyV2 init >> completed");
-        SetupLibraryAgencyV2
+        SetupLibraryAgencyV2 {
+            pool_handle
+        }
     }
 }
 
 impl Drop for SetupLibraryAgencyV2 {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool());
+        futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();
     }
 }

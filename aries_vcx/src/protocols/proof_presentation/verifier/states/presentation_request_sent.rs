@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
@@ -19,6 +19,7 @@ impl PresentationRequestSentState {
     pub async fn verify_presentation(
         &self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
@@ -34,6 +35,7 @@ impl PresentationRequestSentState {
 
         let valid = validate_indy_proof(
             wallet_handle,
+            pool_handle,
             &presentation.presentations_attach.content()?,
             &self.presentation_request.request_presentations_attach.content()?,
         )

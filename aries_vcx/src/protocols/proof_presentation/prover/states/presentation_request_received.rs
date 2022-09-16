@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
@@ -23,11 +23,13 @@ impl PresentationRequestReceived {
     pub async fn build_presentation(
         &self,
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         credentials: &str,
         self_attested_attrs: &str,
     ) -> VcxResult<String> {
         generate_indy_proof(
             wallet_handle,
+            pool_handle,
             credentials,
             self_attested_attrs,
             &self.presentation_request.request_presentations_attach.content()?,

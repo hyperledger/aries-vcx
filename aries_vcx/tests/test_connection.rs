@@ -32,20 +32,20 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_establish_connection_via_public_invite() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
         institution_to_consumer
-            .send_generic_message(institution.wallet_handle, "Hello Alice, Faber here")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "Hello Alice, Faber here")
             .await
             .unwrap();
 
         let consumer_msgs = consumer_to_institution
-            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(consumer_msgs.len(), 1);
@@ -53,9 +53,9 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
@@ -73,14 +73,14 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
         let mut conn_receiver = oob_receiver
             .build_connection(&consumer.agency_client, true)
             .await
             .unwrap();
         conn_receiver
-            .connect(consumer.wallet_handle, &consumer.agency_client)
+            .connect(consumer.wallet_handle, consumer.pool_handle, &consumer.agency_client)
             .await
             .unwrap();
         conn_receiver
@@ -100,12 +100,12 @@ mod integration_tests {
         let (conn_receiver_pw2, _conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution).await;
 
         let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         assert!(*conn.unwrap() == conn_receiver);
 
         let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
@@ -118,19 +118,19 @@ mod integration_tests {
         }
 
         conn_sender
-            .send_generic_message(institution.wallet_handle, "Hello oob receiver, from oob sender")
+            .send_generic_message(institution.wallet_handle, institution.pool_handle, "Hello oob receiver, from oob sender")
             .await
             .unwrap();
         conn_receiver
-            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .send_generic_message(consumer.wallet_handle, consumer.pool_handle, "Hello oob sender, from oob receiver")
             .await
             .unwrap();
         let sender_msgs = conn_sender
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         let receiver_msgs = conn_receiver
-            .download_messages(&consumer.agency_client, None, None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(sender_msgs.len(), 2);
@@ -139,9 +139,9 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -156,15 +156,15 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         conn.unwrap()
-            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .send_generic_message(consumer.wallet_handle, consumer.pool_handle, "Hello oob sender, from oob receiver")
             .await
             .unwrap();
 
         let msgs = institution_to_consumer
-            .download_messages(&institution.agency_client, None, None)
+            .download_messages(institution.pool_handle, &institution.agency_client, None, None)
             .await
             .unwrap();
         assert_eq!(msgs.len(), 2);
@@ -172,9 +172,9 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_handshake_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (mut consumer_to_institution, mut institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -190,17 +190,18 @@ mod integration_tests {
 
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         let receiver_oob_id = oob_receiver.get_id();
         let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
         conn.unwrap()
-            .send_handshake_reuse(consumer.wallet_handle, &receiver_msg)
+            .send_handshake_reuse(consumer.wallet_handle, consumer.pool_handle, &receiver_msg)
             .await
             .unwrap();
 
         let mut msgs = institution_to_consumer
             .download_messages(
+                institution.pool_handle,
                 &institution.agency_client,
                 Some(vec![MessageStatusCode::Received]),
                 None,
@@ -223,12 +224,13 @@ mod integration_tests {
             .handle_message(
                 A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()),
                 institution.wallet_handle,
+                institution.pool_handle
             )
             .await
             .unwrap();
 
         let mut msgs = consumer_to_institution
-            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
             .await
             .unwrap();
         assert_eq!(msgs.len(), 1);
@@ -244,12 +246,12 @@ mod integration_tests {
             }
         };
         consumer_to_institution
-            .find_and_handle_message(consumer.wallet_handle, &consumer.agency_client)
+            .find_and_handle_message(consumer.wallet_handle, consumer.pool_handle, &consumer.agency_client)
             .await
             .unwrap();
         assert_eq!(
             consumer_to_institution
-                .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .download_messages(consumer.pool_handle, &consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap()
                 .len(),
@@ -259,9 +261,9 @@ mod integration_tests {
 
     #[tokio::test]
     pub async fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
 
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
@@ -269,10 +271,10 @@ mod integration_tests {
 
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
 
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+        let mut faber = Faber::setup(setup.pool_handle).await;
+        let mut alice = Alice::setup(setup.pool_handle).await;
 
         // Connection
         let invite = faber.create_invite().await;

@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
@@ -12,6 +12,7 @@ use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(
     wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
     credentials: &str,
     self_attested_attrs: &str,
     proof_req_data_json: &str,
@@ -39,12 +40,12 @@ pub async fn generate_indy_proof(
 
     let mut credentials_identifiers = credential_def_identifiers(credentials, &proof_request)?;
 
-    let revoc_states_json = build_rev_states_json(&mut credentials_identifiers).await?;
+    let revoc_states_json = build_rev_states_json(pool_handle, &mut credentials_identifiers).await?;
     let requested_credentials =
         build_requested_credentials_json(&credentials_identifiers, self_attested_attrs, &proof_request)?;
 
-    let schemas_json = build_schemas_json_prover(wallet_handle, &credentials_identifiers).await?;
-    let credential_defs_json = build_cred_defs_json_prover(wallet_handle, &credentials_identifiers).await?;
+    let schemas_json = build_schemas_json_prover(wallet_handle, pool_handle, &credentials_identifiers).await?;
+    let credential_defs_json = build_cred_defs_json_prover(wallet_handle, pool_handle, &credentials_identifiers).await?;
 
     let proof = anoncreds::libindy_prover_create_proof(
         wallet_handle,

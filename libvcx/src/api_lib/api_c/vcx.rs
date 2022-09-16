@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::global::pool::{is_main_pool_open, open_main_pool};
+use crate::api_lib::global::pool::{is_main_pool_open, open_main_pool, get_main_pool_handle, close_main_pool};
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::indy::CommandHandle;
@@ -305,7 +305,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
         Err(_) => {}
     };
 
-    match futures::executor::block_on(pool::close()) {
+    match futures::executor::block_on(close_main_pool()) {
         Ok(()) => {}
         Err(_) => {}
     };
@@ -355,6 +355,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 
     settings::reset_config_values();
     api_lib::global::agency_client::reset_main_agency_client();
+    crate::api_lib::global::pool::reset_main_pool_handle();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -441,9 +442,14 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
     trace!("vcx_get_ledger_author_agreement(command_handle: {})", command_handle);
 
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match ledger::libindy_get_txn_author_agreement().await {
+            match ledger::libindy_get_txn_author_agreement(pool_handle).await {
                 Ok(err) => {
                     trace!(
                         "vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
@@ -770,12 +776,12 @@ mod tests {
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global;
-    use aries_vcx::global::pool::get_main_pool_handle;
+    use crate::api_lib::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::indy::INVALID_WALLET_HANDLE;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::libindy::utils::pool::test_utils::{
-        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
+        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool
     };
     use aries_vcx::libindy::utils::pool::PoolConfig;
     use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
@@ -807,6 +813,7 @@ mod tests {
     use crate::api_lib::utils::error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
+    use crate::api_lib::global::pool::reset_main_pool_handle;
 
     use super::*;
 
@@ -832,7 +839,8 @@ mod tests {
             aries_vcx::error::VcxErrorKind::NoPoolOpen
         );
 
-        delete_named_test_pool(&pool_name).await;
+        delete_named_test_pool(0, &pool_name).await;
+        reset_main_pool_handle();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -860,7 +868,7 @@ mod tests {
         let _setup_defaults = SetupDefaults::init();
         for _ in 0..2 {
             let setup_wallet = TestSetupCreateWallet::init().await.skip_cleanup();
-            let setup_pool = SetupPoolConfig::init().await.skip_cleanup();
+            let setup_pool = SetupPoolConfig::init().await;
 
             let wallet_config = _vcx_create_wallet().unwrap();
             _vcx_init_threadpool("{}").unwrap();
@@ -1241,8 +1249,8 @@ mod tests {
         };
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
-        delete_test_pool().await;
-        settings::set_test_configs();
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        reset_main_pool_handle();
     }
 
     #[tokio::test]
@@ -1266,6 +1274,8 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        reset_main_pool_handle();
     }
 
     #[cfg(feature = "agency_tests")]

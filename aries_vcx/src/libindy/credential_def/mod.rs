@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use indy_sys::{WalletHandle, PoolHandle};
 use std::fmt;
 
 use crate::error::prelude::*;
@@ -98,8 +98,8 @@ impl Default for PublicEntityStateType {
     }
 }
 
-async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
-    match anoncreds::get_cred_def(Some(issuer_did), cred_def_id).await {
+async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
+    match anoncreds::get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
         Err(err) => Err(VcxError::from_msg(
@@ -115,6 +115,7 @@ async fn _try_get_cred_def_from_ledger(issuer_did: &str, cred_def_id: &str) -> V
 impl CredentialDef {
     pub async fn create(
         wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
         source_id: String,
         config: CredentialDefConfig,
         support_revocation: bool,
@@ -129,7 +130,7 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, &schema_id).await?;
+        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
         let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(
             wallet_handle,
             &issuer_did,
@@ -158,13 +159,13 @@ impl CredentialDef {
         self.support_revocation
     }
 
-    pub async fn publish_cred_def(self, wallet_handle: WalletHandle) -> VcxResult<Self> {
+    pub async fn publish_cred_def(self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<Self> {
         trace!(
             "publish_cred_def >>> issuer_did: {}, cred_def_id: {}",
             self.issuer_did,
             self.cred_def_id
         );
-        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(&self.issuer_did, &self.cred_def_id).await? {
+        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.cred_def_id).await? {
             return Err(VcxError::from_msg(
                 VcxErrorKind::CredDefAlreadyCreated,
                 format!(
@@ -173,7 +174,7 @@ impl CredentialDef {
                 ),
             ));
         }
-        anoncreds::publish_cred_def(wallet_handle, &self.issuer_did, &self.cred_def_json).await?;
+        anoncreds::publish_cred_def(wallet_handle, pool_handle, &self.issuer_did, &self.cred_def_json).await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
             ..self
@@ -210,8 +211,8 @@ impl CredentialDef {
         self.source_id = source_id;
     }
 
-    pub async fn update_state(&mut self, wallet_handle: WalletHandle) -> VcxResult<u32> {
-        if (anoncreds::get_cred_def_json(wallet_handle, &self.cred_def_id).await).is_ok() {
+    pub async fn update_state(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<u32> {
+        if (anoncreds::get_cred_def_json(wallet_handle, pool_handle, &self.cred_def_id).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
