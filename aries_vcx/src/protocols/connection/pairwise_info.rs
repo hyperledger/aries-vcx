@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 
 use crate::error::VcxResult;
 use crate::libindy::utils::signus::create_and_store_my_did;

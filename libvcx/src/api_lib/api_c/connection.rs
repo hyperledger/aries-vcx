@@ -4,7 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::libindy;
 use aries_vcx::utils::error;
 

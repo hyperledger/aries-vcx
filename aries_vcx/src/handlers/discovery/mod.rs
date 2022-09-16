@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::VcxResult;

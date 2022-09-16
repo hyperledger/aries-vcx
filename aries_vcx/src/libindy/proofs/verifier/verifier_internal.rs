@@ -1,4 +1,4 @@
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 use serde_json::Value;
 

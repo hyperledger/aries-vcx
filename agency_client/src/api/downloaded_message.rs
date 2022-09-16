@@ -1,7 +1,7 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::MessageStatusCode;
-use indy::WalletHandle;
+use vdrtools::WalletHandle;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]

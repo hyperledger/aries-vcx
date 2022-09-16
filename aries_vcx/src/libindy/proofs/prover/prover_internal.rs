@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -266,7 +266,7 @@ pub fn build_requested_credentials_json(
 #[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod pool_tests {
-    use indy_sys::PoolHandle;
+    use vdrtools_sys::PoolHandle;
 
     use crate::libindy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};

@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 use serde_json;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};

@@ -1,7 +1,7 @@
 #[cfg(target_os = "android")]
 extern crate android_logger;
 extern crate env_logger;
-extern crate indy_sys;
+extern crate vdrtools_sys;
 extern crate log;
 
 use std::env;

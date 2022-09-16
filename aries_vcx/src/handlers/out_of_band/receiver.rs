@@ -1,5 +1,5 @@
 use std::clone::Clone;
-use indy_sys::PoolHandle;
+use vdrtools_sys::PoolHandle;
 
 use agency_client::agency_client::AgencyClient;
 

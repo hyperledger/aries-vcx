@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -248,7 +248,7 @@ impl Prover {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use indy_sys::PoolHandle;
+    use vdrtools_sys::PoolHandle;
 
     use agency_client::agency_client::AgencyClient;
 

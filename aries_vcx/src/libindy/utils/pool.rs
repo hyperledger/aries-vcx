@@ -1,5 +1,5 @@
-use indy::{pool, ErrorCode};
-use indy_sys::PoolHandle;
+use vdrtools::{pool, ErrorCode};
+use vdrtools_sys::PoolHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;

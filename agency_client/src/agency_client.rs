@@ -1,4 +1,4 @@
-use indy::WalletHandle;
+use vdrtools::WalletHandle;
 use url::Url;
 
 use crate::configuration::AgencyClientConfig;

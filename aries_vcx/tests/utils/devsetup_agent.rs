@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use indy_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{WalletHandle, PoolHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;

@@ -1,4 +1,4 @@
-use indy_sys::PoolHandle;
+use vdrtools_sys::PoolHandle;
 
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;

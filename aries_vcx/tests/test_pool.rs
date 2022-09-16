@@ -5,6 +5,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate tokio;
+extern crate vdrtoolsrs as vdrtools;
 
 pub mod utils;
 
@@ -23,7 +24,7 @@ mod integration_tests {
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
-    use indyrs::ledger::append_request_endorser;
+    use vdrtools::ledger::append_request_endorser;
     use std::thread;
     use std::time::Duration;
 

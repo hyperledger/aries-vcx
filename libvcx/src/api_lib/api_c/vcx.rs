@@ -9,7 +9,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind};
 use crate::api_lib::global::pool::{is_main_pool_open, open_main_pool, get_main_pool_handle, close_main_pool};
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
-use aries_vcx::indy::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::libindy::utils::pool::PoolConfig;
 use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
 use aries_vcx::libindy::utils::{ledger, pool, wallet};
@@ -778,7 +778,7 @@ mod tests {
     use aries_vcx::global;
     use crate::api_lib::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
-    use aries_vcx::indy::INVALID_WALLET_HANDLE;
+    use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::libindy::utils::pool::test_utils::{
         create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool

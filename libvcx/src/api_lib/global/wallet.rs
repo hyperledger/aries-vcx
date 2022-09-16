@@ -1,6 +1,6 @@
 use aries_vcx::error::VcxResult;
 use aries_vcx::global::settings;
-use aries_vcx::indy::{WalletHandle, INVALID_WALLET_HANDLE};
+use aries_vcx::vdrtools::{WalletHandle, INVALID_WALLET_HANDLE};
 use aries_vcx::libindy;
 use aries_vcx::libindy::utils::wallet::WalletConfig;
 use aries_vcx::libindy::utils::{anoncreds, wallet};

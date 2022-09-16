@@ -2,7 +2,7 @@
 extern crate async_std;
 extern crate failure;
 extern crate futures;
-extern crate indyrs as indy;
+extern crate vdrtoolsrs as vdrtools;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]

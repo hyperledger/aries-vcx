@@ -1,4 +1,4 @@
-use indy_sys::PoolHandle;
+use vdrtools_sys::PoolHandle;
 
 use futures::executor::block_on;
 
