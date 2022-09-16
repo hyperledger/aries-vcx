@@ -439,9 +439,8 @@ pub mod test_utils {
 
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
-        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle, pool_handle).await.unwrap(),
+            holder_credential.is_revokable(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             revokable
         );
         holder_credential
@@ -450,7 +449,7 @@ pub mod test_utils {
             .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle, pool_handle).await.unwrap(),
+            holder_credential.is_revokable(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             revokable
         );
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
@@ -689,34 +688,32 @@ pub mod test_utils {
     }
 
     pub async fn revoke_credential(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
-        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id.clone(), None, None)
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id.clone(), None, None)
             .await
             .unwrap();
         info!("revoking credential");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, pool_handle, &faber.config_issuer.institution_did, true)
+            .revoke_credential(faber.wallet_handle, faber.pool_handle, &faber.config_issuer.institution_did, true)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
-            libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id, Some(timestamp + 1), None)
+            libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id, Some(timestamp + 1), None)
                 .await
                 .unwrap();
         assert_ne!(delta, delta_after_revoke);
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: String) {
-        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
-        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id.clone(), None, None)
+        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id.clone(), None, None)
             .await
             .unwrap();
         info!("revoking credential locally");
         issuer_credential
-            .revoke_credential(faber.wallet_handle, pool_handle, &faber.config_issuer.institution_did, false)
+            .revoke_credential(faber.wallet_handle, faber.pool_handle, &faber.config_issuer.institution_did, false)
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
-            libindy::utils::anoncreds::get_rev_reg_delta_json(pool_handle, &rev_reg_id, Some(timestamp + 1), None)
+            libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id, Some(timestamp + 1), None)
                 .await
                 .unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
@@ -727,7 +724,6 @@ pub mod test_utils {
         credential_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
     ) -> RevocationRegistry {
-        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
             &faber.config_issuer.institution_did,
@@ -739,15 +735,14 @@ pub mod test_utils {
         .await
         .unwrap();
         rev_reg_new
-            .publish_revocation_primitives(faber.wallet_handle, pool_handle, TEST_TAILS_URL)
+            .publish_revocation_primitives(faber.wallet_handle, faber.pool_handle, TEST_TAILS_URL)
             .await
             .unwrap();
         rev_reg_new
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
+        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
     }
