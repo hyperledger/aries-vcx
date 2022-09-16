@@ -5,7 +5,7 @@ ARG UID=1000
 ARG INDYSDK_PATH=/home/indy/vdr-tools
 ARG INDYSDK_REVISION=c1390f91
 ARG INDYSDK_REPO=https://gitlab.com/mirgee/vdr-tools.git
-ARG RUST_VER=nightly-2022-05-21
+ARG RUST_VER=nightly-2022-09-15
 
 # Install dependencies
 RUN apt-get update && \
