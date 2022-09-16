@@ -69,7 +69,7 @@ pub struct SetupInstitutionWallet {
     pub wallet_handle: WalletHandle,
 }
 
-pub struct SetupLibraryAgencyV2 {
+pub struct SetupPool {
     pub pool_handle: PoolHandle
 }
 
@@ -317,9 +317,9 @@ impl Drop for SetupInstitutionWallet {
     }
 }
 
-impl SetupLibraryAgencyV2 {
-    pub async fn init() -> SetupLibraryAgencyV2 {
-        debug!("SetupLibraryAgencyV2 init >> going to setup agency environment");
+impl SetupPool {
+    pub async fn init() -> SetupPool {
+        debug!("SetupPool init >> going to setup agency environment");
         init_test_logging();
 
         settings::set_config_value(
@@ -330,14 +330,14 @@ impl SetupLibraryAgencyV2 {
         )
         .unwrap();
         let pool_handle = open_test_pool().await;
-        debug!("SetupLibraryAgencyV2 init >> completed");
-        SetupLibraryAgencyV2 {
+        debug!("SetupPool init >> completed");
+        SetupPool {
             pool_handle
         }
     }
 }
 
-impl Drop for SetupLibraryAgencyV2 {
+impl Drop for SetupPool {
     fn drop(&mut self) {
         futures::executor::block_on(delete_test_pool(self.pool_handle));
         reset_global_state();

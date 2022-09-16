@@ -345,7 +345,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_proof_should_be_validated() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -403,7 +403,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_proof_with_predicates_should_be_validated() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -462,7 +462,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_it_should_fail_to_select_credentials_for_predicate() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -502,7 +502,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer_and_consumers() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
@@ -585,7 +585,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -637,7 +637,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_issuer_is_verifier() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_institution, institution_to_consumer) =
@@ -710,7 +710,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_proof() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -828,7 +828,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_two_creds_one_rev_reg() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -906,7 +906,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -932,7 +932,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_failed() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -968,7 +968,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_with_negotiation() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1025,7 +1025,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1064,7 +1064,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_rejection() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1093,7 +1093,7 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_negotiation() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
