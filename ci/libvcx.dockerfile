@@ -17,7 +17,7 @@ ARG UID=1000
 ARG GID=1000
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
-COPY --from=builder /usr/lib/libindy.so /home/indy/lib*.so /usr/lib/
+COPY --from=builder /usr/lib/libvdrtools.so /home/indy/lib*.so /usr/lib/
 
 WORKDIR /home/node
 RUN apk update && apk upgrade

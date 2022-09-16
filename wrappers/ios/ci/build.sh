@@ -159,7 +159,7 @@ build_libindy() {
     echo "ios/ci/build.sh: running build_libindy()"
     TRIPLETS="aarch64-apple-ios,x86_64-apple-ios"
 
-    pushd $INDY_SDK_DIR/libindy
+    pushd $INDY_SDK_DIR/libvdrtools
         cargo lipo --release --targets="${TRIPLETS}"
     popd
 }
@@ -177,7 +177,7 @@ copy_libindy_architectures() {
         echo TRIPLET=$TRIPLET
 
         mkdir -p $OUTPUT_DIR/libs/$LIB_NAME/$ARCH
-        cp -v $INDY_SDK_DIR/libindy/target/$TRIPLET/release/libindy.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libindy.a
+        cp -v $INDY_SDK_DIR/libvdrtools/target/$TRIPLET/release/libvdrtools.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libvdrtools.a
     done
 }
 
@@ -251,7 +251,7 @@ combine_libs() {
     ARCHS="arm64 x86_64"
     combined_libs_paths=""
     for arch in ${ARCHS[*]}; do
-        libraries="libsodium libzmq libvcx" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
+        libraries="libsodium libzmq libvdrtools" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
 
         libs_to_combine_paths=""
         for library in ${libraries[*]}; do
