@@ -345,9 +345,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_proof_should_be_validated() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -403,9 +403,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_proof_with_predicates_should_be_validated() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -462,9 +462,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_it_should_fail_to_select_credentials_for_predicate() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -502,11 +502,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer_and_consumers() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
-        let mut consumer2 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
+        let mut consumer2 = Alice::setup(setup.pool_handle).await;
         let (consumer1_to_verifier, verifier_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut verifier).await;
         let (consumer1_to_issuer, issuer_to_consumer1) =
@@ -585,10 +585,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
@@ -637,9 +637,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_double_issuance_issuer_is_verifier() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
 
@@ -710,9 +710,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_proof() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_issuer, issuer_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -828,10 +828,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_two_creds_one_rev_reg() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
@@ -906,9 +906,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -932,9 +932,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_failed() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -968,9 +968,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_with_negotiation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -1025,9 +1025,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -1064,9 +1064,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_rejection() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -1093,9 +1093,9 @@ mod tests {
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_negotiation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -1153,10 +1153,10 @@ mod tests {
     #[tokio::test]
     async fn aries_demo() {
         let _setup = SetupEmpty::init();
-        let _pool = Pool::open();
+        let Pool { handle } = Pool::open();
 
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+        let mut faber = Faber::setup(handle).await;
+        let mut alice = Alice::setup(handle).await;
 
         // Publish Schema and Credential Definition
         faber.create_schema().await;
@@ -1189,10 +1189,10 @@ mod tests {
         #[tokio::test]
         async fn aries_demo_create_with_message_id_flow() {
             let _setup = SetupEmpty::init();
-            let _pool = Pool::open();
+            let Pool { handle } = Pool::open();
 
-            let mut faber = Faber::setup().await;
-            let mut alice = Alice::setup().await;
+            let mut faber = Faber::setup(handle).await;
+            let mut alice = Alice::setup(handle).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;
@@ -1275,10 +1275,10 @@ mod tests {
         #[tokio::test]
         async fn aries_demo_download_message_flow() {
             SetupEmpty::init();
-            let _pool = Pool::open();
+            let Pool { handle } = Pool::open();
 
-            let mut faber = Faber::setup().await;
-            let mut alice = Alice::setup().await;
+            let mut faber = Faber::setup(handle).await;
+            let mut alice = Alice::setup(handle).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;

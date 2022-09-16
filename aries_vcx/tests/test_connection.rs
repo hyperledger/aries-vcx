@@ -32,9 +32,9 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_establish_connection_via_public_invite() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -54,8 +54,8 @@ mod integration_tests {
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
         let setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
@@ -140,8 +140,8 @@ mod integration_tests {
     #[tokio::test]
     async fn test_oob_connection_reuse() {
         let setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -173,8 +173,8 @@ mod integration_tests {
     #[tokio::test]
     async fn test_oob_connection_handshake_reuse() {
         let setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (mut consumer_to_institution, mut institution_to_consumer) =
             create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
@@ -261,9 +261,9 @@ mod integration_tests {
 
     #[tokio::test]
     pub async fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
 
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
@@ -271,10 +271,10 @@ mod integration_tests {
 
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
 
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+        let mut faber = Faber::setup(setup.pool_handle).await;
+        let mut alice = Alice::setup(setup.pool_handle).await;
 
         // Connection
         let invite = faber.create_invite().await;

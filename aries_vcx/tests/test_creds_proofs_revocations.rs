@@ -32,9 +32,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_basic_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -94,9 +94,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_local_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -161,11 +161,11 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_batch_revocation() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
-        let mut consumer2 = Alice::setup().await;
-        let mut consumer3 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
+        let mut consumer2 = Alice::setup(setup.pool_handle).await;
+        let mut consumer3 = Alice::setup(setup.pool_handle).await;
         let (consumer_to_institution1, institution_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut institution).await;
         let (consumer_to_institution2, institution_to_consumer2) =
@@ -360,9 +360,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revoked_credential_might_still_work() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -445,10 +445,10 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_first() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
@@ -526,10 +526,10 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_second() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
@@ -607,10 +607,10 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
@@ -687,10 +687,10 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_first() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
@@ -769,10 +769,10 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_second() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut issuer = Faber::setup().await;
-        let mut verifier = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut issuer = Faber::setup(setup.pool_handle).await;
+        let mut verifier = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;

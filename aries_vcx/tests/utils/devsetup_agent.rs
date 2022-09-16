@@ -117,7 +117,7 @@ pub mod test_utils {
     }
 
     impl Faber {
-        pub async fn setup() -> Faber {
+        pub async fn setup(pool_handle: PoolHandle) -> Faber {
             settings::reset_config_values();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
@@ -141,7 +141,6 @@ pub mod test_utils {
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
-            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
                 .unwrap();
@@ -381,7 +380,7 @@ pub mod test_utils {
     }
 
     impl Alice {
-        pub async fn setup() -> Alice {
+        pub async fn setup(pool_handle: PoolHandle) -> Alice {
             settings::reset_config_values();
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -401,7 +400,6 @@ pub mod test_utils {
             };
             create_wallet_with_master_secret(&config_wallet).await.unwrap();
             let wallet_handle = open_wallet(&config_wallet).await.unwrap();
-            let pool_handle = aries_vcx::global::pool::get_main_pool_handle().unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
