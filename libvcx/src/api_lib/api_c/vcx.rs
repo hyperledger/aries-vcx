@@ -355,6 +355,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 
     settings::reset_config_values();
     api_lib::global::agency_client::reset_main_agency_client();
+    crate::aries_vcx::global::pool::reset_main_pool_handle();
     trace!("vcx_shutdown(delete: {})", delete);
 
     error::SUCCESS.code_num
@@ -812,6 +813,7 @@ mod tests {
     use crate::api_lib::utils::error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
+    use crate::aries_vcx::global::pool::reset_main_pool_handle;
 
     use super::*;
 
@@ -838,6 +840,7 @@ mod tests {
         );
 
         delete_named_test_pool(0, &pool_name).await;
+        reset_main_pool_handle();
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1247,6 +1250,7 @@ mod tests {
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
         delete_test_pool(get_main_pool_handle().unwrap()).await;
+        reset_main_pool_handle();
     }
 
     #[tokio::test]
@@ -1271,6 +1275,7 @@ mod tests {
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
         delete_test_pool(get_main_pool_handle().unwrap()).await;
+        reset_main_pool_handle();
     }
 
     #[cfg(feature = "agency_tests")]

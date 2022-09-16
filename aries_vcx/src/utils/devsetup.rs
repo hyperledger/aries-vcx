@@ -8,7 +8,6 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
 use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
-use crate::global::pool::reset_main_pool_handle;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
@@ -79,7 +78,6 @@ fn reset_global_state() {
     AgencyMockDecrypted::clear_mocks();
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
-    reset_main_pool_handle();
     disable_indy_mocks().unwrap();
     settings::reset_config_values();
 }
