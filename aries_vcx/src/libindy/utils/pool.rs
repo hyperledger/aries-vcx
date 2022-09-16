@@ -108,7 +108,7 @@ pub mod test_utils {
     }
 
     pub async fn delete_test_pool(pool_handle: PoolHandle) {
-        close(pool_handle).await.ok();
+        close(pool_handle).await.unwrap();
         delete(POOL).await.unwrap();
     }
 

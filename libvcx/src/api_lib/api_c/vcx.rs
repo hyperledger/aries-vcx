@@ -1246,8 +1246,7 @@ mod tests {
         };
         _vcx_open_main_pool_c_closure(&json!(config).to_string()).unwrap();
 
-        delete_test_pool(0).await;
-        settings::set_test_configs();
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
     }
 
     #[tokio::test]
@@ -1271,6 +1270,7 @@ mod tests {
 
         // Assert pool was initialized
         assert_ne!(get_main_pool_handle().unwrap(), 0);
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
     }
 
     #[cfg(feature = "agency_tests")]
