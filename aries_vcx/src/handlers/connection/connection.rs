@@ -208,17 +208,17 @@ impl Connection {
         self.cloud_agent_info.clone()
     }
 
-    pub fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+    pub async fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_did(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(pool_handle),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(pool_handle).await,
         }
     }
 
-    pub fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+    pub async fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_vk(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(pool_handle),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(pool_handle).await,
         }
     }
 
@@ -251,17 +251,17 @@ impl Connection {
         }
     }
 
-    pub fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(pool_handle),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(pool_handle).await,
         }
     }
 
-    pub fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
-            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(pool_handle),
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(pool_handle).await,
         }
     }
 
@@ -406,7 +406,7 @@ impl Connection {
     }
 
     pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<()> {
-        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).await.ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!(
                 "Can't answer message {:?} because counterparty did doc is not available",
@@ -658,7 +658,7 @@ impl Connection {
     }
 
     pub async fn get_messages(&self, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<HashMap<String, A2AMessage>> {
-        let expected_sender_vk = self.get_expected_sender_vk(pool_handle)?;
+        let expected_sender_vk = self.get_expected_sender_vk(pool_handle).await?;
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
                 .cloud_agent_info()
@@ -671,8 +671,8 @@ impl Connection {
         }
     }
 
-    fn get_expected_sender_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
-        self.remote_vk(pool_handle).map_err(|_err| {
+    async fn get_expected_sender_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+        self.remote_vk(pool_handle).await.map_err(|_err| {
             VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Verkey of connection counterparty \
@@ -683,15 +683,15 @@ impl Connection {
 
     pub async fn get_message_by_id(&self, pool_handle: PoolHandle, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
         trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
-        let expected_sender_vk = self.get_expected_sender_vk(pool_handle)?;
+        let expected_sender_vk = self.get_expected_sender_vk(pool_handle).await?;
         self.cloud_agent_info()
             .get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info())
             .await
     }
 
-    pub fn send_message_closure(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<SendClosure> {
+    pub async fn send_message_closure(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).await.ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
@@ -715,13 +715,13 @@ impl Connection {
     pub async fn send_generic_message(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, message: &str) -> VcxResult<String> {
         trace!("Connection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
-        let send_message = self.send_message_closure(wallet_handle, pool_handle)?;
+        let send_message = self.send_message_closure(wallet_handle, pool_handle).await?;
         send_message(message).await.map(|_| String::new())
     }
 
     pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, message: &A2AMessage) -> VcxResult<String> {
         trace!("Connection::send_a2a_message >>> message: {:?}", message);
-        let send_message = self.send_message_closure(wallet_handle, pool_handle)?;
+        let send_message = self.send_message_closure(wallet_handle, pool_handle).await?;
         send_message(message.clone()).await.map(|_| String::new())
     }
 
@@ -732,7 +732,7 @@ impl Connection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(wallet_handle, pool_handle)?).await?;
+        trust_ping.send_ping(self.send_message_closure(wallet_handle, pool_handle).await?).await?;
         Ok(trust_ping)
     }
 
@@ -756,7 +756,7 @@ impl Connection {
                 ));
             }
         };
-        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).await.ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
@@ -788,7 +788,7 @@ impl Connection {
             query,
             comment
         );
-        let did_doc = self.their_did_doc(pool_handle).ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc(pool_handle).await.ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
@@ -796,7 +796,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn get_connection_info(&self, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<String> {
+    pub async fn get_connection_info(&self, pool_handle: PoolHandle, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
         let agent_info = self.cloud_agent_info();
@@ -811,7 +811,7 @@ impl Connection {
             protocols: Some(self.get_protocols()),
         };
 
-        let remote = match self.their_did_doc(pool_handle) {
+        let remote = match self.their_did_doc(pool_handle).await {
             Some(did_doc) => Some(SideConnectionInfo {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys(),
@@ -860,7 +860,7 @@ impl Connection {
                 Ok(msgs)
             }
             _ => {
-                let expected_sender_vk = self.remote_vk(pool_handle)?;
+                let expected_sender_vk = self.remote_vk(pool_handle).await?;
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())

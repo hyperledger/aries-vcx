@@ -1228,7 +1228,7 @@ mod tests {
                         alice.wallet_handle,
                         alice.pool_handle,
                         pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1261,7 +1261,7 @@ mod tests {
                     .send_presentation(
                         alice.wallet_handle,
                         alice.pool_handle,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1321,7 +1321,7 @@ mod tests {
                         alice.wallet_handle,
                         alice.pool_handle,
                         pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1361,7 +1361,7 @@ mod tests {
                     .send_presentation(
                         alice.wallet_handle,
                         alice.pool_handle,
-                    alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                    alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();

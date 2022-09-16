@@ -169,7 +169,7 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle, pool_handle)?;
+        let send_message = connection.send_message_closure(wallet_handle, pool_handle).await?;
 
         let messages = connection.get_messages(pool_handle, agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
