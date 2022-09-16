@@ -1137,15 +1137,14 @@ mod tests {
     }
 
     impl Pool {
-        pub fn open() -> Pool {
-            let handle = futures::executor::block_on(libindy::utils::pool::test_utils::open_test_pool());
+        pub async fn open() -> Pool {
+            let handle = libindy::utils::pool::test_utils::open_test_pool().await;
             Pool { handle }
         }
     }
 
     impl Drop for Pool {
         fn drop(&mut self) {
-            futures::executor::block_on(libindy::utils::pool::close(self.handle)).unwrap();
             futures::executor::block_on(libindy::utils::pool::test_utils::delete_test_pool(self.handle));
         }
     }
@@ -1153,10 +1152,10 @@ mod tests {
     #[tokio::test]
     async fn aries_demo() {
         let _setup = SetupEmpty::init();
-        let Pool { handle } = Pool::open();
+        let pool = Pool::open().await;
 
-        let mut faber = Faber::setup(handle).await;
-        let mut alice = Alice::setup(handle).await;
+        let mut faber = Faber::setup(pool.handle).await;
+        let mut alice = Alice::setup(pool.handle).await;
 
         // Publish Schema and Credential Definition
         faber.create_schema().await;
@@ -1189,10 +1188,10 @@ mod tests {
         #[tokio::test]
         async fn aries_demo_create_with_message_id_flow() {
             let _setup = SetupEmpty::init();
-            let Pool { handle } = Pool::open();
+            let pool = Pool::open().await;
 
-            let mut faber = Faber::setup(handle).await;
-            let mut alice = Alice::setup(handle).await;
+            let mut faber = Faber::setup(pool.handle).await;
+            let mut alice = Alice::setup(pool.handle).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;
@@ -1275,10 +1274,10 @@ mod tests {
         #[tokio::test]
         async fn aries_demo_download_message_flow() {
             SetupEmpty::init();
-            let Pool { handle } = Pool::open();
+            let pool = Pool::open().await;
 
-            let mut faber = Faber::setup(handle).await;
-            let mut alice = Alice::setup(handle).await;
+            let mut faber = Faber::setup(pool.handle).await;
+            let mut alice = Alice::setup(pool.handle).await;
 
             // Publish Schema and Credential Definition
             faber.create_schema().await;
