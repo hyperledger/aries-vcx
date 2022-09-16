@@ -27,7 +27,7 @@ mod integration_tests {
     use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::test_utils::_ack;
-    use aries_vcx::utils::devsetup::SetupLibraryAgencyV2;
+    use aries_vcx::utils::devsetup::SetupPool;
 
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
@@ -35,7 +35,7 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_v2")]
     async fn test_send_and_download_messages() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -121,7 +121,7 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_v2")]
     async fn test_connection_send_works() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut faber = Faber::setup(setup.pool_handle).await;
         let mut alice = Alice::setup(setup.pool_handle).await;
 
@@ -236,7 +236,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_download_messages() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
         let mut consumer2 = Alice::setup(setup.pool_handle).await;
@@ -292,7 +292,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agency_messages() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut faber = Faber::setup(setup.pool_handle).await;
         let mut alice = Alice::setup(setup.pool_handle).await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
@@ -366,7 +366,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_download_messages_from_multiple_connections() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
         let mut consumer2 = Alice::setup(setup.pool_handle).await;
@@ -400,7 +400,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let wallet_config = WalletConfig {
             wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),

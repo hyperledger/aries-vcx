@@ -32,7 +32,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_establish_connection_via_public_invite() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -53,7 +53,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -139,7 +139,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_reuse() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -172,7 +172,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_oob_connection_handshake_reuse() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -261,7 +261,7 @@ mod integration_tests {
 
     #[tokio::test]
     pub async fn test_two_enterprise_connections() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
 
@@ -271,7 +271,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
-        let setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
 
         let mut faber = Faber::setup(setup.pool_handle).await;
         let mut alice = Alice::setup(setup.pool_handle).await;
