@@ -44,7 +44,6 @@ pub struct TestSetupCreateWallet {
 }
 
 pub struct SetupPoolConfig {
-    skip_cleanup: bool,
     pub pool_config: PoolConfig,
 }
 
@@ -219,22 +218,13 @@ impl SetupPoolConfig {
         };
 
         SetupPoolConfig {
-            skip_cleanup: false,
             pool_config,
         }
-    }
-
-    pub fn skip_cleanup(mut self) -> SetupPoolConfig {
-        self.skip_cleanup = true;
-        self
     }
 }
 
 impl Drop for SetupPoolConfig {
     fn drop(&mut self) {
-        if self.skip_cleanup == false {
-            reset_main_pool_handle();
-        }
         reset_global_state();
     }
 }

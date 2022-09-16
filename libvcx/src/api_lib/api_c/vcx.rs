@@ -865,7 +865,7 @@ mod tests {
         let _setup_defaults = SetupDefaults::init();
         for _ in 0..2 {
             let setup_wallet = TestSetupCreateWallet::init().await.skip_cleanup();
-            let setup_pool = SetupPoolConfig::init().await.skip_cleanup();
+            let setup_pool = SetupPoolConfig::init().await;
 
             let wallet_config = _vcx_create_wallet().unwrap();
             _vcx_init_threadpool("{}").unwrap();
