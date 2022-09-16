@@ -7,7 +7,7 @@ use aries_vcx::handlers::out_of_band::GoalCode;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
 use aries_vcx::utils::service_resolvable::ServiceResolvable;
-use aries_vcx::global::pool::get_main_pool_handle;
+use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;

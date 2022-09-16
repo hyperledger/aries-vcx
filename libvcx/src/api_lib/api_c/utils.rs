@@ -13,7 +13,7 @@ use aries_vcx::indy_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
-use aries_vcx::global::pool::get_main_pool_handle;
+use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
@@ -379,9 +379,9 @@ pub extern "C" fn vcx_messages_update_status(
 #[no_mangle]
 pub extern "C" fn vcx_pool_set_handle(handle: i32) -> i32 {
     if handle <= 0 {
-        aries_vcx::global::pool::set_main_pool_handle(None);
+        crate::api_lib::global::pool::set_main_pool_handle(None);
     } else {
-        aries_vcx::global::pool::set_main_pool_handle(Some(handle));
+        crate::api_lib::global::pool::set_main_pool_handle(Some(handle));
     }
 
     handle

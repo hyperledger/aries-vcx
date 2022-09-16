@@ -5,7 +5,7 @@ use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequestData;
 use aries_vcx::utils::error;
-use aries_vcx::global::pool::get_main_pool_handle;
+use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;

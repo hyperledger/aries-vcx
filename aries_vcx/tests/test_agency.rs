@@ -35,9 +35,9 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_v2")]
     async fn test_send_and_download_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut consumer, &mut institution).await;
 
@@ -121,9 +121,9 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_v2")]
     async fn test_connection_send_works() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut faber = Faber::setup(setup.pool_handle).await;
+        let mut alice = Alice::setup(setup.pool_handle).await;
 
         let invite = faber.create_invite().await;
         alice.accept_invite(&invite).await;
@@ -236,10 +236,10 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_download_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
-        let mut consumer2 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
+        let mut consumer2 = Alice::setup(setup.pool_handle).await;
         let (consumer1_to_institution, institution_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut institution).await;
         let (consumer2_to_institution, institution_to_consumer2) =
@@ -292,9 +292,9 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agency_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut faber = Faber::setup(setup.pool_handle).await;
+        let mut alice = Alice::setup(setup.pool_handle).await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
 
         faber_to_alice
@@ -366,10 +366,10 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_download_messages_from_multiple_connections() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
-        let mut consumer2 = Alice::setup().await;
+        let setup = SetupLibraryAgencyV2::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
+        let mut consumer2 = Alice::setup(setup.pool_handle).await;
         let (consumer1_to_institution, institution_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut institution).await;
         let (consumer2_to_institution, institution_to_consumer2) =
@@ -400,7 +400,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupLibraryAgencyV2::init().await;
         let wallet_config = WalletConfig {
             wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
