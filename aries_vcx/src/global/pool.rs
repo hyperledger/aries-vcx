@@ -4,6 +4,7 @@ use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::libindy::utils::pool::PoolConfig;
 use crate::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, close, delete};
+use crate::indy::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -15,6 +16,9 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 }
 
 pub fn get_main_pool_handle() -> VcxResult<i32> {
+    if settings::indy_mocks_enabled() {
+        return Ok(INVALID_POOL_HANDLE)
+    }
     POOL_HANDLE
         .read()
         .or(Err(VcxError::from_msg(
