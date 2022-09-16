@@ -1,6 +1,5 @@
 use indy_sys::PoolHandle;
 
-use crate::did_doc::DidDoc;
 use crate::messages::connection::invite::Invitation;
 use crate::messages::connection::request::Request;
 use crate::protocols::connection::invitee::states::requested::RequestedState;

@@ -946,7 +946,6 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use crate::global::settings;
     use crate::libindy;
     use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
     use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};

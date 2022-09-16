@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use indy_sys::PoolHandle;
 
 use futures::executor::block_on;
@@ -12,7 +11,6 @@ use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
 use crate::messages::timing::Timing;
 use crate::timing_optional;
-use crate::utils::service_resolvable::ServiceResolvable;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
