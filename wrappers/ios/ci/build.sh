@@ -4,7 +4,7 @@ set -ex
 
 export PKG_CONFIG_ALLOW_CROSS=1
 export CARGO_INCREMENTAL=1
-export RUST_LOG=indy=trace
+export RUST_LOG=vdrtools=trace
 export RUST_TEST_THREADS=1
 
 INDY_VERSION="c1390f91" # in vdr-tools repo
@@ -167,7 +167,7 @@ build_libindy() {
 copy_libindy_architectures() {
     echo "ios/ci/build.sh: running copy_libindy_architectures()"
     ARCHS="arm64 x86_64"
-    LIB_NAME="indy"
+    LIB_NAME="vdrtools"
 
     echo "Copying architectures for $LIB_NAME..."
     for ARCH in ${ARCHS[*]}; do
@@ -195,7 +195,7 @@ build_libvcx() {
             echo TRIPLET=$TRIPLET
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
-            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH}
+            export LIBINDY_DIR=$WORK_DIR/libs/vdrtools/${ARCH}
             echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR} LIBINDY_DIR=${LIBINDY_DIR}"
             cargo build -vv --target "${TRIPLET}" --release --no-default-features
         done
@@ -251,7 +251,7 @@ combine_libs() {
     ARCHS="arm64 x86_64"
     combined_libs_paths=""
     for arch in ${ARCHS[*]}; do
-        libraries="libsodium libzmq libvdrtools" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
+        libraries="libsodium libzmq libvcx" # libssl, libcrypto, libindy were statically linked into libvcx during its build (see libvcx/build.rs)
 
         libs_to_combine_paths=""
         for library in ${libraries[*]}; do
