@@ -137,7 +137,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function buildLedgerPrimitivesV2 (revocationDetails) {
+  async function buildLedgerPrimitives (revocationDetails) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
@@ -172,7 +172,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOfferV2 () {
+  async function sendCredentialOffer () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential offer')
@@ -182,7 +182,7 @@ module.exports.createFaber = async function createFaber () {
 
     await vcxAgent.agentShutdownVcx()
   }
-  async function updateStateCredentialV2 (expectedState) {
+  async function updateStateCredential (expectedState) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer updating state of credential with connection')
@@ -225,7 +225,7 @@ module.exports.createFaber = async function createFaber () {
     return proofRequestMessage
   }
 
-  async function updateStateVerifierProofV2 (expectedNextState) {
+  async function updateStateVerifierProof (expectedNextState) {
     logger.info(`Verifier updating state of proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
@@ -325,7 +325,7 @@ module.exports.createFaber = async function createFaber () {
   }
 
   return {
-    buildLedgerPrimitivesV2,
+    buildLedgerPrimitives,
     rotateRevReg,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
@@ -340,13 +340,13 @@ module.exports.createFaber = async function createFaber () {
     updateConnection,
     handleMessage,
     sendConnectionResponse,
-    sendCredentialOfferV2,
+    sendCredentialOffer,
     createOobCredOffer,
-    updateStateCredentialV2,
+    updateStateCredential,
     sendCredential,
     receiveCredentialAck,
     requestProofFromAlice,
-    updateStateVerifierProofV2,
+    updateStateVerifierProof,
     getCredentialRevRegId,
     getTailsFile,
     getTailsHash,
