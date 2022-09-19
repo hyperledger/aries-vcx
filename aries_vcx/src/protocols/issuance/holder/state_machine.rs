@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::utils::anoncreds::{

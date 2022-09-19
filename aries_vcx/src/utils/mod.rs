@@ -1,4 +1,4 @@
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 use std::env;
 use std::path::PathBuf;
 

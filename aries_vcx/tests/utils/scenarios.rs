@@ -3,7 +3,7 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use indy_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{WalletHandle, PoolHandle};
     use serde_json::{json, Value};
 
     use aries_vcx::global::settings;

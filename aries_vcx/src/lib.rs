@@ -7,8 +7,8 @@ extern crate base64;
 extern crate chrono;
 extern crate failure;
 extern crate futures;
-pub extern crate indy_sys;
-pub extern crate indyrs as indy;
+pub extern crate vdrtools_sys;
+pub extern crate vdrtoolsrs as vdrtools;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;

@@ -4,7 +4,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings;
 use aries_vcx::libindy::utils::pool::PoolConfig;
 use aries_vcx::libindy::utils::pool::{create_pool_ledger_config, open_pool_ledger, close};
-use aries_vcx::indy::INVALID_POOL_HANDLE;
+use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);

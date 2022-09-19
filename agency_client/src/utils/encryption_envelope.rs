@@ -1,7 +1,7 @@
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::utils::libindy::crypto;
-use indy::WalletHandle;
+use vdrtools::WalletHandle;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);

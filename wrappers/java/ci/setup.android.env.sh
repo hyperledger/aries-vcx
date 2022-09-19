@@ -206,17 +206,16 @@ prepare_dependencies() {
         download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/libsodium_$TARGET_ARCH.zip"
         download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/libzmq_$TARGET_ARCH.zip"
 
-        # artifacts from build #06867bd9 / https://gitlab.com/evernym/verity/vdr-tools/-/packages/4038091
         if [ "$TARGET_ARCH" == "arm" ]; then
-          download_and_unzip_if_missed "libindy_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121452/download"
+          download_and_unzip_if_missed "libvdrtools_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920976/download"
         elif [ "$TARGET_ARCH" == "arm64" ]; then
-          download_and_unzip_if_missed "libindy_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121443/download"
+          download_and_unzip_if_missed "libvdrtools_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920946/download"
         elif [ "$TARGET_ARCH" == "armv7" ]; then
-          download_and_unzip_if_missed "libindy_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121464/download"
+          download_and_unzip_if_missed "libvdrtools_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920933/download"
         elif [ "$TARGET_ARCH" == "x86_64" ]; then
-          download_and_unzip_if_missed "libindy_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121458/download"
+          download_and_unzip_if_missed "libvdrtools_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44921029/download"
         elif [ "$TARGET_ARCH" == "x86" ]; then
-          download_and_unzip_if_missed "libindy_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/23121437/download"
+          download_and_unzip_if_missed "libvdrtools_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44921019/download"
         fi
     popd
 }
@@ -225,7 +224,7 @@ setup_dependencies_env_vars(){
     export OPENSSL_DIR=${ANDROID_BUILD_FOLDER}/openssl_$1
     export SODIUM_DIR=${ANDROID_BUILD_FOLDER}/libsodium_$1
     export LIBZMQ_DIR=${ANDROID_BUILD_FOLDER}/libzmq_$1
-    export INDY_DIR=${ANDROID_BUILD_FOLDER}/libindy_$1
+    export INDY_DIR=${ANDROID_BUILD_FOLDER}/libvdrtools_$1
 }
 
 create_standalone_toolchain_and_rust_target(){

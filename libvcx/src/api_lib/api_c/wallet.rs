@@ -4,7 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::indy::{CommandHandle, SearchHandle, WalletHandle};
+use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::libindy::utils;
 use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
@@ -185,7 +185,7 @@ pub extern "C" fn vcx_open_main_wallet(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}",
                     command_handle, err
                 );
-                cb(command_handle, err.into(), aries_vcx::indy::INVALID_WALLET_HANDLE.0);
+                cb(command_handle, err.into(), aries_vcx::vdrtools::INVALID_WALLET_HANDLE.0);
             }
             Ok(wh) => {
                 trace!(

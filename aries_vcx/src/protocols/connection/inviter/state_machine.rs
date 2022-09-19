@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
 
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;

@@ -1,6 +1,6 @@
 extern crate log;
 
-use indy::logger;
+use vdrtools::logger;
 
 use crate::error::prelude::*;
 

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -997,7 +997,7 @@ impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use indy_sys::WalletHandle;
+    use vdrtools_sys::WalletHandle;
 
     use agency_client::testing::mocking::enable_agency_mocks;
 

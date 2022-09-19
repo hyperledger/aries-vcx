@@ -1,4 +1,4 @@
-use indy::{crypto, WalletHandle};
+use vdrtools::{crypto, WalletHandle};
 
 use crate::error::AgencyClientResult;
 use crate::testing::mocking::agency_mocks_enabled;

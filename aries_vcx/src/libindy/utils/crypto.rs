@@ -1,6 +1,6 @@
 /* test isn't ready until > libindy 1.0.1 */
-use indy::crypto;
-use indy_sys::WalletHandle;
+use vdrtools::crypto;
+use vdrtools_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;

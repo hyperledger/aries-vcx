@@ -1,6 +1,6 @@
-use indy::future::TryFutureExt;
-use indy::{anoncreds, blob_storage, ledger};
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools::future::TryFutureExt;
+use vdrtools::{anoncreds, blob_storage, ledger};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 use serde_json::{map::Map, Value};
 use time;
@@ -1354,7 +1354,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use indy_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{WalletHandle, PoolHandle};
 
     use crate::libindy::utils::anoncreds::get_schema_json;
     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};

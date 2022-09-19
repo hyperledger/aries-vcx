@@ -27,7 +27,6 @@ dependencies = [
  "env_logger",
  "failure",
  "futures",
- "indy",
  "lazy_static",
  "log",
  "regex",
@@ -39,6 +38,7 @@ dependencies = [
  "serde_json",
  "url 1.7.2",
  "uuid 0.8.2",
+ "vdrtools",
 ]
 
 [[package]]
@@ -90,8 +90,6 @@ dependencies = [
  "env_logger",
  "failure",
  "futures",
- "indy",
- "indy-sys",
  "lazy_static",
  "libc",
  "libloading",
@@ -112,6 +110,8 @@ dependencies = [
  "tokio",
  "url 1.7.2",
  "uuid 0.8.2",
+ "vdrtools",
+ "vdrtools-sys",
 ]
 
 [[package]]
@@ -1045,39 +1045,6 @@ checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
  "autocfg 1.0.1",
  "hashbrown",
-]
-
-[[package]]
-name = "indy"
-version = "0.8.1"
-source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d#cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d"
-dependencies = [
- "async-std",
- "async-trait",
- "failure",
- "futures",
- "indy-sys",
- "lazy_static",
- "libc",
- "log",
- "num-derive",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
-name = "indy-sys"
-version = "0.8.0"
-source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d#cdb8d56ec5d77abc6b6dce9ca31cbd3fb469037d"
-dependencies = [
- "libc",
- "pkg-config",
- "regex",
- "serde",
- "serde_derive",
- "vcpkg",
 ]
 
 [[package]]
@@ -2555,6 +2522,39 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "vdrtools"
+version = "0.8.6"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c#c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c"
+dependencies = [
+ "async-std",
+ "async-trait",
+ "failure",
+ "futures",
+ "lazy_static",
+ "libc",
+ "log",
+ "num-derive",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "vdrtools-sys",
+]
+
+[[package]]
+name = "vdrtools-sys"
+version = "0.8.6"
+source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c#c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c"
+dependencies = [
+ "libc",
+ "pkg-config",
+ "regex",
+ "serde",
+ "serde_derive",
+ "vcpkg",
+]
 
 [[package]]
 name = "version_check"

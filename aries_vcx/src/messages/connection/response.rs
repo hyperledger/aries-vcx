@@ -1,5 +1,5 @@
 use base64;
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 use time;
 
 use crate::did_doc::DidDoc;

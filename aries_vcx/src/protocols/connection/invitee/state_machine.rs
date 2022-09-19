@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
 
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -430,7 +430,7 @@ pub mod unit_tests {
     }
 
     pub mod invitee {
-        use indy_sys::WalletHandle;
+        use vdrtools_sys::WalletHandle;
 
         use crate::did_doc::test_utils::_service_endpoint;
         use crate::messages::connection::response::{Response, SignedResponse};

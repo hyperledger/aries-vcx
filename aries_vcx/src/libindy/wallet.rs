@@ -1,5 +1,5 @@
 use crate::error::{VcxErrorExt, VcxErrorKind, VcxResult};
-use crate::indy::{ErrorCode, WalletHandle};
+use crate::vdrtools::{ErrorCode, WalletHandle};
 use crate::libindy::utils::wallet::{build_wallet_config, build_wallet_credentials, WalletConfig};
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
@@ -17,7 +17,7 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
         wallet_config.rekey_derivation_method.as_deref(),
     )?;
 
-    let handle = indy::wallet::open_wallet(&config, &credentials)
+    let handle = vdrtools::wallet::open_wallet(&config, &credentials)
         .await
         .map_err(|err| match err.error_code {
             ErrorCode::WalletAlreadyOpenedError => err.to_vcx(

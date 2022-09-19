@@ -1,4 +1,4 @@
-use indy_sys::PoolHandle;
+use vdrtools_sys::PoolHandle;
 
 use crate::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;

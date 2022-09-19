@@ -10,7 +10,7 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
-pub use aries_vcx::indy_sys::{
+pub use aries_vcx::vdrtools_sys::{
     logger::{EnabledCB, FlushCB, LogCB},
     CVoid,
 };

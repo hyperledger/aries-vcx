@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
-use indy_sys::CommandHandle;
+use vdrtools_sys::CommandHandle;
 
 use crate::global::settings;
 
@@ -47,7 +47,7 @@ impl LibindyMock {
 // TODO:  move to devsetup, see if we can reuse this / merge with different setup
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
-    use indy;
+    use vdrtools;
 
     pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
     pub const WALLET_CREDENTIALS: &'static str =
@@ -56,17 +56,17 @@ pub mod test_setup {
     pub struct WalletSetup {
         pub name: String,
         pub wallet_config: String,
-        pub wallet_handle: indy::WalletHandle,
+        pub wallet_handle: vdrtools::WalletHandle,
     }
 
     pub async fn setup_wallet() -> WalletSetup {
         let name: String = crate::utils::random::generate_random_name();
         let wallet_config = json!({ "id": name }).to_string();
 
-        indy::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS)
+        vdrtools::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS)
             .await
             .unwrap();
-        let wallet_handle = indy::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS)
+        let wallet_handle = vdrtools::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS)
             .await
             .unwrap();
 
@@ -77,17 +77,17 @@ pub mod test_setup {
         }
     }
 
-    pub async fn create_trustee_key(wallet_handle: indy::WalletHandle) -> String {
+    pub async fn create_trustee_key(wallet_handle: vdrtools::WalletHandle) -> String {
         let key_config = json!({ "seed": TRUSTEE_SEED }).to_string();
-        indy::crypto::create_key(wallet_handle, Some(&key_config))
+        vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
             .await
             .unwrap()
     }
 
-    pub async fn create_key(wallet_handle: indy::WalletHandle) -> String {
+    pub async fn create_key(wallet_handle: vdrtools::WalletHandle) -> String {
         let seed: String = crate::utils::random::generate_random_seed();
         let key_config = json!({ "seed": seed }).to_string();
-        indy::crypto::create_key(wallet_handle, Some(&key_config))
+        vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
             .await
             .unwrap()
     }
@@ -95,8 +95,8 @@ pub mod test_setup {
     impl Drop for WalletSetup {
         fn drop(&mut self) {
             if self.wallet_handle.0 != 0 {
-                futures::executor::block_on(indy::wallet::close_wallet(self.wallet_handle)).unwrap();
-                futures::executor::block_on(indy::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS))
+                futures::executor::block_on(vdrtools::wallet::close_wallet(self.wallet_handle)).unwrap();
+                futures::executor::block_on(vdrtools::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS))
                     .unwrap();
             }
         }

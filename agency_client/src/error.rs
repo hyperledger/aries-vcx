@@ -1,7 +1,7 @@
 use std::fmt;
 
 use failure::{Backtrace, Context, Fail};
-use indy::IndyError;
+use vdrtools::IndyError;
 
 use crate::utils::error_utils::kind_to_error_message;
 

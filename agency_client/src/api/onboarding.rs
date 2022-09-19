@@ -7,7 +7,7 @@ use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::testing::test_constants;
-use indy::WalletHandle;
+use vdrtools::WalletHandle;
 
 impl AgencyClient {
     async fn _connect(

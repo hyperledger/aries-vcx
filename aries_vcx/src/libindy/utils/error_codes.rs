@@ -1,6 +1,6 @@
 extern crate num_traits;
 
-use indy::IndyError;
+use vdrtools::IndyError;
 
 use crate::error::prelude::{VcxError, VcxErrorKind};
 use crate::utils::error;
@@ -70,7 +70,7 @@ pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use indy::ErrorCode;
+    use vdrtools::ErrorCode;
 
     use crate::utils::devsetup::SetupDefaults;
 

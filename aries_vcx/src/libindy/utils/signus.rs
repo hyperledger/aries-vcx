@@ -1,6 +1,6 @@
-use indy::did;
-use indy::future::TryFutureExt;
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools::did;
+use vdrtools::future::TryFutureExt;
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;

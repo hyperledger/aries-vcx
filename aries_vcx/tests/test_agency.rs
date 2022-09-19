@@ -5,6 +5,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate tokio;
+extern crate vdrtoolsrs as vdrtools;
 
 pub mod utils;
 
@@ -15,7 +16,7 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use indyrs::wallet::close_wallet;
+    use vdrtools::wallet::close_wallet;
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;

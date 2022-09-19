@@ -313,7 +313,7 @@ mod integration_tests {
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
     use serde_json::Value;
-    use indy_sys::PoolHandle;
+    use vdrtools_sys::PoolHandle;
 
     use aries_vcx::global::settings;
     use aries_vcx::handlers::issuance::holder::Holder;

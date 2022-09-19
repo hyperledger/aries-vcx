@@ -1,5 +1,5 @@
-use indy::future::TryFutureExt;
-use indy_sys::WalletHandle;
+use vdrtools::future::TryFutureExt;
+use vdrtools_sys::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 

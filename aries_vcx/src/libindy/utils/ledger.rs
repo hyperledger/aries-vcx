@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use futures::future::TryFutureExt;
-use indy::cache;
-use indy::ledger;
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools::cache;
+use vdrtools::ledger;
+use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 
 use crate::did_doc::service_aries::AriesService;

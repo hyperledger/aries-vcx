@@ -1,5 +1,5 @@
-use indy::{wallet, ErrorCode};
-use indy::{SearchHandle, WalletHandle};
+use vdrtools::{wallet, ErrorCode};
+use vdrtools::{SearchHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
@@ -230,7 +230,7 @@ pub async fn add_wallet_record(
         return Ok(());
     }
 
-    indy::wallet::add_wallet_record(wallet_handle, xtype, id, value, tags)
+    vdrtools::wallet::add_wallet_record(wallet_handle, xtype, id, value, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -247,7 +247,7 @@ pub async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &st
         return Ok(r#"{"id":"123","type":"record type","value":"record value","tags":null}"#.to_string());
     }
 
-    indy::wallet::get_wallet_record(wallet_handle, xtype, id, options)
+    vdrtools::wallet::get_wallet_record(wallet_handle, xtype, id, options)
         .await
         .map_err(VcxError::from)
 }
@@ -259,7 +259,7 @@ pub async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: 
         return Ok(());
     }
 
-    indy::wallet::delete_wallet_record(wallet_handle, xtype, id)
+    vdrtools::wallet::delete_wallet_record(wallet_handle, xtype, id)
         .await
         .map_err(VcxError::from)
 }
@@ -281,7 +281,7 @@ pub async fn update_wallet_record_value(
         return Ok(());
     }
 
-    indy::wallet::update_wallet_record_value(wallet_handle, xtype, id, value)
+    vdrtools::wallet::update_wallet_record_value(wallet_handle, xtype, id, value)
         .await
         .map_err(VcxError::from)
 }
@@ -298,7 +298,7 @@ pub async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id
         return Ok(());
     }
 
-    indy::wallet::add_wallet_record_tags(wallet_handle, xtype, id, tags)
+    vdrtools::wallet::add_wallet_record_tags(wallet_handle, xtype, id, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -320,7 +320,7 @@ pub async fn update_wallet_record_tags(
         return Ok(());
     }
 
-    indy::wallet::update_wallet_record_tags(wallet_handle, xtype, id, tags)
+    vdrtools::wallet::update_wallet_record_tags(wallet_handle, xtype, id, tags)
         .await
         .map_err(VcxError::from)
 }
@@ -342,7 +342,7 @@ pub async fn delete_wallet_record_tags(
         return Ok(());
     }
 
-    indy::wallet::delete_wallet_record_tags(wallet_handle, xtype, id, tag_names)
+    vdrtools::wallet::delete_wallet_record_tags(wallet_handle, xtype, id, tag_names)
         .await
         .map_err(VcxError::from)
 }
@@ -364,7 +364,7 @@ pub async fn open_search_wallet(
         return Ok(1);
     }
 
-    indy::wallet::open_wallet_search(wallet_handle, xtype, query, options)
+    vdrtools::wallet::open_wallet_search(wallet_handle, xtype, query, options)
         .await
         .map_err(VcxError::from)
 }
@@ -384,7 +384,7 @@ pub async fn fetch_next_records_wallet(
         return Ok(String::from("{}"));
     }
 
-    indy::wallet::fetch_wallet_search_next_records(wallet_handle, search_handle, count)
+    vdrtools::wallet::fetch_wallet_search_next_records(wallet_handle, search_handle, count)
         .await
         .map_err(VcxError::from)
 }
@@ -396,7 +396,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
         return Ok(());
     }
 
-    indy::wallet::close_wallet_search(search_handle)
+    vdrtools::wallet::close_wallet_search(search_handle)
         .await
         .map_err(VcxError::from)
 }
@@ -428,7 +428,7 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
     );
 
     let export_config = json!({ "key": backup_key, "path": &path}).to_string();
-    indy::wallet::export_wallet(wallet_handle, &export_config)
+    vdrtools::wallet::export_wallet(wallet_handle, &export_config)
         .await
         .map_err(VcxError::from)
 }
@@ -449,7 +449,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
         warn!("close_wallet >>> Indy mocks enabled, skipping closing wallet");
         return Ok(());
     }
-    indy::wallet::close_wallet(wallet_handle).await?;
+    vdrtools::wallet::close_wallet(wallet_handle).await?;
     Ok(())
 }
 

@@ -66,7 +66,7 @@ execute_on_device(){
     "${LIBZMQ_LIB_DIR}/libzmq.so" "/data/local/tmp/libzmq.so"
 
     adb -e push \
-    "${INDY_LIB_DIR}/libindy.so" "/data/local/tmp/libindy.so"
+    "${INDY_LIB_DIR}/libvdrtools.so" "/data/local/tmp/libvdrtools.so"
 
     adb -e logcat | grep indy &
 

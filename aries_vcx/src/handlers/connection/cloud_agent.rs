@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indy_sys::WalletHandle;
+use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;

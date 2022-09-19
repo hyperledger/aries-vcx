@@ -1,4 +1,4 @@
-use indy_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;

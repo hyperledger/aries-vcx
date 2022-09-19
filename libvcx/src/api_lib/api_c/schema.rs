@@ -7,7 +7,7 @@ use serde_json;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
 use crate::api_lib::global::pool::get_main_pool_handle;
-use aries_vcx::indy_sys::CommandHandle;
+use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::schema;
