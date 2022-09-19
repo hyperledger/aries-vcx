@@ -26,7 +26,7 @@ impl AgencyClient {
                 agent_vk,
             )
             .await?;
-        let response = self.post_to_agency(&data).await?;
+        let response = self.post_to_agency(data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
@@ -56,7 +56,7 @@ impl AgencyClient {
         let data = self
             .prepare_message_for_agent(&Client2AgencyMessage::CreateKey(message), &agent_pwdid)
             .await?;
-        let response = self.post_to_agency(&data).await?;
+        let response = self.post_to_agency(data).await?;
         let mut response = self.parse_response_from_agency(&response).await?;
 
         match response.remove(0) {
@@ -81,7 +81,7 @@ impl AgencyClient {
         let agent_did = self.get_agent_pwdid();
         let message = Client2AgencyMessage::UpdateComMethod(UpdateComMethod::build(com_method));
         let data = self.prepare_message_for_agent(&message, &agent_did).await?;
-        let response = self.post_to_agency(&data).await?;
+        let response = self.post_to_agency(data).await?;
         self.parse_response_from_agency(&response).await?;
 
         Ok(())
