@@ -7,6 +7,6 @@ members = [
 ]
 
 [profile.release]
-debug = true
+debug = 0
 panic = 'unwind'
 incremental = false
