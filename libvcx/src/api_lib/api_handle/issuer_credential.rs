@@ -34,7 +34,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
@@ -162,7 +162,7 @@ pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
 
 pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(error::SUCCESS.code_num)
@@ -181,7 +181,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     credential
         .send_credential(
             get_main_wallet_handle(),
-            connection::send_message_closure(connection_handle)?,
+            connection::send_message_closure(connection_handle).await?,
         )
         .await?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;

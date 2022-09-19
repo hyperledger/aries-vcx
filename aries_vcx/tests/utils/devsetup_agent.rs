@@ -277,7 +277,7 @@ pub mod test_utils {
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
-            let details = self.connection.get_connection_info(self.pool_handle, &self.agency_client).unwrap();
+            let details = self.connection.get_connection_info(self.pool_handle, &self.agency_client).await.unwrap();
             serde_json::from_str(&details).unwrap()
         }
 
@@ -302,7 +302,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.issuer_credential
-                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
+                .send_credential_offer(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).await.unwrap())
                 .await
                 .unwrap();
             self.issuer_credential
@@ -322,7 +322,7 @@ pub mod test_utils {
             self.issuer_credential
                 .send_credential(
                     self.wallet_handle,
-                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();
@@ -338,7 +338,7 @@ pub mod test_utils {
             assert_eq!(VerifierState::PresentationRequestSet, self.verifier.get_state());
 
             self.verifier
-                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap())
+                .send_presentation_request(self.connection.send_message_closure(self.wallet_handle, self.pool_handle).await.unwrap())
                 .await
                 .unwrap();
             self.verifier
@@ -508,7 +508,7 @@ pub mod test_utils {
                     self.wallet_handle,
                     self.pool_handle,
                     pw_did,
-                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();
@@ -601,7 +601,7 @@ pub mod test_utils {
                 .send_presentation(
                     self.wallet_handle,
                     self.pool_handle,
-                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).unwrap(),
+                    self.connection.send_message_closure(self.wallet_handle, self.pool_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();

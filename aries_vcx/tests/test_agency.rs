@@ -138,7 +138,7 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Send Message works");
         {
-            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap()(message.to_a2a_message())
+            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap()(message.to_a2a_message())
                 .await
                 .unwrap();
         }
@@ -213,7 +213,7 @@ mod integration_tests {
         {
             let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
 
-            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap()(credential_offer.to_a2a_message())
+            faber.connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap()(credential_offer.to_a2a_message())
                 .await
                 .unwrap();
 

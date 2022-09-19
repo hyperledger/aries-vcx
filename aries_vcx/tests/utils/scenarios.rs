@@ -152,7 +152,7 @@ pub mod test_utils {
             .await
             .unwrap();
         issuer
-            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
         info!("create_and_send_nonrevocable_cred_offer :: credential offer was sent");
@@ -182,7 +182,7 @@ pub mod test_utils {
             .await
             .unwrap();
         issuer
-            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
         info!("create_and_send_cred_offer :: credential offer was sent");
@@ -222,7 +222,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 my_pw_did,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -254,7 +254,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 proposal,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -292,7 +292,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 proposal,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -327,7 +327,7 @@ pub mod test_utils {
             .await
             .unwrap();
         issuer
-            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
@@ -360,7 +360,7 @@ pub mod test_utils {
             .await
             .unwrap();
         issuer
-            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_credential_offer(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
         assert_eq!(IssuerState::OfferSent, issuer.get_state());
@@ -380,7 +380,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 my_pw_did,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -398,7 +398,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 Some("Have a nice day"),
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -430,7 +430,7 @@ pub mod test_utils {
         issuer_credential
             .send_credential(
                 faber.wallet_handle,
-                issuer_to_consumer.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap(),
+                issuer_to_consumer.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -475,7 +475,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 proposal_data,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -505,7 +505,7 @@ pub mod test_utils {
                 alice.wallet_handle,
                 alice.pool_handle,
                 proposal_data,
-                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
             )
             .await
             .unwrap();
@@ -536,7 +536,7 @@ pub mod test_utils {
             .unwrap();
         verifier.set_request(presentation_request_data, None).unwrap();
         verifier
-            .send_presentation_request(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_presentation_request(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
     }
@@ -552,7 +552,7 @@ pub mod test_utils {
             .decline_presentation_proposal(
                 faber.wallet_handle,
                 faber.pool_handle,
-                connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap(),
+                connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap(),
                 "I don't like Alices",
             )
             .await
@@ -589,7 +589,7 @@ pub mod test_utils {
             .unwrap();
         let mut verifier = Verifier::create_from_request("1".to_string(), &presentation_request_data).unwrap();
         verifier
-            .send_presentation_request(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).unwrap())
+            .send_presentation_request(connection.send_message_closure(faber.wallet_handle, faber.pool_handle).await.unwrap())
             .await
             .unwrap();
         thread::sleep(Duration::from_millis(100));
@@ -665,7 +665,7 @@ pub mod test_utils {
                 .send_presentation(
                     alice.wallet_handle,
                     alice.pool_handle,
-                    connection.send_message_closure(alice.wallet_handle, alice.pool_handle).unwrap(),
+                    connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();

@@ -115,20 +115,20 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).ok(),
+            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).await.ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
 
-    pub fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).ok(),
+            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).await.ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
@@ -162,8 +162,9 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+    pub async fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         self.their_did_doc(pool_handle)
+            .await
             .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -171,8 +172,9 @@ impl SmConnectionInvitee {
             ))
     }
 
-    pub fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
+    pub async fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
         self.their_did_doc(pool_handle)
+            .await
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -316,16 +318,16 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = state.invitation.into_did_doc(pool_handle)?;
+                let ddo = state.invitation.into_did_doc(pool_handle).await?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
                     wallet_handle,
                     self.pairwise_info.pw_vk.clone(),
-                    ddo,
+                    ddo.clone(),
                     request.to_a2a_message(),
                 )
                 .await?;
-                (InviteeFullState::Requested((state.clone(), request, pool_handle).into()), thread_id)
+                (InviteeFullState::Requested((state.clone(), request, ddo).into()), thread_id)
             }
             _ => (self.state.clone(), self.get_thread_id()),
         };

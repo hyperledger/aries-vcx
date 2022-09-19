@@ -80,7 +80,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("disclosed_proof::update_state >> found no available transition");
         return Ok(proof.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
@@ -151,7 +151,7 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(get_main_wallet_handle(), get_main_pool_handle()?, send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
@@ -166,7 +166,7 @@ pub fn generate_reject_proof_msg(_handle: u32) -> VcxResult<String> {
 
 pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
             get_main_wallet_handle(),
@@ -201,7 +201,7 @@ pub async fn decline_presentation_request(
     proposal: Option<&str>,
 ) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
             get_main_wallet_handle(),

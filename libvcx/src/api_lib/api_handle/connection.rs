@@ -56,12 +56,14 @@ pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.pairwise_info().pw_vk.clone()))
 }
 
-pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| connection.remote_did(get_main_pool_handle()?).map_err(|err| err.into()))
+pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.remote_did(get_main_pool_handle()?).await.map_err(|err| err.into())
 }
 
-pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| connection.remote_vk(get_main_pool_handle()?).map_err(|err| err.into()))
+pub async fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection.remote_vk(get_main_pool_handle()?).await.map_err(|err| err.into())
 }
 
 pub fn get_thread_id(handle: u32) -> VcxResult<String> {
@@ -302,16 +304,16 @@ pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessag
 
 pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
     trace!("connection::send_message >>>");
-    let send_message = send_message_closure(handle)?;
+    let send_message = send_message_closure(handle).await?;
     send_message(message).await.map_err(|err| err.into())
 }
 
-pub fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
-    CONNECTION_MAP.get(handle, |connection| {
-        connection
-            .send_message_closure(get_main_wallet_handle(), get_main_pool_handle()?)
-            .map_err(|err| err.into())
-    })
+pub async fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection
+        .send_message_closure(get_main_wallet_handle(), get_main_pool_handle()?)
+        .await
+        .map_err(|err| err.into())
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
@@ -335,12 +337,12 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
     CONNECTION_MAP.insert(handle, connection)
 }
 
-pub fn get_connection_info(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| {
-        connection
-            .get_connection_info(get_main_pool_handle()?, &get_main_agency_client().unwrap())
-            .map_err(|err| err.into())
-    })
+pub async fn get_connection_info(handle: u32) -> VcxResult<String> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    connection
+        .get_connection_info(get_main_pool_handle()?, &get_main_agency_client().unwrap())
+        .await
+        .map_err(|err| err.into())
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]

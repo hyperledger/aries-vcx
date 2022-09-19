@@ -1,7 +1,5 @@
 use vdrtools_sys::PoolHandle;
 
-use futures::executor::block_on;
-
 use crate::did_doc::service_aries::AriesService;
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -21,12 +19,12 @@ pub enum Invitation {
 }
 
 impl Invitation {
-    pub fn into_did_doc(&self, pool_handle: PoolHandle) -> VcxResult<DidDoc> {
+    pub async fn into_did_doc(&self, pool_handle: PoolHandle) -> VcxResult<DidDoc> {
         let mut did_doc: DidDoc = DidDoc::default();
         let (service_endpoint, recipient_keys, routing_keys) = match self {
             Invitation::Public(invitation) => {
                 did_doc.set_id(invitation.did.to_string());
-                let service = block_on(ledger::get_service(pool_handle, &invitation.did)).unwrap_or_else(|err| {
+                let service = ledger::get_service(pool_handle, &invitation.did).await.unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
@@ -42,7 +40,7 @@ impl Invitation {
             }
             Invitation::OutOfBand(invitation) => {
                 did_doc.set_id(invitation.id.0.clone());
-                let service = block_on(invitation.services[0].resolve(pool_handle)).unwrap_or_else(|err| {
+                let service = invitation.services[0].resolve(pool_handle).await.unwrap_or_else(|err| {
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
@@ -239,14 +237,14 @@ pub mod unit_tests {
         assert_eq!(_public_invitation(), invitation);
     }
 
-    #[test]
-    fn test_did_doc_from_invitation_works() {
+    #[tokio::test]
+    async fn test_did_doc_from_invitation_works() {
         let mut did_doc = DidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(_routing_keys());
 
-        assert_eq!(did_doc, Invitation::Pairwise(_pairwise_invitation()).into_did_doc(0).unwrap());
+        assert_eq!(did_doc, Invitation::Pairwise(_pairwise_invitation()).into_did_doc(0).await.unwrap());
     }
 }

@@ -1176,7 +1176,7 @@ pub extern "C" fn vcx_connection_verify_signature(
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match connection::get_their_pw_verkey(connection_handle) {
+        let vk = match connection::get_their_pw_verkey(connection_handle).await {
             Ok(err) => err,
             Err(err) => {
                 error!(
@@ -1372,8 +1372,8 @@ pub extern "C" fn vcx_connection_info(
         source_id
     );
 
-    execute(move || {
-        match get_connection_info(connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match get_connection_info(connection_handle).await {
             Ok(info) => {
                 trace!(
                     "vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}), source_id: {:?}",
@@ -1397,7 +1397,7 @@ pub extern "C" fn vcx_connection_info(
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }
@@ -1480,8 +1480,8 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
         source_id
     );
 
-    execute(move || {
-        match get_their_pw_did(connection_handle) {
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match get_their_pw_did(connection_handle).await {
             Ok(json) => {
                 trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}", command_handle, connection_handle, error::SUCCESS.message, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
@@ -1495,7 +1495,7 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
         };
 
         Ok(())
-    });
+    }));
 
     error::SUCCESS.code_num
 }

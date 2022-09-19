@@ -130,7 +130,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
@@ -230,7 +230,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
     );
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = connection::get_pw_did(connection_handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     credential
         .send_request(get_main_wallet_handle(), get_main_pool_handle()?, my_pw_did, send_message)
         .await?;
@@ -351,7 +351,7 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> VcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
     credential
         .decline_offer(get_main_wallet_handle(), get_main_pool_handle()?, comment, send_message)
         .await?;
