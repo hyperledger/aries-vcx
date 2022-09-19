@@ -1,7 +1,6 @@
 use std::env;
 use std::time::Duration;
 
-use async_std::sync::RwLock;
 use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
@@ -11,19 +10,17 @@ use crate::testing::mocking;
 use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
-    static ref HTTP_CLIENT: RwLock<Client> = RwLock::new(
-        reqwest::ClientBuilder::new()
-            .timeout(Duration::from_secs(50))
-            .pool_idle_timeout(Some(Duration::from_secs(4)))
-            .build()
-            .map_err(|err| {
-                AgencyClientError::from_msg(
-                    AgencyClientErrorKind::PostMessageFailed,
-                    format!("Building reqwest client failed: {:?}", err),
-                )
-            })
-            .unwrap()
-    );
+    static ref HTTP_CLIENT: Client = reqwest::ClientBuilder::new()
+        .timeout(Duration::from_secs(50))
+        .pool_idle_timeout(Some(Duration::from_secs(4)))
+        .build()
+        .map_err(|err| {
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::PostMessageFailed,
+                format!("Building reqwest client failed: {:?}", err),
+            )
+        })
+        .unwrap();
 }
 
 pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
@@ -51,10 +48,9 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
         set_ssl_cert_location();
     }
 
-    let client = HTTP_CLIENT.read().await;
     debug!("post_message >> http client sending request POST {}", url);
 
-    let response = client
+    let response = HTTP_CLIENT
         .post(url)
         .body(body_content.to_owned())
         .header(CONTENT_TYPE, "application/ssi-agent-wire")
