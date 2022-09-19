@@ -891,7 +891,7 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
         Err(err) => return err.into(),
     };
     info!(
-        "vcx_issuer_revoke_local(command_handle: {}, credential_handle: {}, issuer_did: {}) source_id: {}",
+        "vcx_issuer_revoke_credential_local(command_handle: {}, credential_handle: {}, issuer_did: {}) source_id: {}",
         command_handle, credential_handle, issuer_did, source_id
     );
 
@@ -899,7 +899,7 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
         let err = match issuer_credential::revoke_credential_local(credential_handle, &issuer_did).await {
             Ok(()) => {
                 info!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
+                    "vcx_issuer_revoke_credential_local_Cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
                     command_handle,
                     credential_handle,
                     issuer_did,
@@ -911,7 +911,7 @@ pub extern "C" fn vcx_issuer_revoke_credential_local(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!(
-                    "vcx_issuer_revoke_credential_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
+                    "vcx_issuer_revoke_credential_local_cb(command_handle: {}, credential_handle: {}, issuer_did: {}, rc: {}) source_id: {}",
                     command_handle, credential_handle, issuer_did, err, source_id
                 );
                 err.into()

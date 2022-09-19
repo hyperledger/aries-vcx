@@ -18,7 +18,7 @@ static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
 /// # Returns
 /// Revocation registry delta json as a string
 pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> Option<String> {
-    debug!("Getting get_rev_reg_delta for rev_reg_id {}", rev_reg_id);
+    debug!("get_rev_reg_delta >> Getting revocation registry delta for rev_reg_id {}", rev_reg_id);
 
     let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
 
@@ -41,7 +41,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
             Ok(cache) => cache,
             Err(err) => {
                 warn!(
-                    "Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: {}",
+                    "get_rev_reg_delta >> Unable to convert rev_reg_delta cache for rev_reg_id: {}, json: {}, error: {}",
                     rev_reg_id, json, err
                 );
                 None
@@ -49,7 +49,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
         },
         Err(err) => {
             warn!(
-                "Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}",
+                "get_rev_reg_delta >> Unable to get rev_reg_delta cache for rev_reg_id: {}, error: {}",
                 rev_reg_id, err
             );
             None
@@ -67,7 +67,7 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
 ///
 pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, cache: &str) -> VcxResult<()> {
     debug!(
-        "Setting set_rev_reg_delta for rev_reg_id {}, cache {}",
+        "set_rev_reg_delta >> Setting store revocation registry delta for revocation registry {} to new value: {}",
         rev_reg_id, cache
     );
     match serde_json::to_string(cache) {
@@ -87,7 +87,7 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
 
 ///
 ///
-/// Clears the stored reovcation registry delta record
+/// Clears the stored revocation registry delta record
 /// Errors are silently ignored.
 ///
 /// # Arguments
@@ -95,12 +95,11 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
 /// `cache`: Cache object.
 ///
 pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> VcxResult<String> {
-    debug!("Clearing clear_rev_reg_delta for rev_reg_id {}", rev_reg_id);
+    debug!("clear_rev_reg_delta >> Clear revocation registry delta for rev_reg_id {}", rev_reg_id);
     if let Some(last_delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        debug!("Got last delta = {}", last_delta);
         let wallet_id = format!("{}{}", RECORD_ID_PREFIX, rev_reg_id);
         delete_wallet_record(wallet_handle, WALLET_RECORD_TYPE, &wallet_id).await?;
-        debug!("Record with id {} deleted", wallet_id);
+        info!("clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, wallet record: ${}", rev_reg_id, wallet_id);
         Ok(last_delta)
     } else {
         Err(VcxError::from(VcxErrorKind::IOError))

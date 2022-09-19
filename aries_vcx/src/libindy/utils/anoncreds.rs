@@ -622,8 +622,7 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHand
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
     let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
-    _check_response(&response)?;
-    Ok(())
+    _check_response(&response)
 }
 
 pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
@@ -709,8 +708,7 @@ pub async fn publish_rev_reg_def(
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
     let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
-    _check_response(&response)?;
-    Ok(())
+    _check_response(&response)
 }
 
 pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> VcxResult<(String, String)> {
@@ -845,8 +843,7 @@ pub async fn revoke_credential(
         return Ok(());
     }
     revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    publish_local_revocations(wallet_handle, pool_handle, submitter_did, rev_reg_id).await?;
-    Ok(())
+    publish_local_revocations(wallet_handle, pool_handle, submitter_did, rev_reg_id).await
 }
 
 pub async fn revoke_credential_local(
@@ -855,12 +852,13 @@ pub async fn revoke_credential_local(
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxResult<()> {
+    info!("revoke_credential_local >>> Revoking locally credential with cred_rev_id: {} of revocation registry {}", cred_rev_id, rev_reg_id);
     let mut new_delta_json = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    info!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
+    debug!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
     if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        info!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
+        debug!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
         new_delta_json = libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
-        info!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
+        debug!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
     }
     set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
 }
@@ -870,10 +868,15 @@ pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle:
         publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
         info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}", rev_reg_id);
         match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
-            Ok(_) => info!("publish_local_revocations >>> rev_reg_delta cache cleared for rev_reg_id {}", rev_reg_id),
-            Err(err) => error!("publish_local_revocations >>> rev_reg_delta cache clear failed for rev_reg_id {}: {}", rev_reg_id, err)
+            Ok(_) => {
+                info!("publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}", rev_reg_id);
+                Ok(())
+            },
+            Err(err) => {
+                error!("publish_local_revocations >>> failed to clear revocation delta storage for rev_reg_id: {}, error: {}", rev_reg_id, err);
+                Err(VcxError::from(VcxErrorKind::RevDeltaFailedToClear))
+            }
         }
-        Ok(())
     } else {
         Err(VcxError::from(VcxErrorKind::RevDeltaNotFound))
     }
