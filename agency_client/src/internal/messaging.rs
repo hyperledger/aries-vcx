@@ -9,7 +9,7 @@ use core::u8;
 use serde_json::Value;
 
 impl AgencyClient {
-    pub async fn post_to_agency(&self, body_content: &Vec<u8>) -> AgencyClientResult<Vec<u8>> {
+    pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
         let url = self.get_agency_url_full();
         httpclient::post_message(body_content, &url).await
     }
@@ -203,7 +203,7 @@ impl AgencyClient {
     ) -> AgencyClientResult<Vec<Client2AgencyMessage>> {
         trace!("send_message_to_agency >>> message: ..., did: {}", did);
         let data = self.prepare_message_for_agency(message, did, verkey).await?;
-        let response = self.post_to_agency(&data).await?;
+        let response = self.post_to_agency(data).await?;
         self.parse_response_from_agency(&response).await
     }
 }

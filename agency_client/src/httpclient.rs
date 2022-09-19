@@ -23,7 +23,7 @@ lazy_static! {
         .unwrap();
 }
 
-pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
+pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
     if mocking::agency_mocks_enabled() {
         if HttpClientMockResponse::has_response() {
             warn!("post_message >> mocking response for POST {}", url);
@@ -42,7 +42,8 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
         return Ok(mocked_response);
     }
 
-    //Setting SSL Certs location. This is needed on android platform. Or openssl will fail to verify the certs
+    // Setting SSL Certs location. This is needed on android
+    // platform. Or openssl will fail to verify the certs
     if cfg!(target_os = "android") {
         info!("::Android code");
         set_ssl_cert_location();
@@ -52,7 +53,7 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
 
     let response = HTTP_CLIENT
         .post(url)
-        .body(body_content.to_owned())
+        .body(body_content)
         .header(CONTENT_TYPE, "application/ssi-agent-wire")
         .header(USER_AGENT, "reqwest")
         .send()
@@ -71,19 +72,32 @@ pub async fn post_message(body_content: &Vec<u8>, url: &str) -> AgencyClientResu
             if response_status.is_success() {
                 Ok(payload.into_bytes())
             } else {
-                Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed due to non-success HTTP status: {}, response body: {}", url, response_status, payload)))
+                Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::PostMessageFailed,
+                    format!("POST {} failed due to non-success HTTP status: {}, response body: {}",
+                            url, response_status, payload)))
             }
         }
-        Err(error) => Err(AgencyClientError::from_msg(AgencyClientErrorKind::PostMessageFailed, format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, content-length header: {:?}, error: {:?}", url, response_status, content_length, error))),
+        Err(error) => Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::PostMessageFailed,
+            format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
+                     content-length header: {:?}, error: {:?}",
+                    url, response_status, content_length, error))),
     }
 }
 
 fn set_ssl_cert_location() {
     let ssl_cert_file = "SSL_CERT_FILE";
-    env::set_var(ssl_cert_file, env::var("EXTERNAL_STORAGE").unwrap() + "/cacert.pem"); //TODO: CHANGE ME, HARDCODING FOR TESTING ONLY
+
+    // TODO: CHANGE ME, HARDCODING FOR TESTING ONLY
+    env::set_var(ssl_cert_file, env::var("EXTERNAL_STORAGE").unwrap() + "/cacert.pem");
+
     match env::var(ssl_cert_file) {
         Ok(val) => info!("{}:: {:?}", ssl_cert_file, val),
-        Err(e) => error!("couldn't find var in env {}:: {}. This needs to be set on Android to make https calls.\n See https://github.com/seanmonstar/reqwest/issues/70 for more info", ssl_cert_file, e),
+        Err(e) => error!("couldn't find var in env {}:: {}. \
+                          This needs to be set on Android to make https calls.\n\
+                          See https://github.com/seanmonstar/reqwest/issues/70 for more info",
+                         ssl_cert_file, e),
     }
     info!("::SSL_CERT_FILE has been set");
 }
