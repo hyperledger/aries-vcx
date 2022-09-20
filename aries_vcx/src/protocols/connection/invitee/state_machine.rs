@@ -425,6 +425,7 @@ pub mod unit_tests {
     
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
+    use crate::libindy::utils::crypto::sign_connection_response;
 
     use super::*;
 
@@ -491,24 +492,26 @@ pub mod unit_tests {
             }
         }
 
-        async fn _response(wallet_handle: WalletHandle, recipient_key: &str, thread_id: &str) -> SignedResponse {
-            Response::default()
-                .set_service_endpoint(_service_endpoint())
-                .set_keys(vec![recipient_key.to_string()], vec![])
-                .set_thread_id(thread_id)
-                .encode(wallet_handle, &recipient_key)
-                .await
-                .unwrap()
+        async fn _response(wallet_handle: WalletHandle, key: &str, thread_id: &str) -> SignedResponse {
+            sign_connection_response(
+                wallet_handle,
+                key,
+                Response::default()
+                    .set_service_endpoint(_service_endpoint())
+                    .set_keys(vec![key.to_string()], vec![])
+                    .set_thread_id(thread_id)
+            ).await.unwrap()
         }
 
         async fn _response_1(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
-            Response::default()
-                .set_service_endpoint(_service_endpoint())
-                .set_keys(vec![key.to_string()], vec![])
-                .set_thread_id("testid_1")
-                .encode(wallet_handle, &key)
-                .await
-                .unwrap()
+            sign_connection_response(
+                wallet_handle,
+                key,
+                Response::default()
+                    .set_service_endpoint(_service_endpoint())
+                    .set_keys(vec![key.to_string()], vec![])
+                    .set_thread_id("testid_1")
+            ).await.unwrap()
         }
 
         mod new {

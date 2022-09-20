@@ -1,6 +1,4 @@
 use base64;
-use vdrtools_sys::WalletHandle;
-use time;
 
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -73,6 +71,10 @@ impl Response {
         Response::default()
     }
 
+    pub fn get_connection_data(&self) -> String {
+        json!(self.connection).to_string()
+    }
+
     pub fn set_did(mut self, did: String) -> Response {
         self.connection.did = did.clone();
         self.connection.did_doc.set_id(did);
@@ -90,25 +92,14 @@ impl Response {
         self
     }
 
-    pub async fn encode(&self, wallet_handle: WalletHandle, key: &str) -> VcxResult<SignedResponse> {
-        let connection_data = json!(self.connection).to_string();
-
-        let now: u64 = time::get_time().sec as u64;
-
-        let mut sig_data = now.to_be_bytes().to_vec();
-
-        sig_data.extend(connection_data.as_bytes());
-
-        let signature = crypto::sign(wallet_handle, key, &sig_data).await?;
-
+    pub fn encode(&self, signature: Vec<u8>, sig_data: Vec<u8>, signer: String) -> VcxResult<SignedResponse> {
         let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
-
         let signature = base64::encode_config(&signature, base64::URL_SAFE);
 
         let connection_sig = ConnectionSignature {
             signature,
             sig_data,
-            signer: key.to_string(),
+            signer,
             ..Default::default()
         };
 
@@ -251,6 +242,7 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
+    use crate::libindy::utils::crypto::sign_connection_response;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 
@@ -273,7 +265,7 @@ pub mod unit_tests {
         SetupEmpty::init();
         let setup = setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let signed_response: SignedResponse = _response().encode(setup.wallet_handle, &trustee_key).await.unwrap();
+        let signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
         assert_eq!(_response(), signed_response.decode(&trustee_key).await.unwrap());
     }
 
@@ -282,7 +274,7 @@ pub mod unit_tests {
         SetupEmpty::init();
         let setup = setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let mut signed_response: SignedResponse = _response().encode(setup.wallet_handle, &trustee_key).await.unwrap();
+        let mut signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
         signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
         signed_response.decode(&trustee_key).await.unwrap_err();
     }

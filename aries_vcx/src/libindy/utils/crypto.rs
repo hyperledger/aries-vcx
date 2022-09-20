@@ -1,9 +1,10 @@
-/* test isn't ready until > libindy 1.0.1 */
+use time;
 use vdrtools::crypto;
 use vdrtools_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;
+use crate::messages::connection::response::{Response, SignedResponse};
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
@@ -11,6 +12,22 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxRe
     }
 
     crypto::sign(wallet_handle, my_vk, msg).await.map_err(VcxError::from)
+}
+
+async fn get_signature_data(wallet_handle: WalletHandle, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
+    let now: u64 = time::get_time().sec as u64;
+    let mut sig_data = now.to_be_bytes().to_vec();
+    sig_data.extend(data.as_bytes());
+    
+    let signature = sign(wallet_handle, key, &sig_data).await?;
+    
+    Ok((signature, sig_data))
+}
+
+pub async fn sign_connection_response(wallet_handle: WalletHandle, key: &str, response: Response) -> VcxResult<SignedResponse> {
+    let connection_data = response.get_connection_data();
+    let (signature, sig_data) = get_signature_data(wallet_handle, connection_data, key).await?;
+    response.encode(signature, sig_data, key.to_string())
 }
 
 pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxResult<bool> {

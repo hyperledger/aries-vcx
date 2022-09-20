@@ -20,6 +20,7 @@ use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::libindy::utils::crypto::sign_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -361,15 +362,17 @@ impl SmConnectionInviter {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-                Ok(Response::create()
-                    .set_did(new_pairwise_info.pw_did.to_string())
-                    .set_service_endpoint(new_service_endpoint)
-                    .set_keys(new_recipient_keys, new_routing_keys)
-                    .ask_for_ack()
-                    .set_thread_id(&request.get_thread_id())
-                    .encode(wallet_handle, &self.pairwise_info.clone().pw_vk)
-                    .await?
-                    .set_out_time())
+                sign_connection_response(
+                    wallet_handle,
+                    &self.pairwise_info.clone().pw_vk,
+                    Response::create()
+                        .set_did(new_pairwise_info.pw_did.to_string())
+                        .set_service_endpoint(new_service_endpoint)
+                        .set_keys(new_recipient_keys, new_routing_keys)
+                        .ask_for_ack()
+                        .set_thread_id(&request.get_thread_id())
+                        .set_out_time()
+                ).await
             }
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
