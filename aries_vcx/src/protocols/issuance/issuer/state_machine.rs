@@ -14,6 +14,7 @@ use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::status::Status;
+use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
@@ -437,10 +438,8 @@ impl IssuerSM {
                             )
                         }
                         Err(err) => {
-                            let problem_report = ProblemReport::create()
-                                .set_comment(Some(err.to_string()))
-                                .set_thread_id(&thread_id);
-
+                            let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                            error!("Failed to create credential, sending problem report {:?}", problem_report);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -637,7 +636,7 @@ pub mod unit_tests {
     mod build_messages {
         use crate::messages::a2a::MessageId;
         use crate::messages::issuance::CredentialPreviewData;
-        use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer};
+        use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer, build_problem_report_msg};
         use crate::utils::constants::LIBINDY_CRED_OFFER;
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 

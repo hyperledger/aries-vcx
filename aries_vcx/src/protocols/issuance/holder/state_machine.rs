@@ -16,6 +16,7 @@ use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::status::Status;
+use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 use crate::protocols::issuance::holder::states::initial::InitialHolderState;
@@ -57,9 +58,9 @@ impl Default for HolderFullState {
     }
 }
 
-//todo: should set thread id
-fn build_credential_request_msg(credential_request_attach: String) -> VcxResult<CredentialRequest> {
+fn build_credential_request_msg(credential_request_attach: String, thread_id: &str) -> VcxResult<CredentialRequest> {
     CredentialRequest::create()
+        .set_thread_id(thread_id)
         .set_out_time()
         .set_requests_attach(credential_request_attach)
 }
@@ -197,10 +198,9 @@ impl HolderSM {
             },
             HolderFullState::OfferReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                    let request = _make_credential_request(wallet_handle, pool_handle, my_pw_did, &state_data.offer).await;
+                    let request = _make_credential_request(wallet_handle, pool_handle, thread_id.clone(), my_pw_did, &state_data.offer).await;
                     match request {
                         Ok((cred_request, req_meta, cred_def_json)) => {
-                            let cred_request = cred_request.set_thread_id(&thread_id);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -209,9 +209,8 @@ impl HolderSM {
                             HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
                         }
                         Err(err) => {
-                            let problem_report = ProblemReport::create()
-                                .set_comment(Some(err.to_string()))
-                                .set_thread_id(&thread_id);
+                            let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                            error!("Failed to create credential request, sending problem report: {:?}", problem_report);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -231,7 +230,7 @@ impl HolderSM {
                     HolderFullState::ProposalSent(ProposalSentState::new(proposal))
                 }
                 CredentialIssuanceAction::CredentialOfferReject(comment) => {
-                    let problem_report = ProblemReport::create().set_thread_id(&thread_id).set_comment(comment);
+                    let problem_report = build_problem_report_msg(comment, &thread_id);
                     send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
@@ -267,9 +266,8 @@ impl HolderSM {
                             HolderFullState::Finished((state_data, cred_id, credential, rev_reg_def_json).into())
                         }
                         Err(err) => {
-                            let problem_report = ProblemReport::create()
-                                .set_comment(Some(err.to_string()))
-                                .set_thread_id(&thread_id);
+                            let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                            error!("Failed to process or save received credential, sending problem report: {:?}", problem_report);
                             send_message.ok_or(VcxError::from_msg(
                                 VcxErrorKind::InvalidState,
                                 "Attempted to call undefined send_message callback",
@@ -522,6 +520,7 @@ pub async fn create_credential_request(
 async fn _make_credential_request(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
+    thread_id: String,
     my_pw_did: String,
     offer: &CredentialOffer,
 ) -> VcxResult<(CredentialRequest, String, String)> {
@@ -537,7 +536,7 @@ async fn _make_credential_request(
     let (req, req_meta, _cred_def_id, cred_def_json) =
         create_credential_request(wallet_handle, pool_handle, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
-    let credential_request_msg = build_credential_request_msg(req)?;
+    let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
@@ -625,17 +624,17 @@ mod test {
 
     mod build_messages {
         use crate::messages::a2a::MessageId;
-        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
+        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg, build_problem_report_msg};
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
         fn test_holder_build_credential_request_msg() {
             let _setup = SetupMocks::init();
-            let msg = build_credential_request_msg("{}".into()).unwrap();
+            let msg = build_credential_request_msg("{}".into(), "12345").unwrap();
 
             assert_eq!(msg.id, MessageId::default());
-            assert!(msg.thread.is_none()); // todo: should set thread_id baswed on credential offer msg.
+            assert_eq!(msg.thread.unwrap().thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
                 chrono::Duration::milliseconds(100)
