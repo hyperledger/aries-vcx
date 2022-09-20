@@ -7,14 +7,14 @@ use time;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::cache::{clear_rev_reg_delta_cache, get_rev_reg_delta_cache, set_rev_reg_delta_cache};
-use crate::libindy::utils::ledger::publish_txn_on_ledger;
+use crate::libindy::utils::cache::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::libindy::utils::ledger::*;
+use crate::libindy::utils::ledger::sign_and_submit_to_ledger;
 use crate::libindy::utils::LibindyMock;
 use crate::utils;
 use crate::utils::constants::{
-    rev_def_json, CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, REVOC_REG_TYPE, REV_REG_DELTA_JSON, REV_REG_ID,
-    REV_REG_JSON, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN,
+    CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON,
+    REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN,
 };
 use crate::utils::constants::{
     ATTRS, LIBINDY_CRED_OFFER, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON,
@@ -61,8 +61,8 @@ pub async fn libindy_verifier_verify_proof(
         rev_reg_defs_json,
         rev_regs_json,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_create_and_store_revoc_reg(
@@ -90,8 +90,8 @@ pub async fn libindy_create_and_store_revoc_reg(
         &revoc_config,
         writer,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_create_and_store_credential_def(
@@ -110,8 +110,8 @@ pub async fn libindy_create_and_store_credential_def(
         sig_type,
         config_json,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_issuer_create_credential_offer(
@@ -163,8 +163,8 @@ pub async fn libindy_issuer_create_credential(
         revocation,
         blob_handle,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_prover_create_proof(
@@ -190,8 +190,8 @@ pub async fn libindy_prover_create_proof(
         credential_defs_json,
         revoc_states_json,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 async fn fetch_credentials(search_handle: i32, requested_attributes: Map<String, Value>) -> VcxResult<String> {
@@ -200,13 +200,13 @@ async fn fetch_credentials(search_handle: i32, requested_attributes: Map<String,
         v[ATTRS][item_referent] = serde_json::from_str(
             &anoncreds::prover_fetch_credentials_for_proof_req(search_handle, item_referent, 100).await?,
         )
-        .map_err(|_| {
-            error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
-            VcxError::from_msg(
-                VcxErrorKind::InvalidConfiguration,
-                "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
-            )
-        })?
+            .map_err(|_| {
+                error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidConfiguration,
+                    "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
+                )
+            })?
     }
 
     Ok(v.to_string())
@@ -312,8 +312,8 @@ pub async fn libindy_prover_create_credential_req(
         credential_def_json,
         master_secret_name,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_prover_create_revocation_state(
@@ -354,8 +354,8 @@ pub async fn libindy_prover_update_revocation_state(
         100,
         cred_rev_id,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_prover_store_credential(
@@ -379,8 +379,8 @@ pub async fn libindy_prover_store_credential(
         cred_def_json,
         rev_reg_def_json,
     )
-    .await
-    .map_err(VcxError::from)
+        .await
+        .map_err(VcxError::from)
 }
 
 pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<()> {
@@ -553,7 +553,7 @@ pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, po
 
     let request = build_schema_request(submitter_did, schema).await?;
 
-    let response = publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
 
     _check_schema_response(&response)?;
 
@@ -621,8 +621,8 @@ pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHand
         return Ok(());
     }
     let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
-    Ok(())
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
+    _check_response(&response)
 }
 
 pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
@@ -707,8 +707,8 @@ pub async fn publish_rev_reg_def(
         )
     })?;
     let rev_reg_def_req = build_rev_reg_request(issuer_did, &rev_reg_def_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
-    Ok(())
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &rev_reg_def_req).await?;
+    _check_response(&response)
 }
 
 pub async fn get_rev_reg_def_json(pool_handle: PoolHandle, rev_reg_id: &str) -> VcxResult<(String, String)> {
@@ -747,16 +747,18 @@ pub async fn publish_rev_reg_delta(
     pool_handle: PoolHandle,
     issuer_did: &str,
     rev_reg_id: &str,
-    rev_reg_entry_json: &str,
+    revoc_reg_delta_json: &str,
 ) -> VcxResult<String> {
     trace!(
-        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, rev_reg_entry_json: {}",
+        "publish_rev_reg_delta >>> issuer_did: {}, rev_reg_id: {}, revoc_reg_delta_json: {}",
         issuer_did,
         rev_reg_id,
-        rev_reg_entry_json
+        revoc_reg_delta_json
     );
-    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, rev_reg_entry_json).await?;
-    publish_txn_on_ledger(wallet_handle, pool_handle, issuer_did, &request).await
+    let request = build_rev_reg_delta_request(issuer_did, rev_reg_id, revoc_reg_delta_json).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &request).await?;
+    _check_response(&response)?;
+    Ok(response)
 }
 
 pub async fn get_rev_reg_delta_json(
@@ -829,41 +831,38 @@ pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&
     }
 }
 
-pub async fn revoke_credential(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    submitter_did: &str,
-    tails_file: &str,
-    rev_reg_id: &str,
-    cred_rev_id: &str,
-) -> VcxResult<String> {
-    if settings::indy_mocks_enabled() {
-        return Ok(REV_REG_DELTA_JSON.to_string());
-    }
-    let delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
-
-    Ok(delta)
-}
-
 pub async fn revoke_credential_local(
     wallet_handle: WalletHandle,
     tails_file: &str,
     rev_reg_id: &str,
     cred_rev_id: &str,
 ) -> VcxResult<()> {
-    let mut new_delta = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-    if let Some(old_delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-        new_delta = libindy_issuer_merge_revocation_registry_deltas(old_delta.as_str(), new_delta.as_str()).await?;
+    if settings::indy_mocks_enabled() {
+        return Ok(());
     }
-    set_rev_reg_delta_cache(wallet_handle, rev_reg_id, &new_delta).await
+    let mut new_delta_json = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+    debug!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
+    if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
+        debug!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
+        new_delta_json = libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
+        debug!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
+    }
+    set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
 }
 
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<String> {
-    if let Some(delta) = get_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-        match clear_rev_reg_delta_cache(wallet_handle, rev_reg_id).await {
-            Ok(_) => publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await,
-            Err(err) => Err(err),
+pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
+    if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
+        publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
+        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}", rev_reg_id);
+        match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
+            Ok(_) => {
+                info!("publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}", rev_reg_id);
+                Ok(())
+            },
+            Err(err) => {
+                error!("publish_local_revocations >>> failed to clear revocation delta storage for rev_reg_id: {}, error: {}", rev_reg_id, err);
+                Err(VcxError::from(VcxErrorKind::RevDeltaFailedToClear))
+            }
         }
     } else {
         Err(VcxError::from(VcxErrorKind::RevDeltaNotFound))
@@ -947,8 +946,8 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::libindy;
-    use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
     use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
+    use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
     use crate::libindy::credentials::encode_attributes;
     use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
@@ -977,7 +976,8 @@ pub mod test_utils {
     pub async fn create_and_write_test_schema(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, attr_list: &str) -> (String, String) {
         let (schema_id, schema_json) = create_schema(attr_list, submitter_did).await;
         let req = create_schema_req(&schema_json, submitter_did).await;
-        publish_txn_on_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
+        let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, submitter_did, &req).await.unwrap();
+        _check_response(&response).unwrap();
         thread::sleep(Duration::from_millis(1000));
         (schema_id, schema_json)
     }
@@ -1044,8 +1044,8 @@ pub mod test_utils {
             10,
             1,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         rev_reg
             .publish_revocation_primitives(wallet_handle, pool_handle, TEST_TAILS_URL)
             .await
@@ -1081,8 +1081,8 @@ pub mod test_utils {
             &offer,
             cred_def_json,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         (offer, req, req_meta)
     }
 
@@ -1123,8 +1123,8 @@ pub mod test_utils {
             Some(rev_reg_id.clone()),
             Some(tails_file),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         /* store cred */
         let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(
             wallet_handle,
@@ -1134,8 +1134,8 @@ pub mod test_utils {
             &cred_def_json,
             Some(&rev_def_json),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         (
             schema_id,
             schema_json,
@@ -1174,8 +1174,8 @@ pub mod test_utils {
             None,
             None,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         /* store cred */
         let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(
             wallet_handle,
@@ -1185,8 +1185,8 @@ pub mod test_utils {
             &cred_def_json,
             None,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         (
             schema_id,
             schema_json,
@@ -1221,7 +1221,7 @@ pub mod test_utils {
            }),
            "requested_predicates": json!({}),
         })
-        .to_string();
+            .to_string();
         let requested_credentials_json = json!({
               "self_attested_attributes":{
                  "self_attest_3": "my_self_attested_val"
@@ -1232,19 +1232,19 @@ pub mod test_utils {
                 },
               "requested_predicates":{}
         })
-        .to_string();
+            .to_string();
 
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
         let schemas = json!({
             schema_id: schema_json,
         })
-        .to_string();
+            .to_string();
 
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let cred_defs = json!({
             cred_def_id: cred_def_json,
         })
-        .to_string();
+            .to_string();
 
         libindy_prover_get_credentials_for_proof_req(wallet_handle, &proof_req)
             .await
@@ -1259,8 +1259,8 @@ pub mod test_utils {
             &cred_defs,
             None,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         (schemas, cred_defs, proof_req, proof)
     }
 
@@ -1290,7 +1290,7 @@ pub mod test_utils {
                "zip_3": {"name":"zip", "p_type":">=", "p_value":18}
            }),
         })
-        .to_string();
+            .to_string();
 
         let requested_credentials_json;
         if include_predicate_cred {
@@ -1305,7 +1305,7 @@ pub mod test_utils {
                   "zip_3": {"cred_id": cred_id}
               }
             })
-            .to_string();
+                .to_string();
         } else {
             requested_credentials_json = json!({
               "self_attested_attributes":{
@@ -1317,20 +1317,20 @@ pub mod test_utils {
               "requested_predicates":{
               }
             })
-            .to_string();
+                .to_string();
         }
 
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
         let schemas = json!({
             schema_id: schema_json,
         })
-        .to_string();
+            .to_string();
 
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let cred_defs = json!({
             cred_def_id: cred_def_json,
         })
-        .to_string();
+            .to_string();
 
         libindy_prover_get_credentials_for_proof_req(wallet_handle, &proof_req)
             .await
@@ -1345,8 +1345,8 @@ pub mod test_utils {
             &cred_defs,
             None,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         (schemas, cred_defs, proof_req, proof)
     }
 }
@@ -1443,7 +1443,7 @@ pub mod integration_tests {
            }),
            "requested_predicates": json!({}),
         })
-        .to_string();
+            .to_string();
         let _result = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, &proof_req)
             .await
             .unwrap();
@@ -1464,7 +1464,7 @@ pub mod integration_tests {
             "",
             "",
         )
-        .await;
+            .await;
         assert!(rc.is_err());
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
@@ -1475,7 +1475,7 @@ pub mod integration_tests {
             &rev_reg_id,
             &cred_rev_id,
         )
-        .await;
+            .await;
 
         assert!(rc.is_ok());
     }
@@ -1514,7 +1514,7 @@ pub mod integration_tests {
             2,
             "tag1",
         )
-        .await;
+            .await;
 
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::LibindyInvalidStructure);
     }
@@ -1633,16 +1633,18 @@ pub mod integration_tests {
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
 
-        revoke_credential(
+        revoke_credential_local(
             setup.wallet_handle,
-            setup.pool_handle,
-            &setup.institution_did,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
             &rev_reg_id,
-            &cred_rev_id,
+            &cred_rev_id
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
+
+        publish_local_revocations(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_id)
+            .await
+            .unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) = get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, Some(first_timestamp + 1), None)

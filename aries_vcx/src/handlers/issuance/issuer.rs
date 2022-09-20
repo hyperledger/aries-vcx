@@ -6,6 +6,7 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
+use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::issuance::credential_offer::OfferInfo;
@@ -13,7 +14,7 @@ use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::CredentialPreviewData;
 use crate::messages::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState};
+use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -163,8 +164,24 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
-        self.issuer_sm.revoke(wallet_handle, pool_handle, issuer_did, publish).await
+    pub async fn revoke_credential_local(&self, wallet_handle: WalletHandle) -> VcxResult<()> {
+        let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidState,
+            "Credential is not revocable, no revocation info has been found.",
+        ))?;
+        if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (
+            revocation_info.cred_rev_id,
+            revocation_info.rev_reg_id,
+            revocation_info.tails_file,
+        ) {
+            anoncreds::revoke_credential_local(wallet_handle, &tails_file, &rev_reg_id, &cred_rev_id).await?;
+        } else {
+            return Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                "Revocation info is not complete, cannot revoke credential.",
+            ));
+        }
+        Ok(())
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -358,8 +375,8 @@ pub mod unit_tests {
         let setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential(_dummy_wallet_handle(), _dummy_pool_handle(), &setup.institution_did, true).await;
-        assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidRevocationDetails)
+        let revoc_result = issuer.revoke_credential_local(_dummy_wallet_handle()).await;
+        assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidState)
     }
 
     #[tokio::test]

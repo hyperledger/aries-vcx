@@ -454,6 +454,10 @@ pub static CREATE_AGENT: Error = Error {
     code_num: 1113,
     message: "Error creating agent in agency",
 };
+pub static REV_DELTA_FAILED_TO_CLEAR: Error = Error {
+    code_num: 1114,
+    message: "Failed to clear stored revocation deltas",
+};
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {
@@ -560,7 +564,14 @@ lazy_static! {
         insert_c_message(&mut m, &ACTION_NOT_SUPPORTED);
         insert_c_message(&mut m, &INVALID_REDIRECT_DETAILS);
         insert_c_message(&mut m, &NO_AGENT_INFO);
-
+        insert_c_message(&mut m, &REV_REG_DEF_NOT_FOUND);
+        insert_c_message(&mut m, &REV_DELTA_NOT_FOUND);
+        insert_c_message(&mut m, &POISONED_LOCK);
+        insert_c_message(&mut m, &CREATE_PUBLIC_AGENT);
+        insert_c_message(&mut m, &INVALID_MESSAGE_FORMAT);
+        insert_c_message(&mut m, &CREATE_OUT_OF_BAND);
+        insert_c_message(&mut m, &CREATE_AGENT);
+        insert_c_message(&mut m, &REV_DELTA_FAILED_TO_CLEAR);
         m
     };
 }

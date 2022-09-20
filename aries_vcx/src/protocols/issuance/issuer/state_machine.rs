@@ -84,29 +84,6 @@ pub struct IssuerSM {
     state: IssuerFullState,
 }
 
-async fn _revoke(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, rev_info: &Option<RevocationInfoV1>, publish: bool) -> VcxResult<()> {
-    match rev_info {
-        Some(rev_info) => {
-            if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) =
-                (&rev_info.cred_rev_id, &rev_info.rev_reg_id, &rev_info.tails_file)
-            {
-                if publish {
-                    anoncreds::revoke_credential(wallet_handle, pool_handle, issuer_did, tails_file, rev_reg_id, cred_rev_id).await?;
-                } else {
-                    anoncreds::revoke_credential_local(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
-                }
-                Ok(())
-            } else {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidRevocationDetails,
-                    "Missing data to perform revocation.",
-                ))
-            }
-        }
-        None => Err(VcxError::from(VcxErrorKind::NotReady)),
-    }
-}
-
 fn build_credential_message(libindy_credential: String) -> VcxResult<Credential> {
     Ok(Credential::create().set_credential(libindy_credential)?.set_out_time())
 }
@@ -154,12 +131,11 @@ impl IssuerSM {
         }
     }
 
-    pub async fn revoke(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, publish: bool) -> VcxResult<()> {
-        trace!("Issuer::revoke >>> publish: {}", publish);
+    pub fn get_revocation_info(&self) -> Option<RevocationInfoV1> {
         match &self.state {
-            IssuerFullState::CredentialSent(state) => _revoke(wallet_handle, pool_handle, issuer_did, &state.revocation_info_v1, publish).await,
-            IssuerFullState::Finished(state) => _revoke(wallet_handle, pool_handle, issuer_did, &state.revocation_info_v1, publish).await,
-            _ => Err(VcxError::from(VcxErrorKind::NotReady)),
+            IssuerFullState::CredentialSent(state) => state.revocation_info_v1.clone(),
+            IssuerFullState::Finished(state) => state.revocation_info_v1.clone(),
+            _ => None
         }
     }
 
