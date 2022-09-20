@@ -21,6 +21,7 @@ use crate::protocols::connection::invitee::states::invited::InvitedState;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::libindy::utils::ledger::into_did_doc;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -118,7 +119,7 @@ impl SmConnectionInvitee {
     pub async fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).await.ok(),
+            InviteeFullState::Invited(ref state) => into_did_doc(pool_handle, &state.invitation).await.ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
@@ -128,7 +129,7 @@ impl SmConnectionInvitee {
     pub async fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => state.invitation.into_did_doc(pool_handle).await.ok(),
+            InviteeFullState::Invited(ref state) => into_did_doc(pool_handle, &state.invitation).await.ok(),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
@@ -318,7 +319,7 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = state.invitation.into_did_doc(pool_handle).await?;
+                let ddo = into_did_doc(pool_handle, &state.invitation).await?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
                     wallet_handle,

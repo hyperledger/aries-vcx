@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::credentials::encode_attributes;
 use crate::libindy::utils::anoncreds;
 use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::error::ProblemReport;
 use crate::messages::issuance::credential::Credential;
 use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use crate::messages::issuance::credential_proposal::CredentialProposal;
@@ -525,6 +524,7 @@ pub mod unit_tests {
     use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use crate::messages::issuance::test_utils::{_ack, _problem_report};
+    use crate::messages::error::ProblemReport;
     use crate::test::source_id;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
     use crate::utils::devsetup::SetupMocks;

@@ -1,10 +1,6 @@
-use vdrtools_sys::PoolHandle;
-
-use crate::did_doc::service_aries::AriesService;
 use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::OutOfBandInvitation;
-use crate::libindy::utils::ledger;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
 use crate::messages::timing::Timing;
@@ -16,42 +12,6 @@ pub enum Invitation {
     Pairwise(PairwiseInvitation),
     Public(PublicInvitation),
     OutOfBand(OutOfBandInvitation),
-}
-
-impl Invitation {
-    pub async fn into_did_doc(&self, pool_handle: PoolHandle) -> VcxResult<DidDoc> {
-        let mut did_doc: DidDoc = DidDoc::default();
-        let (service_endpoint, recipient_keys, routing_keys) = match self {
-            Invitation::Public(invitation) => {
-                did_doc.set_id(invitation.did.to_string());
-                let service = ledger::get_service(pool_handle, &invitation.did).await.unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
-                (service.service_endpoint, service.recipient_keys, service.routing_keys)
-            }
-            Invitation::Pairwise(invitation) => {
-                did_doc.set_id(invitation.id.0.clone());
-                (
-                    invitation.service_endpoint.clone(),
-                    invitation.recipient_keys.clone(),
-                    invitation.routing_keys.clone(),
-                )
-            }
-            Invitation::OutOfBand(invitation) => {
-                did_doc.set_id(invitation.id.0.clone());
-                let service = invitation.services[0].resolve(pool_handle).await.unwrap_or_else(|err| {
-                    error!("Failed to obtain service definition from the ledger: {}", err);
-                    AriesService::default()
-                });
-                (service.service_endpoint, service.recipient_keys, service.routing_keys)
-            }
-        };
-        did_doc.set_service_endpoint(service_endpoint);
-        did_doc.set_recipient_keys(recipient_keys);
-        did_doc.set_routing_keys(routing_keys);
-        Ok(did_doc)
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
@@ -235,16 +195,5 @@ pub mod unit_tests {
             .unwrap();
 
         assert_eq!(_public_invitation(), invitation);
-    }
-
-    #[tokio::test]
-    async fn test_did_doc_from_invitation_works() {
-        let mut did_doc = DidDoc::default();
-        did_doc.set_id(MessageId::id().0);
-        did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_recipient_keys(_recipient_keys());
-        did_doc.set_routing_keys(_routing_keys());
-
-        assert_eq!(did_doc, Invitation::Pairwise(_pairwise_invitation()).into_did_doc(0).await.unwrap());
     }
 }
