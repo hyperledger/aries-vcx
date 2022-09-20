@@ -22,7 +22,7 @@ mod integration_tests {
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
-        publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential,
+        publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator,
         revoke_credential_local, rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request,
     };
     use crate::utils::test_macros::ProofStateType;
@@ -38,7 +38,7 @@ mod integration_tests {
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
-        let (schema_id, cred_def_id, _, _cred_def, rev_reg, credential_handle) = issue_address_credential(
+        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
             &mut consumer,
             &mut institution,
             &consumer_to_institution,
@@ -48,7 +48,7 @@ mod integration_tests {
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
-        revoke_credential(&mut institution, &credential_handle, rev_reg.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
 
@@ -108,7 +108,7 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_local(&mut institution, &issuer_credential, rev_reg.rev_reg_id.clone()).await;
+        revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         let request_name1 = Some("request1");
         let mut verifier = verifier_create_proof_and_send_request(
             &mut institution,
@@ -214,8 +214,8 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_local(&mut institution, &credential_handle1, rev_reg.rev_reg_id.clone()).await;
-        revoke_credential_local(&mut institution, &credential_handle2, rev_reg.rev_reg_id.clone()).await;
+        revoke_credential_local(&mut institution, &credential_handle1, &rev_reg.rev_reg_id).await;
+        revoke_credential_local(&mut institution, &credential_handle2, &rev_reg.rev_reg_id).await;
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
@@ -378,7 +378,7 @@ mod integration_tests {
         let time_before_revocation = time::get_time().sec as u64;
         thread::sleep(Duration::from_millis(2000));
         info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
-        revoke_credential(&mut institution, &credential_handle, rev_reg.rev_reg_id.clone()).await;
+        revoke_credential_and_publish_accumulator(&mut institution, &credential_handle, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
 
         let from = time_before_revocation - 100;
@@ -482,7 +482,7 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential(&mut issuer, &credential_handle1, rev_reg_id.unwrap()).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle1, &rev_reg_id.unwrap()).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -563,7 +563,7 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential(&mut issuer, &credential_handle2, rev_reg_id.unwrap()).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle2, &rev_reg_id.unwrap()).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -725,7 +725,7 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential(&mut issuer, &credential_handle1, rev_reg.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle1, &rev_reg.rev_reg_id).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -807,7 +807,7 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential(&mut issuer, &credential_handle2, rev_reg_2.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle2, &rev_reg_2.rev_reg_id).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
