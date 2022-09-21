@@ -42,4 +42,4 @@ jobs:
 
       - name: Run tests
         run: |
-          cargo test --locked --features general_test
+          cargo test --locked --features general_test -- --test-threads=1
