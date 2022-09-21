@@ -2,6 +2,7 @@ pub mod presentation;
 pub mod presentation_ack;
 pub mod presentation_proposal;
 pub mod presentation_request;
+pub mod presentation_request_internal;
 
 #[cfg(test)]
 #[cfg(feature = "test_utils")]

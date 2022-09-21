@@ -4,7 +4,7 @@ use std::vec::Vec;
 use serde_json;
 
 use crate::error::prelude::*;
-use crate::libindy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
+use crate::messages::proof_presentation::presentation_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use crate::libindy::utils::anoncreds;
 
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Clone)]
