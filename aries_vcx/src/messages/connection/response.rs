@@ -172,8 +172,6 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
-    use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
-    use crate::libindy::utils::crypto::{decode_signed_connection_response, sign_connection_response};
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 
@@ -189,24 +187,5 @@ pub mod unit_tests {
             .set_keys(_recipient_keys(), _routing_keys());
 
         assert_eq!(_response(), response);
-    }
-
-    #[tokio::test]
-    async fn test_response_encode_works() {
-        SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
-        assert_eq!(_response(), decode_signed_connection_response(signed_response, &trustee_key).await.unwrap());
-    }
-
-    #[tokio::test]
-    async fn test_decode_returns_error_if_signer_differs() {
-        SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let mut signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
-        signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
-        decode_signed_connection_response(signed_response, &trustee_key).await.unwrap_err();
     }
 }
