@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::handlers::out_of_band::GoalCode;
+use aries_vcx::messages::out_of_band::GoalCode;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
-use aries_vcx::utils::service_resolvable::ServiceResolvable;
+use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
@@ -214,7 +214,7 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[cfg(test)]
 #[allow(unused_imports)]
 pub mod tests {
-    use aries_vcx::did_doc::service_aries::AriesService;
+    use aries_vcx::messages::did_doc::service_aries::AriesService;
     use aries_vcx::utils::devsetup::SetupMocks;
 
     use super::*;
