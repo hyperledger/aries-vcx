@@ -4,6 +4,7 @@ on:
   push:
 
 env:
+  DOCKER_IMG_NAME_AGENCY: "ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
   AGENCY_IMAGE: "ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
 
 jobs:
