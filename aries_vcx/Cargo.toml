@@ -1,6 +1,5 @@
 [package]
-
-name = "aries-vcx"
+name = "aries_vcx"
 version = "0.42.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
