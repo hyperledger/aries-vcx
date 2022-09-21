@@ -205,18 +205,6 @@ prepare_dependencies() {
         download_and_unzip_if_missed "openssl_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/openssl/openssl_$TARGET_ARCH.zip"
         download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/libsodium_$TARGET_ARCH.zip"
         download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/libzmq_$TARGET_ARCH.zip"
-
-        if [ "$TARGET_ARCH" == "arm" ]; then
-          download_and_unzip_if_missed "libvdrtools_arm" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920976/download"
-        elif [ "$TARGET_ARCH" == "arm64" ]; then
-          download_and_unzip_if_missed "libvdrtools_arm64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920946/download"
-        elif [ "$TARGET_ARCH" == "armv7" ]; then
-          download_and_unzip_if_missed "libvdrtools_armv7" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44920933/download"
-        elif [ "$TARGET_ARCH" == "x86_64" ]; then
-          download_and_unzip_if_missed "libvdrtools_x86_64" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44921029/download"
-        elif [ "$TARGET_ARCH" == "x86" ]; then
-          download_and_unzip_if_missed "libvdrtools_x86" "https://gitlab.com/evernym/verity/vdr-tools/-/package_files/44921019/download"
-        fi
     popd
 }
 
@@ -224,7 +212,6 @@ setup_dependencies_env_vars(){
     export OPENSSL_DIR=${ANDROID_BUILD_FOLDER}/openssl_$1
     export SODIUM_DIR=${ANDROID_BUILD_FOLDER}/libsodium_$1
     export LIBZMQ_DIR=${ANDROID_BUILD_FOLDER}/libzmq_$1
-    export INDY_DIR=${ANDROID_BUILD_FOLDER}/libvdrtools_$1
 }
 
 create_standalone_toolchain_and_rust_target(){
@@ -270,7 +257,6 @@ set_env_vars(){
     export SODIUM_LIB_DIR=${SODIUM_DIR}/lib
     export SODIUM_INCLUDE_DIR=${SODIUM_DIR}/include
     export LIBZMQ_LIB_DIR=${LIBZMQ_DIR}/lib
-    export INDY_LIB_DIR=${INDY_DIR}/lib
     export LIBZMQ_INCLUDE_DIR=${LIBZMQ_DIR}/include
     export TOOLCHAIN_DIR=${TOOLCHAIN_PREFIX}/${TARGET_ARCH}
     export PATH=${TOOLCHAIN_DIR}/bin:${PATH}
@@ -288,14 +274,13 @@ build_libvcx(){
     echo "Building for architecture ${BOLD}${YELLOW}${ABSOLUTE_ARCH}${RESET}"
     echo "Toolchain path ${BOLD}${YELLOW}${TOOLCHAIN_DIR}${RESET}"
     echo "Sodium path ${BOLD}${YELLOW}${SODIUM_DIR}${RESET}"
-    echo "Indy path ${BOLD}${YELLOW}${INDY_LIB_DIR}${RESET}"
     echo "Artifacts will be in ${BOLD}${YELLOW}${HOME}/artifacts/${RESET}"
     echo "**************************************************"
     LIBVCX_DIR=$1
     pushd ${LIBVCX_DIR}
         rm -rf target/${TRIPLET}
         cargo clean
-        LIBINDY_DIR=${INDY_LIB_DIR} cargo build --release --target=${TRIPLET}
+        cargo build --release --target=${TRIPLET}
         rm -rf target/${TRIPLET}/release/deps
         rm -rf target/${TRIPLET}/release/build
         rm -rf target/release/deps
@@ -312,5 +297,4 @@ copy_libraries_to_jni(){
     echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
     mkdir -p $LIB_PATH
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
-    cp ${INDY_LIB_DIR}/* ${LIB_PATH}
 }

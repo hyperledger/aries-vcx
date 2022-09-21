@@ -19,7 +19,7 @@ ARG GID=1000
 
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
-COPY --from=builder /usr/lib/libvdrtools.so /home/indy/lib*.so /usr/lib/
+COPY --from=builder /home/indy/lib*.so /usr/lib/
 
 WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx

@@ -2,9 +2,6 @@ FROM ubuntu:18.04 as BASE
 
 ARG UID=1000
 
-ARG INDYSDK_PATH=/home/indy/vdr-tools
-ARG INDYSDK_REVISION=c1390f91
-ARG INDYSDK_REPO=https://gitlab.com/mirgee/vdr-tools.git
 ARG RUST_VER=nightly-2022-09-15
 
 # Install dependencies
@@ -42,14 +39,6 @@ COPY --chown=indy ./ aries-vcx/
 # Install Rust toolchain
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VER}
 ENV PATH /home/indy/.cargo/bin:$PATH
-
-# Clone and build indy-sdk
-WORKDIR /home/indy
-RUN git clone $INDYSDK_REPO && cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libvdrtools/Cargo.toml
-
-USER root
-RUN mv $INDYSDK_PATH/libvdrtools/target/release/*.so /usr/lib
 
 # Build indy binaries and move to system library
 USER indy
