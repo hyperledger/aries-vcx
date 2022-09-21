@@ -56,15 +56,14 @@ async function createInteractiveClient (agentName, seed, acceptTaa, rustLogLevel
       } else if (cmd === '11') {
         const connectionId = readlineSync.question('Enter connection id:\n')
         let invitationString = readlineSync.question('Enter invitation:\n')
-        let url
         try {
-          url = new URL(invitationString)
-        } catch (err) {}
-        if (url) {
-          let base64Invitation = url.searchParams.get('c_i') || url.searchParams.get('oob')
+          const url = new URL(invitationString)
+          const base64Invitation = url.searchParams.get('c_i') || url.searchParams.get('oob')
           if (base64Invitation) {
             invitationString = Buffer.from(base64Invitation, 'base64').toString()
           }
+        } catch (err) {
+          logger.debug("Invitation string is not URL, will assume it's an Aries message as JSON")
         }
         await ariesAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
       } else if (cmd === '12') {
