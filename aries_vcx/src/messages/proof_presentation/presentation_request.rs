@@ -1,5 +1,5 @@
 use crate::error::prelude::*;
-use crate::libindy::proofs::proof_request::ProofRequestData;
+use crate::messages::proof_presentation::presentation_request_data::ProofRequestData;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::{AttachmentId, Attachments};
 use crate::messages::thread::Thread;

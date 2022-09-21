@@ -4,7 +4,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
-use crate::libindy::proofs::proof_request::ProofRequestData;
+use crate::messages::proof_presentation::presentation_request_data::ProofRequestData;
 use crate::messages::proof_presentation::presentation_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};

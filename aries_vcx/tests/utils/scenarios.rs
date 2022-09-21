@@ -18,7 +18,7 @@ pub mod test_utils {
     use aries_vcx::libindy;
     use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
     use aries_vcx::libindy::credential_def::CredentialDef;
-    use aries_vcx::libindy::proofs::proof_request_internal::AttrInfo;
+    use aries_vcx::messages::proof_presentation::presentation_request_internal::AttrInfo;
     use aries_vcx::libindy::utils::anoncreds::publish_local_revocations;
     use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
     use aries_vcx::messages::connection::invite::Invitation;
