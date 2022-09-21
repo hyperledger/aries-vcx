@@ -16,6 +16,7 @@ use crate::messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
+use crate::utils::service_resolvable::ServiceResolvable;
 use crate::messages::did_doc::DidDoc;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
@@ -354,6 +355,14 @@ pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesS
     })
 }
 
+pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvable) -> VcxResult<AriesService> {
+    match service {
+        ServiceResolvable::AriesService(service) => Ok(service.clone()),
+        ServiceResolvable::Did(did) => get_service(pool_handle, did).await,
+    }
+}
+
+
 pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> VcxResult<DidDoc> {
     let mut did_doc: DidDoc = DidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
@@ -375,7 +384,7 @@ pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> V
         }
         Invitation::OutOfBand(invitation) => {
             did_doc.set_id(invitation.id.0.clone());
-            let service = invitation.services[0].resolve(pool_handle).await.unwrap_or_else(|err| {
+            let service = resolve_service(pool_handle, &invitation.services[0]).await.unwrap_or_else(|err| {
                 error!("Failed to obtain service definition from the ledger: {}", err);
                 AriesService::default()
             });

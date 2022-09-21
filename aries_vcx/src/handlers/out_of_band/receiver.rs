@@ -17,6 +17,7 @@ use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
 use crate::utils::service_resolvable::ServiceResolvable;
+use crate::libindy::utils::ledger::resolve_service;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -51,7 +52,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.resolve_service()? == service.resolve(pool_handle).await? {
+                        if did_doc.resolve_service()? == resolve_service(pool_handle, &service).await? {
                             return Ok(Some(connection));
                         };
                     }
