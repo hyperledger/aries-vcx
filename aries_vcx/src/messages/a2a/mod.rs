@@ -361,8 +361,7 @@ impl Default for MessageId {
 
     #[cfg(not(test))]
     fn default() -> MessageId {
-        use crate::utils::uuid;
-        MessageId(uuid::uuid())
+        MessageId(uuid::Uuid::new_v4().to_string())
     }
 }
 
