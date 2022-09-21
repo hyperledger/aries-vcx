@@ -20,3 +20,4 @@ pub mod timing;
 pub mod trust_ping;
 pub mod did_doc;
 pub mod actors;
+pub mod utils;
