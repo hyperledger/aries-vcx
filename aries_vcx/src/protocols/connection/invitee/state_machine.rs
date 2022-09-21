@@ -4,7 +4,7 @@ use std::future::Future;
 
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;
@@ -437,7 +437,7 @@ pub mod unit_tests {
     pub mod invitee {
         use vdrtools_sys::WalletHandle;
 
-        use crate::did_doc::test_utils::_service_endpoint;
+        use crate::messages::did_doc::test_utils::_service_endpoint;
         use crate::messages::connection::response::{Response, SignedResponse};
 
         use super::*;

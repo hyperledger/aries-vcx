@@ -2,7 +2,7 @@ use url::Url;
 
 use service_aries::AriesService;
 
-use crate::did_doc::model::{
+use crate::messages::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
@@ -318,9 +318,9 @@ impl DidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::model::*;
-    use crate::did_doc::service_aries::AriesService;
-    use crate::did_doc::DidDoc;
+    use crate::messages::did_doc::model::*;
+    use crate::messages::did_doc::service_aries::AriesService;
+    use crate::messages::did_doc::DidDoc;
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -487,8 +487,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::test_utils::*;
-    use crate::did_doc::DidDoc;
+    use crate::messages::did_doc::test_utils::*;
+    use crate::messages::did_doc::DidDoc;
     use crate::utils::devsetup::SetupEmpty;
 
     #[test]

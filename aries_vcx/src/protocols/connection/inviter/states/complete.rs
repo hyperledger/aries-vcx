@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

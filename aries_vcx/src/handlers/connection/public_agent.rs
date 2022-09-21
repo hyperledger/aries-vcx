@@ -4,7 +4,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
-use crate::did_doc::service_aries::AriesService;
+use crate::messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::libindy::utils::ledger::add_service;

@@ -18,3 +18,4 @@ pub mod proof_presentation;
 pub mod status;
 pub mod timing;
 pub mod trust_ping;
+pub mod did_doc;

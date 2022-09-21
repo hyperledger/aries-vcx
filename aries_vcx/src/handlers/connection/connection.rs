@@ -13,7 +13,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;

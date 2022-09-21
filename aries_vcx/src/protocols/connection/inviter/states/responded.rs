@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 
 use crate::messages::connection::problem_report::ProblemReport;
 use crate::messages::connection::response::SignedResponse;

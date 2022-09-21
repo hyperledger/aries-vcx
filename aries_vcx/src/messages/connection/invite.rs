@@ -1,4 +1,4 @@
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::a2a::{A2AMessage, MessageId};
@@ -121,7 +121,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::*;
+    use crate::messages::did_doc::test_utils::*;
     use crate::utils::uuid;
 
     use super::*;
@@ -171,7 +171,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
+    use crate::messages::did_doc::test_utils::*;
     use crate::messages::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
 
     use super::*;

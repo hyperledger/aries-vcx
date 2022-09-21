@@ -75,7 +75,7 @@ impl OutOfBandInvitation {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use crate::did_doc::service_aries::AriesService;
+    use crate::messages::did_doc::service_aries::AriesService;
     use crate::handlers::out_of_band::receiver::OutOfBandReceiver;
     use crate::handlers::out_of_band::sender::OutOfBandSender;
     use crate::utils::devsetup::SetupMocks;

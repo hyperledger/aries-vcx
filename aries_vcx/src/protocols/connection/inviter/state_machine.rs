@@ -4,7 +4,7 @@ use std::future::Future;
 
 use vdrtools_sys::WalletHandle;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::messages::a2a::protocol_registry::ProtocolRegistry;

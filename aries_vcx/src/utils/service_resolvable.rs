@@ -1,6 +1,6 @@
 use vdrtools_sys::PoolHandle;
 
-use crate::did_doc::service_aries::AriesService;
+use crate::messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::libindy::utils::ledger;
 use crate::messages::connection::did::Did;

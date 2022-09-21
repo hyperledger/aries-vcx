@@ -1,8 +1,4 @@
-use base64;
-
-use crate::did_doc::DidDoc;
-use crate::error::prelude::*;
-use crate::libindy::utils::crypto;
+use crate::messages::did_doc::DidDoc;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::{A2AMessage, MessageId};
@@ -108,7 +104,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::_did_doc_inlined_recipient_keys;
+    use crate::messages::did_doc::test_utils::_did_doc_inlined_recipient_keys;
     use crate::utils::uuid::uuid;
 
     use super::*;
@@ -171,7 +167,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
+    use crate::messages::did_doc::test_utils::*;
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 

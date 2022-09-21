@@ -3,7 +3,7 @@ use vdrtools_sys::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::crypto;
@@ -195,7 +195,7 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
+    use crate::messages::did_doc::test_utils::*;
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup;
     use crate::libindy::utils::test_setup::create_trustee_key;

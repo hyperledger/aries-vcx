@@ -1,6 +1,6 @@
 use vdrtools_sys::WalletHandle;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::VcxResult;
 
 use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};

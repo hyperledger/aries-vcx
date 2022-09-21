@@ -2,7 +2,7 @@ use vdrtools_sys::WalletHandle;
 use std::env;
 use std::path::PathBuf;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::error::VcxResult;
 use crate::messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;

@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 use crate::messages::connection::response::Response;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 use crate::protocols::connection::invitee::states::requested::RequestedState;

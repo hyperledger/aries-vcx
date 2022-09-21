@@ -6,7 +6,7 @@ use vdrtools::ledger;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 
-use crate::did_doc::service_aries::AriesService;
+use crate::messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
@@ -16,7 +16,7 @@ use crate::messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
-use crate::did_doc::DidDoc;
+use crate::messages::did_doc::DidDoc;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(wallet_handle, did, request)
@@ -405,7 +405,7 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 mod test {
     use crate::utils::devsetup::*;
     use crate::messages::a2a::MessageId;
-    use crate::did_doc::test_utils::{_service_endpoint, _recipient_keys, _routing_keys};
+    use crate::messages::did_doc::test_utils::{_service_endpoint, _recipient_keys, _routing_keys};
     use crate::messages::connection::invite::test_utils::_pairwise_invitation;
 
     use super::*;

@@ -37,7 +37,6 @@ pub mod utils;
 #[macro_use]
 pub mod handlers;
 pub mod actors;
-pub mod did_doc;
 pub mod error;
 pub mod global;
 pub mod libindy;
