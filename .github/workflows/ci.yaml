@@ -5,18 +5,56 @@ on:
 
 env:
   DOCKER_IMG_NAME_AGENCY: "ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
-  AGENCY_IMAGE: "ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
 
 jobs:
-  rust:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          # - macos-latest
+  init:
+    outputs:
+      img-indy-pool: ${{ steps.indy-pool.outputs.img }}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: Indy-pool tag
+        id: indy-pool
+        run: |
+          _img="ghcr.io/${{ github.repository }}/indy-pool"
+          _tag="${{ hashFiles('ci/indy-pool.dockerfile') }}"
+
+          echo "::set-output name=img::${_img}:${_tag}"
+
+  build-indy-pool-image:
+    runs-on: ubuntu-latest
+    needs: [ init ]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          file: ci/indy-pool.dockerfile
+          context: ci
+          push: true
+          tags: ${{ needs.init.outputs.img-indy-pool }}
+
+  rust:
+    needs:
+      - build-indy-pool-image
+      - init
+
+    runs-on: ubuntu-latest
 
     steps:
       - name: Git checkout
@@ -57,9 +95,7 @@ jobs:
         run: |
           set -ex
 
-          docker build -t indy-pool -f ci/indy-pool.dockerfile ci
-
-          docker run --rm -d --name indypool  --network host indy-pool
+          docker run --rm -d --name indypool  --network host ${{ needs.init.outputs.img-indy-pool }}
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
 
