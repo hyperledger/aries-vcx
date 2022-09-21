@@ -3,7 +3,6 @@ use serde_json::Value;
 
 use log;
 
-use crate::handlers::out_of_band::OutOfBandInvitation;
 use crate::messages::ack::Ack;
 use crate::messages::basic_message::message::BasicMessage;
 use crate::messages::connection::invite::{PairwiseInvitation, PublicInvitation};
@@ -19,6 +18,7 @@ use crate::messages::issuance::credential_offer::CredentialOffer;
 use crate::messages::issuance::credential_proposal::CredentialProposal;
 use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::messages::out_of_band::invitation::OutOfBandInvitation;
 use crate::messages::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;

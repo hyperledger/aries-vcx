@@ -5,7 +5,7 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::out_of_band::OutOfBandInvitation;
+use crate::messages::out_of_band::invitation::OutOfBandInvitation;
 use crate::messages::a2a::A2AMessage;
 use crate::messages::attachment::AttachmentId;
 use crate::messages::connection::invite::Invitation;

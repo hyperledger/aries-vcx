@@ -1,6 +1,6 @@
 use crate::messages::did_doc::DidDoc;
 use crate::error::prelude::*;
-use crate::handlers::out_of_band::OutOfBandInvitation;
+use crate::messages::out_of_band::invitation::OutOfBandInvitation;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::connection::did::Did;
 use crate::messages::timing::Timing;
