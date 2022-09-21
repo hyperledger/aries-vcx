@@ -56,9 +56,12 @@ jobs:
         run: |
           set -ex
 
-          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker build -t indy-pool -f ci/indy-pool.dockerfile ci
+
+          docker run --rm -d --name indypool  --network host indy-pool
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
+
           docker-compose -f ./ci/agency/docker-compose.yml up -d
           sleep 10
 
