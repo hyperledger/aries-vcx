@@ -91,75 +91,6 @@ impl Response {
         self.connection.did_doc.set_routing_keys(routing_keys);
         self
     }
-
-    pub fn encode(&self, signature: Vec<u8>, sig_data: Vec<u8>, signer: String) -> VcxResult<SignedResponse> {
-        let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
-        let signature = base64::encode_config(&signature, base64::URL_SAFE);
-
-        let connection_sig = ConnectionSignature {
-            signature,
-            sig_data,
-            signer,
-            ..Default::default()
-        };
-
-        let signed_response = SignedResponse {
-            id: self.id.clone(),
-            thread: self.thread.clone(),
-            connection_sig,
-            please_ack: self.please_ack.clone(),
-            timing: self.timing.clone(),
-        };
-
-        Ok(signed_response)
-    }
-}
-
-impl SignedResponse {
-    pub async fn decode(self, their_vk: &str) -> VcxResult<Response> {
-        let signature =
-            base64::decode_config(&self.connection_sig.signature.as_bytes(), base64::URL_SAFE).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
-                    format!("Cannot decode ConnectionResponse: {:?}", err),
-                )
-            })?;
-
-        let sig_data =
-            base64::decode_config(&self.connection_sig.sig_data.as_bytes(), base64::URL_SAFE).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
-                    format!("Cannot decode ConnectionResponse: {:?}", err),
-                )
-            })?;
-
-        if !crypto::verify(their_vk, &sig_data, &signature).await? {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
-                "ConnectionResponse signature is invalid for original Invite recipient key",
-            ));
-        }
-
-        if self.connection_sig.signer != their_vk {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
-                "Signer declared in ConnectionResponse signed response is not matching the actual signer. Connection ",
-            ));
-        }
-
-        let sig_data = &sig_data[8..];
-
-        let connection: ConnectionData = serde_json::from_slice(sig_data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, err.to_string()))?;
-
-        Ok(Response {
-            id: self.id,
-            thread: self.thread,
-            connection,
-            please_ack: self.please_ack,
-            timing: self.timing,
-        })
-    }
 }
 
 a2a_message!(SignedResponse, ConnectionResponse);
@@ -242,7 +173,7 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
-    use crate::libindy::utils::crypto::sign_connection_response;
+    use crate::libindy::utils::crypto::{decode_signed_connection_response, sign_connection_response};
     use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 
@@ -266,7 +197,7 @@ pub mod unit_tests {
         let setup = setup_wallet().await;
         let trustee_key = create_trustee_key(setup.wallet_handle).await;
         let signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
-        assert_eq!(_response(), signed_response.decode(&trustee_key).await.unwrap());
+        assert_eq!(_response(), decode_signed_connection_response(signed_response, &trustee_key).await.unwrap());
     }
 
     #[tokio::test]
@@ -276,6 +207,6 @@ pub mod unit_tests {
         let trustee_key = create_trustee_key(setup.wallet_handle).await;
         let mut signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
         signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
-        signed_response.decode(&trustee_key).await.unwrap_err();
+        decode_signed_connection_response(signed_response, &trustee_key).await.unwrap_err();
     }
 }

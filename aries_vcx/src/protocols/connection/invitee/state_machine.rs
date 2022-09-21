@@ -22,6 +22,7 @@ use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::libindy::utils::ledger::into_did_doc;
+use crate::libindy::utils::crypto::decode_signed_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -263,7 +264,7 @@ impl SmConnectionInvitee {
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let response = response.clone().decode(&remote_vk).await?;
+        let response = decode_signed_connection_response(response.clone(), &remote_vk).await?;
 
         if !response.from_thread(&request.get_thread_id()) {
             return Err(VcxError::from_msg(
