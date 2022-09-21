@@ -70,5 +70,5 @@ jobs:
         run: |
           set -ex
 
-          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests"
-          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2"
+          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --locked --features "pool_tests agency_tests"
+          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --locked --features "pool_tests agency_v2"
