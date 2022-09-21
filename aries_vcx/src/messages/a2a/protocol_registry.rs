@@ -208,21 +208,4 @@ pub mod unit_tests {
         }];
         assert_eq!(expected_protocols, protocols);
     }
-
-    #[test]
-    fn test_get_protocols_for_query_works_for_limited_actors() {
-        let _setup = SetupEmpty::init();
-
-        settings::set_config_value(settings::CONFIG_ACTORS, &json!([Actors::Invitee]).to_string()).unwrap();
-
-        let registry: ProtocolRegistry = ProtocolRegistry::init();
-
-        let protocols = registry.get_protocols_for_query(Some("https://didcomm.org/connections/1.0"));
-
-        let expected_protocols = vec![ProtocolDescriptor {
-            pid: MessageFamilies::Connections.id(),
-            roles: Some(vec![Actors::Invitee]),
-        }];
-        assert_eq!(expected_protocols, protocols);
-    }
 }

@@ -26,9 +26,6 @@ pub static CONFIG_PROTOCOL_VERSION: &str = "protocol_version";
 pub static CONFIG_TXN_AUTHOR_AGREEMENT: &str = "author_agreement";
 pub static CONFIG_POOL_CONFIG: &str = "pool_config";
 pub static CONFIG_DID_METHOD: &str = "did_method";
-// proprietary or aries
-pub static CONFIG_ACTORS: &str = "actors";
-
 pub static DEFAULT_PROTOCOL_VERSION: usize = 2;
 pub static MAX_SUPPORTED_PROTOCOL_VERSION: usize = 2;
 pub static UNINITIALIZED_WALLET_KEY: &str = "<KEY_IS_NOT_SET>";
