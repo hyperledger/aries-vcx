@@ -20,7 +20,7 @@ mod integration_tests {
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use aries_vcx::utils::service_resolvable::ServiceResolvable;
+    use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
 
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::scenarios::test_utils::{

@@ -16,7 +16,7 @@ use crate::messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
-use crate::utils::service_resolvable::ServiceResolvable;
+use crate::messages::did_doc::service_resolvable::ServiceResolvable;
 use crate::messages::did_doc::DidDoc;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {

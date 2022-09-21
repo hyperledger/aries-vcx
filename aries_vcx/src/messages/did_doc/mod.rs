@@ -10,6 +10,7 @@ use crate::utils::validation::validate_verkey;
 
 pub mod model;
 pub mod service_aries;
+pub mod service_resolvable;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct DidDoc {

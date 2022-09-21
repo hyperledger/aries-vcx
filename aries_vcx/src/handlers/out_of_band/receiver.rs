@@ -16,7 +16,7 @@ use crate::messages::issuance::credential_request::CredentialRequest;
 use crate::messages::proof_presentation::presentation::Presentation;
 use crate::messages::proof_presentation::presentation_request::PresentationRequest;
 
-use crate::utils::service_resolvable::ServiceResolvable;
+use crate::messages::did_doc::service_resolvable::ServiceResolvable;
 use crate::libindy::utils::ledger::resolve_service;
 
 #[derive(Default, Debug, PartialEq, Clone)]

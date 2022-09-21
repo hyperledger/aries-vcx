@@ -3,7 +3,7 @@ use crate::error::prelude::*;
 use crate::messages::a2a::message_type::MessageType;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::attachment::Attachments;
-use crate::utils::service_resolvable::ServiceResolvable;
+use crate::messages::did_doc::service_resolvable::ServiceResolvable;
 use crate::messages::mime_type::MimeType;
 use crate::messages::timing::Timing;
 use crate::messages::out_of_band::GoalCode;

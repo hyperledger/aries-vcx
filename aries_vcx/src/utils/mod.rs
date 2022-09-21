@@ -61,7 +61,6 @@ pub mod test_logger;
 pub mod encryption_envelope;
 pub mod filters;
 pub mod serialization;
-pub mod service_resolvable;
 pub mod validation;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {
