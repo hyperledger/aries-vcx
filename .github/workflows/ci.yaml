@@ -3,6 +3,9 @@ name: ci-fast
 on:
   push:
 
+env:
+  AGENCY_IMAGE: "ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
+
 jobs:
   rust:
     strategy:
@@ -37,10 +40,29 @@ jobs:
 
       - name: Buld tests
         run: |
+          set -e
+
           cargo test --no-run --features general_test
           cargo test --no-run --features "pool_tests agency_tests"
           cargo test --no-run --features "pool_tests agency_v2"
 
-      - name: Run tests
+      - name: Run general tests
         run: |
           cargo test --locked --features general_test -- --test-threads=1
+
+      - name: Run pool agency tests
+        run: |
+          set -ex
+
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
+          sleep 7
+          docker-compose -f ./ci/agency/docker-compose.yml up -d
+          sleep 10
+
+      - name: Run pool integration tests
+        run: |
+          set -ex
+
+          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests"
+          RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2"
