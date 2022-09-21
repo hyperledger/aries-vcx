@@ -31,9 +31,7 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.62.1
+
       - name: Set outputs
         id: mainstep
         run: |
