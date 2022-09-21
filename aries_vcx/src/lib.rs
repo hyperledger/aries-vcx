@@ -36,7 +36,6 @@ extern crate derive_builder;
 pub mod utils;
 #[macro_use]
 pub mod handlers;
-pub mod actors;
 pub mod error;
 pub mod global;
 pub mod libindy;

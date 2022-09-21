@@ -1,4 +1,4 @@
-use crate::actors::Actors;
+use crate::messages::actors::Actors;
 use crate::messages::a2a::{A2AMessage, MessageId};
 use crate::messages::thread::Thread;
 use crate::messages::timing::Timing;

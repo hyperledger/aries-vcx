@@ -1,8 +1,8 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
-use crate::actors;
-use crate::actors::Actors;
+use crate::messages::actors;
+use crate::messages::actors::Actors;
 use crate::messages::a2a::message_family::MessageFamilies;
 use crate::messages::discovery::disclose::ProtocolDescriptor;
 
