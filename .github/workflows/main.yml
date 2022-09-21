@@ -10,6 +10,7 @@ on:
 
 jobs:
   workflow-setup:
+    if: false
     runs-on: ubuntu-20.04
     outputs:
       CACHE_KEY_POOL: ${{ steps.mainstep.outputs.CACHE_KEY_POOL }}
