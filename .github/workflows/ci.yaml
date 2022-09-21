@@ -38,7 +38,8 @@ jobs:
       - name: Buld tests
         run: |
           cargo test --no-run --features general_test
-
+          cargo test --no-run --features "pool_tests agency_tests"
+          cargo test --no-run --features "pool_tests agency_v2"
 
       - name: Run tests
         run: |
