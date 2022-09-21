@@ -7,6 +7,7 @@ edition = "2018"
 [features]
 test_utils = []
 general_test = ["test_utils"]
+pool_tests = [ "test_utils" ]
 
 [dependencies]
 async-trait = "0.1.53"
