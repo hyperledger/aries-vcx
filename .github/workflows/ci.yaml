@@ -33,6 +33,8 @@ jobs:
 
       - name: Cache Dependencies
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
 
       - name: Fetch rust dependencies
         run: |
