@@ -207,8 +207,9 @@ dependencies = [
  "tokio",
  "url 1.7.2",
  "uuid 0.8.2",
- "vdrtools-sys 0.8.6 (git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b)",
+ "vdrtools-sys",
  "vdrtoolsrs",
+ "zmq",
 ]
 
 [[package]]
@@ -223,8 +224,8 @@ version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3203e79f4dd9bdda415ed03cf14dae5a2bf775c683a00f94e9cd1faf0f596e5"
 dependencies = [
- "quote 1.0.21",
- "syn 1.0.100",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -377,9 +378,9 @@ version = "0.1.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76464446b8bc32758d7e88ee1a804d9914cd9b1cb264c029899680b0be29826f"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -872,8 +873,8 @@ version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdffe87e1d521a10f9696f833fe502293ea446d7f256c06128293a4119bdf4cb"
 dependencies = [
- "quote 1.0.21",
- "syn 1.0.100",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -926,10 +927,10 @@ checksum = "f0c960ae2da4de88a91b2d920c2a7233b400bc33cb28453a2987822d8392519b"
 dependencies = [
  "fnv",
  "ident_case",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
+ "proc-macro2",
+ "quote",
  "strsim 0.9.3",
- "syn 1.0.100",
+ "syn",
 ]
 
 [[package]]
@@ -940,10 +941,10 @@ checksum = "8e91455b86830a1c21799d94524df0845183fa55bafd9aa137b01c7d1065fa36"
 dependencies = [
  "fnv",
  "ident_case",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
+ "proc-macro2",
+ "quote",
  "strsim 0.10.0",
- "syn 1.0.100",
+ "syn",
 ]
 
 [[package]]
@@ -953,8 +954,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9b5a2f4ac4969822c62224815d069952656cadc7084fdca9751e6d959189b72"
 dependencies = [
  "darling_core 0.10.2",
- "quote 1.0.21",
- "syn 1.0.100",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -964,8 +965,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29b5acf0dea37a7f66f7b25d2c5e93fd46f8f6968b1a5d7a3e02e97768afc95a"
 dependencies = [
  "darling_core 0.12.4",
- "quote 1.0.21",
- "syn 1.0.100",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -984,9 +985,9 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1005,9 +1006,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66e616858f6187ed828df7c64a6d71720d83767a7f19740b2d1b6fe6327b36e5"
 dependencies = [
  "darling 0.12.4",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1017,7 +1018,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58a94ace95092c5acb1e97a7e846b310cfbd499652f72297da7493f618a98d73"
 dependencies = [
  "derive_builder_core",
- "syn 1.0.100",
+ "syn",
 ]
 
 [[package]]
@@ -1206,9 +1207,9 @@ version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa4da3c766cd7a0db8242e326e9e4e081edd567072893ed320008189715366a4"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
  "synstructure",
 ]
 
@@ -1348,9 +1349,9 @@ version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42cd15d1c7456c04dbdf7e88bcd69760d74f3a798d6444e16974b505b0e62f17"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1693,7 +1694,7 @@ dependencies = [
 [[package]]
 name = "indy-api-types"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "aes 0.7.5",
  "anyhow",
@@ -1719,7 +1720,7 @@ dependencies = [
 [[package]]
 name = "indy-utils"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "base64 0.10.1",
  "dirs",
@@ -1739,7 +1740,7 @@ dependencies = [
 [[package]]
 name = "indy-wallet"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1914,14 +1915,13 @@ dependencies = [
  "serde_json",
  "time",
  "tokio",
- "toml 0.4.10",
  "uuid 0.7.4",
 ]
 
 [[package]]
 name = "libvdrtools"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "android_logger",
  "async-std",
@@ -1948,7 +1948,7 @@ dependencies = [
  "log",
  "log-derive",
  "log-panics",
- "num-derive 0.3.3",
+ "num-derive",
  "num-traits",
  "num_cpus",
  "pbkdf2 0.9.0",
@@ -1996,9 +1996,9 @@ checksum = "2c7f436d3b5b51857b145075009f3a0d88dd37d2e93f42bb227045f4562a131e"
 dependencies = [
  "darling 0.10.2",
  "log",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2070,7 +2070,7 @@ dependencies = [
  "tokio",
  "url 1.7.2",
  "uuid 0.8.2",
- "vdrtools",
+ "vdrtoolsrs",
 ]
 
 [[package]]
@@ -2081,7 +2081,7 @@ checksum = "73b122901b3a675fac8cecf68dcb2f0d3036193bc861d1ac0e1c337f7d5254c2"
 dependencies = [
  "error-chain",
  "pkg-config",
- "toml 0.2.1",
+ "toml",
 ]
 
 [[package]]
@@ -2236,24 +2236,13 @@ dependencies = [
 
 [[package]]
 name = "num-derive"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eafd0b45c5537c3ba526f79d3e75120036502bebacbb3f3220914067ce39dbf2"
-dependencies = [
- "proc-macro2 0.4.30",
- "quote 0.6.13",
- "syn 0.15.44",
-]
-
-[[package]]
-name = "num-derive"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2357,9 +2346,9 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b501e44f11665960c7e7fcf062c7d96a14ade4aa98116c004b2e37b5be7d736c"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2367,15 +2356,6 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
-
-[[package]]
-name = "openssl-src"
-version = "111.22.0+1.1.1q"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f31f0d509d1c1ae9cada2f9539ff8f37933831fd5098879e482aa687d659853"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "openssl-sys"
@@ -2386,7 +2366,6 @@ dependencies = [
  "autocfg 1.1.0",
  "cc",
  "libc",
- "openssl-src",
  "pkg-config",
  "vcpkg",
 ]
@@ -2586,15 +2565,6 @@ checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
 name = "proc-macro2"
-version = "0.4.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
-dependencies = [
- "unicode-xid 0.1.0",
-]
-
-[[package]]
-name = "proc-macro2"
 version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bd7356a8122b6c4a24a82b278680c73357984ca2fc79a0f9fa6dea7dced7c58"
@@ -2604,20 +2574,11 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "0.6.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ce23b6b870e8f94f81fb0a363d65d86675884b34a09043c81e5562f11c1f8e1"
-dependencies = [
- "proc-macro2 0.4.30",
-]
-
-[[package]]
-name = "quote"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179"
 dependencies = [
- "proc-macro2 1.0.44",
+ "proc-macro2",
 ]
 
 [[package]]
@@ -3134,9 +3095,9 @@ version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81fa1584d3d1bcacd84c277a0dfe21f5b0f6accf4a23d04d4c6d61f1af522b4c"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3448,13 +3409,13 @@ dependencies = [
  "either",
  "heck",
  "once_cell",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
+ "proc-macro2",
+ "quote",
  "serde_json",
  "sha2",
  "sqlx-core 0.5.8",
  "sqlx-rt 0.5.8",
- "syn 1.0.100",
+ "syn",
  "url 2.3.0",
 ]
 
@@ -3468,12 +3429,12 @@ dependencies = [
  "either",
  "heck",
  "once_cell",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
+ "proc-macro2",
+ "quote",
  "sha2",
  "sqlx-core 0.5.11",
  "sqlx-rt 0.5.13",
- "syn 1.0.100",
+ "syn",
  "url 2.3.0",
 ]
 
@@ -3538,9 +3499,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0054a7df764039a6cd8592b9de84be4bec368ff081d203a7d5371cbfa8e65c81"
 dependencies = [
  "heck",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3560,23 +3521,12 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "0.15.44"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ca4b3b69a77cbe1ffc9e198781b7acb0c7365a883670e8f1c1bc66fba79a5c5"
-dependencies = [
- "proc-macro2 0.4.30",
- "quote 0.6.13",
- "unicode-xid 0.1.0",
-]
-
-[[package]]
-name = "syn"
 version = "1.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52205623b1b0f064a4e71182c3b18ae902267282930c6d5462c91b859668426e"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
+ "proc-macro2",
+ "quote",
  "unicode-ident",
 ]
 
@@ -3586,10 +3536,10 @@ version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
- "unicode-xid 0.2.4",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "unicode-xid",
 ]
 
 [[package]]
@@ -3630,9 +3580,9 @@ version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a891860d3c8d66fec8e73ddb3765f90082374dbaaa833407b904a94f1a7eb43"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3671,9 +3621,9 @@ version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9724f9a975fb987ef7a3cd9be0350edcbe130698af5b8f7a631e23d42d052484"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3705,15 +3655,6 @@ name = "toml"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "736b60249cb25337bc196faa43ee12c705e426f3d55c214d73a4e7be06f92cb4"
-
-[[package]]
-name = "toml"
-version = "0.4.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "758664fc71a3a69038656bee8b6be6477d2a6c315a6b81f7081f591bffa4111f"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "tower-service"
@@ -3779,12 +3720,6 @@ name = "unicode-segmentation"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a"
-
-[[package]]
-name = "unicode-xid"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
 
 [[package]]
 name = "unicode-xid"
@@ -3909,8 +3844,8 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aae2faf80ac463422992abf4de234731279c058aaf33171ca70277c98406b124"
 dependencies = [
- "quote 1.0.21",
- "syn 1.0.100",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3920,42 +3855,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
-name = "vdrtools"
-version = "0.8.6"
-source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c#c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c"
-dependencies = [
- "async-std",
- "async-trait",
- "failure",
- "futures",
- "lazy_static",
- "libc",
- "log",
- "num-derive 0.2.5",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
- "vdrtools-sys 0.8.6 (git+https://gitlab.com/mirgee/vdr-tools.git?rev=c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c)",
-]
-
-[[package]]
 name = "vdrtools-sys"
 version = "0.8.6"
-source = "git+https://gitlab.com/mirgee/vdr-tools.git?rev=c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c#c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c"
-dependencies = [
- "libc",
- "pkg-config",
- "regex",
- "serde",
- "serde_derive",
- "vcpkg",
-]
-
-[[package]]
-name = "vdrtools-sys"
-version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "libc",
  "libvdrtools",
@@ -3966,7 +3868,7 @@ dependencies = [
 [[package]]
 name = "vdrtoolsrs"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b#e24a10a2052bce2b1901e990bf95207e55f9df7b"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3975,12 +3877,12 @@ dependencies = [
  "lazy_static",
  "libc",
  "log",
- "num-derive 0.3.3",
+ "num-derive",
  "num-traits",
  "serde",
  "serde_derive",
  "serde_json",
- "vdrtools-sys 0.8.6 (git+https://gitlab.com/left-arm/vdr-tools.git?rev=e24a10a2052bce2b1901e990bf95207e55f9df7b)",
+ "vdrtools-sys",
 ]
 
 [[package]]
@@ -4042,9 +3944,9 @@ dependencies = [
  "bumpalo",
  "log",
  "once_cell",
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
  "wasm-bindgen-shared",
 ]
 
@@ -4066,7 +3968,7 @@ version = "0.2.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "052be0f94026e6cbc75cdefc9bae13fd6052cdcaf532fa6c45e7ae33a1e6c810"
 dependencies = [
- "quote 1.0.21",
+ "quote",
  "wasm-bindgen-macro-support",
 ]
 
@@ -4076,9 +3978,9 @@ version = "0.2.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07bc0c051dc5f23e307b13285f9d75df86bfdf816c5721e573dec1f9b8aa193c"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -4247,9 +4149,9 @@ version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
- "proc-macro2 1.0.44",
- "quote 1.0.21",
- "syn 1.0.100",
+ "proc-macro2",
+ "quote",
+ "syn",
  "synstructure",
 ]
 

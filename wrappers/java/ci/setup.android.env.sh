@@ -217,11 +217,11 @@ setup_dependencies_env_vars(){
 create_standalone_toolchain_and_rust_target(){
     # will only create toolchain if not already created
     python3 ${ANDROID_NDK_ROOT}/build/tools/make_standalone_toolchain.py \
-    --arch ${TARGET_ARCH} \
-    --api ${TARGET_API} \
-    --stl=libc++ \
-    --force \
-    --install-dir ${TOOLCHAIN_DIR}
+        --arch ${TARGET_ARCH} \
+        --api ${TARGET_API} \
+        --stl=libc++ \
+        --force \
+        --install-dir ${TOOLCHAIN_DIR}
 
     # add rust target
     rustup target add ${TRIPLET}
@@ -252,21 +252,30 @@ set_env_vars(){
     export RUST_LOG=indy=trace
     export RUST_TEST_THREADS=1
     export RUST_BACKTRACE=1
-    export OPENSSL_DIR=${OPENSSL_DIR}
-    export OPENSSL_LIB_DIR=${OPENSSL_DIR}/lib
+
+    # export OPENSSL_DIR=${OPENSSL_DIR}
+    # export OPENSSL_LIB_DIR=${OPENSSL_DIR}/lib
+    export OPENSSL_STATIC=1
+
     export SODIUM_LIB_DIR=${SODIUM_DIR}/lib
     export SODIUM_INCLUDE_DIR=${SODIUM_DIR}/include
+
     export LIBZMQ_LIB_DIR=${LIBZMQ_DIR}/lib
     export LIBZMQ_INCLUDE_DIR=${LIBZMQ_DIR}/include
+    export LIBZMQ_PREFIX=${LIBZMQ_DIR}
+
     export TOOLCHAIN_DIR=${TOOLCHAIN_PREFIX}/${TARGET_ARCH}
     export PATH=${TOOLCHAIN_DIR}/bin:${PATH}
+
     export CC=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-clang
     export AR=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ar
     export CXX=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-clang++
     export CXXLD=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ld
     export RANLIB=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-ranlib
+    export OBJCOPY=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-objcopy
+
     export TARGET=android
-    export OPENSSL_STATIC=1
+
 }
 
 build_libvcx(){
@@ -296,5 +305,7 @@ copy_libraries_to_jni(){
     LIB_PATH=${ANDROID_JNI_LIB}/${ABI}
     echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
     mkdir -p $LIB_PATH
-    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${LIB_PATH}
+    cp ${LIBVCX_DIR}/target/${TRIPLET}/release/libvcx.so ${LIB_PATH}
+    cp ${LIBZMQ_LIB_DIR}/libzmq.so    ${LIB_PATH}
+    cp ${SODIUM_LIB_DIR}/libsodium.so ${LIB_PATH}
 }

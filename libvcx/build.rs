@@ -1,81 +1,12 @@
 use std::env;
 use std::fs;
-use std::fs::File;
-use std::io::prelude::*;
 use std::path::Path;
-
-extern crate toml;
-
-#[macro_use]
-extern crate serde_derive;
-
-// used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Tomlfile;
-
-// used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Metadata {
-    deb: Deb,
-}
-
-// used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Deb {
-    revision: Option<String>,
-}
-
-// used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Package {
-    metadata: Metadata,
-}
-
-// used in formatting the Cargo.toml file
-#[derive(Deserialize, Debug)]
-struct Contents {
-    package: Package,
-}
 
 fn main() {
     let target = env::var("TARGET").unwrap();
     println!("target={}", target);
 
-    if target.contains("aarch64-linux-android")
-        || target.contains("armv7-linux-androideabi")
-        || target.contains("arm-linux-androideabi")
-        || target.contains("i686-linux-android")
-        || target.contains("x86_64-linux-android")
-        || target.contains("aarch64-apple-ios")
-        || target.contains("armv7-apple-ios")
-        || target.contains("armv7s-apple-ios")
-        || target.contains("i386-apple-ios")
-        || target.contains("x86_64-apple-ios")
-    {
-        let openssl = match env::var("OPENSSL_LIB_DIR") {
-            Ok(val) => val,
-            Err(..) => match env::var("OPENSSL_DIR") {
-                Ok(dir) => Path::new(&dir[..]).join("/lib").to_string_lossy().into_owned(),
-                Err(..) => {
-                    panic!("Missing required environment variables OPENSSL_DIR or OPENSSL_LIB_DIR")
-                }
-            },
-        };
-
-        println!("cargo:rustc-link-search=native={}", openssl);
-        println!("cargo:rustc-link-lib=static=crypto");
-        println!("cargo:rustc-link-lib=static=ssl");
-    } else if target.contains("darwin") {
-        //OSX specific logic
-        println!("cargo:rustc-link-lib=sodium");
-        println!("cargo:rustc-link-lib=zmq");
-        //OSX does not allow 3rd party libs to be installed in /usr/lib. Instead install it in /usr/local/lib
-        println!("cargo:rustc-link-search=native=/usr/local/lib");
-        println!("cargo:rustc-link-search=native=/opt/homebrew/lib");
-    } else if target.contains("-linux-") {
-        //Linux specific logic
-        println!("cargo:rustc-link-search=native=/usr/lib");
-    } else if target.contains("-windows-") {
+    if target.contains("-windows-") {
         let profile = env::var("PROFILE").unwrap();
         println!("profile={}", profile);
 
@@ -102,49 +33,4 @@ fn main() {
             }
         }
     }
-
-    match env::var("CARGO_FEATURE_CI") {
-        Ok(_) => {
-            println!("injecting version information");
-            // Leaving as unwrap, this is in the build script.
-            let revision = get_revision().unwrap();
-            write_variables(&revision);
-        }
-        Err(_) => {
-            println!("NOT injecting version information");
-        }
-    };
-}
-
-// Writes to the file 'src/utils/version_constants.rs' for use
-// in outputing the version dynamically.
-fn write_variables(revision: &str) {
-    let out_dir = "src/utils/";
-    let dest_path = Path::new(&out_dir).join("version_constants.rs");
-    let mut f = File::create(&dest_path).unwrap();
-    let s = format!(
-        "pub const VERSION: &'static str = env!(\"CARGO_PKG_VERSION\");\npub const REVISION: &'static str = \"{}\";\n",
-        revision
-    );
-    if let Err(e) = f.write_all(s.as_bytes()) {
-        panic!("Error creating version_constants.rs: {}", e);
-    };
-}
-
-// Gets the revision number from the Cargo.toml file.
-pub fn get_revision() -> Option<String> {
-    let dir = match env::var("CARGO_MANIFEST_DIR") {
-        Ok(d) => d,
-        Err(_) => panic!("Couldn't Manifest Directory"),
-    };
-    let filename = "Cargo.toml";
-    let p = format!("{}/{}", dir, filename);
-    let mut input = String::new();
-    File::open(p).and_then(|mut f| f.read_to_string(&mut input)).unwrap();
-    let tomlfile: Contents = toml::from_str(&input).unwrap();
-    let revision: String = match tomlfile.package.metadata.deb.revision {
-        Some(v) => v,
-        None => String::from(""),
-    };
-    Some(format!("+{}", revision))
 }

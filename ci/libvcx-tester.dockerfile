@@ -1,12 +1,12 @@
 ARG ALPINE_CORE_IMAGE
 FROM ${ALPINE_CORE_IMAGE} as builder
+
 USER indy
 WORKDIR /home/indy
 
 COPY --chown=indy  ./ ./
 
 USER indy
-ENV X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR "true"
 RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
 
 USER root
@@ -19,9 +19,24 @@ ARG GID=1000
 
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+        bash \
+        build-base \
+        curl \
+        openssl-dev \
+        zeromq-dev \
+        python3 \
+        npm git tzdata
+
+RUN cp /usr/share/zoneinfo/UTC /etc/localtime && echo UTC > /etc/timezone
+
+ENV TZ=UTC
+
 COPY --from=builder /home/indy/lib*.so /usr/lib/
 
 WORKDIR /home/node
+COPY --chown=node ./Cargo.toml ./Cargo.lock ./
 COPY --chown=node ./libvcx ./libvcx
 COPY --chown=node ./agency_client ./agency_client
 COPY --chown=node ./messages ./messages
@@ -29,20 +44,7 @@ COPY --chown=node ./aries_vcx ./aries_vcx
 COPY --chown=node ./wrappers/node ./wrappers/node
 COPY --chown=node ./agents/node ./agents/node
 
-RUN apk update && apk upgrade
-RUN apk add --no-cache \
-        bash \
-        g++ \
-        gcc \
-        git \
-        curl \
-        libsodium-dev \
-        libzmq \
-        npm \
-        make \
-        openssl-dev \
-        python3 \
-        zeromq-dev
+
 RUN npm install -g npm@8.7.0
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories
