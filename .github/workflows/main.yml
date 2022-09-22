@@ -571,6 +571,8 @@ jobs:
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
                               sh -c '(cd $HOME/agency_client && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
+                                cd $HOME/messages && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
                                 cd $HOME/aries_vcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
                                 cd $HOME/libvcx && \
