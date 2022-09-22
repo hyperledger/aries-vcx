@@ -132,7 +132,7 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm.presentation()?.presentations_attach.content()
+        self.verifier_sm.presentation()?.presentations_attach.content().map_err(|err| err.into())
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {

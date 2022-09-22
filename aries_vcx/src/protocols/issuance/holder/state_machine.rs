@@ -62,6 +62,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
         .set_thread_id(thread_id)
         .set_out_time()
         .set_requests_attach(credential_request_attach)
+        .map_err(|err| err.into())
 }
 
 fn build_credential_ack(thread_id: &str) -> Ack {

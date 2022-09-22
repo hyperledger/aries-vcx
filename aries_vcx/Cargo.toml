@@ -51,6 +51,7 @@ agency_client = { version = "0.1.0", path = "../agency_client" }
 sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
 derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
+messages = { path  = "../messages" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

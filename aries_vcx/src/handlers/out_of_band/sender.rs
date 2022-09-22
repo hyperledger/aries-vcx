@@ -89,7 +89,7 @@ impl OutOfBandSender {
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
-        self.oob.to_string()
+        self.oob.to_string().map_err(|err| err.into())
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<Self> {

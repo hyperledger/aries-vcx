@@ -48,7 +48,7 @@ impl FinishedHolderState {
             .credential
             .as_ref()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
-        credential.credentials_attach.content()
+        credential.credentials_attach.content().map_err(|err| err.into())
     }
 
     // TODO: Avoid duplication

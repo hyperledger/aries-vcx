@@ -94,6 +94,7 @@ dependencies = [
  "libc",
  "libloading",
  "log",
+ "messages",
  "num-traits",
  "openssl",
  "rand 0.7.3",

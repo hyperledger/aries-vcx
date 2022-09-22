@@ -24,13 +24,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate strum;
-#[macro_use]
 extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
 #[macro_use]
 extern crate derive_builder;
+extern crate messages;
 
 #[macro_use]
 pub mod utils;
@@ -39,7 +39,6 @@ pub mod handlers;
 pub mod error;
 pub mod global;
 pub mod libindy;
-pub mod messages;
 pub mod protocols;
 
 #[cfg(test)]

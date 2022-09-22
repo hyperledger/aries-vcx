@@ -58,6 +58,6 @@ impl OfferReceivedState {
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {
-        self.offer.offers_attach.content()
+        self.offer.offers_attach.content().map_err(|err| err.into())
     }
 }

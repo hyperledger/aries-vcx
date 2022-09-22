@@ -134,6 +134,7 @@ impl Prover {
             .presentation_request()?
             .request_presentations_attach
             .content()
+            .map_err(|err| err.into())
     }
 
     pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
