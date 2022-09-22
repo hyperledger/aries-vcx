@@ -1,7 +1,7 @@
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::is_cred_def_revokable;

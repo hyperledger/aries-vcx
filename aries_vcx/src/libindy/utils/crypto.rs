@@ -5,7 +5,7 @@ use vdrtools_sys::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::messages::connection::response::{Response, SignedResponse, ConnectionSignature, ConnectionData};
+use messages::connection::response::{Response, SignedResponse, ConnectionSignature, ConnectionData};
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
@@ -137,9 +137,9 @@ pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxR
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::did_doc::test_utils::*;
+    use messages::did_doc::test_utils::*;
     use crate::libindy::utils::test_setup::{create_trustee_key, setup_wallet};
-    use crate::messages::connection::response::test_utils::{_did, _response, _thread_id};
+    use messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

@@ -4,13 +4,13 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
-use crate::messages::did_doc::service_aries::AriesService;
+use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::libindy::utils::ledger::add_service;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::connection::did::Did;
-use crate::messages::connection::request::Request;
+use messages::a2a::A2AMessage;
+use messages::connection::did::Did;
+use messages::connection::request::Request;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

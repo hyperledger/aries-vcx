@@ -4,13 +4,13 @@ use std::fmt::Display;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::error::ProblemReport;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_ack::PresentationAck;
-use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
-use crate::messages::status::Status;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::error::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_ack::PresentationAck;
+use messages::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
@@ -440,11 +440,11 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
-    use crate::messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
-    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
-    use crate::messages::proof_presentation::test_utils::{_ack, _problem_report};
+    use messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
+    use messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
+    use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
+    use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
 
@@ -525,8 +525,8 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use crate::messages::a2a::MessageId;
-        use crate::messages::proof_presentation::presentation_request::PresentationRequestData;
+        use messages::a2a::MessageId;
+        use messages::proof_presentation::presentation_request::PresentationRequestData;
         use crate::protocols::proof_presentation::verifier::state_machine::{
             build_starting_presentation_request, build_verification_ack,
         };

@@ -1,8 +1,8 @@
-use crate::messages::error::ProblemReport;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_ack::PresentationAck;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::status::Status;
+use messages::error::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_ack::PresentationAck;
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

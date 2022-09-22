@@ -58,8 +58,7 @@ impl Request {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
+#[cfg(feature = "test_utils")]
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
 
@@ -83,6 +82,7 @@ pub mod unit_tests {
     }
 
     #[test]
+    #[cfg(feature = "general_test")]
     fn test_request_build_works() {
         let request: Request = Request::default()
             .set_did(_did())

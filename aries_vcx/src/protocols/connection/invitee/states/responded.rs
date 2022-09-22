@@ -1,7 +1,7 @@
-use crate::messages::did_doc::DidDoc;
-use crate::messages::connection::problem_report::ProblemReport;
-use crate::messages::connection::request::Request;
-use crate::messages::connection::response::SignedResponse;
+use messages::did_doc::DidDoc;
+use messages::connection::problem_report::ProblemReport;
+use messages::connection::request::Request;
+use messages::connection::response::SignedResponse;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

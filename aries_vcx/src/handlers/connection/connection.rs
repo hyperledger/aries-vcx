@@ -13,19 +13,19 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
-use crate::messages::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
-use crate::messages::a2a::protocol_registry::ProtocolRegistry;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::basic_message::message::BasicMessage;
-use crate::messages::connection::invite::Invitation;
-use crate::messages::connection::request::Request;
-use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::A2AMessage;
+use messages::basic_message::message::BasicMessage;
+use messages::connection::invite::Invitation;
+use messages::connection::request::Request;
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -1002,13 +1002,13 @@ mod tests {
     use agency_client::testing::mocking::enable_agency_mocks;
 
     use crate::handlers::connection::public_agent::test_utils::_public_agent;
-    use crate::messages::connection::invite::test_utils::{
+    use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
-    use crate::messages::connection::request::unit_tests::_request;
-    use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::test_utils::_disclose;
-    use crate::messages::discovery::query::test_utils::_query;
+    use messages::connection::request::unit_tests::_request;
+    use messages::connection::response::test_utils::_signed_response;
+    use messages::discovery::disclose::test_utils::_disclose;
+    use messages::discovery::query::test_utils::_query;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
     use crate::utils::mockdata::mockdata_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,

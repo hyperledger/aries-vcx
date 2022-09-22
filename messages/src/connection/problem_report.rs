@@ -62,7 +62,6 @@ impl Default for ProblemCode {
     }
 }
 
-#[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::connection::response::test_utils::*;

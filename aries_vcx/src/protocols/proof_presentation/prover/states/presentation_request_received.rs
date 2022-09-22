@@ -2,10 +2,10 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::prover::prover::generate_indy_proof;
-use crate::messages::error::ProblemReport;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::status::Status;
+use messages::error::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;

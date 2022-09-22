@@ -4,17 +4,17 @@ use std::future::Future;
 
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
-use crate::messages::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::messages::a2a::protocol_registry::ProtocolRegistry;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::ack::Ack;
-use crate::messages::connection::invite::Invitation;
-use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
-use crate::messages::connection::request::Request;
-use crate::messages::connection::response::{Response, SignedResponse};
-use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::A2AMessage;
+use messages::ack::Ack;
+use messages::connection::invite::Invitation;
+use messages::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::connection::request::Request;
+use messages::connection::response::{Response, SignedResponse};
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::states::complete::CompleteState;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::invited::InvitedState;
@@ -415,14 +415,14 @@ impl SmConnectionInvitee {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::ack::test_utils::_ack;
-    use crate::messages::connection::invite::test_utils::_pairwise_invitation;
-    use crate::messages::connection::problem_report::unit_tests::_problem_report;
-    use crate::messages::connection::request::unit_tests::_request;
-    use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::test_utils::_disclose;
+    use messages::ack::test_utils::_ack;
+    use messages::connection::invite::test_utils::_pairwise_invitation;
+    use messages::connection::problem_report::unit_tests::_problem_report;
+    use messages::connection::request::unit_tests::_request;
+    use messages::connection::response::test_utils::_signed_response;
+    use messages::discovery::disclose::test_utils::_disclose;
     
-    use crate::messages::trust_ping::ping::unit_tests::_ping;
+    use messages::trust_ping::ping::unit_tests::_ping;
     
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
@@ -437,8 +437,8 @@ pub mod unit_tests {
     pub mod invitee {
         use vdrtools_sys::WalletHandle;
 
-        use crate::messages::did_doc::test_utils::_service_endpoint;
-        use crate::messages::connection::response::{Response, SignedResponse};
+        use messages::did_doc::test_utils::_service_endpoint;
+        use messages::connection::response::{Response, SignedResponse};
 
         use super::*;
 
@@ -532,8 +532,8 @@ pub mod unit_tests {
 
         mod build_messages {
             use super::*;
-            use crate::messages::a2a::MessageId;
-            use crate::messages::ack::AckStatus;
+            use messages::a2a::MessageId;
+            use messages::ack::AckStatus;
             use crate::utils::devsetup::was_in_past;
 
             #[tokio::test]

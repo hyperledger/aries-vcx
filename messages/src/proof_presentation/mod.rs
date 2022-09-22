@@ -5,7 +5,6 @@ pub mod presentation_request;
 pub mod presentation_request_internal;
 pub mod presentation_request_data;
 
-#[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::ack;

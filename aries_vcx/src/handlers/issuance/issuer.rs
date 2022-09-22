@@ -8,11 +8,11 @@ use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::issuance::credential_offer::OfferInfo;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::issuance::CredentialPreviewData;
-use crate::messages::mime_type::MimeType;
+use messages::a2a::A2AMessage;
+use messages::issuance::credential_offer::OfferInfo;
+use messages::issuance::credential_proposal::CredentialProposal;
+use messages::issuance::CredentialPreviewData;
+use messages::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;
@@ -246,8 +246,8 @@ pub mod test_utils {
 
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
-    use crate::messages::a2a::A2AMessage;
-    use crate::messages::issuance::credential_proposal::CredentialProposal;
+    use messages::a2a::A2AMessage;
+    use messages::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
         pool_handle: PoolHandle,
@@ -271,10 +271,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::ack::test_utils::_ack;
-    use crate::messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
-    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use crate::messages::issuance::credential_request::test_utils::_credential_request;
+    use messages::ack::test_utils::_ack;
+    use messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
+    use messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use messages::issuance::credential_request::test_utils::_credential_request;
     use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
     use crate::utils::devsetup::SetupMocks;
 

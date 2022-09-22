@@ -12,11 +12,11 @@ name = "aries_vcx"
 path = "src/lib.rs"
 
 [features]
-test_utils = []
-pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-agency_pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-agency_v2 = ["test_utils", "tokio/rt", "tokio/macros"]
-general_test = ["test_utils", "tokio/rt", "tokio/macros"]
+test_utils = ["messages/test_utils"]
+pool_tests = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+agency_pool_tests = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+agency_v2 = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+general_test = ["test_utils", "messages/general_test", "tokio/rt", "tokio/macros"]
 fatal_warnings = []
 warnlog_fetched_messages = []
 mysql_test = ["test_utils", "sqlx", "tokio/rt", "tokio/macros"]

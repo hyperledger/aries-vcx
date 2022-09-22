@@ -1,4 +1,4 @@
-use crate::messages::status::Status;
+use messages::status::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

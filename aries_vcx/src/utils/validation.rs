@@ -1,7 +1,7 @@
 extern crate openssl;
 extern crate rust_base58;
 
-use crate::messages::actors::Actors;
+use messages::actors::Actors;
 use crate::error::prelude::*;
 use crate::utils::qualifier;
 

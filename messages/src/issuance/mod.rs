@@ -61,7 +61,6 @@ impl Default for CredentialPreviewData {
     }
 }
 
-#[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::ack;

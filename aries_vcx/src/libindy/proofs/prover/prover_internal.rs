@@ -4,8 +4,8 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
-use crate::messages::proof_presentation::presentation_request_data::ProofRequestData;
-use crate::messages::proof_presentation::presentation_request_internal::NonRevokedInterval;
+use messages::proof_presentation::presentation_request_data::ProofRequestData;
+use messages::proof_presentation::presentation_request_internal::NonRevokedInterval;
 use crate::libindy::utils::anoncreds;
 use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 
@@ -309,7 +309,7 @@ pub mod pool_tests {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::proof_presentation::presentation_request_internal::NonRevokedInterval;
+    use messages::proof_presentation::presentation_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
     use crate::utils::devsetup::*;
     use crate::utils::{

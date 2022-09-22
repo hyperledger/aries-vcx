@@ -41,7 +41,6 @@ timing_optional!(Ping);
 threadlike_optional!(Ping);
 a2a_message!(Ping);
 
-#[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::connection::response::test_utils::*;

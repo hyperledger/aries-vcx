@@ -1,5 +1,5 @@
-use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use crate::messages::issuance::credential_proposal::CredentialProposal;
+use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use messages::issuance::credential_proposal::CredentialProposal;
 use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

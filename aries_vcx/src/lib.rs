@@ -30,7 +30,7 @@ extern crate url;
 extern crate uuid;
 #[macro_use]
 extern crate derive_builder;
-extern crate messages;
+pub extern crate messages;
 
 #[macro_use]
 pub mod utils;

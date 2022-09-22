@@ -1,10 +1,10 @@
 use vdrtools_sys::WalletHandle;
 
-use crate::messages::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::VcxResult;
 
-use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::messages::discovery::query::Query;
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::discovery::query::Query;
 use crate::utils::send_message;
 
 pub async fn send_discovery_query(

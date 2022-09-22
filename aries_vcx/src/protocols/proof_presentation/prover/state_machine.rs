@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::error::ProblemReport;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::status::Status;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::error::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -419,12 +419,12 @@ impl ProverSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
-    use crate::messages::proof_presentation::presentation_proposal::test_utils::{
+    use messages::proof_presentation::presentation::test_utils::_presentation;
+    use messages::proof_presentation::presentation_proposal::test_utils::{
         _presentation_preview, _presentation_proposal, _presentation_proposal_data,
     };
-    use crate::messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use crate::messages::proof_presentation::test_utils::{_ack, _problem_report};
+    use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -555,7 +555,7 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use crate::messages::a2a::MessageId;
+        use messages::a2a::MessageId;
         use crate::protocols::common::build_problem_report_msg;
 
         use crate::protocols::proof_presentation::prover::state_machine::build_presentation_msg;

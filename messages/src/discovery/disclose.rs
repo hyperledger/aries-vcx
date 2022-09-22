@@ -45,7 +45,7 @@ impl Disclose {
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::connection::response::test_utils::*;
 

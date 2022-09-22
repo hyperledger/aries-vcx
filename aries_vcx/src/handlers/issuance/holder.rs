@@ -6,9 +6,9 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_proposal::CredentialProposalData;
+use messages::a2a::A2AMessage;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
@@ -188,7 +188,7 @@ pub mod test_utils {
 
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
-    use crate::messages::a2a::A2AMessage;
+    use messages::a2a::A2AMessage;
 
     pub async fn get_credential_offer_messages(
         pool_handle: PoolHandle,
@@ -212,10 +212,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::issuance::credential::test_utils::_credential;
-    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
-    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
-    use crate::messages::issuance::credential_request::test_utils::_my_pw_did;
+    use messages::issuance::credential::test_utils::_credential;
+    use messages::issuance::credential_offer::test_utils::_credential_offer;
+    use messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
+    use messages::issuance::credential_request::test_utils::_my_pw_did;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

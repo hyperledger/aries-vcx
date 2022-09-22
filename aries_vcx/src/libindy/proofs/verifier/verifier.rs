@@ -55,7 +55,7 @@ pub async fn validate_indy_proof(
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
-    use crate::messages::proof_presentation::presentation_request_data::ProofRequestData;
+    use messages::proof_presentation::presentation_request_data::ProofRequestData;
     use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWalletPool;
     use crate::{libindy, utils};

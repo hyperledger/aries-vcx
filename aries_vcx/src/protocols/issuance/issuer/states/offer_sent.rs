@@ -1,7 +1,7 @@
-use crate::messages::error::ProblemReport;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_request::CredentialRequest;
-use crate::messages::status::Status;
+use messages::error::ProblemReport;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_request::CredentialRequest;
+use messages::status::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
