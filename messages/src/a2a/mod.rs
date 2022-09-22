@@ -360,8 +360,15 @@ impl Default for MessageId {
     }
 
     #[cfg(not(test))]
+    #[cfg(not(feature = "test_utils"))]
     fn default() -> MessageId {
         MessageId(uuid::Uuid::new_v4().to_string())
+    }
+
+    #[cfg(not(test))]
+    #[cfg(feature = "test_utils")]
+    fn default() -> MessageId {
+        MessageId::id()
     }
 }
 
