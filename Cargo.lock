@@ -1191,6 +1191,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
+name = "messages"
+version = "0.1.0"
+dependencies = [
+ "base64 0.8.0",
+ "chrono",
+ "derive_builder",
+ "env_logger",
+ "failure",
+ "futures",
+ "lazy_static",
+ "libc",
+ "libloading",
+ "log",
+ "num-traits",
+ "openssl",
+ "rand 0.7.3",
+ "regex",
+ "rmp-serde",
+ "rust-base58",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sqlx",
+ "strum",
+ "strum_macros",
+ "time",
+ "tokio",
+ "url 1.7.2",
+ "uuid 0.8.2",
+ "vdrtools",
+ "vdrtools-sys",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"

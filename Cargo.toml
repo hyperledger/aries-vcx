@@ -3,7 +3,8 @@
 members = [
     "aries_vcx",
     "libvcx",
-    "agency_client"
+    "agency_client",
+    "messages"
 ]
 
 [profile.release]
