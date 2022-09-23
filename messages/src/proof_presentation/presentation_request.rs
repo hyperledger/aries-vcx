@@ -1,5 +1,4 @@
 use crate::error::prelude::*;
-use crate::proof_presentation::presentation_request_data::ProofRequestData;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::attachment::{AttachmentId, Attachments};
 use crate::thread::Thread;
@@ -42,25 +41,16 @@ impl PresentationRequest {
 
     pub fn set_request_presentations_attach(
         mut self,
-        request_presentations: &PresentationRequestData,
+        request_presentations: &str,
     ) -> MessagesResult<PresentationRequest> {
-        trace!("set_request_presentations_attach >>> {:?}", request_presentations);
+        trace!("set_request_presentations_attach >>> {}", request_presentations);
         self.request_presentations_attach
             .add_base64_encoded_json_attachment(AttachmentId::PresentationRequest, json!(request_presentations))?;
         Ok(self)
     }
 
-    pub fn get_presentation_request_data(self) -> MessagesResult<ProofRequestData> {
-        let content = &self.request_presentations_attach.content()?;
-        serde_json::from_str(content).map_err(|err| {
-            MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
-                format!(
-                    "Cannot deserialize PresentationRequestData: {}, error: {}",
-                    content, err
-                ),
-            )
-        })
+    pub fn get_presentation_request_data(self) -> MessagesResult<String> {
+        self.request_presentations_attach.content()
     }
 
     pub fn to_json(&self) -> MessagesResult<String> {
@@ -73,18 +63,27 @@ impl PresentationRequest {
     }
 }
 
-pub type PresentationRequestData = ProofRequestData;
-
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::thread::Thread;
 
     use super::*;
 
-    pub fn _presentation_request_data() -> PresentationRequestData {
-        PresentationRequestData::default()
-            .set_requested_attributes_as_string(json!([{"name": "name"}]).to_string())
-            .unwrap()
+    pub fn _presentation_request_data() -> String {
+        json!({
+            "nonce": "",
+            "name": "",
+            "version": "1.0",
+            "requested_attributes": {
+              "attribute_0": {
+                "name": "",
+                "restrictions": []
+              },
+            },
+            "requested_predicates": {},
+            "non_revoked": null,
+            "ver": null
+        }).to_string()
     }
 
     fn _attachment() -> Attachments {

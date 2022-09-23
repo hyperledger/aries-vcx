@@ -2,7 +2,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use messages::proof_presentation::presentation_request_data::ProofRequestData;
+use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::prover::prover_internal::{
     build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover,
     credential_def_identifiers,

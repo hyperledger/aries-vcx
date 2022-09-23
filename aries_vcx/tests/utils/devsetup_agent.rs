@@ -26,11 +26,12 @@ pub mod test_utils {
     use aries_vcx::libindy::utils::wallet::wallet_configure_issuer;
     use aries_vcx::libindy::utils::wallet::*;
     use aries_vcx::libindy::wallet::open_wallet;
+    use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::PublicInvitation;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::issuance::credential_offer::OfferInfo;
-    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

@@ -9,7 +9,7 @@ use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_ack::PresentationAck;
 use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
@@ -20,6 +20,7 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
+use crate::libindy::proofs::proof_request::PresentationRequestData;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -83,7 +84,7 @@ fn build_starting_presentation_request(
     Ok(PresentationRequest::create()
         .set_id(thread_id.into())
         .set_comment(comment)
-        .set_request_presentations_attach(request_data)?
+        .set_request_presentations_attach(&json!(request_data).to_string())?
         .set_out_time())
 }
 
@@ -443,10 +444,10 @@ pub mod unit_tests {
     use messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
     use messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::proof_presentation::presentation_request::test_utils::_presentation_request_data;
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
+    use crate::libindy::proofs::proof_request::test_utils::_presentation_request_data;
 
     use super::*;
 
@@ -525,8 +526,9 @@ pub mod unit_tests {
     }
 
     mod build_messages {
+        use super::*;
+
         use messages::a2a::MessageId;
-        use messages::proof_presentation::presentation_request::PresentationRequestData;
         use crate::protocols::proof_presentation::verifier::state_machine::{
             build_starting_presentation_request, build_verification_ack,
         };

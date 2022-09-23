@@ -18,7 +18,6 @@ extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
-#[macro_use]
 extern crate derive_builder;
 
 #[macro_use]
