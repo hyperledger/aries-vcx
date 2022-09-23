@@ -185,7 +185,7 @@ impl DidDoc {
         }
     }
 
-    pub fn resolve_service(&self) -> VcxResult<AriesService> {
+    pub fn get_service(&self) -> VcxResult<AriesService> {
         let service: &AriesService = self.service.get(0).ok_or(VcxError::from_msg(
             VcxErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
