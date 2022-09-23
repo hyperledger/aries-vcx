@@ -1,16 +1,12 @@
 extern crate base64;
 extern crate chrono;
 extern crate failure;
-extern crate futures;
 #[macro_use]
 extern crate lazy_static;
-extern crate libc;
 #[macro_use]
 extern crate log;
-extern crate openssl;
 extern crate rand;
 extern crate regex;
-extern crate rmp_serde;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

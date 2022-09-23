@@ -1,5 +1,4 @@
 extern crate env_logger;
-extern crate vdrtools_sys;
 extern crate log;
 
 use std::env;

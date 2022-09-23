@@ -1,9 +1,6 @@
-extern crate openssl;
-extern crate rust_base58;
-
 use crate::error::prelude::*;
 
-use self::rust_base58::FromBase58;
+use rust_base58::FromBase58;
 
 pub fn validate_verkey(verkey: &str) -> MessagesResult<String> {
     let check_verkey = String::from(verkey);
