@@ -17,7 +17,7 @@ impl From<(RequestedState, ProblemReport)> for InitialState {
             "ConnectionInvitee: transit state from RequestedState to InitialState, problem_report: {:?}",
             problem_report
         );
-        InitialState::new(Some(problem_report))
+        InitialState::new(Some(problem_report), None)
     }
 }
 

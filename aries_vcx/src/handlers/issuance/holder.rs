@@ -169,9 +169,9 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle, pool_handle).await?;
+        let send_message = connection.send_message_closure(wallet_handle).await?;
 
-        let messages = connection.get_messages(pool_handle, agency_client).await?;
+        let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
             self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
@@ -182,8 +182,6 @@ impl Holder {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use vdrtools_sys::PoolHandle;
-
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
@@ -191,12 +189,11 @@ pub mod test_utils {
     use messages::a2a::A2AMessage;
 
     pub async fn get_credential_offer_messages(
-        pool_handle: PoolHandle,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<String> {
         let credential_offers: Vec<A2AMessage> = connection
-            .get_messages(pool_handle, agency_client)
+            .get_messages(agency_client)
             .await?
             .into_iter()
             .filter_map(|(_, a2a_message)| match a2a_message {
@@ -212,6 +209,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use vdrtools_sys::PoolHandle;
+
     use messages::issuance::credential::test_utils::_credential;
     use messages::issuance::credential_offer::test_utils::_credential_offer;
     use messages::issuance::credential_proposal::test_utils::_credential_proposal_data;

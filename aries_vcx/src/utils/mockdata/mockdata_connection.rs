@@ -29,6 +29,39 @@ pub const CONNECTION_SM_INVITEE_INVITED: &str = r#"
     "state": {
         "Invitee": {
             "Invited": {
+                "did_doc": {
+                    "@context": "https://w3id.org/did/v1",
+                    "id": "2ZHFFhzA2XtTD6hJqzL7ux",
+                    "publicKey": [
+                        {
+                            "id": "1",
+                            "type": "Ed25519VerificationKey2018",
+                            "controller": "2ZHFFhzA2XtTD6hJqzL7ux",
+                            "publicKeyBase58": "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj"
+                        }
+                    ],
+                    "authentication": [
+                        {
+                            "type": "Ed25519SignatureAuthentication2018",
+                            "publicKey": "2ZHFFhzA2XtTD6hJqzL7ux#1"
+                        }
+                    ],
+                    "service": [
+                        {
+                            "id": "did:example:123456789abcdefghi;indy",
+                            "type": "IndyAgent",
+                            "priority": 0,
+                            "recipientKeys": [
+                                "2ZHFFhzA2XtTD6hJqzL7ux#1"
+                            ],
+                            "routingKeys": [
+                                "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2",
+                                "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+                            ],
+                            "serviceEndpoint": "http://localhost:8080/agency/msg"
+                        }
+                    ]
+                },
                 "invitation": {
                     "@id": "18ac5f5d-c81d-451a-be20-a0df4933513a",
                     "label": "alice-131bc1e2-fa29-404c-a87c-69983e02084d",
