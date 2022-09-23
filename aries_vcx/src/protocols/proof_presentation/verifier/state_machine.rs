@@ -5,7 +5,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use messages::a2a::{A2AMessage, MessageId};
-use messages::error::ProblemReport;
+use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_ack::PresentationAck;
 use messages::proof_presentation::presentation_proposal::PresentationProposal;

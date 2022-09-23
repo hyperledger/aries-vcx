@@ -64,14 +64,14 @@ impl Default for CredentialPreviewData {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::ack;
-    use crate::error;
+    use crate::problem_report;
     use crate::issuance::credential_offer::test_utils::_credential_offer;
 
     pub fn _ack() -> ack::Ack {
         ack::test_utils::_ack().set_thread_id(&_credential_offer().id.0)
     }
 
-    pub fn _problem_report() -> error::ProblemReport {
-        error::test_utils::_problem_report().set_thread_id(&_credential_offer().id.0)
+    pub fn _problem_report() -> problem_report::ProblemReport {
+        problem_report::test_utils::_problem_report().set_thread_id(&_credential_offer().id.0)
     }
 }

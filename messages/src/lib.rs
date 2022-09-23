@@ -36,6 +36,7 @@ pub mod basic_message;
 pub mod connection;
 pub mod discovery;
 pub mod error;
+pub mod problem_report;
 pub mod forward;
 pub mod issuance;
 pub mod localization;

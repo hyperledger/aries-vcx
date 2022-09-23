@@ -624,7 +624,7 @@ mod test {
 
     mod build_messages {
         use messages::a2a::MessageId;
-        use messages::error::ProblemReport;
+        use messages::problem_report::ProblemReport;
         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg, build_problem_report_msg};
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 
@@ -662,7 +662,7 @@ mod test {
 
     mod step {
         use super::*;
-        use messages::error::ProblemReport;
+        use messages::problem_report::ProblemReport;
 
         #[tokio::test]
         #[cfg(feature = "general_test")]

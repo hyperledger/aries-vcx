@@ -3,7 +3,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::libindy::proofs::verifier::verifier::validate_indy_proof;
-use messages::error::ProblemReport;
+use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;

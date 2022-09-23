@@ -11,7 +11,7 @@ use crate::connection::request::Request;
 use crate::connection::response::SignedResponse;
 use crate::discovery::disclose::Disclose;
 use crate::discovery::query::Query;
-use crate::error::ProblemReport as CommonProblemReport;
+use crate::problem_report::ProblemReport as CommonProblemReport;
 use crate::forward::Forward;
 use crate::issuance::credential::Credential;
 use crate::issuance::credential_offer::CredentialOffer;

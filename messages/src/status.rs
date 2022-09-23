@@ -1,4 +1,4 @@
-use crate::error::ProblemReport;
+use crate::problem_report::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {
