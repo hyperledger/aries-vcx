@@ -17,7 +17,6 @@ extern crate log;
 extern crate openssl;
 extern crate rand;
 extern crate regex;
-extern crate rmp_serde;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

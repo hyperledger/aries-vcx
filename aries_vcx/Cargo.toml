@@ -35,7 +35,6 @@ serde_derive = "1.0.97"
 url = "1.5.1"
 regex = "1.1.0"
 rust-base58 = "0.0.4"
-rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 num-traits = "0.2.0"
