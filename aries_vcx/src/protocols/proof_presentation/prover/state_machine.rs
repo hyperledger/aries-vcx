@@ -55,7 +55,6 @@ pub enum ProverFullState {
 
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     Ok(Presentation::create()
-        .ask_for_ack()
         .set_thread_id(&thread_id)
         .set_presentations_attach(presentation_attachment)?
         .set_out_time())
