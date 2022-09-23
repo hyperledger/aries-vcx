@@ -1,7 +1,7 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
-use crate::messages::trust_ping::ping::Ping;
-use crate::messages::trust_ping::ping_response::PingResponse;
+use messages::trust_ping::ping::Ping;
+use messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
 
@@ -60,7 +60,7 @@ impl TrustPingSender {
 mod unit_tests {
     use crate::error::VcxResult;
     use crate::handlers::trust_ping::TrustPingSender;
-    use crate::messages::a2a::A2AMessage;
+    use messages::a2a::A2AMessage;
     use crate::protocols::trustping::build_ping_response;
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;

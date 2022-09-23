@@ -1,7 +1,7 @@
 use std::clone::Clone;
 
-use crate::did_doc::DidDoc;
-use crate::messages::discovery::disclose::ProtocolDescriptor;
+use messages::did_doc::DidDoc;
+use messages::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {

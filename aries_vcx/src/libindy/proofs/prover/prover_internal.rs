@@ -309,7 +309,6 @@ pub mod pool_tests {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
     use crate::libindy::proofs::prover::prover_internal::CredInfoProver;
     use crate::utils::devsetup::*;
     use crate::utils::{

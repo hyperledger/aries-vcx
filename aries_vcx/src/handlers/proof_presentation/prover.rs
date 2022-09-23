@@ -7,10 +7,10 @@ use agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::libindy::utils::anoncreds;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::a2a::A2AMessage;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
+use messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
@@ -134,6 +134,7 @@ impl Prover {
             .presentation_request()?
             .request_presentations_attach
             .content()
+            .map_err(|err| err.into())
     }
 
     pub fn get_proof_request_attachment(&self) -> VcxResult<String> {
@@ -254,7 +255,7 @@ pub mod test_utils {
 
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;
-    use crate::messages::a2a::A2AMessage;
+    use messages::a2a::A2AMessage;
 
     pub async fn get_proof_request_messages(
         pool_handle: PoolHandle,
@@ -278,7 +279,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+    use messages::proof_presentation::presentation_request::PresentationRequest;
     use crate::utils::devsetup::*;
 
     use super::*;

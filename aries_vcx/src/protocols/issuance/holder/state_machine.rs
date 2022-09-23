@@ -7,15 +7,14 @@ use crate::libindy::utils::anoncreds::{
     self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential,
     libindy_prover_store_credential,
 };
-use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::ack::Ack;
-use crate::messages::error::ProblemReport;
-use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_ack::CredentialAck;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::issuance::credential_request::CredentialRequest;
-use crate::messages::status::Status;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::ack::Ack;
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_ack::CredentialAck;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_proposal::CredentialProposal;
+use messages::issuance::credential_request::CredentialRequest;
+use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
@@ -63,6 +62,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
         .set_thread_id(thread_id)
         .set_out_time()
         .set_requests_attach(credential_request_attach)
+        .map_err(|err| err.into())
 }
 
 fn build_credential_ack(thread_id: &str) -> Ack {
@@ -543,11 +543,11 @@ async fn _make_credential_request(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use crate::messages::issuance::credential::test_utils::_credential;
-    use crate::messages::issuance::credential_offer::test_utils::_credential_offer;
-    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use crate::messages::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
-    use crate::messages::issuance::test_utils::{_ack, _problem_report};
+    use messages::issuance::credential::test_utils::_credential;
+    use messages::issuance::credential_offer::test_utils::_credential_offer;
+    use messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use messages::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
+    use messages::issuance::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::constants;
     use crate::utils::devsetup::SetupMocks;
@@ -623,7 +623,8 @@ mod test {
     }
 
     mod build_messages {
-        use crate::messages::a2a::MessageId;
+        use messages::a2a::MessageId;
+        use messages::problem_report::ProblemReport;
         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg, build_problem_report_msg};
         use crate::utils::devsetup::{was_in_past, SetupMocks};
 
@@ -661,6 +662,7 @@ mod test {
 
     mod step {
         use super::*;
+        use messages::problem_report::ProblemReport;
 
         #[tokio::test]
         #[cfg(feature = "general_test")]

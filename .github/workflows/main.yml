@@ -101,6 +101,7 @@ jobs:
           LIBVCX_SOURCE_HASH=${{ hashFiles('libvcx') }}
           ARIESVCX_SOURCE_HASH=${{ hashFiles('aries_vcx') }}
           AGENCY_CLIENT_HASH=${{ hashFiles('agency_client') }}
+          MESSAGES_HASH=${{ hashFiles('messages') }}
 
           ALPINE_CORE_DOCKERFILE_HASH=${{ hashFiles('ci/alpine_core.dockerfile')}}
           LIBVCX_DOCKERFILE_HASH=${{ hashFiles('ci/libvcx.dockerfile') }}
@@ -113,10 +114,10 @@ jobs:
 
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
           
-          LIBVCX_HASH=${LIBVCX_DOCKERFILE_HASH:0:11}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}
-          LIBVCX_TESTER_HASH=${LIBVCX_TESTER_DOCKERFILE_HASH:0:11}-${LIBVCX_HASH}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}
-          CODECOV_HASH=${LIBVCX_SOURCE_HASH:0:23}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
-          ANDROID_HASH=${LIBVCX_SOURCE_HASH:0:15}-${ARIESVCX_SOURCE_HASH:0:11}-${JAVA_WRAPPERS_HASH:0:15}
+          LIBVCX_HASH=${LIBVCX_DOCKERFILE_HASH:0:11}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${MESSAGES_HASH:0:11}
+          LIBVCX_TESTER_HASH=${LIBVCX_HASH}-${LIBVCX_TESTER_DOCKERFILE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}
+          CODECOV_HASH=${LIBVCX_HASH}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${MESSAGES_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
+          ANDROID_HASH=${LIBVCX_HASH}-${ARIESVCX_SOURCE_HASH:0:11}-${JAVA_WRAPPERS_HASH:0:15}
           POOL_HASH=${POOL_DOCKERFILE_HASH:0:15}
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
@@ -570,6 +571,8 @@ jobs:
           sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
                               sh -c '(cd $HOME/agency_client && \
+                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
+                                cd $HOME/messages && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
                                 cd $HOME/aries_vcx && \
                                 RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \

@@ -92,20 +92,17 @@ dependencies = [
  "futures",
  "lazy_static",
  "libc",
- "libloading",
  "log",
+ "messages",
  "num-traits",
  "openssl",
  "rand 0.7.3",
  "regex",
- "rmp-serde",
  "rust-base58",
  "serde",
  "serde_derive",
  "serde_json",
  "sqlx",
- "strum",
- "strum_macros",
  "time",
  "tokio",
  "url 1.7.2",
@@ -1117,16 +1114,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0005d08a8f7b65fb8073cb697aa0b12b631ed251ce73d862ce50eeb52ce3b50"
 
 [[package]]
-name = "libloading"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
-dependencies = [
- "cc",
- "winapi",
-]
-
-[[package]]
 name = "libm"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1189,6 +1176,33 @@ name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
+
+[[package]]
+name = "messages"
+version = "0.1.0"
+dependencies = [
+ "base64 0.8.0",
+ "chrono",
+ "derive_builder",
+ "env_logger",
+ "failure",
+ "lazy_static",
+ "log",
+ "num-traits",
+ "rand 0.7.3",
+ "regex",
+ "rust-base58",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "strum",
+ "strum_macros",
+ "time",
+ "tokio",
+ "url 1.7.2",
+ "uuid 0.8.2",
+ "vdrtools",
+]
 
 [[package]]
 name = "mime"

@@ -3,12 +3,12 @@ use vdrtools_sys::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
-use crate::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::crypto;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::forward::Forward;
+use messages::a2a::A2AMessage;
+use messages::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -195,11 +195,11 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
+    use messages::did_doc::test_utils::*;
     use crate::libindy::utils::crypto::create_key;
     use crate::libindy::utils::test_setup;
     use crate::libindy::utils::test_setup::create_trustee_key;
-    use crate::messages::ack::test_utils::_ack;
+    use messages::ack::test_utils::_ack;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

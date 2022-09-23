@@ -16,7 +16,8 @@ mod integration_tests {
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::messages::proof_presentation::presentation_request::{PresentationRequest, PresentationRequestData};
+    use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::SetupWalletPool;
     use aries_vcx::utils::get_temp_dir_path;
@@ -30,7 +31,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
@@ -66,7 +67,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
@@ -76,7 +77,7 @@ mod integration_tests {
         req["requested_attributes"]["address1_1"] = json!({"name": "address1"});
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
 
@@ -104,7 +105,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
@@ -121,7 +122,7 @@ mod integration_tests {
         req["requested_attributes"]["zip_1"]["name"] = json!("Zip");
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("2", proof_req).unwrap();
         let retrieved_creds2 = proof.retrieve_credentials(setup.wallet_handle).await.unwrap();
@@ -131,7 +132,7 @@ mod integration_tests {
         req["requested_attributes"]["zip_1"]["name"] = json!("ZIP");
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req.to_string()).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof.retrieve_credentials(setup.wallet_handle).await.unwrap();
@@ -166,7 +167,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
@@ -222,7 +223,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 
@@ -272,7 +273,7 @@ mod integration_tests {
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&indy_proof_req).unwrap();
         let proof_req = PresentationRequest::create()
-            .set_request_presentations_attach(&pres_req_data)
+            .set_request_presentations_attach(&json!(pres_req_data).to_string())
             .unwrap();
         let mut proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
 

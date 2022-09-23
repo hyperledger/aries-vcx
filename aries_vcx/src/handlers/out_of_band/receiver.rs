@@ -5,18 +5,19 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::handlers::out_of_band::OutOfBandInvitation;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::attachment::AttachmentId;
-use crate::messages::connection::invite::Invitation;
-use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_request::CredentialRequest;
+use messages::out_of_band::invitation::OutOfBandInvitation;
+use messages::a2a::A2AMessage;
+use messages::attachment::AttachmentId;
+use messages::connection::invite::Invitation;
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_request::CredentialRequest;
 
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_request::PresentationRequest;
 
-use crate::utils::service_resolvable::ServiceResolvable;
+use messages::did_doc::service_resolvable::ServiceResolvable;
+use crate::libindy::utils::ledger::resolve_service;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -51,7 +52,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.resolve_service()? == service.resolve(pool_handle).await? {
+                        if did_doc.get_service()? == resolve_service(pool_handle, &service).await? {
                             return Ok(Some(connection));
                         };
                     }
@@ -150,7 +151,7 @@ impl OutOfBandReceiver {
         self.oob.to_a2a_message()
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
+    pub fn to_string(&self) -> String {
         self.oob.to_string()
     }
 

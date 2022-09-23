@@ -116,6 +116,19 @@ impl Default for ProofRequestData {
     }
 }
 
+pub type PresentationRequestData = ProofRequestData;
+
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use super::*;
+
+    pub fn _presentation_request_data() -> PresentationRequestData {
+        PresentationRequestData::default()
+            .set_requested_attributes_as_string(json!([{"name": "name"}]).to_string())
+            .unwrap()
+    }
+}
+
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
@@ -127,6 +140,7 @@ mod unit_tests {
     use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
+
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();

@@ -1,7 +1,7 @@
 use crate::error::prelude::*;
-use crate::messages::error::ProblemReport;
-use crate::messages::issuance::credential::{Credential, CredentialData};
-use crate::messages::status::Status;
+use messages::problem_report::ProblemReport;
+use messages::issuance::credential::{Credential, CredentialData};
+use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FinishedHolderState {
@@ -48,7 +48,7 @@ impl FinishedHolderState {
             .credential
             .as_ref()
             .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "No credential found"))?;
-        credential.credentials_attach.content()
+        credential.credentials_attach.content().map_err(|err| err.into())
     }
 
     // TODO: Avoid duplication

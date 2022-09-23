@@ -6,15 +6,18 @@ use vdrtools::ledger;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 
-use crate::did_doc::service_aries::AriesService;
+use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
 use crate::libindy::utils::signus::create_and_store_my_did;
-use crate::messages::connection::did::Did;
+use messages::connection::did::Did;
+use messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::constants::SUBMIT_SCHEMA_RESPONSE;
 use crate::utils::random::generate_random_did;
+use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::did_doc::DidDoc;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(wallet_handle, did, request)
@@ -352,6 +355,48 @@ pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesS
     })
 }
 
+pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvable) -> VcxResult<AriesService> {
+    match service {
+        ServiceResolvable::AriesService(service) => Ok(service.clone()),
+        ServiceResolvable::Did(did) => get_service(pool_handle, did).await,
+    }
+}
+
+
+pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> VcxResult<DidDoc> {
+    let mut did_doc: DidDoc = DidDoc::default();
+    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
+        Invitation::Public(invitation) => {
+            did_doc.set_id(invitation.did.to_string());
+            let service = get_service(pool_handle, &invitation.did).await.unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {}", err);
+                AriesService::default()
+            });
+            (service.service_endpoint, service.recipient_keys, service.routing_keys)
+        }
+        Invitation::Pairwise(invitation) => {
+            did_doc.set_id(invitation.id.0.clone());
+            (
+                invitation.service_endpoint.clone(),
+                invitation.recipient_keys.clone(),
+                invitation.routing_keys.clone(),
+            )
+        }
+        Invitation::OutOfBand(invitation) => {
+            did_doc.set_id(invitation.id.0.clone());
+            let service = resolve_service(pool_handle, &invitation.services[0]).await.unwrap_or_else(|err| {
+                error!("Failed to obtain service definition from the ledger: {}", err);
+                AriesService::default()
+            });
+            (service.service_endpoint, service.recipient_keys, service.routing_keys)
+        }
+    };
+    did_doc.set_service_endpoint(service_endpoint);
+    did_doc.set_recipient_keys(recipient_keys);
+    did_doc.set_routing_keys(routing_keys);
+    Ok(did_doc)
+}
+
 pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
     add_attr(wallet_handle, pool_handle, did, &attrib_json).await
@@ -368,6 +413,9 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 #[cfg(feature = "general_test")]
 mod test {
     use crate::utils::devsetup::*;
+    use messages::a2a::MessageId;
+    use messages::did_doc::test_utils::{_service_endpoint, _recipient_keys, _routing_keys};
+    use messages::connection::invite::test_utils::_pairwise_invitation;
 
     use super::*;
 
@@ -388,6 +436,16 @@ mod test {
         let transaction =
             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
+    }
+
+    #[tokio::test]
+    async fn test_did_doc_from_invitation_works() {
+        let mut did_doc = DidDoc::default();
+        did_doc.set_id(MessageId::id().0);
+        did_doc.set_service_endpoint(_service_endpoint());
+        did_doc.set_recipient_keys(_recipient_keys());
+        did_doc.set_routing_keys(_routing_keys());
+        assert_eq!(did_doc, into_did_doc(0, &Invitation::Pairwise(_pairwise_invitation())).await.unwrap());
     }
 }
 

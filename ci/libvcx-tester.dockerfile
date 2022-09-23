@@ -24,6 +24,7 @@ COPY --from=builder /usr/lib/libvdrtools.so /home/indy/lib*.so /usr/lib/
 WORKDIR /home/node
 COPY --chown=node ./libvcx ./libvcx
 COPY --chown=node ./agency_client ./agency_client
+COPY --chown=node ./messages ./messages
 COPY --chown=node ./aries_vcx ./aries_vcx
 COPY --chown=node ./wrappers/node ./wrappers/node
 COPY --chown=node ./agents/node ./agents/node

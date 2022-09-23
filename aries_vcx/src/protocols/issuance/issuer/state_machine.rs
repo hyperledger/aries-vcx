@@ -1,19 +1,18 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::credentials::encode_attributes;
 use crate::libindy::utils::anoncreds;
-use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::error::ProblemReport;
-use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use crate::messages::issuance::credential_proposal::CredentialProposal;
-use crate::messages::issuance::credential_request::CredentialRequest;
-use crate::messages::issuance::CredentialPreviewData;
-use crate::messages::status::Status;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use messages::issuance::credential_proposal::CredentialProposal;
+use messages::issuance::credential_request::CredentialRequest;
+use messages::issuance::CredentialPreviewData;
+use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
@@ -519,12 +518,13 @@ async fn _create_credential(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::a2a::A2AMessage;
-    use crate::messages::issuance::credential::test_utils::_credential;
-    use crate::messages::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
-    use crate::messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use crate::messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
-    use crate::messages::issuance::test_utils::{_ack, _problem_report};
+    use messages::a2a::A2AMessage;
+    use messages::issuance::credential::test_utils::_credential;
+    use messages::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
+    use messages::issuance::credential_proposal::test_utils::_credential_proposal;
+    use messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
+    use messages::issuance::test_utils::{_ack, _problem_report};
+    use messages::problem_report::ProblemReport;
     use crate::test::source_id;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
     use crate::utils::devsetup::SetupMocks;
@@ -610,8 +610,8 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use crate::messages::a2a::MessageId;
-        use crate::messages::issuance::CredentialPreviewData;
+        use messages::a2a::MessageId;
+        use messages::issuance::CredentialPreviewData;
         use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer, build_problem_report_msg};
         use crate::utils::constants::LIBINDY_CRED_OFFER;
         use crate::utils::devsetup::{was_in_past, SetupMocks};

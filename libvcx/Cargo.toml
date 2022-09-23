@@ -15,9 +15,9 @@ crate-type = ["staticlib","rlib", "cdylib"]
 
 [features]
 test_utils = []
-pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-agency_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-general_test = ["test_utils", "tokio/rt", "tokio/macros"]
+pool_tests = ["test_utils", "aries-vcx/test_utils", "tokio/rt", "tokio/macros"]
+agency_tests = ["test_utils", "aries-vcx/test_utils", "tokio/rt", "tokio/macros"]
+general_test = ["test_utils", "aries-vcx/test_utils", "tokio/rt", "tokio/macros"]
 to_restore = []
 fatal_warnings = []
 

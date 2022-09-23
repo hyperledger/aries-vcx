@@ -17,31 +17,25 @@ extern crate log;
 extern crate openssl;
 extern crate rand;
 extern crate regex;
-extern crate rmp_serde;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate strum;
-#[macro_use]
-extern crate strum_macros;
 extern crate time;
 extern crate url;
 extern crate uuid;
 #[macro_use]
 extern crate derive_builder;
+pub extern crate messages;
 
 #[macro_use]
 pub mod utils;
 #[macro_use]
 pub mod handlers;
-pub mod actors;
-pub mod did_doc;
 pub mod error;
 pub mod global;
 pub mod libindy;
-pub mod messages;
 pub mod protocols;
 
 #[cfg(test)]

@@ -1,10 +1,10 @@
-use crate::messages::a2a::A2AMessage;
-use crate::messages::error::ProblemReport;
-use crate::messages::issuance::credential::Credential;
-use crate::messages::issuance::credential_ack::CredentialAck;
-use crate::messages::issuance::credential_offer::CredentialOffer;
-use crate::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use crate::messages::issuance::credential_request::CredentialRequest;
+use messages::a2a::A2AMessage;
+use messages::problem_report::ProblemReport;
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_ack::CredentialAck;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
+use messages::issuance::credential_request::CredentialRequest;
 
 type OptionalComment = Option<String>;
 

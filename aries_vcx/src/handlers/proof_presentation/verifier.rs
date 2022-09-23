@@ -6,13 +6,13 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::messages::a2a::A2AMessage;
-use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::proof_presentation::presentation_request::*;
+use messages::a2a::A2AMessage;
+use messages::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
+use crate::libindy::proofs::proof_request::PresentationRequestData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -132,7 +132,7 @@ impl Verifier {
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm.presentation()?.presentations_attach.content()
+        self.verifier_sm.presentation()?.presentations_attach.content().map_err(|err| err.into())
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
@@ -209,8 +209,8 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::messages::a2a::A2AMessage;
-    use crate::messages::proof_presentation::presentation::test_utils::_presentation;
+    use messages::a2a::A2AMessage;
+    use messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;

@@ -4,22 +4,23 @@ use std::future::Future;
 
 use vdrtools_sys::WalletHandle;
 
-use crate::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::messages::a2a::protocol_registry::ProtocolRegistry;
-use crate::messages::a2a::{A2AMessage, MessageId};
-use crate::messages::connection::invite::{Invitation, PairwiseInvitation};
-use crate::messages::connection::problem_report::{ProblemCode, ProblemReport};
-use crate::messages::connection::request::Request;
-use crate::messages::connection::response::{Response, SignedResponse};
-use crate::messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::connection::invite::{Invitation, PairwiseInvitation};
+use messages::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::connection::request::Request;
+use messages::connection::response::{Response, SignedResponse};
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::libindy::utils::crypto::sign_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -361,15 +362,17 @@ impl SmConnectionInviter {
         match &self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
                 let new_recipient_keys = vec![new_pairwise_info.pw_vk.clone()];
-                Ok(Response::create()
-                    .set_did(new_pairwise_info.pw_did.to_string())
-                    .set_service_endpoint(new_service_endpoint)
-                    .set_keys(new_recipient_keys, new_routing_keys)
-                    .ask_for_ack()
-                    .set_thread_id(&request.get_thread_id())
-                    .encode(wallet_handle, &self.pairwise_info.clone().pw_vk)
-                    .await?
-                    .set_out_time())
+                sign_connection_response(
+                    wallet_handle,
+                    &self.pairwise_info.clone().pw_vk,
+                    Response::create()
+                        .set_did(new_pairwise_info.pw_did.to_string())
+                        .set_service_endpoint(new_service_endpoint)
+                        .set_keys(new_recipient_keys, new_routing_keys)
+                        .ask_for_ack()
+                        .set_thread_id(&request.get_thread_id())
+                        .set_out_time()
+                ).await
             }
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -382,13 +385,13 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::messages::ack::test_utils::{_ack};
-    use crate::messages::connection::problem_report::unit_tests::_problem_report;
-    use crate::messages::connection::request::unit_tests::_request;
-    use crate::messages::connection::response::test_utils::_signed_response;
-    use crate::messages::discovery::disclose::test_utils::_disclose;
-    use crate::messages::discovery::query::test_utils::_query;
-    use crate::messages::trust_ping::ping::unit_tests::_ping;
+    use messages::ack::test_utils::{_ack};
+    use messages::connection::problem_report::unit_tests::_problem_report;
+    use messages::connection::request::unit_tests::_request;
+    use messages::connection::response::test_utils::_signed_response;
+    use messages::discovery::disclose::test_utils::_disclose;
+    use messages::discovery::query::test_utils::_query;
+    use messages::trust_ping::ping::unit_tests::_ping;
     
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
@@ -472,7 +475,7 @@ pub mod unit_tests {
         mod build_messages {
             
 
-            use crate::messages::a2a::MessageId;
+            use messages::a2a::MessageId;
             
             use crate::utils::devsetup::was_in_past;
 
@@ -512,7 +515,7 @@ pub mod unit_tests {
         }
 
         mod get_thread_id {
-            use crate::messages::ack::test_utils::_ack_random_thread;
+            use messages::ack::test_utils::_ack_random_thread;
 
             use super::*;
 

@@ -1,7 +1,7 @@
 use futures::future::BoxFuture;
 
 use crate::error::VcxResult;
-use crate::messages::a2a::A2AMessage;
+use messages::a2a::A2AMessage;
 
 pub mod connection;
 pub mod issuance;

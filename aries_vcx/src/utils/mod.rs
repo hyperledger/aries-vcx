@@ -2,9 +2,9 @@ use vdrtools_sys::WalletHandle;
 use std::env;
 use std::path::PathBuf;
 
-use crate::did_doc::DidDoc;
+use messages::did_doc::DidDoc;
 use crate::error::VcxResult;
-use crate::messages::a2a::A2AMessage;
+use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
@@ -61,7 +61,6 @@ pub mod test_logger;
 pub mod encryption_envelope;
 pub mod filters;
 pub mod serialization;
-pub mod service_resolvable;
 pub mod validation;
 
 pub fn get_temp_dir_path(filename: &str) -> PathBuf {

@@ -12,11 +12,11 @@ name = "aries_vcx"
 path = "src/lib.rs"
 
 [features]
-test_utils = []
-pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-agency_pool_tests = ["test_utils", "tokio/rt", "tokio/macros"]
-agency_v2 = ["test_utils", "tokio/rt", "tokio/macros"]
-general_test = ["test_utils", "tokio/rt", "tokio/macros"]
+test_utils = ["messages/test_utils"]
+pool_tests = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+agency_pool_tests = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+agency_v2 = ["test_utils", "messages/test_utils", "tokio/rt", "tokio/macros"]
+general_test = ["test_utils", "messages/general_test", "tokio/rt", "tokio/macros"]
 fatal_warnings = []
 warnlog_fetched_messages = []
 mysql_test = ["test_utils", "sqlx", "tokio/rt", "tokio/macros"]
@@ -35,22 +35,19 @@ serde_derive = "1.0.97"
 url = "1.5.1"
 regex = "1.1.0"
 rust-base58 = "0.0.4"
-rmp-serde = "0.13.7"
 base64 = "0.8.0"
 openssl = { version = "0.10.35", features = ["vendored"] }
 num-traits = "0.2.0"
 vdrtools = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c" }
 vdrtools-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c" }
 futures = "0.3.15"
-libloading = "0.5.0"
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
 failure = "0.1.6"
-strum = "0.16.0"
-strum_macros = "0.16.0"
 agency_client = { version = "0.1.0", path = "../agency_client" }
 sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
 derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
+messages = { path  = "../messages" }
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
