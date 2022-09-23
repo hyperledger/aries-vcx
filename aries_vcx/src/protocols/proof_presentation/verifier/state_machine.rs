@@ -271,38 +271,38 @@ impl VerifierSM {
                 }
             },
             VerifierFullState::PresentationRequestSent(state) => match message {
-                VerifierMessages::VerifyPresentation(presentation) => match state
-                    .verify_presentation(wallet_handle, pool_handle, &presentation, &thread_id)
-                    .await
-                {
-                    Ok(()) => {
-                        if presentation.please_ack.is_some() {
-                            let ack = build_verification_ack(&thread_id);
-                            send_message.ok_or(VcxError::from_msg(
-                                VcxErrorKind::InvalidState,
-                                "Attempted to call undefined send_message callback",
-                            ))?(A2AMessage::PresentationAck(ack))
-                            .await?;
-                        };
-                        (
-                            VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
-                            thread_id,
-                        )
+                VerifierMessages::VerifyPresentation(presentation) => {
+                    let verification_result = state
+                        .verify_presentation(wallet_handle, pool_handle, &presentation, &thread_id)
+                        .await;
+                    let ack = build_verification_ack(&thread_id);
+                    match send_message {
+                        None => error!("Send message closure was not provided, presentation verification ack won't be sent."),
+                        Some(send_message) => {
+                            match send_message(A2AMessage::PresentationAck(ack)).await {
+                                Ok(_) => (),
+                                Err(err) => warn!("Failed to send presentation verification ack: {}", err),
+                            }
+                        }
                     }
-                    Err(err) => {
-                        let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
-                        error!("Presentation was not verified, sending problem report: {:?}", problem_report);
-                        send_message.ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidState,
-                            "Attempted to call undefined send_message callback",
-                        ))?(problem_report.to_a2a_message())
-                        .await?;
-                        match err.kind() {
-                            VcxErrorKind::InvalidProof => (
-                                VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
+                    match verification_result {
+                        Ok(()) => {
+                            (
+                                VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
                                 thread_id,
-                            ),
-                            _ => (VerifierFullState::Finished((state, problem_report).into()), thread_id),
+                            )
+                        }
+                        Err(err) => {
+                            match err.kind() {
+                                VcxErrorKind::InvalidProof => (
+                                    VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
+                                    thread_id,
+                                ),
+                                _ => {
+                                    let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                                    (VerifierFullState::Finished((state, problem_report).into()), thread_id)
+                                }
+                            }
                         }
                     }
                 },
