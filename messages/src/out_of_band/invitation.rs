@@ -33,13 +33,8 @@ pub struct OutOfBandInvitation {
 a2a_message!(OutOfBandInvitation);
 
 impl OutOfBandInvitation {
-    pub fn to_string(&self) -> VcxResult<String> {
-        serde_json::to_string(&self).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::SerializationError,
-                format!("Cannot serialize out of band message: {:?}", err),
-            )
-        })
+    pub fn to_string(&self) -> String {
+        json!(self).to_string()
     }
 
     pub fn from_string(oob_data: &str) -> VcxResult<OutOfBandInvitation> {

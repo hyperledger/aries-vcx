@@ -182,11 +182,11 @@ pub fn get_thread_id_receiver(handle: u32) -> VcxResult<String> {
 }
 
 pub fn to_string_sender(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| oob.to_string().map_err(|err| err.into()))
+    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| Ok(oob.to_string()))
 }
 
 pub fn to_string_receiver(handle: u32) -> VcxResult<String> {
-    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| oob.to_string().map_err(|err| err.into()))
+    OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| Ok(oob.to_string()))
 }
 
 pub fn from_string_sender(oob_data: &str) -> VcxResult<u32> {
