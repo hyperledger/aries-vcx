@@ -41,11 +41,8 @@ num-traits = "0.2.0"
 vdrtools = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c" }
 vdrtools-sys = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c" }
 futures = "0.3.15"
-libloading = "0.5.0"
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
 failure = "0.1.6"
-strum = "0.16.0"
-strum_macros = "0.16.0"
 agency_client = { version = "0.1.0", path = "../agency_client" }
 sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
 derive_builder = "0.10.2"
