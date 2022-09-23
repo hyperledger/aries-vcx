@@ -6,7 +6,7 @@ use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::utils::validation::validate_verkey;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries;
@@ -100,10 +100,10 @@ impl DidDoc {
         });
     }
 
-    pub fn validate(&self) -> VcxResult<()> {
+    pub fn validate(&self) -> MessagesResult<()> {
         if self.context != CONTEXT {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            return Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported @context value: {:?}",
                     self.context
@@ -112,16 +112,16 @@ impl DidDoc {
         }
 
         if self.id.is_empty() {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            return Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 "DIDDoc validation failed: id is empty",
             ));
         }
 
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                MessagesError::from_msg(
+                    MesssagesErrorKind::InvalidJson,
                     format!(
                         "DIDDoc validation failed: Invalid endpoint \"{:?}\", err: {:?}",
                         service.service_endpoint, err
@@ -132,7 +132,7 @@ impl DidDoc {
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
                 let public_key = self.find_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;
-                Ok::<_, VcxError>(())
+                Ok::<_, MessagesError>(())
             })?;
 
             service.routing_keys.iter().try_for_each(|routing_key_entry| {
@@ -141,7 +141,7 @@ impl DidDoc {
                 // 'authentication' verification method of the DDO
                 // That represents assumption that 'routing_key_entry' is always key value and not key reference
                 validate_verkey(routing_key_entry)?;
-                Ok::<_, VcxError>(())
+                Ok::<_, MessagesError>(())
             })?;
         }
 
@@ -185,9 +185,9 @@ impl DidDoc {
         }
     }
 
-    pub fn get_service(&self) -> VcxResult<AriesService> {
-        let service: &AriesService = self.service.get(0).ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidState,
+    pub fn get_service(&self) -> MessagesResult<AriesService> {
+        let service: &AriesService = self.service.get(0).ok_or(MessagesError::from_msg(
+            MesssagesErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
         ))?;
         let recipient_keys = self.recipient_keys();
@@ -199,7 +199,7 @@ impl DidDoc {
         })
     }
 
-    fn find_key(&self, key_value_or_reference: &str) -> VcxResult<Ed25519PublicKey> {
+    fn find_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
             Err(_) => {
@@ -211,10 +211,10 @@ impl DidDoc {
         Ok(public_key)
     }
 
-    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> VcxResult<()> {
+    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> MessagesResult<()> {
         if public_key.type_ != KEY_TYPE {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            return Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported PublicKey type: {:?}",
                     public_key.type_
@@ -225,7 +225,7 @@ impl DidDoc {
         Ok(())
     }
 
-    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> VcxResult<Ed25519PublicKey> {
+    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> MessagesResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
@@ -233,26 +233,26 @@ impl DidDoc {
                 None => ddo_keys.id == key_ref.key_id,
                 Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id),
             })
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn find_key_by_value(&self, key: String) -> VcxResult<Ed25519PublicKey> {
+    fn find_key_by_value(&self, key: String) -> MessagesResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key value: {}", key),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn is_authentication_key(&self, key: &str) -> VcxResult<()> {
+    fn is_authentication_key(&self, key: &str) -> MessagesResult<()> {
         if self.authentication.is_empty() {
             // todo: remove this, was probably to support legacy implementations
             return Ok(());
@@ -269,8 +269,8 @@ impl DidDoc {
                     Err(_) => false,
                 }
             })
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
                     key
@@ -278,8 +278,8 @@ impl DidDoc {
             ))?;
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            return Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported Authentication type: {:?}",
                     authentication_key.type_
@@ -298,11 +298,11 @@ impl DidDoc {
         key.split('#').collect()
     }
 
-    fn parse_key_reference(key_reference: &str) -> VcxResult<DdoKeyReference> {
+    fn parse_key_reference(key_reference: &str) -> MessagesResult<DdoKeyReference> {
         let pars: Vec<&str> = DidDoc::key_parts(key_reference);
         match pars.len() {
-            0 => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            0 => Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
             )),
             1 => Ok(DdoKeyReference {

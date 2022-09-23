@@ -39,7 +39,7 @@ impl Presentation {
         self
     }
 
-    pub fn set_presentations_attach(mut self, presentations: String) -> VcxResult<Presentation> {
+    pub fn set_presentations_attach(mut self, presentations: String) -> MessagesResult<Presentation> {
         self.presentations_attach
             .add_base64_encoded_json_attachment(AttachmentId::Presentation, serde_json::Value::String(presentations))?;
         Ok(self)

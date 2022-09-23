@@ -129,10 +129,10 @@ impl PresentationProposalData {
         self
     }
 
-    pub fn add_attribute_string(mut self, attr: &str) -> VcxResult<Self> {
+    pub fn add_attribute_string(mut self, attr: &str) -> MessagesResult<Self> {
         let attr: Attribute = serde_json::from_str(attr).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Cannot deserialize supplied attribute: {:?}", err),
             )
         })?;
@@ -150,10 +150,10 @@ impl PresentationProposalData {
         self
     }
 
-    pub fn add_predicate_string(mut self, pred: &str) -> VcxResult<Self> {
+    pub fn add_predicate_string(mut self, pred: &str) -> MessagesResult<Self> {
         let pred: Predicate = serde_json::from_str(pred).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Cannot deserialize supplied predicate: {:?}", err),
             )
         })?;

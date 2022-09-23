@@ -1,4 +1,4 @@
-use crate::error::VcxResult;
+use crate::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::attachment::{AttachmentId, Attachments};
 use crate::issuance::CredentialPreviewData;
@@ -43,7 +43,7 @@ impl CredentialOffer {
         self
     }
 
-    pub fn set_offers_attach(mut self, credential_offer: &str) -> VcxResult<CredentialOffer> {
+    pub fn set_offers_attach(mut self, credential_offer: &str) -> MessagesResult<CredentialOffer> {
         self.offers_attach.add_base64_encoded_json_attachment(
             AttachmentId::CredentialOffer,
             ::serde_json::Value::String(credential_offer.to_string()),

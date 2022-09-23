@@ -2,29 +2,29 @@ extern crate num_traits;
 
 use vdrtoolsrs::IndyError;
 
-use crate::error::prelude::{VcxError, VcxErrorKind};
+use crate::error::prelude::{MessagesError, MesssagesErrorKind};
 use crate::utils::error;
 
 use self::num_traits::int::PrimInt;
 
-impl From<IndyError> for VcxError {
+impl From<IndyError> for MessagesError {
     fn from(error: IndyError) -> Self {
         match error.error_code as u32 {
-            100..=111 => VcxError::from_msg(VcxErrorKind::InvalidLibindyParam, error.message),
-            113 => VcxError::from_msg(VcxErrorKind::LibindyInvalidStructure, error.message),
-            114 => VcxError::from_msg(VcxErrorKind::IOError, error.message),
-            200 => VcxError::from_msg(VcxErrorKind::InvalidWalletHandle, error.message),
-            203 => VcxError::from_msg(VcxErrorKind::DuplicationWallet, error.message),
-            204 => VcxError::from_msg(VcxErrorKind::WalletNotFound, error.message),
-            206 => VcxError::from_msg(VcxErrorKind::WalletAlreadyOpen, error.message),
-            212 => VcxError::from_msg(VcxErrorKind::WalletRecordNotFound, error.message),
-            213 => VcxError::from_msg(VcxErrorKind::DuplicationWalletRecord, error.message),
-            306 => VcxError::from_msg(VcxErrorKind::CreatePoolConfig, error.message),
-            404 => VcxError::from_msg(VcxErrorKind::DuplicationMasterSecret, error.message),
-            407 => VcxError::from_msg(VcxErrorKind::CredDefAlreadyCreated, error.message),
-            600 => VcxError::from_msg(VcxErrorKind::DuplicationDid, error.message),
-            702 => VcxError::from_msg(VcxErrorKind::InsufficientTokenAmount, error.message),
-            error_code => VcxError::from_msg(VcxErrorKind::LibndyError(error_code), error.message),
+            100..=111 => MessagesError::from_msg(MesssagesErrorKind::InvalidLibindyParam, error.message),
+            113 => MessagesError::from_msg(MesssagesErrorKind::LibindyInvalidStructure, error.message),
+            114 => MessagesError::from_msg(MesssagesErrorKind::IOError, error.message),
+            200 => MessagesError::from_msg(MesssagesErrorKind::InvalidWalletHandle, error.message),
+            203 => MessagesError::from_msg(MesssagesErrorKind::DuplicationWallet, error.message),
+            204 => MessagesError::from_msg(MesssagesErrorKind::WalletNotFound, error.message),
+            206 => MessagesError::from_msg(MesssagesErrorKind::WalletAlreadyOpen, error.message),
+            212 => MessagesError::from_msg(MesssagesErrorKind::WalletRecordNotFound, error.message),
+            213 => MessagesError::from_msg(MesssagesErrorKind::DuplicationWalletRecord, error.message),
+            306 => MessagesError::from_msg(MesssagesErrorKind::CreatePoolConfig, error.message),
+            404 => MessagesError::from_msg(MesssagesErrorKind::DuplicationMasterSecret, error.message),
+            407 => MessagesError::from_msg(MesssagesErrorKind::CredDefAlreadyCreated, error.message),
+            600 => MessagesError::from_msg(MesssagesErrorKind::DuplicationDid, error.message),
+            702 => MessagesError::from_msg(MesssagesErrorKind::InsufficientTokenAmount, error.message),
+            error_code => MessagesError::from_msg(MesssagesErrorKind::LibndyError(error_code), error.message),
         }
     }
 }
@@ -101,10 +101,10 @@ pub mod unit_tests {
             indy_backtrace: None,
         };
 
-        assert_eq!(VcxError::from(err100).kind(), VcxErrorKind::InvalidLibindyParam);
-        assert_eq!(VcxError::from(err107).kind(), VcxErrorKind::InvalidLibindyParam);
-        assert_eq!(VcxError::from(err111).kind(), VcxErrorKind::InvalidLibindyParam);
+        assert_eq!(MessagesError::from(err100).kind(), MesssagesErrorKind::InvalidLibindyParam);
+        assert_eq!(MessagesError::from(err107).kind(), MesssagesErrorKind::InvalidLibindyParam);
+        assert_eq!(MessagesError::from(err111).kind(), MesssagesErrorKind::InvalidLibindyParam);
         // Test that RC 112 falls out of the range 100...112
-        assert_ne!(VcxError::from(err112).kind(), VcxErrorKind::InvalidLibindyParam);
+        assert_ne!(MessagesError::from(err112).kind(), MesssagesErrorKind::InvalidLibindyParam);
     }
 }

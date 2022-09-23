@@ -37,10 +37,10 @@ impl OutOfBandInvitation {
         json!(self).to_string()
     }
 
-    pub fn from_string(oob_data: &str) -> VcxResult<OutOfBandInvitation> {
+    pub fn from_string(oob_data: &str) -> MessagesResult<OutOfBandInvitation> {
         serde_json::from_str(oob_data).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Cannot deserialize out of band message: {:?}", err),
             )
         })

@@ -43,18 +43,18 @@ impl PresentationRequest {
     pub fn set_request_presentations_attach(
         mut self,
         request_presentations: &PresentationRequestData,
-    ) -> VcxResult<PresentationRequest> {
+    ) -> MessagesResult<PresentationRequest> {
         trace!("set_request_presentations_attach >>> {:?}", request_presentations);
         self.request_presentations_attach
             .add_base64_encoded_json_attachment(AttachmentId::PresentationRequest, json!(request_presentations))?;
         Ok(self)
     }
 
-    pub fn get_presentation_request_data(self) -> VcxResult<ProofRequestData> {
+    pub fn get_presentation_request_data(self) -> MessagesResult<ProofRequestData> {
         let content = &self.request_presentations_attach.content()?;
         serde_json::from_str(content).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!(
                     "Cannot deserialize PresentationRequestData: {}, error: {}",
                     content, err
@@ -63,10 +63,10 @@ impl PresentationRequest {
         })
     }
 
-    pub fn to_json(&self) -> VcxResult<String> {
+    pub fn to_json(&self) -> MessagesResult<String> {
         serde_json::to_string(self).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 format!("Cannot serialize PresentationRequest: {}", err),
             )
         })

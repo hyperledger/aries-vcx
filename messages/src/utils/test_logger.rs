@@ -49,8 +49,8 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
     )
 }
 
-fn set_default_logger(patter: Option<&str>) -> VcxResult<()> {
-    logger::set_default_logger(patter).map_err(VcxError::from)
+fn set_default_logger(patter: Option<&str>) -> MessagesResult<()> {
+    logger::set_default_logger(patter).map_err(MessagesError::from)
 }
 
 impl LibvcxDefaultLogger {
@@ -60,7 +60,7 @@ impl LibvcxDefaultLogger {
         env::var("RUST_LOG").map_or((), |log_pattern| LibvcxDefaultLogger::init(Some(log_pattern)).unwrap())
     }
 
-    pub fn init(pattern: Option<String>) -> VcxResult<()> {
+    pub fn init(pattern: Option<String>) -> MessagesResult<()> {
         info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         let formatter = match env::var("RUST_LOG_FORMATTER") {
@@ -76,7 +76,7 @@ impl LibvcxDefaultLogger {
             .parse_filters(pattern.as_deref().unwrap_or("warn"))
             .try_init()
             .map_err(|err| {
-                VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                MessagesError::from_msg(MesssagesErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
             })?;
         set_default_logger(pattern.as_deref())
     }

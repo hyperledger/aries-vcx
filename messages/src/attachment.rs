@@ -2,7 +2,7 @@ use std::str::from_utf8;
 
 use serde_json;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Attachments(pub Vec<Attachment>);
@@ -29,21 +29,21 @@ impl Attachments {
         id: AttachmentId,
         json: serde_json::Value,
         encoding: AttachmentEncoding,
-    ) -> VcxResult<()> {
+    ) -> MessagesResult<()> {
         let json: Json = Json::new(id, json, encoding)?;
         self.add(Attachment::JSON(json));
         Ok(())
     }
 
-    pub fn add_base64_encoded_json_attachment(&mut self, id: AttachmentId, json: serde_json::Value) -> VcxResult<()> {
+    pub fn add_base64_encoded_json_attachment(&mut self, id: AttachmentId, json: serde_json::Value) -> MessagesResult<()> {
         self.add_json_attachment(id, json, AttachmentEncoding::Base64) // TODO: AttachmentEncoding::Json does not seem to work
     }
 
-    pub fn content(&self) -> VcxResult<String> {
+    pub fn content(&self) -> MessagesResult<String> {
         match self.get() {
             Some(Attachment::JSON(ref attach)) => attach.get_data(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            _ => Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidJson,
                 "Unsupported Attachment type",
             )),
         }
@@ -89,16 +89,16 @@ pub enum AttachmentId {
 }
 
 impl Json {
-    pub fn new(id: AttachmentId, json: serde_json::Value, encoding: AttachmentEncoding) -> VcxResult<Json> {
+    pub fn new(id: AttachmentId, json: serde_json::Value, encoding: AttachmentEncoding) -> MessagesResult<Json> {
         let data: AttachmentData = match encoding {
             AttachmentEncoding::Base64 => AttachmentData::Base64(base64::encode(&match json {
                 serde_json::Value::Object(obj) => serde_json::to_string(&obj).map_err(|_| {
-                    VcxError::from_msg(VcxErrorKind::InvalidJson, "Invalid Attachment Json".to_string())
+                    MessagesError::from_msg(MesssagesErrorKind::InvalidJson, "Invalid Attachment Json".to_string())
                 })?,
                 serde_json::Value::String(str) => str,
                 val => {
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    return Err(MessagesError::from_msg(
+                        MesssagesErrorKind::InvalidJson,
                         format!("Unsupported Json value: {:?}", val),
                     ))
                 }
@@ -108,12 +108,12 @@ impl Json {
         Ok(Json { id, data })
     }
 
-    pub fn get_data(&self) -> VcxResult<String> {
+    pub fn get_data(&self) -> MessagesResult<String> {
         let data = self.data.get_bytes()?;
         trace!("Json::get_data >>> data: {:?}", data);
         from_utf8(data.as_slice())
             .map(|s| s.to_string())
-            .map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment".to_string()))
+            .map_err(|_| MessagesError::from_msg(MesssagesErrorKind::IOError, "Wrong bytes in attachment".to_string()))
     }
 }
 
@@ -132,13 +132,13 @@ pub enum AttachmentData {
 }
 
 impl AttachmentData {
-    pub fn get_bytes(&self) -> VcxResult<Vec<u8>> {
+    pub fn get_bytes(&self) -> MessagesResult<Vec<u8>> {
         match self {
             AttachmentData::Base64(s) => {
-                base64::decode(s).map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment"))
+                base64::decode(s).map_err(|_| MessagesError::from_msg(MesssagesErrorKind::IOError, "Wrong bytes in attachment"))
             }
             AttachmentData::Json(json) => serde_json::to_vec(&json)
-                .map_err(|_| VcxError::from_msg(VcxErrorKind::IOError, "Wrong bytes in attachment")),
+                .map_err(|_| MessagesError::from_msg(MesssagesErrorKind::IOError, "Wrong bytes in attachment")),
         }
     }
 }

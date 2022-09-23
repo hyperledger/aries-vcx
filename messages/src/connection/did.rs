@@ -6,12 +6,12 @@ use crate::error::prelude::*;
 pub struct Did(String);
 
 impl Did {
-    pub fn new(did: &str) -> VcxResult<Self> {
+    pub fn new(did: &str) -> MessagesResult<Self> {
         if Self::validate(did) {
             Ok(Self(did.to_string()))
         } else {
-            Err(VcxError::from_msg(
-                VcxErrorKind::InvalidDid,
+            Err(MessagesError::from_msg(
+                MesssagesErrorKind::InvalidDid,
                 format!("{} is not a valid DID", did),
             ))
         }

@@ -1,4 +1,4 @@
-use crate::error::VcxResult;
+use crate::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::attachment::{AttachmentId, Attachments};
 use crate::thread::Thread;
@@ -34,7 +34,7 @@ impl CredentialRequest {
         self
     }
 
-    pub fn set_requests_attach(mut self, credential_request: String) -> VcxResult<CredentialRequest> {
+    pub fn set_requests_attach(mut self, credential_request: String) -> MessagesResult<CredentialRequest> {
         self.requests_attach.add_base64_encoded_json_attachment(
             AttachmentId::CredentialRequest,
             serde_json::Value::String(credential_request),

@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::mime_type::MimeType;
@@ -33,10 +33,10 @@ impl CredentialPreviewData {
         self
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
+    pub fn to_string(&self) -> MessagesResult<String> {
         serde_json::to_string(&self.attributes).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::SerializationError,
+            MessagesError::from_msg(
+                MesssagesErrorKind::SerializationError,
                 format!("Failed serialize credential preview attributes\nError: {}", err),
             )
         })

@@ -55,7 +55,7 @@ pub struct PublicInvitation {
 }
 
 impl Invitation {
-    pub fn get_id(&self) -> VcxResult<String> {
+    pub fn get_id(&self) -> MessagesResult<String> {
         match self {
             Self::Pairwise(invite) => Ok(invite.id.0.clone()),
             Self::Public(invite) => Ok(invite.id.0.clone()),
@@ -110,7 +110,7 @@ impl PublicInvitation {
         self
     }
 
-    pub fn set_public_did(mut self, public_did: &str) -> VcxResult<Self> {
+    pub fn set_public_did(mut self, public_did: &str) -> MessagesResult<Self> {
         self.did = Did::new(public_did)?;
         Ok(self)
     }

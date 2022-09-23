@@ -5,13 +5,13 @@ use crate::error::prelude::*;
 
 use self::rust_base58::FromBase58;
 
-pub fn validate_verkey(verkey: &str) -> VcxResult<String> {
+pub fn validate_verkey(verkey: &str) -> MessagesResult<String> {
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(_) => Err(VcxError::from_msg(VcxErrorKind::InvalidVerkey, "Invalid Verkey length")),
-        Err(x) => Err(VcxError::from_msg(
-            VcxErrorKind::NotBase58,
+        Ok(_) => Err(MessagesError::from_msg(MesssagesErrorKind::InvalidVerkey, "Invalid Verkey length")),
+        Err(x) => Err(MessagesError::from_msg(
+            MesssagesErrorKind::NotBase58,
             format!("Invalid Verkey: {}", x),
         )),
     }
@@ -41,7 +41,7 @@ mod unit_tests {
 
         let verkey = "8XFh8yBzrpJQmNyZzgoT";
         match validate_verkey(&verkey) {
-            Err(x) => assert_eq!(x.kind(), VcxErrorKind::InvalidVerkey),
+            Err(x) => assert_eq!(x.kind(), MesssagesErrorKind::InvalidVerkey),
             Ok(_) => panic!("Should be invalid verkey"),
         }
     }
@@ -52,7 +52,7 @@ mod unit_tests {
 
         let verkey = "*kVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
-            Err(x) => assert_eq!(x.kind(), VcxErrorKind::NotBase58),
+            Err(x) => assert_eq!(x.kind(), MesssagesErrorKind::NotBase58),
             Ok(_) => panic!("Should be invalid verkey"),
         }
     }

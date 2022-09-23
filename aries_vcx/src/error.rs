@@ -6,7 +6,7 @@ use failure::{Backtrace, Context, Fail};
 use agency_client;
 use agency_client::error::AgencyClientErrorKind;
 use messages;
-use messages::error::VcxErrorKind as MessagesErrorKind;
+use messages::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
 
 pub mod prelude {
@@ -359,8 +359,8 @@ impl From<AgencyClientErrorKind> for VcxErrorKind {
     }
 }
 
-impl From<messages::error::VcxError> for VcxError {
-    fn from(msg_err: messages::error::VcxError) -> VcxError {
+impl From<messages::error::MessagesError> for VcxError {
+    fn from(msg_err: messages::error::MessagesError) -> VcxError {
         let vcx_error_kind: VcxErrorKind = msg_err.kind().into();
         VcxError::from_msg(vcx_error_kind, msg_err.to_string())
     }
