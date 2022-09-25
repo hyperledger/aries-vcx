@@ -6,7 +6,9 @@ use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::out_of_band::GoalCode;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
+use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
+use aries_vcx::libindy::utils::ledger::into_did_doc;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;
@@ -165,7 +167,9 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
 
 pub async fn build_connection(handle: u32) -> VcxResult<String> {
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    oob.build_connection(&get_main_agency_client().unwrap(), false)
+    let invitation = Invitation::OutOfBand(oob.oob.clone());
+    let ddo = into_did_doc(get_main_pool_handle()?, &invitation).await?;
+    oob.build_connection(&get_main_agency_client().unwrap(), ddo, false)
         .await?
         .to_string()
         .map_err(|err| err.into())
