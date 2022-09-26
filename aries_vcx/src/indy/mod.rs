@@ -1,4 +1,3 @@
-pub mod credential_def;
 pub mod credentials;
 pub mod proofs;
 pub mod utils;

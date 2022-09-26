@@ -10,7 +10,7 @@ pub mod integration_tests {
         create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
         create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
     };
-    use crate::indy::credential_def::generate_cred_def;
+    use crate::indy::primitives::credential_definition::generate_cred_def;
     use crate::indy::ledger::transactions::{get_cred_def, get_rev_reg, get_rev_reg_def_json, get_rev_reg_delta_json, get_schema_json, is_cred_def_on_ledger};
     use crate::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req;
     use crate::indy::primitives::revocation_registry::{generate_rev_reg, libindy_issuer_revoke_credential, publish_local_revocations, revoke_credential_local};
