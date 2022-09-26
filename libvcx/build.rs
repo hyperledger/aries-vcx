@@ -9,17 +9,6 @@ extern crate toml;
 #[macro_use]
 extern crate serde_derive;
 
-// error in rust compiler.  Bugfix requested in Sept. 2017
-// these are used, but the compiler is not seeing it for
-// some reason
-#[allow(unused_imports)]
-#[macro_use]
-extern crate serde_json;
-// error in rust compiler.  Bugfix has been submitted in Sept. 2017
-#[allow(unused_imports)]
-#[macro_use]
-extern crate serde;
-
 // used in formatting the Cargo.toml file
 #[derive(Deserialize, Debug)]
 struct Tomlfile;
@@ -52,11 +41,7 @@ fn main() {
     let target = env::var("TARGET").unwrap();
     println!("target={}", target);
 
-    if let Ok(_mode) = env::var("LIBINDY_STATIC") {
-        let libindy_lib_path = env::var("LIBINDY_DIR").unwrap();
-        println!("cargo:rustc-link-search=native={}", libindy_lib_path);
-        println!("cargo:rustc-link-lib=static=indy");
-    } else if target.contains("aarch64-linux-android")
+    if target.contains("aarch64-linux-android")
         || target.contains("armv7-linux-androideabi")
         || target.contains("arm-linux-androideabi")
         || target.contains("i686-linux-android")
@@ -67,11 +52,6 @@ fn main() {
         || target.contains("i386-apple-ios")
         || target.contains("x86_64-apple-ios")
     {
-        let libindy_lib_path = match env::var("LIBINDY_DIR") {
-            Ok(val) => val,
-            Err(..) => panic!("Missing required environment variable LIBINDY_DIR"),
-        };
-
         let openssl = match env::var("OPENSSL_LIB_DIR") {
             Ok(val) => val,
             Err(..) => match env::var("OPENSSL_DIR") {
@@ -82,8 +62,6 @@ fn main() {
             },
         };
 
-        println!("cargo:rustc-link-search=native={}", libindy_lib_path);
-        println!("cargo:rustc-link-lib=static=vdrtools");
         println!("cargo:rustc-link-search=native={}", openssl);
         println!("cargo:rustc-link-lib=static=crypto");
         println!("cargo:rustc-link-lib=static=ssl");
@@ -91,16 +69,13 @@ fn main() {
         //OSX specific logic
         println!("cargo:rustc-link-lib=sodium");
         println!("cargo:rustc-link-lib=zmq");
-        println!("cargo:rustc-link-lib=vdrtools");
         //OSX does not allow 3rd party libs to be installed in /usr/lib. Instead install it in /usr/local/lib
         println!("cargo:rustc-link-search=native=/usr/local/lib");
+        println!("cargo:rustc-link-search=native=/opt/homebrew/lib");
     } else if target.contains("-linux-") {
         //Linux specific logic
-        println!("cargo:rustc-link-lib=vdrtools");
         println!("cargo:rustc-link-search=native=/usr/lib");
     } else if target.contains("-windows-") {
-        println!("cargo:rustc-link-lib=vdrtools.dll");
-
         let profile = env::var("PROFILE").unwrap();
         println!("profile={}", profile);
 
@@ -116,7 +91,6 @@ fn main() {
         println!("cargo:rustc-flags=-L {}", indy_dir.as_os_str().to_str().unwrap());
 
         let files = vec![
-            "indy.dll",
             "libeay32md.dll",
             "libsodium.dll",
             "libzmq.dll",
