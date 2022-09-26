@@ -1,6 +1,6 @@
 use vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::anoncreds;
+use crate::libindy::{anoncreds, credential_def};
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -130,7 +130,7 @@ impl CredentialDef {
             tag,
         } = config;
         let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
-        let (cred_def_id, cred_def_json) = anoncreds::generate_cred_def(
+        let (cred_def_id, cred_def_json) = credential_def::generate_cred_def(
             wallet_handle,
             &issuer_did,
             &schema_json,

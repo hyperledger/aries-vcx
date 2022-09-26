@@ -10,6 +10,8 @@ use crate::global::settings;
 use crate::libindy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::libindy::ledger::transactions::*;
 use crate::libindy::ledger::transactions::sign_and_submit_to_ledger;
+use crate::libindy::primitives::revocation_registry;
+use crate::libindy::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::libindy::utils::LibindyMock;
 use crate::utils;
 use crate::utils::constants::{
@@ -21,98 +23,6 @@ use crate::utils::constants::{
 };
 use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 
-const BLOB_STORAGE_TYPE: &str = "default";
-const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
-
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinitionValue {
-    pub issuance_type: String,
-    pub max_cred_num: u32,
-    pub public_keys: serde_json::Value,
-    pub tails_hash: String,
-    pub tails_location: String,
-}
-
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RevocationRegistryDefinition {
-    pub id: String,
-    pub revoc_def_type: String,
-    pub tag: String,
-    pub cred_def_id: String,
-    pub value: RevocationRegistryDefinitionValue,
-    pub ver: String,
-}
-
-pub async fn libindy_verifier_verify_proof(
-    proof_req_json: &str,
-    proof_json: &str,
-    schemas_json: &str,
-    credential_defs_json: &str,
-    rev_reg_defs_json: &str,
-    rev_regs_json: &str,
-) -> VcxResult<bool> {
-    anoncreds::verifier_verify_proof(
-        proof_req_json,
-        proof_json,
-        schemas_json,
-        credential_defs_json,
-        rev_reg_defs_json,
-        rev_regs_json,
-    )
-        .await
-        .map_err(VcxError::from)
-}
-
-pub async fn libindy_create_and_store_revoc_reg(
-    wallet_handle: WalletHandle,
-    issuer_did: &str,
-    cred_def_id: &str,
-    tails_dir: &str,
-    max_creds: u32,
-    tag: &str,
-) -> VcxResult<(String, String, String)> {
-    trace!("creating revocation: {}, {}, {}", cred_def_id, tails_dir, max_creds);
-
-    let tails_config = json!({"base_dir": tails_dir,"uri_pattern": ""}).to_string();
-
-    let writer = blob_storage::open_writer(BLOB_STORAGE_TYPE, &tails_config).await?;
-
-    let revoc_config = json!({"max_cred_num": max_creds, "issuance_type": REVOCATION_REGISTRY_TYPE}).to_string();
-
-    anoncreds::issuer_create_and_store_revoc_reg(
-        wallet_handle,
-        issuer_did,
-        None,
-        tag,
-        cred_def_id,
-        &revoc_config,
-        writer,
-    )
-        .await
-        .map_err(VcxError::from)
-}
-
-pub async fn libindy_create_and_store_credential_def(
-    wallet_handle: WalletHandle,
-    issuer_did: &str,
-    schema_json: &str,
-    tag: &str,
-    sig_type: Option<&str>,
-    config_json: &str,
-) -> VcxResult<(String, String)> {
-    anoncreds::issuer_create_and_store_credential_def(
-        wallet_handle,
-        issuer_did,
-        schema_json,
-        tag,
-        sig_type,
-        config_json,
-    )
-        .await
-        .map_err(VcxError::from)
-}
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
@@ -573,31 +483,6 @@ pub async fn get_schema_json(wallet_handle: WalletHandle, pool_handle: PoolHandl
     Ok((schema_id.to_string(), schema_json))
 }
 
-pub async fn generate_cred_def(
-    wallet_handle: WalletHandle,
-    issuer_did: &str,
-    schema_json: &str,
-    tag: &str,
-    sig_type: Option<&str>,
-    support_revocation: Option<bool>,
-) -> VcxResult<(String, String)> {
-    trace!(
-        "generate_cred_def >>> issuer_did: {}, schema_json: {}, tag: {}, sig_type: {:?}, support_revocation: {:?}",
-        issuer_did,
-        schema_json,
-        tag,
-        sig_type,
-        support_revocation
-    );
-    if settings::indy_mocks_enabled() {
-        return Ok((CRED_DEF_ID.to_string(), CRED_DEF_JSON.to_string()));
-    }
-
-    let config_json = json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
-
-    libindy_create_and_store_credential_def(wallet_handle, issuer_did, schema_json, tag, sig_type, &config_json).await
-}
-
 pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
         return Ok(CRED_DEF_REQ.to_string());
@@ -662,7 +547,7 @@ pub async fn generate_rev_reg(
     }
 
     let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
-        libindy_create_and_store_revoc_reg(wallet_handle, issuer_did, cred_def_id, tails_dir, max_creds, tag).await?;
+        revocation_registry::libindy_create_and_store_revoc_reg(wallet_handle, issuer_did, cred_def_id, tails_dir, max_creds, tag).await?;
 
     let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json).map_err(|err| {
         VcxError::from_msg(
@@ -948,7 +833,7 @@ pub mod test_utils {
     use crate::libindy;
     use crate::libindy::primitives::credential_definition::CredentialDefConfigBuilder;
     use crate::libindy::primitives::revocation_registry::RevocationRegistry;
-    use crate::libindy::credentials::encode_attributes;
+    use crate::libindy::credentials::encoding::encode_attributes;
     use crate::libindy::primitives::credential_definition::CredentialDef;
     use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
@@ -1377,6 +1262,7 @@ pub mod integration_tests {
         create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
         create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
     };
+    use crate::libindy::credential_def::generate_cred_def;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
     use crate::utils::get_temp_dir_path;
@@ -1384,43 +1270,6 @@ pub mod integration_tests {
     use super::*;
 
     extern crate serde_json;
-
-    #[tokio::test]
-    async fn test_prover_verify_proof() {
-        let setup = SetupWalletPool::init().await;
-
-        let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle, setup.pool_handle, &setup.institution_did).await;
-
-        let proof_validation = libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap();
-
-        assert!(proof_validation);
-    }
-
-    #[tokio::test]
-    async fn test_prover_verify_proof_with_predicate_success_case() {
-        let setup = SetupWalletPool::init().await;
-
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, true).await;
-
-        let proof_validation = libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap();
-
-        assert!(proof_validation);
-    }
-
-    #[tokio::test]
-    async fn test_prover_verify_proof_with_predicate_fail_case() {
-        let setup = SetupWalletPool::init().await;
-
-        let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, false).await;
-
-        libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
-            .await
-            .unwrap_err();
-    }
 
     #[tokio::test]
     async fn tests_libindy_prover_get_credentials() {
@@ -1482,22 +1331,6 @@ pub mod integration_tests {
     }
 
     #[tokio::test]
-    async fn test_create_cred_def_real() {
-        let setup = SetupWalletPool::init().await;
-
-        let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
-
-        let (_, cred_def_json) = generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
-            .await
-            .unwrap();
-        publish_cred_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &cred_def_json)
-            .await
-            .unwrap();
-    }
-
-    #[tokio::test]
     async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
         let setup = SetupWalletPool::init().await;
@@ -1518,33 +1351,6 @@ pub mod integration_tests {
             .await;
 
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::LibindyInvalidStructure);
-    }
-
-    #[tokio::test]
-    async fn test_create_rev_reg_def() {
-        let setup = SetupWalletPool::init().await;
-
-        let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
-        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
-
-        let (cred_def_id, cred_def_json) =
-            generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
-                .await
-                .unwrap();
-        publish_cred_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &cred_def_json)
-            .await
-            .unwrap();
-        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) =
-            generate_rev_reg(setup.wallet_handle, &setup.institution_did, &cred_def_id, "tails.txt", 2, "tag1")
-                .await
-                .unwrap();
-        publish_rev_reg_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_json)
-            .await
-            .unwrap();
-        publish_rev_reg_delta(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
-            .await
-            .unwrap();
     }
 
     #[tokio::test]

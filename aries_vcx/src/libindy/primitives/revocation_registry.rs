@@ -1,9 +1,12 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::blob_storage;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::libindy::primitives::credential_definition::PublicEntityStateType;
 use crate::libindy::anoncreds;
-use crate::libindy::anoncreds::RevocationRegistryDefinition;
+
+pub const BLOB_STORAGE_TYPE: &str = "default";
+pub const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
 pub struct RevocationRegistry {
@@ -170,4 +173,54 @@ impl RevocationRegistry {
             )
         })
     }
+}
+
+pub async fn libindy_create_and_store_revoc_reg(
+    wallet_handle: WalletHandle,
+    issuer_did: &str,
+    cred_def_id: &str,
+    tails_dir: &str,
+    max_creds: u32,
+    tag: &str,
+) -> VcxResult<(String, String, String)> {
+    trace!("creating revocation: {}, {}, {}", cred_def_id, tails_dir, max_creds);
+
+    let tails_config = json!({"base_dir": tails_dir,"uri_pattern": ""}).to_string();
+
+    let writer = blob_storage::open_writer(BLOB_STORAGE_TYPE, &tails_config).await?;
+
+    let revoc_config = json!({"max_cred_num": max_creds, "issuance_type": REVOCATION_REGISTRY_TYPE}).to_string();
+
+    vdrtools::anoncreds::issuer_create_and_store_revoc_reg(
+        wallet_handle,
+        issuer_did,
+        None,
+        tag,
+        cred_def_id,
+        &revoc_config,
+        writer,
+    )
+        .await
+        .map_err(VcxError::from)
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinitionValue {
+    pub issuance_type: String,
+    pub max_cred_num: u32,
+    pub public_keys: serde_json::Value,
+    pub tails_hash: String,
+    pub tails_location: String,
+}
+
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RevocationRegistryDefinition {
+    pub id: String,
+    pub revoc_def_type: String,
+    pub tag: String,
+    pub cred_def_id: String,
+    pub value: RevocationRegistryDefinitionValue,
+    pub ver: String,
 }

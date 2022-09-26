@@ -4,7 +4,7 @@ use std::fmt::Display;
 use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::credentials::encode_attributes;
+use crate::libindy::credentials::encoding::encode_attributes;
 use crate::libindy::anoncreds;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::issuance::credential::Credential;

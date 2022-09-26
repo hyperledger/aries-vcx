@@ -1,4 +1,4 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::verifier::verifier_internal::{
@@ -6,6 +6,7 @@ use crate::libindy::proofs::verifier::verifier_internal::{
     get_credential_info, validate_proof_revealed_attributes,
 };
 use crate::libindy::anoncreds;
+use crate::libindy::proofs::verifier::verifier_libindy;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 pub async fn validate_indy_proof(
@@ -41,7 +42,7 @@ pub async fn validate_indy_proof(
     debug!("*******\n{}\n********", proof_req_json);
     debug!("*******\n{}\n********", rev_reg_defs_json);
     debug!("*******\n{}\n********", rev_regs_json);
-    anoncreds::libindy_verifier_verify_proof(
+    verifier_libindy::libindy_verifier_verify_proof(
         proof_req_json,
         proof_json,
         &schemas_json,
