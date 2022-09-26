@@ -18,7 +18,7 @@ use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
 
 use messages::did_doc::service_resolvable::ServiceResolvable;
-use crate::libindy::utils::ledger::resolve_service;
+use crate::indy::ledger::transactions::resolve_service;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {

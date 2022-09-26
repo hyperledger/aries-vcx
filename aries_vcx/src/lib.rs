@@ -35,7 +35,7 @@ pub mod utils;
 pub mod handlers;
 pub mod error;
 pub mod global;
-pub mod libindy;
+pub mod indy;
 pub mod protocols;
 
 #[cfg(test)]

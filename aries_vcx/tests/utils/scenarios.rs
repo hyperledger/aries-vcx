@@ -3,7 +3,7 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use vdrtools_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{PoolHandle, WalletHandle};
     use serde_json::{json, Value};
 
     use aries_vcx::global::settings;
@@ -15,20 +15,21 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::libindy;
-    use aries_vcx::libindy::credential_def::revocation_registry::RevocationRegistry;
-    use aries_vcx::libindy::credential_def::CredentialDef;
-    use aries_vcx::libindy::utils::anoncreds::publish_local_revocations;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
-    use aries_vcx::libindy::utils::ledger::into_did_doc;
+    use aries_vcx::indy;
+    use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
+    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
+    use aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
+    use aries_vcx::indy::test_utils::create_and_store_credential_def;
+    use aries_vcx::indy::ledger::transactions::{get_rev_reg_delta_json, into_did_doc};
+    use aries_vcx::indy::primitives;
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::mime_type::MimeType;
     use aries_vcx::messages::proof_presentation::presentation_proposal::{Attribute, PresentationProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::libindy::proofs::proof_request_internal::AttrInfo;
+    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::indy::proofs::proof_request_internal::AttrInfo;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -692,11 +693,11 @@ pub mod test_utils {
 
     pub async fn revoke_credential_and_publish_accumulator(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
         revoke_credential_local(faber, issuer_credential, &rev_reg_id).await;
-        publish_local_revocations(faber.wallet_handle, faber.pool_handle, &faber.config_issuer.institution_did, &rev_reg_id).await;
+        publish_local_revocations(faber.wallet_handle, faber.pool_handle, &faber.config_issuer.institution_did, &rev_reg_id).await.unwrap();
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
-        let (_, delta, timestamp) = libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id, None, None)
+        let (_, delta, timestamp) = get_rev_reg_delta_json(faber.pool_handle, &rev_reg_id, None, None)
             .await
             .unwrap();
         info!("revoking credential locally");
@@ -705,7 +706,7 @@ pub mod test_utils {
             .await
             .unwrap();
         let (_, delta_after_revoke, _) =
-            libindy::utils::anoncreds::get_rev_reg_delta_json(faber.pool_handle, rev_reg_id, Some(timestamp + 1), None)
+            get_rev_reg_delta_json(faber.pool_handle, rev_reg_id, Some(timestamp + 1), None)
                 .await
                 .unwrap();
         assert_ne!(delta, delta_after_revoke); // They will not equal as we have saved the delta in cache
@@ -734,7 +735,7 @@ pub mod test_utils {
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        libindy::utils::anoncreds::publish_local_revocations(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
+        primitives::revocation_registry::publish_local_revocations(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
             .await
             .unwrap();
     }

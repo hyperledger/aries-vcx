@@ -1,6 +1,7 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::libindy::credential_def::PublicEntityStateType;
-use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
+use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
+use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
+use aries_vcx::indy::primitives::credential_definition::CredentialDef;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -96,9 +97,9 @@ pub mod tests {
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::credential_def::RevocationDetailsBuilder;
-    use aries_vcx::libindy::utils::anoncreds::get_cred_def_json;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::indy::primitives::credential_definition::RevocationDetailsBuilder;
+    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::indy::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::{constants::SCHEMA_ID, get_temp_dir_path};

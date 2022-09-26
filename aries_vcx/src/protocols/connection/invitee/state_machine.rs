@@ -21,7 +21,7 @@ use crate::protocols::connection::invitee::states::invited::InvitedState;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::libindy::utils::crypto::decode_signed_connection_response;
+use crate::indy::signing::decode_signed_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -426,7 +426,7 @@ pub mod unit_tests {
     
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
-    use crate::libindy::utils::crypto::sign_connection_response;
+    use crate::indy::signing::sign_connection_response;
 
     use super::*;
 

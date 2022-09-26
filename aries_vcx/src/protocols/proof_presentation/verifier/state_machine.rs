@@ -20,7 +20,7 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
-use crate::libindy::proofs::proof_request::PresentationRequestData;
+use crate::indy::proofs::proof_request::PresentationRequestData;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -447,7 +447,7 @@ pub mod unit_tests {
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-    use crate::libindy::proofs::proof_request::test_utils::_presentation_request_data;
+    use crate::indy::proofs::proof_request::test_utils::_presentation_request_data;
 
     use super::*;
 

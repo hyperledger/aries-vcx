@@ -1,7 +1,7 @@
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::libindy::proofs::prover::prover::generate_indy_proof;
+use crate::indy::proofs::prover::prover::generate_indy_proof;
 use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;

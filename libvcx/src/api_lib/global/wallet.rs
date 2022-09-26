@@ -1,9 +1,11 @@
 use aries_vcx::error::VcxResult;
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::{WalletHandle, INVALID_WALLET_HANDLE};
-use aries_vcx::libindy;
-use aries_vcx::libindy::utils::wallet::WalletConfig;
-use aries_vcx::libindy::utils::{anoncreds, wallet};
+use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
+use aries_vcx::indy;
+use aries_vcx::indy::wallet::WalletConfig;
+use aries_vcx::indy::{anoncreds, wallet};
+use aries_vcx::indy::credentials::holder;
+use aries_vcx::indy::proofs::prover;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -25,23 +27,23 @@ pub fn reset_main_wallet_handle() -> VcxResult<()> {
 }
 
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
-    wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await
+    indy::wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await
 }
 
 pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
-    let handle = libindy::wallet::open_wallet(wallet_config).await?;
+    let handle = indy::wallet::open_wallet(wallet_config).await?;
     set_main_wallet_handle(handle);
     Ok(handle)
 }
 
 pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
-    let handle = wallet::create_and_open_wallet(wallet_config).await?;
+    let handle = indy::wallet::create_and_open_wallet(wallet_config).await?;
     set_main_wallet_handle(handle);
     Ok(handle)
 }
 
 pub async fn close_main_wallet() -> VcxResult<()> {
-    wallet::close_wallet(get_main_wallet_handle()).await?;
+    indy::wallet::close_wallet(get_main_wallet_handle()).await?;
     reset_main_wallet_handle()?;
     Ok(())
 }
@@ -51,7 +53,7 @@ pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
-    anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
+    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
         .await
         .ok();
 
@@ -63,9 +65,9 @@ pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
 pub mod test_utils {
     use aries_vcx::global;
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::utils::signus::create_and_store_my_did;
-    use aries_vcx::libindy::utils::wallet::add_wallet_record;
-    use aries_vcx::libindy::utils::wallet::*;
+    use aries_vcx::indy::keys::create_and_store_my_did;
+    use aries_vcx::indy::wallet::{add_wallet_record, WalletConfig};
+    use aries_vcx::indy::wallet::*;
     use aries_vcx::utils::devsetup::TempFile;
 
     use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};

@@ -4,8 +4,8 @@ use std::fmt::Display;
 use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::credentials::encode_attributes;
-use crate::libindy::utils::anoncreds;
+use crate::indy::credentials::encoding::encode_attributes;
+use crate::indy::anoncreds;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::issuance::credential::Credential;
 use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
@@ -13,6 +13,7 @@ use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::issuance::CredentialPreviewData;
 use messages::status::Status;
+use crate::indy::credentials::issuer;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
@@ -502,7 +503,7 @@ async fn _create_credential(
     };
     let request = &request.requests_attach.content()?;
     let cred_data = encode_attributes(cred_data)?;
-    let (libindy_credential, cred_rev_id, _) = anoncreds::libindy_issuer_create_credential(
+    let (libindy_credential, cred_rev_id, _) = issuer::libindy_issuer_create_credential(
         wallet_handle,
         &offer,
         request,
@@ -614,7 +615,7 @@ pub mod unit_tests {
         use messages::issuance::CredentialPreviewData;
         use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer, build_problem_report_msg};
         use crate::utils::constants::LIBINDY_CRED_OFFER;
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use crate::utils::devsetup::{SetupMocks, was_in_past};
 
         #[test]
         #[cfg(feature = "general_test")]

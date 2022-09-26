@@ -5,7 +5,7 @@ use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::vdrtools_sys::CommandHandle;
-use aries_vcx::libindy;
+use aries_vcx::indy;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::connection;
@@ -1091,7 +1091,7 @@ pub extern "C" fn vcx_connection_sign_data(
             }
         };
 
-        match libindy::utils::crypto::sign(get_main_wallet_handle(), &vk, &data_raw).await {
+        match indy::signing::sign(get_main_wallet_handle(), &vk, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1188,7 +1188,7 @@ pub extern "C" fn vcx_connection_verify_signature(
             }
         };
 
-        match libindy::utils::crypto::verify(&vk, &data_raw, &signature_raw).await {
+        match indy::signing::verify(&vk, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",

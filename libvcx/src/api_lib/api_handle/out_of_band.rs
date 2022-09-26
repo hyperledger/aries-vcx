@@ -8,7 +8,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
-use aries_vcx::libindy::utils::ledger::into_did_doc;
+use aries_vcx::indy::ledger::transactions::into_did_doc;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection::CONNECTION_MAP;

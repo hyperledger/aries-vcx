@@ -11,7 +11,7 @@ use chrono::format::{DelayedFormat, StrftimeItems};
 
 use crate::chrono::Local;
 use crate::error::prelude::*;
-use crate::libindy;
+use crate::indy;
 
 #[allow(unused_imports)]
 #[cfg(target_os = "android")]
@@ -100,7 +100,7 @@ impl LibvcxDefaultLogger {
                     VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                 })?;
         }
-        libindy::utils::logger::set_default_logger(pattern.as_deref())
+        indy::utils::logger::set_default_logger(pattern.as_deref())
     }
 }
 

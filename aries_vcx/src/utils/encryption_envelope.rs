@@ -6,7 +6,7 @@ use agency_client::testing::mocking::AgencyMockDecrypted;
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::crypto;
+use crate::indy::signing;
 use messages::a2a::A2AMessage;
 use messages::forward::Forward;
 
@@ -56,7 +56,7 @@ impl EncryptionEnvelope {
             "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
             pw_verkey, receiver_keys
         );
-        crypto::pack_message(wallet_handle, pw_verkey, &receiver_keys, message.as_bytes()).await
+        signing::pack_message(wallet_handle, pw_verkey, &receiver_keys, message.as_bytes()).await
     }
 
     async fn wrap_into_forward_messages(
@@ -91,7 +91,7 @@ impl EncryptionEnvelope {
         let message = json!(message).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
 
-        crypto::pack_message(wallet_handle, None, &receiver_keys, message.as_bytes()).await
+        signing::pack_message(wallet_handle, None, &receiver_keys, message.as_bytes()).await
     }
 
     async fn _unpack_a2a_message(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
@@ -100,7 +100,7 @@ impl EncryptionEnvelope {
             payload.len()
         );
 
-        let unpacked_msg = crypto::unpack_message(wallet_handle, &payload).await?;
+        let unpacked_msg = signing::unpack_message(wallet_handle, &payload).await?;
 
         let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
             VcxError::from_msg(
@@ -196,9 +196,9 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use crate::libindy::utils::crypto::create_key;
-    use crate::libindy::utils::test_setup;
-    use crate::libindy::utils::test_setup::create_trustee_key;
+    use crate::indy::signing::create_key;
+    use crate::indy::utils::test_setup;
+    use crate::indy::utils::test_setup::create_trustee_key;
     use messages::ack::test_utils::_ack;
     use crate::utils::devsetup::SetupEmpty;
 

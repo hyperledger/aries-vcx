@@ -2,25 +2,21 @@ use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
+use agency_client::testing::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
 
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
-use crate::libindy::utils::mocks::did_mocks::DidMocks;
-use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
-use crate::libindy::utils::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
-use crate::libindy::utils::pool::PoolConfig;
-use crate::libindy::utils::wallet::wallet_configure_issuer;
-use crate::libindy::utils::wallet::{
-    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
-    WalletConfig,
-};
-use crate::libindy::wallet::open_wallet;
+use crate::indy::utils::mocks::did_mocks::DidMocks;
+use crate::indy::utils::mocks::pool_mocks::PoolMocks;
+use crate::indy::ledger::pool::test_utils::{create_test_ledger_config, delete_test_pool, open_test_pool};
+use crate::indy::ledger::pool::PoolConfig;
+use crate::indy::wallet::{close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, WalletConfig};
+use crate::indy::wallet::open_wallet;
 use crate::utils;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;

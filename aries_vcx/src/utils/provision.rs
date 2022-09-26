@@ -4,7 +4,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 
 use crate::error::prelude::*;
-use crate::libindy::utils::signus;
+use crate::indy::keys;
 
 pub async fn provision_cloud_agent(
     client: &mut AgencyClient,
@@ -12,7 +12,7 @@ pub async fn provision_cloud_agent(
     provision_config: &AgentProvisionConfig,
 ) -> VcxResult<AgencyClientConfig> {
     let seed = provision_config.agent_seed.as_deref();
-    let (my_did, my_vk) = signus::create_and_store_my_did(wallet_handle, seed, None).await?;
+    let (my_did, my_vk) = keys::create_and_store_my_did(wallet_handle, seed, None).await?;
     client
         .provision_cloud_agent(
             wallet_handle,

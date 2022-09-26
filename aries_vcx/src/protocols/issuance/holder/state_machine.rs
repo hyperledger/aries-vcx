@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds::{
-    self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential,
-    libindy_prover_store_credential,
+use crate::indy::anoncreds::{
+    self,
 };
 use messages::a2a::{A2AMessage, MessageId};
 use messages::ack::Ack;
@@ -15,6 +14,8 @@ use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::status::Status;
+use crate::indy::credentials::holder::{libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
+use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
@@ -478,7 +479,7 @@ async fn _store_credential(
     let credential_json = credential.credentials_attach.content()?;
     let rev_reg_id = _parse_rev_reg_id_from_credential(&credential_json)?;
     let rev_reg_def_json = if let Some(rev_reg_id) = rev_reg_id {
-        let (_, json) = anoncreds::get_rev_reg_def_json(pool_handle, &rev_reg_id).await?;
+        let (_, json) = get_rev_reg_def_json(pool_handle, &rev_reg_id).await?;
         Some(json)
     } else {
         None
@@ -626,7 +627,7 @@ mod test {
         use messages::a2a::MessageId;
         use messages::problem_report::ProblemReport;
         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg, build_problem_report_msg};
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use crate::utils::devsetup::{SetupMocks, was_in_past};
 
         #[test]
         #[cfg(feature = "general_test")]

@@ -6,13 +6,14 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
+use crate::indy::anoncreds;
+use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::CredentialPreviewData;
 use messages::mime_type::MimeType;
+use crate::indy::primitives::revocation_registry;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;
@@ -174,7 +175,7 @@ impl Issuer {
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
         ) {
-            anoncreds::revoke_credential_local(wallet_handle, &tails_file, &rev_reg_id, &cred_rev_id).await?;
+            revocation_registry::revoke_credential_local(wallet_handle, &tails_file, &rev_reg_id, &cred_rev_id).await?;
         } else {
             return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,

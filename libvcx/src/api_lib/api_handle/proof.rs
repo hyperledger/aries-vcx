@@ -3,7 +3,7 @@ use serde_json;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
+use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
 use aries_vcx::utils::error;
 use crate::api_lib::global::pool::get_main_pool_handle;
 

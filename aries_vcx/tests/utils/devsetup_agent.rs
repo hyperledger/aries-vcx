@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use vdrtools_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -19,15 +19,17 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::libindy::credential_def::PublicEntityStateType;
-    use aries_vcx::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
-    use aries_vcx::libindy::schema::Schema;
-    use aries_vcx::libindy::utils::anoncreds;
-    use aries_vcx::libindy::utils::wallet::wallet_configure_issuer;
-    use aries_vcx::libindy::utils::wallet::*;
-    use aries_vcx::libindy::wallet::open_wallet;
-    use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::libindy::utils::ledger::into_did_doc;
+    use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
+    use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
+    use aries_vcx::indy::primitives::credential_schema::Schema;
+    use aries_vcx::indy::anoncreds;
+    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
+    use aries_vcx::indy::wallet::{close_wallet, create_wallet_with_master_secret, delete_wallet, IssuerConfig, wallet_configure_issuer, WalletConfig};
+    use aries_vcx::indy::wallet::*;
+    use aries_vcx::indy::wallet::open_wallet;
+    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::indy::ledger::transactions::into_did_doc;
+    use aries_vcx::indy::primitives::credential_schema;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::{Invitation, PublicInvitation};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -175,8 +177,8 @@ pub mod test_utils {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let (schema_id, schema) = anoncreds::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
+            let (schema_id, schema) = credential_schema::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
+            credential_schema::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),

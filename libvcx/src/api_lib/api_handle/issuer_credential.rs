@@ -235,8 +235,8 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 #[allow(unused_imports)]
 pub mod tests {
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::utils::anoncreds::libindy_create_and_store_credential_def;
-    use aries_vcx::libindy::utils::LibindyMock;
+    use aries_vcx::indy::primitives::credential_definition::libindy_create_and_store_credential_def;
+    use aries_vcx::indy::utils::LibindyMock;
     use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
