@@ -26,16 +26,22 @@ const optionDefinitions = [
     description: 'Agent name'
   },
   {
-    name: 'RUST_LOG',
+    name: 'rustLog',
     type: String,
-    description: 'Agent name',
-    defaultValue: 'vcx=error'
+    description: 'Rust log level',
+    defaultValue: 'warn,aries-vcx=trace'
   },
   {
     name: 'agencyUrl',
     type: String,
     description: 'Url of mediator agency',
     defaultValue: 'http://localhost:8080'
+  },
+  {
+    name: 'indyNetwork',
+    type: String,
+    description: 'Identifier for indy network',
+    defaultValue: '127.0.0.1'
   }
 ]
 

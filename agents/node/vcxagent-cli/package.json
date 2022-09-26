@@ -8,11 +8,13 @@
     "lint:fix": "standard --fix"
   },
   "dependencies": {
+    "sovrin-networks": "git+https://github.com/AbsaOSS/sovrin-networks#0.1.0",
     "@hyperledger/node-vcx-wrapper": "file:../../../wrappers/node",
     "@hyperledger/vcxagent-core": "file:../vcxagent-core",
     "command-line-args": "^5.1.1",
     "command-line-usage": "^5.0.5",
     "readline-sync": "^1.4.10",
+    "uuid": "9.0.0",
     "standard": "^16.0.4",
     "winston": "^3.3.3"
   },

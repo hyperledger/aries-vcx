@@ -19,13 +19,10 @@ async function initRustapi (logLevel = 'vcx=error', num_threads = 4) {
   await initThreadpool({ num_threads })
 }
 
-async function provisionAgentInAgency (agentName, genesisPath, agencyConfig, seed, walletExtraConfigs, logger) {
+async function provisionAgentInAgency (agentName, agencyConfig, seed, walletExtraConfigs, logger) {
   logger.info('Provisioning cloud agent')
   if (!agentName) {
     throw Error('agentName not specified')
-  }
-  if (!genesisPath) {
-    throw Error('genesisPath not specified')
   }
   if (!agencyConfig) {
     throw Error('agencyConfig not specified')
