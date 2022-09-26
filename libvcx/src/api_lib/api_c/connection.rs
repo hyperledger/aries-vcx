@@ -1091,7 +1091,7 @@ pub extern "C" fn vcx_connection_sign_data(
             }
         };
 
-        match libindy::crypto::sign(get_main_wallet_handle(), &vk, &data_raw).await {
+        match libindy::signing::sign(get_main_wallet_handle(), &vk, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1188,7 +1188,7 @@ pub extern "C" fn vcx_connection_verify_signature(
             }
         };
 
-        match libindy::crypto::verify(&vk, &data_raw, &signature_raw).await {
+        match libindy::signing::verify(&vk, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",

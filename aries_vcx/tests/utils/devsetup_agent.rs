@@ -29,6 +29,7 @@ pub mod test_utils {
     use aries_vcx::libindy::wallet::open_wallet;
     use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::libindy::ledger::transactions::into_did_doc;
+    use aries_vcx::libindy::primitives::credential_schema;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::{Invitation, PublicInvitation};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -176,8 +177,8 @@ pub mod test_utils {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let (schema_id, schema) = anoncreds::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            anoncreds::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
+            let (schema_id, schema) = credential_schema::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
+            credential_schema::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
 
             self.schema = Schema {
                 source_id: "test_schema".to_string(),

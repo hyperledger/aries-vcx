@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -11,6 +11,8 @@ use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::libindy::credentials::holder;
+use crate::libindy::proofs::prover;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
@@ -51,7 +53,7 @@ impl Prover {
     pub async fn retrieve_credentials(&self, wallet_handle: WalletHandle) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
-        anoncreds::libindy_prover_get_credentials_for_proof_req(wallet_handle, &presentation_request).await
+        prover::prover::libindy_prover_get_credentials_for_proof_req(wallet_handle, &presentation_request).await
     }
 
     pub async fn generate_presentation(

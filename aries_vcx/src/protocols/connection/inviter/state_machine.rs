@@ -20,7 +20,7 @@ use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::libindy::crypto::sign_connection_response;
+use crate::libindy::signing::sign_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {

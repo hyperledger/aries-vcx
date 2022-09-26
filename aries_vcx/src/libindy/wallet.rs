@@ -2,7 +2,9 @@ use vdrtools::wallet;
 use vdrtools_sys::SearchHandle;
 use crate::error::{VcxError, VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::libindy::{anoncreds, signus};
+use crate::libindy::{anoncreds, keys};
+use crate::libindy::credentials::holder;
+use crate::libindy::proofs::prover;
 use crate::vdrtools::{ErrorCode, WalletHandle};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
@@ -442,7 +444,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
 
 pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
-        signus::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
+        keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
     Ok(IssuerConfig { institution_did })
 }
 
@@ -451,7 +453,7 @@ pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResul
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
-    anoncreds::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
+    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
         .await
         .ok();
 

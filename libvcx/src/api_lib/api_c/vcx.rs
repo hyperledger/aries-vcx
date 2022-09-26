@@ -780,7 +780,7 @@ mod tests {
     use crate::api_lib::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
-    use aries_vcx::libindy::anoncreds::test_utils::create_and_store_credential_def;
+    use aries_vcx::libindy::test_utils::create_and_store_credential_def;
     use aries_vcx::libindy::ledger::pool::test_utils::{
         create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
     };

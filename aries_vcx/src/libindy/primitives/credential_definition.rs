@@ -5,6 +5,8 @@ use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 
 use std::fmt;
+use crate::global::settings;
+use crate::libindy::ledger::transactions::{build_cred_def_request, check_response, get_cred_def, get_cred_def_json, get_schema_json, sign_and_submit_to_ledger};
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
@@ -98,7 +100,7 @@ impl Default for PublicEntityStateType {
 }
 
 async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
-    match anoncreds::get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
+    match get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
         Err(err) => Err(VcxError::from_msg(
@@ -129,7 +131,7 @@ impl CredentialDef {
             schema_id,
             tag,
         } = config;
-        let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
+        let (_, schema_json) = get_schema_json(wallet_handle, pool_handle, &schema_id).await?;
         let (cred_def_id, cred_def_json) = credential_def::generate_cred_def(
             wallet_handle,
             &issuer_did,
@@ -173,7 +175,7 @@ impl CredentialDef {
                 ),
             ));
         }
-        anoncreds::publish_cred_def(wallet_handle, pool_handle, &self.issuer_did, &self.cred_def_json).await?;
+        publish_cred_def(wallet_handle, pool_handle, &self.issuer_did, &self.cred_def_json).await?;
         Ok(Self {
             state: PublicEntityStateType::Published,
             ..self
@@ -211,7 +213,7 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<u32> {
-        if (anoncreds::get_cred_def_json(wallet_handle, pool_handle, &self.cred_def_id).await).is_ok() {
+        if (get_cred_def_json(wallet_handle, pool_handle, &self.cred_def_id).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
@@ -220,4 +222,19 @@ impl CredentialDef {
     pub fn get_state(&self) -> u32 {
         self.state as u32
     }
+}
+
+pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
+    trace!(
+        "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
+        issuer_did,
+        cred_def_json
+    );
+    if settings::indy_mocks_enabled() {
+        debug!("publish_cred_def >>> mocked success");
+        return Ok(());
+    }
+    let cred_def_req = build_cred_def_request(issuer_did, cred_def_json).await?;
+    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, issuer_did, &cred_def_req).await?;
+    check_response(&response)
 }

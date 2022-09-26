@@ -57,9 +57,10 @@ pub async fn validate_indy_proof(
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
     use crate::libindy::proofs::proof_request::ProofRequestData;
-    use crate::libindy::anoncreds::test_utils::create_and_store_nonrevocable_credential;
+    use crate::libindy::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWalletPool;
     use crate::{libindy, utils};
+    use crate::libindy::proofs::prover;
 
     use super::*;
 
@@ -94,7 +95,7 @@ pub mod unit_tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = prover::prover::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({
@@ -161,7 +162,7 @@ pub mod unit_tests {
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = prover::prover::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({
@@ -240,7 +241,7 @@ pub mod unit_tests {
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = prover::prover::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({

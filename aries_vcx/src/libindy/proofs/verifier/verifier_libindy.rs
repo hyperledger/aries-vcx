@@ -26,7 +26,7 @@ pub async fn libindy_verifier_verify_proof(
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::libindy::anoncreds::test_utils::{
+    use crate::libindy::test_utils::{
         create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
         create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
     };

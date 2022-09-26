@@ -13,6 +13,7 @@ use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
+use aries_vcx::libindy::ledger::transactions::get_ledger_txn;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
@@ -469,7 +470,7 @@ pub extern "C" fn vcx_rotate_verkey(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::signus::rotate_verkey(get_main_wallet_handle(), pool_handle, &did).await {
+        match aries_vcx::libindy::keys::rotate_verkey(get_main_wallet_handle(), pool_handle, &did).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
@@ -508,7 +509,7 @@ pub extern "C" fn vcx_rotate_verkey_start(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::signus::libindy_replace_keys_start(get_main_wallet_handle(), &did).await {
+        match aries_vcx::libindy::keys::libindy_replace_keys_start(get_main_wallet_handle(), &did).await {
             Ok(temp_vk) => {
                 trace!(
                     "vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
@@ -560,7 +561,7 @@ pub extern "C" fn vcx_rotate_verkey_apply(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::signus::rotate_verkey_apply(get_main_wallet_handle(), pool_handle, &did, &temp_vk).await {
+        match aries_vcx::libindy::keys::rotate_verkey_apply(get_main_wallet_handle(), pool_handle, &did, &temp_vk).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
@@ -602,7 +603,7 @@ pub extern "C" fn vcx_get_verkey_from_wallet(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::signus::get_verkey_from_wallet(get_main_wallet_handle(), &did).await {
+        match aries_vcx::libindy::keys::get_verkey_from_wallet(get_main_wallet_handle(), &did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
@@ -651,7 +652,7 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::signus::get_verkey_from_ledger(pool_handle, &did).await {
+        match aries_vcx::libindy::keys::get_verkey_from_ledger(pool_handle, &did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
@@ -701,7 +702,7 @@ pub extern "C" fn vcx_get_ledger_txn(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::libindy::anoncreds::get_ledger_txn(
+        match get_ledger_txn(
             get_main_wallet_handle(),
             pool_handle,
             submitter_did.as_deref(),

@@ -7,6 +7,8 @@ use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 use aries_vcx::libindy::primitives::credential_definition::PublicEntityStateType;
 use aries_vcx::libindy::anoncreds;
 use aries_vcx::libindy::ledger::transactions;
+use aries_vcx::libindy::ledger::transactions::{build_schema_request, get_schema_json};
+use aries_vcx::libindy::primitives::credential_schema;
 use aries_vcx::libindy::primitives::credential_schema::{Schema, SchemaData};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
@@ -37,8 +39,8 @@ pub async fn create_and_publish_schema(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
-    anoncreds::publish_schema(&issuer_did, get_main_wallet_handle(), get_main_pool_handle()?, &schema).await?;
+    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
+    credential_schema::publish_schema(&issuer_did, get_main_wallet_handle(), get_main_pool_handle()?, &schema).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     debug!("created schema on ledger with id: {}", schema_id);
@@ -76,8 +78,8 @@ pub async fn prepare_schema_for_endorser(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
-    let schema_request = anoncreds::build_schema_request(&issuer_did, &schema).await?;
+    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
+    let schema_request = build_schema_request(&issuer_did, &schema).await?;
     let schema_request = transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
@@ -116,9 +118,9 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult
         schema_id
     );
 
-    let (schema_id, schema_data_json) = anoncreds::get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?, &schema_id)
+    let (schema_id, schema_data_json) = get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?, &schema_id)
         .await
-        .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
+        .map_err(|err| err.map(VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
 
     let schema_data: SchemaData = serde_json::from_str(&schema_data_json)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
@@ -192,7 +194,7 @@ pub mod tests {
     use serde_json::Value;
 
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::libindy::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::libindy::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]

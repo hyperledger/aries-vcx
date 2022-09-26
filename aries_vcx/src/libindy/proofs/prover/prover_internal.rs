@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
 use crate::libindy::anoncreds;
-use crate::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
+use crate::libindy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json, get_rev_reg_delta_json, get_schema_json};
+use crate::libindy::proofs::prover;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -35,7 +36,7 @@ pub async fn build_schemas_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
+            let (_, schema_json) = get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -65,7 +66,7 @@ pub async fn build_cred_defs_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id)
+            let (_, credential_def) = get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -180,7 +181,7 @@ pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifi
 
                 let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
 
-                let rev_state_json = anoncreds::libindy_prover_create_revocation_state(
+                let rev_state_json = prover::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
                     cred_rev_id,

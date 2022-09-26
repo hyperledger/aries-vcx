@@ -98,8 +98,8 @@ pub mod tests {
 
     use aries_vcx::global::settings;
     use aries_vcx::libindy::primitives::credential_definition::RevocationDetailsBuilder;
-    use aries_vcx::libindy::anoncreds::get_cred_def_json;
-    use aries_vcx::libindy::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::libindy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::libindy::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::{constants::SCHEMA_ID, get_temp_dir_path};

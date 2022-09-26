@@ -35,12 +35,14 @@ pub async fn generate_cred_def(
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::libindy::anoncreds::{generate_rev_reg, get_schema_json, publish_cred_def, publish_rev_reg_def, publish_rev_reg_delta};
-    use crate::libindy::anoncreds::test_utils::{
+    use crate::libindy::test_utils::{
         create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
         create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
     };
     use crate::libindy::credential_def::generate_cred_def;
+    use crate::libindy::ledger::transactions::get_schema_json;
+    use crate::libindy::primitives::credential_definition::publish_cred_def;
+    use crate::libindy::primitives::revocation_registry::{generate_rev_reg, publish_rev_reg_def, publish_rev_reg_delta};
     use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
     use crate::utils::get_temp_dir_path;

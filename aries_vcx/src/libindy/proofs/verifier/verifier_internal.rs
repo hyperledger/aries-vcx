@@ -5,6 +5,7 @@ use serde_json::Value;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::anoncreds;
+use crate::libindy::ledger::transactions::{get_cred_def_json, get_rev_reg, get_rev_reg_def_json, get_schema_json};
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -104,7 +105,7 @@ pub async fn build_cred_defs_json_verifier(
 
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let (id, credential_def) = anoncreds::get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id).await?;
+            let (id, credential_def) = get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id).await?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
                 VcxError::from_msg(
@@ -131,7 +132,7 @@ pub async fn build_schemas_json_verifier(
 
     for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
-            let (id, schema_json) = anoncreds::get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
+            let (id, schema_json) = get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -161,7 +162,7 @@ pub async fn build_rev_reg_defs_json(pool_handle: PoolHandle, credential_data: &
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationDetails))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let (id, json) = anoncreds::get_rev_reg_def_json(pool_handle, rev_reg_id)
+            let (id, json) = get_rev_reg_def_json(pool_handle, rev_reg_id)
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
@@ -191,7 +192,7 @@ pub async fn build_rev_reg_json(pool_handle: PoolHandle, credential_data: &Vec<C
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationTimestamp))?;
 
         if rev_regs_json.get(rev_reg_id).is_none() {
-            let (id, json, timestamp) = anoncreds::get_rev_reg(pool_handle, rev_reg_id, timestamp.to_owned())
+            let (id, json, timestamp) = get_rev_reg(pool_handle, rev_reg_id, timestamp.to_owned())
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 

@@ -15,12 +15,12 @@ mod integration_tests {
     use aries_vcx::messages::did_doc::service_aries::AriesService;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::set_config_value;
-    use aries_vcx::libindy::anoncreds::get_cred_def_json;
-    use aries_vcx::libindy::anoncreds::test_utils::create_and_store_nonrevocable_credential_def;
+    use aries_vcx::libindy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::libindy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::libindy::ledger::transactions::{
         add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
     };
-    use aries_vcx::libindy::signus::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
+    use aries_vcx::libindy::keys::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
