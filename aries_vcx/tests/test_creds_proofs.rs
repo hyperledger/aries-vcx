@@ -11,12 +11,12 @@ pub mod utils;
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
-    use aries_vcx::libindy::ledger::transactions::get_cred_def_json;
-    use aries_vcx::libindy::test_utils::{
+    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::indy::test_utils::{
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::libindy::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::SetupWalletPool;
@@ -320,9 +320,9 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::libindy;
-    use aries_vcx::libindy::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::libindy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
+    use aries_vcx::indy;
+    use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
+    use aries_vcx::indy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

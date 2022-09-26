@@ -14,7 +14,7 @@ pub use aries_vcx::vdrtools_sys::{
     logger::{EnabledCB, FlushCB, LogCB},
     CVoid,
 };
-use aries_vcx::libindy;
+use aries_vcx::indy;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
@@ -86,7 +86,7 @@ impl LibvcxLogger {
             )
         })?;
         log::set_max_level(LevelFilter::Trace);
-        libindy::utils::logger::set_logger(log::logger())
+        indy::utils::logger::set_logger(log::logger())
             .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::LoggingError, "Setting logger failed"))?;
 
         unsafe {
@@ -229,7 +229,7 @@ impl LibvcxDefaultLogger {
                     VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                 })?;
         }
-        libindy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str)).map_err(|err| {
+        indy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str)).map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::LoggingError,
                 format!("Setting default logger failed: {:?}", err),

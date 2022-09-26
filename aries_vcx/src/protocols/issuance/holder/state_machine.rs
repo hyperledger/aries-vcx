@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
-use crate::libindy::anoncreds::{
+use crate::indy::anoncreds::{
     self,
 };
 use messages::a2a::{A2AMessage, MessageId};
@@ -14,8 +14,8 @@ use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::status::Status;
-use crate::libindy::credentials::holder::{libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
-use crate::libindy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json};
+use crate::indy::credentials::holder::{libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
+use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;

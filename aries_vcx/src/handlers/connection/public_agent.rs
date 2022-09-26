@@ -7,7 +7,7 @@ use agency_client::agency_client::AgencyClient;
 use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::libindy::ledger::transactions::add_service;
+use crate::indy::ledger::transactions::add_service;
 use messages::a2a::A2AMessage;
 use messages::connection::did::Did;
 use messages::connection::request::Request;

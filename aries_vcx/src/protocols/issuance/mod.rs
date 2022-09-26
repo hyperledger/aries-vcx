@@ -2,7 +2,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::ledger::transactions::get_cred_def_json;
+use crate::indy::ledger::transactions::get_cred_def_json;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 
 pub mod actions;

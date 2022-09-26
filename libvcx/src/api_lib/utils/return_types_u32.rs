@@ -10,8 +10,8 @@ use std::time::Duration;
 use libc::c_char;
 
 use aries_vcx::vdrtools_sys::CommandHandle;
-use aries_vcx::libindy::utils::error_codes::map_indy_error;
-use aries_vcx::libindy::utils::next_command_handle;
+use aries_vcx::indy::utils::error_codes::map_indy_error;
+use aries_vcx::indy::utils::next_command_handle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::utils::callback::POISON_MSG;

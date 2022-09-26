@@ -6,14 +6,14 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::libindy::anoncreds;
-use crate::libindy::credentials::issuer::libindy_issuer_create_credential_offer;
+use crate::indy::anoncreds;
+use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::CredentialPreviewData;
 use messages::mime_type::MimeType;
-use crate::libindy::primitives::revocation_registry;
+use crate::indy::primitives::revocation_registry;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;

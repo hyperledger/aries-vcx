@@ -10,11 +10,11 @@ use crate::api_lib::global::pool::{close_main_pool, get_main_pool_handle, is_mai
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::libindy::ledger::{pool, transactions};
-use aries_vcx::libindy::ledger::pool::PoolConfig;
-use aries_vcx::libindy::wallet;
-use aries_vcx::libindy::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::{libindy, utils};
+use aries_vcx::indy::ledger::{pool, transactions};
+use aries_vcx::indy::ledger::pool::PoolConfig;
+use aries_vcx::indy::wallet;
+use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
+use aries_vcx::{indy, utils};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
 
@@ -343,7 +343,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
             rekey_derivation_method: None,
         };
 
-        match futures::executor::block_on(libindy::wallet::delete_wallet(&wallet_config)) {
+        match futures::executor::block_on(indy::wallet::delete_wallet(&wallet_config)) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -776,16 +776,16 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::{global, libindy};
+    use aries_vcx::{global, indy};
     use crate::api_lib::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
-    use aries_vcx::libindy::test_utils::create_and_store_credential_def;
-    use aries_vcx::libindy::ledger::pool::test_utils::{
+    use aries_vcx::indy::test_utils::create_and_store_credential_def;
+    use aries_vcx::indy::ledger::pool::test_utils::{
         create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
     };
-    use aries_vcx::libindy::ledger::pool::PoolConfig;
-    use aries_vcx::libindy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::indy::ledger::pool::PoolConfig;
+    use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{
         AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig,
@@ -892,7 +892,7 @@ mod tests {
 
         let (export_wallet_path, wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
-        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
+        indy::wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),
@@ -923,7 +923,7 @@ mod tests {
 
         let (export_wallet_path, _wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
-        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
+        indy::wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
         let wallet_config = WalletConfig {
@@ -957,7 +957,7 @@ mod tests {
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
+        indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
     #[tokio::test]

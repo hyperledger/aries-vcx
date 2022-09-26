@@ -4,7 +4,7 @@ use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 
 use crate::error::prelude::*;
-use crate::libindy::keys;
+use crate::indy::keys;
 
 pub async fn provision_cloud_agent(
     client: &mut AgencyClient,

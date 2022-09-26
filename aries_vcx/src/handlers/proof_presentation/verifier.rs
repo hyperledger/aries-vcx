@@ -12,7 +12,7 @@ use messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
-use crate::libindy::proofs::proof_request::PresentationRequestData;
+use crate::indy::proofs::proof_request::PresentationRequestData;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {

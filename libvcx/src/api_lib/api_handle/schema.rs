@@ -4,12 +4,12 @@ use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
-use aries_vcx::libindy::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx::libindy::anoncreds;
-use aries_vcx::libindy::ledger::transactions;
-use aries_vcx::libindy::ledger::transactions::{build_schema_request, get_schema_json};
-use aries_vcx::libindy::primitives::credential_schema;
-use aries_vcx::libindy::primitives::credential_schema::{Schema, SchemaData};
+use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
+use aries_vcx::indy::anoncreds;
+use aries_vcx::indy::ledger::transactions;
+use aries_vcx::indy::ledger::transactions::{build_schema_request, get_schema_json};
+use aries_vcx::indy::primitives::credential_schema;
+use aries_vcx::indy::primitives::credential_schema::{Schema, SchemaData};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -194,9 +194,9 @@ pub mod tests {
     use serde_json::Value;
 
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::test_utils::create_and_write_test_schema;
+    use aries_vcx::indy::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::ledger::transactions::add_new_did;
+    use aries_vcx::indy::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_ID};

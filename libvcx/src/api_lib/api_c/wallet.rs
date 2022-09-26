@@ -4,10 +4,10 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::libindy;
+use aries_vcx::indy;
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
-use aries_vcx::libindy::utils;
-use aries_vcx::libindy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::indy::utils;
+use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
 
 use crate::api_lib;
@@ -119,7 +119,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::wallet_configure_issuer(get_main_wallet_handle(), &enterprise_seed).await {
+        match indy::wallet::wallet_configure_issuer(get_main_wallet_handle(), &enterprise_seed).await {
             Err(err) => {
                 error!(
                     "vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}",
@@ -300,7 +300,7 @@ pub extern "C" fn vcx_wallet_add_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::add_wallet_record(get_main_wallet_handle(), &type_, &id, &value, Some(&tags_json)).await {
+        match indy::wallet::add_wallet_record(get_main_wallet_handle(), &type_, &id, &value, Some(&tags_json)).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_add_record(command_handle: {}, rc: {})",
@@ -365,7 +365,7 @@ pub extern "C" fn vcx_wallet_update_record_value(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::update_wallet_record_value(get_main_wallet_handle(), &type_, &id, &value).await {
+        match indy::wallet::update_wallet_record_value(get_main_wallet_handle(), &type_, &id, &value).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_update_record_value(command_handle: {}, rc: {})",
@@ -434,7 +434,7 @@ pub extern "C" fn vcx_wallet_update_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::update_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
+        match indy::wallet::update_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
@@ -503,7 +503,7 @@ pub extern "C" fn vcx_wallet_add_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::add_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
+        match indy::wallet::add_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
@@ -572,7 +572,7 @@ pub extern "C" fn vcx_wallet_delete_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::delete_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tag_names_json).await {
+        match indy::wallet::delete_wallet_record_tags(get_main_wallet_handle(), &type_, &id, &tag_names_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
@@ -640,7 +640,7 @@ pub extern "C" fn vcx_wallet_get_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::get_wallet_record(get_main_wallet_handle(), &type_, &id, &options_json).await {
+        match indy::wallet::get_wallet_record(get_main_wallet_handle(), &type_, &id, &options_json).await {
             Ok(err) => {
                 trace!(
                     "vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
@@ -710,7 +710,7 @@ pub extern "C" fn vcx_wallet_delete_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::delete_wallet_record(get_main_wallet_handle(), &type_, &id).await {
+        match indy::wallet::delete_wallet_record(get_main_wallet_handle(), &type_, &id).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_delete_record(command_handle: {}, rc: {})",
@@ -790,7 +790,7 @@ pub extern "C" fn vcx_wallet_open_search(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
+        match indy::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
             Ok(err) => {
                 trace!(
                     "vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
@@ -858,7 +858,7 @@ pub extern "C" fn vcx_wallet_search_next_records(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match libindy::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
+        match indy::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
             Ok(err) => {
                 trace!(
                     "vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
@@ -925,7 +925,7 @@ pub extern "C" fn vcx_wallet_close_search(
             command_handle,
             error::SUCCESS.message
         );
-        match libindy::wallet::close_search_wallet(search_handle).await {
+        match indy::wallet::close_search_wallet(search_handle).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_close_search(command_handle: {}, rc: {})",
@@ -1094,7 +1094,7 @@ pub mod tests {
     use std::ptr;
 
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::wallet::{delete_wallet, WalletConfig};
+    use aries_vcx::indy::wallet::{delete_wallet, WalletConfig};
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 
     use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_create_and_open_wallet};
