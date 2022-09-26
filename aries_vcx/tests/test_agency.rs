@@ -23,9 +23,8 @@ mod integration_tests {
     use agency_client::messages::update_message::UIDsByConn;
     use agency_client::MessageStatusCode;
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::utils::signus::create_and_store_my_did;
-    use aries_vcx::libindy::utils::wallet::{create_indy_wallet, WalletConfig};
-    use aries_vcx::libindy::wallet::open_wallet;
+    use aries_vcx::libindy::signus::create_and_store_my_did;
+    use aries_vcx::libindy::wallet::{create_indy_wallet, open_wallet, WalletConfig};
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::ack::test_utils::_ack;
     use aries_vcx::utils::devsetup::SetupPool;

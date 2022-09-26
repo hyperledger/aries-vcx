@@ -1,20 +1,20 @@
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::credential_def::PublicEntityStateType;
-use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::anoncreds::RevocationRegistryDefinition;
+use crate::libindy::primitives::credential_definition::PublicEntityStateType;
+use crate::libindy::anoncreds;
+use crate::libindy::anoncreds::RevocationRegistryDefinition;
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
 pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: String,
     pub rev_reg_id: String,
-    pub(super) rev_reg_def: RevocationRegistryDefinition,
-    pub(super) rev_reg_entry: String,
-    pub(super) tails_dir: String,
-    pub(super) max_creds: u32,
-    pub(super) tag: u32,
+    pub(in crate::libindy) rev_reg_def: RevocationRegistryDefinition,
+    pub(in crate::libindy) rev_reg_entry: String,
+    pub(in crate::libindy) tails_dir: String,
+    pub(in crate::libindy) max_creds: u32,
+    pub(in crate::libindy) tag: u32,
     rev_reg_def_state: PublicEntityStateType,
     rev_reg_delta_state: PublicEntityStateType,
 }

@@ -6,14 +6,15 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use crate::api_lib::global::pool::{is_main_pool_open, open_main_pool, get_main_pool_handle, close_main_pool};
+use crate::api_lib::global::pool::{close_main_pool, get_main_pool_handle, is_main_pool_open, open_main_pool};
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::libindy::utils::pool::PoolConfig;
-use aries_vcx::libindy::utils::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::libindy::utils::{ledger, pool, wallet};
-use aries_vcx::utils;
+use aries_vcx::libindy::ledger::{pool, transactions};
+use aries_vcx::libindy::ledger::pool::PoolConfig;
+use aries_vcx::libindy::wallet;
+use aries_vcx::libindy::wallet::{IssuerConfig, WalletConfig};
+use aries_vcx::{libindy, utils};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
 
@@ -342,7 +343,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
             rekey_derivation_method: None,
         };
 
-        match futures::executor::block_on(wallet::delete_wallet(&wallet_config)) {
+        match futures::executor::block_on(libindy::wallet::delete_wallet(&wallet_config)) {
             Ok(()) => (),
             Err(_) => (),
         };
@@ -425,7 +426,7 @@ pub extern "C" fn vcx_update_webhook_url(
 
             Ok(())
         }
-        .boxed(),
+            .boxed(),
     );
 
     error::SUCCESS.code_num
@@ -449,7 +450,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match ledger::libindy_get_txn_author_agreement(pool_handle).await {
+            match transactions::libindy_get_txn_author_agreement(pool_handle).await {
                 Ok(err) => {
                     trace!(
                         "vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
@@ -473,7 +474,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
             Ok(())
         }
-        .boxed(),
+            .boxed(),
     );
 
     error::SUCCESS.code_num
@@ -683,7 +684,7 @@ pub mod test_utils {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW
         })
-        .to_string();
+            .to_string();
 
         info!("_vcx_create_and_open_wallet >>>");
 
@@ -736,7 +737,7 @@ pub mod test_utils {
             "retrieveValue": true,
             "retrieveTags": false
         })
-        .to_string();
+            .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -747,7 +748,7 @@ pub mod test_utils {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -760,7 +761,7 @@ pub mod test_utils {
                 xtype.as_ptr(),
                 id.as_ptr(),
                 options.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -775,20 +776,20 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::global;
+    use aries_vcx::{global, libindy};
     use crate::api_lib::global::pool::get_main_pool_handle;
     use aries_vcx::global::settings;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_store_credential_def;
-    use aries_vcx::libindy::utils::pool::test_utils::{
-        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool
+    use aries_vcx::libindy::anoncreds::test_utils::create_and_store_credential_def;
+    use aries_vcx::libindy::ledger::pool::test_utils::{
+        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
     };
-    use aries_vcx::libindy::utils::pool::PoolConfig;
-    use aries_vcx::libindy::utils::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::libindy::ledger::pool::PoolConfig;
+    use aries_vcx::libindy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{
-        SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet, AGENCY_DID,
-        AGENCY_ENDPOINT, AGENCY_VERKEY,
+        AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig,
+        TempFile, TestSetupCreateWallet,
     };
 
     use crate::api_lib;
@@ -891,7 +892,7 @@ mod tests {
 
         let (export_wallet_path, wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
-        wallet::delete_wallet(&wallet_config).await.unwrap();
+        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let import_config = RestoreWalletConfigs {
             wallet_name: wallet_name.clone(),
@@ -907,7 +908,7 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-        .to_string();
+            .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&content).unwrap();
@@ -922,7 +923,7 @@ mod tests {
 
         let (export_wallet_path, _wallet_name, wallet_config) = _create_main_wallet_and_its_backup().await;
 
-        wallet::delete_wallet(&wallet_config).await.unwrap();
+        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
 
         let wallet_name = &format!("export_test_wallet_{}", uuid::Uuid::new_v4());
         let wallet_config = WalletConfig {
@@ -950,13 +951,13 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-        .to_string();
+            .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
         assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
 
-        wallet::delete_wallet(&wallet_config).await.unwrap();
+        libindy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
     #[tokio::test]
@@ -1014,8 +1015,8 @@ mod tests {
             "tag".to_string(),
             false,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof(
             "1".to_string(),
@@ -1024,8 +1025,8 @@ mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let schema = schema::create_and_publish_schema(
             "5",
             "VsKV7grR1BUE29mG2Fm2kX".to_string(),
@@ -1033,8 +1034,8 @@ mod tests {
             "0.1".to_string(),
             data.to_string(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let disclosed_proof =
             disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION)
                 .unwrap();
@@ -1119,7 +1120,7 @@ mod tests {
             vcx_update_webhook_url(
                 cb.command_handle,
                 CString::new(webhook_url.to_string()).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             )
         );
     }
@@ -1185,7 +1186,7 @@ mod tests {
                 CString::new(version.to_string()).unwrap().into_raw(),
                 std::ptr::null(),
                 CString::new(acc_mech_type.to_string()).unwrap().into_raw(),
-                time_of_acceptance
+                time_of_acceptance,
             )
         );
 
@@ -1319,7 +1320,7 @@ mod tests {
             vcx_update_webhook_url(
                 cb.command_handle,
                 CString::new(webhook_url.to_string()).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             )
         );
         cb.receive(TimeoutUtils::some_custom(2)).unwrap();

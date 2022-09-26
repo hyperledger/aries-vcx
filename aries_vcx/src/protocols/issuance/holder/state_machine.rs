@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::libindy::utils::anoncreds::{
+use crate::libindy::anoncreds::{
     self, get_cred_def_json, libindy_prover_create_credential_req, libindy_prover_delete_credential,
     libindy_prover_store_credential,
 };

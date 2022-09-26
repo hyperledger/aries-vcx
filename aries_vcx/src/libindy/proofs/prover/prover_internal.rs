@@ -6,8 +6,8 @@ use serde_json::Value;
 use crate::error::prelude::*;
 use crate::libindy::proofs::proof_request::ProofRequestData;
 use crate::libindy::proofs::proof_request_internal::NonRevokedInterval;
-use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
+use crate::libindy::anoncreds;
+use crate::libindy::anoncreds::{get_rev_reg_def_json, get_rev_reg_delta_json};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {

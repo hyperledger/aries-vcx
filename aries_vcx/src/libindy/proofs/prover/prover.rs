@@ -7,7 +7,7 @@ use crate::libindy::proofs::prover::prover_internal::{
     build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover,
     credential_def_identifiers,
 };
-use crate::libindy::utils::anoncreds;
+use crate::libindy::anoncreds;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(

@@ -2,9 +2,7 @@ use vdrtools_sys::WalletHandle;
 use serde_json;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::libindy::utils::wallet::{
-    add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value,
-};
+use crate::libindy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";

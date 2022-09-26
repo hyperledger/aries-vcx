@@ -1,8 +1,7 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
-
-use crate::error::prelude::*;
-use crate::libindy::credential_def::PublicEntityStateType;
-use crate::libindy::utils::anoncreds;
+use vdrtools_sys::{PoolHandle, WalletHandle};
+use crate::error::{VcxError, VcxResult};
+use crate::libindy::anoncreds;
+use crate::libindy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::DEFAULT_SERIALIZE_VERSION;
 use crate::utils::serialization::ObjectWithVersion;
 

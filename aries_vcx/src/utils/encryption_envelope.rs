@@ -6,7 +6,7 @@ use agency_client::testing::mocking::AgencyMockDecrypted;
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::crypto;
+use crate::libindy::crypto;
 use messages::a2a::A2AMessage;
 use messages::forward::Forward;
 
@@ -196,7 +196,7 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use crate::libindy::utils::crypto::create_key;
+    use crate::libindy::crypto::create_key;
     use crate::libindy::utils::test_setup;
     use crate::libindy::utils::test_setup::create_trustee_key;
     use messages::ack::test_utils::_ack;

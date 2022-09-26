@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::ledger;
+use crate::libindy::ledger::transactions;
 use crate::libindy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 use crate::utils;
 
@@ -42,9 +42,9 @@ pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) 
 }
 
 pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, temp_vk: &str) -> VcxResult<()> {
-    let nym_request = ledger::libindy_build_nym_request(did, did, Some(temp_vk), None, None).await?;
-    let nym_request = ledger::append_txn_author_agreement_to_request(&nym_request).await?;
-    let nym_result = ledger::libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &nym_request).await?;
+    let nym_request = transactions::libindy_build_nym_request(did, did, Some(temp_vk), None, None).await?;
+    let nym_request = transactions::append_txn_author_agreement_to_request(&nym_request).await?;
+    let nym_result = transactions::libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,
@@ -93,7 +93,7 @@ pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> V
 }
 
 pub async fn get_verkey_from_ledger(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
-    let nym_response: String = ledger::get_nym(pool_handle, did).await?;
+    let nym_response: String = transactions::get_nym(pool_handle, did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,

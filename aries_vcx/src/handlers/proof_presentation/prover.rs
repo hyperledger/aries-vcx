@@ -6,7 +6,7 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::libindy::utils::anoncreds;
+use crate::libindy::anoncreds;
 use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};

@@ -6,8 +6,8 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::libindy::utils::anoncreds;
-use crate::libindy::utils::anoncreds::libindy_issuer_create_credential_offer;
+use crate::libindy::anoncreds;
+use crate::libindy::anoncreds::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;

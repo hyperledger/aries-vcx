@@ -5,7 +5,7 @@ use crate::libindy::proofs::verifier::verifier_internal::{
     build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
     get_credential_info, validate_proof_revealed_attributes,
 };
-use crate::libindy::utils::anoncreds;
+use crate::libindy::anoncreds;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 pub async fn validate_indy_proof(
@@ -56,7 +56,7 @@ pub async fn validate_indy_proof(
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
     use crate::libindy::proofs::proof_request::ProofRequestData;
-    use crate::libindy::utils::anoncreds::test_utils::create_and_store_nonrevocable_credential;
+    use crate::libindy::anoncreds::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWalletPool;
     use crate::{libindy, utils};
 
@@ -93,7 +93,7 @@ pub mod unit_tests {
 
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
-        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({
@@ -160,7 +160,7 @@ pub mod unit_tests {
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({
@@ -239,7 +239,7 @@ pub mod unit_tests {
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
-        let prover_proof_json = libindy::utils::anoncreds::libindy_prover_create_proof(
+        let prover_proof_json = libindy::anoncreds::libindy_prover_create_proof(
             setup.wallet_handle,
             &proof_req_json,
             &json!({

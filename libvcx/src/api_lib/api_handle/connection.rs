@@ -12,7 +12,7 @@ use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::protocols::SendClosure;
-use aries_vcx::libindy::utils::ledger::into_did_doc;
+use aries_vcx::libindy::ledger::transactions::into_did_doc;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;

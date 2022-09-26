@@ -3,11 +3,11 @@ use std::string::ToString;
 use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::vdrtools::{WalletHandle, PoolHandle};
-use aries_vcx::libindy::credential_def::PublicEntityStateType;
-use aries_vcx::libindy::schema::{Schema, SchemaData};
-use aries_vcx::libindy::utils::anoncreds;
-use aries_vcx::libindy::utils::ledger;
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::libindy::primitives::credential_definition::PublicEntityStateType;
+use aries_vcx::libindy::anoncreds;
+use aries_vcx::libindy::ledger::transactions;
+use aries_vcx::libindy::primitives::credential_schema::{Schema, SchemaData};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -78,7 +78,7 @@ pub async fn prepare_schema_for_endorser(
 
     let (schema_id, schema) = anoncreds::create_schema(&issuer_did, &name, &version, &data).await?;
     let schema_request = anoncreds::build_schema_request(&issuer_did, &schema).await?;
-    let schema_request = ledger::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
+    let schema_request = transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
@@ -192,9 +192,9 @@ pub mod tests {
     use serde_json::Value;
 
     use aries_vcx::global::settings;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::libindy::anoncreds::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::libindy::utils::ledger::add_new_did;
+    use aries_vcx::libindy::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_ID};
@@ -448,7 +448,7 @@ pub mod tests {
         assert_eq!(0, get_state(schema_handle).unwrap());
         assert_eq!(0, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
 
-        ledger::endorse_transaction(get_main_wallet_handle(), setup.setup.pool_handle, &endorser_did, &schema_request)
+        transactions::endorse_transaction(get_main_wallet_handle(), setup.setup.pool_handle, &endorser_did, &schema_request)
             .await
             .unwrap();
 

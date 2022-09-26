@@ -1,15 +1,15 @@
 use vdrtools::future::TryFutureExt;
 use vdrtools::{anoncreds, blob_storage, ledger};
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json;
 use serde_json::{map::Map, Value};
 use time;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::libindy::utils::cache::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
-use crate::libindy::utils::ledger::*;
-use crate::libindy::utils::ledger::sign_and_submit_to_ledger;
+use crate::libindy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
+use crate::libindy::ledger::transactions::*;
+use crate::libindy::ledger::transactions::sign_and_submit_to_ledger;
 use crate::libindy::utils::LibindyMock;
 use crate::utils;
 use crate::utils::constants::{
@@ -946,9 +946,10 @@ pub mod test_utils {
     use std::time::Duration;
 
     use crate::libindy;
-    use crate::libindy::credential_def::{CredentialDef, CredentialDefConfigBuilder};
-    use crate::libindy::credential_def::revocation_registry::RevocationRegistry;
+    use crate::libindy::primitives::credential_definition::CredentialDefConfigBuilder;
+    use crate::libindy::primitives::revocation_registry::RevocationRegistry;
     use crate::libindy::credentials::encode_attributes;
+    use crate::libindy::primitives::credential_definition::CredentialDef;
     use crate::utils::constants::{TAILS_DIR, TEST_TAILS_URL};
     use crate::utils::get_temp_dir_path;
 
@@ -1072,10 +1073,10 @@ pub mod test_utils {
         cred_def_id: &str,
         cred_def_json: &str,
     ) -> (String, String, String) {
-        let offer = libindy::utils::anoncreds::libindy_issuer_create_credential_offer(wallet_handle, cred_def_id)
+        let offer = libindy::anoncreds::libindy_issuer_create_credential_offer(wallet_handle, cred_def_id)
             .await
             .unwrap();
-        let (req, req_meta) = libindy::utils::anoncreds::libindy_prover_create_credential_req(
+        let (req, req_meta) = libindy::anoncreds::libindy_prover_create_credential_req(
             wallet_handle,
             &did,
             &offer,
@@ -1115,7 +1116,7 @@ pub mod test_utils {
         let (_id, rev_def_json) = get_rev_reg_def_json(pool_handle, &rev_reg_id).await.unwrap();
         let tails_file = get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string();
 
-        let (cred, cred_rev_id, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(
+        let (cred, cred_rev_id, _) = libindy::anoncreds::libindy_issuer_create_credential(
             wallet_handle,
             &offer,
             &req,
@@ -1126,7 +1127,7 @@ pub mod test_utils {
             .await
             .unwrap();
         /* store cred */
-        let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(
+        let cred_id = libindy::anoncreds::libindy_prover_store_credential(
             wallet_handle,
             None,
             &req_meta,
@@ -1166,7 +1167,7 @@ pub mod test_utils {
         let credential_data = r#"{"address1": ["123 Main St"], "address2": ["Suite 3"], "city": ["Draper"], "state": ["UT"], "zip": ["84000"]}"#;
         let encoded_attributes = encode_attributes(&credential_data).unwrap();
 
-        let (cred, _, _) = libindy::utils::anoncreds::libindy_issuer_create_credential(
+        let (cred, _, _) = libindy::anoncreds::libindy_issuer_create_credential(
             wallet_handle,
             &offer,
             &req,
@@ -1177,7 +1178,7 @@ pub mod test_utils {
             .await
             .unwrap();
         /* store cred */
-        let cred_id = libindy::utils::anoncreds::libindy_prover_store_credential(
+        let cred_id = libindy::anoncreds::libindy_prover_store_credential(
             wallet_handle,
             None,
             &req_meta,
@@ -1354,9 +1355,9 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use vdrtools_sys::{WalletHandle, PoolHandle};
+    use vdrtools_sys::{PoolHandle, WalletHandle};
 
-    use crate::libindy::utils::anoncreds::get_schema_json;
+    use crate::libindy::anoncreds::get_schema_json;
     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
     use crate::utils::devsetup::SetupMocks;
 
@@ -1372,7 +1373,7 @@ mod unit_tests {
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::libindy::utils::anoncreds::test_utils::{
+    use crate::libindy::anoncreds::test_utils::{
         create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
         create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
     };

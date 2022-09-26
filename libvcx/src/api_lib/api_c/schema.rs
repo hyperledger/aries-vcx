@@ -578,10 +578,9 @@ mod tests {
 
     use rand::Rng;
 
-    use aries_vcx::libindy::credential_def::PublicEntityStateType;
-    use aries_vcx::libindy::schema;
-    use aries_vcx::libindy::schema::Schema;
-    use aries_vcx::libindy::utils::anoncreds::test_utils::create_and_write_test_schema;
+    use aries_vcx::libindy::primitives::credential_definition::PublicEntityStateType;
+    use aries_vcx::libindy::primitives::credential_schema::Schema;
+    use aries_vcx::libindy::anoncreds::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{
         DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION,

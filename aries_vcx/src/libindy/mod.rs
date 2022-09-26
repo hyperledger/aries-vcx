@@ -1,6 +1,11 @@
 pub mod credential_def;
 pub mod credentials;
 pub mod proofs;
-pub mod schema;
 pub mod utils;
 pub mod wallet;
+pub mod signus;
+pub mod crypto;
+pub mod wallet_non_secrets;
+pub mod anoncreds;
+pub mod ledger;
+pub mod primitives;

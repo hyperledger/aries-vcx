@@ -10,7 +10,7 @@ use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::libindy::utils::mocks::pool_mocks::PoolMocks;
-use crate::libindy::utils::signus::create_and_store_my_did;
+use crate::libindy::signus::create_and_store_my_did;
 use messages::connection::did::Did;
 use messages::connection::invite::Invitation;
 use crate::utils;
