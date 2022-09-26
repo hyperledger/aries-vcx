@@ -958,7 +958,6 @@ mod tests {
         issuer
             .update_state(
                 institution.wallet_handle,
-                institution.pool_handle,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -1229,7 +1228,7 @@ mod tests {
                         alice.wallet_handle,
                         alice.pool_handle,
                         pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1262,7 +1261,7 @@ mod tests {
                     .send_presentation(
                         alice.wallet_handle,
                         alice.pool_handle,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1322,7 +1321,7 @@ mod tests {
                         alice.wallet_handle,
                         alice.pool_handle,
                         pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                     )
                     .await
                     .unwrap();
@@ -1362,7 +1361,7 @@ mod tests {
                     .send_presentation(
                         alice.wallet_handle,
                         alice.pool_handle,
-                    alice.connection.send_message_closure(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+                    alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                 )
                 .await
                 .unwrap();

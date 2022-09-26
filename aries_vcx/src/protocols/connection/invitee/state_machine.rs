@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::future::Future;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::WalletHandle;
 
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
@@ -21,7 +21,6 @@ use crate::protocols::connection::invitee::states::invited::InvitedState;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::libindy::utils::ledger::into_did_doc;
 use crate::libindy::utils::crypto::decode_signed_connection_response;
 
 #[derive(Clone)]
@@ -69,11 +68,11 @@ impl From<InviteeFullState> for InviteeState {
 }
 
 impl SmConnectionInvitee {
-    pub fn new(source_id: &str, pairwise_info: PairwiseInfo) -> Self {
+    pub fn new(source_id: &str, pairwise_info: PairwiseInfo, did_doc: DidDoc) -> Self {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             thread_id: String::new(),
-            state: InviteeFullState::Initial(InitialState::new(None)),
+            state: InviteeFullState::Initial(InitialState::new(None, Some(did_doc))),
             pairwise_info,
         }
     }
@@ -117,20 +116,20 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn their_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
-            InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => into_did_doc(pool_handle, &state.invitation).await.ok(),
+            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
+            InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.did_doc.clone()),
         }
     }
 
-    pub async fn bootstrap_did_doc(&self, pool_handle: PoolHandle) -> Option<DidDoc> {
+    pub async fn bootstrap_did_doc(&self) -> Option<DidDoc> {
         match self.state {
-            InviteeFullState::Initial(_) => None,
-            InviteeFullState::Invited(ref state) => into_did_doc(pool_handle, &state.invitation).await.ok(),
+            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
+            InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
@@ -164,8 +163,8 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn remote_did(&self, pool_handle: PoolHandle) -> VcxResult<String> {
-        self.their_did_doc(pool_handle)
+    pub async fn remote_did(&self) -> VcxResult<String> {
+        self.their_did_doc()
             .await
             .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(
@@ -174,8 +173,8 @@ impl SmConnectionInvitee {
             ))
     }
 
-    pub async fn remote_vk(&self, pool_handle: PoolHandle) -> VcxResult<String> {
-        self.their_did_doc(pool_handle)
+    pub async fn remote_vk(&self) -> VcxResult<String> {
+        self.their_did_doc()
             .await
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
             .ok_or(VcxError::from_msg(
@@ -290,8 +289,9 @@ impl SmConnectionInvitee {
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { state, .. } = self;
+        let thread_id = invitation.get_id()?;
         let state = match state {
-            InviteeFullState::Initial(state) => InviteeFullState::Invited((state, invitation.clone()).into()),
+            InviteeFullState::Initial(state) => InviteeFullState::Invited((state.clone(), invitation, state.did_doc.unwrap()).into()),
             s => {
                 return Err(VcxError::from_msg(
                     VcxErrorKind::InvalidState,
@@ -301,7 +301,7 @@ impl SmConnectionInvitee {
         };
         Ok(Self {
             state,
-            thread_id: invitation.get_id()?,
+            thread_id,
             ..self
         })
     }
@@ -309,7 +309,6 @@ impl SmConnectionInvitee {
     pub async fn send_connection_request<F, T>(
         self,
         wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         routing_keys: Vec<String>,
         service_endpoint: String,
         send_message: F,
@@ -320,7 +319,8 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = into_did_doc(pool_handle, &state.invitation).await?;
+                let ddo = self.their_did_doc().await
+                    .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
                     wallet_handle,
@@ -400,8 +400,8 @@ impl SmConnectionInvitee {
 
     pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(_state) => InviteeFullState::Initial(InitialState::new(None)),
-            InviteeFullState::Invited(_state) => InviteeFullState::Initial(InitialState::new(None)),
+            InviteeFullState::Requested(_state) => InviteeFullState::Initial(InitialState::new(None, None)),
+            InviteeFullState::Invited(_state) => InviteeFullState::Initial(InitialState::new(None, None)),
             _ => self.state.clone(),
         };
         Ok(Self { state, ..self })
@@ -437,14 +437,10 @@ pub mod unit_tests {
     pub mod invitee {
         use vdrtools_sys::WalletHandle;
 
-        use messages::did_doc::test_utils::_service_endpoint;
+        use messages::did_doc::test_utils::{_service_endpoint, _did_doc_inlined_recipient_keys};
         use messages::connection::response::{Response, SignedResponse};
 
         use super::*;
-
-        fn _dummy_pool_handle() -> PoolHandle {
-            0
-        }
 
         async fn _send_message(
             _wallet_handle: WalletHandle,
@@ -457,7 +453,7 @@ pub mod unit_tests {
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
             let pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
-            SmConnectionInvitee::new(&source_id(), pairwise_info)
+            SmConnectionInvitee::new(&source_id(), pairwise_info, _did_doc_inlined_recipient_keys())
         }
 
         impl SmConnectionInvitee {
@@ -473,7 +469,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
-                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 self
@@ -610,7 +606,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee
-                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
@@ -659,7 +655,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
@@ -688,7 +684,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), _dummy_pool_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
                     .await
                     .unwrap();
 
@@ -786,6 +782,7 @@ pub mod unit_tests {
                 let _setup = SetupIndyMocks::init();
 
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_completed_state().await;
+                assert_match!(InviteeFullState::Completed(_), did_exchange_sm.state);
 
                 // Disclose
                 assert!(did_exchange_sm.get_remote_protocols().is_none());

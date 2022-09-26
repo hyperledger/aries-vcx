@@ -1,11 +1,12 @@
 use messages::connection::invite::Invitation;
 use messages::connection::request::Request;
-use crate::protocols::connection::invitee::states::requested::RequestedState;
 use messages::did_doc::DidDoc;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {
     pub invitation: Invitation,
+    pub did_doc: DidDoc
 }
 
 impl From<(InvitedState, Request, DidDoc)> for RequestedState {

@@ -9,6 +9,7 @@ use messages::out_of_band::invitation::OutOfBandInvitation;
 use messages::a2a::A2AMessage;
 use messages::attachment::AttachmentId;
 use messages::connection::invite::Invitation;
+use messages::did_doc::DidDoc;
 use messages::issuance::credential::Credential;
 use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_request::CredentialRequest;
@@ -45,7 +46,7 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
-                match connection.bootstrap_did_doc(pool_handle).await {
+                match connection.bootstrap_did_doc().await {
                     Some(did_doc) => {
                         if let ServiceResolvable::Did(did) = service {
                             if did.to_string() == did_doc.id {
@@ -132,7 +133,7 @@ impl OutOfBandReceiver {
         Ok(None)
     }
 
-    pub async fn build_connection(&self, agency_client: &AgencyClient, autohop_enabled: bool) -> VcxResult<Connection> {
+    pub async fn build_connection(&self, agency_client: &AgencyClient, did_doc: DidDoc, autohop_enabled: bool) -> VcxResult<Connection> {
         trace!(
             "OutOfBandReceiver::build_connection >>> autohop_enabled: {}",
             autohop_enabled
@@ -142,6 +143,7 @@ impl OutOfBandReceiver {
             agency_client.get_wallet_handle(),
             agency_client,
             Invitation::OutOfBand(self.oob.clone()),
+            did_doc,
             autohop_enabled,
         )
         .await
