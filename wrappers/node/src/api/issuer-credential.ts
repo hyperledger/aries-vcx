@@ -406,9 +406,9 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
    *
    * Credential is made up of the data sent during Credential Offer
    */
-  public async sendCredential(connection: Connection): Promise<void> {
+  public async sendCredential(connection: Connection): Promise<number> {
     try {
-      await createFFICallbackPromise<void>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_issuer_send_credential(0, this.handle, connection.handle, cb);
           if (rc) {
@@ -416,14 +416,15 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           }
         },
         (resolve, reject) =>
-          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+          ffi.Callback('void', ['uint32', 'uint32', 'uint32'], (xcommandHandle: number, err: number, _state: number) => {
             if (err) {
               reject(err);
               return;
             }
-            resolve();
+            resolve(_state);
           }),
       );
+      return state;
     } catch (err) {
       throw new VCXInternalError(err);
     }
