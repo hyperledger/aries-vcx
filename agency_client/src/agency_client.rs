@@ -5,7 +5,7 @@ use crate::configuration::AgencyClientConfig;
 use crate::error::AgencyClientResult;
 use crate::{validation, AgencyClientError, AgencyClientErrorKind};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct AgencyClient {
     wallet_handle: WalletHandle,
     pub agency_url: String,
