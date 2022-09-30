@@ -85,7 +85,7 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(&mut self, config: &AgencyClientConfig) -> AgencyClientResult<()> {
+    pub fn configure(mut self, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
         validate_mandotory_config_val(
@@ -128,7 +128,7 @@ impl AgencyClient {
         self.set_my_pwdid(&config.sdk_to_remote_did);
         self.set_my_vk(&config.sdk_to_remote_verkey);
 
-        Ok(())
+        Ok(self)
     }
 
     pub fn set_testing_defaults_agency(&mut self) {
