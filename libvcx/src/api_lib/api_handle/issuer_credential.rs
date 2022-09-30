@@ -183,8 +183,9 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
             connection::send_message_closure(connection_handle).await?,
         )
         .await?;
+    let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(state)
 }
 
 pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {

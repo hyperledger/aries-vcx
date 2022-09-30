@@ -494,7 +494,7 @@ pub extern "C" fn vcx_issuer_send_credential(
     command_handle: CommandHandle,
     credential_handle: u32,
     connection_handle: u32,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, state: u32)>,
 ) -> u32 {
     info!("vcx_issuer_send_credential >>>");
 
@@ -509,8 +509,8 @@ pub extern "C" fn vcx_issuer_send_credential(
         source_id
     );
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let err = match issuer_credential::send_credential(credential_handle, connection_handle).await {
-            Ok(err) => {
+        match issuer_credential::send_credential(credential_handle, connection_handle).await {
+            Ok(state) => {
                 trace!(
                     "vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                     command_handle,
@@ -518,7 +518,7 @@ pub extern "C" fn vcx_issuer_send_credential(
                     error::SUCCESS.message,
                     source_id
                 );
-                err
+                cb(command_handle, error::SUCCESS.code_num, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -526,12 +526,9 @@ pub extern "C" fn vcx_issuer_send_credential(
                     "vcx_issuer_send_credential_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
                     command_handle, credential_handle, err, source_id
                 );
-                err.into()
+                cb(command_handle, err.into(), 0);
             }
         };
-
-        cb(command_handle, err);
-
         Ok(())
     }));
 
