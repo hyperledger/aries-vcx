@@ -12,7 +12,6 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_v2")]
 mod integration_tests {
-    use std::fmt;
     use std::thread;
     use std::time::Duration;
 
@@ -395,7 +394,7 @@ mod integration_tests {
     #[cfg(feature = "agency_v2")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
-        let setup = SetupPool::init().await;
+        let _setup = SetupPool::init().await;
         let wallet_config = WalletConfig {
             wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -419,7 +418,7 @@ mod integration_tests {
             .await
             .unwrap();
         let config = client.get_config().unwrap();
-        client.configure(&config);
+        let client = client.configure(&config).unwrap();
         client.update_agent_webhook("https://example.org").await.unwrap();
         close_wallet(wallet_handle).await.unwrap();
     }
