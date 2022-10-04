@@ -58,7 +58,23 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
                 credential_preview =
-                    credential_preview.add_value(&key.to_string(), &value.to_string(), MimeType::Plain);
+                    credential_preview.add_value(
+                        &key.as_str()
+                            .ok_or(
+                                VcxError::from_msg(
+                                    VcxErrorKind::InvalidOption,
+                                    "Credential value names are currently only allowed to be strings",
+                                )
+                            )?,
+                        &value.as_str()
+                            .ok_or(
+                                VcxError::from_msg(
+                                    VcxErrorKind::InvalidOption,
+                                    "Credential values are currently only allowed to be strings",
+                                )
+                            )?,
+                        MimeType::Plain
+                    );
             }
         }
         serde_json::Value::Object(values_map) => {
@@ -343,25 +359,36 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_build_credential_preview() {
+        fn verify_preview(preview: CredentialPreviewData) {
+            let value_name = preview
+                .attributes
+                .clone()
+                .into_iter()
+                .find(|x| x.name == "name")
+                .unwrap();
+            let value_age = preview
+                .attributes
+                .clone()
+                .into_iter()
+                .find(|x| x.name == "age")
+                .unwrap();
+            assert_eq!(value_name.name, "name");
+            assert_eq!(value_name.value, "Alice");
+            assert_eq!(value_age.name, "age");
+            assert_eq!(value_age.value, "123");
+        }
+
         let _setup = SetupMocks::init();
         let input = json!({"name":"Alice","age":"123"}).to_string();
         let preview = _build_credential_preview(&input).unwrap();
-        let value_name = preview
-            .attributes
-            .clone()
-            .into_iter()
-            .find(|x| x.name == "name")
-            .unwrap();
-        let value_age = preview
-            .attributes
-            .clone()
-            .into_iter()
-            .find(|x| x.name == "age")
-            .unwrap();
-        assert_eq!(value_name.name, "name");
-        assert_eq!(value_name.value, "Alice");
-        assert_eq!(value_age.name, "age");
-        assert_eq!(value_age.value, "123");
+        verify_preview(preview);
+
+        let input = json!([
+            {"name":"name", "value": "Alice"},
+            {"name": "age", "value": "123"}
+        ]).to_string();
+        let preview = _build_credential_preview(&input).unwrap();
+        verify_preview(preview);
     }
 
     #[tokio::test]
