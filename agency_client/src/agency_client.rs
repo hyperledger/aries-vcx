@@ -59,33 +59,47 @@ impl AgencyClient {
         self.my_vk.clone()
     }
 
-    pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
+    pub fn set_wallet_handle(mut self, wallet_handle: WalletHandle) -> Self {
         self.wallet_handle = wallet_handle;
+        self
     }
 
-    pub(crate) fn set_agency_url(&mut self, url: &str) {
+    pub(crate) fn set_agency_url(mut self, url: &str) -> Self {
         self.agency_url = url.to_string();
-    }
-    pub(crate) fn set_agency_did(&mut self, did: &str) {
-        self.agency_did = did.to_string();
-    }
-    pub(crate) fn set_agency_vk(&mut self, vk: &str) {
-        self.agency_vk = vk.to_string();
-    }
-    pub(crate) fn set_agent_pwdid(&mut self, pwdid: &str) {
-        self.agent_pwdid = pwdid.to_string();
-    }
-    pub(crate) fn set_agent_vk(&mut self, vk: &str) {
-        self.agent_vk = vk.to_string();
-    }
-    pub(crate) fn set_my_pwdid(&mut self, pwdid: &str) {
-        self.my_pwdid = pwdid.to_string();
-    }
-    pub(crate) fn set_my_vk(&mut self, vk: &str) {
-        self.my_vk = vk.to_string();
+        self
     }
 
-    pub fn configure(mut self, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
+    pub(crate) fn set_agency_did(mut self, did: &str) -> Self {
+        self.agency_did = did.to_string();
+        self
+    }
+
+    pub(crate) fn set_agency_vk(mut self, vk: &str) -> Self {
+        self.agency_vk = vk.to_string();
+        self
+    }
+
+    pub(crate) fn set_agent_pwdid(mut self, pwdid: &str) -> Self {
+        self.agent_pwdid = pwdid.to_string();
+        self
+    }
+
+    pub(crate) fn set_agent_vk(mut self, vk: &str) -> Self {
+        self.agent_vk = vk.to_string();
+        self
+    }
+
+    pub(crate) fn set_my_pwdid(mut self, pwdid: &str) -> Self {
+        self.my_pwdid = pwdid.to_string();
+        self
+    }
+
+    pub(crate) fn set_my_vk(mut self, vk: &str) -> Self {
+        self.my_vk = vk.to_string();
+        self
+    }
+
+    pub fn configure(self, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
         validate_mandotory_config_val(
@@ -120,31 +134,14 @@ impl AgencyClient {
         )?;
         validate_mandotory_config_val(&config.agency_endpoint, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
 
-        self.set_agency_url(&config.agency_endpoint);
-        self.set_agency_did(&config.agency_did);
-        self.set_agency_vk(&config.agency_verkey);
-        self.set_agent_pwdid(&config.remote_to_sdk_did);
-        self.set_agent_vk(&config.remote_to_sdk_verkey);
-        self.set_my_pwdid(&config.sdk_to_remote_did);
-        self.set_my_vk(&config.sdk_to_remote_verkey);
-
-        Ok(self)
-    }
-
-    pub fn set_testing_defaults_agency(&mut self) {
-        trace!("set_testing_defaults_agency >>>");
-
-        let default_did = "VsKV7grR1BUE29mG2Fm2kX";
-        let default_verkey = "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR";
-        let default_url = "http://127.0.0.1:8080";
-
-        self.set_agency_url(default_url);
-        self.set_agency_did(default_did);
-        self.set_agency_vk(default_verkey);
-        self.set_agent_pwdid(default_did);
-        self.set_agent_vk(default_verkey);
-        self.set_my_pwdid(default_did);
-        self.set_my_vk(default_verkey);
+        Ok(self
+            .set_agency_url(&config.agency_endpoint)
+            .set_agency_did(&config.agency_did)
+            .set_agency_vk(&config.agency_verkey)
+            .set_agent_pwdid(&config.remote_to_sdk_did)
+            .set_agent_vk(&config.remote_to_sdk_verkey)
+            .set_my_pwdid(&config.sdk_to_remote_did)
+            .set_my_vk(&config.sdk_to_remote_verkey))
     }
 
     pub fn new() -> Self {

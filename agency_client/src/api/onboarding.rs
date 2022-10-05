@@ -101,12 +101,13 @@ impl AgencyClient {
             "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}",
             my_did, my_vk, agency_did, agency_vk, agency_url
         );
-        self.set_wallet_handle(wallet_handle);
-        self.set_agency_url(agency_url);
-        self.set_agency_vk(agency_vk);
-        self.set_agency_did(agency_did);
-        self.set_my_pwdid(my_did);
-        self.set_my_vk(my_vk);
+        *self = self.clone()
+            .set_wallet_handle(wallet_handle)
+            .set_agency_url(agency_url)
+            .set_agency_vk(agency_vk)
+            .set_agency_did(agency_did)
+            .set_my_pwdid(my_did)
+            .set_my_vk(my_vk);
 
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::CONNECTED_RESPONSE_DECRYPTED);
         let (agency_pw_did, agency_pw_vk) = self._connect(my_did, my_vk, agency_did, agency_vk).await?;
@@ -120,8 +121,9 @@ impl AgencyClient {
             agent_did,
             agent_vk
         );
-        self.set_agent_pwdid(&agent_did);
-        self.set_agent_vk(&agent_vk);
+        *self = self.clone()
+            .set_agent_pwdid(&agent_did)
+            .set_agent_vk(&agent_vk);
         Ok(())
     }
 
