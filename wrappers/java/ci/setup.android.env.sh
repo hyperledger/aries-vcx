@@ -259,6 +259,7 @@ set_env_vars(){
 
     export SODIUM_LIB_DIR=${SODIUM_DIR}/lib
     export SODIUM_INCLUDE_DIR=${SODIUM_DIR}/include
+    export SODIUM_STATIC=1
 
     export LIBZMQ_LIB_DIR=${LIBZMQ_DIR}/lib
     export LIBZMQ_INCLUDE_DIR=${LIBZMQ_DIR}/include
@@ -275,7 +276,6 @@ set_env_vars(){
     export OBJCOPY=${TOOLCHAIN_DIR}/bin/${ANDROID_TRIPLET}-objcopy
 
     export TARGET=android
-
 }
 
 build_libvcx(){
@@ -307,5 +307,4 @@ copy_libraries_to_jni(){
     mkdir -p $LIB_PATH
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/libvcx.so ${LIB_PATH}
     cp ${LIBZMQ_LIB_DIR}/libzmq.so    ${LIB_PATH}
-    cp ${SODIUM_LIB_DIR}/libsodium.so ${LIB_PATH}
 }
