@@ -88,7 +88,7 @@ impl Predicate {
 }
 
 fn default_presentation_preview_type() -> MessageType {
-    MessageType::build(MessageFamilies::CredentialIssuance, "presentation-preview")
+    MessageType::build(MessageFamilies::PresentProof, "presentation-preview")
 }
 
 impl PresentationProposal {
