@@ -418,7 +418,7 @@ mod integration_tests {
             .await
             .unwrap();
         let config = client.get_config().unwrap();
-        let client = client.configure(&config).unwrap();
+        let client = client.configure(wallet_handle, &config).unwrap();
         client.update_agent_webhook("https://example.org").await.unwrap();
         close_wallet(wallet_handle).await.unwrap();
     }

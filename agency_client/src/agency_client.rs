@@ -85,7 +85,7 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(mut self, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
+    pub fn configure(mut self, wallet_handle: WalletHandle, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
         validate_mandotory_config_val(
@@ -127,6 +127,7 @@ impl AgencyClient {
         self.set_agent_vk(&config.remote_to_sdk_verkey);
         self.set_my_pwdid(&config.sdk_to_remote_did);
         self.set_my_vk(&config.sdk_to_remote_verkey);
+        self.set_wallet_handle(wallet_handle);
 
         Ok(self)
     }
