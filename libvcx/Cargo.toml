@@ -1,6 +1,6 @@
 [package]
 name = "libvcx"
-version = "0.43.0"
+version = "0.44.0"
 authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
 publish = false
 description = "Absa's fork of HL LibVCX"
