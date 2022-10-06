@@ -202,9 +202,9 @@ prepare_dependencies() {
     TARGET_ARCH="$1"
     echo "prepare_dependencies >> TARGET_ARCH=${TARGET_ARCH}"
     pushd "${ANDROID_BUILD_FOLDER}"
-        download_and_unzip_if_missed "openssl_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/openssl/openssl_$TARGET_ARCH.zip"
-        download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/sodium/libsodium_$TARGET_ARCH.zip"
-        download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps-libc++/zmq/libzmq_$TARGET_ARCH.zip"
+        download_and_unzip_if_missed "openssl_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps/openssl/openssl_$TARGET_ARCH.zip"
+        download_and_unzip_if_missed "libsodium_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps/sodium/libsodium_$TARGET_ARCH.zip"
+        download_and_unzip_if_missed "libzmq_$TARGET_ARCH" "https://repo.sovrin.org/android/libindy/deps/zmq/libzmq_$TARGET_ARCH.zip"
     popd
 }
 
