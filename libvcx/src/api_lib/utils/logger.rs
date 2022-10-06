@@ -78,16 +78,17 @@ impl LibvcxLogger {
         flush: Option<FlushCB>,
     ) -> VcxResult<()> {
         trace!("LibvcxLogger::init >>>");
+
         let logger = LibvcxLogger::new(context, enabled, log, flush);
+
         log::set_boxed_logger(Box::new(logger)).map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::LoggingError,
                 format!("Setting logger failed with: {}", err),
             )
         })?;
+
         log::set_max_level(LevelFilter::Trace);
-        indy::utils::logger::set_logger(log::logger())
-            .map_err(|err| err.map(aries_vcx::error::VcxErrorKind::LoggingError, "Setting logger failed"))?;
 
         unsafe {
             LOGGER_STATE = LoggerState::Custom;
@@ -229,12 +230,7 @@ impl LibvcxDefaultLogger {
                     VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                 })?;
         }
-        indy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str)).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::LoggingError,
-                format!("Setting default logger failed: {:?}", err),
-            )
-        })
+        Ok(())
     }
 
     extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {

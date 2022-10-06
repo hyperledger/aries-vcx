@@ -1,28 +1,28 @@
 name: 'Generate test code coverage'
 
 inputs:
-  run-services: 
+  run-services:
     description: 'Boolean flag indicating whether it is necessary to run services alongside the tests'
     required: true
-  codecov-img-name: 
+  codecov-img-name:
     description: 'Name of the codecov image'
     required: true
-  codecov-cont-name: 
+  codecov-cont-name:
     description: 'Name of the codecov container'
     required: true
-  pool-img-name: 
+  pool-img-name:
     description: 'Name of the pool image'
     required: false
-  agency-img-name: 
+  agency-img-name:
     description: 'Name of the agency image'
     required: false
-  test-features: 
+  test-features:
     description: 'Blank-separated list of features to use for the test run'
     required: true
-  test-path: 
+  test-path:
     description: 'Path to the folder to run tests from'
     required: true
-  cov-file-path: 
+  cov-file-path:
     description: 'Path to the coverage file'
     default: libvcx/coverage.lcov
 
@@ -52,12 +52,16 @@ runs:
           -e CARGO_INCREMENTAL=0 \
           -e RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           -e RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          -e TEST_PATH=${{ inputs.test-path }} \
+          -e TEST_PATH='${{ inputs.test-path }}' \
           -e FEATURES='${{ inputs.test-features }}' \
           ${{ inputs.codecov-img-name }} \
-          bash -c '(cd $HOME/$TEST_PATH && \
-              cargo test --features "$FEATURES" && \
-              grcov ../target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ../target/debug/coverage.lcov)'
+          bash -c 'set -ex; \
+                   cd $HOME/aries-vcx; \
+                   env; \
+                   cargo test \
+                         --package ${{ inputs.test-path }} \
+                         --features "$FEATURES"; \
+                   grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ./target/debug/coverage.lcov'
         docker_id=$(docker ps -a | grep ${{ inputs.codecov-cont-name }} | grep Exited | tail -n 1 | cut -d ' ' -f 1)
         docker_image_id=$(docker images | grep codecov | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
         docker cp ${docker_id}:/home/indy/aries-vcx/target/debug/coverage.lcov ${{ inputs.cov-file-path }}

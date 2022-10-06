@@ -20,12 +20,12 @@ reqwest = "0.11.10"
 regex = "1.1.0"
 rmp-serde = "0.13.7"
 rust-base58 = "0.0.4"
-vdrtools = { git = "https://gitlab.com/mirgee/vdr-tools.git", rev = "c1390f91bc152ef31a7ead73c1c3fe286cc9cc0c" }
+vdrtoolsrs = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "21ac57e1a" }
 futures = "0.3.21"
 url = "1.5.1"
 failure = "0.1.6"
 async-std = "1.11.0"
-uuid = {version = "0.8", default-features = false, features = ["v4"]}
+uuid = { version = "0.8", default-features = false, features = ["v4"]}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

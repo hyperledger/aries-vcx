@@ -113,7 +113,7 @@ jobs:
           LIBVCX_NODE_AGENT_HASH=${{ hashFiles('agents/node') }}
 
           POOL_DOCKERFILE_HASH=${{ hashFiles('ci/indy-pool.dockerfile')}}
-          
+
           LIBVCX_HASH=${LIBVCX_DOCKERFILE_HASH:0:11}-${LIBVCX_SOURCE_HASH:0:11}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${MESSAGES_HASH:0:11}
           LIBVCX_TESTER_HASH=${LIBVCX_HASH}-${LIBVCX_TESTER_DOCKERFILE_HASH:0:11}-${LIBVCX_NODE_WRAPPERS_HASH:0:11}-${LIBVCX_NODE_AGENT_HASH:0:11}
           CODECOV_HASH=${LIBVCX_HASH}-${ARIESVCX_SOURCE_HASH:0:11}-${AGENCY_CLIENT_HASH:0:11}-${MESSAGES_HASH:0:11}-${CODECOV_DOCKERFILE_HASH:0:23}
@@ -135,7 +135,7 @@ jobs:
           echo "::set-output name=DOCKER_IMG_NAME_AGENCY::ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0"
           echo "::set-output name=DOCKER_IMG_NAME_ANDROID::android-test"
           echo "::set-output name=DOCKER_IMG_NAME_LIBVCX::libvcx:$LIBVCX_HASH"
-          echo "::set-output name=DOCKER_IMG_NAME_LIBVCX_TESTER::libvcx-tester:LIBVCX_TESTER_HASH"
+          echo "::set-output name=DOCKER_IMG_NAME_LIBVCX_TESTER::libvcx-tester:$LIBVCX_TESTER_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_CODECOV::codecov:$CODECOV_HASH"
           echo "::set-output name=DOCKER_IMG_NAME_POOL::indypool:$POOL_HASH"
 
@@ -373,7 +373,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           test-features: general_test
-          test-path: aries-vcx/aries_vcx
+          test-path: aries-vcx
           run-services: false
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-unit-aries-vcx
@@ -442,7 +442,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           test-features: 'pool_tests agency_pool_tests agency_v2'
-          test-path: aries-vcx/aries_vcx
+          test-path: aries-vcx
           run-services: true
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-integration-aries-vcx
@@ -491,7 +491,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           test-features: general_test
-          test-path: aries-vcx/agency_client
+          test-path: agency_client
           run-services: false
           codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_NAME_CODECOV }}
           codecov-cont-name: codecov-unit-agency-client
@@ -568,16 +568,12 @@ jobs:
       - name: Run quick unit tests
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(cd $HOME/agency_client && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
-                                cd $HOME/messages && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
-                                cd $HOME/aries_vcx && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" && \
-                                cd $HOME/libvcx && \
-                                RUST_TEST_THREADS=1 cargo test --release --features "general_test" )'
+          docker run --rm \
+             --name libvcx \
+             --network host \
+             $DOCKER_IMG_NAME_LIBVCX_TESTER \
+             sh -c 'set -e; export RUST_TEST_THREADS=1; export RUST_BACKTRACE=full; \
+                    cd $HOME; cargo test --release --features "general_test"'
 
   test-libvcx-image-pool-tests:
     runs-on: ubuntu-20.04
@@ -626,7 +622,6 @@ jobs:
       - name: Start indypool, mysql, agency
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
@@ -636,11 +631,15 @@ jobs:
       - name: Run pool integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(cd $HOME/libvcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_tests" && \
-                              cd $HOME/aries_vcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "pool_tests agency_v2" )'
+          docker run --rm --name libvcx \
+              --network host \
+              $DOCKER_IMG_NAME_LIBVCX_TESTER sh -c 'set -ex; \
+                  cd $HOME/libvcx; \
+                  export RUST_TEST_THREADS=1; \
+                  export TEST_POOL_IP=127.0.0.1;
+                  cargo test --release --features "pool_tests agency_tests"; \
+                  cd $HOME/aries_vcx; \
+                  cargo test --release --features "pool_tests agency_v2"'
 
       - name: Collect docker logs on failure
         if: failure()
@@ -705,7 +704,6 @@ jobs:
       - name: Start indypool, mysql, agency
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
@@ -715,7 +713,7 @@ jobs:
       - name: Run mysql integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX_TESTER \
                               sh -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
                               RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "mysql_test")'
 
@@ -782,7 +780,6 @@ jobs:
       - name: Start indypool, mysql, agency
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
@@ -792,7 +789,7 @@ jobs:
       - name: Run agency+pool integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e X86_64_UNKNOWN_LINUX_MUSL_OPENSSL_NO_VENDOR=true $DOCKER_IMG_NAME_LIBVCX_TESTER \
+          docker run --rm -i --name libvcx --network host $DOCKER_IMG_NAME_LIBVCX_TESTER \
                               sh -c '(cd $HOME/aries_vcx && \
                               cargo --version && \
                               rustc --version && \
@@ -838,7 +835,6 @@ jobs:
       - name: Run android tests
         run: |
           rm -rf /tmp/imgcache
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -i --name test-android-build $DOCKER_IMG_NAME_ANDROID \
                               sh -c '(cd $HOME/aries-vcx && ./wrappers/java/ci/android.test.sh armv7)'
 
@@ -869,8 +865,10 @@ jobs:
       - name: Run wrapper tests
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
+          docker run --rm -i --name libvcx \
+                 --network host \
+                 -e NPMJS_TOKEN=$NPMJS_TOKEN \
+                 $DOCKER_IMG_NAME_LIBVCX_TESTER \
                               sh -c '(
                                 cd $HOME/wrappers/node && \
                                 npm install && \
@@ -927,7 +925,6 @@ jobs:
       - name: Start indypool, mysql, agency
         run: |
           set -x
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
           docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
           docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
           sleep 7
@@ -937,28 +934,44 @@ jobs:
       - name: Run wrapper demo
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo)'
+          docker run --rm --name libvcx \
+              --network host \
+              -e AGENCY_URL=http://localhost:8080 \
+              -e NPMJS_TOKEN=$NPMJS_TOKEN \
+              $DOCKER_IMG_NAME_LIBVCX_TESTER sh -c 'set -ex; \
+                  cd $HOME/wrappers/node; \
+                  npm install; \
+                  npm run compile; \
+                  cd $HOME/agents/node/vcxagent-core; \
+                  npm install; \
+                  npm run demo'
 
       - name: Run wrapper demo with revocation
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e AGENCY_URL=http://localhost:8080 -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && npm run demo:revocation)'
+          docker run --rm --name libvcx \
+              --network host \
+              -e AGENCY_URL=http://localhost:8080 \
+              -e NPMJS_TOKEN=$NPMJS_TOKEN \
+              $DOCKER_IMG_NAME_LIBVCX_TESTER sh -c 'set -ex; \
+                  cd $HOME/wrappers/node; \
+                  npm install; \
+                  npm run compile; \
+                  cd $HOME/agents/node/vcxagent-core; \
+                  npm install; \
+                  npm run demo:revocation'
 
       - name: Run integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host -e NPMJS_TOKEN=$NPMJS_TOKEN $DOCKER_IMG_NAME_LIBVCX_TESTER \
-                              sh -c '(
-                                cd $HOME/wrappers/node && npm install && npm run compile && \
-                                cd $HOME/agents/node/vcxagent-core && npm install && \
-                                cd $HOME/agents/node/vcxagent-cli && npm install && \
-                                cd $HOME/agents/node/vcxagent-core && npm run test:integration)'
+          docker run --rm --name libvcx \
+              --network host \
+              -e NPMJS_TOKEN=$NPMJS_TOKEN \
+              $DOCKER_IMG_NAME_LIBVCX_TESTER sh -c 'set -ex; \
+                  cd $HOME/wrappers/node; npm install; npm run compile; \
+                  cd $HOME/agents/node/vcxagent-core; npm install; \
+                  cd $HOME/agents/node/vcxagent-cli;  npm install; \
+                  cd $HOME/agents/node/vcxagent-core; npm run test:integration'
 
       - name: Collect docker logs on failure
         if: failure()

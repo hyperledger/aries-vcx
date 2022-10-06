@@ -26,7 +26,7 @@ prepare_artifacts(){
     AAR_DIR=${HOME}/artifacts/aar
     mkdir -p ${PACKAGE_DIR}/{include,lib} ${ZIP_DIR} ${AAR_DIR}
 
-    mv ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${PACKAGE_DIR}/lib
+    mv ${LIBVCX_DIR}/target/${TRIPLET}/release/libvcx.so ${PACKAGE_DIR}/lib
     rm -r ${LIBVCX_DIR}/target
 
     if [ -z "${LIBVCX_VERSION}" ]; then
@@ -60,6 +60,18 @@ do
 
     create_standalone_toolchain_and_rust_target
     create_cargo_config
+
+    # The prebuild libzmq.so exports not only symbols zmq_* but many
+    # others. Some of these symbols conflicts symbols from libsodium.
+    #
+    # Hide all !^zmq_ symbols
+    #
+    _libzmq=${LIBZMQ_DIR}/lib/libzmq.so
+    for s in $(nm -g ${_libzmq} | egrep ' (T|V) ' | awk '!/ T zmq/ { print $3 }'); do
+        cp ${_libzmq} ${_libzmq}.in
+        ${OBJCOPY} -L ${s} ${_libzmq}.in ${_libzmq}
+    done
+    rm ${_libzmq}.in
 
     build_libvcx ${LIBVCX_DIR}
 
