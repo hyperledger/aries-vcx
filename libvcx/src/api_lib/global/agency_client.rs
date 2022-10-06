@@ -22,9 +22,8 @@ pub fn get_main_agency_client() -> VcxResult<AgencyClient> {
 }
 
 pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
-    let client = get_main_agency_client()?.configure(config)?;
+    let client = get_main_agency_client()?.configure(get_main_wallet_handle(), config)?;
     set_main_agency_client(client);
-    get_main_agency_client_mut()?.set_wallet_handle(get_main_wallet_handle());
     Ok(())
 }
 
