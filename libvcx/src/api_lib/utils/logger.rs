@@ -228,7 +228,12 @@ impl LibvcxDefaultLogger {
                     VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                 })?;
         }
-        Ok(())
+        indy::utils::logger::set_default_logger(pattern.as_ref().map(String::as_str)).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::LoggingError,
+                format!("Setting default logger failed: {:?}", err),
+            )
+        })
     }
 
     extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {
