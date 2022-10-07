@@ -6,12 +6,10 @@ edition = "2018"
 
 description = "A library that facilitates building standards compliant and interoperable solutions for self-sovereign identity by abstracting the operations for interacting with a verifiable data registry as defined by Hyperledger Aries."
 license = "Apache-2.0"
-build = "build.rs"
 
 [lib]
 name = "vdrtools"
 path = "src/lib.rs"
-crate-type = ["staticlib", "rlib", "cdylib"]
 
 [features]
 default = ["base58_bs58", "pair_amcl", "local_nodes_pool", "revocation_tests"]
@@ -23,18 +21,6 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-cheqd = [
-    "indy-api-types/cheqd",
-    "cosmrs",
-    "prost",
-    "prost-build",
-    "prost-types",
-    "tendermint-proto",
-    "walkdir",
-    "ics23",
-    "lexical-core",
-    "http-client"
-]
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -76,21 +62,13 @@ num-traits = "0.2"
 num-derive = "0.3"
 convert_case = "0.3.2"
 futures = "0.3.1"
-
 bip32 = { version = "0.2.2", features = ["alloc"] }
 bip39 = "1.0.1"
 pbkdf2 = "0.9.0"
 
-http-client = { version = "6.5.2", features = ["default"], optional = true }
-ics23 = { version = "0.6.5", optional = true }
-lexical-core = { version = "0.7.6", optional = true }
-cosmrs = { version = "0.2.1", features = ["rpc", "bip32"], optional = true }
 k256 = { version = "0.9.6", features = ["ecdsa-core", "ecdsa"] }
 uuid = { version = "0.8", default-features = false, features = ["v4"] }
 ursa = { version = "0.3.7", optional = true}
-prost = { version = "0.7.0", optional = true}
-prost-types = { version = "0.7.0", optional = true}
-tendermint-proto = { version = "0.22", optional = true}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
@@ -103,50 +81,3 @@ rstest = "0.6.4"
 [[bench]]
 name = "wallet"
 harness = false
-
-[package.metadata.deb]
-extended-description = """"""
-section = "devel"
-priority = "optional"
-conflicts = "libindy"  # TODO rename libs and remove this section
-maintainer-scripts = "./debian"
-changelog = "./debian/changelog"
-
-[package.metadata.deb.variants.libvdrtools-focal]
-provides = "libvdrtools (= 0.0.1)"
-name = "libvdrtools"
-depends = "libzmq5, libsodium23, libssl1.1"
-assets = [
-    ["target/release/libvdrtools.so", "usr/lib/", "644"],
-]
-
-[package.metadata.deb.variants.libvdrtools-bionic]
-provides = "libvdrtools (= 0.0.1)"
-name = "libvdrtools"
-depends = "libzmq5, libsodium23, libssl1.1"
-assets = [
-    ["target/release/libvdrtools.so", "usr/lib/", "644"],
-]
-
-[package.metadata.deb.variants.libvdrtools-dev-focal]
-provides = "libvdrtools-dev (= 0.0.1)"
-name = "libvdrtools-dev"
-depends = "libvdrtools (= 0.0.1)"
-assets = [
-    ["include/*.h", "usr/include/vdrtools/", "644"],
-    ["target/release/libvdrtools.a", "usr/lib/", "644"],
-]
-
-[package.metadata.deb.variants.libvdrtools-dev-bionic]
-provides = "libvdrtools-dev (= 0.0.1)"
-name = "libvdrtools-dev"
-depends = "libvdrtools (= 0.0.1)"
-assets = [
-    ["include/*.h", "usr/include/vdrtools/", "644"],
-    ["target/release/libvdrtools.a", "usr/lib/", "644"],
-]
-
-[build-dependencies]
-regex = "1.2.1"
-prost-build = { version = "0.7", optional = true }
-walkdir = { version = "2", optional = true }

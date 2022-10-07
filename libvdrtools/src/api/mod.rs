@@ -11,12 +11,6 @@ pub mod pairwise;
 pub mod pool;
 pub mod vdr;
 pub mod wallet;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_ledger;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_keys;
-#[cfg(feature = "cheqd")]
-pub mod cheqd_pool;
 
 use indy_api_types::{errors::prelude::*, validation::Validatable, ErrorCode};
 use indy_utils::ctypes;

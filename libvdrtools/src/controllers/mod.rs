@@ -10,12 +10,6 @@ mod metrics;
 mod non_secrets;
 mod pairwise;
 mod pool;
-#[cfg(feature = "cheqd")]
-mod cheqd_ledger;
-#[cfg(feature = "cheqd")]
-mod cheqd_keys;
-#[cfg(feature = "cheqd")]
-mod cheqd_pool;
 mod wallet;
 pub(crate) mod vdr;
 
@@ -31,10 +25,4 @@ pub(crate) use non_secrets::NonSecretsController;
 pub(crate) use pairwise::PairwiseController;
 pub(crate) use pool::PoolController;
 pub(crate) use wallet::WalletController;
-#[cfg(feature = "cheqd")]
-pub(crate) use cheqd_ledger::CheqdLedgerController;
-#[cfg(feature = "cheqd")]
-pub(crate) use cheqd_keys::CheqdKeysController;
-#[cfg(feature = "cheqd")]
-pub(crate) use cheqd_pool::CheqdPoolController;
 pub(crate) use vdr::VDRController;

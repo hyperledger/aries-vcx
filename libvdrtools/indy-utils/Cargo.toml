@@ -17,7 +17,6 @@ pwhash_argon2i13_sodium = []
 hmacsha256_sodium = []
 hash_openssl = []
 randombytes_sodium = []
-cheqd = ["indy-api-types/cheqd"]
 
 [dependencies]
 base64 = {version = "0.10.1"}
