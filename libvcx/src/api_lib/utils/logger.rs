@@ -192,8 +192,6 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
 
 impl LibvcxDefaultLogger {
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
-        info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
-
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]

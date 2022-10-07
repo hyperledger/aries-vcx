@@ -23,12 +23,7 @@ use crate::api_lib::utils::logger::{
 /// u32 error code
 #[no_mangle]
 pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
-    info!("vcx_set_default_logger >>>");
-
     check_useful_opt_c_str!(pattern, VcxErrorKind::InvalidConfiguration);
-
-    trace!("vcx_set_default_logger(pattern: {:?})", pattern);
-
     match LibvcxDefaultLogger::init(pattern.clone()) {
         Ok(()) => {
             info!("Logger Successfully Initialized with pattern {:?}", &pattern);
@@ -36,7 +31,6 @@ pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
         }
         Err(err) => {
             set_current_error_vcx(&err);
-            error!("Logger Failed To Initialize: {}", err);
             err.into()
         }
     }
