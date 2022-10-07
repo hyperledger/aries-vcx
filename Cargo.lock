@@ -177,7 +177,7 @@ checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
 
 [[package]]
 name = "aries-vcx"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -1894,7 +1894,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.43.0"
+version = "0.44.0"
 dependencies = [
  "android_logger",
  "aries-vcx",
