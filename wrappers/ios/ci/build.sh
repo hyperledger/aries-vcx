@@ -13,9 +13,6 @@ OUTPUT_DIR=/tmp/artifacts
 
 setup() {
     echo "ios/ci/build.sh: running setup()"
-    echo "Setup rustup"
-    rustup default 1.62.1
-    rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
     rustup target add aarch64-apple-ios x86_64-apple-ios
@@ -27,8 +24,13 @@ setup() {
     fi
 
     echo "Install Rust Xcode tools"
-    cargo install cargo-lipo
-    cargo install cargo-xcode
+    if [ ! -x ~/.cargo/bin/cargo-lipo ]; then
+        cargo install cargo-lipo
+    fi
+
+    if [ ! -x ~/.cargo/bin/cargo-xcode ]; then
+        cargo install cargo-xcode
+    fi
 
     echo "Check Homebrew"
     BREW_VERSION=$(brew --version)
@@ -156,7 +158,7 @@ build_libvcx() {
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
             echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR}"
-            cargo build -vv --target "${TRIPLET}" --release --no-default-features
+            cargo build --target "${TRIPLET}" --release --no-default-features
         done
     popd
 }
@@ -344,8 +346,9 @@ abspath() {
 setup
 
 # Build 3rd party libraries
-build_crypto   # builds into:  $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
+build_crypto    # builds into: $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
 build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
+
 # TODO: also remove excessively building non-ios platform artifacts:
 # Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
 # Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386

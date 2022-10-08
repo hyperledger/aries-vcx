@@ -1002,13 +1002,23 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
           xcodebuild -version
+      - name: Cache tools
+        uses: actions/cache@v3
+        with:
+          key: ios-tools-${{ hashFiles('.github/workflows/main.yml', './wrappers/ios/**') }}
+          path: |
+            ~/.cargo/bin/cargo-lipo
+            ~/.cargo/bin/cargo-xcode
+
       - name: Build iOS wrapper
         run: |
           ./wrappers/ios/ci/build.sh
+
       - uses: actions/upload-artifact@v2
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
+
       - uses: actions/upload-artifact@v2
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
