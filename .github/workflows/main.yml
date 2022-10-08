@@ -1005,10 +1005,17 @@ jobs:
       - name: Cache tools
         uses: actions/cache@v3
         with:
-          key: ios-tools-${{ hashFiles('.github/workflows/main.yml', './wrappers/ios/**') }}
+          key: ios-tools-${{ hashFiles('.github/workflows/main.yml', './wrappers/ios/ci/**') }}
           path: |
             ~/.cargo/bin/cargo-lipo
             ~/.cargo/bin/cargo-xcode
+
+      - name: Cache external deps
+        uses: actions/cache@v3
+        with:
+          key: ios-deps-${{ hashFiles('.github/workflows/main.yml', './wrappers/ios/ci/**') }}
+          path: |
+            /tmp/artifacts/libs
 
       - name: Build iOS wrapper
         run: |

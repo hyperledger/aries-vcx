@@ -342,24 +342,27 @@ abspath() {
     fi
 }
 
+
 # Setup environment
 setup
 
-# Build 3rd party libraries
-build_crypto    # builds into: $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
-build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
+if [ ! -d $OUTPUT_DIR/libs ]; then
+    # Build 3rd party libraries
+    build_crypto    # builds into: $OUTPUT_DIR/OpenSSL-for-iPhone # builds: x86_64 arm64 arm64e, TODO: keep only arm64, x86_64
+    build_libsodium # builds into: $OUTPUT_DIR/libsodium-ios # builds: armv7 armv7s i386 x86_64 arm64, TODO: keep only arm64, x86_64
 
-# TODO: also remove excessively building non-ios platform artifacts:
-# Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
-# Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386
-# Architectures in the fat file: ./libsodium-ios/dist/ios/lib/libsodium.a are: armv7 armv7s i386 x86_64 arm64
-build_libzmq   # builds into:  $OUTPUT_DIR/libzmq-ios # builds: x86_64 arm64
+    # TODO: also remove excessively building non-ios platform artifacts:
+    # Architectures in the fat file: ./libsodium-ios/dist/macos/lib/libsodium.a are: x86_64
+    # Architectures in the fat file: ./libsodium-ios/dist/watchos/lib/libsodium.a are: armv7k i386
+    # Architectures in the fat file: ./libsodium-ios/dist/ios/lib/libsodium.a are: armv7 armv7s i386 x86_64 arm64
+    build_libzmq   # builds into:  $OUTPUT_DIR/libzmq-ios # builds: x86_64 arm64
 
-# Extract architectures from fat files into non-fat files
-extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
-extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
-extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
+    # Extract architectures from fat files into non-fat files
+    extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodium sodium
+    extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
+    extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
+    extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
+fi
 
 # Build vcx
 build_libvcx
