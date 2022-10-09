@@ -384,7 +384,7 @@ jobs:
           flags: unittests-aries-vcx
           name: codecov-unit-aries-vcx
           fail_ci_if_error: true
-          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
+
       - uses: actions/upload-artifact@v2
         with:
           name: code-coverage-report-unit-aries-vcx
@@ -455,7 +455,7 @@ jobs:
           flags: integration-aries-vcx
           name: codecov-integration-aries-vcx
           fail_ci_if_error: true
-          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
+
       - uses: actions/upload-artifact@v2
         with:
           name: code-coverage-report-integration-aries-vcx
