@@ -19,4 +19,7 @@ extern crate serde_derive;
 extern crate serde_json;
 
 #[macro_use]
+extern crate cfg_if;
+
+#[macro_use]
 pub mod api_lib;

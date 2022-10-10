@@ -1856,6 +1856,7 @@ dependencies = [
  "android_logger",
  "aries-vcx",
  "base64 0.10.1",
+ "cfg-if 1.0.0",
  "chrono",
  "env_logger",
  "failure",

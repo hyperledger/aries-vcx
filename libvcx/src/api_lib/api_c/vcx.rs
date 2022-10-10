@@ -769,7 +769,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
+#[allow(unused_imports)] // TODO: remove it
 mod tests {
     #[cfg(feature = "general_test")]
     use std::ptr;
@@ -796,13 +796,6 @@ mod tests {
         SetupDefaults, SetupEmpty, SetupMocks,
         SetupPoolConfig,  TempFile, TestSetupCreateWallet,
     };
-
-    // #[cfg(feature = "agency_tests")]
-    // use aries_vcx::utils::devsetup::{
-    //     AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY,
-    // };
-    // #[cfg(feature = "agency_tests")]
-    // use agency_client::configuration::AgentProvisionConfig;
 
     use crate::api_lib;
     use crate::api_lib::api_c;

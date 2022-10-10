@@ -926,8 +926,6 @@ pub mod tests {
     use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
-    // static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
-    // static DEFAULT_ATTR: &str = "{\"attr\":\"value\"}";
 
     pub fn issuer_credential_state_accepted() -> String {
         json!({
