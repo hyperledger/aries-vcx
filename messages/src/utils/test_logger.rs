@@ -8,7 +8,6 @@ use chrono::format::{DelayedFormat, StrftimeItems};
 
 use crate::chrono::Local;
 use crate::error::prelude::*;
-use vdrtoolsrs::logger;
 
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
@@ -48,15 +47,11 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
     )
 }
 
-fn set_default_logger(patter: Option<&str>) -> MessagesResult<()> {
-    logger::set_default_logger(patter).map_err(MessagesError::from)
-}
-
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
-        trace!("LibvcxDefaultLogger::init_testing_logger >>>");
-
-        env::var("RUST_LOG").map_or((), |log_pattern| LibvcxDefaultLogger::init(Some(log_pattern)).unwrap())
+        env::var("RUST_LOG").map_or((), |log_pattern| {
+            LibvcxDefaultLogger::init(Some(log_pattern)).unwrap();
+        });
     }
 
     pub fn init(pattern: Option<String>) -> MessagesResult<()> {
@@ -77,17 +72,6 @@ impl LibvcxDefaultLogger {
             .map_err(|err| {
                 MessagesError::from_msg(MesssagesErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
             })?;
-        set_default_logger(pattern.as_deref())
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use super::*;
-
-    #[test]
-    fn test_logger_for_testing() {
-        LibvcxDefaultLogger::init_testing_logger();
+        Ok(())
     }
 }

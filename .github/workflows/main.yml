@@ -572,8 +572,11 @@ jobs:
              --name libvcx \
              --network host \
              $DOCKER_IMG_NAME_LIBVCX_TESTER \
-             sh -c 'set -e; export RUST_TEST_THREADS=1; export RUST_BACKTRACE=full; \
-                    cd $HOME; cargo test --release --features "general_test"'
+             sh -c 'set -e; \
+                    export RUST_TEST_THREADS=1; \
+                    export RUST_BACKTRACE=full; \
+                    export RUST_LOG=error; \
+                    cd $HOME; cargo test --features "general_test"'
 
   test-libvcx-image-pool-tests:
     runs-on: ubuntu-20.04
