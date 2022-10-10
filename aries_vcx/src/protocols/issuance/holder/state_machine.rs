@@ -3,9 +3,6 @@ use std::collections::HashMap;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
-use crate::indy::anoncreds::{
-    self,
-};
 use messages::a2a::{A2AMessage, MessageId};
 use messages::ack::Ack;
 use messages::issuance::credential::Credential;
@@ -14,7 +11,11 @@ use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::status::Status;
-use crate::indy::credentials::holder::{libindy_prover_create_credential_req, libindy_prover_delete_credential, libindy_prover_store_credential};
+use crate::indy::credentials::holder::{
+    libindy_prover_create_credential_req,
+    libindy_prover_delete_credential,
+    libindy_prover_store_credential,
+};
 use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -25,6 +26,7 @@ use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -625,8 +627,9 @@ mod test {
 
     mod build_messages {
         use messages::a2a::MessageId;
-        use messages::problem_report::ProblemReport;
-        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg, build_problem_report_msg};
+        use crate::protocols::issuance::holder::state_machine::{
+            build_credential_ack, build_credential_request_msg,
+        };
         use crate::utils::devsetup::{SetupMocks, was_in_past};
 
         #[test]

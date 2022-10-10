@@ -1,12 +1,9 @@
-extern crate openssl;
-extern crate rust_base58;
-
 use messages::actors::Actors;
 use crate::error::prelude::*;
 use crate::utils::qualifier;
 
-use self::openssl::bn::BigNum;
-use self::rust_base58::FromBase58;
+use openssl::bn::BigNum;
+use rust_base58::FromBase58;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {

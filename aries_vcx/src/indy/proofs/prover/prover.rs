@@ -8,7 +8,6 @@ use crate::indy::proofs::prover::prover_internal::{
     build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover,
     credential_def_identifiers,
 };
-use crate::indy::anoncreds;
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};

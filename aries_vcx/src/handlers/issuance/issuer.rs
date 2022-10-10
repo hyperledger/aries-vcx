@@ -6,7 +6,6 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::indy::anoncreds;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
@@ -393,7 +392,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_cant_revoke_without_revocation_details() {
-        let setup = SetupMocks::init();
+        let _setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
         let revoc_result = issuer.revoke_credential_local(_dummy_wallet_handle()).await;

@@ -1,6 +1,5 @@
 use aries_vcx::error::prelude::*;
 use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::indy::anoncreds;
 use aries_vcx::indy::primitives::revocation_registry;
 use aries_vcx::indy::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::api_lib::global::pool::get_main_pool_handle;

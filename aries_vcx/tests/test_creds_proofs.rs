@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate log;
-extern crate serde;
-extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate tokio;
 
 pub mod utils;
 
@@ -316,11 +313,9 @@ mod tests {
     use serde_json::Value;
     use vdrtools_sys::PoolHandle;
 
-    use aries_vcx::global::settings;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy;
     use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::indy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;

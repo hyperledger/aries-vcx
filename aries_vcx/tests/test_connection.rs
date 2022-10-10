@@ -1,10 +1,8 @@
 #[macro_use]
 extern crate log;
-extern crate serde;
-extern crate serde_derive;
+
 #[macro_use]
 extern crate serde_json;
-extern crate tokio;
 
 pub mod utils;
 
@@ -236,7 +234,7 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
+        let _reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());

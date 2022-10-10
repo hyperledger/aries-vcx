@@ -1,34 +1,35 @@
-#[cfg(target_os = "android")]
-extern crate android_logger;
-extern crate env_logger;
-extern crate libc;
-extern crate log;
-
-use chrono::format::{DelayedFormat, StrftimeItems};
 use std::env;
 use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
-pub use aries_vcx::vdrtools_sys::{
-    logger::{EnabledCB, FlushCB, LogCB},
-    CVoid,
+use libc::c_char;
+
+use chrono::{
+    Local,
+    format::{DelayedFormat, StrftimeItems},
 };
-use aries_vcx::indy;
+
+use log::{Level, LevelFilter, Metadata, Record};
+
+use env_logger::{
+    Builder as EnvLoggerBuilder,
+    fmt::Formatter,
+};
+
+pub use aries_vcx::{
+    error::{VcxError, VcxErrorKind, VcxResult},
+    vdrtools_sys::{
+        logger::{EnabledCB, FlushCB, LogCB},
+        CVoid,
+    },
+};
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
-#[allow(unused_imports)]
-#[cfg(target_os = "android")]
-use self::android_logger::Filter;
-use self::env_logger::fmt::Formatter;
-use self::env_logger::Builder as EnvLoggerBuilder;
-use self::libc::c_char;
-use self::log::{Level, LevelFilter, Metadata, Record};
-use crate::chrono::Local;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
+
 static mut CONTEXT: *const CVoid = ptr::null();
 static mut ENABLED_CB: Option<EnabledCB> = None;
 static mut LOG_CB: Option<LogCB> = None;
@@ -195,41 +196,43 @@ impl LibvcxDefaultLogger {
         info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
 
         let pattern = pattern.or(env::var("RUST_LOG").ok());
-        if cfg!(target_os = "android") {
-            #[cfg(target_os = "android")]
-            let log_filter = match pattern.as_ref() {
-                Some(val) => match val.to_lowercase().as_ref() {
-                    "error" => Filter::default().with_min_level(log::Level::Error),
-                    "warn" => Filter::default().with_min_level(log::Level::Warn),
-                    "info" => Filter::default().with_min_level(log::Level::Info),
-                    "debug" => Filter::default().with_min_level(log::Level::Debug),
-                    "trace" => Filter::default().with_min_level(log::Level::Trace),
-                    _ => Filter::default().with_min_level(log::Level::Error),
-                },
-                None => Filter::default().with_min_level(log::Level::Error),
-            };
+        cfg_if! {
+            if #[cfg(target_os = "android")] {
+                use android_logger::Filter;
+                let log_filter = match pattern.as_ref() {
+                    Some(val) => match val.to_lowercase().as_ref() {
+                        "error" => Filter::default().with_min_level(log::Level::Error),
+                        "warn" => Filter::default().with_min_level(log::Level::Warn),
+                        "info" => Filter::default().with_min_level(log::Level::Info),
+                        "debug" => Filter::default().with_min_level(log::Level::Debug),
+                        "trace" => Filter::default().with_min_level(log::Level::Trace),
+                        _ => Filter::default().with_min_level(log::Level::Error),
+                    },
+                    None => Filter::default().with_min_level(log::Level::Error),
+                };
 
-            //Set logging to off when deploying production android app.
-            #[cfg(target_os = "android")]
-            android_logger::init_once(log_filter);
-            info!("Logging for Android");
-        } else {
-            let formatter = match env::var("RUST_LOG_FORMATTER") {
-                Ok(val) => match val.as_str() {
-                    "text_no_color" => text_no_color_format,
+                // Set logging to off when deploying production android app.
+                android_logger::init_once(log_filter);
+                info!("Logging for Android");
+            } else {
+                let formatter = match env::var("RUST_LOG_FORMATTER") {
+                    Ok(val) => match val.as_str() {
+                        "text_no_color" => text_no_color_format,
+                        _ => text_format,
+                    },
                     _ => text_format,
-                },
-                _ => text_format,
-            };
-            EnvLoggerBuilder::new()
-                .format(formatter)
-                .filter(None, LevelFilter::Off)
-                .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
-                .try_init()
-                .map_err(|err| {
-                    VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
-                })?;
+                };
+                EnvLoggerBuilder::new()
+                    .format(formatter)
+                    .filter(None, LevelFilter::Off)
+                    .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
+                    .try_init()
+                    .map_err(|err| {
+                        VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                    })?;
+            }
         }
+
         Ok(())
     }
 

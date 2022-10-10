@@ -12,7 +12,6 @@ use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::indy::ledger::{pool, transactions};
 use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet;
 use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
 use aries_vcx::{indy, utils};
 use aries_vcx::utils::error;
@@ -546,7 +545,6 @@ pub extern "C" fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 }
 
 #[cfg(feature = "test_utils")]
-#[allow(unused_imports)]
 pub mod test_utils {
     use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
     use aries_vcx::error::VcxResult;
@@ -771,39 +769,43 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
+#[allow(unused_imports)] // TODO: remove it
 mod tests {
+    #[cfg(feature = "general_test")]
     use std::ptr;
 
-    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::{global, indy};
+    use aries_vcx::indy;
+    use aries_vcx::error::VcxResult;
+
+    #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
+
     use aries_vcx::global::settings;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
-    use aries_vcx::indy::test_utils::create_and_store_credential_def;
-    use aries_vcx::indy::ledger::pool::test_utils::{
-        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
+
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::indy::ledger::pool::{
+        test_utils::{
+            create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
+        },
+        PoolConfig,
     };
-    use aries_vcx::indy::ledger::pool::PoolConfig;
+
     use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
-    use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{
-        AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY, SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig,
-        TempFile, TestSetupCreateWallet,
+        SetupDefaults, SetupEmpty, SetupMocks,
+        SetupPoolConfig,  TempFile, TestSetupCreateWallet,
     };
 
     use crate::api_lib;
     use crate::api_lib::api_c;
     use crate::api_lib::api_c::connection::vcx_connection_create;
-    use crate::api_lib::api_c::utils::vcx_provision_cloud_agent;
     use crate::api_lib::api_c::vcx::test_utils::{
-        _test_add_and_get_wallet_record, _vcx_configure_issuer, _vcx_configure_issuer_wallet,
-        _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_full, _vcx_init_threadpool,
-        _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure, _vcx_open_main_wallet_c_closure, _vcx_open_pool,
+        _test_add_and_get_wallet_record,
+        _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_threadpool,
+        _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure,
+        _vcx_open_main_wallet_c_closure, _vcx_open_pool,
         _vcx_open_wallet,
-    };
-    use crate::api_lib::api_c::wallet::{
-        vcx_close_main_wallet, vcx_configure_issuer_wallet, vcx_create_wallet, vcx_open_main_wallet,
     };
     use crate::api_lib::api_handle::{
         connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema,
@@ -826,7 +828,9 @@ mod tests {
 
         // Write invalid genesis.txn
         let _genesis_transactions = TempFile::create_with_data(utils::constants::GENESIS_PATH, "{}");
-        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &_genesis_transactions.path);
+
+        // FIXME: actually use result
+        let _ = settings::set_config_value(settings::CONFIG_GENESIS_PATH, &_genesis_transactions.path);
 
         let pool_config = PoolConfig {
             genesis_path: _genesis_transactions.path.clone(),
@@ -868,7 +872,7 @@ mod tests {
     async fn test_vcx_init_called_twice_passes_after_shutdown() {
         let _setup_defaults = SetupDefaults::init();
         for _ in 0..2 {
-            let setup_wallet = TestSetupCreateWallet::init().await.skip_cleanup();
+            let _setup_wallet = TestSetupCreateWallet::init().await.skip_cleanup();
             let setup_pool = SetupPoolConfig::init().await;
 
             let wallet_config = _vcx_create_wallet().unwrap();
@@ -1256,10 +1260,11 @@ mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_open_wallet() {
-        _vcx_create_and_open_wallet();
+    async fn test_open_wallet() -> VcxResult<()> {
+        let _ = _vcx_create_and_open_wallet();
         _test_add_and_get_wallet_record();
-        close_main_wallet().await;
+        close_main_wallet().await?;
+        Ok(())
     }
 
     #[cfg(feature = "pool_tests")]
@@ -1279,6 +1284,7 @@ mod tests {
         reset_main_pool_handle();
     }
 
+    #[cfg(feature = "to_restore")]
     #[cfg(feature = "agency_tests")]
     #[tokio::test]
     async fn test_provision_cloud_agent() {
@@ -1287,7 +1293,7 @@ mod tests {
         let rc = vcx_init_threadpool(CString::new("{}").unwrap().into_raw());
         assert_eq!(rc, error::SUCCESS.code_num);
 
-        let config_wallet = _vcx_create_and_open_wallet().unwrap();
+        let _config_wallet = _vcx_create_and_open_wallet().unwrap();
 
         let config_provision_agent = AgentProvisionConfig {
             agency_did: AGENCY_DID.to_string(),

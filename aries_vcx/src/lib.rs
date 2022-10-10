@@ -3,36 +3,33 @@
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 pub extern crate agency_client;
-extern crate base64;
-extern crate chrono;
-extern crate failure;
-extern crate futures;
+
 pub extern crate vdrtools_sys;
 pub extern crate vdrtoolsrs as vdrtools;
+
 #[macro_use]
 extern crate lazy_static;
-extern crate libc;
+
 #[macro_use]
 extern crate log;
-extern crate openssl;
-extern crate rand;
-extern crate regex;
-extern crate serde;
+
 #[macro_use]
 extern crate serde_derive;
+
 #[macro_use]
 extern crate serde_json;
-extern crate time;
-extern crate url;
-extern crate uuid;
+
 #[macro_use]
 extern crate derive_builder;
+
 pub extern crate messages;
 
 #[macro_use]
 pub mod utils;
+
 #[macro_use]
 pub mod handlers;
+
 pub mod error;
 pub mod global;
 pub mod indy;

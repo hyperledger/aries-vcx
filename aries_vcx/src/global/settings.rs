@@ -1,6 +1,3 @@
-extern crate serde_json;
-extern crate url;
-
 use std::collections::HashMap;
 use std::sync::RwLock;
 
@@ -11,6 +8,7 @@ pub static CONFIG_POOL_NAME: &str = "pool_name";
 pub static CONFIG_SDK_TO_REMOTE_ROLE: &str = "sdk_to_remote_role";
 pub static CONFIG_INSTITUTION_DID: &str = "institution_did";
 pub static CONFIG_INSTITUTION_VERKEY: &str = "institution_verkey";
+
 // functionally not used
 pub static CONFIG_WEBHOOK_URL: &str = "webhook_url";
 pub static CONFIG_ENABLE_TEST_MODE: &str = "enable_test_mode";

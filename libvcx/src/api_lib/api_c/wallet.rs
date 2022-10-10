@@ -6,7 +6,6 @@ use libc::c_char;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy;
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
-use aries_vcx::indy::utils;
 use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
 
@@ -1086,12 +1085,8 @@ pub extern "C" fn vcx_wallet_set_handle(handle: WalletHandle) -> WalletHandle {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
 pub mod tests {
-    extern crate serde_json;
-
     use std::ffi::CString;
-    use std::ptr;
 
     use aries_vcx::global::settings;
     use aries_vcx::indy::wallet::{delete_wallet, WalletConfig};

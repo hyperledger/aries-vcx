@@ -84,7 +84,7 @@ mod tests {
             .unwrap();
     }
 
-    #[async_std::test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();

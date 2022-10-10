@@ -1,9 +1,11 @@
-extern crate derive_builder;
+#[cfg(feature = "mysql_test")]
 #[macro_use]
 extern crate log;
-extern crate serde;
+
+#[cfg(feature = "mysql_test")]
 #[macro_use]
 extern crate serde_json;
+
 #[cfg(feature = "mysql_test")]
 extern crate sqlx;
 

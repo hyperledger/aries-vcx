@@ -1,19 +1,15 @@
 #![crate_name = "agency_client"]
-extern crate async_std;
-extern crate failure;
-extern crate futures;
+
 extern crate vdrtoolsrs as vdrtools;
+
 #[macro_use]
 extern crate lazy_static;
+
 #[macro_use]
 extern crate log;
-extern crate reqwest;
-extern crate rmp_serde;
-extern crate serde;
+
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate url;
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -22,15 +18,18 @@ use self::error::prelude::*;
 use self::utils::validation;
 
 pub mod utils;
+
 #[macro_use]
 pub mod agency_client;
+
 pub mod api;
 pub mod configuration;
 pub mod error;
 pub mod httpclient;
-mod internal;
 pub mod messages;
 pub mod testing;
+
+mod internal;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {

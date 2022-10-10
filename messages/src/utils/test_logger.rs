@@ -5,8 +5,8 @@ use std::env;
 use std::io::Write;
 
 use chrono::format::{DelayedFormat, StrftimeItems};
+use chrono::Local;
 
-use crate::chrono::Local;
 use crate::error::prelude::*;
 
 use self::env_logger::fmt::Formatter;

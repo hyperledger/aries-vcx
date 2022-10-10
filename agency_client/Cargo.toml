@@ -4,12 +4,14 @@ version = "0.1.0"
 authors = ["Miroslav Kovar <miroslavkovar@protonmail.com>"]
 edition = "2018"
 
+[lib]
+doctest = false
+
 [features]
 test_utils = []
 general_test = ["test_utils"]
 
 [dependencies]
-async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 lazy_static = "1.3"
@@ -18,14 +20,14 @@ serde_json = "1.0.40"
 serde_derive = "1.0.97"
 reqwest = "0.11.10"
 regex = "1.1.0"
-rmp-serde = "0.13.7"
 rust-base58 = "0.0.4"
 vdrtoolsrs = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "aa446cb8d" }
-futures = "0.3.21"
-url = "1.5.1"
+url = "2.3"
 failure = "0.1.6"
-async-std = "1.11.0"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
+
+[dev-dependencies]
+tokio = { version = "1.15", features = [ "rt", "macros" ] }

@@ -6,7 +6,6 @@ pub mod test_utils {
     use vdrtools_sys::{PoolHandle, WalletHandle};
     use serde_json::{json, Value};
 
-    use aries_vcx::global::settings;
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -15,7 +14,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy;
     use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
     use aries_vcx::indy::primitives::credential_definition::CredentialDef;
     use aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
@@ -601,7 +599,7 @@ pub mod test_utils {
     }
 
     pub async fn create_proof_request(
-        faber: &mut Faber,
+        _faber: &mut Faber,
         requested_attrs: &str,
         requested_preds: &str,
         revocation_interval: &str,

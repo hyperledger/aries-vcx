@@ -22,10 +22,11 @@ pub mod test_utils {
     use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
     use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
     use aries_vcx::indy::primitives::credential_schema::Schema;
-    use aries_vcx::indy::anoncreds;
     use aries_vcx::indy::primitives::credential_definition::CredentialDef;
-    use aries_vcx::indy::wallet::{close_wallet, create_wallet_with_master_secret, delete_wallet, IssuerConfig, wallet_configure_issuer, WalletConfig};
-    use aries_vcx::indy::wallet::*;
+    use aries_vcx::indy::wallet::{
+        close_wallet, create_wallet_with_master_secret,
+        delete_wallet, IssuerConfig, wallet_configure_issuer, WalletConfig,
+    };
     use aries_vcx::indy::wallet::open_wallet;
     use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::indy::ledger::transactions::into_did_doc;

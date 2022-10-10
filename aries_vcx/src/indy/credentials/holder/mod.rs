@@ -1,11 +1,8 @@
 use vdrtools_sys::WalletHandle;
 use vdrtools::anoncreds;
-use serde_json::{Map, Value};
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
-use crate::{indy, utils};
-use crate::utils::constants::{PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
-use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
+use crate::utils;
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -15,7 +12,15 @@ pub async fn libindy_prover_store_credential(
     cred_def_json: &str,
     rev_reg_def_json: Option<&str>,
 ) -> VcxResult<String> {
-    trace!("libindy_prover_store_credential >>> cred_id: {:?}, cred_req_meta: {}, cred_json: {}, cred_def_json: {}, rev_reg_def_json: {:?}", cred_id, cred_req_meta, cred_json, cred_def_json, rev_reg_def_json);
+    trace!("libindy_prover_store_credential >>> \
+            cred_id: {:?}, \
+            cred_req_meta: {}, \
+            cred_json: {}, \
+            cred_def_json: {}, \
+            rev_reg_def_json: {:?}",
+           cred_id, cred_req_meta, cred_json, cred_def_json, rev_reg_def_json,
+    );
+
     if settings::indy_mocks_enabled() {
         return Ok("cred_id".to_string());
     }

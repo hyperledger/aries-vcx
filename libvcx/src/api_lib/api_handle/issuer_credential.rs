@@ -233,12 +233,9 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
 pub mod tests {
-    use aries_vcx::global::settings;
-    use aries_vcx::indy::primitives::credential_definition::libindy_create_and_store_credential_def;
     use aries_vcx::indy::utils::LibindyMock;
-    use aries_vcx::utils::constants::{REV_REG_ID, SCHEMAS_JSON, V3_OBJECT_SERIALIZE_VERSION};
+    use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
@@ -246,7 +243,6 @@ pub mod tests {
     use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
-    use crate::api_lib::utils::devsetup::SetupGlobalsWalletPoolAgency;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
@@ -305,7 +301,7 @@ pub mod tests {
     async fn test_retry_build_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = build_test_connection_inviter_requested().await;
+        let _connection_handle = build_test_connection_inviter_requested().await;
 
         let credential_handle = _issuer_credential_create();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
@@ -313,14 +309,14 @@ pub mod tests {
         LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
+        let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap_err();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
         // Can retry after initial failure
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
-        let err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
+        let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSet));

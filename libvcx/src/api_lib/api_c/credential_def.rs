@@ -424,6 +424,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
     error::SUCCESS.code_num
 }
 
+#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
     use std::ffi::CString;

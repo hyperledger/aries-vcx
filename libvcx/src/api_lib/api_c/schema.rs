@@ -569,26 +569,16 @@ pub extern "C" fn vcx_schema_get_state(
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
 mod tests {
-    extern crate rand;
-    extern crate serde_json;
-
     use std::ffi::CString;
 
-    use rand::Rng;
-
     use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
-    use aries_vcx::indy::primitives::credential_schema::Schema;
-    use aries_vcx::indy::test_utils::create_and_write_test_schema;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{
-        DEFAULT_SCHEMA_ATTRS, DEFAULT_SCHEMA_ID, DEFAULT_SCHEMA_NAME, SCHEMA_ID, SCHEMA_WITH_VERSION,
+        DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION,
     };
     use aries_vcx::utils::devsetup::SetupMocks;
 
-    use crate::api_lib;
-    use crate::api_lib::api_c::vcx::test_utils::_vcx_create_and_open_wallet;
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::utils::return_types_u32;
