@@ -1907,6 +1907,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "log",
+ "once_cell",
  "openssl",
  "rand 0.7.3",
  "rmp-serde",
