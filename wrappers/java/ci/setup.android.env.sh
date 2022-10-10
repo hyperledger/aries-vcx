@@ -45,7 +45,7 @@ create_avd(){
     accept_licenses
 
     if [ ! -d "${ANDROID_SDK}/emulator/" ] ; then
-        echo "yes" |
+        echo "y" |
               sdkmanager --no_https \
                 "emulator" \
                 "platform-tools" \
