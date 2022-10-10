@@ -141,7 +141,7 @@ impl Connection {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection.process_request(wallet_handle, request, agency_client).await
+        connection.process_request(wallet_handle, agency_client, request).await
     }
 
     pub fn from_parts(
@@ -293,11 +293,11 @@ impl Connection {
         Ok(())
     }
 
-    async fn process_request(
+    pub async fn process_request(
         &mut self,
         wallet_handle: WalletHandle,
-        request: Request,
         agency_client: &AgencyClient,
+        request: Request,
     ) -> VcxResult<Self> {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
