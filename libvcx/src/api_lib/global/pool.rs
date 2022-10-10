@@ -54,7 +54,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
 
     debug!("open_pool ::: Pool Config Created Successfully");
 
-    let handle = open_pool_ledger(&pool_name, config.pool_config.as_deref())
+    let handle = open_pool_ledger(&pool_name, Some(config.clone()))
         .await
         .map_err(|err| err.extend("Can not open Pool Ledger"))?;
 

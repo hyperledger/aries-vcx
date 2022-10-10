@@ -26,10 +26,23 @@ pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult
     }
 }
 
-pub async fn open_pool_ledger(pool_name: &str, config: Option<&str>) -> VcxResult<i32> {
+pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> VcxResult<i32> {
     set_protocol_version().await?;
 
-    let handle = pool::open_pool_ledger(pool_name, config)
+    let config = if let Some(config) = config {
+        Some(serde_json::to_string(&config)
+                .map_err(|err|
+                    VcxError::from_msg(
+                        VcxErrorKind::SerializationError,
+                        format!("Failed to serialize pool config {:?}, err: {:?}", config, err),
+                    )
+                )?
+        )
+    } else {
+        None
+    };
+
+    let handle = pool::open_pool_ledger(pool_name, config.as_deref())
         .await
         .map_err(|err| match err.error_code {
             ErrorCode::PoolLedgerNotCreatedError => err.to_vcx(
