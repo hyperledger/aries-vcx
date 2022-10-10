@@ -52,15 +52,6 @@ use crate::{
     },
 };
 
-#[cfg(feature = "cheqd")]
-use crate::{
-    controllers::{
-        CheqdKeysController, CheqdPoolController, CheqdLedgerController,
-    },
-    services::{
-        CheqdLedgerService, CheqdKeysService, CheqdPoolService,
-    }
-};
 use indy_api_types::errors::IndyResult;
 use std::future::Future;
 use std::time::{SystemTime, UNIX_EPOCH};

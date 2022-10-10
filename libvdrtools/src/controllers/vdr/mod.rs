@@ -1,14 +1,10 @@
 mod indy_ledger;
-#[cfg(feature = "cheqd")]
-mod cheqd_ledger;
 mod ledger;
 mod read;
 mod write;
 mod endorsement;
 
 use indy_ledger::IndyLedger;
-#[cfg(feature = "cheqd")]
-use cheqd_ledger::CheqdLedger;
 
 use futures::future::join_all;
 use std::{
@@ -23,12 +19,6 @@ use crate::services::{
     LedgerService as IndyLedgerService,
     WalletService,
     CryptoService,
-};
-#[cfg(feature = "cheqd")]
-use crate::services::{
-    CheqdPoolService,
-    CheqdLedgerService,
-    CheqdKeysService,
 };
 
 use crate::domain::{
@@ -129,19 +119,7 @@ impl VDR {
     }
 }
 
-#[cfg(feature = "cheqd")]
-pub(crate) struct VDRController {
-    wallet_service: Arc<WalletService>,
-    indy_ledger_service: Arc<IndyLedgerService>,
-    cheqd_ledger_service: Arc<CheqdLedgerService>,
-    indy_pool_service: Arc<IndyPoolService>,
-    cheqd_pool_service: Arc<CheqdPoolService>,
-    crypto_service: Arc<CryptoService>,
-    cheqd_crypto_service: Arc<CheqdKeysService>,
-}
-
-#[cfg(not(feature = "cheqd"))]
-pub(crate) struct VDRController {
+pub struct VDRController {
     wallet_service: Arc<WalletService>,
     indy_ledger_service: Arc<IndyLedgerService>,
     indy_pool_service: Arc<IndyPoolService>,
@@ -149,27 +127,6 @@ pub(crate) struct VDRController {
 }
 
 impl VDRController {
-    #[cfg(feature = "cheqd")]
-    pub(crate) fn new(
-        wallet_service: Arc<WalletService>,
-        indy_ledger_service: Arc<IndyLedgerService>,
-        cheqd_ledger_service: Arc<CheqdLedgerService>,
-        indy_pool_service: Arc<IndyPoolService>,
-        cheqd_pool_service: Arc<CheqdPoolService>,
-        crypto_service: Arc<CryptoService>,
-        cheqd_crypto_service: Arc<CheqdKeysService>, ) -> VDRController {
-        VDRController {
-            wallet_service,
-            indy_ledger_service,
-            cheqd_ledger_service,
-            indy_pool_service,
-            cheqd_pool_service,
-            crypto_service,
-            cheqd_crypto_service,
-        }
-    }
-
-    #[cfg(not(feature = "cheqd"))]
     pub(crate) fn new(
         wallet_service: Arc<WalletService>,
         indy_ledger_service: Arc<IndyLedgerService>,
@@ -195,25 +152,6 @@ impl VDRController {
                                         taa_config,
                                         self.indy_ledger_service.clone(),
                                         self.indy_pool_service.clone())?;
-        let ledger = Arc::new(RwLock::new(ledger));
-
-        vdr_builder.add_ledger(namespace_list, ledger);
-        Ok(())
-    }
-
-    #[cfg(feature = "cheqd")]
-    pub(crate) async fn register_cheqd_ledger(&self,
-                                              vdr_builder: Arc<Mutex<VDRBuilder>>,
-                                              namespace_list: Namespaces,
-                                              chain_id: String,
-                                              rpc_address: String) -> IndyResult<()> {
-        let mut vdr_builder = vdr_builder.lock().await;
-        vdr_builder.validate_unique_namespaces(&namespace_list)?;
-
-        let ledger = CheqdLedger::create(&chain_id,
-                                         &rpc_address,
-                                         self.cheqd_ledger_service.clone(),
-                                         self.cheqd_pool_service.clone()).await?;
         let ledger = Arc::new(RwLock::new(ledger));
 
         vdr_builder.add_ledger(namespace_list, ledger);
