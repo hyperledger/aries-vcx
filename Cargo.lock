@@ -1182,16 +1182,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
-name = "eyre"
-version = "0.6.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c2b6b5a29c02cdc822728b7d7b8ae1bab3e3b05d44522770ddd49722eeac7eb"
-dependencies = [
- "indenter",
- "once_cell",
-]
-
-[[package]]
 name = "failure"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1676,12 +1666,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indenter"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
-
-[[package]]
 name = "indexmap"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1694,14 +1678,13 @@ dependencies = [
 [[package]]
 name = "indy-api-types"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "aes 0.7.5",
  "anyhow",
  "bip32",
  "bip39",
  "bs58",
- "eyre",
  "failure",
  "futures",
  "k256",
@@ -1720,7 +1703,7 @@ dependencies = [
 [[package]]
 name = "indy-utils"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "base64 0.10.1",
  "dirs",
@@ -1740,7 +1723,7 @@ dependencies = [
 [[package]]
 name = "indy-wallet"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1752,7 +1735,6 @@ dependencies = [
  "libc",
  "log",
  "lru",
- "owning_ref",
  "rmp-serde",
  "serde",
  "serde_derive",
@@ -1921,7 +1903,7 @@ dependencies = [
 [[package]]
 name = "libvdrtools"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "android_logger",
  "async-std",
@@ -2368,15 +2350,6 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "owning_ref"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
-dependencies = [
- "stable_deref_trait",
 ]
 
 [[package]]
@@ -3459,12 +3432,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stable_deref_trait"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
 name = "stringprep"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3857,7 +3824,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 [[package]]
 name = "vdrtools-sys"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "libc",
  "libvdrtools",
@@ -3868,7 +3835,7 @@ dependencies = [
 [[package]]
 name = "vdrtoolsrs"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=21ac57e1a#21ac57e1a50e6deb7bf8aff5a5db7696eddc07f0"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
 dependencies = [
  "async-std",
  "async-trait",
