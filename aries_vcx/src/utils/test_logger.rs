@@ -56,14 +56,12 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
 
 impl LibvcxDefaultLogger {
     pub fn init_testing_logger() {
-        trace!("LibvcxDefaultLogger::init_testing_logger >>>");
-
-        env::var("RUST_LOG").map_or((), |log_pattern| LibvcxDefaultLogger::init(Some(log_pattern)).unwrap())
+        env::var("RUST_LOG").map_or((), |log_pattern| {
+            LibvcxDefaultLogger::init(Some(log_pattern)).unwrap();
+        });
     }
 
     pub fn init(pattern: Option<String>) -> VcxResult<()> {
-        info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
-
         let pattern = pattern.or(env::var("RUST_LOG").ok());
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
@@ -100,17 +98,6 @@ impl LibvcxDefaultLogger {
                     VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                 })?;
         }
-        indy::utils::logger::set_default_logger(pattern.as_deref())
-    }
-}
-
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod unit_tests {
-    use super::*;
-
-    #[test]
-    fn test_logger_for_testing() {
-        LibvcxDefaultLogger::init_testing_logger();
+        Ok(())
     }
 }
