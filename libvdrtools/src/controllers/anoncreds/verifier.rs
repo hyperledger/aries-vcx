@@ -17,7 +17,7 @@ use crate::{
     services::VerifierService,
 };
 
-pub(crate) struct VerifierController {
+pub struct VerifierController {
     verifier_service: Arc<VerifierService>,
 }
 

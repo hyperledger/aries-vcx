@@ -10,7 +10,7 @@ use crate::{
     services::PoolService,
 };
 
-pub(crate) struct PoolController {
+pub struct PoolController {
     pool_service: Arc<PoolService>,
 }
 

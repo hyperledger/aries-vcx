@@ -46,7 +46,7 @@ trait ReadableBlob: Send + Sync {
     fn close(&self) -> IndyResult<()>;
 }
 
-pub(crate) struct BlobStorageService {
+pub struct BlobStorageService {
     writer_types: Mutex<HashMap<String, Box<dyn WriterType>>>,
     writer_configs: Mutex<HashMap<i32, Box<dyn Writer>>>,
     writer_blobs: Mutex<HashMap<i32, (Box<dyn WritableBlob>, Sha256)>>,

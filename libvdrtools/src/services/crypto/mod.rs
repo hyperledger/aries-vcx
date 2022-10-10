@@ -74,7 +74,7 @@ trait CryptoType: Send + Sync {
     ) -> IndyResult<Vec<u8>>;
 }
 
-pub(crate) struct CryptoService {
+pub struct CryptoService {
     crypto_types: RwLock<HashMap<&'static str, Box<dyn CryptoType>>>,
 }
 

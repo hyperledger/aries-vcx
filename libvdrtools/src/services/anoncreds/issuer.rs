@@ -23,7 +23,7 @@ use crate::{
     services::AnoncredsHelpers,
 };
 
-pub(crate) struct IssuerService {}
+pub struct IssuerService {}
 
 impl IssuerService {
     pub(crate) fn new() -> IssuerService {

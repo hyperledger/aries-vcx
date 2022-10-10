@@ -48,7 +48,7 @@ lazy_static! {
 
 type Nodes = HashMap<String, Option<VerKey>>;
 
-pub(crate) struct PoolService {
+pub struct PoolService {
     open_pools: Mutex<HashMap<PoolHandle, Arc<ZMQPool>>>,
     pending_pools: Mutex<HashSet<String>>,
 }

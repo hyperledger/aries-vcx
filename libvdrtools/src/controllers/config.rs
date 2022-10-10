@@ -2,7 +2,7 @@ use std::env;
 
 use crate::{domain::IndyConfig, services::PoolService};
 
-pub(crate) struct ConfigController {}
+pub struct ConfigController {}
 
 impl ConfigController {
     pub(crate) fn new() -> ConfigController {

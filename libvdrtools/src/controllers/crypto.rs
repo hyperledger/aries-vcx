@@ -18,7 +18,7 @@ pub const PROTECTED_HEADER_TYP: &str = "JWM/1.0";
 pub const PROTECTED_HEADER_ALG_AUTH: &str = "Authcrypt";
 pub const PROTECTED_HEADER_ALG_ANON: &str = "Anoncrypt";
 
-pub(crate) struct CryptoController {
+pub struct CryptoController {
     wallet_service: Arc<WalletService>,
     crypto_service: Arc<CryptoService>,
 }

@@ -40,7 +40,7 @@ use crate::{
 
 use super::tails::{store_tails_from_generator, SDKTailsAccessor};
 
-pub(crate) struct IssuerController {
+pub struct IssuerController {
     pub issuer_service: Arc<IssuerService>,
     pub blob_storage_service: Arc<BlobStorageService>,
     pub wallet_service: Arc<WalletService>,

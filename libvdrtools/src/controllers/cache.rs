@@ -18,7 +18,7 @@ use crate::{
 const CRED_DEF_CACHE: &str = "cred_def_cache";
 const SCHEMA_CACHE: &str = "schema_cache";
 
-pub(crate) struct CacheController {
+pub struct CacheController {
     crypto_service: Arc<CryptoService>,
     ledger_service: Arc<LedgerService>,
     pool_service: Arc<PoolService>,

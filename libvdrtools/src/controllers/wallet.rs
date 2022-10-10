@@ -18,7 +18,7 @@ use crate::utils::crypto::base58::ToBase58;
 
 use crate::services::CryptoService;
 
-pub(crate) struct WalletController {
+pub struct WalletController {
     wallet_service: Arc<WalletService>,
     crypto_service: Arc<CryptoService>,
 }

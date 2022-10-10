@@ -38,7 +38,7 @@ enum SignatureType {
     Multi,
 }
 
-pub(crate) struct LedgerController {
+pub struct LedgerController {
     pool_service: Arc<PoolService>,
     crypto_service: Arc<CryptoService>,
     wallet_service: Arc<WalletService>,

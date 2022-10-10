@@ -9,7 +9,7 @@ use crate::domain::{
     pairwise::{Pairwise, PairwiseInfo},
 };
 
-pub(crate) struct PairwiseController {
+pub struct PairwiseController {
     wallet_service: Arc<WalletService>,
 }
 

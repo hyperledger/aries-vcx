@@ -4,7 +4,7 @@ use indy_api_types::errors::prelude::*;
 
 use crate::services::BlobStorageService;
 
-pub(crate) struct BlobStorageController {
+pub struct BlobStorageController {
     blob_storage_service: Arc<BlobStorageService>,
 }
 

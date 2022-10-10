@@ -66,7 +66,7 @@ impl SearchForProofRequest {
     }
 }
 
-pub(crate) struct ProverController {
+pub struct ProverController {
     prover_service: Arc<ProverService>,
     wallet_service: Arc<WalletService>,
     crypto_service: Arc<CryptoService>,

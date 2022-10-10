@@ -19,7 +19,7 @@ use crate::{
     services::{CryptoService, LedgerService, PoolService},
 };
 
-pub(crate) struct DidController {
+pub struct DidController {
     wallet_service: Arc<WalletService>,
     crypto_service: Arc<CryptoService>,
     ledger_service: Arc<LedgerService>,
@@ -41,7 +41,7 @@ impl DidController {
         }
     }
 
-    pub(crate) async fn create_and_store_my_did(
+    pub async fn create_and_store_my_did(
         &self,
         wallet_handle: WalletHandle,
         my_did_info: MyDidInfo,
@@ -86,7 +86,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn replace_keys_start(
+    pub async fn replace_keys_start(
         &self,
         wallet_handle: WalletHandle,
         key_info: KeyInfo,
@@ -133,7 +133,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn replace_keys_apply(
+    pub async fn replace_keys_apply(
         &self,
         wallet_handle: WalletHandle,
         my_did: DidValue,
@@ -167,7 +167,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn store_their_did(
+    pub async fn store_their_did(
         &self,
         wallet_handle: WalletHandle,
         their_did_info: TheirDidInfo,
@@ -191,7 +191,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn get_my_did_with_meta(
+    pub async fn get_my_did_with_meta(
         &self,
         wallet_handle: WalletHandle,
         my_did: DidValue,
@@ -239,7 +239,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn list_my_dids_with_meta(
+    pub async fn list_my_dids_with_meta(
         &self,
         wallet_handle: WalletHandle,
     ) -> IndyResult<String> {
@@ -337,7 +337,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn key_for_did(
+    pub async fn key_for_did(
         &self,
         pool_handle: PoolHandle,
         wallet_handle: WalletHandle,
@@ -379,7 +379,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn key_for_local_did(
+    pub async fn key_for_local_did(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
@@ -412,7 +412,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn set_endpoint_for_did(
+    pub async fn set_endpoint_for_did(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
@@ -438,7 +438,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn get_endpoint_for_did(
+    pub async fn get_endpoint_for_did(
         &self,
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
@@ -470,7 +470,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn set_did_metadata(
+    pub async fn set_did_metadata(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
@@ -494,7 +494,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn get_did_metadata(
+    pub async fn get_did_metadata(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
@@ -516,7 +516,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn abbreviate_verkey(
+    pub async fn abbreviate_verkey(
         &self,
         did: DidValue,
         verkey: String,
@@ -548,7 +548,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn qualify_did(
+    pub async fn qualify_did(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
@@ -638,7 +638,7 @@ impl DidController {
         res
     }
 
-    pub(crate) async fn get_nym_ack_process_and_store_their_did(
+    pub async fn get_nym_ack_process_and_store_their_did(
         &self,
         wallet_handle: WalletHandle,
         did: DidValue,
