@@ -6,12 +6,10 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use crate::indy::anoncreds;
 use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::indy::credentials::holder;
 use crate::indy::proofs::prover;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};

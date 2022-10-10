@@ -2,23 +2,22 @@ use std::thread;
 use std::time::Duration;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
-use crate::indy;
 use crate::indy::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::indy::primitives::revocation_registry::RevocationRegistry;
 use crate::indy::credentials::encoding::encode_attributes;
 use crate::indy::primitives::credential_definition::CredentialDef;
-use crate::indy::{credentials, proofs};
+use crate::indy::credentials;
 use crate::indy::ledger::transactions::get_cred_def_json;
 use crate::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req;
-use crate::indy::ledger::transactions::{append_txn_author_agreement_to_request, check_response, get_rev_reg_def_json, libindy_build_schema_request, sign_and_submit_to_ledger};
+use crate::indy::ledger::transactions::{
+    append_txn_author_agreement_to_request, check_response, get_rev_reg_def_json,
+    libindy_build_schema_request, sign_and_submit_to_ledger,
+};
 use crate::indy::primitives::credential_schema::libindy_issuer_create_schema;
 use crate::indy::proofs::prover::prover::libindy_prover_create_proof;
 use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL};
 use crate::utils::get_temp_dir_path;
 
-use super::*;
-
-extern crate serde_json;
 
 pub async fn create_schema(attr_list: &str, submitter_did: &str) -> (String, String) {
     let data = attr_list.to_string();

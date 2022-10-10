@@ -92,20 +92,30 @@ pub fn check_is_published(handle: u32) -> VcxResult<bool> {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
 pub mod tests {
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::global::settings;
+    #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::primitives::credential_definition::RevocationDetailsBuilder;
-    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::test_utils::create_and_write_test_schema;
+    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils;
     use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::{constants::SCHEMA_ID, get_temp_dir_path};
+    use aries_vcx::utils::constants::SCHEMA_ID;
 
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::utils::get_temp_dir_path;
+
+    #[cfg(feature = "pool_tests")]
     use crate::api_lib::api_handle::revocation_registry::RevocationRegistryConfig;
-    use crate::api_lib::api_handle::{revocation_registry, schema};
+    #[cfg(feature = "pool_tests")]
+
+    use crate::api_lib::api_handle::revocation_registry;
+    use crate::api_lib::api_handle::schema;
+
+    #[cfg(feature = "pool_tests")]
     use crate::api_lib::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
@@ -151,7 +161,7 @@ pub mod tests {
             .max_creds(2 as u32)
             .build()
             .unwrap();
-        let revocation_details = serde_json::to_string(&revocation_details).unwrap();
+        let _revocation_details = serde_json::to_string(&revocation_details).unwrap();
         let handle_cred_def = create("1".to_string(), schema_id, issuer_did.clone(), "tag1".to_string(), true)
             .await
             .unwrap();

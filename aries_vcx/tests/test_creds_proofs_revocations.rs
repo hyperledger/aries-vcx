@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate log;
-extern crate serde;
-extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate tokio;
 
 pub mod utils;
 
@@ -14,7 +11,6 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::global::settings;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::utils::devsetup::*;
 

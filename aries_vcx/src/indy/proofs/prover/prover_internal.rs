@@ -6,8 +6,9 @@ use serde_json::Value;
 use crate::error::prelude::*;
 use crate::indy::proofs::proof_request::ProofRequestData;
 use crate::indy::proofs::proof_request_internal::NonRevokedInterval;
-use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg_def_json, get_rev_reg_delta_json, get_schema_json};
+use crate::indy::ledger::transactions::{
+    get_cred_def_json, get_rev_reg_def_json,
+    get_rev_reg_delta_json, get_schema_json};
 use crate::indy::proofs::prover;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]

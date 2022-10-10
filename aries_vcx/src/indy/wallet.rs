@@ -2,9 +2,8 @@ use vdrtools::wallet;
 use vdrtools_sys::SearchHandle;
 use crate::error::{VcxError, VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::{anoncreds, keys};
+use crate::indy::keys;
 use crate::indy::credentials::holder;
-use crate::indy::proofs::prover;
 use crate::vdrtools::{ErrorCode, WalletHandle};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]

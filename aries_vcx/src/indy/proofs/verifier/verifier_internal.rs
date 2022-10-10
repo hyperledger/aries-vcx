@@ -4,8 +4,9 @@ use serde_json::Value;
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg, get_rev_reg_def_json, get_schema_json};
+use crate::indy::ledger::transactions::{
+    get_cred_def_json, get_rev_reg, get_rev_reg_def_json,
+    get_schema_json};
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]

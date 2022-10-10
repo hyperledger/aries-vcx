@@ -5,7 +5,6 @@ use serde_json;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx::indy::anoncreds;
 use aries_vcx::indy::ledger::transactions;
 use aries_vcx::indy::ledger::transactions::{build_schema_request, get_schema_json};
 use aries_vcx::indy::primitives::credential_schema;
@@ -186,23 +185,22 @@ pub fn get_state(handle: u32) -> VcxResult<u32> {
 }
 
 #[cfg(test)]
-#[allow(unused_imports)]
 pub mod tests {
-    extern crate rand;
-
     use rand::Rng;
-    use serde_json::Value;
 
     use aries_vcx::global::settings;
+    #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::ledger::transactions::add_new_did;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_ID};
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupLibraryWallet, SetupMocks};
+    use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks};
 
+    #[cfg(feature = "pool_tests")]
     use crate::api_lib::api_handle::schema;
+    #[cfg(feature = "pool_tests")]
     use crate::api_lib::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
@@ -475,7 +473,7 @@ pub mod tests {
         let _setup = SetupGlobalsWalletPoolAgency::init().await;
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
-        let schema_handle =
+        let _schema_handle =
             schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
                 .await
                 .unwrap();
@@ -502,18 +500,18 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
-        let setup = SetupGlobalsWalletPoolAgency::init().await;
+        let _setup = SetupGlobalsWalletPoolAgency::init().await;
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let schema_handle =
             schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
                 .await
                 .unwrap();
-        let schema_json_1 = schema::to_string(schema_handle).unwrap();
+        let _schema_json_1 = schema::to_string(schema_handle).unwrap();
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
 
-        let (schema_handle, schema_json_2) = schema::get_schema_attrs("source_id".into(), schema_id).await.unwrap();
-        let j: Value = serde_json::from_str(&schema_json_2).unwrap();
+        let (_schema_handle, schema_json_2) = schema::get_schema_attrs("source_id".into(), schema_id).await.unwrap();
+        let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
         assert_eq!(j["version"], "1.0");
     }

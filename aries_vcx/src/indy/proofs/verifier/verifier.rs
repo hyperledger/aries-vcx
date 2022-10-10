@@ -2,10 +2,10 @@ use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
+    build_cred_defs_json_verifier, build_rev_reg_defs_json,
+    build_rev_reg_json, build_schemas_json_verifier,
     get_credential_info, validate_proof_revealed_attributes,
 };
-use crate::indy::anoncreds;
 use crate::indy::proofs::verifier::verifier_libindy;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
@@ -59,7 +59,7 @@ pub mod unit_tests {
     use crate::indy::proofs::proof_request::ProofRequestData;
     use crate::indy::test_utils::create_and_store_nonrevocable_credential;
     use crate::utils::devsetup::SetupWalletPool;
-    use crate::{indy, utils};
+    use crate::utils;
     use crate::indy::proofs::prover;
 
     use super::*;

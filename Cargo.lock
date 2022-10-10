@@ -88,21 +88,18 @@ name = "agency_client"
 version = "0.1.0"
 dependencies = [
  "android_logger",
- "async-std",
- "async-trait",
  "env_logger",
  "failure",
- "futures",
  "lazy_static",
  "log",
  "regex",
  "reqwest",
- "rmp-serde",
  "rust-base58",
  "serde",
  "serde_derive",
  "serde_json",
- "url 1.7.2",
+ "tokio",
+ "url",
  "uuid 0.8.2",
  "vdrtoolsrs",
 ]
@@ -181,7 +178,7 @@ version = "0.44.0"
 dependencies = [
  "agency_client",
  "android_logger",
- "base64 0.8.0",
+ "base64 0.10.1",
  "chrono",
  "derive_builder",
  "env_logger",
@@ -205,7 +202,6 @@ dependencies = [
  "strum_macros",
  "time",
  "tokio",
- "url 1.7.2",
  "uuid 0.8.2",
  "vdrtools-sys",
  "vdrtoolsrs",
@@ -306,7 +302,7 @@ dependencies = [
  "async-std",
  "native-tls",
  "thiserror",
- "url 2.3.0",
+ "url",
 ]
 
 [[package]]
@@ -437,16 +433,6 @@ dependencies = [
  "miniz_oxide",
  "object",
  "rustc-demangle",
-]
-
-[[package]]
-name = "base64"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c4a342b450b268e1be8036311e2c613d7f8a7ed31214dff1cc3b60852a3168d"
-dependencies = [
- "byteorder",
- "safemem",
 ]
 
 [[package]]
@@ -1249,7 +1235,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9c384f161156f5260c24a097c56119f9be8c798586aecc13afbcbe7b7e26bf8"
 dependencies = [
- "percent-encoding 2.2.0",
+ "percent-encoding",
 ]
 
 [[package]]
@@ -1645,17 +1631,6 @@ checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "idna"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38f09e0f0b1fb55fdee1f17470ad800da77af5186a1a76c026b679358b7e844e"
-dependencies = [
- "matches",
- "unicode-bidi",
- "unicode-normalization",
-]
-
-[[package]]
-name = "idna"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de910d521f7cc3135c4de8db1cb910e0b5ed1dc6f57c381cd07e8e661ce10094"
@@ -1880,8 +1855,7 @@ version = "0.44.0"
 dependencies = [
  "android_logger",
  "aries-vcx",
- "async-std",
- "base64 0.8.0",
+ "base64 0.10.1",
  "chrono",
  "env_logger",
  "failure",
@@ -1890,9 +1864,7 @@ dependencies = [
  "libc",
  "log",
  "once_cell",
- "openssl",
  "rand 0.7.3",
- "rmp-serde",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2033,7 +2005,7 @@ dependencies = [
 name = "messages"
 version = "0.1.0"
 dependencies = [
- "base64 0.8.0",
+ "base64 0.10.1",
  "chrono",
  "derive_builder",
  "env_logger",
@@ -2041,7 +2013,6 @@ dependencies = [
  "lazy_static",
  "log",
  "num-traits",
- "rand 0.7.3",
  "regex",
  "rust-base58",
  "serde",
@@ -2051,7 +2022,7 @@ dependencies = [
  "strum_macros",
  "time",
  "tokio",
- "url 1.7.2",
+ "url",
  "uuid 0.8.2",
  "vdrtoolsrs",
 ]
@@ -2444,12 +2415,6 @@ dependencies = [
 
 [[package]]
 name = "percent-encoding"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31010dd2e1ac33d5b46a5b413495239882813e0369f8ed8a5e266f173602f831"
-
-[[package]]
-name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
@@ -2833,7 +2798,7 @@ dependencies = [
  "mime",
  "native-tls",
  "once_cell",
- "percent-encoding 2.2.0",
+ "percent-encoding",
  "pin-project-lite",
  "serde",
  "serde_json",
@@ -2841,7 +2806,7 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tower-service",
- "url 2.3.0",
+ "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2969,12 +2934,6 @@ name = "ryu"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09"
-
-[[package]]
-name = "safemem"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e27a8b19b835f7aea908818e871f5cc3a5a186550c30773be987e155e8163d8f"
 
 [[package]]
 name = "schannel"
@@ -3312,7 +3271,7 @@ dependencies = [
  "num-bigint 0.3.3",
  "once_cell",
  "parking_lot",
- "percent-encoding 2.2.0",
+ "percent-encoding",
  "rand 0.8.5",
  "rsa 0.4.1",
  "rustls",
@@ -3325,7 +3284,7 @@ dependencies = [
  "sqlx-rt 0.5.8",
  "stringprep",
  "thiserror",
- "url 2.3.0",
+ "url",
  "webpki",
  "webpki-roots",
  "whoami",
@@ -3361,7 +3320,7 @@ dependencies = [
  "num-bigint 0.3.3",
  "once_cell",
  "paste",
- "percent-encoding 2.2.0",
+ "percent-encoding",
  "rand 0.8.5",
  "rsa 0.5.0",
  "sha-1",
@@ -3371,7 +3330,7 @@ dependencies = [
  "sqlx-rt 0.5.13",
  "stringprep",
  "thiserror",
- "url 2.3.0",
+ "url",
 ]
 
 [[package]]
@@ -3390,7 +3349,7 @@ dependencies = [
  "sqlx-core 0.5.8",
  "sqlx-rt 0.5.8",
  "syn",
- "url 2.3.0",
+ "url",
 ]
 
 [[package]]
@@ -3409,7 +3368,7 @@ dependencies = [
  "sqlx-core 0.5.11",
  "sqlx-rt 0.5.13",
  "syn",
- "url 2.3.0",
+ "url",
 ]
 
 [[package]]
@@ -3719,24 +3678,13 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "url"
-version = "1.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd4e7c0d531266369519a4aa4f399d748bd37043b00bde1e4ff1f60a120b355a"
-dependencies = [
- "idna 0.1.5",
- "matches",
- "percent-encoding 1.0.1",
-]
-
-[[package]]
-name = "url"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22fe195a4f217c25b25cb5058ced57059824a678474874038dc88d211bf508d3"
 dependencies = [
  "form_urlencoded",
- "idna 0.2.1",
- "percent-encoding 2.2.0",
+ "idna",
+ "percent-encoding",
 ]
 
 [[package]]

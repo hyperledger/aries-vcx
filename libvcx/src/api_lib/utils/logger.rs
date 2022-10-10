@@ -14,7 +14,6 @@ pub use aries_vcx::vdrtools_sys::{
     logger::{EnabledCB, FlushCB, LogCB},
     CVoid,
 };
-use aries_vcx::indy;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
@@ -26,7 +25,7 @@ use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
 use self::libc::c_char;
 use self::log::{Level, LevelFilter, Metadata, Record};
-use crate::chrono::Local;
+use chrono::Local;
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 static mut CONTEXT: *const CVoid = ptr::null();

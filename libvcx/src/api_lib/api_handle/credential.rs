@@ -365,8 +365,8 @@ pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex;
     use aries_vcx::utils::mockdata::mockdata_credex::{
-        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
-        CREDENTIAL_SM_OFFER_RECEIVED,
+        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
+        ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
     use crate::api_lib::api_handle::connection;

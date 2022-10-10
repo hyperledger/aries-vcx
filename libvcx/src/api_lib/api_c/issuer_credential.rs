@@ -915,13 +915,10 @@ pub mod tests {
     use std::ffi::CString;
     use std::ptr;
 
-    use aries_vcx::global::settings;
-    use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::get_temp_dir_path;
-    use aries_vcx::utils::mockdata::mockdata_credex::{ARIES_CREDENTIAL_REQUEST, CREDENTIAL_ISSUER_SM_FINISHED};
+    use aries_vcx::utils::mockdata::mockdata_credex::CREDENTIAL_ISSUER_SM_FINISHED;
 
-    use crate::api_lib::api_handle::connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
@@ -929,8 +926,8 @@ pub mod tests {
     use super::*;
 
     static DEFAULT_CREDENTIAL_NAME: &str = "Credential Name Default";
-    static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
-    static DEFAULT_ATTR: &str = "{\"attr\":\"value\"}";
+    // static DEFAULT_DID: &str = "8XFh8yBzrpJQmNyZzgoTqB";
+    // static DEFAULT_ATTR: &str = "{\"attr\":\"value\"}";
 
     pub fn issuer_credential_state_accepted() -> String {
         json!({

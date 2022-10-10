@@ -1,7 +1,5 @@
 use std::sync::Once;
 
-use env_logger;
-
 use crate::testing::mocking;
 use crate::testing::mocking::AgencyMockDecrypted;
 

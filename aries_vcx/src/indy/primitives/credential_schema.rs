@@ -1,8 +1,10 @@
 use vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
-use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger};
+use crate::indy::ledger::transactions::{
+    _check_schema_response, build_schema_request, get_schema_json,
+    sign_and_submit_to_ledger,
+};
 use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
 use crate::utils::serialization::ObjectWithVersion;

@@ -27,17 +27,10 @@ pub async fn libindy_verifier_verify_proof(
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
     use crate::indy::test_utils::{
-        create_and_store_credential, create_and_store_credential_def, create_and_store_nonrevocable_credential_def,
-        create_and_write_test_schema, create_indy_proof, create_proof_with_predicate,
+        create_indy_proof, create_proof_with_predicate,
     };
     use crate::indy::proofs::verifier::verifier_libindy::libindy_verifier_verify_proof;
-    use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
-    use crate::utils::get_temp_dir_path;
-
-    use super::*;
-
-    extern crate serde_json;
+    use crate::utils::devsetup::SetupWalletPool;
 
     #[tokio::test]
     async fn test_prover_verify_proof() {

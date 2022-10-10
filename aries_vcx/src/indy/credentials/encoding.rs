@@ -113,8 +113,6 @@ pub mod unit_tests {
     use serde_json::Value;
 
     use crate::utils::devsetup::*;
-
-    use crate::indy::credentials::*;
     use crate::indy::credentials::encoding::encode_attributes;
 
     #[test]

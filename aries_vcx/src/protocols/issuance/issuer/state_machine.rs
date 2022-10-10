@@ -5,7 +5,6 @@ use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::credentials::encoding::encode_attributes;
-use crate::indy::anoncreds;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::issuance::credential::Credential;
 use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
@@ -613,7 +612,9 @@ pub mod unit_tests {
     mod build_messages {
         use messages::a2a::MessageId;
         use messages::issuance::CredentialPreviewData;
-        use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer, build_problem_report_msg};
+        use crate::protocols::issuance::issuer::state_machine::{
+            build_credential_message, build_credential_offer,
+        };
         use crate::utils::constants::LIBINDY_CRED_OFFER;
         use crate::utils::devsetup::{SetupMocks, was_in_past};
 

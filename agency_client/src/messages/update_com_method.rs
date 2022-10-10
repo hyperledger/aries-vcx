@@ -64,8 +64,6 @@ impl UpdateComMethod {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use crate::messages::update_com_method::ComMethodType;
 
     #[test]

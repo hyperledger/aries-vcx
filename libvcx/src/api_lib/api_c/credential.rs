@@ -1208,6 +1208,7 @@ pub extern "C" fn vcx_credential_release(handle: u32) -> u32 {
     }
 }
 
+#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
     use std::ffi::CString;

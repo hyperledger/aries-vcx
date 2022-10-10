@@ -1,11 +1,8 @@
-use vdrtools_sys::WalletHandle;
 use vdrtools::anoncreds;
-use serde_json::{Map, Value};
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
-use crate::{indy, utils};
-use crate::utils::constants::{PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES, REV_STATE_JSON};
-use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
+use crate::indy;
+use crate::utils::constants::REV_STATE_JSON;
 
 pub mod prover;
 mod prover_internal;

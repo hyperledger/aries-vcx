@@ -1,10 +1,8 @@
-extern crate rust_base58;
-
 use regex::Regex;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
-use self::rust_base58::FromBase58;
+use rust_base58::FromBase58;
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();

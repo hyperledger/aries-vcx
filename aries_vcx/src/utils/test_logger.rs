@@ -1,5 +1,8 @@
 #[cfg(target_os = "android")]
 extern crate android_logger;
+#[cfg(target_os = "android")]
+use self::android_logger::Filter;
+
 extern crate env_logger;
 extern crate vdrtools_sys;
 extern crate log;
@@ -8,14 +11,12 @@ use std::env;
 use std::io::Write;
 
 use chrono::format::{DelayedFormat, StrftimeItems};
+use chrono::Local;
 
-use crate::chrono::Local;
 use crate::error::prelude::*;
 use crate::indy;
 
-#[allow(unused_imports)]
-#[cfg(target_os = "android")]
-use self::android_logger::Filter;
+
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
 use self::log::{LevelFilter, Record};
