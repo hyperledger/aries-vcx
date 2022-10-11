@@ -67,12 +67,13 @@ enum_number!(PublicEntityStateType
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
-    pub cred_def_id: String,
+    pub id: String,
     tag: String,
     source_id: String,
     issuer_did: String,
     cred_def_json: String,
     support_revocation: bool,
+    schema_id: String,
     #[serde(default)]
     pub state: PublicEntityStateType,
 }
@@ -99,15 +100,15 @@ impl Default for PublicEntityStateType {
     }
 }
 
-async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, cred_def_id: &str) -> VcxResult<Option<String>> {
-    match get_cred_def(pool_handle, Some(issuer_did), cred_def_id).await {
+async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, id: &str) -> VcxResult<Option<String>> {
+    match get_cred_def(pool_handle, Some(issuer_did), id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
         Err(err) => Err(VcxError::from_msg(
             VcxErrorKind::InvalidLedgerResponse,
             format!(
                 "Failed to check presence of credential definition id {} on the ledger\nError: {}",
-                cred_def_id, err
+                id, err
             ),
         )),
     }
@@ -144,10 +145,11 @@ impl CredentialDef {
         Ok(Self {
             source_id,
             tag,
-            cred_def_id,
+            id: cred_def_id,
             cred_def_json,
             issuer_did,
             support_revocation,
+            schema_id,
             state: PublicEntityStateType::Built,
         })
     }
@@ -164,14 +166,14 @@ impl CredentialDef {
         trace!(
             "publish_cred_def >>> issuer_did: {}, cred_def_id: {}",
             self.issuer_did,
-            self.cred_def_id
+            self.id
         );
-        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.cred_def_id).await? {
+        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.id).await? {
             return Err(VcxError::from_msg(
                 VcxErrorKind::CredDefAlreadyCreated,
                 format!(
                     "Credential definition with id {} already exists on the ledger: {}",
-                    self.cred_def_id, ledger_cred_def_json
+                    self.id, ledger_cred_def_json
                 ),
             ));
         }
@@ -200,12 +202,21 @@ impl CredentialDef {
             .map_err(|err: VcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 
+    pub fn get_data_json(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
+    }
+
     pub fn get_source_id(&self) -> &String {
         &self.source_id
     }
 
     pub fn get_cred_def_id(&self) -> String {
-        self.cred_def_id.clone()
+        self.id.clone()
+    }
+
+    pub fn get_schema_id(&self) -> String {
+        self.schema_id.clone()
     }
 
     pub fn set_source_id(&mut self, source_id: String) {
@@ -213,7 +224,7 @@ impl CredentialDef {
     }
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<u32> {
-        if (get_cred_def_json(wallet_handle, pool_handle, &self.cred_def_id).await).is_ok() {
+        if (get_cred_def_json(wallet_handle, pool_handle, &self.id).await).is_ok() {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

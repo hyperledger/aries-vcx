@@ -71,6 +71,10 @@ impl RevocationRegistry {
         self.rev_reg_id.clone()
     }
 
+    pub fn get_cred_def_id(&self) -> String {
+        self.cred_def_id.clone()
+    }
+
     pub fn get_rev_reg_def(&self) -> RevocationRegistryDefinition {
         self.rev_reg_def.clone()
     }
