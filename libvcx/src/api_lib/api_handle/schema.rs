@@ -38,21 +38,13 @@ pub async fn create_and_publish_schema(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
-    credential_schema::publish_schema(&issuer_did, get_main_wallet_handle(), get_main_pool_handle()?, &schema).await?;
+    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?.publish(get_main_wallet_handle(), get_main_pool_handle()?, None).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
+    debug!("created schema on ledger with id: {}", schema.get_schema_id());
 
-    debug!("created schema on ledger with id: {}", schema_id);
-    let schema_handle = _store_schema(
-        source_id,
-        name,
-        version,
-        schema_id,
-        data,
-        PublicEntityStateType::Published,
-    )?;
-
-    Ok(schema_handle)
+    SCHEMA_MAP
+        .add(schema)
+        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -77,33 +69,8 @@ pub async fn prepare_schema_for_endorser(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
-    let schema_request = build_schema_request(&issuer_did, &schema).await?;
-    let schema_request = transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
-
-    debug!("prepared schema for endorser with id: {}", schema_id);
-
-    let schema_handle = _store_schema(source_id, name, version, schema_id, data, PublicEntityStateType::Built)?;
-
-    Ok((schema_handle, schema_request))
-}
-
-fn _store_schema(
-    source_id: &str,
-    name: String,
-    version: String,
-    schema_id: String,
-    data: String,
-    state: PublicEntityStateType,
-) -> VcxResult<u32> {
-    let schema = Schema {
-        source_id: source_id.to_string(),
-        name,
-        data: serde_json::from_str(&data).unwrap_or_default(),
-        version,
-        schema_id,
-        state,
-    };
+    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?.publish(get_main_wallet_handle(), get_main_pool_handle()?, Some(endorser_did)).await?;
+    debug!("prepared schema for endorser with id: {}", schema.get_schema_id());
 
     SCHEMA_MAP
         .add(schema)

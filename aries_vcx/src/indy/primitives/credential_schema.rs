@@ -1,9 +1,9 @@
 use vdrtools_sys::{PoolHandle, WalletHandle};
-use crate::error::{VcxError, VcxResult};
+use crate::error::{VcxError, VcxResult, VcxErrorKind};
 use crate::global::settings;
 use crate::indy::ledger::transactions::{
     _check_schema_response, build_schema_request, get_schema_json,
-    sign_and_submit_to_ledger,
+    sign_and_submit_to_ledger, set_endorser
 };
 use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
@@ -24,17 +24,63 @@ pub struct Schema {
     pub schema_id: String,
     pub name: String,
     pub source_id: String,
+    pub submitter_did: String,
     #[serde(default)]
     pub state: PublicEntityStateType,
+    schema_json: String
 }
 
 impl Schema {
-    pub fn get_source_id(&self) -> &String {
-        &self.source_id
+    pub async fn create(source_id: &str, submitter_did: &str, name: &str, version: &str, data: &Vec<String>) -> VcxResult<Self> {
+        trace!("Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}", submitter_did, name, version, data);
+
+        // if settings::indy_mocks_enabled() {
+        //     return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
+        // }
+
+        let data_str = serde_json::to_string(data)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
+
+        let (schema_id, schema_json) = libindy_issuer_create_schema(&submitter_did, name, version, &data_str).await?;
+
+        Ok(Self {
+            source_id: source_id.to_string(),
+            name: name.to_string(),
+            data: data.clone(),
+            version: version.to_string(),
+            schema_id,
+            submitter_did: submitter_did.to_string(),
+            schema_json,
+            state: PublicEntityStateType::Built,
+        })
     }
 
-    pub fn get_schema_id(&self) -> &String {
-        &self.schema_id
+    pub async fn publish(self, wallet_handle: WalletHandle, pool_handle: PoolHandle, endorser_did: Option<String>) -> VcxResult<Self> {
+        trace!("Schema::publish >>>");
+
+        if settings::indy_mocks_enabled() {
+            return Ok(Self::default());
+        }
+
+        let mut request = build_schema_request(&self.submitter_did, &self.schema_json).await?;
+        if let Some(endorser_did) = endorser_did {
+            request = set_endorser(wallet_handle, &self.submitter_did, &request, &endorser_did).await?;
+        }
+        let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, &self.submitter_did, &request).await?;
+        _check_schema_response(&response)?;
+
+        return Ok(Self {
+            state: PublicEntityStateType::Published,
+            ..self
+        });
+    }
+
+    pub fn get_source_id(&self) -> String {
+        self.source_id.clone()
+    }
+
+    pub fn get_schema_id(&self) -> String {
+        self.schema_id.clone()
     }
 
     pub fn to_string(&self) -> VcxResult<String> {
@@ -56,6 +102,10 @@ impl Schema {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)
+    }
+
+    pub async fn get_schema_json(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<String> {
+        Ok(get_schema_json(wallet_handle, pool_handle, &self.schema_id).await?.1)
     }
 
     pub fn get_state(&self) -> u32 {
@@ -80,32 +130,4 @@ pub async fn libindy_issuer_create_schema(
     vdrtools::anoncreds::issuer_create_schema(issuer_did, name, version, attrs)
         .await
         .map_err(VcxError::from)
-}
-
-pub async fn create_schema(submitter_did: &str, name: &str, version: &str, data: &str) -> VcxResult<(String, String)> {
-    trace!("create_schema >>> submitter_did: {}, name: {}, version: {}, data: {}", submitter_did, name, version, data);
-
-    if settings::indy_mocks_enabled() {
-        return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
-    }
-
-    let (id, create_schema) = libindy_issuer_create_schema(&submitter_did, name, version, data).await?;
-
-    Ok((id, create_schema))
-}
-
-pub async fn publish_schema(submitter_did: &str, wallet_handle: WalletHandle, pool_handle: PoolHandle, schema: &str) -> VcxResult<()> {
-    trace!("publish_schema >>> submitter_did: {}, schema: {}", submitter_did, schema);
-
-    if settings::indy_mocks_enabled() {
-        return Ok(());
-    }
-
-    let request = build_schema_request(submitter_did, schema).await?;
-
-    let response = sign_and_submit_to_ledger(wallet_handle, pool_handle, submitter_did, &request).await?;
-
-    _check_schema_response(&response)?;
-
-    Ok(())
 }
