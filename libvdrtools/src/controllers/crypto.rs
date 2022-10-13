@@ -34,7 +34,7 @@ impl CryptoController {
         }
     }
 
-    pub(crate) async fn create_key(
+    pub async fn create_key(
         &self,
         wallet_handle: WalletHandle,
         key_info: &KeyInfo,
@@ -56,7 +56,7 @@ impl CryptoController {
         Ok(res)
     }
 
-    pub(crate) async fn crypto_sign(
+    pub async fn crypto_sign(
         &self,
         wallet_handle: WalletHandle,
         my_vk: &str,
@@ -83,7 +83,7 @@ impl CryptoController {
         Ok(res)
     }
 
-    pub(crate) async fn crypto_verify(
+    pub async fn crypto_verify(
         &self,
         their_vk: &str,
         msg: &[u8],
@@ -303,9 +303,9 @@ impl CryptoController {
         Ok(res)
     }
 
-    //TODO: Refactor pack to be more modular to version changes or crypto_scheme changes
-    //this match statement is super messy, but the easiest way to comply with current architecture
-    pub(crate) async fn pack_msg(
+    // TODO: Refactor pack to be more modular to version changes or crypto_scheme changes
+    // this match statement is super messy, but the easiest way to comply with current architecture
+    pub async fn pack_msg(
         &self,
         message: Vec<u8>,
         receiver_list: Vec<String>,
@@ -464,7 +464,7 @@ impl CryptoController {
         })
     }
 
-    pub(crate) async fn unpack_msg(
+    pub async fn unpack_msg(
         &self,
         jwe_struct: JWE,
         wallet_handle: WalletHandle,

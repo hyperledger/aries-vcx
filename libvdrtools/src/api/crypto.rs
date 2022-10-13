@@ -962,7 +962,7 @@ pub extern "C" fn indy_unpack_message(
         wallet_handle, jwe_data,
     );
 
-    //serialize JWE to struct
+    // serialize JWE to struct
     let jwe_struct: JWE = match serde_json::from_slice(jwe_data.as_slice()) {
         Ok(x) => x,
         Err(_) => return ErrorCode::CommonInvalidParam3,

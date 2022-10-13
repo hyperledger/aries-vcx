@@ -13,7 +13,10 @@ mod pool;
 mod wallet;
 pub(crate) mod vdr;
 
-pub(crate) use anoncreds::{IssuerController, ProverController, VerifierController};
+pub use anoncreds::{
+    IssuerController, CredentialDefinitionId,
+    ProverController, VerifierController,
+};
 pub(crate) use blob_storage::BlobStorageController;
 pub(crate) use cache::CacheController;
 pub(crate) use config::ConfigController;

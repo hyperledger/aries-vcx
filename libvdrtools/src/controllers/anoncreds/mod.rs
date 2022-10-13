@@ -3,6 +3,6 @@ mod prover;
 mod tails;
 mod verifier;
 
-pub(crate) use issuer::IssuerController;
-pub(crate) use prover::ProverController;
-pub(crate) use verifier::VerifierController;
+pub use issuer::{IssuerController, CredentialDefinitionId};
+pub use prover::ProverController;
+pub use verifier::VerifierController;

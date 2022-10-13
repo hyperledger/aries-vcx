@@ -55,14 +55,40 @@ use crate::{
 };
 
 use indy_api_types::errors::IndyResult;
+
 use std::cmp;
 use std::future::Future;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub use domain::crypto::did::{DidMethod, DidValue, MyDidInfo};
-pub use domain::crypto::key::KeyInfo;
+pub use controllers::CredentialDefinitionId;
 
-pub use indy_api_types::WalletHandle;
+pub use domain::{
+    anoncreds::{
+        revocation_registry_definition::{
+            RevocationRegistryId,
+            RevocationRegistryDefinition,
+        },
+        credential::{CredentialValues, Credential},
+        credential_request::{CredentialRequest, CredentialRequestMetadata},
+        credential_definition::CredentialDefinition,
+        credential_offer::CredentialOffer,
+        schema::AttributeNames,
+    },
+    crypto::{
+        did::{
+            DidMethod, DidValue, MyDidInfo,
+        },
+        key::KeyInfo,
+        pack::JWE,
+    },
+};
+
+pub use indy_api_types::{
+    WalletHandle,
+    SearchHandle,
+};
+
+pub use services::AnoncredsHelpers;
 
 fn get_cur_time() -> u128 {
     let since_epoch = SystemTime::now()

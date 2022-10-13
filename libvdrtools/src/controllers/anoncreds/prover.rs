@@ -93,7 +93,7 @@ impl ProverController {
         }
     }
 
-    pub(crate) async fn create_master_secret(
+    pub async fn create_master_secret(
         &self,
         wallet_handle: WalletHandle,
         master_secret_id: Option<String>,
@@ -137,7 +137,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn create_credential_request(
+    pub async fn create_credential_request(
         &self,
         wallet_handle: WalletHandle,
         prover_did: DidValue,
@@ -294,7 +294,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn store_credential(
+    pub async fn store_credential(
         &self,
         wallet_handle: WalletHandle,
         cred_id: Option<String>,
@@ -767,7 +767,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn close_credentials_search_for_proof_req(
+    pub async fn close_credentials_search_for_proof_req(
         &self,
         search_handle: SearchHandle,
     ) -> IndyResult<()> {
@@ -792,7 +792,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn delete_credential(
+    pub async fn delete_credential(
         &self,
         wallet_handle: WalletHandle,
         cred_id: String,
@@ -823,7 +823,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn create_proof(
+    pub async fn create_proof(
         &self,
         wallet_handle: WalletHandle,
         proof_req: ProofRequest,
@@ -900,7 +900,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn create_revocation_state(
+    pub async fn create_revocation_state(
         &self,
         blob_storage_reader_handle: i32,
         revoc_reg_def: RevocationRegistryDefinition,

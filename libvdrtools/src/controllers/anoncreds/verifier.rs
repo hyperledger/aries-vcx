@@ -26,7 +26,7 @@ impl VerifierController {
         VerifierController { verifier_service }
     }
 
-    pub(crate) fn verify_proof(
+    pub fn verify_proof(
         &self,
         proof_req: ProofRequest,
         proof: Proof,
@@ -66,7 +66,7 @@ impl VerifierController {
         res
     }
 
-    pub(crate) fn generate_nonce(&self) -> IndyResult<String> {
+    pub fn generate_nonce(&self) -> IndyResult<String> {
         trace!("generate_nonce >");
 
         let nonce = self

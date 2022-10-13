@@ -15,7 +15,7 @@ impl BlobStorageController {
         }
     }
 
-    pub(crate) async fn open_reader(&self, type_: String, config: String) -> IndyResult<i32> {
+    pub async fn open_reader(&self, type_: String, config: String) -> IndyResult<i32> {
         trace!("open_reader > type_ {:?} config {:?}", type_, config);
 
         let handle = self
@@ -28,7 +28,7 @@ impl BlobStorageController {
         res
     }
 
-    pub(crate) async fn open_writer(&self, type_: String, config: String) -> IndyResult<i32> {
+    pub async fn open_writer(&self, type_: String, config: String) -> IndyResult<i32> {
         trace!("open_writer > type_ {:?} config {:?}", type_, config);
 
         let handle = self

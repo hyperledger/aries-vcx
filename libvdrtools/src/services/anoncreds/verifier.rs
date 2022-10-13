@@ -38,7 +38,7 @@ lazy_static! {
         Regex::new("^attr::([^:]+)::marker$").unwrap();
 }
 
-pub(crate) struct VerifierService {}
+pub struct VerifierService {}
 
 impl VerifierService {
     pub(crate) fn new() -> VerifierService {

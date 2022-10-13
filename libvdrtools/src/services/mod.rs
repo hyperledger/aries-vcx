@@ -6,12 +6,12 @@ mod metrics;
 mod pool;
 mod wallet;
 
-pub(crate) use anoncreds::{
+pub use anoncreds::{
     AnoncredsHelpers, IssuerService, ProverService, VerifierService,
 };
 
-pub(crate) use blob_storage::BlobStorageService;
-pub(crate) use crypto::CryptoService;
+pub use blob_storage::BlobStorageService;
+pub use crypto::CryptoService;
 pub(crate) use ledger::LedgerService;
 pub(crate) use metrics::MetricsService;
 pub(crate) use metrics::command_metrics::CommandMetric;

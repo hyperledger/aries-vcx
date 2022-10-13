@@ -3,7 +3,7 @@ mod issuer;
 mod prover;
 mod verifier;
 
-pub(crate) use helpers::AnoncredsHelpers;
-pub(crate) use issuer::IssuerService;
-pub(crate) use prover::ProverService;
-pub(crate) use verifier::VerifierService;
+pub use helpers::AnoncredsHelpers;
+pub use issuer::IssuerService;
+pub use prover::ProverService;
+pub use verifier::VerifierService;

@@ -12,7 +12,7 @@ use ursa::cl::{
     RevocationRegistryDelta as CryptoRevocationRegistryDelta, Witness,
 };
 
-use crate::{
+pub use crate::{
     domain::{
         anoncreds::{
             credential::{Credential, CredentialValues},
@@ -62,7 +62,7 @@ impl IssuerController {
         }
     }
 
-    pub(crate) fn create_schema(
+    pub fn create_schema(
         &self,
         issuer_did: DidValue,
         name: String,
@@ -583,7 +583,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) async fn create_credential_offer(
+    pub async fn create_credential_offer(
         &self,
         wallet_handle: WalletHandle,
         cred_def_id: CredentialDefinitionId,
@@ -623,7 +623,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) async fn new_credential(
+    pub async fn new_credential(
         &self,
         wallet_handle: WalletHandle,
         cred_offer: CredentialOffer,

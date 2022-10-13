@@ -40,7 +40,7 @@ macro_rules! _object_to_unqualified {
     }};
 }
 
-pub(crate) struct AnoncredsHelpers {}
+pub struct AnoncredsHelpers {}
 
 impl AnoncredsHelpers {
     pub(crate) fn attr_common_view(attr: &str) -> String {
@@ -185,7 +185,7 @@ impl AnoncredsHelpers {
         res
     }
 
-    pub(crate) fn to_unqualified(entity: &str) -> IndyResult<String> {
+    pub fn to_unqualified(entity: &str) -> IndyResult<String> {
         trace!("to_unqualified > entity {:?}", entity);
 
         _object_to_unqualified!(entity, CredentialDefinition);
