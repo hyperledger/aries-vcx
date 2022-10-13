@@ -10,6 +10,7 @@ use crate::services::{
     connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
     issuer::ServiceCredentialsIssuer, holder::ServiceCredentialsHolder,
     revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
+    verifier::ServiceVerifier, prover::ServiceProver
 };
 
 #[derive(Clone)]
@@ -23,6 +24,8 @@ pub struct Agent {
     pub(super) rev_regs: Arc<ServiceRevocationRegistries>,
     pub(super) holder: Arc<ServiceCredentialsHolder>,
     pub(super) issuer: Arc<ServiceCredentialsIssuer>,
+    pub(super) verifier: Arc<ServiceVerifier>,
+    pub(super) prover: Arc<ServiceProver>,
 }
 
 impl Agent {
@@ -75,5 +78,13 @@ impl Agent {
 
     pub fn holder(&self) -> Arc<ServiceCredentialsHolder> {
         self.holder.clone()
+    }
+
+    pub fn verifier(&self) -> Arc<ServiceVerifier> {
+        self.verifier.clone()
+    }
+
+    pub fn prover(&self) -> Arc<ServiceProver> {
+        self.prover.clone()
     }
 }

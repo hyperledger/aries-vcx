@@ -19,6 +19,7 @@ use crate::{
         connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
         issuer::ServiceCredentialsIssuer, holder::ServiceCredentialsHolder,
         revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
+        verifier::ServiceVerifier, prover::ServiceProver
     },
 };
 
@@ -111,6 +112,18 @@ impl Agent {
             config_agency_client.clone(),
             connections.clone(),
         ));
+        let verifier = Arc::new(ServiceVerifier::new(
+            wallet_handle,
+            pool_handle,
+            config_agency_client.clone(),
+            connections.clone(),
+        ));
+        let prover = Arc::new(ServiceProver::new(
+            wallet_handle,
+            pool_handle,
+            config_agency_client.clone(),
+            connections.clone(),
+        ));
 
         Ok(Self {
             wallet_handle,
@@ -121,6 +134,8 @@ impl Agent {
             rev_regs,
             issuer,
             holder,
+            verifier,
+            prover,
             config: AgentConfig {
                 config_wallet,
                 config_issuer,
