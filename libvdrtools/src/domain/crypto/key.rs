@@ -35,7 +35,7 @@ impl Drop for Key {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct KeyInfo {
     pub seed: Option<String>,
     pub crypto_type: Option<String>,

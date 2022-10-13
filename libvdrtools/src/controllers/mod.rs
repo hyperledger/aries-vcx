@@ -4,7 +4,7 @@ mod blob_storage;
 mod cache;
 mod config;
 mod crypto;
-mod did;
+pub(crate) mod did;
 mod ledger;
 mod metrics;
 mod non_secrets;

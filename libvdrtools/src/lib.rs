@@ -25,6 +25,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate indy_utils;
 
+pub use indy_api_types as types;
+
 #[macro_use]
 mod utils;
 
@@ -43,22 +45,29 @@ use crate::{
     controllers::{
         BlobStorageController, CacheController, ConfigController, CryptoController, DidController,
         IssuerController, LedgerController, MetricsController, NonSecretsController,
-        PairwiseController, PoolController, ProverController, VerifierController, WalletController,
-        VDRController,
+        PairwiseController, PoolController, ProverController, VDRController, VerifierController,
+        WalletController,
     },
     services::{
-        BlobStorageService, CryptoService, IssuerService, LedgerService, MetricsService,
-        CommandMetric, PoolService, ProverService, VerifierService, WalletService,
+        BlobStorageService, CommandMetric, CryptoService, IssuerService, LedgerService,
+        MetricsService, PoolService, ProverService, VerifierService, WalletService,
     },
 };
 
 use indy_api_types::errors::IndyResult;
+use std::cmp;
 use std::future::Future;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::cmp;
+
+pub use domain::crypto::did::{DidMethod, DidValue, MyDidInfo};
+pub use domain::crypto::key::KeyInfo;
+
+pub use indy_api_types::WalletHandle;
 
 fn get_cur_time() -> u128 {
-    let since_epoch = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time has gone backwards");
+    let since_epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time has gone backwards");
     since_epoch.as_millis()
 }
 
@@ -69,11 +78,15 @@ pub struct InstrumentedThreadPool {
 }
 
 impl InstrumentedThreadPool {
-    pub fn spawn_ok_instrumented<T, FutIndyRes, FnCb>(&self, idx: CommandMetric, action: FutIndyRes, cb: FnCb)
-        where
-            FutIndyRes: Future<Output = IndyResult<T>> + Send + 'static,
-            FnCb: Fn(IndyResult<T>) + Sync + Send + 'static,
-            T: Send + 'static
+    pub fn spawn_ok_instrumented<T, FutIndyRes, FnCb>(
+        &self,
+        idx: CommandMetric,
+        action: FutIndyRes,
+        cb: FnCb,
+    ) where
+        FutIndyRes: Future<Output = IndyResult<T>> + Send + 'static,
+        FnCb: Fn(IndyResult<T>) + Sync + Send + 'static,
+        T: Send + 'static,
     {
         let requested_time = get_cur_time();
         let metrics_service = self.metrics_service.clone();
@@ -83,9 +96,15 @@ impl InstrumentedThreadPool {
             let executed_time = get_cur_time();
             cb(res);
             let cb_finished_time = get_cur_time();
-            metrics_service.cmd_left_queue(idx, start_time - requested_time).await;
-            metrics_service.cmd_executed(idx, executed_time - start_time).await;
-            metrics_service.cmd_callback(idx, cb_finished_time - executed_time).await;
+            metrics_service
+                .cmd_left_queue(idx, start_time - requested_time)
+                .await;
+            metrics_service
+                .cmd_executed(idx, executed_time - start_time)
+                .await;
+            metrics_service
+                .cmd_callback(idx, cb_finished_time - executed_time)
+                .await;
         })
     }
 }
@@ -113,7 +132,6 @@ pub struct Locator {
     pub vdr_controller: VDRController,
     pub executor: InstrumentedThreadPool,
 }
-
 
 impl Locator {
     pub fn instance() -> &'static Locator {
@@ -143,7 +161,10 @@ impl Locator {
         // TODO: Make it work with lower number of threads (VE-2668)
         let num_threads = cmp::max(8, num_cpus::get());
         let executor = InstrumentedThreadPool {
-            executor: futures::executor::ThreadPool::builder().pool_size(num_threads).create().unwrap(),
+            executor: futures::executor::ThreadPool::builder()
+                .pool_size(num_threads)
+                .create()
+                .unwrap(),
             metrics_service: metrics_service.clone(),
         };
 
@@ -189,7 +210,8 @@ impl Locator {
 
         let pairwise_controller = PairwiseController::new(wallet_service.clone());
         let blob_storage_controller = BlobStorageController::new(blob_storage_service.clone());
-        let metrics_controller = MetricsController::new(wallet_service.clone(), metrics_service.clone());
+        let metrics_controller =
+            MetricsController::new(wallet_service.clone(), metrics_service.clone());
         let non_secret_controller = NonSecretsController::new(wallet_service.clone());
 
         let cache_controller = CacheController::new(

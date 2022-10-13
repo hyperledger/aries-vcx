@@ -24,7 +24,7 @@ impl Validatable for DidMethod {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct MyDidInfo {
     pub did: Option<DidValue>,
     pub seed: Option<String>,
