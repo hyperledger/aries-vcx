@@ -49,14 +49,18 @@ impl ServiceSchemas {
             .map_err(|err| err.into())
     }
 
-    pub async fn exists_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<bool> {
+    pub fn find_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<Vec<String>> {
         let name = name.to_string();
         let version = version.to_string();
-        let f = |m: &&Mutex<Schema>| -> bool {
+        let f = |(id, m): (&String, &Mutex<Schema>)| -> Option<String> {
             let schema = m.lock().unwrap();
-            schema.name == name && schema.version == version
+            if schema.name == name && schema.version == version {
+                Some(id.to_string())
+            } else {
+                None
+            }
         };
-        self.schemas.exists(f)
+        self.schemas.find_by(f)
     }
 
     pub fn get_by_id(&self, id: &str) -> AgentResult<Schema> {

@@ -58,7 +58,7 @@ impl ServiceCredentialsIssuer {
         Ok(issuer)
     }
 
-    fn get_connection_id(&self, id: &str) -> AgentResult<String> {
+    pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
         let IssuerWrapper {
             connection_id,
             ..
