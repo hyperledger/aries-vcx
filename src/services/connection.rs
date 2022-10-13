@@ -7,6 +7,7 @@ use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::connection::{Connection, ConnectionState},
@@ -177,5 +178,24 @@ impl ServiceConnections {
             }
         }
         Ok(offers)
+    }
+
+    pub async fn get_proof_requests(&self, id: &str) -> AgentResult<Vec<PresentationRequest>> {
+        let connection = self.connections.get_cloned(id)?;
+        let agency_client = self.agency_client()?;
+        let mut requests = Vec::<PresentationRequest>::new();
+        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
+            match message {
+                A2AMessage::PresentationRequest(request) => {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    requests.push(request);
+                }
+                _ => {}
+            }
+        }
+        Ok(requests)
     }
 }
