@@ -6,10 +6,10 @@ use std::{
     sync::Arc,
 };
 
+use bip32;
+use bip39;
 use failure::{Backtrace, Context, Fail};
 use log;
-use bip39;
-use bip32;
 
 #[cfg(feature = "casting_errors")]
 use sqlx;
@@ -20,7 +20,6 @@ use ursa::errors::{UrsaCryptoError, UrsaCryptoErrorKind};
 use libc::c_char;
 
 use crate::ErrorCode;
-
 
 pub mod prelude {
     pub use super::{

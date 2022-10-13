@@ -40,17 +40,18 @@ macro_rules! map (
 );
 
 macro_rules! json_string {
-    ($value:ident) => ({
-        serde_json::to_string(&$value)
-            .map_err(|err| IndyError::from_msg(
+    ($value:ident) => {
+        serde_json::to_string(&$value).map_err(|err| {
+            IndyError::from_msg(
                 IndyErrorKind::InvalidStructure,
                 format!("Cannot serialize Object into JSON String. Err: {:?}", err),
-            ))?
-    })
+            )
+        })?
+    };
 }
 
 macro_rules! json_string_result {
-    ($value:ident) => ({
+    ($value:ident) => {
         Ok(json_string!($value))
-    })
+    };
 }
