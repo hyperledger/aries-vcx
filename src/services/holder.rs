@@ -6,6 +6,7 @@ use crate::storage::in_memory::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
@@ -54,7 +55,7 @@ impl ServiceCredentialsHolder {
         Ok(holder)
     }
 
-    fn get_connection_id(&self, id: &str) -> AgentResult<String> {
+    pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
         let HolderWrapper { connection_id, .. } = self.creds_holder.get_cloned(id)?;
         Ok(connection_id)
     }
@@ -85,6 +86,19 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
+        self.creds_holder.add(
+            &holder.get_thread_id()?,
+            HolderWrapper::new(holder, connection_id),
+        )
+    }
+
+    pub fn create_from_offer(
+        &self,
+        connection_id: &str,
+        offer: CredentialOffer,
+    ) -> AgentResult<String> {
+        self.service_connections.get_by_id(&connection_id)?;
+        let holder = Holder::create_from_offer("", offer)?;
         self.creds_holder.add(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),

@@ -5,6 +5,7 @@ use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
 use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
 use aries_vcx::messages::connection::request::Request;
+use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
@@ -49,7 +50,7 @@ impl ServiceConnections {
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
         let mut connection =
-            Connection::create("", self.wallet_handle, &self.agency_client()?, false).await?;
+            Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
         connection
             .connect(self.wallet_handle, &self.agency_client()?)
             .await?;
@@ -70,7 +71,7 @@ impl ServiceConnections {
             &self.agency_client()?,
             invite,
             ddo,
-            false,
+            true,
         )
         .await?;
         self.connections
@@ -143,14 +144,38 @@ impl ServiceConnections {
     pub async fn get_credential_proposals(&self, id: &str) -> AgentResult<Vec<CredentialProposal>> {
         let connection = self.connections.get_cloned(id)?;
         let agency_client = self.agency_client()?;
-        Ok(connection
-            .get_messages_noauth(&agency_client)
-            .await?
-            .into_iter()
-            .filter_map(|(_, message)| match message {
-                A2AMessage::CredentialProposal(proposal) => Some(proposal),
-                _ => None,
-            })
-            .collect())
+        let mut proposals = Vec::<CredentialProposal>::new();
+        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
+            match message {
+                A2AMessage::CredentialProposal(proposal) => {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    proposals.push(proposal);
+                }
+                _ => {}
+            }
+        }
+        Ok(proposals)
+    }
+
+    pub async fn get_credential_offers(&self, id: &str) -> AgentResult<Vec<CredentialOffer>> {
+        let connection = self.connections.get_cloned(id)?;
+        let agency_client = self.agency_client()?;
+        let mut offers = Vec::<CredentialOffer>::new();
+        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
+            match message {
+                A2AMessage::CredentialOffer(offer) => {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    offers.push(offer);
+                }
+                _ => {}
+            }
+        }
+        Ok(offers)
     }
 }
