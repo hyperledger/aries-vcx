@@ -147,4 +147,9 @@ where
         let store = self._lock_store_read()?;
         Ok(store.iter().filter_map(closure).collect())
     }
+
+    pub fn get_all(&self) -> AgentResult<Vec<T>> {
+        let store = self._lock_store_read()?;
+        Ok(store.iter().map(|(k, v)| v.lock().unwrap().deref().clone()).into_iter().collect())
+    }
 }
