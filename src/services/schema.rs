@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
+use aries_vcx::indy::ledger::transactions::get_schema_json;
 use aries_vcx::indy::primitives::credential_schema::Schema;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 
@@ -42,11 +43,7 @@ impl ServiceSchemas {
     }
 
     pub async fn schema_json(&self, id: &str) -> AgentResult<String> {
-        self.schemas
-            .get_cloned(id)?
-            .get_schema_json(self.wallet_handle, self.pool_handle)
-            .await
-            .map_err(|err| err.into())
+        Ok(get_schema_json(self.wallet_handle, self.pool_handle, id).await?.1)
     }
 
     pub fn find_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<Vec<String>> {

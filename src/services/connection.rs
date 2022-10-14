@@ -96,6 +96,9 @@ impl ServiceConnections {
         connection
             .process_request(self.wallet_handle, &self.agency_client()?, request)
             .await?;
+        connection
+            .send_response(self.wallet_handle)
+            .await?;
         self.connections.add(id, connection)?;
         Ok(())
     }
@@ -125,6 +128,10 @@ impl ServiceConnections {
     // exposed only to other services.
     pub fn get_by_id(&self, id: &str) -> AgentResult<Connection> {
         self.connections.get_cloned(id)
+    }
+
+    pub fn exists_by_id(&self, id: &str) -> bool {
+        self.connections.has_id(id)
     }
 
     // TODO: Make the following functions generic
@@ -194,6 +201,26 @@ impl ServiceConnections {
                     requests.push(request);
                 }
                 _ => {}
+            }
+        }
+        Ok(requests)
+    }
+
+    pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {
+        let agency_client = self.agency_client()?;
+        let mut requests = Vec::<(PresentationRequest, String)>::new();
+        for connection in self.connections.get_all()? {
+            for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
+                match message {
+                    A2AMessage::PresentationRequest(request) => {
+                        connection
+                            .update_message_status(&uid, &agency_client)
+                            .await
+                            .ok();
+                        requests.push((request, connection.get_thread_id()));
+                    }
+                    _ => {}
+                }
             }
         }
         Ok(requests)
