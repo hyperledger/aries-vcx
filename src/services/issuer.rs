@@ -48,12 +48,12 @@ impl ServiceCredentialsIssuer {
     }
 
     fn get_issuer(&self, id: &str) -> AgentResult<Issuer> {
-        let IssuerWrapper { issuer, .. } = self.creds_issuer.get_cloned(id)?;
+        let IssuerWrapper { issuer, .. } = self.creds_issuer.get(id)?;
         Ok(issuer)
     }
 
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let IssuerWrapper { connection_id, .. } = self.creds_issuer.get_cloned(id)?;
+        let IssuerWrapper { connection_id, .. } = self.creds_issuer.get(id)?;
         Ok(connection_id)
     }
 
@@ -78,7 +78,7 @@ impl ServiceCredentialsIssuer {
         issuer
             .update_state(self.wallet_handle, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.add(
+        self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, connection_id),
         )
@@ -103,7 +103,7 @@ impl ServiceCredentialsIssuer {
         issuer
             .send_credential_offer(connection.send_message_closure(self.wallet_handle).await?)
             .await?;
-        self.creds_issuer.add(
+        self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )
@@ -113,7 +113,7 @@ impl ServiceCredentialsIssuer {
         let IssuerWrapper {
             mut issuer,
             connection_id,
-        } = self.creds_issuer.get_cloned(id)?;
+        } = self.creds_issuer.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
             .send_credential(
@@ -121,7 +121,7 @@ impl ServiceCredentialsIssuer {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_issuer.add(
+        self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )?;
@@ -136,12 +136,12 @@ impl ServiceCredentialsIssuer {
         let IssuerWrapper {
             mut issuer,
             connection_id,
-        } = self.creds_issuer.get_cloned(id)?;
+        } = self.creds_issuer.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = issuer
             .update_state(self.wallet_handle, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.add(
+        self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )?;

@@ -24,12 +24,12 @@ impl ServiceRevocationRegistries {
     }
 
     fn get_tails_hash(&self, id: &str) -> AgentResult<String> {
-        let rev_reg = self.rev_regs.get_cloned(id)?;
+        let rev_reg = self.rev_regs.get(id)?;
         Ok(rev_reg.get_rev_reg_def().value.tails_hash)
     }
 
     pub fn get_tails_dir(&self, id: &str) -> AgentResult<String> {
-        let rev_reg = self.rev_regs.get_cloned(id)?;
+        let rev_reg = self.rev_regs.get(id)?;
         Ok(rev_reg.get_tails_dir())
     }
 
@@ -43,7 +43,7 @@ impl ServiceRevocationRegistries {
             1,
         )
         .await?;
-        self.rev_regs.add(&rev_reg.get_rev_reg_id(), rev_reg)
+        self.rev_regs.set(&rev_reg.get_rev_reg_id(), rev_reg)
     }
 
     pub fn tails_file_path(&self, id: &str) -> AgentResult<String> {
@@ -60,16 +60,16 @@ impl ServiceRevocationRegistries {
     }
 
     pub async fn publish_rev_reg(&self, id: &str, tails_url: &str) -> AgentResult<()> {
-        let mut rev_reg = self.rev_regs.get_cloned(id)?;
+        let mut rev_reg = self.rev_regs.get(id)?;
         rev_reg
             .publish_revocation_primitives(self.wallet_handle, self.pool_handle, tails_url)
             .await?;
-        self.rev_regs.add(id, rev_reg)?;
+        self.rev_regs.set(id, rev_reg)?;
         Ok(())
     }
 
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
-        let rev_reg = self.rev_regs.get_cloned(id)?;
+        let rev_reg = self.rev_regs.get(id)?;
         rev_reg
             .revoke_credential_local(self.wallet_handle, cred_rev_id)
             .await?;
@@ -77,7 +77,7 @@ impl ServiceRevocationRegistries {
     }
 
     pub async fn publish_local_revocations(&self, id: &str) -> AgentResult<()> {
-        let rev_reg = self.rev_regs.get_cloned(id)?;
+        let rev_reg = self.rev_regs.get(id)?;
         rev_reg
             .publish_local_revocations(self.wallet_handle, self.pool_handle, &self.issuer_did)
             .await?;

@@ -30,15 +30,15 @@ impl ServiceSchemas {
         attributes: &Vec<String>,
     ) -> AgentResult<String> {
         let schema = Schema::create("", &self.issuer_did, name, version, attributes).await?;
-        self.schemas.add(&schema.get_schema_id(), schema)
+        self.schemas.set(&schema.get_schema_id(), schema)
     }
 
     pub async fn publish_schema(&self, id: &str) -> AgentResult<()> {
-        let schema = self.schemas.get_cloned(id)?;
+        let schema = self.schemas.get(id)?;
         let schema = schema
             .publish(self.wallet_handle, self.pool_handle, None)
             .await?;
-        self.schemas.add(id, schema)?;
+        self.schemas.set(id, schema)?;
         Ok(())
     }
 
@@ -63,6 +63,6 @@ impl ServiceSchemas {
     }
 
     pub fn get_by_id(&self, id: &str) -> AgentResult<Schema> {
-        self.schemas.get_cloned(id)
+        self.schemas.get(id)
     }
 }

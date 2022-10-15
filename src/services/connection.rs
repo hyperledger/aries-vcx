@@ -59,7 +59,7 @@ impl ServiceConnections {
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
         self.connections
-            .add(&connection.get_thread_id(), connection)?;
+            .set(&connection.get_thread_id(), connection)?;
         Ok(invite)
     }
 
@@ -75,56 +75,53 @@ impl ServiceConnections {
         )
         .await?;
         self.connections
-            .add(&connection.get_thread_id(), connection)
+            .set(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, id: &str) -> AgentResult<()> {
-        let mut connection = self.connections.get_cloned(id)?;
+        let mut connection = self.connections.get(id)?;
         connection
             .connect(self.wallet_handle, &self.agency_client()?)
             .await?;
         connection
             .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
             .await?;
-        self.connections.add(id, connection)?;
+        self.connections.set(id, connection)?;
         Ok(())
     }
 
     pub async fn accept_request(&self, id: &str, request: Request) -> AgentResult<()> {
-        let mut connection = self.connections.get_cloned(id)?;
+        let mut connection = self.connections.get(id)?;
         connection
             .process_request(self.wallet_handle, &self.agency_client()?, request)
             .await?;
         connection.send_response(self.wallet_handle).await?;
-        self.connections.add(id, connection)?;
+        self.connections.set(id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, id: &str) -> AgentResult<()> {
-        let mut connection = self.connections.get_cloned(id)?;
+        let mut connection = self.connections.get(id)?;
         connection.send_ping(self.wallet_handle, None).await?;
-        self.connections.add(id, connection)?;
+        self.connections.set(id, connection)?;
         Ok(())
     }
 
     pub fn get_state(&self, id: &str) -> AgentResult<ConnectionState> {
-        Ok(self.connections.get_cloned(id)?.get_state())
+        Ok(self.connections.get(id)?.get_state())
     }
 
     pub async fn update_state(&self, id: &str) -> AgentResult<ConnectionState> {
-        let mut connection = self.connections.get_cloned(id)?;
+        let mut connection = self.connections.get(id)?;
         connection
             .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
             .await?;
-        self.connections.add(id, connection)?;
-        Ok(self.connections.get_cloned(id)?.get_state())
+        self.connections.set(id, connection)?;
+        Ok(self.connections.get(id)?.get_state())
     }
 
-    // TODO: Probably should not expose Connection. This can be existence check
-    // and other services should reference Connection storage. Or this should be
-    // exposed only to other services.
-    pub fn get_by_id(&self, id: &str) -> AgentResult<Connection> {
-        self.connections.get_cloned(id)
+    pub(in crate::services) fn get_by_id(&self, id: &str) -> AgentResult<Connection> {
+        self.connections.get(id)
     }
 
     pub fn exists_by_id(&self, id: &str) -> bool {
@@ -133,21 +130,23 @@ impl ServiceConnections {
 
     // TODO: Make the following functions generic
     pub async fn get_connection_requests(&self, id: &str) -> AgentResult<Vec<Request>> {
-        let connection = self.connections.get_cloned(id)?;
+        let connection = self.connections.get(id)?;
         let agency_client = self.agency_client()?;
-        Ok(connection
-            .get_messages_noauth(&agency_client)
-            .await?
-            .into_iter()
-            .filter_map(|(_, message)| match message {
-                A2AMessage::ConnectionRequest(request) => Some(request),
-                _ => None,
-            })
-            .collect())
+        let mut requests = Vec::<Request>::new();
+        for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
+            if let A2AMessage::ConnectionRequest(request) = message {
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
+                requests.push(request);
+            }
+        }
+        Ok(requests)
     }
 
     pub async fn get_credential_proposals(&self, id: &str) -> AgentResult<Vec<CredentialProposal>> {
-        let connection = self.connections.get_cloned(id)?;
+        let connection = self.connections.get(id)?;
         let agency_client = self.agency_client()?;
         let mut proposals = Vec::<CredentialProposal>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
@@ -163,7 +162,7 @@ impl ServiceConnections {
     }
 
     pub async fn get_credential_offers(&self, id: &str) -> AgentResult<Vec<CredentialOffer>> {
-        let connection = self.connections.get_cloned(id)?;
+        let connection = self.connections.get(id)?;
         let agency_client = self.agency_client()?;
         let mut offers = Vec::<CredentialOffer>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
@@ -179,7 +178,7 @@ impl ServiceConnections {
     }
 
     pub async fn get_proof_requests(&self, id: &str) -> AgentResult<Vec<PresentationRequest>> {
-        let connection = self.connections.get_cloned(id)?;
+        let connection = self.connections.get(id)?;
         let agency_client = self.agency_client()?;
         let mut requests = Vec::<PresentationRequest>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
@@ -195,7 +194,7 @@ impl ServiceConnections {
     }
 
     pub async fn get_proof_proposals(&self, id: &str) -> AgentResult<Vec<PresentationProposal>> {
-        let connection = self.connections.get_cloned(id)?;
+        let connection = self.connections.get(id)?;
         let agency_client = self.agency_client()?;
         let mut proposals = Vec::<PresentationProposal>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {

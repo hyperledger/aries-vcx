@@ -52,7 +52,7 @@ impl ServiceProver {
     }
 
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let ProverWrapper { connection_id, .. } = self.provers.get_cloned(id)?;
+        let ProverWrapper { connection_id, .. } = self.provers.get(id)?;
         Ok(connection_id)
     }
 
@@ -90,7 +90,7 @@ impl ServiceProver {
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
-        self.provers.add(
+        self.provers.set(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, connection_id),
         )
@@ -111,7 +111,7 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.add(
+        self.provers.set(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, connection_id),
         )
@@ -121,7 +121,7 @@ impl ServiceProver {
         let ProverWrapper {
             mut prover,
             connection_id,
-        } = self.provers.get_cloned(id)?;
+        } = self.provers.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover).await?;
         prover
@@ -139,7 +139,7 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.add(
+        self.provers.set(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, &connection_id),
         )?;
@@ -150,7 +150,7 @@ impl ServiceProver {
         let ProverWrapper {
             mut prover,
             connection_id,
-        } = self.provers.get_cloned(id)?;
+        } = self.provers.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = prover
             .update_state(
@@ -160,7 +160,7 @@ impl ServiceProver {
                 &connection,
             )
             .await?;
-        self.provers.add(
+        self.provers.set(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, &connection_id),
         )?;
@@ -168,7 +168,7 @@ impl ServiceProver {
     }
 
     pub fn get_state(&self, id: &str) -> AgentResult<ProverState> {
-        let ProverWrapper { prover, .. } = self.provers.get_cloned(id)?;
+        let ProverWrapper { prover, .. } = self.provers.get(id)?;
         Ok(prover.get_state())
     }
 
