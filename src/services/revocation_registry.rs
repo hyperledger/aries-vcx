@@ -50,10 +50,12 @@ impl ServiceRevocationRegistries {
         Ok(Path::new(&self.get_tails_dir(id)?)
             .join(self.get_tails_hash(id)?)
             .to_str()
-            .ok_or(AgentError::from_msg(
-                AgentErrorKind::SerializationError,
-                "Failed to serialize tails file path",
-            ))?
+            .ok_or_else(|| {
+                AgentError::from_msg(
+                    AgentErrorKind::SerializationError,
+                    "Failed to serialize tails file path",
+                )
+            })?
             .to_string())
     }
 
@@ -68,13 +70,17 @@ impl ServiceRevocationRegistries {
 
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get_cloned(id)?;
-        rev_reg.revoke_credential_local(self.wallet_handle, cred_rev_id).await?;
+        rev_reg
+            .revoke_credential_local(self.wallet_handle, cred_rev_id)
+            .await?;
         Ok(())
     }
 
     pub async fn publish_local_revocations(&self, id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get_cloned(id)?;
-        rev_reg.publish_local_revocations(self.wallet_handle, self.pool_handle, &self.issuer_did).await?;
+        rev_reg
+            .publish_local_revocations(self.wallet_handle, self.pool_handle, &self.issuer_did)
+            .await?;
         Ok(())
     }
 

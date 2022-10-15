@@ -37,7 +37,12 @@ pub struct ServiceVerifier {
 }
 
 impl ServiceVerifier {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, config_agency_client: AgencyClientConfig, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        config_agency_client: AgencyClientConfig,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             wallet_handle,
             pool_handle,
@@ -58,7 +63,12 @@ impl ServiceVerifier {
             })
     }
 
-    pub async fn send_proof_request(&self, connection_id: &str, request: PresentationRequestData, proposal: Option<PresentationProposal>) -> AgentResult<String> {
+    pub async fn send_proof_request(
+        &self,
+        connection_id: &str,
+        request: PresentationRequestData,
+        proposal: Option<PresentationProposal>,
+    ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut verifier = if let Some(proposal) = proposal {
             Verifier::create_from_proposal("", &proposal)?
@@ -66,13 +76,12 @@ impl ServiceVerifier {
             Verifier::create_from_request("".to_string(), &request)?
         };
         verifier
-            .send_presentation_request(
-                connection
-                    .send_message_closure(self.wallet_handle)
-                    .await?,
-            )
+            .send_presentation_request(connection.send_message_closure(self.wallet_handle).await?)
             .await?;
-        self.verifiers.add(&verifier.get_thread_id()?, VerifierWrapper::new(verifier, connection_id))
+        self.verifiers.add(
+            &verifier.get_thread_id()?,
+            VerifierWrapper::new(verifier, connection_id),
+        )
     }
 
     pub fn verify_presentation(&self, id: &str) -> AgentResult<Status> {
@@ -81,17 +90,23 @@ impl ServiceVerifier {
     }
 
     pub async fn update_state(&self, id: &str) -> AgentResult<VerifierState> {
-        let VerifierWrapper { mut verifier, connection_id } = self.verifiers.get_cloned(id)?;
+        let VerifierWrapper {
+            mut verifier,
+            connection_id,
+        } = self.verifiers.get_cloned(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = verifier
             .update_state(
                 self.wallet_handle,
                 self.pool_handle,
                 &self.agency_client()?,
-                &connection
+                &connection,
             )
             .await?;
-        self.verifiers.add(&verifier.get_thread_id()?, VerifierWrapper::new(verifier, &connection_id))?;
+        self.verifiers.add(
+            &verifier.get_thread_id()?,
+            VerifierWrapper::new(verifier, &connection_id),
+        )?;
         Ok(state)
     }
 

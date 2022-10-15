@@ -56,7 +56,7 @@ impl ServiceConnections {
             .await?;
         let invite = connection
             .get_invite_details()
-            .ok_or(AgentError::from_kind(AgentErrorKind::InviteDetails))?
+            .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
         self.connections
             .add(&connection.get_thread_id(), connection)?;
@@ -95,9 +95,7 @@ impl ServiceConnections {
         connection
             .process_request(self.wallet_handle, &self.agency_client()?, request)
             .await?;
-        connection
-            .send_response(self.wallet_handle)
-            .await?;
+        connection.send_response(self.wallet_handle).await?;
         self.connections.add(id, connection)?;
         Ok(())
     }
@@ -153,15 +151,12 @@ impl ServiceConnections {
         let agency_client = self.agency_client()?;
         let mut proposals = Vec::<CredentialProposal>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            match message {
-                A2AMessage::CredentialProposal(proposal) => {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    proposals.push(proposal);
-                }
-                _ => {}
+            if let A2AMessage::CredentialProposal(proposal) = message {
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
+                proposals.push(proposal);
             }
         }
         Ok(proposals)
@@ -172,15 +167,12 @@ impl ServiceConnections {
         let agency_client = self.agency_client()?;
         let mut offers = Vec::<CredentialOffer>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            match message {
-                A2AMessage::CredentialOffer(offer) => {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    offers.push(offer);
-                }
-                _ => {}
+            if let A2AMessage::CredentialOffer(offer) = message {
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
+                offers.push(offer);
             }
         }
         Ok(offers)
@@ -191,15 +183,12 @@ impl ServiceConnections {
         let agency_client = self.agency_client()?;
         let mut requests = Vec::<PresentationRequest>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            match message {
-                A2AMessage::PresentationRequest(request) => {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    requests.push(request);
-                }
-                _ => {}
+            if let A2AMessage::PresentationRequest(request) = message {
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
+                requests.push(request);
             }
         }
         Ok(requests)
@@ -210,15 +199,12 @@ impl ServiceConnections {
         let agency_client = self.agency_client()?;
         let mut proposals = Vec::<PresentationProposal>::new();
         for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            match message {
-                A2AMessage::PresentationProposal(proposal) => {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    proposals.push(proposal);
-                }
-                _ => {}
+            if let A2AMessage::PresentationProposal(proposal) = message {
+                connection
+                    .update_message_status(&uid, &agency_client)
+                    .await
+                    .ok();
+                proposals.push(proposal);
             }
         }
         Ok(proposals)
@@ -229,15 +215,12 @@ impl ServiceConnections {
         let mut requests = Vec::<(PresentationRequest, String)>::new();
         for connection in self.connections.get_all()? {
             for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-                match message {
-                    A2AMessage::PresentationRequest(request) => {
-                        connection
-                            .update_message_status(&uid, &agency_client)
-                            .await
-                            .ok();
-                        requests.push((request, connection.get_thread_id()));
-                    }
-                    _ => {}
+                if let A2AMessage::PresentationRequest(request) = message {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    requests.push((request, connection.get_thread_id()));
                 }
             }
         }

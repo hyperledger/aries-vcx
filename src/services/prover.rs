@@ -36,7 +36,12 @@ pub struct ServiceProver {
 }
 
 impl ServiceProver {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, config_agency_client: AgencyClientConfig, service_connections: Arc<ServiceConnections>) -> Self {
+    pub fn new(
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        config_agency_client: AgencyClientConfig,
+        service_connections: Arc<ServiceConnections>,
+    ) -> Self {
         Self {
             wallet_handle,
             pool_handle,
@@ -78,13 +83,24 @@ impl ServiceProver {
         Ok(res_credentials.to_string())
     }
 
-    pub fn create_from_request(&self, connection_id: &str, request: PresentationRequest) -> AgentResult<String> {
+    pub fn create_from_request(
+        &self,
+        connection_id: &str,
+        request: PresentationRequest,
+    ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
-        self.provers.add(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
+        self.provers.add(
+            &prover.get_thread_id()?,
+            ProverWrapper::new(prover, connection_id),
+        )
     }
 
-    pub async fn send_proof_proposal(&self, connection_id: &str, proposal: PresentationProposalData) -> AgentResult<String> {
+    pub async fn send_proof_proposal(
+        &self,
+        connection_id: &str,
+        proposal: PresentationProposalData,
+    ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
         prover
@@ -92,16 +108,20 @@ impl ServiceProver {
                 self.wallet_handle,
                 self.pool_handle,
                 proposal,
-                connection
-                    .send_message_closure(self.wallet_handle)
-                    .await?,
+                connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.add(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
+        self.provers.add(
+            &prover.get_thread_id()?,
+            ProverWrapper::new(prover, connection_id),
+        )
     }
 
     pub async fn send_proof_prentation(&self, id: &str) -> AgentResult<()> {
-        let ProverWrapper { mut prover, connection_id } = self.provers.get_cloned(id)?;
+        let ProverWrapper {
+            mut prover,
+            connection_id,
+        } = self.provers.get_cloned(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover).await?;
         prover
@@ -116,27 +136,34 @@ impl ServiceProver {
             .send_presentation(
                 self.wallet_handle,
                 self.pool_handle,
-                connection
-                    .send_message_closure(self.wallet_handle)
-                    .await?,
+                connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.add(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
+        self.provers.add(
+            &prover.get_thread_id()?,
+            ProverWrapper::new(prover, &connection_id),
+        )?;
         Ok(())
     }
 
     pub async fn update_state(&self, id: &str) -> AgentResult<ProverState> {
-        let ProverWrapper { mut prover, connection_id } = self.provers.get_cloned(id)?;
+        let ProverWrapper {
+            mut prover,
+            connection_id,
+        } = self.provers.get_cloned(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = prover
             .update_state(
                 self.wallet_handle,
                 self.pool_handle,
                 &self.agency_client()?,
-                &connection
+                &connection,
             )
             .await?;
-        self.provers.add(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
+        self.provers.add(
+            &prover.get_thread_id()?,
+            ProverWrapper::new(prover, &connection_id),
+        )?;
         Ok(state)
     }
 

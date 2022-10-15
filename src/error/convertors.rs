@@ -8,7 +8,7 @@ impl From<VcxError> for AgentError {
     fn from(err: VcxError) -> AgentError {
         let kind = match err.kind() {
             VcxErrorKind::CredDefAlreadyCreated => AgentErrorKind::CredDefAlreadyCreated,
-            _ => AgentErrorKind::GenericAriesVcxError
+            _ => AgentErrorKind::GenericAriesVcxError,
         };
         let message = format!("AriesVCX Error: {}", err);
         AgentError { message, kind }
