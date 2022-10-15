@@ -1,4 +1,4 @@
-use failure::{Backtrace, Context, Fail};
+use failure::Fail;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
 pub enum AgentErrorKind {
@@ -14,4 +14,6 @@ pub enum AgentErrorKind {
     SerializationError,
     #[fail(display = "Invalid arguments passed")]
     InvalidArguments,
+    #[fail(display = "Credential definition already exists on the ledger")]
+    CredDefAlreadyCreated,
 }

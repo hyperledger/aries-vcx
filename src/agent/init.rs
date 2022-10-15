@@ -102,7 +102,6 @@ impl Agent {
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
             wallet_handle,
-            pool_handle,
             config_agency_client.clone(),
             connections.clone(),
         ));

@@ -1,19 +1,18 @@
 use std::sync::Arc;
 
-use crate::agent::Agent;
 use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
-use aries_vcx::messages::connection::invite::{Invitation, PairwiseInvitation};
+use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::connection::{Connection, ConnectionState},
     indy::ledger::transactions::into_did_doc,
     messages::a2a::A2AMessage,
-    protocols::connection::inviter::state_machine::InviterState,
     vdrtools_sys::{PoolHandle, WalletHandle},
 };
 
@@ -204,6 +203,25 @@ impl ServiceConnections {
             }
         }
         Ok(requests)
+    }
+
+    pub async fn get_proof_proposals(&self, id: &str) -> AgentResult<Vec<PresentationProposal>> {
+        let connection = self.connections.get_cloned(id)?;
+        let agency_client = self.agency_client()?;
+        let mut proposals = Vec::<PresentationProposal>::new();
+        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
+            match message {
+                A2AMessage::PresentationProposal(proposal) => {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    proposals.push(proposal);
+                }
+                _ => {}
+            }
+        }
+        Ok(proposals)
     }
 
     pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {

@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
@@ -9,7 +9,7 @@ use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools_sys::WalletHandle;
 
 #[derive(Clone)]
 struct IssuerWrapper {
@@ -28,7 +28,6 @@ impl IssuerWrapper {
 
 pub struct ServiceCredentialsIssuer {
     wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
     config_agency_client: AgencyClientConfig,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
@@ -37,13 +36,11 @@ pub struct ServiceCredentialsIssuer {
 impl ServiceCredentialsIssuer {
     pub fn new(
         wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         config_agency_client: AgencyClientConfig,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
             wallet_handle,
-            pool_handle,
             config_agency_client,
             service_connections,
             creds_issuer: ObjectCache::new("creds-issuer"),
@@ -153,6 +150,12 @@ impl ServiceCredentialsIssuer {
             IssuerWrapper::new(issuer, &connection_id),
         )?;
         Ok(state)
+    }
+
+    pub fn get_rev_reg_id(&self, id: &str) -> AgentResult<String> {
+        let issuer = self.get_issuer(id)?;
+        issuer.get_rev_reg_id()
+            .map_err(|err| err.into())
     }
 
     pub fn exists_by_id(&self, id: &str) -> bool {

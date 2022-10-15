@@ -1,4 +1,4 @@
-use std::sync::{Mutex, Arc};
+use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
@@ -6,6 +6,7 @@ use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
@@ -57,9 +58,13 @@ impl ServiceVerifier {
             })
     }
 
-    pub async fn send_proof_request(&self, connection_id: &str, request: PresentationRequestData) -> AgentResult<String> {
+    pub async fn send_proof_request(&self, connection_id: &str, request: PresentationRequestData, proposal: Option<PresentationProposal>) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let mut verifier = Verifier::create_from_request("".to_string(), &request)?;
+        let mut verifier = if let Some(proposal) = proposal {
+            Verifier::create_from_proposal("", &proposal)?
+        } else {
+            Verifier::create_from_request("".to_string(), &request)?
+        };
         verifier
             .send_presentation_request(
                 connection
