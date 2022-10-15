@@ -17,7 +17,7 @@ RUN apk update && apk upgrade && \
 USER indy
 WORKDIR /home/indy
 
-ARG RUST_VER="1.62.1"
+ARG RUST_VER="1.64.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
 
 ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"

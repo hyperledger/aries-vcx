@@ -2,7 +2,7 @@ FROM ubuntu:20.04 as BASE
 
 ARG UID=1000
 ARG DEBIAN_FRONTEND=noninteractive
-ARG RUST_VER=nightly-2022-09-15
+ARG RUST_VER=nightly-2022-10-14
 
 # Install dependencies
 RUN apt-get update -qq && \
@@ -31,6 +31,6 @@ RUN cargo install grcov --version 0.8.9
 WORKDIR /home/indy/aries-vcx
 COPY --chown=indy ./ ./
 
-RUN cargo test -p messages --no-run --features general_test
-RUN cargo test -p agency_client --no-run --features general_test
-RUN cargo test -p libvcx --no-run --features general_test
+RUN cargo test -p messages --no-run -F general_test
+RUN cargo test -p agency_client --no-run -F general_test
+RUN cargo test -p libvcx --no-run -F general_test
