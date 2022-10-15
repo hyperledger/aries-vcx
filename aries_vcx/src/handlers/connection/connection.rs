@@ -141,7 +141,8 @@ impl Connection {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection.process_request(wallet_handle, agency_client, request).await
+        connection.process_request(wallet_handle, agency_client, request).await?;
+        Ok(connection)
     }
 
     pub fn from_parts(
@@ -298,7 +299,7 @@ impl Connection {
         wallet_handle: WalletHandle,
         agency_client: &AgencyClient,
         request: Request,
-    ) -> VcxResult<Self> {
+    ) -> VcxResult<()> {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -327,11 +328,30 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self {
-            connection_sm,
-            cloud_agent_info: new_cloud_agent_info,
-            autohop_enabled: self.autohop_enabled,
-        })
+        self.connection_sm = connection_sm;
+        self.cloud_agent_info = new_cloud_agent_info;
+        Ok(())
+    }
+
+    pub async fn send_response(
+        &mut self,
+        wallet_handle: WalletHandle,
+    ) -> VcxResult<()> {
+        trace!("Connection::send_response >>>");
+        let connection_sm = match self.connection_sm.clone() {
+            SmConnection::Inviter(sm_inviter) => {
+                if let InviterFullState::Requested(_) = sm_inviter.state_object() {
+                    sm_inviter.handle_send_response(wallet_handle, &send_message).await?
+                } else {
+                    return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                }
+            }
+            SmConnection::Invitee(_) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
+        };
+        self.connection_sm = SmConnection::Inviter(connection_sm);
+        Ok(())
     }
 
     pub fn get_invite_details(&self) -> Option<&Invitation> {
