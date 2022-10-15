@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::ops::DerefMut;
 use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-use futures::future::BoxFuture;
 
 use crate::error::*;
 
@@ -66,32 +63,6 @@ where
         store.contains_key(id)
     }
 
-    pub fn get<F, R>(&self, id: String, closure: F) -> AgentResult<R>
-    where
-        F: Fn(&T) -> AgentResult<R>,
-    {
-        let store = self._lock_store_read()?;
-        match store.get(&id) {
-            Some(m) => match m.lock() {
-                Ok(obj) => closure(obj.deref()),
-                Err(_) => Err(AgentError::from_msg(
-                    AgentErrorKind::LockError,
-                    &format!(
-                        "[ObjectCache: {}] Unable to lock Object Store",
-                        self.cache_name
-                    ),
-                )), //TODO better error
-            },
-            None => Err(AgentError::from_msg(
-                AgentErrorKind::NotFound,
-                &format!(
-                    "[ObjectCache: {}] Object not found for id: {}",
-                    self.cache_name, id
-                ),
-            )),
-        }
-    }
-
     pub fn get_cloned(&self, id: &str) -> AgentResult<T> {
         let store = self._lock_store_read()?;
         match store.get(id) {
@@ -124,22 +95,6 @@ where
         }
     }
 
-    pub fn insert(&self, id: String, obj: T) -> AgentResult<()> {
-        let mut store = self._lock_store_write()?;
-
-        match store.insert(id, Mutex::new(obj)) {
-            _ => Ok(()),
-        }
-    }
-
-    pub fn exists<F>(&self, closure: F) -> AgentResult<bool>
-    where
-        F: FnMut(&&Mutex<T>) -> bool,
-    {
-        let store = self._lock_store_read()?;
-        Ok(store.values().find(closure).is_some())
-    }
-
     pub fn find_by<F>(&self, closure: F) -> AgentResult<Vec<String>>
     where
         F: FnMut((&String, &Mutex<T>)) -> Option<String>,
@@ -150,6 +105,6 @@ where
 
     pub fn get_all(&self) -> AgentResult<Vec<T>> {
         let store = self._lock_store_read()?;
-        Ok(store.iter().map(|(k, v)| v.lock().unwrap().deref().clone()).into_iter().collect())
+        Ok(store.iter().map(|(_, v)| v.lock().unwrap().deref().clone()).into_iter().collect())
     }
 }

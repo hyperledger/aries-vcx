@@ -1,12 +1,10 @@
-use std::sync::{Mutex, Arc};
+use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -46,11 +44,6 @@ impl ServiceProver {
             service_connections,
             provers: ObjectCache::new("provers"),
         }
-    }
-
-    fn get_prover(&self, id: &str) -> AgentResult<Prover> {
-        let ProverWrapper { prover, .. } = self.provers.get_cloned(id)?;
-        Ok(prover)
     }
 
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {

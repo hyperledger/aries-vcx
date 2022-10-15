@@ -3,7 +3,6 @@ use std::sync::Mutex;
 
 use crate::error::*;
 use crate::storage::in_memory::ObjectCache;
-use aries_vcx::indy::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
 use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 
@@ -64,6 +63,18 @@ impl ServiceRevocationRegistries {
             .publish_revocation_primitives(self.wallet_handle, self.pool_handle, tails_url)
             .await?;
         self.rev_regs.add(id, rev_reg)?;
+        Ok(())
+    }
+
+    pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
+        let rev_reg = self.rev_regs.get_cloned(id)?;
+        rev_reg.revoke_credential_local(self.wallet_handle, &cred_rev_id).await?;
+        Ok(())
+    }
+
+    pub async fn publish_local_revocations(&self, id: &str) -> AgentResult<()> {
+        let rev_reg = self.rev_regs.get_cloned(id)?;
+        rev_reg.publish_local_revocations(self.wallet_handle, self.pool_handle, &self.issuer_did).await?;
         Ok(())
     }
 

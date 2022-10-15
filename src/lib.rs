@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate derive_builder;
 extern crate serde;
 #[macro_use]
