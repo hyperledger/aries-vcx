@@ -8,9 +8,9 @@ use crate::agent::agent_config::AgentConfig;
 use crate::error::*;
 use crate::services::{
     connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-    issuer::ServiceCredentialsIssuer, holder::ServiceCredentialsHolder,
+    holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
     revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-    verifier::ServiceVerifier, prover::ServiceProver
+    verifier::ServiceVerifier,
 };
 
 #[derive(Clone)]

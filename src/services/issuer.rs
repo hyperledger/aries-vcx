@@ -48,18 +48,12 @@ impl ServiceCredentialsIssuer {
     }
 
     fn get_issuer(&self, id: &str) -> AgentResult<Issuer> {
-        let IssuerWrapper {
-            issuer,
-            ..
-        } = self.creds_issuer.get_cloned(id)?;
+        let IssuerWrapper { issuer, .. } = self.creds_issuer.get_cloned(id)?;
         Ok(issuer)
     }
 
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let IssuerWrapper {
-            connection_id,
-            ..
-        } = self.creds_issuer.get_cloned(id)?;
+        let IssuerWrapper { connection_id, .. } = self.creds_issuer.get_cloned(id)?;
         Ok(connection_id)
     }
 
@@ -77,11 +71,13 @@ impl ServiceCredentialsIssuer {
     pub async fn accept_proposal(
         &self,
         connection_id: &str,
-        proposal: &CredentialProposal
+        proposal: &CredentialProposal,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut issuer = Issuer::create_from_proposal("", proposal)?;
-        issuer.update_state(self.wallet_handle, &self.agency_client()?, &connection).await?;
+        issuer
+            .update_state(self.wallet_handle, &self.agency_client()?, &connection)
+            .await?;
         self.creds_issuer.add(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, connection_id),
@@ -154,8 +150,7 @@ impl ServiceCredentialsIssuer {
 
     pub fn get_rev_reg_id(&self, id: &str) -> AgentResult<String> {
         let issuer = self.get_issuer(id)?;
-        issuer.get_rev_reg_id()
-            .map_err(|err| err.into())
+        issuer.get_rev_reg_id().map_err(|err| err.into())
     }
 
     pub fn exists_by_id(&self, id: &str) -> bool {

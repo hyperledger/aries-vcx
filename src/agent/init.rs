@@ -13,13 +13,13 @@ use aries_vcx::{
 };
 
 use crate::{
-    agent::{agent::Agent, agent_config::AgentConfig},
+    agent::{agent_config::AgentConfig, agent_struct::Agent},
     error::AgentResult,
     services::{
         connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-        issuer::ServiceCredentialsIssuer, holder::ServiceCredentialsHolder,
+        holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-        verifier::ServiceVerifier, prover::ServiceProver
+        verifier::ServiceVerifier,
     },
 };
 

@@ -3,7 +3,7 @@ use aries_vcx::{
     indy::wallet::{IssuerConfig, WalletConfig},
 };
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone)]
 pub struct AgentConfig {
     pub config_wallet: WalletConfig,
     pub config_agency_client: AgencyClientConfig,

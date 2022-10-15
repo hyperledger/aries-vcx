@@ -105,6 +105,10 @@ where
 
     pub fn get_all(&self) -> AgentResult<Vec<T>> {
         let store = self._lock_store_read()?;
-        Ok(store.iter().map(|(_, v)| v.lock().unwrap().deref().clone()).into_iter().collect())
+        Ok(store
+            .iter()
+            .map(|(_, v)| v.lock().unwrap().deref().clone())
+            .into_iter()
+            .collect())
     }
 }

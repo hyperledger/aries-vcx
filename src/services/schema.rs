@@ -43,7 +43,9 @@ impl ServiceSchemas {
     }
 
     pub async fn schema_json(&self, id: &str) -> AgentResult<String> {
-        Ok(get_schema_json(self.wallet_handle, self.pool_handle, id).await?.1)
+        Ok(get_schema_json(self.wallet_handle, self.pool_handle, id)
+            .await?
+            .1)
     }
 
     pub fn find_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<Vec<String>> {
