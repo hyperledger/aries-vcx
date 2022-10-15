@@ -51,12 +51,12 @@ impl ServiceCredentialsHolder {
     }
 
     fn get_holder(&self, id: &str) -> AgentResult<Holder> {
-        let HolderWrapper { holder, .. } = self.creds_holder.get_cloned(id)?;
+        let HolderWrapper { holder, .. } = self.creds_holder.get(id)?;
         Ok(holder)
     }
 
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let HolderWrapper { connection_id, .. } = self.creds_holder.get_cloned(id)?;
+        let HolderWrapper { connection_id, .. } = self.creds_holder.get(id)?;
         Ok(connection_id)
     }
 
@@ -86,7 +86,7 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_holder.add(
+        self.creds_holder.set(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -99,7 +99,7 @@ impl ServiceCredentialsHolder {
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
-        self.creds_holder.add(
+        self.creds_holder.set(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -125,7 +125,7 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_holder.add(
+        self.creds_holder.set(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
@@ -139,7 +139,7 @@ impl ServiceCredentialsHolder {
         let HolderWrapper {
             mut holder,
             connection_id,
-        } = self.creds_holder.get_cloned(id)?;
+        } = self.creds_holder.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = holder
             .update_state(
@@ -149,7 +149,7 @@ impl ServiceCredentialsHolder {
                 &connection,
             )
             .await?;
-        self.creds_holder.add(
+        self.creds_holder.set(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )?;

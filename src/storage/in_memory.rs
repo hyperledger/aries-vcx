@@ -63,7 +63,7 @@ where
         store.contains_key(id)
     }
 
-    pub fn get_cloned(&self, id: &str) -> AgentResult<T> {
+    pub fn get(&self, id: &str) -> AgentResult<T> {
         let store = self._lock_store_read()?;
         match store.get(id) {
             Some(m) => match m.lock() {
@@ -86,7 +86,7 @@ where
         }
     }
 
-    pub fn add(&self, id: &str, obj: T) -> AgentResult<String> {
+    pub fn set(&self, id: &str, obj: T) -> AgentResult<String> {
         let mut store = self._lock_store_write()?;
 
         match store.insert(id.to_string(), Mutex::new(obj)) {

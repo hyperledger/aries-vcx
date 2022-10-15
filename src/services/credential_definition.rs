@@ -29,21 +29,21 @@ impl ServiceCredentialDefinitions {
             true,
         )
         .await?;
-        self.cred_defs.add(&cd.get_cred_def_id(), cd)
+        self.cred_defs.set(&cd.get_cred_def_id(), cd)
     }
 
     pub async fn publish_cred_def(&self, id: &str) -> AgentResult<()> {
-        let cred_def = self.cred_defs.get_cloned(id)?;
+        let cred_def = self.cred_defs.get(id)?;
         let cred_def = cred_def
             .publish_cred_def(self.wallet_handle, self.pool_handle)
             .await?;
-        self.cred_defs.add(id, cred_def)?;
+        self.cred_defs.set(id, cred_def)?;
         Ok(())
     }
 
     pub fn cred_def_json(&self, id: &str) -> AgentResult<String> {
         self.cred_defs
-            .get_cloned(id)?
+            .get(id)?
             .get_data_json()
             .map_err(|err| err.into())
     }

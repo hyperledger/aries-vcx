@@ -78,14 +78,14 @@ impl ServiceVerifier {
         verifier
             .send_presentation_request(connection.send_message_closure(self.wallet_handle).await?)
             .await?;
-        self.verifiers.add(
+        self.verifiers.set(
             &verifier.get_thread_id()?,
             VerifierWrapper::new(verifier, connection_id),
         )
     }
 
     pub fn verify_presentation(&self, id: &str) -> AgentResult<Status> {
-        let VerifierWrapper { verifier, .. } = self.verifiers.get_cloned(id)?;
+        let VerifierWrapper { verifier, .. } = self.verifiers.get(id)?;
         Ok(Status::from_u32(verifier.get_presentation_status()))
     }
 
@@ -93,7 +93,7 @@ impl ServiceVerifier {
         let VerifierWrapper {
             mut verifier,
             connection_id,
-        } = self.verifiers.get_cloned(id)?;
+        } = self.verifiers.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = verifier
             .update_state(
@@ -103,7 +103,7 @@ impl ServiceVerifier {
                 &connection,
             )
             .await?;
-        self.verifiers.add(
+        self.verifiers.set(
             &verifier.get_thread_id()?,
             VerifierWrapper::new(verifier, &connection_id),
         )?;
@@ -111,7 +111,7 @@ impl ServiceVerifier {
     }
 
     pub fn get_state(&self, id: &str) -> AgentResult<VerifierState> {
-        let VerifierWrapper { verifier, .. } = self.verifiers.get_cloned(id)?;
+        let VerifierWrapper { verifier, .. } = self.verifiers.get(id)?;
         Ok(verifier.get_state())
     }
 
