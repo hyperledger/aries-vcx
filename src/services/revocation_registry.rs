@@ -25,12 +25,12 @@ impl ServiceRevocationRegistries {
 
     fn get_tails_hash(&self, id: &str) -> AgentResult<String> {
         let rev_reg = self.rev_regs.get_cloned(id)?;
-        Ok(rev_reg.get_rev_reg_def().value.tails_hash.clone())
+        Ok(rev_reg.get_rev_reg_def().value.tails_hash)
     }
 
     pub fn get_tails_dir(&self, id: &str) -> AgentResult<String> {
         let rev_reg = self.rev_regs.get_cloned(id)?;
-        Ok(rev_reg.get_tails_dir().clone())
+        Ok(rev_reg.get_tails_dir())
     }
 
     pub async fn create_rev_reg(&self, cred_def_id: &str, max_creds: u32) -> AgentResult<String> {
@@ -68,7 +68,7 @@ impl ServiceRevocationRegistries {
 
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get_cloned(id)?;
-        rev_reg.revoke_credential_local(self.wallet_handle, &cred_rev_id).await?;
+        rev_reg.revoke_credential_local(self.wallet_handle, cred_rev_id).await?;
         Ok(())
     }
 

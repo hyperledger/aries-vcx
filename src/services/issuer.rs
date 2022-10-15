@@ -84,7 +84,7 @@ impl ServiceCredentialsIssuer {
         issuer.update_state(self.wallet_handle, &self.agency_client()?, &connection).await?;
         self.creds_issuer.add(
             &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
+            IssuerWrapper::new(issuer, connection_id),
         )
     }
 
