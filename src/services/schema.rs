@@ -38,7 +38,7 @@ impl ServiceSchemas {
         let schema = schema
             .publish(self.wallet_handle, self.pool_handle, None)
             .await?;
-        self.schemas.add(&id, schema)?;
+        self.schemas.add(id, schema)?;
         Ok(())
     }
 

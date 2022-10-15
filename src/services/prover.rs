@@ -79,13 +79,13 @@ impl ServiceProver {
     }
 
     pub fn create_from_request(&self, connection_id: &str, request: PresentationRequest) -> AgentResult<String> {
-        self.service_connections.get_by_id(&connection_id)?;
+        self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
         self.provers.add(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
 
     pub async fn send_proof_proposal(&self, connection_id: &str, proposal: PresentationProposalData) -> AgentResult<String> {
-        let connection = self.service_connections.get_by_id(&connection_id)?;
+        let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
         prover
             .send_proposal(

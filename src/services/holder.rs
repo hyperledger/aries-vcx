@@ -97,7 +97,7 @@ impl ServiceCredentialsHolder {
         connection_id: &str,
         offer: CredentialOffer,
     ) -> AgentResult<String> {
-        self.service_connections.get_by_id(&connection_id)?;
+        self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
         self.creds_holder.add(
             &holder.get_thread_id()?,

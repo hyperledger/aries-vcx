@@ -59,7 +59,7 @@ impl ServiceVerifier {
     }
 
     pub async fn send_proof_request(&self, connection_id: &str, request: PresentationRequestData, proposal: Option<PresentationProposal>) -> AgentResult<String> {
-        let connection = self.service_connections.get_by_id(&connection_id)?;
+        let connection = self.service_connections.get_by_id(connection_id)?;
         let mut verifier = if let Some(proposal) = proposal {
             Verifier::create_from_proposal("", &proposal)?
         } else {
