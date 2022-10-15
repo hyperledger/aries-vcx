@@ -1,0 +1,46 @@
+name: 'load-image'
+
+inputs:
+  docker-img:
+    description: 'Source image tag'
+    required: true
+  exit-on-cache-miss:
+    description: 'Determines whether job will exit with failure on cache-miss'
+    default: true
+
+outputs:
+  cache-hit:
+    description: "Was cache hit?"
+    value: ${{ steps.loadcache.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: setup
+      uses: ./.github/actions/derive-cache-info
+      with:
+        docker-img: ${{ inputs.docker-img }}
+    - name: "Print output"
+      shell: bash
+      run: |
+        echo "{{ steps.setup.outputs.cache-dir }} = ${{ steps.setup.outputs.cache-dir }}"
+        echo "{{ steps.setup.outputs.cache-key }} = ${{ steps.setup.outputs.cache-key }}"
+    - name: "Try load from cache"
+      id: loadcache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.setup.outputs.cache-dir }}
+        key: ${{ steps.setup.outputs.cache-key }}
+    - name: "On cache miss, check if we should terminate job"
+      if: steps.loadcache.outputs.cache-hit != 'true' && inputs.exit-on-cache-miss == 'true'
+      shell: bash
+      run: |
+        echo "Terminating with failure, as we got cache miss and input 'exit-on-cache-miss' was specified as 'true'"
+        exit -1
+    - name: "On cache hit, load image from cache"
+      if: steps.loadcache.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        set -x
+        docker load < "${{ steps.setup.outputs.cache-file-path }}"
+

@@ -1,4 +1,5 @@
-name: 'Generate test code coverage'
+name: "code-coverage"
+description: "Generate test code coverage"
 
 inputs:
   run-services:
@@ -26,8 +27,6 @@ inputs:
     description: 'Path to the coverage file'
     default: libvcx/coverage.lcov
 
-env:
-  DOCKER_BUILDKIT: 1
 
 runs:
   using: 'composite'
@@ -37,11 +36,11 @@ runs:
         set -x
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
         if [[ ${{ inputs.run-services }} == true ]]; then
-          docker run --rm -d --name indypool  --network host $DOCKER_IMG_NAME_POOL
+          docker run --rm -d --name indypool  --network host $DOCKER_IMG_CACHED_POOL
           if [[ -n "${{ inputs.agency-img-name }}" ]]; then
             docker run --rm -d --name mysql --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
             sleep 7
-            DOCKER_IMG_NAME_AGENCY=${{ inputs.agency-img-name }} docker-compose -f ./ci/agency/docker-compose.yml up -d
+            DOCKER_IMG_CACHED_AGENCY=${{ inputs.agency-img-name }} docker-compose -f ./ci/agency/docker-compose.yml up -d
             sleep 10
             docker-compose -f ./ci/agency/docker-compose.yml logs
           fi
