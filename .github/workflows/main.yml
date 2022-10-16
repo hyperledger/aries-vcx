@@ -406,7 +406,7 @@ jobs:
         with:
           test-features: general_test
           test-path: aries-vcx
-          codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_CODECOV }}
+          codecov-img-name: $DOCKER_IMG_CACHED_CODECOV
           cov-file-path: /tmp/artifacts/coverage
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v2
@@ -444,7 +444,7 @@ jobs:
         with:
           test-features: 'pool_tests agency_pool_tests agency_v2'
           test-path: aries-vcx
-          codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_CODECOV }}
+          codecov-img-name: $DOCKER_IMG_CACHED_CODECOV
           cov-file-path: /tmp/artifacts/coverage
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v2
@@ -486,7 +486,7 @@ jobs:
         with:
           test-features: general_test
           test-path: agency_client
-          codecov-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_CODECOV }}
+          codecov-img-name: $DOCKER_IMG_CACHED_CODECOV
           cov-file-path: /tmp/artifacts/coverage
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v2
