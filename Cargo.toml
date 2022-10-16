@@ -4,7 +4,8 @@ members = [
     "aries_vcx",
     "libvcx",
     "agency_client",
-    "messages"
+    "messages",
+    "agents/rust/aries-agent"
 ]
 
 [profile.release]
