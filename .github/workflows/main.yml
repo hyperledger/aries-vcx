@@ -148,7 +148,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
@@ -156,7 +156,6 @@ jobs:
           build-arg: "USER_ID=$UID"
           dockerfile-path: "ci/alpine_core.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ALPINE_CORE }}
 
   build-docker-libvcx:
@@ -173,7 +172,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load alpine core image"
         uses: ./.github/actions/load-image
         with:
@@ -185,7 +184,6 @@ jobs:
           build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
           dockerfile-path: "ci/libvcx.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_LIBVCX }}
 
   build-docker-libvcx-tester:
@@ -202,7 +200,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load alpine core image"
         uses: ./.github/actions/load-image
         with:
@@ -214,7 +212,6 @@ jobs:
           build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
           dockerfile-path: "ci/libvcx-tester.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_LIBVCX_TESTER }}
 
   build-docker-codecov:
@@ -230,16 +227,15 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           dockerfile-path: "ci/libvcx-codecov.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_CODECOV }}
-          
+
   build-docker-android:
     needs: workflow-setup
     runs-on: ubuntu-20.04
@@ -253,14 +249,13 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           dockerfile-path: "wrappers/java/ci/android.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
-          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ANDROID }}
 
 
@@ -281,7 +276,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Publish branch image"
         uses: ./.github/actions/publish-image
         with:
@@ -303,7 +298,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -329,7 +324,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Publish branch image"
         uses: ./.github/actions/publish-image
         with:
@@ -350,7 +345,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Publish branch image"
         uses: ./.github/actions/publish-image
         with:
@@ -371,7 +366,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Publish branch image"
         uses: ./.github/actions/publish-image
         with:
@@ -394,12 +389,12 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load codecov image"
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED_CODECOV }}
-      - name: "Create codecov artifacts directory"  
+      - name: "Create codecov artifacts directory"
         run: mkdir -p /tmp/artifacts/coverage
       - name: "Run quick unit tests"
         uses: ./.github/actions/code-coverage
@@ -434,7 +429,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -472,7 +467,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load codecov image"
         uses: ./.github/actions/load-image
         with:
@@ -512,7 +507,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load libvcx tester image"
         uses: ./.github/actions/load-image
         with:
@@ -543,7 +538,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -579,7 +574,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -609,7 +604,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -641,7 +636,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -666,7 +661,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load libvcx tester image"
         uses: ./.github/actions/load-image
         with:
@@ -696,7 +691,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -785,7 +780,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -816,7 +811,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -850,7 +845,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load image"
         uses: ./.github/actions/load-image
         with:
@@ -883,7 +878,7 @@ jobs:
         with:
           login-server: env.URL_DOCKER_REGISTRY
           username: env.GITHUB_ACTOR
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: secrets.GITHUB_TOKEN
       - name: "Load image"
         uses: ./.github/actions/load-image
         with:

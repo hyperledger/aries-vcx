@@ -2,13 +2,13 @@ name: 'publish-android'
 description: "Build andorid .aar and publish it to /tmp/artifacts"
 
 inputs:
-  abis: 
+  abis:
     description: 'A space separated list of ABIs to create a AAR for'
     default: 'armv7 arm64 x86 x86_64'
-  docker-img-name: 
+  docker-img-name:
     description: 'Name of the android image'
     required: true
-  full-version-name: 
+  full-version-name:
     description: 'Name of the resulting .aar'
     required: true
 
