@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
-use crate::storage::in_memory::ObjectCache;
+use crate::storage::object_cache::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::issuance::holder::Holder;

@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use crate::error::*;
-use crate::storage::in_memory::ObjectCache;
+use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 
