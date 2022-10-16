@@ -2,7 +2,7 @@ name: "start-vcxs"
 description: 'Start up VCXS service and its dependencies'
 
 inputs:
-  docker-img-tester:
+  docker-img:
     description: 'libvcx tester image to pull'
     required: true
 
@@ -12,13 +12,13 @@ runs:
     - name: "Load libvcx tester image"
       uses: ./.github/actions/load-image
       with:
-        docker-img: ${{ inputs.docker-img-tester }}
-    - name: "Start indypool, mysql"
+        docker-img: ${{ inputs.docker-img }}
+    - name: "Start indypool, mysql, agency"
       shell: bash
       run: |
         set -x
-        docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
         docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-        sleep 7
-        AGENCY_IMAGE="${{ env.DOCKER_IMAGE_AGENCY }}" docker-compose -f ./ci/agency/docker-compose.yml up -d
+        docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
+        sleep 5
+        docker-compose -f ./ci/agency/docker-compose.yml up -d
         sleep 10
