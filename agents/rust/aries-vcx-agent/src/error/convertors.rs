@@ -10,7 +10,7 @@ impl From<VcxError> for AgentError {
             VcxErrorKind::CredDefAlreadyCreated => AgentErrorKind::CredDefAlreadyCreated,
             _ => AgentErrorKind::GenericAriesVcxError,
         };
-        let message = format!("AriesVCX Error: {}", err);
+        let message = format!("AriesVCX Error: {}", err.to_string());
         AgentError { message, kind }
     }
 }
