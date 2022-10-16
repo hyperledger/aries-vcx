@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::in_memory::ObjectCache;
+use crate::storage::object_cache::ObjectCache;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
