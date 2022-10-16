@@ -1,5 +1,5 @@
 name: "derive-cache-info"
-description: "Produces output useful for caching docker images"
+description: "Given image <docker-img> derive cache-key and caching location on file system. This can be used for caching the image."
 
 inputs:
   docker-img:

@@ -1,5 +1,5 @@
 name: "start-vcxs"
-description: 'Start up VCXS service and its dependencies'
+description: 'Startup services need for testing, load up testing image'
 
 inputs:
   docker-img:
