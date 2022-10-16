@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   agency:
-    image: ${DOCKER_IMG_CACHED_AGENCY}
+    image: ${DOCKER_IMAGE_AGENCY}
     container_name: agency
     environment:
       - LOG_JSON_TO_CONSOLE=false
