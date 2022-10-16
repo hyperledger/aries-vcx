@@ -479,8 +479,6 @@ jobs:
           docker-img: ${{ env.DOCKER_IMG_CACHED_CODECOV }}
       - name: "Create codecov artifacts directory"
         run: mkdir -p /tmp/artifacts/coverage
-      - name: "Run integration tests"
-        uses: ./.github/actions/code-coverage
       - name: "Run quick unit tests"
         uses: ./.github/actions/code-coverage
         with:
@@ -908,7 +906,19 @@ jobs:
   
   make-release:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-libvcx, build-docker-android, build-and-publish-ios-wrapper, build-and-publish-android-device, build-and-publish-android-emulator, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-android-build, test-node-wrapper, test-integration-node-wrapper ]
+    needs:
+      - workflow-setup
+      - build-docker-libvcx
+      - build-docker-android
+      - build-and-publish-ios-wrapper
+      - build-and-publish-android-device
+      - build-and-publish-android-emulator
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool-tests
+      - test-libvcx-image-agency-pool-tests
+      - test-android-build
+      - test-node-wrapper
+      - test-integration-node-wrapper
     if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
     outputs:
       RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
@@ -958,7 +968,7 @@ jobs:
 
   release-android-device:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-android, build-and-publish-ios-wrapper, build-and-publish-android-device, build-and-publish-android-emulator, make-release ]
+    needs: [ workflow-setup, make-release ]
     steps:
       - name: "Fetch android device build from artifacts"
         uses: actions/download-artifact@v2
@@ -976,7 +986,7 @@ jobs:
 
   release-android-emulator:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-android, build-and-publish-ios-wrapper, build-and-publish-android-device, build-and-publish-android-emulator, make-release ]
+    needs: [ workflow-setup, make-release ]
     steps:
       - name: "Fetch android emulator build from artifacts"
         uses: actions/download-artifact@v2
@@ -994,7 +1004,7 @@ jobs:
 
   release-ios-device:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-libvcx, build-docker-android, build-and-publish-ios-wrapper, build-and-publish-android-device, build-and-publish-android-emulator, make-release ]
+    needs: [ workflow-setup, make-release ]
     steps:
       - name: "Fetch iOS device build from artifacts"
         uses: actions/download-artifact@v2
@@ -1012,7 +1022,7 @@ jobs:
 
   release-ios-universal:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-android, build-and-publish-ios-wrapper, build-and-publish-android-device, build-and-publish-android-emulator, make-release ]
+    needs: [ workflow-setup, make-release ]
     steps:
       - name: "Fetch iOS universal build from artifacts"
         uses: actions/download-artifact@v2

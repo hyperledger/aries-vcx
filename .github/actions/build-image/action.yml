@@ -1,5 +1,10 @@
 name: 'build-image'
-description: "Builds image and stores it in github cache"
+description: |
+  Tries to load <docker-img> from github cache. 
+  On cache miss, load up layers of last build of this image within the same branch. If no such image is found, try 
+    to load last build of this image from master branch.
+  Then image is built ( and reusing the pre-loaded layers from last branch/master build ).
+  Finally, image is pushed to docker registry.
 
 inputs:
   docker-img:

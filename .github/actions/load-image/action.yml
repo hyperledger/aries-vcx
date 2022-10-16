@@ -1,4 +1,5 @@
 name: 'load-image'
+description: "Tries to load image specified by tag from cache by deriving cache key from image name. Fails by default on cache miss."
 
 inputs:
   docker-img:
@@ -20,11 +21,6 @@ runs:
       uses: ./.github/actions/derive-cache-info
       with:
         docker-img: ${{ inputs.docker-img }}
-    - name: "Print output"
-      shell: bash
-      run: |
-        echo "{{ steps.setup.outputs.cache-dir }} = ${{ steps.setup.outputs.cache-dir }}"
-        echo "{{ steps.setup.outputs.cache-key }} = ${{ steps.setup.outputs.cache-key }}"
     - name: "Try load from cache"
       id: loadcache
       uses: actions/cache@v3

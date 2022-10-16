@@ -1,5 +1,5 @@
 name: 'publish-image'
-description: "Action to publish image to Github Container Registry"
+description: "Given image specified by <docker-img>, retag it to <publish-version> and push to $URL_DOCKER_REGISTRY"
 
 inputs:
   docker-img:
