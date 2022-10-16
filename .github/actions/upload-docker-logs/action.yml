@@ -1,5 +1,5 @@
 name: 'upload-docker-logs'
-description:  'Gets docker logs and uploads them as artifact'
+description: 'Gets docker logs and uploads them as artifact'
 
 inputs:
   name:
