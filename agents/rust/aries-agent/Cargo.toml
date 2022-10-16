@@ -1,0 +1,14 @@
+[package]
+name = "aries-vcx-agent"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+failure = "0.1.8"
+futures = "0.3.24"
+serde = "1.0.145"
+aries-vcx = { path = "../../../aries_vcx" }
+derive_builder = "0.11.2"
+serde_json = "1.0.85"
+log = "0.4.17"
+uuid = "1.2.1"
