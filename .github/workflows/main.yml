@@ -24,86 +24,29 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-20.04
     outputs:
-      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ steps.mainstep.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
-      DOCKER_IMG_CACHED_LIBVCX: ${{ steps.mainstep.outputs.DOCKER_IMG_CACHED_LIBVCX }}
-      DOCKER_IMG_CACHED_LIBVCX_TESTER: ${{ steps.mainstep.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER }}
-      DOCKER_IMG_CACHED_CODECOV: ${{ steps.mainstep.outputs.DOCKER_IMG_CACHED_CODECOV }}
-      DOCKER_IMG_CACHED_ANDROID: ${{ steps.mainstep.outputs.DOCKER_IMG_CACHED_ANDROID }}
+      PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
+      RELEASE: ${{ steps.run-info.outputs.release }}
+      PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
+      BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
 
-      PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
-      RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
-      PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
-      BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
+      DOCKER_IMG_CACHED_ALPINE_CORE: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
+      DOCKER_IMG_CACHED_LIBVCX: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_LIBVCX }}
+      DOCKER_IMG_CACHED_LIBVCX_TESTER: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER }}
+      DOCKER_IMG_CACHED_CODECOV: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_CODECOV }}
+      DOCKER_IMG_CACHED_ANDROID: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_ANDROID }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.62.1
+      - name: "Construct CI run-info"
+        id: run-info
+        uses: ./.github/actions/construct-run-info
       - name: "Set outputs"
-        id: mainstep
+        id: docker-imgs
         run: |
           set -x
-
-          if [[ -z "$GITHUB_HEAD_REF" ]]; then # is set only if pipeline run is triggered as pull request
-            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-            echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Push"
-          else
-            BRANCH_NAME=$GITHUB_HEAD_REF
-            echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
-          fi
-
-          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "PR Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
-
-            REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
-            REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
-            echo "This is pull request from $REPO_HEAD to $REPO_BASE"
-
-            if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]; then
-              echo "This CI run is PR from non-forked repository."
-              IS_FORK="false";
-            else
-              echo "This is fork."
-              IS_FORK="true";
-            fi;
-          else
-            echo "Not PR so this is not fork."
-            IS_FORK="false";
-          fi;
-
-          REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
-          REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
-          echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in libvcx/Cargo.toml) is $REPO_VERSION_DESIRED"
-
-          RELEASE="false"
-          PRERELEASE="false"
-
-          if [[ "$IS_FORK" == "false" ]]; then
-            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]; then
-                PRERELEASE="true"
-              fi;
-            elif [[ "${{ github.event_name }}" == "push" ]]; then
-              if [[ "$BRANCH_NAME" == "main" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
-                PUBLISH_VERSION="$REPO_VERSION_DESIRED"
-                RELEASE="true"
-                echo "This is push to main, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
-              fi;
-            fi;
-
-            if [[ -z "$PUBLISH_VERSION" ]]; then
-              PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
-            fi;
-
-            echo "CI will publish artifacts at version: $PUBLISH_VERSION"
-          else
-            echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
-            PUBLISH_VERSION=""
-          fi;
-
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
           HASH_DOCKERFILE_LIBVCX_TESTER=${{ hashFiles('ci/libvcx-tester.dockerfile') }}
@@ -126,11 +69,6 @@ jobs:
           echo "::set-output name=DOCKER_IMG_CACHED_LIBVCX_TESTER::$DOCKER_REPO_LOCAL_LIBVCX_TESTER:$HASH_DOCKER_LIBVCX_TESTER"
           echo "::set-output name=DOCKER_IMG_CACHED_CODECOV::$DOCKER_REPO_LOCAL_CODECOV:$HASH_DOCKER_CODECOV"
           echo "::set-output name=DOCKER_IMG_CACHED_ANDROID::$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID"
-          
-          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
-          echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
-          echo "::set-output name=RELEASE::$RELEASE"
-          echo "::set-output name=PRERELEASE::$PRERELEASE"
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
@@ -140,6 +78,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -164,6 +103,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
       DOCKER_IMG_CACHED_ALPINE_CORE: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -192,6 +132,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER }}
       DOCKER_IMG_CACHED_ALPINE_CORE: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -219,6 +160,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_CODECOV }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -241,6 +183,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       DOCKER_IMG_CACHED: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -261,7 +204,7 @@ jobs:
 
   #  ##########################################################################################
   #  ##############################   DOCKER PUBLISH   ########################################
-  
+
   publish-docker-alpine-core:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-alpine-core ]
@@ -282,7 +225,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.BRANCH_NAME }}
-  
+
   publish-docker-libvcx:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-libvcx ]
@@ -309,7 +252,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.BRANCH_NAME }}
-  
+
   publish-docker-libvcx-tester:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-libvcx-tester ]
@@ -330,7 +273,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.BRANCH_NAME }}
-  
+
   publish-docker-codecov:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-codecov ]
@@ -351,7 +294,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.BRANCH_NAME }}
-  
+
   publish-docker-android:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-android ]
@@ -372,7 +315,7 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.BRANCH_NAME }}
-  
+
   #  ##########################################################################################
   #  ###############################    TESTING    ###########################################
 
@@ -829,7 +772,7 @@ jobs:
 
   #  ##########################################################################################
   #  ############################   NPMJS PUBLISHING   #######################################
-  
+
   publish-node-wrapper:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-libvcx-tester, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-node-wrapper, test-integration-node-wrapper ]
@@ -898,7 +841,7 @@ jobs:
 
   #  ##########################################################################################
   #  ##############################      RELEASE      #########################################
-  
+
   make-release:
     runs-on: ubuntu-20.04
     needs:
