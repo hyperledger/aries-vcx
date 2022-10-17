@@ -1,0 +1,88 @@
+name: 'is-fork'
+description: Determine basic information about the build
+
+outputs:
+  release:
+    description: "Is this release"
+    value: ${{ steps.main.outputs.release }}
+  pre-release:
+    description: "Is this pre-release"
+    value: ${{ steps.main.outputs.pre-release }}
+  publish-version:
+    description: "Publish artifacts under this version"
+    value: ${{ steps.main.outputs.publish-version }}
+  branch-name:
+    description: "Name of branch from which CI is running"
+    value: ${{ steps.main.outputs.branch-name }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Determine whether running in fork"
+      id: 'main'
+      shell: bash
+      run: |
+        if [[ -z "$GITHUB_HEAD_REF" ]]; then # is set only if pipeline run is triggered as pull request
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Push"
+        else
+          BRANCH_NAME=$GITHUB_HEAD_REF
+          echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
+        fi
+        
+        BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+        
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "PR Labels: ${{ toJson(github.event.pull_request.labels.*.name) }}"
+        
+          REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
+          REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
+          echo "This is pull request from $REPO_HEAD to $REPO_BASE"
+        
+          if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]; then
+            echo "This CI run is PR from non-forked repository."
+            IS_FORK="false";
+          else
+            echo "This is fork."
+            IS_FORK="true";
+          fi;
+        else
+          echo "Not PR so this is not fork."
+          IS_FORK="false";
+        fi;
+        
+        REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
+        REPO_VERSION_DESIRED=$(cargo pkgid --manifest-path libvcx/Cargo.toml | cut -d# -f2 | cut -d: -f2)
+        echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in libvcx/Cargo.toml) is $REPO_VERSION_DESIRED"
+        
+        RELEASE="false"
+        PRERELEASE="false"
+        PUBLISH_VERSION=""
+        
+        if [[ "$IS_FORK" == "false" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]; then
+              PRERELEASE="true"
+            fi;
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            if [[ "$BRANCH_NAME" == "main" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
+              PUBLISH_VERSION="$REPO_VERSION_DESIRED"
+              RELEASE="true"
+              echo "This is push to main, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
+            fi;
+          fi;
+        
+          if [[ -z "$PUBLISH_VERSION" ]]; then
+            PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
+          fi;
+        
+          echo "CI will publish artifacts at version: $PUBLISH_VERSION"
+        else
+          echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
+          PUBLISH_VERSION=""
+        fi;
+        
+        echo "release=$(echo $RELEASE)" >> $GITHUB_OUTPUT
+        echo "pre-release=$(echo $PRERELEASE)" >> $GITHUB_OUTPUT
+        echo "publish-version=$(echo $PUBLISH_VERSION)" >> $GITHUB_OUTPUT
+        echo "branch-name=$(echo $BRANCH_NAME)" >> $GITHUB_OUTPUT
