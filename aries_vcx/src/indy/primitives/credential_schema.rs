@@ -1,12 +1,10 @@
 use vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxResult, VcxErrorKind};
 use crate::global::settings;
-use crate::indy::ledger::transactions::{
-    _check_schema_response, build_schema_request, get_schema_json,
-    sign_and_submit_to_ledger, set_endorser
-};
+use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger, set_endorser, libindy_get_schema};
 use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
+use crate::utils::random::generate_random_did;
 use crate::utils::serialization::ObjectWithVersion;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -52,6 +50,24 @@ impl Schema {
             submitter_did: submitter_did.to_string(),
             schema_json,
             state: PublicEntityStateType::Built,
+        })
+    }
+
+    pub async fn create_from_ledger_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, source_id: &str, schema_id: &str) -> VcxResult<Self> {
+        let submitter_did = generate_random_did();
+        let schema_json = libindy_get_schema(wallet_handle, pool_handle, &submitter_did, schema_id).await?;
+        let schema_data: SchemaData = serde_json::from_str(&schema_json)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
+
+        Ok(Self {
+            source_id: source_id.to_string(),
+            schema_id: schema_id.to_string(),
+            schema_json: schema_json.to_string(),
+            name: schema_data.name,
+            version: schema_data.version,
+            data: schema_data.attr_names,
+            submitter_did: submitter_did.to_string(),
+            state: PublicEntityStateType::Published,
         })
     }
 
@@ -104,7 +120,7 @@ impl Schema {
         Ok(self.state as u32)
     }
 
-    pub async fn get_schema_json(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<String> {
+    pub async fn get_schema_json(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<String> {
         Ok(get_schema_json(wallet_handle, pool_handle, &self.schema_id).await?.1)
     }
 

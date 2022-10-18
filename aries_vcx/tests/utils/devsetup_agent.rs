@@ -174,21 +174,13 @@ pub mod test_utils {
         }
 
         pub async fn create_schema(&mut self) {
-            let data = r#"["name","date","degree", "empty_param"]"#.to_string();
+            let data = vec!["name","date","degree", "empty_param"].iter().map(|s| s.to_string()).collect();
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let (schema_id, schema) = credential_schema::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            credential_schema::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
-
-            self.schema = Schema {
-                source_id: "test_schema".to_string(),
-                name,
-                data: serde_json::from_str(&data).unwrap_or_default(),
-                version,
-                schema_id,
-                state: PublicEntityStateType::Published,
-            };
+            self.schema = Schema::create("", &self.config_issuer.institution_did, &name, &version, &data)
+                .await.unwrap()
+                .publish(self.wallet_handle, self.pool_handle, None).await.unwrap();
         }
 
         pub async fn create_nonrevocable_credential_definition(&mut self) {
