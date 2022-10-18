@@ -718,7 +718,7 @@ mod tests {
                 CString::new("Test Source ID").unwrap().into_raw(),
                 CString::new("Test Schema").unwrap().into_raw(),
                 CString::new("0.0").unwrap().into_raw(),
-                CString::new("[att1, att2]").unwrap().into_raw(),
+                CString::new("[\"attr\", \"att2\"]").unwrap().into_raw(),
                 CString::new("V4SGRU86Z58d6TV7PBUe6f").unwrap().into_raw(),
                 Some(cb.get_callback())
             ),
@@ -743,7 +743,7 @@ mod tests {
             did,
             "name".to_string(),
             "1.0".to_string(),
-            "[\"name\":\"male\"]".to_string(),
+            "[\"name\",\"gender\"]".to_string(),
             "V4SGRU86Z58d6TV7PBUe6f".to_string(),
         )
         .await

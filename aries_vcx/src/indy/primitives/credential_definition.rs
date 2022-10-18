@@ -77,6 +77,7 @@ pub struct CredentialDef {
     issuer_did: String,
     cred_def_json: String,
     support_revocation: bool,
+    #[serde(default)]
     schema_id: String,
     #[serde(default)]
     pub state: PublicEntityStateType,

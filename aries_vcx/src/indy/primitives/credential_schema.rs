@@ -22,9 +22,11 @@ pub struct Schema {
     pub schema_id: String,
     pub name: String,
     pub source_id: String,
-    pub submitter_did: String,
+    #[serde(default)]
+    submitter_did: String,
     #[serde(default)]
     pub state: PublicEntityStateType,
+    #[serde(default)]
     schema_json: String
 }
 
@@ -32,9 +34,18 @@ impl Schema {
     pub async fn create(source_id: &str, submitter_did: &str, name: &str, version: &str, data: &Vec<String>) -> VcxResult<Self> {
         trace!("Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}", submitter_did, name, version, data);
 
-        // if settings::indy_mocks_enabled() {
-        //     return Ok((SCHEMA_ID.to_string(), SCHEMA_JSON.to_string()));
-        // }
+        if settings::indy_mocks_enabled() {
+            return Ok(Self {
+                source_id: source_id.to_string(),
+                version: version.to_string(),
+                submitter_did: submitter_did.to_string(),
+                schema_id: SCHEMA_ID.to_string(),
+                schema_json: SCHEMA_JSON.to_string(),
+                name: name.to_string(),
+                state: PublicEntityStateType::Built,
+                ..Self::default()
+            });
+        }
 
         let data_str = serde_json::to_string(data)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
@@ -54,8 +65,7 @@ impl Schema {
     }
 
     pub async fn create_from_ledger_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, source_id: &str, schema_id: &str) -> VcxResult<Self> {
-        let submitter_did = generate_random_did();
-        let schema_json = libindy_get_schema(wallet_handle, pool_handle, &submitter_did, schema_id).await?;
+        let schema_json = get_schema_json(wallet_handle, pool_handle, schema_id).await?.1;
         let schema_data: SchemaData = serde_json::from_str(&schema_json)
             .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
 
@@ -66,7 +76,7 @@ impl Schema {
             name: schema_data.name,
             version: schema_data.version,
             data: schema_data.attr_names,
-            submitter_did: submitter_did.to_string(),
+            submitter_did: "".to_string(),
             state: PublicEntityStateType::Published,
         })
     }
@@ -75,7 +85,7 @@ impl Schema {
         trace!("Schema::publish >>>");
 
         if settings::indy_mocks_enabled() {
-            return Ok(Self::default());
+            return Ok(Self { state: PublicEntityStateType::Published, ..self });
         }
 
         let mut request = build_schema_request(&self.submitter_did, &self.schema_json).await?;

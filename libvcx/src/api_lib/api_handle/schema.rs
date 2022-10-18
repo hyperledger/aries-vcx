@@ -305,7 +305,7 @@ pub mod tests {
         )
         .await
         .unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidLibindyParam)
+        assert_eq!(err.kind(), VcxErrorKind::SerializationError)
     }
 
     #[cfg(feature = "pool_tests")]
