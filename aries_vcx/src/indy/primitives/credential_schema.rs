@@ -131,7 +131,11 @@ impl Schema {
     }
 
     pub async fn get_schema_json(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<String> {
-        Ok(get_schema_json(wallet_handle, pool_handle, &self.schema_id).await?.1)
+        if !self.schema_json.is_empty() {
+            Ok(self.schema_json.clone())
+        } else {
+            Ok(get_schema_json(wallet_handle, pool_handle, &self.schema_id).await?.1)
+        }
     }
 
     pub fn get_state(&self) -> u32 {
