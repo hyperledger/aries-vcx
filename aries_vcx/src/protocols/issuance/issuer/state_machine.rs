@@ -139,6 +139,16 @@ impl IssuerSM {
         }
     }
 
+    pub fn get_rev_id(&self) -> VcxResult<String> {
+        let err = VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
+        let rev_id = match &self.state {
+            IssuerFullState::CredentialSent(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
+            IssuerFullState::Finished(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
+            _ => None
+        };
+        rev_id.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Revocation info does not contain rev id"))
+    }
+
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
             IssuerFullState::Initial(_state) => {
