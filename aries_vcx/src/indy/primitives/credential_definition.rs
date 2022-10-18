@@ -69,7 +69,9 @@ enum_number!(PublicEntityStateType
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
-    pub id: String,
+    pub cred_def_id: String, // TODO: Remove!
+    #[serde(default)]
+    id: String,
     tag: String,
     source_id: String,
     issuer_did: String,
@@ -147,6 +149,7 @@ impl CredentialDef {
         Ok(Self {
             source_id,
             tag,
+            cred_def_id: cred_def_id.clone(),
             id: cred_def_id,
             cred_def_json,
             issuer_did,
