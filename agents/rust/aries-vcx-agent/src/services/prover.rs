@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
@@ -9,6 +10,7 @@ use aries_vcx::messages::proof_presentation::presentation_proposal::Presentation
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use serde_json::Value;
 
 use super::connection::ServiceConnections;
 
@@ -51,6 +53,11 @@ impl ServiceProver {
         }
     }
 
+    pub fn get_prover(&self, id: &str) -> AgentResult<Prover> {
+        let ProverWrapper { prover, .. } = self.provers.get(id)?;
+        Ok(prover)
+    }
+
     pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
         let ProverWrapper { connection_id, .. } = self.provers.get(id)?;
         Ok(connection_id)
@@ -67,19 +74,23 @@ impl ServiceProver {
             })
     }
 
-    async fn get_credentials_for_presentation(&self, prover: &Prover) -> AgentResult<String> {
+    async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
         let credentials = prover.retrieve_credentials(self.wallet_handle).await?;
-        let credentials: std::collections::HashMap<String, serde_json::Value> =
+        let credentials: HashMap<String, Value> =
             serde_json::from_str(&credentials).unwrap();
 
         let mut res_credentials = json!({});
 
-        for (referent, credentials) in credentials["attrs"].as_object().unwrap().iter() {
-            res_credentials["attrs"][referent] = json!({
-                "credential": credentials[0]
-            })
+        for (key, val) in credentials["attrs"].as_object().unwrap().iter() {
+            let cred_array = val.as_array().unwrap();
+            if cred_array.len() > 0 {
+                let first_cred = &cred_array[0];
+                res_credentials["attrs"][key]["credential"] = first_cred.clone();
+                if let Some(tails_dir) = tails_dir {
+                    res_credentials["attrs"][key]["tails_file"] = Value::from(tails_dir);
+                }
+            }
         }
-
         Ok(res_credentials.to_string())
     }
 
@@ -117,13 +128,21 @@ impl ServiceProver {
         )
     }
 
-    pub async fn send_proof_prentation(&self, id: &str) -> AgentResult<()> {
+    pub fn is_secondary_proof_requested(&self, id: &str) -> AgentResult<bool> {
+        let prover = self.get_prover(id)?;
+        let attach = prover.get_proof_request_attachment()?;
+        info!("Proof request attachment: {}", attach);
+        let attach: Value = serde_json::from_str(&attach)?;
+        Ok(!attach["non_revoked"].is_null())
+    }
+
+    pub async fn send_proof_prentation(&self, id: &str, tails_dir: Option<&str>) -> AgentResult<()> {
         let ProverWrapper {
             mut prover,
             connection_id,
         } = self.provers.get(id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        let credentials = self.get_credentials_for_presentation(&prover).await?;
+        let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
             .generate_presentation(
                 self.wallet_handle,

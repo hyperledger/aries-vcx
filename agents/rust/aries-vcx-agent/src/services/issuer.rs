@@ -153,6 +153,11 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_reg_id().map_err(|err| err.into())
     }
 
+    pub fn get_rev_id(&self, id: &str) -> AgentResult<String> {
+        let issuer = self.get_issuer(id)?;
+        issuer.get_rev_id().map_err(|err| err.into())
+    }
+
     pub fn exists_by_id(&self, id: &str) -> bool {
         self.creds_issuer.has_id(id)
     }
