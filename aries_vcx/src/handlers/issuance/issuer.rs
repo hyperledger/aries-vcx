@@ -205,6 +205,10 @@ impl Issuer {
         self.issuer_sm.get_rev_reg_id()
     }
 
+    pub fn get_rev_id(&self) -> VcxResult<String> {
+        self.issuer_sm.get_rev_id()
+    }
+
     pub fn get_thread_id(&self) -> VcxResult<String> {
         self.issuer_sm.thread_id()
     }
