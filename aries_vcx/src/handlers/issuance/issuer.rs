@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use messages::issuance::revocation_notification::RevocationNotification;
 use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
@@ -162,6 +163,21 @@ impl Issuer {
             Some(send_message),
         )
         .await
+    }
+
+    pub async fn send_revocation_notification(&mut self, wallet_handle: WalletHandle, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+        if self.issuer_sm.is_revokable() {
+            let rev_msg = RevocationNotification::create()
+                .set_thread_id(self.issuer_sm.thread_id()?)
+                .set_comment(comment)
+                .set_out_time();
+            send_message(rev_msg).await
+        } else {
+            Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("Can't send revocation notification in state {:?}, credential is not revokable", self.issuer_sm.get_state()),
+            ))
+        }
     }
 
     pub fn get_state(&self) -> IssuerState {

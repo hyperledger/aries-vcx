@@ -11,6 +11,7 @@ use crate::connection::request::Request;
 use crate::connection::response::SignedResponse;
 use crate::discovery::disclose::Disclose;
 use crate::discovery::query::Query;
+use crate::issuance::revocation_notification::RevocationNotification;
 use crate::problem_report::ProblemReport as CommonProblemReport;
 use crate::forward::Forward;
 use crate::issuance::credential::Credential;
@@ -58,6 +59,7 @@ pub enum A2AMessage {
     CredentialOffer(CredentialOffer),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
+    RevocationNotification(RevocationNotification),
     CredentialAck(Ack),
 
     /// proof presentation
