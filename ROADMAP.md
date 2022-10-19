@@ -36,21 +36,24 @@ the library into 3 pieces.
 - ✅ Removal of global state from `aries-vcx`
 - ✅ Support wallet multi-tenancy on aries-vcx level
 
-# Phase 2 - In progress 🚧 / Planned 
-- 🚧 Update C API / public-agents API to enable for receiving messages from public directly, without mediator intermediary
-- Update connection protocol implementation to make use of mediator optional
-- Call `vdr-tools` directly via Rust API; remove FFI between `aries-vcx --- vdr-tools`
-- Extract `aries-vcx::protocols` module as `aries-protocols` crate
-- Extract `aries-vcx::messages` module as `aries-messages` crate
-- Extract `aries-vcx::did_doc` module as `did-doc` crate
+# Phase 2 - In progress 🚧 / Planned
+- ✅ Extract `aries-vcx::messages` module into `aries-messages` crate
+- ✅ Implement simple aries agent on top aries-vcx
+- ✅ Implement `aries-vcx - AFJ` AATH back-channel pair
+- 🚧 Remove FFI layer between `aries-vcx --- vdr-tools`
 - 🚧 Concise `aries-vcx` public crate API
-- Publish crates on crates.io
-- Implement `aries-vcx - AFJ` test harness back-channel pair
+- Update public agents' API to enable for receiving messages directly, without a mediator intermediary.
+- Update connection protocol implementation to make use of mediator optional
+- Extract `aries-vcx::protocols` module into `aries-protocols` crate
+- Extract `aries-vcx::did_doc` module into `did-doc` crate
+- Publish crates to crates.io
 - Implement `did-exchange` protocol
+- Add support for full did format, such as `did:sov`, `did:peer`
+- Unify approach for Aries FSM interface across protocols
+- Abstract away concept "wallet handle" and "pool handle" from `aries-vcx` codebase
 
 # Phase 3
 - Use `indy-vdr` to facilitate ledger calls
-- Implement Rust issuer/verifier web service on top of aries-vcx
 
 # Future vision architecture diagram
 # <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_150922.png"/>
