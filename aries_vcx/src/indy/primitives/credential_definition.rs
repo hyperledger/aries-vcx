@@ -69,8 +69,7 @@ enum_number!(PublicEntityStateType
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
-    pub cred_def_id: String, // TODO: Remove!
-    #[serde(default)]
+    #[serde(alias = "cred_def_id")]
     id: String,
     tag: String,
     source_id: String,
@@ -150,7 +149,6 @@ impl CredentialDef {
         Ok(Self {
             source_id,
             tag,
-            cred_def_id: cred_def_id.clone(),
             id: cred_def_id,
             cred_def_json,
             issuer_did,
@@ -206,11 +204,6 @@ impl CredentialDef {
             .serialize()
             .map_err(|err| err)
             .map_err(|err: VcxError| err.extend("Cannot serialize CredentialDefinition"))
-    }
-
-    pub fn get_data_json(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
     }
 
     pub fn get_source_id(&self) -> &String {

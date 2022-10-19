@@ -1,10 +1,9 @@
 use vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxResult, VcxErrorKind};
 use crate::global::settings;
-use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger, set_endorser, libindy_get_schema};
+use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger, set_endorser};
 use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
-use crate::utils::random::generate_random_did;
 use crate::utils::serialization::ObjectWithVersion;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -27,7 +26,7 @@ pub struct Schema {
     #[serde(default)]
     pub state: PublicEntityStateType,
     #[serde(default)]
-    schema_json: String
+    schema_json: String // added in 0.45.0, #[serde(default)] use for backwards compatibility
 }
 
 impl Schema {

@@ -102,7 +102,7 @@ pub async fn create_and_store_credential_def(
     let mut rev_reg = RevocationRegistry::create(
         wallet_handle,
         issuer_did,
-        &cred_def.cred_def_id,
+        &cred_def.get_cred_def_id(),
         get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
         10,
         1,

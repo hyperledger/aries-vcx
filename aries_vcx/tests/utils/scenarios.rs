@@ -143,7 +143,7 @@ pub mod test_utils {
         info!("create_and_send_nonrevocable_cred_offer >> creating issuer credential");
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
-            cred_def_id: cred_def.cred_def_id.clone(),
+            cred_def_id: cred_def.get_cred_def_id(),
             rev_reg_id: None,
             tails_file: None,
         };
@@ -173,7 +173,7 @@ pub mod test_utils {
         info!("create_and_send_cred_offer >> creating issuer credential");
         let offer_info = OfferInfo {
             credential_json: credential_json.to_string(),
-            cred_def_id: cred_def.cred_def_id.clone(),
+            cred_def_id: cred_def.get_cred_def_id(),
             rev_reg_id: Some(rev_reg.get_rev_reg_id()),
             tails_file: Some(rev_reg.get_tails_dir()),
         };
@@ -718,7 +718,7 @@ pub mod test_utils {
         let mut rev_reg_new = RevocationRegistry::create(
             faber.wallet_handle,
             &faber.config_issuer.institution_did,
-            &credential_def.cred_def_id,
+            &credential_def.get_cred_def_id(),
             &rev_reg.get_tails_dir(),
             10,
             2,

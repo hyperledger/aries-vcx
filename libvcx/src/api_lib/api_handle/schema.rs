@@ -4,11 +4,9 @@ use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
-use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
 use aries_vcx::indy::ledger::transactions;
-use aries_vcx::indy::ledger::transactions::{build_schema_request, get_schema_json};
-use aries_vcx::indy::primitives::credential_schema;
-use aries_vcx::indy::primitives::credential_schema::{Schema, SchemaData};
+use aries_vcx::indy::ledger::transactions::build_schema_request;
+use aries_vcx::indy::primitives::credential_schema::Schema;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
