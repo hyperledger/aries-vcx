@@ -19,7 +19,6 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
     use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
     use aries_vcx::indy::primitives::credential_schema::Schema;
     use aries_vcx::indy::primitives::credential_definition::CredentialDef;
@@ -30,7 +29,6 @@ pub mod test_utils {
     use aries_vcx::indy::wallet::open_wallet;
     use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::indy::ledger::transactions::into_did_doc;
-    use aries_vcx::indy::primitives::credential_schema;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::{Invitation, PublicInvitation};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -174,21 +172,13 @@ pub mod test_utils {
         }
 
         pub async fn create_schema(&mut self) {
-            let data = r#"["name","date","degree", "empty_param"]"#.to_string();
+            let data = vec!["name","date","degree", "empty_param"].iter().map(|s| s.to_string()).collect();
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            let (schema_id, schema) = credential_schema::create_schema(&self.config_issuer.institution_did, &name, &version, &data).await.unwrap();
-            credential_schema::publish_schema(&self.config_issuer.institution_did, self.wallet_handle, self.pool_handle, &schema).await.unwrap();
-
-            self.schema = Schema {
-                source_id: "test_schema".to_string(),
-                name,
-                data: serde_json::from_str(&data).unwrap_or_default(),
-                version,
-                schema_id,
-                state: PublicEntityStateType::Published,
-            };
+            self.schema = Schema::create("", &self.config_issuer.institution_did, &name, &version, &data)
+                .await.unwrap()
+                .publish(self.wallet_handle, self.pool_handle, None).await.unwrap();
         }
 
         pub async fn create_nonrevocable_credential_definition(&mut self) {

@@ -71,6 +71,10 @@ impl RevocationRegistry {
         self.rev_reg_id.clone()
     }
 
+    pub fn get_cred_def_id(&self) -> String {
+        self.cred_def_id.clone()
+    }
+
     pub fn get_rev_reg_def(&self) -> RevocationRegistryDefinition {
         self.rev_reg_def.clone()
     }
@@ -176,6 +180,18 @@ impl RevocationRegistry {
                 format!("Cannot deserialize revocation registry: {:?}", err),
             )
         })
+    }
+
+    pub async fn revoke_credential_local(
+        &self,
+        wallet_handle: WalletHandle,
+        cred_rev_id: &str,
+    ) -> VcxResult<()> {
+        revoke_credential_local(wallet_handle, &self.tails_dir, &self.rev_reg_id, cred_rev_id).await
+    }
+
+    pub async fn publish_local_revocations(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str) -> VcxResult<()> {
+        publish_local_revocations(wallet_handle, pool_handle, submitter_did, &self.rev_reg_id).await
     }
 }
 

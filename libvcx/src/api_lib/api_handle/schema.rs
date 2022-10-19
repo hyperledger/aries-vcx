@@ -4,11 +4,9 @@ use serde_json;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
-use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
 use aries_vcx::indy::ledger::transactions;
-use aries_vcx::indy::ledger::transactions::{build_schema_request, get_schema_json};
-use aries_vcx::indy::primitives::credential_schema;
-use aries_vcx::indy::primitives::credential_schema::{Schema, SchemaData};
+use aries_vcx::indy::ledger::transactions::build_schema_request;
+use aries_vcx::indy::primitives::credential_schema::Schema;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -38,21 +36,20 @@ pub async fn create_and_publish_schema(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
-    credential_schema::publish_schema(&issuer_did, get_main_wallet_handle(), get_main_pool_handle()?, &schema).await?;
+    let data: Vec<String> = serde_json::from_str(&data).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::SerializationError,
+            format!("Cannot deserialize schema data to vec: {:?}", err),
+        )
+    })?;
+
+    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?.publish(get_main_wallet_handle(), get_main_pool_handle()?, None).await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
+    debug!("created schema on ledger with id: {}", schema.get_schema_id());
 
-    debug!("created schema on ledger with id: {}", schema_id);
-    let schema_handle = _store_schema(
-        source_id,
-        name,
-        version,
-        schema_id,
-        data,
-        PublicEntityStateType::Published,
-    )?;
-
-    Ok(schema_handle)
+    SCHEMA_MAP
+        .add(schema)
+        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -77,37 +74,27 @@ pub async fn prepare_schema_for_endorser(
         source_id, name, issuer_did
     );
 
-    let (schema_id, schema) = credential_schema::create_schema(&issuer_did, &name, &version, &data).await?;
-    let schema_request = build_schema_request(&issuer_did, &schema).await?;
+    let data: Vec<String> = serde_json::from_str(&data).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::SerializationError,
+            format!("Cannot deserialize schema data to vec: {:?}", err),
+        )
+    })?;
+
+    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?;
+    let schema_json = schema.get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?).await?;
+    let schema_id = schema.get_schema_id();
+    let schema_request = build_schema_request(&issuer_did, &schema_json).await?;
     let schema_request = transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
-    let schema_handle = _store_schema(source_id, name, version, schema_id, data, PublicEntityStateType::Built)?;
+    let schema_handle = SCHEMA_MAP
+        .add(schema)
+        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))?;
 
     Ok((schema_handle, schema_request))
-}
-
-fn _store_schema(
-    source_id: &str,
-    name: String,
-    version: String,
-    schema_id: String,
-    data: String,
-    state: PublicEntityStateType,
-) -> VcxResult<u32> {
-    let schema = Schema {
-        source_id: source_id.to_string(),
-        name,
-        data: serde_json::from_str(&data).unwrap_or_default(),
-        version,
-        schema_id,
-        state,
-    };
-
-    SCHEMA_MAP
-        .add(schema)
-        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))
+    
 }
 
 pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32, String)> {
@@ -117,22 +104,9 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult
         schema_id
     );
 
-    let (schema_id, schema_data_json) = get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?, &schema_id)
+    let schema = Schema::create_from_ledger_json(get_main_wallet_handle(), get_main_pool_handle()?, &source_id, &schema_id)
         .await
-        .map_err(|err| err.map(VcxErrorKind::InvalidSchemaSeqNo, "Schema not found"))?;
-
-    let schema_data: SchemaData = serde_json::from_str(&schema_data_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
-
-    let schema = Schema {
-        source_id,
-        schema_id,
-        name: schema_data.name,
-        version: schema_data.version,
-        data: schema_data.attr_names,
-        state: PublicEntityStateType::Published,
-    };
-
+        .map_err(|err| err.map(VcxErrorKind::CreateSchema, "Create schema from ledger failed"))?;
     let schema_json = schema.to_string()?;
 
     let handle = SCHEMA_MAP
@@ -329,7 +303,7 @@ pub mod tests {
         )
         .await
         .unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::InvalidLibindyParam)
+        assert_eq!(err.kind(), VcxErrorKind::SerializationError)
     }
 
     #[cfg(feature = "pool_tests")]
