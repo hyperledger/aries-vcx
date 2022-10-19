@@ -8,7 +8,7 @@ COPY --chown=indy  ./ ./
 USER indy
 RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 USER root
-RUN mv /home/indy/target/libvcx/release/libvcx.so .
+RUN mv /home/indy/target/release/libvcx.so .
 
 
 FROM alpine:3.15.4

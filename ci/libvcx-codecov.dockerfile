@@ -32,7 +32,7 @@ WORKDIR /home/indy/aries-vcx
 COPY --chown=indy ./ ./
 
 RUN cargo test -p messages --no-run --features general_test
-RUN cargo test -p agency-client --no-run --features general_test
+RUN cargo test -p agency_client --no-run --features general_test
 RUN cargo test -p libvcx --no-run --features general_test
 RUN cargo test -p aries-vcx --no-run --features general_test
-RUN cargo test -p aries-vcx --no-run --features pool_tests agency_pool_tests agency_v2
+RUN cargo test -p aries-vcx --no-run --features pool_tests agency_pool_tests

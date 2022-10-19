@@ -6,7 +6,7 @@ COPY --chown=indy  ./ ./
 RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 
 USER root
-RUN mv /home/indy/libvcx/target/release/libvcx.so .
+RUN mv /home/indy/target/release/libvcx.so .
 
 FROM alpine:3.15.4
 ARG UID=1000
