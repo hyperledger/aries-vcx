@@ -206,6 +206,11 @@ impl CredentialDef {
             .map_err(|err: VcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 
+    pub fn get_data_json(&self) -> VcxResult<String> {
+        serde_json::to_string(&self)
+            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
+    }
+
     pub fn get_source_id(&self) -> &String {
         &self.source_id
     }
