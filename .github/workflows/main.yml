@@ -7,6 +7,10 @@ on:
   pull_request:
     branches:
       - "**"
+      PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
+      RELEASE: ${{ steps.run-info.outputs.release }}
+      PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
+      BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
 
 env:
   DOCKER_BUILDKIT: 1
@@ -775,7 +779,13 @@ jobs:
 
   publish-node-wrapper:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-libvcx-tester, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-node-wrapper, test-integration-node-wrapper ]
+    needs:
+      - workflow-setup
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool-tests
+      - test-libvcx-image-agency-pool-tests
+      - test-node-wrapper
+      - test-integration-node-wrapper
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       DOCKER_IMG_CACHED: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER}}
@@ -808,7 +818,13 @@ jobs:
 
   publish-agent-core:
     runs-on: ubuntu-20.04
-    needs: [ workflow-setup, build-docker-libvcx-tester, test-libvcx-image-general_test, test-libvcx-image-pool-tests, test-libvcx-image-agency-pool-tests, test-node-wrapper, test-integration-node-wrapper ]
+    needs:
+      - workflow-setup
+      - test-libvcx-image-general_test
+      - test-libvcx-image-pool-tests
+      - test-libvcx-image-agency-pool-tests
+      - test-node-wrapper
+      - test-integration-node-wrapper
     env:
       NPMJS_TOKEN: ${{ secrets.NPMJS_TOKEN }}
       DOCKER_IMG_CACHED: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER}}

@@ -1,4 +1,4 @@
-name: 'is-fork'
+name: 'construct-run-info'
 description: Determine basic information about the build
 
 outputs:
