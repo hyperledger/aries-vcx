@@ -380,7 +380,7 @@ jobs:
       - name: "Run integration tests"
         uses: ./.github/actions/code-coverage
         with:
-          test-features: 'pool_tests agency_pool_tests agency_v2'
+          test-features: 'pool_tests agency_pool_tests'
           test-path: aries-vcx
           codecov-img-name: $DOCKER_IMG_CACHED_CODECOV
           cov-file-path: /tmp/artifacts/coverage
@@ -437,7 +437,7 @@ jobs:
           name: code-coverage-report-unit-agency-client
           path: /tmp/artifacts/coverage
 
-  test-libvcx-image-general_test:
+  test-image-general_test:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-libvcx-tester ]
     env:
@@ -455,18 +455,16 @@ jobs:
         uses: ./.github/actions/load-image
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
-      - name: "Run quick unit tests"
+      - name: "Run tests featured as: general_test"
         run: |
           set -x
-          docker run --rm \
-             --name libvcx \
-             --network host \
+          docker run --network host \
              $DOCKER_IMG_CACHED \
-             sh -c 'set -e; \
-                    export RUST_TEST_THREADS=1; \
-                    export RUST_BACKTRACE=full; \
-                    export RUST_LOG=error; \
-                    cd $HOME; cargo test --features "general_test"'
+             sh -c 'set -e \
+                    RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=error cargo test \
+                    --workspace --exclude aries-vcx-agent \
+                    --features "general_test" \
+                    --manifest-path=$HOME/Cargo.toml"'
 
   test-libvcx-image-pool-tests:
     runs-on: ubuntu-20.04
@@ -489,11 +487,12 @@ jobs:
       - name: "Run libvcx integration tests"
         run: |
           set -x
-          docker run --rm --name libvcx \
-              --network host \
-              $DOCKER_IMG_CACHED sh -c 'set -ex \
-                  export RUST_TEST_THREADS=1 && export TEST_POOL_IP=127.0.0.1 \
-                  cargo test --release --features "pool_tests" --manifest-path=$HOME/libvcx/Cargo.toml"'
+          docker run --network host \
+             $DOCKER_IMG_CACHED \
+             sh -c 'set -e \
+                    RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
+                    --features "pool_tests" \
+                    --manifest-path=$HOME/libvcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -521,11 +520,11 @@ jobs:
       - name: "Run aries-vcx integration tests"
         run: |
           set -x
-          docker run --rm --name libvcx \
-              --network host \
-              $DOCKER_IMG_CACHED sh -c 'set -ex \
-                  export RUST_TEST_THREADS=1 && export TEST_POOL_IP=127.0.0.1 \
-                  cargo test --release --features "pool_tests agency_v2 --manifest-path=$HOME/aries_vcx/Cargo.toml"'
+          docker run --network host \
+             $DOCKER_IMG_CACHED \
+             sh -c 'set -e; RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
+                    --features "pool_tests" \
+                    --manifest-path=$HOME/aries_vcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -553,9 +552,8 @@ jobs:
       - name: "Run mysql integration tests"
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host $DOCKER_IMG_CACHED \
-                              sh -c '(ls -lah $HOME && ls -lah $HOME/libvcx && cd $HOME/aries_vcx && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --features "mysql_test")'
+          docker run --network host $DOCKER_IMG_CACHED \
+                              sh -c '(RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --features "mysql_test")'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -580,14 +578,14 @@ jobs:
         uses: ./.github/actions/setup-testing
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
-      - name: Run agency+pool integration tests
+      - name: Run agency integration tests
         run: |
           set -x
-          docker run --rm -i --name libvcx --network host $DOCKER_IMG_CACHED \
-                              sh -c '(cd $HOME/aries_vcx && \
-                              cargo --version && \
-                              rustc --version && \
-                              RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --release --features "agency_pool_tests")'
+          docker run --network host \
+             $DOCKER_IMG_CACHED \
+             sh -c 'set -e; RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
+                    --features "agency_pool_tests" \
+                    --manifest-path=$HOME/aries_vcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -805,7 +803,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - workflow-setup
-      - test-libvcx-image-general_test
+      - test-image-general_test
       - test-libvcx-image-pool-tests
       - test-aries-vcx-image-pool-tests
       - test-libvcx-image-agency-pool-tests
@@ -845,7 +843,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - workflow-setup
-      - test-libvcx-image-general_test
+      - test-image-general_test
       - test-libvcx-image-pool-tests
       - test-aries-vcx-image-pool-tests
       - test-libvcx-image-agency-pool-tests
@@ -893,7 +891,7 @@ jobs:
       - build-and-publish-ios-wrapper
       - build-and-publish-android-device
       - build-and-publish-android-emulator
-      - test-libvcx-image-general_test
+      - test-image-general_test
       - test-libvcx-image-pool-tests
       - test-aries-vcx-image-pool-tests
       - test-libvcx-image-agency-pool-tests

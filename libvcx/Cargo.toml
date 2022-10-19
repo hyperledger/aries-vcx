@@ -16,7 +16,6 @@ doctest = false
 [features]
 test_utils = [ "aries-vcx/test_utils" ]
 pool_tests = [ "test_utils" ]
-agency_tests = [ "test_utils" ]
 general_test = [ "test_utils" ]
 # to_restore = []
 fatal_warnings = []

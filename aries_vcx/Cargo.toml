@@ -15,7 +15,6 @@ doctest = false
 test_utils = [ "messages/test_utils" ]
 pool_tests = [ "test_utils" ]
 agency_pool_tests = ["test_utils" ]
-agency_v2 = ["test_utils" ]
 general_test = ["test_utils", "messages/general_test" ]
 fatal_warnings = []
 warnlog_fetched_messages = []

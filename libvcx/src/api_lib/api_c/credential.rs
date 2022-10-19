@@ -1400,40 +1400,6 @@ mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // Missing implementation for v3 in generate_credential_request_msg
-    async fn test_vcx_credential_get_request_msg() {
-        let _setup = SetupMocks::init();
-
-        let handle_conn = connection::tests::build_test_connection_inviter_invited().await;
-
-        let my_pw_did = CString::new(connection::get_pw_did(handle_conn).unwrap())
-            .unwrap()
-            .into_raw();
-        let their_pw_did = CString::new(connection::get_their_pw_did(handle_conn).unwrap())
-            .unwrap()
-            .into_raw();
-
-        let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        assert_eq!(
-            vcx_credential_get_request_msg(
-                cb.command_handle,
-                handle_cred,
-                my_pw_did,
-                their_pw_did,
-                0,
-                Some(cb.get_callback())
-            ),
-            error::SUCCESS.code_num
-        );
-        let msg = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
-
-        serde_json::from_str::<CredentialRequest>(&msg).unwrap();
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential() {
         let _setup = SetupMocks::init();
 
