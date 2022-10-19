@@ -7,10 +7,6 @@ on:
   pull_request:
     branches:
       - "**"
-      PUBLISH_VERSION: ${{ steps.run-info.outputs.publish-version }}
-      RELEASE: ${{ steps.run-info.outputs.release }}
-      PRERELEASE: ${{ steps.run-info.outputs.pre-release }}
-      BRANCH_NAME: ${{ steps.run-info.outputs.branch-name }}
 
 env:
   DOCKER_BUILDKIT: 1
