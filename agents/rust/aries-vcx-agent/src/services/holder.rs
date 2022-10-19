@@ -126,7 +126,7 @@ impl ServiceCredentialsHolder {
             )
             .await?;
         self.creds_holder.set(
-            thread_id,
+            &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
     }
