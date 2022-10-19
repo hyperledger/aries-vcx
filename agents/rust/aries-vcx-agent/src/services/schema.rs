@@ -33,17 +33,17 @@ impl ServiceSchemas {
         self.schemas.set(&schema.get_schema_id(), schema)
     }
 
-    pub async fn publish_schema(&self, id: &str) -> AgentResult<()> {
-        let schema = self.schemas.get(id)?;
+    pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
+        let schema = self.schemas.get(thread_id)?;
         let schema = schema
             .publish(self.wallet_handle, self.pool_handle, None)
             .await?;
-        self.schemas.set(id, schema)?;
+        self.schemas.set(thread_id, schema)?;
         Ok(())
     }
 
-    pub async fn schema_json(&self, id: &str) -> AgentResult<String> {
-        Ok(get_schema_json(self.wallet_handle, self.pool_handle, id)
+    pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
+        Ok(get_schema_json(self.wallet_handle, self.pool_handle, thread_id)
             .await?
             .1)
     }
@@ -62,7 +62,7 @@ impl ServiceSchemas {
         self.schemas.find_by(f)
     }
 
-    pub fn get_by_id(&self, id: &str) -> AgentResult<Schema> {
-        self.schemas.get(id)
+    pub fn get_by_id(&self, thread_id: &str) -> AgentResult<Schema> {
+        self.schemas.get(thread_id)
     }
 }

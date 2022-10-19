@@ -47,13 +47,13 @@ impl ServiceCredentialsIssuer {
         }
     }
 
-    fn get_issuer(&self, id: &str) -> AgentResult<Issuer> {
-        let IssuerWrapper { issuer, .. } = self.creds_issuer.get(id)?;
+    fn get_issuer(&self, thread_id: &str) -> AgentResult<Issuer> {
+        let IssuerWrapper { issuer, .. } = self.creds_issuer.get(thread_id)?;
         Ok(issuer)
     }
 
-    pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let IssuerWrapper { connection_id, .. } = self.creds_issuer.get(id)?;
+    pub fn get_connection_id(&self, thread_id: &str) -> AgentResult<String> {
+        let IssuerWrapper { connection_id, .. } = self.creds_issuer.get(thread_id)?;
         Ok(connection_id)
     }
 
@@ -86,11 +86,11 @@ impl ServiceCredentialsIssuer {
 
     pub async fn send_credential_offer(
         &self,
-        id: Option<&str>,
+        thread_id: Option<&str>,
         connection_id: Option<&str>,
         offer_info: OfferInfo,
     ) -> AgentResult<String> {
-        let (mut issuer, connection_id) = match (id, connection_id) {
+        let (mut issuer, connection_id) = match (thread_id, connection_id) {
             (Some(id), Some(connection_id)) => (self.get_issuer(id)?, connection_id.to_string()),
             (Some(id), None) => (self.get_issuer(id)?, self.get_connection_id(id)?),
             (None, Some(connection_id)) => (Issuer::create("")?, connection_id.to_string()),
@@ -109,11 +109,11 @@ impl ServiceCredentialsIssuer {
         )
     }
 
-    pub async fn send_credential(&self, id: &str) -> AgentResult<()> {
+    pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
-        } = self.creds_issuer.get(id)?;
+        } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
             .send_credential(
@@ -128,37 +128,37 @@ impl ServiceCredentialsIssuer {
         Ok(())
     }
 
-    pub fn get_state(&self, id: &str) -> AgentResult<IssuerState> {
-        Ok(self.get_issuer(id)?.get_state())
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<IssuerState> {
+        Ok(self.get_issuer(thread_id)?.get_state())
     }
 
-    pub async fn update_state(&self, id: &str) -> AgentResult<IssuerState> {
+    pub async fn update_state(&self, thread_id: &str) -> AgentResult<IssuerState> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
-        } = self.creds_issuer.get(id)?;
+        } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = issuer
             .update_state(self.wallet_handle, &self.agency_client()?, &connection)
             .await?;
         self.creds_issuer.set(
-            &issuer.get_thread_id()?,
+            thread_id,
             IssuerWrapper::new(issuer, &connection_id),
         )?;
         Ok(state)
     }
 
-    pub fn get_rev_reg_id(&self, id: &str) -> AgentResult<String> {
-        let issuer = self.get_issuer(id)?;
+    pub fn get_rev_reg_id(&self, thread_id: &str) -> AgentResult<String> {
+        let issuer = self.get_issuer(thread_id)?;
         issuer.get_rev_reg_id().map_err(|err| err.into())
     }
 
-    pub fn get_rev_id(&self, id: &str) -> AgentResult<String> {
-        let issuer = self.get_issuer(id)?;
+    pub fn get_rev_id(&self, thread_id: &str) -> AgentResult<String> {
+        let issuer = self.get_issuer(thread_id)?;
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
-    pub fn exists_by_id(&self, id: &str) -> bool {
-        self.creds_issuer.has_id(id)
+    pub fn exists_by_id(&self, thread_id: &str) -> bool {
+        self.creds_issuer.has_id(thread_id)
     }
 }

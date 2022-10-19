@@ -53,13 +53,13 @@ impl ServiceProver {
         }
     }
 
-    pub fn get_prover(&self, id: &str) -> AgentResult<Prover> {
-        let ProverWrapper { prover, .. } = self.provers.get(id)?;
+    pub fn get_prover(&self, thread_id: &str) -> AgentResult<Prover> {
+        let ProverWrapper { prover, .. } = self.provers.get(thread_id)?;
         Ok(prover)
     }
 
-    pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let ProverWrapper { connection_id, .. } = self.provers.get(id)?;
+    pub fn get_connection_id(&self, thread_id: &str) -> AgentResult<String> {
+        let ProverWrapper { connection_id, .. } = self.provers.get(thread_id)?;
         Ok(connection_id)
     }
 
@@ -128,19 +128,19 @@ impl ServiceProver {
         )
     }
 
-    pub fn is_secondary_proof_requested(&self, id: &str) -> AgentResult<bool> {
-        let prover = self.get_prover(id)?;
+    pub fn is_secondary_proof_requested(&self, thread_id: &str) -> AgentResult<bool> {
+        let prover = self.get_prover(thread_id)?;
         let attach = prover.get_proof_request_attachment()?;
         info!("Proof request attachment: {}", attach);
         let attach: Value = serde_json::from_str(&attach)?;
         Ok(!attach["non_revoked"].is_null())
     }
 
-    pub async fn send_proof_prentation(&self, id: &str, tails_dir: Option<&str>) -> AgentResult<()> {
+    pub async fn send_proof_prentation(&self, thread_id: &str, tails_dir: Option<&str>) -> AgentResult<()> {
         let ProverWrapper {
             mut prover,
             connection_id,
-        } = self.provers.get(id)?;
+        } = self.provers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
@@ -165,11 +165,11 @@ impl ServiceProver {
         Ok(())
     }
 
-    pub async fn update_state(&self, id: &str) -> AgentResult<ProverState> {
+    pub async fn update_state(&self, thread_id: &str) -> AgentResult<ProverState> {
         let ProverWrapper {
             mut prover,
             connection_id,
-        } = self.provers.get(id)?;
+        } = self.provers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = prover
             .update_state(
@@ -180,18 +180,18 @@ impl ServiceProver {
             )
             .await?;
         self.provers.set(
-            &prover.get_thread_id()?,
+            thread_id,
             ProverWrapper::new(prover, &connection_id),
         )?;
         Ok(state)
     }
 
-    pub fn get_state(&self, id: &str) -> AgentResult<ProverState> {
-        let ProverWrapper { prover, .. } = self.provers.get(id)?;
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<ProverState> {
+        let ProverWrapper { prover, .. } = self.provers.get(thread_id)?;
         Ok(prover.get_state())
     }
 
-    pub fn exists_by_id(&self, id: &str) -> bool {
-        self.provers.has_id(id)
+    pub fn exists_by_id(&self, thread_id: &str) -> bool {
+        self.provers.has_id(thread_id)
     }
 }

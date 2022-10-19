@@ -84,16 +84,16 @@ impl ServiceVerifier {
         )
     }
 
-    pub fn verify_presentation(&self, id: &str) -> AgentResult<Status> {
-        let VerifierWrapper { verifier, .. } = self.verifiers.get(id)?;
+    pub fn verify_presentation(&self, thread_id: &str) -> AgentResult<Status> {
+        let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
         Ok(Status::from_u32(verifier.get_presentation_status()))
     }
 
-    pub async fn update_state(&self, id: &str) -> AgentResult<VerifierState> {
+    pub async fn update_state(&self, thread_id: &str) -> AgentResult<VerifierState> {
         let VerifierWrapper {
             mut verifier,
             connection_id,
-        } = self.verifiers.get(id)?;
+        } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = verifier
             .update_state(
@@ -104,18 +104,18 @@ impl ServiceVerifier {
             )
             .await?;
         self.verifiers.set(
-            &verifier.get_thread_id()?,
+            thread_id,
             VerifierWrapper::new(verifier, &connection_id),
         )?;
         Ok(state)
     }
 
-    pub fn get_state(&self, id: &str) -> AgentResult<VerifierState> {
-        let VerifierWrapper { verifier, .. } = self.verifiers.get(id)?;
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<VerifierState> {
+        let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
         Ok(verifier.get_state())
     }
 
-    pub fn exists_by_id(&self, id: &str) -> bool {
-        self.verifiers.has_id(id)
+    pub fn exists_by_id(&self, thread_id: &str) -> bool {
+        self.verifiers.has_id(thread_id)
     }
 }

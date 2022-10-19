@@ -50,13 +50,13 @@ impl ServiceCredentialsHolder {
         }
     }
 
-    fn get_holder(&self, id: &str) -> AgentResult<Holder> {
-        let HolderWrapper { holder, .. } = self.creds_holder.get(id)?;
+    fn get_holder(&self, thread_id: &str) -> AgentResult<Holder> {
+        let HolderWrapper { holder, .. } = self.creds_holder.get(thread_id)?;
         Ok(holder)
     }
 
-    pub fn get_connection_id(&self, id: &str) -> AgentResult<String> {
-        let HolderWrapper { connection_id, .. } = self.creds_holder.get(id)?;
+    pub fn get_connection_id(&self, thread_id: &str) -> AgentResult<String> {
+        let HolderWrapper { connection_id, .. } = self.creds_holder.get(thread_id)?;
         Ok(connection_id)
     }
 
@@ -107,10 +107,10 @@ impl ServiceCredentialsHolder {
 
     pub async fn send_credential_request(
         &self,
-        id: Option<&str>,
+        thread_id: Option<&str>,
         connection_id: Option<&str>,
     ) -> AgentResult<String> {
-        let (mut holder, connection_id) = match (id, connection_id) {
+        let (mut holder, connection_id) = match (thread_id, connection_id) {
             (Some(id), Some(connection_id)) => (self.get_holder(id)?, connection_id.to_string()),
             (Some(id), None) => (self.get_holder(id)?, self.get_connection_id(id)?),
             (None, Some(connection_id)) => (Holder::create("")?, connection_id.to_string()),
@@ -126,20 +126,20 @@ impl ServiceCredentialsHolder {
             )
             .await?;
         self.creds_holder.set(
-            &holder.get_thread_id()?,
+            thread_id,
             HolderWrapper::new(holder, &connection_id),
         )
     }
 
-    pub fn get_state(&self, id: &str) -> AgentResult<HolderState> {
-        Ok(self.get_holder(id)?.get_state())
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<HolderState> {
+        Ok(self.get_holder(thread_id)?.get_state())
     }
 
-    pub async fn update_state(&self, id: &str) -> AgentResult<HolderState> {
+    pub async fn update_state(&self, thread_id: &str) -> AgentResult<HolderState> {
         let HolderWrapper {
             mut holder,
             connection_id,
-        } = self.creds_holder.get(id)?;
+        } = self.creds_holder.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = holder
             .update_state(
@@ -150,38 +150,38 @@ impl ServiceCredentialsHolder {
             )
             .await?;
         self.creds_holder.set(
-            &holder.get_thread_id()?,
+            thread_id,
             HolderWrapper::new(holder, &connection_id),
         )?;
         Ok(state)
     }
 
-    pub async fn is_revokable(&self, id: &str) -> AgentResult<bool> {
-        self.get_holder(id)?
+    pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {
+        self.get_holder(thread_id)?
             .is_revokable(self.wallet_handle, self.pool_handle)
             .await
             .map_err(|err| err.into())
     }
 
-    pub async fn get_rev_reg_id(&self, id: &str) -> AgentResult<String> {
-        self.get_holder(id)?
+    pub async fn get_rev_reg_id(&self, thread_id: &str) -> AgentResult<String> {
+        self.get_holder(thread_id)?
             .get_rev_reg_id()
             .map_err(|err| err.into())
     }
 
-    pub async fn get_tails_hash(&self, id: &str) -> AgentResult<String> {
-        self.get_holder(id)?
+    pub async fn get_tails_hash(&self, thread_id: &str) -> AgentResult<String> {
+        self.get_holder(thread_id)?
             .get_tails_hash()
             .map_err(|err| err.into())
     }
 
-    pub async fn get_tails_location(&self, id: &str) -> AgentResult<String> {
-        self.get_holder(id)?
+    pub async fn get_tails_location(&self, thread_id: &str) -> AgentResult<String> {
+        self.get_holder(thread_id)?
             .get_tails_location()
             .map_err(|err| err.into())
     }
 
-    pub fn exists_by_id(&self, id: &str) -> bool {
-        self.creds_holder.has_id(id)
+    pub fn exists_by_id(&self, thread_id: &str) -> bool {
+        self.creds_holder.has_id(thread_id)
     }
 }
