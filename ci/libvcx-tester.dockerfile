@@ -36,7 +36,7 @@ COPY --chown=node ./agency_client ./agency_client
 COPY --chown=node ./messages ./messages
 COPY --chown=node ./aries_vcx ./aries_vcx
 COPY --chown=node ./wrappers/node ./wrappers/node
-COPY --chown=node ./agents/node ./agents/node
+COPY --chown=node ./agents ./agents
 
 
 RUN npm install -g npm@8.7.0
