@@ -253,8 +253,6 @@ pub mod test_utils {
         assert_eq!(HolderState::Initial, holder.get_state());
         holder
             .send_proposal(
-                alice.wallet_handle,
-                alice.pool_handle,
                 proposal,
                 connection.send_message_closure(alice.wallet_handle).await.unwrap(),
             )
@@ -291,8 +289,6 @@ pub mod test_utils {
             .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder
             .send_proposal(
-                alice.wallet_handle,
-                alice.pool_handle,
                 proposal,
                 connection.send_message_closure(alice.wallet_handle).await.unwrap(),
             )
