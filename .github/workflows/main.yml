@@ -907,7 +907,7 @@ jobs:
       - name: "Git checkout"
         uses: actions/checkout@v2
       - name: "Generate changelog"
-        uses: heinrichreimer/github-changelog-generator-action@v2.2
+        uses: heinrichreimer/action-github-changelog-generator@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
