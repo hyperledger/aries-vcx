@@ -19,5 +19,5 @@ runs:
     - name: "Upload logs to GitHub"
       uses: actions/upload-artifact@v2
       with:
-        name: inputs.name
+        name: {{ inputs.name }}
         path: ./logs.tgz
