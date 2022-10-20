@@ -464,7 +464,7 @@ jobs:
                     RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=error cargo test \
                     --workspace --exclude aries-vcx-agent \
                     --features "general_test" \
-                    --manifest-path=$HOME/Cargo.toml"'
+                    --manifest-path="$HOME/Cargo.toml"'
 
   test-libvcx-image-pool-tests:
     runs-on: ubuntu-20.04
@@ -492,7 +492,7 @@ jobs:
              sh -c 'set -e \
                     RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
                     --features "pool_tests" \
-                    --manifest-path=$HOME/libvcx/Cargo.toml"'
+                    --manifest-path="$HOME/libvcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -524,7 +524,7 @@ jobs:
              $DOCKER_IMG_CACHED \
              sh -c 'set -e; RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
                     --features "pool_tests" \
-                    --manifest-path=$HOME/aries_vcx/Cargo.toml"'
+                    --manifest-path="$HOME/aries_vcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -553,7 +553,9 @@ jobs:
         run: |
           set -x
           docker run --network host $DOCKER_IMG_CACHED \
-                              sh -c '(RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test --features "mysql_test")'
+                              sh -c '(RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test \
+                                    --features "mysql_test \
+                                    --manifest-path="$HOME/aries_vcx/Cargo.toml")'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
@@ -585,7 +587,7 @@ jobs:
              $DOCKER_IMG_CACHED \
              sh -c 'set -e; RUST_TEST_THREADS=1 RUST_BACKTRACE=full TEST_POOL_IP=127.0.0.1 cargo test --release \
                     --features "agency_pool_tests" \
-                    --manifest-path=$HOME/aries_vcx/Cargo.toml"'
+                    --manifest-path="$HOME/aries_vcx/Cargo.toml"'
       - name: "Collect docker logs on failure"
         if: failure()
         uses: ./.github/actions/upload-docker-logs
