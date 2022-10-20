@@ -554,7 +554,7 @@ jobs:
           set -x
           docker run --network host $DOCKER_IMG_CACHED \
                               sh -c '(RUST_TEST_THREADS=1 TEST_POOL_IP=127.0.0.1 cargo test \
-                                    --features "mysql_test \
+                                    --features "mysql_test" \
                                     --manifest-path="$HOME/aries_vcx/Cargo.toml")'
       - name: "Collect docker logs on failure"
         if: failure()
