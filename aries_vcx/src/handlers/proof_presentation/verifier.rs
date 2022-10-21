@@ -77,15 +77,10 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn send_ack(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
-        self.step(
-            wallet_handle,
-            pool_handle,
-            VerifierMessages::SendPresentationAck(),
-            Some(send_message),
-        )
-        .await
+        self.verifier_sm = self.verifier_sm.clone().send_ack(send_message).await?;
+        Ok(())
     }
 
     pub fn set_request(
@@ -169,19 +164,12 @@ impl Verifier {
 
     pub async fn decline_presentation_proposal<'a>(
         &'a mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         send_message: SendClosure,
         reason: &'a str,
     ) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
-        self.step(
-            wallet_handle,
-            pool_handle,
-            VerifierMessages::RejectPresentationProposal(reason.to_string()),
-            Some(send_message),
-        )
-        .await
+        self.verifier_sm = self.verifier_sm.clone().reject_presentation_proposal(reason.to_string(), send_message).await?;
+        Ok(())
     }
 
     pub async fn update_state(

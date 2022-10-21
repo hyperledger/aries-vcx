@@ -542,8 +542,6 @@ pub mod test_utils {
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         verifier
             .decline_presentation_proposal(
-                faber.wallet_handle,
-                faber.pool_handle,
                 connection.send_message_closure(faber.wallet_handle).await.unwrap(),
                 "I don't like Alices",
             )

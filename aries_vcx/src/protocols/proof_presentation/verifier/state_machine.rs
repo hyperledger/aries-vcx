@@ -117,6 +117,41 @@ impl VerifierSM {
         }
     }
 
+    pub async fn send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+        let state = match self.state {
+            VerifierFullState::Finished(state) => {
+                let ack = build_verification_ack(&self.thread_id);
+                send_message(A2AMessage::PresentationAck(ack)).await?;
+                VerifierFullState::Finished(state)
+            }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn reject_presentation_proposal(self, reason: String, send_message: SendClosure) -> VcxResult<Self> {
+        let (state, thread_id) = match self.state {
+            VerifierFullState::PresentationProposalReceived(state) => {
+                let thread_id = match state.presentation_proposal.thread {
+                    Some(thread) => thread
+                        .thid
+                        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
+                    None => state.presentation_proposal.id.0,
+                };
+                let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
+                send_message(problem_report.to_a2a_message()).await?;
+                (
+                    VerifierFullState::Finished(FinishedState::declined(problem_report)),
+                    thread_id,
+                )
+            }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+        };
+        Ok(Self { state, thread_id, ..self })
+    }
+
+
+
     pub fn find_message_to_handle(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         trace!("VerifierSM::find_message_to_handle >>> messages: {:?}", messages);
         for (uid, message) in messages {
@@ -249,22 +284,12 @@ impl VerifierSM {
             }
             VerifierFullState::PresentationProposalReceived(state) => match message {
                 VerifierMessages::RejectPresentationProposal(reason) => {
-                    let thread_id = match state.presentation_proposal.thread {
-                        Some(thread) => thread
-                            .thid
-                            .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
-                        None => state.presentation_proposal.id.0,
-                    };
-                    let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
-                    send_message.ok_or(VcxError::from_msg(
+                    let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
-                    ))?(problem_report.to_a2a_message())
-                    .await?;
-                    (
-                        VerifierFullState::Finished(FinishedState::declined(problem_report)),
-                        thread_id,
-                    )
+                    ))?;
+                    let Self { state, thread_id, .. } = self.reject_presentation_proposal(reason, send_message).await?;
+                    (state, thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in state {}", state_name);
@@ -319,16 +344,12 @@ impl VerifierSM {
                     (VerifierFullState::PresentationRequestSent(state), thread_id)
                 }
             },
-            VerifierFullState::Finished(state) => {
-                if matches!(message, VerifierMessages::SendPresentationAck()) {
-                    let ack = build_verification_ack(&thread_id);
-                    send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?(A2AMessage::PresentationAck(ack))
-                    .await?;
-                }
-                (VerifierFullState::Finished(state), thread_id)
+            VerifierFullState::Finished(_) => {
+                let send_message = send_message.ok_or(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                (self.send_ack(send_message).await?.state, thread_id)
             }
         };
 
