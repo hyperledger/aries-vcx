@@ -347,6 +347,47 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
+    pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<Self> {
+        Ok(match self.state {
+            IssuerFullState::OfferSet(ref state_data) => {
+                let cred_offer_msg = state_data.offer.to_a2a_message();
+                send_message(cred_offer_msg).await?;
+                self.mark_credential_offer_msg_sent()?
+            }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+        })
+    }
+
+    pub async fn send_credential(self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<Self> {
+        let state = match self.state {
+            IssuerFullState::RequestReceived(state_data) => {
+                match _create_credential(
+                    wallet_handle,
+                    &state_data.request,
+                    &state_data.rev_reg_id,
+                    &state_data.tails_file,
+                    &state_data.offer,
+                    &state_data.cred_data,
+                    &self.thread_id,
+                ).await {
+                    Ok((credential_msg, cred_rev_id)) => {
+                        let credential_msg = credential_msg.set_thread_id(&self.thread_id).ask_for_ack(); // TODO: Make configurable
+                        send_message(credential_msg.to_a2a_message()).await?;
+                        IssuerFullState::CredentialSent((state_data, cred_rev_id).into())
+                    }
+                    Err(err) => {
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        error!("Failed to create credential, sending problem report {:?}", problem_report);
+                        send_message(problem_report.to_a2a_message()).await?;
+                        IssuerFullState::Finished((state_data, problem_report).into())
+                    }
+                }
+            }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+        };
+        Ok(Self { state, ..self })
+    }
+
     pub async fn handle_message(
         self,
         wallet_handle: WalletHandle,
@@ -360,7 +401,7 @@ impl IssuerSM {
             state,
             source_id,
             thread_id,
-        } = self;
+        } = self.clone();
         let (state, thread_id) = match state {
             IssuerFullState::Initial(state_data) => match cim {
                 CredentialIssuanceAction::CredentialProposal(proposal) => {
@@ -399,43 +440,11 @@ impl IssuerSM {
             },
             IssuerFullState::RequestReceived(state_data) => match cim {
                 CredentialIssuanceAction::CredentialSend() => {
-                    let credential_msg = _create_credential(
-                        wallet_handle,
-                        &state_data.request,
-                        &state_data.rev_reg_id,
-                        &state_data.tails_file,
-                        &state_data.offer,
-                        &state_data.cred_data,
-                        &thread_id,
-                    )
-                    .await;
-                    match credential_msg {
-                        Ok((credential_msg, cred_rev_id)) => {
-                            let credential_msg = credential_msg.set_thread_id(&thread_id).ask_for_ack(); // TODO: Make configurable
-                            send_message.ok_or(VcxError::from_msg(
-                                VcxErrorKind::InvalidState,
-                                "Attempted to call undefined send_message callback",
-                            ))?(credential_msg.to_a2a_message())
-                            .await?;
-                            (
-                                IssuerFullState::CredentialSent((state_data, cred_rev_id).into()),
-                                thread_id,
-                            )
-                        }
-                        Err(err) => {
-                            let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
-                            error!("Failed to create credential, sending problem report {:?}", problem_report);
-                            send_message.ok_or(VcxError::from_msg(
-                                VcxErrorKind::InvalidState,
-                                "Attempted to call undefined send_message callback",
-                            ))?(problem_report.to_a2a_message())
-                            .await?;
-                            (
-                                IssuerFullState::Finished((state_data, problem_report).into()),
-                                thread_id,
-                            )
-                        }
-                    }
+                    let send_message = send_message.ok_or(VcxError::from_msg(
+                        VcxErrorKind::InvalidState,
+                        "Attempted to call undefined send_message callback",
+                    ))?;
+                    (self.send_credential(wallet_handle, send_message).await?.state, thread_id)
                 }
                 _ => {
                     warn!("Unable to process received message in state {}", state_name);
