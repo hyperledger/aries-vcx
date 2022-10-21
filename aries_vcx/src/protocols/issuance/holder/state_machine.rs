@@ -249,9 +249,17 @@ impl HolderSM {
     }
 
     pub async fn send_proposal(self, proposal_data: CredentialProposalData, send_message: SendClosure) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()))?;
         let state = match self.state {
-            HolderFullState::Initial(_) | HolderFullState::OfferReceived(_) => {
-                let proposal = CredentialProposal::from(proposal_data).set_id(&self.thread_id);
+            HolderFullState::Initial(_) => {
+                let proposal = CredentialProposal::from(proposal_data)
+                    .set_id(&self.thread_id);
+                send_message(proposal.to_a2a_message()).await?;
+                HolderFullState::ProposalSent(ProposalSentState::new(proposal))
+            }
+            HolderFullState::OfferReceived(_) => {
+                let proposal = CredentialProposal::from(proposal_data)
+                    .set_thread_id(&self.thread_id);
                 send_message(proposal.to_a2a_message()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
