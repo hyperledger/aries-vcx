@@ -217,7 +217,7 @@ impl HolderSM {
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.decline_offer(wallet_handle, pool_handle, comment, send_message).await?.state
+                    self.decline_offer(comment, send_message).await?.state
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
@@ -289,9 +289,9 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn decline_offer(self, wallet_handle: WalletHandle, pool_handle: PoolHandle, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn decline_offer(self, comment: Option<String>, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::OfferReceived(state_data) => {
+            HolderFullState::OfferReceived(_) => {
                 let problem_report = build_problem_report_msg(comment, &self.thread_id);
                 send_message(problem_report.to_a2a_message()).await?;
                 HolderFullState::Finished(problem_report.into())

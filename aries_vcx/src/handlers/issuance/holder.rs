@@ -63,14 +63,10 @@ impl Holder {
 
     pub async fn decline_offer<'a>(
         &'a mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         comment: Option<&'a str>,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().decline_offer(
-            wallet_handle,
-            pool_handle,
             comment.map(String::from),
             send_message,
         )

@@ -353,7 +353,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
     credential
-        .decline_offer(get_main_wallet_handle(), get_main_pool_handle()?, comment, send_message)
+        .decline_offer(comment, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)

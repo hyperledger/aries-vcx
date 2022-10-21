@@ -393,8 +393,6 @@ pub mod test_utils {
         assert_eq!(HolderState::OfferReceived, holder.get_state());
         holder
             .decline_offer(
-                alice.wallet_handle,
-                alice.pool_handle,
                 Some("Have a nice day"),
                 connection.send_message_closure(alice.wallet_handle).await.unwrap(),
             )
