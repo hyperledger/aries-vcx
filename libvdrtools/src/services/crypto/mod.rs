@@ -13,9 +13,11 @@ use indy_utils::crypto::{
 
 use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
+#[cfg(feature = "ffi_api")]
+use crate::domain::crypto::combo_box::ComboBox;
+
 use crate::{
     domain::crypto::{
-        combo_box::ComboBox,
         did::{Did, DidValue, MyDidInfo, TheirDid, TheirDidInfo},
         key::{Key, KeyInfo},
     },
@@ -271,6 +273,7 @@ impl CryptoService {
         res
     }
 
+    #[cfg(feature = "ffi_api")]
     pub(crate) async fn create_combo_box(
         &self,
         my_key: &Key,

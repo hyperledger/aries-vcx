@@ -2,15 +2,9 @@ extern crate zeroize;
 
 use self::zeroize::Zeroize;
 
-#[derive(Derivative)]
-#[derivative(Debug)]
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Key {
     pub verkey: String,
-    #[cfg(not(test))]
-    #[derivative(Debug = "ignore")]
-    pub signkey: String,
-    #[cfg(test)]
     pub signkey: String,
 }
 

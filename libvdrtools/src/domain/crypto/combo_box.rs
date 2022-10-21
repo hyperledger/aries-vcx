@@ -1,3 +1,4 @@
+#[cfg(feature = "ffi_api")]
 use rmp_serde;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -7,6 +8,7 @@ pub struct ComboBox {
     pub nonce: String
 }
 
+#[cfg(feature = "ffi_api")]
 impl ComboBox {
     pub fn to_msg_pack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
         rmp_serde::encode::to_vec_named(self)

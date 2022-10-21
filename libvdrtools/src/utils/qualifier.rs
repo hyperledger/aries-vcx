@@ -78,4 +78,16 @@ macro_rules! qualifiable_type (($newtype:ident) => (
             self.0.contains($newtype::PREFIX) && qualifier::is_fully_qualified(&self.0)
         }
     }
+
+    impl From<&str> for $newtype {
+        fn from(value: &str) -> Self {
+            Self(value.to_owned())
+        }
+    }
+
+    impl From<&String> for $newtype {
+        fn from(value: &String) -> Self {
+            Self(value.clone())
+        }
+    }
 ));

@@ -199,7 +199,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn set_credential_attr_tag_policy(
+    pub async fn set_credential_attr_tag_policy(
         &self,
         wallet_handle: WalletHandle,
         cred_def_id: CredentialDefinitionId,
@@ -273,7 +273,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn get_credential_attr_tag_policy(
+    pub async fn get_credential_attr_tag_policy(
         &self,
         wallet_handle: WalletHandle,
         cred_def_id: CredentialDefinitionId,
@@ -362,7 +362,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn get_credentials(
+    pub async fn get_credentials(
         &self,
         wallet_handle: WalletHandle,
         filter_json: Option<String>,
@@ -400,7 +400,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn get_credential(
+    pub async fn get_credential(
         &self,
         wallet_handle: WalletHandle,
         cred_id: String,
@@ -428,7 +428,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn search_credentials(
+    pub async fn search_credentials(
         &self,
         wallet_handle: WalletHandle,
         query_json: Option<String>,
@@ -462,7 +462,7 @@ impl ProverController {
         Ok(res)
     }
 
-    pub(crate) async fn fetch_credentials(
+    pub async fn fetch_credentials(
         &self,
         search_handle: SearchHandle,
         count: usize,
@@ -504,7 +504,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn close_credentials_search(
+    pub async fn close_credentials_search(
         &self,
         search_handle: SearchHandle,
     ) -> IndyResult<()> {
@@ -529,7 +529,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn get_credentials_for_proof_req(
+    pub async fn get_credentials_for_proof_req(
         &self,
         wallet_handle: WalletHandle,
         proof_request: ProofRequest,
@@ -610,7 +610,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn search_credentials_for_proof_req(
+    pub async fn search_credentials_for_proof_req(
         &self,
         wallet_handle: WalletHandle,
         proof_request: ProofRequest,
@@ -710,7 +710,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn fetch_credential_for_proof_request(
+    pub async fn fetch_credential_for_proof_request(
         &self,
         search_handle: SearchHandle,
         item_referent: String,
@@ -955,7 +955,7 @@ impl ProverController {
         res
     }
 
-    pub(crate) async fn update_revocation_state(
+    pub async fn update_revocation_state(
         &self,
         blob_storage_reader_handle: i32,
         mut rev_state: RevocationState,

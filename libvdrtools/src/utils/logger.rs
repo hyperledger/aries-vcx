@@ -1,66 +1,86 @@
-extern crate env_logger;
-extern crate log_panics;
-extern crate log;
+// extern crate env_logger;
+// extern crate log_panics;
+// extern crate log;
+
 #[cfg(target_os = "android")]
 extern crate android_logger;
 
-use self::env_logger::Builder as EnvLoggerBuilder;
-use self::log::{LevelFilter, Level};
-use std::env;
-use std::io::Write;
+
+// use env_logger::Builder as EnvLoggerBuilder;
+// use log::{LevelFilter, Level};
+// use std::env;
+// use std::io::Write;
+
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
-use log::{Record, Metadata};
 
-use libc::{c_void, c_char};
-use std::ffi::CString;
-use std::ptr;
+// use log::{Record, Metadata};
 
-use indy_api_types::errors::prelude::*;
-use indy_utils::ctypes;
+// use libc::{c_void, c_char};
+// use std::ffi::CString;
+// use std::ptr;
+
+// use indy_api_types::errors::prelude::*;
+// use indy_utils::ctypes;
+
+#[cfg(feature = "ffi_api")]
 use indy_api_types::errors::IndyErrorKind::InvalidStructure;
 
+#[cfg(feature = "ffi_api")]
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 
+#[cfg(feature = "ffi_api")]
 pub enum LoggerState {
     Default,
     Custom
 }
 
+#[cfg(feature = "ffi_api")]
 impl LoggerState {
     pub fn get(&self) -> (*const c_void, Option<EnabledCB>, Option<LogCB>, Option<FlushCB>) {
         match self {
-            LoggerState::Default => (ptr::null(), Some(LibvdrtoolsDefaultLogger::enabled), Some(LibvdrtoolsDefaultLogger::log), Some(LibvdrtoolsDefaultLogger::flush)),
+            LoggerState::Default => (
+                ptr::null(),
+                Some(LibvdrtoolsDefaultLogger::enabled),
+                Some(LibvdrtoolsDefaultLogger::log),
+                Some(LibvdrtoolsDefaultLogger::flush)
+            ),
             LoggerState::Custom => unsafe { (CONTEXT, ENABLED_CB, LOG_CB, FLUSH_CB) },
         }
     }
 }
 
 
-pub type EnabledCB = extern fn(context: *const c_void,
-                               level: u32,
-                               target: *const c_char) -> bool;
+// pub type EnabledCB = extern fn(context: *const c_void,
+//                                level: u32,
+//                                target: *const c_char) -> bool;
 
-pub type LogCB = extern fn(context: *const c_void,
-                           level: u32,
-                           target: *const c_char,
-                           message: *const c_char,
-                           module_path: *const c_char,
-                           file: *const c_char,
-                           line: u32);
+// pub type LogCB = extern fn(context: *const c_void,
+//                            level: u32,
+//                            target: *const c_char,
+//                            message: *const c_char,
+//                            module_path: *const c_char,
+//                            file: *const c_char,
+//                            line: u32);
 
-pub type FlushCB = extern fn(context: *const c_void);
+// pub type FlushCB = extern fn(context: *const c_void);
 
+#[cfg(feature = "ffi_api")]
 static mut CONTEXT: *const c_void = ptr::null();
+#[cfg(feature = "ffi_api")]
 static mut ENABLED_CB: Option<EnabledCB> = None;
+#[cfg(feature = "ffi_api")]
 static mut LOG_CB: Option<LogCB> = None;
+#[cfg(feature = "ffi_api")]
 static mut FLUSH_CB: Option<FlushCB> = None;
 
-#[cfg(debug_assertions)]
-const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Trace;
-#[cfg(not(debug_assertions))]
-const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Info;
+// #[cfg(debug_assertions)]
+// const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Trace;
 
+// #[cfg(not(debug_assertions))]
+// const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Info;
+
+#[cfg(feature = "ffi_api")]
 pub struct LibvdrtoolsLogger {
     context: *const c_void,
     enabled: Option<EnabledCB>,
@@ -68,12 +88,14 @@ pub struct LibvdrtoolsLogger {
     flush: Option<FlushCB>,
 }
 
+#[cfg(feature = "ffi_api")]
 impl LibvdrtoolsLogger {
     fn new(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>) -> Self {
         LibvdrtoolsLogger { context, enabled, log, flush }
     }
 }
 
+#[cfg(feature = "ffi_api")]
 impl log::Log for LibvdrtoolsLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         if let Some(enabled_cb) = self.enabled {
@@ -115,10 +137,13 @@ impl log::Log for LibvdrtoolsLogger {
     }
 }
 
+#[cfg(feature = "ffi_api")]
 unsafe impl Sync for LibvdrtoolsLogger {}
 
+#[cfg(feature = "ffi_api")]
 unsafe impl Send for LibvdrtoolsLogger {}
 
+#[cfg(feature = "ffi_api")]
 impl LibvdrtoolsLogger {
     pub fn init(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>, max_lvl: Option<u32>) -> Result<(), IndyError> {
         let logger = LibvdrtoolsLogger::new(context, enabled, log, flush);
@@ -163,13 +188,15 @@ impl LibvdrtoolsLogger {
     }
 }
 
+#[cfg(feature = "ffi_api")]
 pub struct LibvdrtoolsDefaultLogger;
 
+#[cfg(feature = "ffi_api")]
 impl LibvdrtoolsDefaultLogger {
     pub fn init(pattern: Option<String>) -> Result<(), IndyError> {
         let pattern = pattern.or_else(|| env::var("RUST_LOG").ok());
 
-        log_panics::init(); //Logging of panics is essential for android. As android does not log to stdout for native code
+        log_panics::init(); // Logging of panics is essential for android. As android does not log to stdout for native code
 
         if cfg!(target_os = "android") {
             #[cfg(target_os = "android")]
@@ -245,6 +272,7 @@ impl LibvdrtoolsDefaultLogger {
     }
 }
 
+#[cfg(feature = "ffi_api")]
 fn get_level(level: u32) -> Level {
     match level {
         1 => Level::Error,

@@ -19,7 +19,7 @@ impl PoolController {
         PoolController { pool_service }
     }
 
-    pub(crate) fn create(&self, name: String, config: Option<PoolConfig>) -> IndyResult<()> {
+    pub fn create(&self, name: String, config: Option<PoolConfig>) -> IndyResult<()> {
         trace!("create > name {:?} config {:?}", name, config);
 
         self.pool_service.create(&name, config)?;
@@ -29,7 +29,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) async fn delete(&self, name: String) -> IndyResult<()> {
+    pub async fn delete(&self, name: String) -> IndyResult<()> {
         trace!("delete > name {:?}", name);
 
         self.pool_service.delete(&name).await?;
@@ -39,7 +39,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) async fn open(
+    pub async fn open(
         &self,
         name: String,
         config: Option<PoolOpenConfig>,
@@ -53,7 +53,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) fn list(&self) -> IndyResult<String> {
+    pub fn list(&self) -> IndyResult<String> {
         trace!("list > ");
 
         let pools = self.pool_service.list()?;
@@ -66,7 +66,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) async fn close(&self, pool_handle: PoolHandle) -> IndyResult<()> {
+    pub async fn close(&self, pool_handle: PoolHandle) -> IndyResult<()> {
         trace!("close > handle {:?}", pool_handle);
 
         self.pool_service.close(pool_handle).await?;
@@ -76,7 +76,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) async fn refresh(&self, handle: PoolHandle) -> IndyResult<()> {
+    pub async fn refresh(&self, handle: PoolHandle) -> IndyResult<()> {
         trace!("refresh > handle {:?}", handle);
 
         self.pool_service.refresh(handle).await?;
@@ -86,7 +86,7 @@ impl PoolController {
         res
     }
 
-    pub(crate) fn set_protocol_version(&self, version: usize) -> IndyResult<()> {
+    pub fn set_protocol_version(&self, version: usize) -> IndyResult<()> {
         trace!("set_protocol_version > version {:?}", version);
 
         if version != 1 && version != 2 {

@@ -217,6 +217,7 @@ impl PoolService {
         res
     }
 
+    #[cfg(feature = "ffi_api")]
     pub(crate) async fn is_pool_opened(&self, handle: PoolHandle) -> bool {
         self
             .open_pools

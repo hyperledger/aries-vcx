@@ -11,7 +11,7 @@ use std::{
     collections::{HashMap, HashSet},
     convert::TryFrom,
 };
-use indy_api_types::{errors::*};
+use indy_api_types::errors::*;
 use async_std::sync::{Arc, RwLock, Mutex, RwLockReadGuard};
 
 use crate::services::{
@@ -32,10 +32,12 @@ use crate::domain::{
 
 use ledger::Ledger;
 
+#[cfg(feature = "ffi_api")]
 pub(crate) struct VDRBuilder {
     pub(crate) namespaces: HashMap<String, Arc<RwLock<dyn Ledger + 'static>>>,
 }
 
+#[cfg(feature = "ffi_api")]
 impl VDRBuilder {
     pub fn create() -> VDRBuilder {
         VDRBuilder {
@@ -73,11 +75,12 @@ impl VDRBuilder {
     }
 }
 
-
+#[cfg(feature = "ffi_api")]
 pub(crate) struct VDR {
     namespaces: HashMap<String, Arc<RwLock<dyn Ledger + 'static>>>,
 }
 
+#[cfg(feature = "ffi_api")]
 impl VDR {
     async fn resolve_ledger_for_namespace<'a>(&'a self,
                                               namespace: &str) -> IndyResult<RwLockReadGuard<'a, dyn Ledger>> {
@@ -119,6 +122,7 @@ impl VDR {
     }
 }
 
+#[cfg(feature = "ffi_api")]
 pub struct VDRController {
     wallet_service: Arc<WalletService>,
     indy_ledger_service: Arc<IndyLedgerService>,
@@ -126,6 +130,7 @@ pub struct VDRController {
     crypto_service: Arc<CryptoService>,
 }
 
+#[cfg(feature = "ffi_api")]
 impl VDRController {
     pub(crate) fn new(
         wallet_service: Arc<WalletService>,
@@ -140,11 +145,13 @@ impl VDRController {
         }
     }
 
-    pub(crate) async fn register_indy_ledger(&self,
-                                             vdr_builder: Arc<Mutex<VDRBuilder>>,
-                                             namespace_list: Namespaces,
-                                             genesis_txn: String,
-                                             taa_config: Option<TAAConfig>) -> IndyResult<()> {
+    pub(crate) async fn register_indy_ledger(
+        &self,
+        vdr_builder: Arc<Mutex<VDRBuilder>>,
+        namespace_list: Namespaces,
+        genesis_txn: String,
+        taa_config: Option<TAAConfig>,
+    ) -> IndyResult<()> {
         let mut vdr_builder = vdr_builder.lock().await;
         vdr_builder.validate_unique_namespaces(&namespace_list)?;
 

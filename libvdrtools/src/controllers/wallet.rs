@@ -13,8 +13,8 @@ use indy_utils::crypto::{
     chacha20poly1305_ietf, chacha20poly1305_ietf::Key as MasterKey, randombytes,
 };
 
-use indy_wallet::{KeyDerivationData, WalletService};
 use crate::utils::crypto::base58::ToBase58;
+use indy_wallet::{KeyDerivationData, WalletService};
 
 use crate::services::CryptoService;
 
@@ -34,7 +34,7 @@ impl WalletController {
         }
     }
 
-    pub(crate) fn register_type(
+    pub fn register_type(
         &self,
         type_: String,
         create: WalletCreate,
@@ -96,7 +96,7 @@ impl WalletController {
         Ok(())
     }
 
-    pub(crate) async fn create(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
+    pub async fn create(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
         trace!(
             "_create > config: {:?} credentials: {:?}",
             &config,
@@ -119,11 +119,7 @@ impl WalletController {
         res
     }
 
-    pub(crate) async fn open(
-        &self,
-        config: Config,
-        credentials: Credentials,
-    ) -> IndyResult<WalletHandle> {
+    pub async fn open(&self, config: Config, credentials: Credentials) -> IndyResult<WalletHandle> {
         trace!(
             "open > config: {:?} credentials: {:?}",
             &config,
@@ -154,7 +150,7 @@ impl WalletController {
         res
     }
 
-    pub(crate) async fn close(&self, wallet_handle: WalletHandle) -> IndyResult<()> {
+    pub async fn close(&self, wallet_handle: WalletHandle) -> IndyResult<()> {
         trace!("close > handle: {:?}", wallet_handle);
 
         self.wallet_service.close_wallet(wallet_handle).await?;
@@ -163,7 +159,7 @@ impl WalletController {
         Ok(())
     }
 
-    pub(crate) async fn delete(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
+    pub async fn delete(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
         trace!(
             "delete > config: {:?} credentials: {:?}",
             &config,
@@ -187,7 +183,7 @@ impl WalletController {
         res
     }
 
-    pub(crate) async fn export(
+    pub async fn export(
         &self,
         wallet_handle: WalletHandle,
         export_config: ExportConfig,
@@ -214,7 +210,7 @@ impl WalletController {
         res
     }
 
-    pub(crate) async fn import(
+    pub async fn import(
         &self,
         config: Config,
         credentials: Credentials,
@@ -246,7 +242,7 @@ impl WalletController {
         res
     }
 
-    pub(crate) fn generate_key(&self, config: Option<KeyConfig>) -> IndyResult<String> {
+    pub fn generate_key(&self, config: Option<KeyConfig>) -> IndyResult<String> {
         trace!("generate_key > config: {:?}", secret!(&config));
 
         let seed = config

@@ -18,7 +18,7 @@ impl PairwiseController {
         PairwiseController { wallet_service }
     }
 
-    pub(crate) async fn pairwise_exists(
+    pub async fn pairwise_exists(
         &self,
         wallet_handle: WalletHandle,
         their_did: DidValue,
@@ -38,7 +38,7 @@ impl PairwiseController {
         res
     }
 
-    pub(crate) async fn create_pairwise(
+    pub async fn create_pairwise(
         &self,
         wallet_handle: WalletHandle,
         their_did: DidValue,
@@ -79,7 +79,7 @@ impl PairwiseController {
         res
     }
 
-    pub(crate) async fn list_pairwise(&self, wallet_handle: WalletHandle) -> IndyResult<String> {
+    pub async fn list_pairwise(&self, wallet_handle: WalletHandle) -> IndyResult<String> {
         trace!("list_pairwise > wallet_handle {:?}", wallet_handle);
 
         let mut search = self
@@ -111,7 +111,7 @@ impl PairwiseController {
         res
     }
 
-    pub(crate) async fn get_pairwise(
+    pub async fn get_pairwise(
         &self,
         wallet_handle: WalletHandle,
         their_did: DidValue,
@@ -139,7 +139,7 @@ impl PairwiseController {
         res
     }
 
-    pub(crate) async fn set_pairwise_metadata(
+    pub async fn set_pairwise_metadata(
         &self,
         wallet_handle: WalletHandle,
         their_did: DidValue,

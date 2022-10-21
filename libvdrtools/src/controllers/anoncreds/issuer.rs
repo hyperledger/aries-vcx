@@ -97,7 +97,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) async fn create_and_store_credential_definition(
+    pub async fn create_and_store_credential_definition(
         &self,
         wallet_handle: WalletHandle,
         issuer_did: DidValue,
@@ -255,7 +255,7 @@ impl IssuerController {
         Ok(res)
     }
 
-    pub(crate) async fn rotate_credential_definition_start(
+    pub async fn rotate_credential_definition_start(
         &self,
         wallet_handle: WalletHandle,
         cred_def_id: CredentialDefinitionId,
@@ -365,7 +365,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) async fn rotate_credential_definition_apply(
+    pub async fn rotate_credential_definition_apply(
         &self,
         wallet_handle: WalletHandle,
         cred_def_id: CredentialDefinitionId,
@@ -414,7 +414,7 @@ impl IssuerController {
         Ok(())
     }
 
-    pub(crate) async fn create_and_store_revocation_registry(
+    pub async fn create_and_store_revocation_registry(
         &self,
         wallet_handle: WalletHandle,
         issuer_did: DidValue,
@@ -824,7 +824,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) async fn revoke_credential(
+    pub async fn revoke_credential(
         &self,
         wallet_handle: WalletHandle,
         blob_storage_reader_handle: i32,
@@ -1029,7 +1029,7 @@ impl IssuerController {
         res
     }
 
-    pub(crate) fn merge_revocation_registry_deltas(
+    pub fn merge_revocation_registry_deltas(
         &self,
         rev_reg_delta: RevocationRegistryDelta,
         other_rev_reg_delta: RevocationRegistryDelta,

@@ -1,5 +1,6 @@
 pub use indy_utils::environment;
 
+#[cfg(feature = "ffi_api")]
 #[macro_use]
 pub mod ccallback;
 
@@ -39,6 +40,7 @@ macro_rules! map (
      };
 );
 
+#[cfg(feature = "ffi_api")]
 macro_rules! json_string {
     ($value:ident) => {
         serde_json::to_string(&$value).map_err(|err| {
@@ -50,6 +52,7 @@ macro_rules! json_string {
     };
 }
 
+#[cfg(feature = "ffi_api")]
 macro_rules! json_string_result {
     ($value:ident) => {
         Ok(json_string!($value))

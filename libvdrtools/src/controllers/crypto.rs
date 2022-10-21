@@ -6,8 +6,9 @@ use indy_wallet::RecordOptions;
 
 use crate::{
     domain::crypto::{
-        combo_box::ComboBox,
-        key::{Key, KeyInfo, KeyMetadata},
+        key::{Key, KeyInfo},
+        // combo_box::ComboBox,
+        // key::KeyMetadata,
         pack::*,
     },
     services::{CryptoService, WalletService},
@@ -106,202 +107,202 @@ impl CryptoController {
     }
 
     //TODO begin deprecation process this function. It will be replaced by pack
-    pub(crate) async fn authenticated_encrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        their_vk: &str,
-        msg: &[u8],
-    ) -> IndyResult<Vec<u8>> {
-        trace!(
-            "authenticated_encrypt >>> wallet_handle: {:?}, my_vk: {:?}, their_vk: {:?}, msg: {:?}",
-            wallet_handle,
-            my_vk,
-            their_vk,
-            msg
-        );
+    // pub(crate) async fn authenticated_encrypt(
+    //     &self,
+    //     wallet_handle: WalletHandle,
+    //     my_vk: &str,
+    //     their_vk: &str,
+    //     msg: &[u8],
+    // ) -> IndyResult<Vec<u8>> {
+    //     trace!(
+    //         "authenticated_encrypt >>> wallet_handle: {:?}, my_vk: {:?}, their_vk: {:?}, msg: {:?}",
+    //         wallet_handle,
+    //         my_vk,
+    //         their_vk,
+    //         msg
+    //     );
 
-        self.crypto_service.validate_key(my_vk).await?;
-        self.crypto_service.validate_key(their_vk).await?;
+    //     self.crypto_service.validate_key(my_vk).await?;
+    //     self.crypto_service.validate_key(their_vk).await?;
 
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
-            .await?;
+    //     let my_key: Key = self
+    //         .wallet_service
+    //         .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
+    //         .await?;
 
-        let msg = self
-            .crypto_service
-            .create_combo_box(&my_key, &their_vk, msg)
-            .await?;
+    //     let msg = self
+    //         .crypto_service
+    //         .create_combo_box(&my_key, &their_vk, msg)
+    //         .await?;
 
-        let msg = msg.to_msg_pack().map_err(|e| {
-            err_msg(
-                IndyErrorKind::InvalidState,
-                format!("Can't serialize ComboBox: {:?}", e),
-            )
-        })?;
+    //     let msg = msg.to_msg_pack().map_err(|e| {
+    //         err_msg(
+    //             IndyErrorKind::InvalidState,
+    //             format!("Can't serialize ComboBox: {:?}", e),
+    //         )
+    //     })?;
 
-        let res = self.crypto_service.crypto_box_seal(&their_vk, &msg).await?;
+    //     let res = self.crypto_service.crypto_box_seal(&their_vk, &msg).await?;
 
-        trace!("authenticated_encrypt <<< res: {:?}", res);
+    //     trace!("authenticated_encrypt <<< res: {:?}", res);
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
     //TODO begin deprecation process this function. It will be replaced by unpack
-    pub(crate) async fn authenticated_decrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        msg: &[u8],
-    ) -> IndyResult<(String, Vec<u8>)> {
-        trace!(
-            "authenticated_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, msg: {:?}",
-            wallet_handle,
-            my_vk,
-            msg
-        );
+    // pub(crate) async fn authenticated_decrypt(
+    //     &self,
+    //     wallet_handle: WalletHandle,
+    //     my_vk: &str,
+    //     msg: &[u8],
+    // ) -> IndyResult<(String, Vec<u8>)> {
+    //     trace!(
+    //         "authenticated_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, msg: {:?}",
+    //         wallet_handle,
+    //         my_vk,
+    //         msg
+    //     );
 
-        self.crypto_service.validate_key(my_vk).await?;
+    //     self.crypto_service.validate_key(my_vk).await?;
 
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
-            .await?;
+    //     let my_key: Key = self
+    //         .wallet_service
+    //         .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
+    //         .await?;
 
-        let decrypted_msg = self
-            .crypto_service
-            .crypto_box_seal_open(&my_key, &msg)
-            .await?;
+    //     let decrypted_msg = self
+    //         .crypto_service
+    //         .crypto_box_seal_open(&my_key, &msg)
+    //         .await?;
 
-        let parsed_msg = ComboBox::from_msg_pack(decrypted_msg.as_slice()).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't deserialize ComboBox: {:?}", err),
-            )
-        })?;
+    //     let parsed_msg = ComboBox::from_msg_pack(decrypted_msg.as_slice()).map_err(|err| {
+    //         err_msg(
+    //             IndyErrorKind::InvalidStructure,
+    //             format!("Can't deserialize ComboBox: {:?}", err),
+    //         )
+    //     })?;
 
-        let doc: Vec<u8> = base64::decode(&parsed_msg.msg).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't decode internal msg filed from base64 {}", err),
-            )
-        })?;
+    //     let doc: Vec<u8> = base64::decode(&parsed_msg.msg).map_err(|err| {
+    //         err_msg(
+    //             IndyErrorKind::InvalidStructure,
+    //             format!("Can't decode internal msg filed from base64 {}", err),
+    //         )
+    //     })?;
 
-        let nonce: Vec<u8> = base64::decode(&parsed_msg.nonce).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't decode nonce from base64 {}", err),
-            )
-        })?;
+    //     let nonce: Vec<u8> = base64::decode(&parsed_msg.nonce).map_err(|err| {
+    //         err_msg(
+    //             IndyErrorKind::InvalidStructure,
+    //             format!("Can't decode nonce from base64 {}", err),
+    //         )
+    //     })?;
 
-        let decrypted_msg = self
-            .crypto_service
-            .crypto_box_open(&my_key, &parsed_msg.sender, &doc, &nonce)
-            .await?;
+    //     let decrypted_msg = self
+    //         .crypto_service
+    //         .crypto_box_open(&my_key, &parsed_msg.sender, &doc, &nonce)
+    //         .await?;
 
-        let res = (parsed_msg.sender, decrypted_msg);
+    //     let res = (parsed_msg.sender, decrypted_msg);
 
-        trace!("authenticated_decrypt <<< res: {:?}", res);
+    //     trace!("authenticated_decrypt <<< res: {:?}", res);
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
-    pub(crate) async fn anonymous_encrypt(&self, their_vk: &str, msg: &[u8]) -> IndyResult<Vec<u8>> {
-        trace!(
-            "anonymous_encrypt >>> their_vk: {:?}, msg: {:?}",
-            their_vk,
-            msg
-        );
+    // pub(crate) async fn anonymous_encrypt(&self, their_vk: &str, msg: &[u8]) -> IndyResult<Vec<u8>> {
+    //     trace!(
+    //         "anonymous_encrypt >>> their_vk: {:?}, msg: {:?}",
+    //         their_vk,
+    //         msg
+    //     );
 
-        self.crypto_service.validate_key(their_vk).await?;
+    //     self.crypto_service.validate_key(their_vk).await?;
 
-        let res = self.crypto_service.crypto_box_seal(their_vk, &msg).await?;
+    //     let res = self.crypto_service.crypto_box_seal(their_vk, &msg).await?;
 
-        trace!("anonymous_encrypt <<< res: {:?}", res);
+    //     trace!("anonymous_encrypt <<< res: {:?}", res);
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
-    pub(crate) async fn anonymous_decrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        encrypted_msg: &[u8],
-    ) -> IndyResult<Vec<u8>> {
-        trace!(
-            "anonymous_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, encrypted_msg: {:?}",
-            wallet_handle,
-            my_vk,
-            encrypted_msg
-        );
+    // pub(crate) async fn anonymous_decrypt(
+    //     &self,
+    //     wallet_handle: WalletHandle,
+    //     my_vk: &str,
+    //     encrypted_msg: &[u8],
+    // ) -> IndyResult<Vec<u8>> {
+    //     trace!(
+    //         "anonymous_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, encrypted_msg: {:?}",
+    //         wallet_handle,
+    //         my_vk,
+    //         encrypted_msg
+    //     );
 
-        self.crypto_service.validate_key(&my_vk).await?;
+    //     self.crypto_service.validate_key(&my_vk).await?;
 
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, &my_vk, &RecordOptions::id_value())
-            .await?;
+    //     let my_key: Key = self
+    //         .wallet_service
+    //         .get_indy_object(wallet_handle, &my_vk, &RecordOptions::id_value())
+    //         .await?;
 
-        let res = self
-            .crypto_service
-            .crypto_box_seal_open(&my_key, &encrypted_msg)
-            .await?;
+    //     let res = self
+    //         .crypto_service
+    //         .crypto_box_seal_open(&my_key, &encrypted_msg)
+    //         .await?;
 
-        trace!("anonymous_decrypt <<< res: {:?}", res);
+    //     trace!("anonymous_decrypt <<< res: {:?}", res);
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
-    pub(crate) async fn set_key_metadata(
-        &self,
-        wallet_handle: WalletHandle,
-        verkey: &str,
-        metadata: &str,
-    ) -> IndyResult<()> {
-        debug!(
-            "set_key_metadata >>> wallet_handle: {:?}, verkey: {:?}, metadata: {:?}",
-            wallet_handle, verkey, metadata
-        );
+    // pub(crate) async fn set_key_metadata(
+    //     &self,
+    //     wallet_handle: WalletHandle,
+    //     verkey: &str,
+    //     metadata: &str,
+    // ) -> IndyResult<()> {
+    //     debug!(
+    //         "set_key_metadata >>> wallet_handle: {:?}, verkey: {:?}, metadata: {:?}",
+    //         wallet_handle, verkey, metadata
+    //     );
 
-        self.crypto_service.validate_key(verkey).await?;
+    //     self.crypto_service.validate_key(verkey).await?;
 
-        let metadata = KeyMetadata {
-            value: metadata.to_string(),
-        };
+    //     let metadata = KeyMetadata {
+    //         value: metadata.to_string(),
+    //     };
 
-        self.wallet_service
-            .upsert_indy_object(wallet_handle, &verkey, &metadata)
-            .await?;
+    //     self.wallet_service
+    //         .upsert_indy_object(wallet_handle, &verkey, &metadata)
+    //         .await?;
 
-        debug!("set_key_metadata <<<");
+    //     debug!("set_key_metadata <<<");
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub(crate) async fn get_key_metadata(
-        &self,
-        wallet_handle: WalletHandle,
-        verkey: &str,
-    ) -> IndyResult<String> {
-        debug!(
-            "get_key_metadata >>> wallet_handle: {:?}, verkey: {:?}",
-            wallet_handle, verkey
-        );
+    // pub(crate) async fn get_key_metadata(
+    //     &self,
+    //     wallet_handle: WalletHandle,
+    //     verkey: &str,
+    // ) -> IndyResult<String> {
+    //     debug!(
+    //         "get_key_metadata >>> wallet_handle: {:?}, verkey: {:?}",
+    //         wallet_handle, verkey
+    //     );
 
-        self.crypto_service.validate_key(verkey).await?;
+    //     self.crypto_service.validate_key(verkey).await?;
 
-        let metadata = self
-            .wallet_service
-            .get_indy_object::<KeyMetadata>(wallet_handle, &verkey, &RecordOptions::id_value())
-            .await?;
+    //     let metadata = self
+    //         .wallet_service
+    //         .get_indy_object::<KeyMetadata>(wallet_handle, &verkey, &RecordOptions::id_value())
+    //         .await?;
 
-        let res = metadata.value;
+    //     let res = metadata.value;
 
-        debug!("get_key_metadata <<< res: {:?}", res);
+    //     debug!("get_key_metadata <<< res: {:?}", res);
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
     // TODO: Refactor pack to be more modular to version changes or crypto_scheme changes
     // this match statement is super messy, but the easiest way to comply with current architecture

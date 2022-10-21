@@ -1,3 +1,4 @@
+#[cfg(feature = "ffi_api")]
 use super::super::crypto::{
     ED25519,
     SECP256K1,
@@ -18,6 +19,7 @@ impl ToString for DidMethod {
     }
 }
 
+#[cfg(feature = "ffi_api")]
 impl DidMethod {
     pub(crate) fn signature_type(&self) -> &'static str {
         match self {

@@ -4,7 +4,9 @@ pub mod ledger;
 pub mod pairwise;
 pub mod pool;
 pub mod cache;
+#[cfg(feature = "ffi_api")]
 pub mod id;
+#[cfg(feature = "ffi_api")]
 pub mod vdr;
 
 use indy_api_types::validation::Validatable;

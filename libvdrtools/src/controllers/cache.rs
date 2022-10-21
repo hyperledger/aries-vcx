@@ -71,7 +71,7 @@ impl CacheController {
         }
     }
 
-    pub(crate) async fn get_schema(
+    pub async fn get_schema(
         &self,
         pool_handle: PoolHandle,
         wallet_handle: WalletHandle,
@@ -128,7 +128,7 @@ impl CacheController {
         res
     }
 
-    pub(crate) async fn get_cred_def(
+    pub async fn get_cred_def(
         &self,
         pool_handle: PoolHandle,
         wallet_handle: WalletHandle,
@@ -170,7 +170,7 @@ impl CacheController {
         return res;
     }
 
-    pub(crate) async fn purge_schema_cache(
+    pub async fn purge_schema_cache(
         &self,
         wallet_handle: WalletHandle,
         options: PurgeOptions,
@@ -209,7 +209,7 @@ impl CacheController {
         res
     }
 
-    pub(crate) async fn purge_cred_def_cache(
+    pub async fn purge_cred_def_cache(
         &self,
         wallet_handle: WalletHandle,
         options: PurgeOptions,

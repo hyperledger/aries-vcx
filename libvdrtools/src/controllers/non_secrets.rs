@@ -18,7 +18,8 @@ impl NonSecretsController {
         }
     }
 
-    pub(crate) async fn add_record(
+    // TODO: change to String -> &str
+    pub async fn add_record(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -53,7 +54,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn update_record_value(
+    pub async fn update_record_value(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -80,7 +81,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn update_record_tags(
+    pub async fn update_record_tags(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -107,7 +108,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn add_record_tags(
+    pub async fn add_record_tags(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -134,7 +135,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn delete_record_tags(
+    pub async fn delete_record_tags(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -166,7 +167,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn delete_record(
+    pub async fn delete_record(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -190,7 +191,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn get_record(
+    pub async fn get_record(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -228,7 +229,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn open_search(
+    pub async fn open_search(
         &self,
         wallet_handle: WalletHandle,
         type_: String,
@@ -268,7 +269,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn fetch_search_next_records(
+    pub async fn fetch_search_next_records(
         &self,
         wallet_handle: WalletHandle,
         wallet_search_handle: SearchHandle,
@@ -322,7 +323,7 @@ impl NonSecretsController {
         res
     }
 
-    pub(crate) async fn close_search(&self, wallet_search_handle: SearchHandle) -> IndyResult<()> {
+    pub async fn close_search(&self, wallet_search_handle: SearchHandle) -> IndyResult<()> {
         trace!(
             "close_search > wallet_search_handle {:?}",
             wallet_search_handle

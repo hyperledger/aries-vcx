@@ -5,8 +5,10 @@ use indy_wallet::{RecordOptions, WalletService};
 use crate::utils::crypto::base58::ToBase58;
 use serde_json::{self, Value};
 
+#[cfg(feature = "ffi_api")]
+use crate::api::ledger::{CustomFree, CustomTransactionParser};
+
 use crate::{
-    api::ledger::{CustomFree, CustomTransactionParser},
     domain::{
         anoncreds::{
             credential_definition::{
@@ -60,6 +62,7 @@ impl LedgerController {
         }
     }
 
+    #[cfg(feature = "ffi_api")]
     #[allow(dead_code)] // FIXME [async] TODO implement external SP parsers
     pub(crate) fn register_sp_parser(
         &self,
@@ -78,7 +81,7 @@ impl LedgerController {
         //     .map_err(IndyError::from)
     }
 
-    pub(crate) async fn sign_and_submit_request(
+    pub async fn sign_and_submit_request(
         &self,
         pool_handle: PoolHandle,
         wallet_handle: WalletHandle,
@@ -109,7 +112,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) async fn submit_request(
+    pub async fn submit_request(
         &self,
         handle: PoolHandle,
         request_json: String,
@@ -126,7 +129,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) async fn submit_action(
+    pub async fn submit_action(
         &self,
         handle: PoolHandle,
         request_json: String,
@@ -150,7 +153,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) async fn sign_request(
+    pub async fn sign_request(
         &self,
         wallet_handle: WalletHandle,
         submitter_did: DidValue,
@@ -175,7 +178,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) async fn multi_sign_request(
+    pub async fn multi_sign_request(
         &self,
         wallet_handle: WalletHandle,
         submitter_did: DidValue,
@@ -200,7 +203,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_ddo_request(
+    pub fn build_get_ddo_request(
         &self,
         submitter_did: Option<DidValue>,
         target_did: DidValue,
@@ -219,7 +222,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) async fn build_nym_request(
+    pub async fn build_nym_request(
         &self,
         submitter_did: DidValue,
         target_did: DidValue,
@@ -253,7 +256,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_attrib_request(
+    pub fn build_attrib_request(
         &self,
         submitter_did: DidValue,
         target_did: DidValue,
@@ -283,7 +286,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_attrib_request(
+    pub fn build_get_attrib_request(
         &self,
         submitter_did: Option<DidValue>,
         target_did: DidValue,
@@ -313,7 +316,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_nym_request(
+    pub fn build_get_nym_request(
         &self,
         submitter_did: Option<DidValue>,
         target_did: DidValue,
@@ -335,7 +338,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_get_nym_response(&self, get_nym_response: String) -> IndyResult<String> {
+    pub fn parse_get_nym_response(&self, get_nym_response: String) -> IndyResult<String> {
         debug!(
             "parse_get_nym_response > get_nym_response {:?}",
             get_nym_response
@@ -350,7 +353,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_schema_request(
+    pub fn build_schema_request(
         &self,
         submitter_did: DidValue,
         schema: Schema,
@@ -371,7 +374,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_schema_request(
+    pub fn build_get_schema_request(
         &self,
         submitter_did: Option<DidValue>,
         id: SchemaId,
@@ -392,7 +395,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_get_schema_response(
+    pub fn parse_get_schema_response(
         &self,
         get_schema_response: String,
     ) -> IndyResult<(String, String)> {
@@ -410,7 +413,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_cred_def_request(
+    pub fn build_cred_def_request(
         &self,
         submitter_did: DidValue,
         cred_def: CredentialDefinition,
@@ -431,7 +434,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_cred_def_request(
+    pub fn build_get_cred_def_request(
         &self,
         submitter_did: Option<DidValue>,
         id: CredentialDefinitionId,
@@ -452,7 +455,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_get_cred_def_response(
+    pub fn parse_get_cred_def_response(
         &self,
         get_cred_def_response: String,
     ) -> IndyResult<(String, String)> {
@@ -470,7 +473,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_node_request(
+    pub fn build_node_request(
         &self,
         submitter_did: DidValue,
         target_did: DidValue,
@@ -492,7 +495,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_validator_info_request(
+    pub fn build_get_validator_info_request(
         &self,
         submitter_did: DidValue,
     ) -> IndyResult<String> {
@@ -512,7 +515,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_txn_request(
+    pub fn build_get_txn_request(
         &self,
         submitter_did: Option<DidValue>,
         ledger_type: Option<String>,
@@ -536,7 +539,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_pool_config_request(
+    pub fn build_pool_config_request(
         &self,
         submitter_did: DidValue,
         writes: bool,
@@ -558,7 +561,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_pool_restart_request(
+    pub fn build_pool_restart_request(
         &self,
         submitter_did: DidValue,
         action: String,
@@ -580,7 +583,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_pool_upgrade_request(
+    pub fn build_pool_upgrade_request(
         &self,
         submitter_did: DidValue,
         name: String,
@@ -633,7 +636,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_revoc_reg_def_request(
+    pub fn build_revoc_reg_def_request(
         &self,
         submitter_did: DidValue,
         data: RevocationRegistryDefinition,
@@ -656,7 +659,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_revoc_reg_def_request(
+    pub fn build_get_revoc_reg_def_request(
         &self,
         submitter_did: Option<DidValue>,
         id: RevocationRegistryId,
@@ -677,7 +680,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_revoc_reg_def_response(
+    pub fn parse_revoc_reg_def_response(
         &self,
         get_revoc_reg_def_response: String,
     ) -> IndyResult<(String, String)> {
@@ -695,7 +698,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_revoc_reg_entry_request(
+    pub fn build_revoc_reg_entry_request(
         &self,
         submitter_did: DidValue,
         revoc_reg_def_id: RevocationRegistryId,
@@ -721,7 +724,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_revoc_reg_request(
+    pub fn build_get_revoc_reg_request(
         &self,
         submitter_did: Option<DidValue>,
         revoc_reg_def_id: RevocationRegistryId,
@@ -745,7 +748,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_revoc_reg_response(
+    pub fn parse_revoc_reg_response(
         &self,
         get_revoc_reg_response: String,
     ) -> IndyResult<(String, String, u64)> {
@@ -763,7 +766,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_revoc_reg_delta_request(
+    pub fn build_get_revoc_reg_delta_request(
         &self,
         submitter_did: Option<DidValue>,
         revoc_reg_def_id: RevocationRegistryId,
@@ -790,7 +793,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn parse_revoc_reg_delta_response(
+    pub fn parse_revoc_reg_delta_response(
         &self,
         get_revoc_reg_delta_response: String,
     ) -> IndyResult<(String, String, u64)> {
@@ -808,7 +811,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn get_response_metadata(&self, response: String) -> IndyResult<String> {
+    pub fn get_response_metadata(&self, response: String) -> IndyResult<String> {
         debug!("get_response_metadata > response {:?}", response);
 
         let metadata = PoolService::parse_response_metadata(&response)?;
@@ -823,7 +826,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_auth_rule_request(
+    pub fn build_auth_rule_request(
         &self,
         submitter_did: DidValue,
         txn_type: String,
@@ -857,7 +860,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_auth_rules_request(
+    pub fn build_auth_rules_request(
         &self,
         submitter_did: DidValue,
         rules: AuthRules,
@@ -878,7 +881,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_auth_rule_request(
+    pub fn build_get_auth_rule_request(
         &self,
         submitter_did: Option<DidValue>,
         txn_type: Option<String>,
@@ -910,7 +913,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_txn_author_agreement_request(
+    pub fn build_txn_author_agreement_request(
         &self,
         submitter_did: DidValue,
         text: Option<String>,
@@ -940,7 +943,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_disable_all_txn_author_agreements_request(
+    pub fn build_disable_all_txn_author_agreements_request(
         &self,
         submitter_did: DidValue,
     ) -> IndyResult<String> {
@@ -965,7 +968,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_txn_author_agreement_request(
+    pub fn build_get_txn_author_agreement_request(
         &self,
         submitter_did: Option<DidValue>,
         data: Option<GetTxnAuthorAgreementData>,
@@ -986,7 +989,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_acceptance_mechanisms_request(
+    pub fn build_acceptance_mechanisms_request(
         &self,
         submitter_did: DidValue,
         aml: AcceptanceMechanisms,
@@ -1013,7 +1016,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn build_get_acceptance_mechanisms_request(
+    pub fn build_get_acceptance_mechanisms_request(
         &self,
         submitter_did: Option<DidValue>,
         timestamp: Option<u64>,
@@ -1040,7 +1043,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn append_txn_author_agreement_acceptance_to_request(
+    pub fn append_txn_author_agreement_acceptance_to_request(
         &self,
         request_json: String,
         text: Option<String>,
@@ -1075,7 +1078,7 @@ impl LedgerController {
         res
     }
 
-    pub(crate) fn append_request_endorser(
+    pub fn append_request_endorser(
         &self,
         request_json: String,
         endorser_did: DidValue,

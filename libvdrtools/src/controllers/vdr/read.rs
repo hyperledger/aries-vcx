@@ -5,6 +5,7 @@ use crate::{
         cache::GetCacheOptions,
     },
 };
+#[cfg(feature = "ffi_api")]
 use crate::controllers::vdr::{VDRController, VDR};
 use crate::controllers::{
     cache,
@@ -15,6 +16,7 @@ const DID_CACHE: &str = "vdr_did_cache";
 const CREDDEF_CACHE: &str = "vdr_cred_def_cache";
 const SCHEMA_CACHE: &str = "vdr_schema_cache";
 
+#[cfg(feature = "ffi_api")]
 impl VDRController {
     pub(crate) async fn resolve_did(
         &self,

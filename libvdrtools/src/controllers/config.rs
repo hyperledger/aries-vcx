@@ -9,7 +9,7 @@ impl ConfigController {
         ConfigController {}
     }
 
-    pub(crate) fn set_runtime_config(&self, config: IndyConfig) {
+    pub fn set_runtime_config(&self, config: IndyConfig) {
         trace!("set_runtime_config > {:?}", config);
 
         // FIXME: Deprecate this param.

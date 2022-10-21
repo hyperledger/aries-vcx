@@ -1,15 +1,9 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-#[macro_use]
-extern crate derivative;
 
 #[macro_use]
 extern crate log;
 
-extern crate serde;
-
 extern crate variant_count;
-
-extern crate num_cpus;
 
 #[macro_use]
 extern crate num_derive;
@@ -22,7 +16,8 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
-#[macro_use]
+// #[cfg(feature = "ffi_api")]
+// #[macro_use]
 extern crate indy_utils;
 
 pub use indy_api_types as types;
@@ -35,30 +30,43 @@ mod controllers;
 mod domain;
 mod services;
 
+#[cfg(feature = "ffi_api")]
 pub mod api;
 
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
 
+#[cfg(feature = "ffi_api")]
+use crate::services::CommandMetric;
+
+#[cfg(feature = "ffi_api")]
+use crate::controllers::VDRController;
+
 use crate::{
     controllers::{
         BlobStorageController, CacheController, ConfigController, CryptoController, DidController,
         IssuerController, LedgerController, MetricsController, NonSecretsController,
-        PairwiseController, PoolController, ProverController, VDRController, VerifierController,
+        PairwiseController, PoolController, ProverController, VerifierController,
         WalletController,
     },
+
     services::{
-        BlobStorageService, CommandMetric, CryptoService, IssuerService, LedgerService,
+        BlobStorageService,
+        CryptoService, IssuerService, LedgerService,
         MetricsService, PoolService, ProverService, VerifierService, WalletService,
     },
 };
 
+#[cfg(feature = "ffi_api")]
 use indy_api_types::errors::IndyResult;
 
-use std::cmp;
-use std::future::Future;
-use std::time::{SystemTime, UNIX_EPOCH};
+#[cfg(feature = "ffi_api")]
+use std::{
+    cmp,
+    future::Future,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 pub use controllers::CredentialDefinitionId;
 
@@ -67,12 +75,16 @@ pub use domain::{
         revocation_registry_definition::{
             RevocationRegistryId,
             RevocationRegistryDefinition,
+            RevocationRegistryConfig,
+            IssuanceType,
         },
+        revocation_state::RevocationStates,
         credential::{CredentialValues, Credential},
         credential_request::{CredentialRequest, CredentialRequestMetadata},
         credential_definition::CredentialDefinition,
         credential_offer::CredentialOffer,
         schema::AttributeNames,
+        schema::{Schema, SchemaId},
     },
     crypto::{
         did::{
@@ -81,15 +93,19 @@ pub use domain::{
         key::KeyInfo,
         pack::JWE,
     },
+    pool::PoolConfig,
 };
 
 pub use indy_api_types::{
-    WalletHandle,
-    SearchHandle,
+    WalletHandle, INVALID_WALLET_HANDLE,
+    SearchHandle, INVALID_SEARCH_HANDLE,
+    PoolHandle, INVALID_POOL_HANDLE,
+    CommandHandle, INVALID_COMMAND_HANDLE,
 };
 
 pub use services::AnoncredsHelpers;
 
+#[cfg(feature = "ffi_api")]
 fn get_cur_time() -> u128 {
     let since_epoch = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -97,12 +113,14 @@ fn get_cur_time() -> u128 {
     since_epoch.as_millis()
 }
 
+#[cfg(feature = "ffi_api")]
 #[derive(Clone)]
 pub struct InstrumentedThreadPool {
     executor: futures::executor::ThreadPool,
     metrics_service: Arc<MetricsService>,
 }
 
+#[cfg(feature = "ffi_api")]
 impl InstrumentedThreadPool {
     pub fn spawn_ok_instrumented<T, FutIndyRes, FnCb>(
         &self,
@@ -155,7 +173,11 @@ pub struct Locator {
     pub non_secret_controller: NonSecretsController,
     pub cache_controller: CacheController,
     pub metrics_controller: MetricsController,
+
+    #[cfg(feature = "ffi_api")]
     pub vdr_controller: VDRController,
+
+    #[cfg(feature = "ffi_api")]
     pub executor: InstrumentedThreadPool,
 }
 
@@ -167,13 +189,6 @@ impl Locator {
     fn new() -> Locator {
         info!("new >");
 
-        std::panic::set_hook(Box::new(|pi| {
-            error!("Custom panic hook");
-            error!("Custom panic hook: {:?}", pi);
-            let bt = backtrace::Backtrace::new();
-            error!("Custom panic hook: {:?}", bt);
-        }));
-
         let issuer_service = Arc::new(IssuerService::new());
         let prover_service = Arc::new(ProverService::new());
         let verifier_service = Arc::new(VerifierService::new());
@@ -184,14 +199,18 @@ impl Locator {
         let pool_service = Arc::new(PoolService::new());
         let wallet_service = Arc::new(WalletService::new());
 
-        // TODO: Make it work with lower number of threads (VE-2668)
-        let num_threads = cmp::max(8, num_cpus::get());
-        let executor = InstrumentedThreadPool {
-            executor: futures::executor::ThreadPool::builder()
-                .pool_size(num_threads)
-                .create()
-                .unwrap(),
-            metrics_service: metrics_service.clone(),
+        #[cfg(feature = "ffi_api")]
+        let executor = {
+            // TODO: Make it work with lower number of threads (VE-2668)
+            let num_threads = cmp::max(8, num_cpus::get());
+
+            InstrumentedThreadPool {
+                executor: futures::executor::ThreadPool::builder()
+                    .pool_size(num_threads)
+                    .create()
+                    .unwrap(),
+                metrics_service: metrics_service.clone(),
+            }
         };
 
         let issuer_controller = IssuerController::new(
@@ -247,6 +266,7 @@ impl Locator {
             wallet_service.clone(),
         );
 
+        #[cfg(feature = "ffi_api")]
         let vdr_controller = VDRController::new(
             wallet_service.clone(),
             ledger_service.clone(),
@@ -269,7 +289,11 @@ impl Locator {
             non_secret_controller,
             cache_controller,
             metrics_controller,
+
+            #[cfg(feature = "ffi_api")]
             vdr_controller,
+
+            #[cfg(feature = "ffi_api")]
             executor,
         };
 
