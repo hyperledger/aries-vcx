@@ -1255,8 +1255,6 @@ mod tests {
                 alice
                     .prover
                     .send_presentation(
-                        alice.wallet_handle,
-                        alice.pool_handle,
                         alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                     )
                     .await
@@ -1355,10 +1353,8 @@ mod tests {
                 alice
                     .prover
                     .send_presentation(
-                        alice.wallet_handle,
-                        alice.pool_handle,
-                    alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
-                )
+                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
+                    )
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationSent, alice.prover.get_state());

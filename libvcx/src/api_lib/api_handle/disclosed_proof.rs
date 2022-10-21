@@ -152,7 +152,7 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
-    proof.send_presentation(get_main_wallet_handle(), get_main_pool_handle()?, send_message).await?;
+    proof.send_presentation(send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -169,8 +169,6 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32>
     let send_message = connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
-            get_main_wallet_handle(),
-            get_main_pool_handle()?,
             send_message,
             Some(String::from("Presentation Request was rejected")),
             None,
@@ -204,8 +202,6 @@ pub async fn decline_presentation_request(
     let send_message = connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
-            get_main_wallet_handle(),
-            get_main_pool_handle()?,
             send_message,
             reason.map(|s| s.to_string()),
             proposal.map(|s| s.to_string()),
