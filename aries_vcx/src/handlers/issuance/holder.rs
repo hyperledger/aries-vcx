@@ -56,8 +56,7 @@ impl Holder {
             pool_handle,
             my_pw_did,
             send_message,
-        )
-        .await?;
+        ).await?;
         Ok(())
     }
 
@@ -69,8 +68,7 @@ impl Holder {
         self.holder_sm = self.holder_sm.clone().decline_offer(
             comment.map(String::from),
             send_message,
-        )
-        .await?;
+        ).await?;
         Ok(())
     }
 
