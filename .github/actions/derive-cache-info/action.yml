@@ -1,0 +1,33 @@
+name: "derive-cache-info"
+description: "Given image <docker-img> derive cache-key and caching location on file system. This can be used for caching the image."
+
+inputs:
+  docker-img:
+    description: "Docker image reference to generate cache key for"
+    required: true
+
+outputs:
+  cache-key:
+    description: "Value of cache-key for given docker img"
+    value: ${{ steps.main.outputs.cache-key }}
+  cache-dir:
+    description: "Expected path to directory of cache file for given image"
+    value: ${{ steps.main.outputs.cache-dir }}
+  cache-file-path:
+    description: "Expected path to cache file for given image"
+    value: ${{ steps.main.outputs.cache-file-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: main
+      shell: bash
+      run: |
+        source ./ci/util.sh
+        DOCKER_IMG=${{ inputs.docker-img }}
+        CACHE_KEY=`as_docker_cache_key $DOCKER_IMG`
+        CACHE_DIR="/tmp/cachedir-$CACHE_KEY"
+        CACHE_FILE_PATH="$CACHE_DIR/$CACHE_KEY.rar"
+        echo "::set-output name=cache-key::$CACHE_KEY"
+        echo "::set-output name=cache-dir::$CACHE_DIR"
+        echo "::set-output name=cache-file-path::$CACHE_FILE_PATH"

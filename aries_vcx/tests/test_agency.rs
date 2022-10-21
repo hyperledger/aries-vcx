@@ -8,7 +8,7 @@ extern crate vdrtoolsrs as vdrtools;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_v2")]
+#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use std::thread;
     use std::time::Duration;
@@ -30,7 +30,7 @@ mod integration_tests {
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     async fn test_send_and_download_messages() {
         let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
@@ -114,7 +114,7 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     async fn test_connection_send_works() {
         let setup = SetupPool::init().await;
         let mut faber = Faber::setup(setup.pool_handle).await;
@@ -228,7 +228,7 @@ mod integration_tests {
         }
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_download_messages() {
         let setup = SetupPool::init().await;
@@ -282,7 +282,7 @@ mod integration_tests {
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agency_messages() {
         let setup = SetupPool::init().await;
@@ -355,7 +355,7 @@ mod integration_tests {
         assert_eq!(specific_review[0].uid, uid);
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_download_messages_from_multiple_connections() {
         let setup = SetupPool::init().await;
@@ -389,7 +389,7 @@ mod integration_tests {
         assert_eq!(consumer2_msgs.len(), 2);
     }
 
-    #[cfg(feature = "agency_v2")]
+    #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
         let _setup = SetupPool::init().await;

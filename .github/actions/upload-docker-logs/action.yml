@@ -1,0 +1,23 @@
+name: 'upload-docker-logs'
+description: 'Gets docker logs and uploads them as artifact'
+
+inputs:
+  name:
+    description: 'Name of uploaded artifact'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Collect docker logs on failure"
+      uses: jwalton/gh-docker-logs@v1
+      with:
+        dest: './logs'
+    - name: "Tar logs"
+      shell: bash
+      run: tar cvzf ./logs.tgz ./logs
+    - name: "Upload logs to GitHub"
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ inputs.name }}
+        path: ./logs.tgz

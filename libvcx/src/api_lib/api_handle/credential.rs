@@ -521,17 +521,6 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    #[cfg(feature = "to_restore")] // get_credential_offer not implemented for aries
-    async fn test_get_credential_offer_and_deserialize() {
-        let _setup = SetupMocks::init();
-
-        let handle = from_string(CREDENTIAL_SM_OFFER_RECEIVED).unwrap();
-        let offer_string = get_credential_offer(handle).unwrap();
-        serde_json::Value::from(offer_string);
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_credential_and_deserialize() {
         let _setup = SetupMocks::init();
 

@@ -1,18 +1,16 @@
-name: 'Publish android image'
+name: 'publish-android'
+description: "Build andorid .aar and publish it to /tmp/artifacts"
 
 inputs:
-  abis: 
+  abis:
     description: 'A space separated list of ABIs to create a AAR for'
     default: 'armv7 arm64 x86 x86_64'
-  docker-img-name: 
+  docker-img-name:
     description: 'Name of the android image'
     required: true
-  full-version-name: 
+  full-version-name:
     description: 'Name of the resulting .aar'
     required: true
-
-env:
-  DOCKER_BUILDKIT: 1
 
 runs:
   using: "composite"
@@ -20,17 +18,13 @@ runs:
     - name: Build, run android wrapper tests, and publish artifacts
       run: |
         set -x
-        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY" "/usr/local/lib/android" "/usr/share/dotnet"
-        # docker run --name test-android-wrapper -v $PWD:/home/indy/aries-vcx:rw ${{ inputs.docker-img.name }} \
+        sudo rm -rf "/usr/local/share/boost" "/usr/local/lib/android" "/usr/share/dotnet"
         docker run --name publish-android-wrapper \
             -e ABIS="${{ inputs.abis }}" \
             -e FULL_VERSION_NAME="${{ inputs.full-version-name }}" \
             ${{ inputs.docker-img-name }} \
             bash -c '(cd /home/indy/aries-vcx && ./wrappers/java/ci/android.build.sh $ABIS)'
-        docker_id=$(docker ps -a | grep publish-android-wrapper | grep Exited | tail -n 1 | cut -d ' ' -f 1)
-        docker_image_id=$(docker images | grep ${{ inputs.docker-img-name }} | perl -pe 's/\s+/ /g' | cut -d ' ' -f 3)
         mkdir -p /tmp/artifacts/aar
-        docker cp ${docker_id}:/home/indy/artifacts/aar /tmp/artifacts
-        docker rm ${docker_id} > /dev/null
-        docker rmi ${docker_image_id} > /dev/null
+        docker cp publish-android-wrapper:/home/indy/artifacts/aar /tmp/artifacts
+        docker rm publish-android-wrapper > /dev/null
       shell: bash

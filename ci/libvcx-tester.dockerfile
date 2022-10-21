@@ -1,22 +1,16 @@
 ARG ALPINE_CORE_IMAGE
 FROM ${ALPINE_CORE_IMAGE} as builder
-
 USER indy
 WORKDIR /home/indy
-
 COPY --chown=indy  ./ ./
-
-USER indy
-RUN cargo build --release --manifest-path=/home/indy/Cargo.toml
+RUN cargo build --release --manifest-path=/home/indy/libvcx/Cargo.toml
 
 USER root
 RUN mv /home/indy/target/release/libvcx.so .
 
 FROM alpine:3.15.4
-
 ARG UID=1000
 ARG GID=1000
-
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
 RUN apk update && apk upgrade && \
@@ -42,7 +36,7 @@ COPY --chown=node ./agency_client ./agency_client
 COPY --chown=node ./messages ./messages
 COPY --chown=node ./aries_vcx ./aries_vcx
 COPY --chown=node ./wrappers/node ./wrappers/node
-COPY --chown=node ./agents/node ./agents/node
+COPY --chown=node ./agents ./agents
 
 
 RUN npm install -g npm@8.7.0

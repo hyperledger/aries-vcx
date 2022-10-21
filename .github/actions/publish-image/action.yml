@@ -1,0 +1,28 @@
+name: 'publish-image'
+description: "Given image specified by <docker-img>, retag it to <publish-version> and push to $URL_DOCKER_REGISTRY"
+
+inputs:
+  docker-img:
+    description: 'Source image to be published'
+    required: true
+  publish-version:
+    description: 'The image will be published as <docker-tag>:<publish-version>'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Load image"
+      uses: ./.github/actions/load-image
+      with:
+        docker-img: ${{ inputs.docker-img }}
+    - name: "Publish image"
+      shell: bash
+      run: |
+        IFS=$':' read -a arr <<< ${{ inputs.docker-img }}
+        DOCKER_IMG_CACHED_TAGLESS=${arr[0]}
+        GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
+        REMOTE_DOCKER_IMG_CACHED="${URL_DOCKER_REGISTRY}/${GITHUB_REPOSITORY_LOWERCASE}/${DOCKER_IMG_CACHED_TAGLESS}:${{ inputs.publish-version }}"
+        echo "Publishing image $REMOTE_DOCKER_IMG_CACHED"
+        docker tag ${{ inputs.docker-img }} "$REMOTE_DOCKER_IMG_CACHED"
+        docker push "$REMOTE_DOCKER_IMG_CACHED" || true
