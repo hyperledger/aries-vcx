@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use messages::proof_presentation::presentation::Presentation;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
@@ -80,6 +81,12 @@ impl Verifier {
     pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::send_ack >>>");
         self.verifier_sm = self.verifier_sm.clone().send_ack(send_message).await?;
+        Ok(())
+    }
+
+    pub async fn verify_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation, send_message: SendClosure) -> VcxResult<()> {
+        trace!("Verifier::send_ack >>>");
+        self.verifier_sm = self.verifier_sm.clone().verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?;
         Ok(())
     }
 
