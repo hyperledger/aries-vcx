@@ -1,3 +1,6 @@
+#[macro_use]
+pub mod please_ack;
+
 use crate::a2a::{A2AMessage, MessageId};
 use crate::thread::Thread;
 use crate::timing::Timing;
@@ -45,19 +48,6 @@ impl Ack {
         self
     }
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PleaseAck {}
-
-#[macro_export]
-macro_rules! please_ack (($type:ident) => (
-    impl $type {
-        pub fn ask_for_ack(mut self) -> $type {
-            self.please_ack = Some(PleaseAck {});
-            self
-        }
-    }
-));
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {

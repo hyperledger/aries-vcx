@@ -171,7 +171,7 @@ impl Issuer {
                 .set_thread_id(self.issuer_sm.thread_id()?)
                 .set_comment(comment)
                 .set_out_time();
-            send_message(rev_msg).await
+            send_message(rev_msg.to_a2a_message()).await
         } else {
             Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,

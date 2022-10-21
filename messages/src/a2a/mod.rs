@@ -98,6 +98,7 @@ impl A2AMessage {
             Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
+            Self::RevocationNotification(m) => m.get_thread_id() == thread_id,
             Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
             Self::Ping(ping) => ping.from_thread(thread_id),
             Self::PingResponse(ping) => ping.from_thread(thread_id),
@@ -304,6 +305,9 @@ impl Serialize for A2AMessage {
             A2AMessage::CredentialAck(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::ACK)
             }
+            A2AMessage::RevocationNotification(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::RevocationNotification, A2AMessage::REVOKE)
+            }
             A2AMessage::PresentationProposal(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION)
             }
@@ -388,6 +392,7 @@ impl A2AMessage {
     const CREDENTIAL: &'static str = "issue-credential";
     const PROPOSE_CREDENTIAL: &'static str = "propose-credential";
     const REQUEST_CREDENTIAL: &'static str = "request-credential";
+    const REVOKE: &'static str = "revoke";
     const PROPOSE_PRESENTATION: &'static str = "propose-presentation";
     const REQUEST_PRESENTATION: &'static str = "request-presentation";
     const PRESENTATION: &'static str = "presentation";
