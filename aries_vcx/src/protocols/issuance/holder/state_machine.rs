@@ -146,6 +146,14 @@ impl HolderSM {
                     }
                     _ => {}
                 },
+                HolderFullState::Finished(_) => match message {
+                    A2AMessage::RevocationNotification(notification) => {
+                        if notification.from_thread(&self.thread_id) {
+                            return Some((uid, A2AMessage::RevocationNotification(notification)));
+                        }
+                    }
+                    _ => {}
+                },
                 _ => {}
             };
         }

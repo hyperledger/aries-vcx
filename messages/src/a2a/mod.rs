@@ -98,7 +98,7 @@ impl A2AMessage {
             Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
-            Self::RevocationNotification(m) => m.get_thread_id() == thread_id,
+            Self::RevocationNotification(m) => m.from_thread(thread_id),
             Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
             Self::Ping(ping) => ping.from_thread(thread_id),
             Self::PingResponse(ping) => ping.from_thread(thread_id),

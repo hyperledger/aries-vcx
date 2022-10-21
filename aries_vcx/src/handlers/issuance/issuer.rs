@@ -165,11 +165,13 @@ impl Issuer {
         .await
     }
 
-    pub async fn send_revocation_notification(&mut self, wallet_handle: WalletHandle, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_revocation_notification(&mut self, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+        // TODO: Check if actually revoked
         if self.issuer_sm.is_revokable() {
             let rev_msg = RevocationNotification::create()
-                .set_thread_id(self.issuer_sm.thread_id()?)
+                .set_credential_id(self.get_rev_reg_id()?, self.get_rev_id()?)
                 .set_comment(comment)
+                .set_thread_id(&self.get_thread_id()?)
                 .set_out_time();
             send_message(rev_msg.to_a2a_message()).await
         } else {
