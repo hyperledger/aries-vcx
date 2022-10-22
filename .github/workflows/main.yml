@@ -85,9 +85,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
@@ -110,9 +110,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load alpine core image"
         uses: ./.github/actions/load-image
         with:
@@ -139,9 +139,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load alpine core image"
         uses: ./.github/actions/load-image
         with:
@@ -167,9 +167,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
@@ -190,9 +190,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build and cache image"
         uses: ./.github/actions/build-image
         with:
@@ -217,9 +217,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -238,9 +238,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -259,9 +259,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -280,9 +280,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -301,9 +301,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -324,9 +324,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load codecov image"
         uses: ./.github/actions/load-image
         with:
@@ -364,9 +364,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -402,9 +402,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load codecov image"
         uses: ./.github/actions/load-image
         with:
@@ -442,9 +442,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load libvcx tester image"
         uses: ./.github/actions/load-image
         with:
@@ -471,9 +471,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -504,9 +504,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -536,9 +536,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -567,9 +567,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -599,9 +599,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -624,9 +624,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load libvcx tester image"
         uses: ./.github/actions/load-image
         with:
@@ -654,9 +654,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Setup for testing"
         uses: ./.github/actions/setup-testing
         with:
@@ -743,9 +743,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -774,9 +774,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load android image"
         uses: ./.github/actions/load-image
         with:
@@ -815,9 +815,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load image"
         uses: ./.github/actions/load-image
         with:
@@ -855,9 +855,9 @@ jobs:
       - name: "Docker Login"
         uses: azure/docker-login@v1
         with:
-          login-server: env.URL_DOCKER_REGISTRY
-          username: env.GITHUB_ACTOR
-          password: secrets.GITHUB_TOKEN
+          login-server: ${{ env.URL_DOCKER_REGISTRY }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: "Load image"
         uses: ./.github/actions/load-image
         with:
