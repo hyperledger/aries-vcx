@@ -128,87 +128,6 @@ impl ServiceConnections {
         self.connections.has_id(thread_id)
     }
 
-    // TODO: Make the following functions generic
-    pub async fn get_connection_requests(&self, thread_id: &str) -> AgentResult<Vec<Request>> {
-        let connection = self.connections.get(thread_id)?;
-        let agency_client = self.agency_client()?;
-        let mut requests = Vec::<Request>::new();
-        for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
-            if let A2AMessage::ConnectionRequest(request) = message {
-                connection
-                    .update_message_status(&uid, &agency_client)
-                    .await
-                    .ok();
-                requests.push(request);
-            }
-        }
-        Ok(requests)
-    }
-
-    pub async fn get_credential_proposals(&self, thread_id: &str) -> AgentResult<Vec<CredentialProposal>> {
-        let connection = self.connections.get(thread_id)?;
-        let agency_client = self.agency_client()?;
-        let mut proposals = Vec::<CredentialProposal>::new();
-        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            if let A2AMessage::CredentialProposal(proposal) = message {
-                connection
-                    .update_message_status(&uid, &agency_client)
-                    .await
-                    .ok();
-                proposals.push(proposal);
-            }
-        }
-        Ok(proposals)
-    }
-
-    pub async fn get_credential_offers(&self, thread_id: &str) -> AgentResult<Vec<CredentialOffer>> {
-        let connection = self.connections.get(thread_id)?;
-        let agency_client = self.agency_client()?;
-        let mut offers = Vec::<CredentialOffer>::new();
-        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            if let A2AMessage::CredentialOffer(offer) = message {
-                connection
-                    .update_message_status(&uid, &agency_client)
-                    .await
-                    .ok();
-                offers.push(offer);
-            }
-        }
-        Ok(offers)
-    }
-
-    pub async fn get_proof_requests(&self, thread_id: &str) -> AgentResult<Vec<PresentationRequest>> {
-        let connection = self.connections.get(thread_id)?;
-        let agency_client = self.agency_client()?;
-        let mut requests = Vec::<PresentationRequest>::new();
-        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            if let A2AMessage::PresentationRequest(request) = message {
-                connection
-                    .update_message_status(&uid, &agency_client)
-                    .await
-                    .ok();
-                requests.push(request);
-            }
-        }
-        Ok(requests)
-    }
-
-    pub async fn get_proof_proposals(&self, thread_id: &str) -> AgentResult<Vec<PresentationProposal>> {
-        let connection = self.connections.get(thread_id)?;
-        let agency_client = self.agency_client()?;
-        let mut proposals = Vec::<PresentationProposal>::new();
-        for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-            if let A2AMessage::PresentationProposal(proposal) = message {
-                connection
-                    .update_message_status(&uid, &agency_client)
-                    .await
-                    .ok();
-                proposals.push(proposal);
-            }
-        }
-        Ok(proposals)
-    }
-
     pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {
         let agency_client = self.agency_client()?;
         let mut requests = Vec::<(PresentationRequest, String)>::new();
@@ -226,3 +145,28 @@ impl ServiceConnections {
         Ok(requests)
     }
 }
+
+macro_rules! get_messages (($msg_type:ty, $a2a_msg:ident, $name:ident) => (
+    impl ServiceConnections {
+        pub async fn $name(&self, thread_id: &str) -> AgentResult<Vec<$msg_type>> {
+            let connection = self.connections.get(thread_id)?;
+            let agency_client = self.agency_client()?;
+            let mut messages = Vec::<$msg_type>::new();
+            for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
+                if let A2AMessage::$a2a_msg(message) = message {
+                    connection
+                        .update_message_status(&uid, &agency_client)
+                        .await
+                        .ok();
+                    messages.push(message);
+                }
+            }
+            Ok(messages)
+        }
+    }
+));
+
+get_messages!(Request, ConnectionRequest, get_connection_requests);
+get_messages!(CredentialProposal, CredentialProposal, get_credential_proposals);
+get_messages!(CredentialOffer, CredentialOffer, get_credential_offers);
+get_messages!(PresentationProposal, PresentationProposal, get_proof_proposals);
