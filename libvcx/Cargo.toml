@@ -1,11 +1,9 @@
 [package]
 name = "libvcx"
-version = "0.44.0"
-authors = ["Absa Group Limited", "Hyperledger Indy Contributors <hyperledger-indy@lists.hyperledger.org>"]
-publish = false
-description = "Absa's fork of HL LibVCX"
-license = "Apache-2.0"
-edition = "2018"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
 
 [lib]
 name = "vcx"

@@ -37,7 +37,7 @@ runs:
                    env; \
                    cargo test \
                          --package ${{ inputs.test-path }} \
-                         --features "$FEATURES"; \
+                        -F "$FEATURES"; \
                    grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o ./target/debug/coverage.lcov'
         docker cp calc-codecov:/home/indy/aries-vcx/target/debug/coverage.lcov ${{ inputs.cov-file-path }}
         docker rm calc-codecov > /dev/null

@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "agency_client"
-version = "0.1.0"
+version = "0.44.0"
 dependencies = [
  "android_logger",
  "env_logger",
@@ -2084,7 +2084,7 @@ dependencies = [
 
 [[package]]
 name = "messages"
-version = "0.1.0"
+version = "0.44.0"
 dependencies = [
  "base64 0.10.1",
  "chrono",
