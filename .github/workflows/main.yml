@@ -56,7 +56,7 @@ jobs:
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
           HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
-          HASH_SRC_WRAPPER_NODEJS=${{ hashFiles('wrappers/node') }}
+          HASH_SRC_WRAPPER_NODEJS=triggerbuild1-${{ hashFiles('wrappers/node') }}
           HASH_SRC_AGENT_NODEJS=${{ hashFiles('agents/node') }}
 
           HASH_DOCKER_LIBVCX=${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_MESSAGES:0:11}
