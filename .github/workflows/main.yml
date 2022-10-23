@@ -211,6 +211,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -220,6 +221,11 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish branch image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -232,6 +238,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -241,6 +248,11 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish branch image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -253,6 +265,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_LIBVCX_TESTER }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -262,6 +275,11 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish branch image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -274,6 +292,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_CODECOV }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -283,6 +302,11 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish branch image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
@@ -295,6 +319,7 @@ jobs:
     env:
       DOCKER_IMG_CACHED: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
       PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      BRANCH_NAME: ${{ needs.workflow-setup.outputs.BRANCH_NAME }}
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -304,6 +329,11 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Publish branch image"
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
       - name: "Publish versioned image"
         uses: ./.github/actions/publish-image
         with:
