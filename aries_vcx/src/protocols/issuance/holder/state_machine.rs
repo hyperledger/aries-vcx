@@ -153,14 +153,6 @@ impl HolderSM {
         None
     }
 
-    pub fn step(state: HolderFullState, source_id: String, thread_id: String) -> Self {
-        HolderSM {
-            state,
-            source_id,
-            thread_id,
-        }
-    }
-
     pub async fn handle_message(
         self,
         wallet_handle: WalletHandle,

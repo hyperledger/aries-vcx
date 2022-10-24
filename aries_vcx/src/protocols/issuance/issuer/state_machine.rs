@@ -347,6 +347,23 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
+    pub async fn receive_proposal(self, proposal: CredentialProposal) -> VcxResult<Self> {
+        let (state, thread_id) = match self.state {
+            IssuerFullState::Initial(_) => {
+                let thread_id = proposal.id.0.to_string();
+                let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
+                (state, thread_id)
+            }
+            IssuerFullState::OfferSent(_) => {
+                verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposal(proposal.clone()))?;
+                let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
+                (state, self.thread_id.clone())
+            }
+            s @ _ => (s, self.thread_id.clone())
+        };
+        Ok(Self { state, thread_id, ..self })
+    }
+
     pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<Self> {
         Ok(match self.state {
             IssuerFullState::OfferSet(ref state_data) => {
@@ -356,6 +373,14 @@ impl IssuerSM {
             }
             _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
         })
+    }
+
+    pub async fn receive_request(self, request: CredentialRequest) -> VcxResult<Self> {
+        let state = match self.state {
+            IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
+            s @ _ => s
+        };
+        Ok(Self { state, ..self })
     }
 
     pub async fn send_credential(self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<Self> {
