@@ -45,12 +45,27 @@ mod integration_tests {
         let cred_def_id = res.2;
         let cred_id = res.7;
         let rev_reg_id = res.8;
+        let cred_rev_id = res.9;
 
         let cred_json = libindy_prover_get_credential(setup.wallet_handle, &cred_id).await.unwrap();
         let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).unwrap();
 
         assert_eq!(prover_cred.schema_id, schema_id);
         assert_eq!(prover_cred.cred_def_id, cred_def_id);
+        assert_eq!(prover_cred.cred_rev_id.unwrap(), cred_rev_id);
         assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg_id);
+    }
+
+    #[tokio::test]
+    async fn test_get_cred_rev_id() {
+        let setup = SetupWalletPool::init().await;
+
+        let res = create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        let cred_id = res.7;
+        let cred_rev_id = res.9;
+
+        let cred_rev_id_ = get_cred_rev_id(setup.wallet_handle, &cred_id).await.unwrap();
+
+        assert_eq!(cred_rev_id, cred_rev_id_);
     }
 }
