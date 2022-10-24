@@ -198,7 +198,7 @@ impl HolderSM {
             CredentialIssuanceAction::ProblemReport(problem_report) => {
                 self.receive_problem_report(problem_report)?
             }
-            _ => { self }
+            _ => self
         };
         Ok(holder_sm)
     }

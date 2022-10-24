@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
+use messages::ack::Ack;
+use messages::problem_report::ProblemReport;
 use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
@@ -347,7 +349,8 @@ impl IssuerSM {
         Ok(Self::step(source_id, thread_id, state))
     }
 
-    pub async fn receive_proposal(self, proposal: CredentialProposal) -> VcxResult<Self> {
+    pub fn receive_proposal(self, proposal: CredentialProposal) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposal(proposal.clone()))?;
         let (state, thread_id) = match self.state {
             IssuerFullState::Initial(_) => {
                 let thread_id = proposal.id.0.to_string();
@@ -375,7 +378,8 @@ impl IssuerSM {
         })
     }
 
-    pub async fn receive_request(self, request: CredentialRequest) -> VcxResult<Self> {
+    pub fn receive_request(self, request: CredentialRequest) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialRequest(request.clone()))?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
             s @ _ => s
@@ -413,6 +417,25 @@ impl IssuerSM {
         Ok(Self { state, ..self })
     }
 
+    pub fn receive_ack(self, ack: Ack) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
+        let state = match self.state {
+            IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
+            s @ _ => s
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::ProblemReport(problem_report.clone()))?;
+        let state = match self.state {
+            IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
+            IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
+            s @ _ => s
+        };
+        Ok(Self { state, ..self })
+    }
+
     pub async fn handle_message(
         self,
         wallet_handle: WalletHandle,
@@ -421,86 +444,21 @@ impl IssuerSM {
     ) -> VcxResult<Self> {
         trace!("IssuerSM::handle_message >>> cim: {:?}, state: {:?}", cim, self.state);
         verify_thread_id(&self.thread_id, &cim)?;
-        let state_name = self.state.to_string();
-        let Self {
-            state,
-            source_id,
-            thread_id,
-        } = self.clone();
-        let (state, thread_id) = match state {
-            IssuerFullState::Initial(state_data) => match cim {
-                CredentialIssuanceAction::CredentialProposal(proposal) => {
-                    let thread_id = proposal.id.0.to_string();
-                    (
-                        IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None)),
-                        thread_id,
-                    )
-                }
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (IssuerFullState::Initial(state_data), thread_id)
-                }
-            },
-            IssuerFullState::ProposalReceived(state_data) => {
-                warn!("Unable to process received message in state {}", state_name);
-                (IssuerFullState::ProposalReceived(state_data), thread_id)
+        let issuer_sm = match cim {
+            CredentialIssuanceAction::CredentialProposal(proposal) => self.receive_proposal(proposal)?,
+            CredentialIssuanceAction::CredentialRequest(request) => self.receive_request(request)?,
+            CredentialIssuanceAction::CredentialSend() => {
+                let send_message = send_message.ok_or(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.send_credential(wallet_handle, send_message).await?
             }
-            IssuerFullState::OfferSent(state_data) => match cim {
-                CredentialIssuanceAction::CredentialRequest(request) => (
-                    IssuerFullState::RequestReceived((state_data, request).into()),
-                    thread_id,
-                ),
-                CredentialIssuanceAction::CredentialProposal(proposal) => (
-                    IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None)),
-                    thread_id,
-                ),
-                CredentialIssuanceAction::ProblemReport(problem_report) => (
-                    IssuerFullState::Finished((state_data, problem_report).into()),
-                    thread_id,
-                ),
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (IssuerFullState::OfferSent(state_data), thread_id)
-                }
-            },
-            IssuerFullState::RequestReceived(state_data) => match cim {
-                CredentialIssuanceAction::CredentialSend() => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    (self.send_credential(wallet_handle, send_message).await?.state, thread_id)
-                }
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (IssuerFullState::RequestReceived(state_data), thread_id)
-                }
-            },
-            IssuerFullState::CredentialSent(state_data) => match cim {
-                CredentialIssuanceAction::ProblemReport(_problem_report) => {
-                    info!("Interaction closed with failure");
-                    (IssuerFullState::Finished(state_data.into()), thread_id)
-                }
-                CredentialIssuanceAction::CredentialAck(_ack) => {
-                    info!("Interaction closed with success");
-                    (IssuerFullState::Finished(state_data.into()), thread_id)
-                }
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (IssuerFullState::CredentialSent(state_data), thread_id)
-                }
-            },
-            IssuerFullState::Finished(state_data) => {
-                warn!("Unable to process received message in state {}", state_name);
-                (IssuerFullState::Finished(state_data), thread_id)
-            }
-            IssuerFullState::OfferSet(state_data) => {
-                warn!("Unable to process received message in state {}", state_name);
-                (IssuerFullState::OfferSet(state_data), thread_id)
-            }
+            CredentialIssuanceAction::CredentialAck(ack) => self.receive_ack(ack)?,
+            CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
+            _ => self
         };
-
-        Ok(Self::step(source_id, thread_id, state))
+        Ok(issuer_sm)
     }
 
     pub fn credential_status(&self) -> u32 {
