@@ -1349,11 +1349,11 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_wallet_export_import() {
         let _setup = SetupDefaults::init();
-
+        println!("1");
         let wallet_name = "test_wallet_import_export";
-
+        println!("2");
         let export_file = TempFile::prepare_path(wallet_name);
-
+        println!("3");
         let wallet_config = WalletConfig {
             wallet_name: wallet_name.into(),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -1364,13 +1364,15 @@ pub mod tests {
             rekey: None,
             rekey_derivation_method: None,
         };
+        println!("4");
         create_and_open_as_main_wallet(&wallet_config).await.unwrap();
-
+        println!("5");
         let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
-
+        println!("6");
         let cb = return_types_u32::Return_U32::new().unwrap();
         let cstr_file = CString::new(export_file.path.clone()).unwrap();
         let cstr_backup_key = CString::new(backup_key.clone()).unwrap();
+        println!("7");
         assert_eq!(
             vcx_wallet_export(
                 cb.command_handle,
@@ -1380,10 +1382,13 @@ pub mod tests {
             ),
             error::SUCCESS.code_num
         );
+        println!("8");
         cb.receive(TimeoutUtils::some_long()).unwrap();
-
+        println!("9");
         close_main_wallet().await.unwrap();
+        println!("10");
         delete_wallet(&wallet_config).await.unwrap();
+        println!("11");
 
         let import_config = json!({
             settings::CONFIG_WALLET_NAME: wallet_config.wallet_name.clone(),
@@ -1394,14 +1399,18 @@ pub mod tests {
         })
         .to_string();
 
+        println!("12");
         let cb = return_types_u32::Return_U32::new().unwrap();
         let cstr_config = CString::new(import_config).unwrap();
+        println!("13");
         assert_eq!(
             vcx_wallet_import(cb.command_handle, cstr_config.as_ptr(), Some(cb.get_callback())),
             error::SUCCESS.code_num
         );
+        println!("14");
         cb.receive(TimeoutUtils::some_long()).unwrap();
-
+        println!("15");
         delete_wallet(&wallet_config).await.unwrap();
+        println!("16");
     }
 }

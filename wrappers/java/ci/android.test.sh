@@ -27,7 +27,7 @@ build_test_artifacts(){
     pushd ${LIBVCX_DIR}
         cargo clean
 
-        SET_OF_TESTS=''
+        SET_OF_TESTS='api_lib::api_c::wallet::tests::test_wallet_export_import'
 
         # This is needed to get the correct message if test are not
         # built. Next call will just reuse old results and parse the
@@ -79,7 +79,7 @@ execute_on_device(){
         adb -e shell "chmod 755 /data/local/tmp/$EXE_NAME"
         OUT="$(mktemp)"
         MARK="ADB_SUCCESS!"
-        time adb -e shell "TEST_POOL_IP=10.0.0.2 LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=debug /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
+        time adb -e shell "LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=trace /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
         grep $MARK $OUT
     done
 
