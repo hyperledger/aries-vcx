@@ -39,4 +39,5 @@ runs:
       run: |
         set -x
         docker load < "${{ steps.setup.outputs.cache-file-path }}"
+        rm "${{ steps.setup.outputs.cache-file-path }}"
 
