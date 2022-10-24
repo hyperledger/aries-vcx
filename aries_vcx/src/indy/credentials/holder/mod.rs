@@ -4,8 +4,6 @@ use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
 use crate::utils;
 
-
-
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
     cred_id: Option<&str>,
