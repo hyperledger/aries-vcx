@@ -4,6 +4,8 @@ use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
 use crate::utils;
 
+
+
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
     cred_id: Option<&str>,
@@ -32,6 +34,23 @@ pub async fn libindy_prover_store_credential(
         cred_json,
         cred_def_json,
         rev_reg_def_json,
+    )
+        .await
+        .map_err(VcxError::from)
+}
+
+pub async fn libindy_prover_get_credential(
+    wallet_handle: WalletHandle,
+    cred_id: &str,
+) -> VcxResult<String> {
+    trace!("libindy_prover_get_credential >>> \
+            cred_id: {:?}",
+           cred_id,
+    );
+
+    anoncreds::prover_get_credential(
+        wallet_handle,
+        cred_id,
     )
         .await
         .map_err(VcxError::from)
