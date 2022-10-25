@@ -78,14 +78,14 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn send_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        trace!("Verifier::send_ack >>>");
-        self.verifier_sm = self.verifier_sm.clone().send_ack(send_message).await?;
+    pub async fn send_presentation_ack(&mut self, send_message: SendClosure) -> VcxResult<()> {
+        trace!("Verifier::send_presentation_ack >>>");
+        self.verifier_sm = self.verifier_sm.clone().send_presentation_ack(send_message).await?;
         Ok(())
     }
 
     pub async fn verify_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation, send_message: SendClosure) -> VcxResult<()> {
-        trace!("Verifier::send_ack >>>");
+        trace!("Verifier::verify_presentation >>>");
         self.verifier_sm = self.verifier_sm.clone().verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?;
         Ok(())
     }

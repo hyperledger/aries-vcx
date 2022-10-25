@@ -95,7 +95,7 @@ impl ProverSM {
                 send_message(proposal.to_a2a_message()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -112,7 +112,7 @@ impl ProverSM {
                     Self::_handle_reject_presentation_request(send_message, &reason, &self.thread_id).await?;
                 ProverFullState::Finished(FinishedState::declined(problem_report))
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -127,7 +127,7 @@ impl ProverSM {
                 Self::_handle_presentation_proposal(send_message, presentation_preview, &self.thread_id).await?;
                 ProverFullState::Finished(state.into())
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -147,7 +147,7 @@ impl ProverSM {
                     }
                 }
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -158,7 +158,7 @@ impl ProverSM {
                 let presentation = presentation.set_thread_id(&self.thread_id);
                 ProverFullState::PresentationPrepared((state, presentation).into())
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -173,7 +173,7 @@ impl ProverSM {
                 send_message(state.problem_report.to_a2a_message()).await?;
                 ProverFullState::Finished((state).into())
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }

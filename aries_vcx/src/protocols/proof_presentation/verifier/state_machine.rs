@@ -117,14 +117,43 @@ impl VerifierSM {
         }
     }
 
-    pub async fn send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
-        let state = match self.state {
-            VerifierFullState::Finished(state) => {
-                let ack = build_verification_ack(&self.thread_id);
-                send_message(A2AMessage::PresentationAck(ack)).await?;
-                VerifierFullState::Finished(state)
+    pub fn receive_presentation_proposal(self, proposal: PresentationProposal) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &VerifierMessages::PresentationProposalReceived(proposal.clone()))?;
+        let (state, thread_id) = match self.state {
+            VerifierFullState::Initial(_) => {
+                let thread_id = match proposal.thread {
+                    Some(ref thread) => thread.thid.clone().ok_or(VcxError::from_msg(
+                        VcxErrorKind::InvalidState,
+                        "Received proposal with invalid thid",
+                    ))?,
+                    None => proposal.id.0.clone(),
+                };
+                (
+                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
+                        proposal.clone(),
+                    )),
+                    thread_id,
+                )
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            VerifierFullState::PresentationRequestSent(_) => {
+                verify_thread_id(&self.thread_id, &VerifierMessages::PresentationProposalReceived(proposal.clone()))?;
+                (
+                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
+                            proposal
+                    )), 
+                    self.thread_id.clone()
+                )
+            }
+            s @ _ => (s, self.thread_id.clone())
+        };
+        Ok(Self { state, thread_id, ..self })
+    }
+
+    pub fn receive_presentation_request_reject(self, problem_report: ProblemReport) -> VcxResult<Self> {
+        verify_thread_id(&self.thread_id, &VerifierMessages::PresentationRejectReceived(problem_report.clone()))?;
+        let state = match self.state {
+            VerifierFullState::PresentationRequestSent(state) => VerifierFullState::Finished((state, problem_report).into()),
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -145,7 +174,7 @@ impl VerifierSM {
                     thread_id,
                 )
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => (s, self.thread_id.clone())
         };
         Ok(Self { state, thread_id, ..self })
     }
@@ -173,7 +202,19 @@ impl VerifierSM {
                     }
                 }
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            s @ _ => s
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn send_presentation_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+        let state = match self.state {
+            VerifierFullState::Finished(state) => {
+                let ack = build_verification_ack(&self.thread_id);
+                send_message(A2AMessage::PresentationAck(ack)).await?;
+                VerifierFullState::Finished(state)
+            }
+            s @ _ => s
         };
         Ok(Self { state, ..self })
     }
@@ -275,88 +316,37 @@ impl VerifierSM {
         send_message: Option<SendClosure>,
     ) -> VcxResult<Self> {
         trace!("VerifierSM::step >>> message: {:?}", message);
-        let state_name = self.state.to_string();
-        let Self {
-            source_id,
-            state,
-            thread_id,
-        } = self.clone();
-        verify_thread_id(&thread_id, &message)?;
-        let (state, thread_id) = match state {
-            VerifierFullState::Initial(state) => match message {
-                VerifierMessages::PresentationProposalReceived(ref proposal) => {
-                    let thread_id = match proposal.thread {
-                        Some(ref thread) => thread.thid.clone().ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidState,
-                            "Received proposal with invalid thid",
-                        ))?,
-                        None => proposal.id.0.clone(),
-                    };
-                    (
-                        VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                            proposal.clone(),
-                        )),
-                        thread_id,
-                    )
-                }
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (VerifierFullState::Initial(state), thread_id)
-                }
-            },
-            VerifierFullState::PresentationRequestSet(state) => {
-                warn!("Unable to process received message in state {}", state_name);
-                (VerifierFullState::PresentationRequestSet(state), thread_id)
-            }
-            VerifierFullState::PresentationProposalReceived(state) => match message {
-                VerifierMessages::RejectPresentationProposal(reason) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    let Self { state, thread_id, .. } = self.reject_presentation_proposal(reason, send_message).await?;
-                    (state, thread_id)
-                }
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (VerifierFullState::PresentationProposalReceived(state), thread_id)
-                }
-            },
-            VerifierFullState::PresentationRequestSent(state) => match message {
-                VerifierMessages::VerifyPresentation(presentation) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
-                        "Attempted to call undefined send_message callback",
-                    ))?;
-                    let Self { state, thread_id, .. } = self.verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?;
-                    (state, thread_id)
-                },
-                VerifierMessages::PresentationRejectReceived(problem_report) => {
-                    (VerifierFullState::Finished((state, problem_report).into()), thread_id)
-                }
-                VerifierMessages::PresentationProposalReceived(proposal) => (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
-                    thread_id,
-                ),
-                _ => {
-                    warn!("Unable to process received message in state {}", state_name);
-                    (VerifierFullState::PresentationRequestSent(state), thread_id)
-                }
-            },
-            VerifierFullState::Finished(_) => {
+        let verifier_sm = match message {
+            VerifierMessages::PresentationProposalReceived(proposal) => self.receive_presentation_proposal(proposal)?,
+            VerifierMessages::RejectPresentationProposal(reason) => {
                 let send_message = send_message.ok_or(VcxError::from_msg(
                     VcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                (self.send_ack(send_message).await?.state, thread_id)
+                self.reject_presentation_proposal(reason, send_message).await?
             }
+            VerifierMessages::VerifyPresentation(presentation) => {
+                let send_message = send_message.ok_or(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?
+            }
+            VerifierMessages::SendPresentationAck() => {
+                let send_message = send_message.ok_or(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Attempted to call undefined send_message callback",
+                ))?;
+                self.send_presentation_ack(send_message).await?
+            }
+            // TODO: Rename to PresentationRequestRejectReceived
+            VerifierMessages::PresentationRejectReceived(problem_report) => self.receive_presentation_request_reject(problem_report)?,
+            // TODO: This code path is not used currently; would need to convert ProofRequest to
+            // ProofRequestData
+           VerifierMessages::SetPresentationRequest(_) |
+                VerifierMessages::Unknown => self
         };
-
-        Ok(Self {
-            source_id,
-            state,
-            thread_id,
-        })
+        Ok(verifier_sm)
     }
 
     pub fn source_id(&self) -> String {
@@ -784,6 +774,7 @@ pub mod unit_tests {
             let _setup = SetupMocks::init();
 
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
+            assert_match!(VerifierFullState::PresentationProposalReceived(_), verifier_sm.state);
 
             verifier_sm = verifier_sm
                 .step(
