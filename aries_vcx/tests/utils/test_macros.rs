@@ -1,5 +1,7 @@
 use std::fmt;
 
+use messages::status::Status;
+
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -56,3 +58,13 @@ enum_number!(ProofStateType
     ProofValidated = 1,
     ProofInvalid = 2,
 });
+
+impl From<Status> for ProofStateType {
+    fn from(state: Status) -> Self {
+        match state {
+            Status::Success => ProofStateType::ProofValidated,
+            Status::Failed(_) => ProofStateType::ProofInvalid,
+            _ => ProofStateType::ProofUndefined,
+        }
+    }
+}

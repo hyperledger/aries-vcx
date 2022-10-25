@@ -1,6 +1,7 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use messages::status::Status;
     use vdrtools_sys::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;
@@ -19,16 +20,16 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::indy::ledger::transactions::into_did_doc;
+    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
     use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
     use aries_vcx::indy::primitives::credential_schema::Schema;
-    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
-    use aries_vcx::indy::wallet::{
-        close_wallet, create_wallet_with_master_secret,
-        delete_wallet, IssuerConfig, wallet_configure_issuer, WalletConfig,
-    };
-    use aries_vcx::indy::wallet::open_wallet;
     use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::indy::ledger::transactions::into_did_doc;
+    use aries_vcx::indy::wallet::open_wallet;
+    use aries_vcx::indy::wallet::{
+        close_wallet, create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig,
+        WalletConfig,
+    };
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::connection::invite::{Invitation, PublicInvitation};
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
@@ -150,9 +151,15 @@ pub mod test_utils {
             let connection = Connection::create("faber", agency_client.get_wallet_handle(), &agency_client, true)
                 .await
                 .unwrap();
-            let agent = PublicAgent::create(wallet_handle, pool_handle, &agency_client, "faber", &config_issuer.institution_did)
-                .await
-                .unwrap();
+            let agent = PublicAgent::create(
+                wallet_handle,
+                pool_handle,
+                &agency_client,
+                "faber",
+                &config_issuer.institution_did,
+            )
+            .await
+            .unwrap();
             let faber = Faber {
                 wallet_handle,
                 pool_handle,
@@ -172,13 +179,19 @@ pub mod test_utils {
         }
 
         pub async fn create_schema(&mut self) {
-            let data = vec!["name","date","degree", "empty_param"].iter().map(|s| s.to_string()).collect();
+            let data = vec!["name", "date", "degree", "empty_param"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect();
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
             self.schema = Schema::create("", &self.config_issuer.institution_did, &name, &version, &data)
-                .await.unwrap()
-                .publish(self.wallet_handle, self.pool_handle, None).await.unwrap();
+                .await
+                .unwrap()
+                .publish(self.wallet_handle, self.pool_handle, None)
+                .await
+                .unwrap();
         }
 
         pub async fn create_nonrevocable_credential_definition(&mut self) {
@@ -189,12 +202,18 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(self.wallet_handle, self.pool_handle, String::from("test_cred_def"), config, false)
-                .await
-                .unwrap()
-                .publish_cred_def(self.wallet_handle, self.pool_handle)
-                .await
-                .unwrap();
+            self.cred_def = CredentialDef::create(
+                self.wallet_handle,
+                self.pool_handle,
+                String::from("test_cred_def"),
+                config,
+                false,
+            )
+            .await
+            .unwrap()
+            .publish_cred_def(self.wallet_handle, self.pool_handle)
+            .await
+            .unwrap();
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {
@@ -337,7 +356,12 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.verifier
-                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
+                .update_state(
+                    self.wallet_handle,
+                    self.pool_handle,
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
 
@@ -345,16 +369,17 @@ pub mod test_utils {
         }
 
         pub async fn verify_presentation(&mut self) {
-            self.update_proof_state(
-                VerifierState::Finished,
-                aries_vcx::messages::status::Status::Success.code(),
-            )
-            .await
+            self.update_proof_state(VerifierState::Finished, Status::Success).await
         }
 
-        pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: u32) {
+        pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: Status) {
             self.verifier
-                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
+                .update_state(
+                    self.wallet_handle,
+                    self.pool_handle,
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
@@ -419,16 +444,10 @@ pub mod test_utils {
         pub async fn accept_invite(&mut self, invite: &str) {
             let invite: Invitation = serde_json::from_str(invite).unwrap();
             let ddo = into_did_doc(self.pool_handle, &invite).await.unwrap();
-            self.connection = Connection::create_with_invite(
-                "faber",
-                self.wallet_handle,
-                &self.agency_client,
-                invite,
-                ddo,
-                true,
-            )
-            .await
-            .unwrap();
+            self.connection =
+                Connection::create_with_invite("faber", self.wallet_handle, &self.agency_client, invite, ddo, true)
+                    .await
+                    .unwrap();
             self.connection
                 .connect(self.wallet_handle, &self.agency_client)
                 .await
@@ -515,7 +534,12 @@ pub mod test_utils {
 
         pub async fn accept_credential(&mut self) {
             self.credential
-                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
+                .update_state(
+                    self.wallet_handle,
+                    self.pool_handle,
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
@@ -590,7 +614,12 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(self.wallet_handle, self.pool_handle, credentials.to_string(), String::from("{}"))
+                .generate_presentation(
+                    self.wallet_handle,
+                    self.pool_handle,
+                    credentials.to_string(),
+                    String::from("{}"),
+                )
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
@@ -608,7 +637,12 @@ pub mod test_utils {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.prover
-                .update_state(self.wallet_handle, self.pool_handle, &self.agency_client, &self.connection)
+                .update_state(
+                    self.wallet_handle,
+                    self.pool_handle,
+                    &self.agency_client,
+                    &self.connection,
+                )
                 .await
                 .unwrap();
             assert_eq!(

@@ -3,8 +3,8 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use vdrtools_sys::{PoolHandle, WalletHandle};
     use serde_json::{json, Value};
+    use vdrtools_sys::{PoolHandle, WalletHandle};
 
     use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
@@ -14,20 +14,20 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
-    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
-    use aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
-    use aries_vcx::indy::test_utils::create_and_store_credential_def;
     use aries_vcx::indy::ledger::transactions::{get_rev_reg_delta_json, into_did_doc};
     use aries_vcx::indy::primitives;
+    use aries_vcx::indy::primitives::credential_definition::CredentialDef;
+    use aries_vcx::indy::primitives::revocation_registry::publish_local_revocations;
+    use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
+    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::indy::proofs::proof_request_internal::AttrInfo;
+    use aries_vcx::indy::test_utils::create_and_store_credential_def;
     use aries_vcx::messages::connection::invite::Invitation;
     use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
     use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::mime_type::MimeType;
     use aries_vcx::messages::proof_presentation::presentation_proposal::{Attribute, PresentationProposalData};
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::indy::proofs::proof_request_internal::AttrInfo;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -426,7 +426,10 @@ pub mod test_utils {
         issuer_credential
             .send_credential(
                 faber.wallet_handle,
-                issuer_to_consumer.send_message_closure(faber.wallet_handle).await.unwrap(),
+                issuer_to_consumer
+                    .send_message_closure(faber.wallet_handle)
+                    .await
+                    .unwrap(),
             )
             .await
             .unwrap();
@@ -436,16 +439,27 @@ pub mod test_utils {
         info!("send_credential >>> storing credential");
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+            holder_credential
+                .is_revokable(alice.wallet_handle, alice.pool_handle)
+                .await
+                .unwrap(),
             revokable
         );
         holder_credential
-            .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, consumer_to_issuer)
+            .update_state(
+                alice.wallet_handle,
+                alice.pool_handle,
+                &alice.agency_client,
+                consumer_to_issuer,
+            )
             .await
             .unwrap();
         assert_eq!(HolderState::Finished, holder_credential.get_state());
         assert_eq!(
-            holder_credential.is_revokable(alice.wallet_handle, alice.pool_handle).await.unwrap(),
+            holder_credential
+                .is_revokable(alice.wallet_handle, alice.pool_handle)
+                .await
+                .unwrap(),
             revokable
         );
         assert_eq!(thread_id, holder_credential.get_thread_id().unwrap());
@@ -651,7 +665,12 @@ pub mod test_utils {
             selected_credentials
         );
         prover
-            .generate_presentation(alice.wallet_handle, alice.pool_handle, selected_credentials.into(), "{}".to_string())
+            .generate_presentation(
+                alice.wallet_handle,
+                alice.pool_handle,
+                selected_credentials.into(),
+                "{}".to_string(),
+            )
             .await
             .unwrap();
         assert_eq!(thread_id, prover.get_thread_id().unwrap());
@@ -673,19 +692,35 @@ pub mod test_utils {
 
     pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
         verifier
-            .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, &connection)
+            .update_state(
+                faber.wallet_handle,
+                faber.pool_handle,
+                &faber.agency_client,
+                &connection,
+            )
             .await
             .unwrap();
         assert_eq!(verifier.get_state(), VerifierState::Finished);
         assert_eq!(
-            verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
-    pub async fn revoke_credential_and_publish_accumulator(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
+    pub async fn revoke_credential_and_publish_accumulator(
+        faber: &mut Faber,
+        issuer_credential: &Issuer,
+        rev_reg_id: &str,
+    ) {
         revoke_credential_local(faber, issuer_credential, &rev_reg_id).await;
-        publish_local_revocations(faber.wallet_handle, faber.pool_handle, &faber.config_issuer.institution_did, &rev_reg_id).await.unwrap();
+        publish_local_revocations(
+            faber.wallet_handle,
+            faber.pool_handle,
+            &faber.config_issuer.institution_did,
+            &rev_reg_id,
+        )
+        .await
+        .unwrap();
     }
 
     pub async fn revoke_credential_local(faber: &mut Faber, issuer_credential: &Issuer, rev_reg_id: &str) {
@@ -727,15 +762,20 @@ pub mod test_utils {
     }
 
     pub async fn publish_revocation(institution: &mut Faber, rev_reg_id: String) {
-        primitives::revocation_registry::publish_local_revocations(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, rev_reg_id.as_str())
-            .await
-            .unwrap();
+        primitives::revocation_registry::publish_local_revocations(
+            institution.wallet_handle,
+            institution.pool_handle,
+            &institution.config_issuer.institution_did,
+            rev_reg_id.as_str(),
+        )
+        .await
+        .unwrap();
     }
 
     pub async fn _create_address_schema(
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
-        institution_did: &str
+        institution_did: &str,
     ) -> (
         String,
         String,
@@ -837,7 +877,12 @@ pub mod test_utils {
         Issuer,
     ) {
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
 
         info!("test_real_proof_with_revocation :: AS INSTITUTION SEND CREDENTIAL OFFER");
         let (address1, address2, city, state, zip) = attr_names();
@@ -866,7 +911,13 @@ pub mod test_utils {
         cred_def_id: &str,
         request_name: Option<&str>,
     ) -> Verifier {
-        let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, None, None);
+        let _requested_attrs = requested_attrs(
+            &institution.config_issuer.institution_did,
+            &schema_id,
+            &cred_def_id,
+            None,
+            None,
+        );
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
         send_proof_request(
             institution,
