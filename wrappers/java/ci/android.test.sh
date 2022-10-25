@@ -79,8 +79,7 @@ execute_on_device(){
         adb -e shell "chmod 755 /data/local/tmp/$EXE_NAME"
         OUT="$(mktemp)"
         MARK="ADB_SUCCESS!"
-        time adb -e shell "cat /data/local/tmp/$EXE_NAME"
-        time adb -e shell "LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=trace /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
+        time adb -e shell "export LD_LIBRARY_PATH=/data/local/tmp; export RUST_TEST_THREADS=1; export RUST_BACKTRACE=full; export RUST_LOG=trace; env; /data/local/tmp/$EXE_NAME api_lib::api_c::wallet::tests::test_wallet_export_import && echo $MARK" 2>&1 | tee $OUT
         grep $MARK $OUT
     done
 
