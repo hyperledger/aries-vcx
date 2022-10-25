@@ -7,13 +7,6 @@ use vdrtools_sys::WalletHandle;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::credentials::encoding::encode_attributes;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::issuance::credential::Credential;
-use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
-use messages::issuance::credential_proposal::CredentialProposal;
-use messages::issuance::credential_request::CredentialRequest;
-use messages::issuance::CredentialPreviewData;
-use messages::status::Status;
 use crate::indy::credentials::issuer;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
@@ -26,6 +19,13 @@ use crate::protocols::issuance::issuer::states::proposal_received::ProposalRecei
 use crate::protocols::issuance::issuer::states::requested_received::RequestReceivedState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+use messages::issuance::credential_proposal::CredentialProposal;
+use messages::issuance::credential_request::CredentialRequest;
+use messages::issuance::CredentialPreviewData;
+use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum IssuerFullState {
@@ -136,18 +136,24 @@ impl IssuerSM {
         match &self.state {
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.clone(),
             IssuerFullState::Finished(state) => state.revocation_info_v1.clone(),
-            _ => None
+            _ => None,
         }
     }
 
     pub fn get_rev_id(&self) -> VcxResult<String> {
-        let err = VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
+        let err = VcxError::from_msg(
+            VcxErrorKind::InvalidState,
+            "No revocation info found - is this credential revokable?",
+        );
         let rev_id = match &self.state {
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
             IssuerFullState::Finished(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
-            _ => None
+            _ => None,
         };
-        rev_id.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Revocation info does not contain rev id"))
+        rev_id.ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidState,
+            "Revocation info does not contain rev id",
+        ))
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
@@ -350,7 +356,10 @@ impl IssuerSM {
     }
 
     pub fn receive_proposal(self, proposal: CredentialProposal) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposal(proposal.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
+        )?;
         let (state, thread_id) = match self.state {
             IssuerFullState::Initial(_) => {
                 let thread_id = proposal.id.0.to_string();
@@ -358,7 +367,10 @@ impl IssuerSM {
                 (state, thread_id)
             }
             IssuerFullState::OfferSent(_) => {
-                verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposal(proposal.clone()))?;
+                verify_thread_id(
+                    &self.thread_id,
+                    &CredentialIssuanceAction::CredentialProposal(proposal.clone()),
+                )?;
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
@@ -367,7 +379,11 @@ impl IssuerSM {
                 (s, self.thread_id.clone())
             }
         };
-        Ok(Self { state, thread_id, ..self })
+        Ok(Self {
+            state,
+            thread_id,
+            ..self
+        })
     }
 
     pub async fn send_credential_offer(self, send_message: SendClosure) -> VcxResult<Self> {
@@ -377,12 +393,17 @@ impl IssuerSM {
                 send_message(cred_offer_msg).await?;
                 self.mark_credential_offer_msg_sent()?
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            _ => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
         })
     }
 
     pub fn receive_request(self, request: CredentialRequest) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialRequest(request.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &CredentialIssuanceAction::CredentialRequest(request.clone()),
+        )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
             s @ _ => {
@@ -404,7 +425,9 @@ impl IssuerSM {
                     &state_data.offer,
                     &state_data.cred_data,
                     &self.thread_id,
-                ).await {
+                )
+                .await
+                {
                     Ok((credential_msg, cred_rev_id)) => {
                         let credential_msg = credential_msg.set_thread_id(&self.thread_id).ask_for_ack(); // TODO: Make configurable
                         send_message(credential_msg.to_a2a_message()).await?;
@@ -412,13 +435,18 @@ impl IssuerSM {
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!("Failed to create credential, sending problem report {:?}", problem_report);
+                        error!(
+                            "Failed to create credential, sending problem report {:?}",
+                            problem_report
+                        );
                         send_message(problem_report.to_a2a_message()).await?;
                         IssuerFullState::Finished((state_data, problem_report).into())
                     }
                 }
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            _ => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -436,7 +464,10 @@ impl IssuerSM {
     }
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::ProblemReport(problem_report.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &CredentialIssuanceAction::ProblemReport(problem_report.clone()),
+        )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
@@ -468,7 +499,7 @@ impl IssuerSM {
             }
             CredentialIssuanceAction::CredentialAck(ack) => self.receive_ack(ack)?,
             CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
-            _ => self
+            _ => self,
         };
         Ok(issuer_sm)
     }
@@ -532,6 +563,9 @@ async fn _create_credential(
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::test::source_id;
+    use crate::utils::constants::LIBINDY_CRED_OFFER;
+    use crate::utils::devsetup::SetupMocks;
     use messages::a2a::A2AMessage;
     use messages::issuance::credential::test_utils::_credential;
     use messages::issuance::credential_offer::test_utils::{_credential_offer, _offer_info};
@@ -539,9 +573,6 @@ pub mod unit_tests {
     use messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use messages::issuance::test_utils::{_ack, _problem_report};
     use messages::problem_report::ProblemReport;
-    use crate::test::source_id;
-    use crate::utils::constants::LIBINDY_CRED_OFFER;
-    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -624,13 +655,11 @@ pub mod unit_tests {
     }
 
     mod build_messages {
+        use crate::protocols::issuance::issuer::state_machine::{build_credential_message, build_credential_offer};
+        use crate::utils::constants::LIBINDY_CRED_OFFER;
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
         use messages::a2a::MessageId;
         use messages::issuance::CredentialPreviewData;
-        use crate::protocols::issuance::issuer::state_machine::{
-            build_credential_message, build_credential_offer,
-        };
-        use crate::utils::constants::LIBINDY_CRED_OFFER;
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
 
         #[test]
         #[cfg(feature = "general_test")]

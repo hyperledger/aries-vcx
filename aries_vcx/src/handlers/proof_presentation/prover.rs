@@ -6,14 +6,14 @@ use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use messages::a2a::A2AMessage;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
-use messages::proof_presentation::presentation_request::PresentationRequest;
 use crate::indy::proofs::prover;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
+use messages::a2a::A2AMessage;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
+use messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -81,10 +81,20 @@ impl Prover {
         Ok(json!(proof).to_string())
     }
 
-    pub async fn set_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation) -> VcxResult<()> {
+    pub async fn set_presentation(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        presentation: Presentation,
+    ) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        self.step(wallet_handle, pool_handle, ProverMessages::SetPresentation(presentation), None)
-            .await
+        self.step(
+            wallet_handle,
+            pool_handle,
+            ProverMessages::SetPresentation(presentation),
+            None,
+        )
+        .await
     }
 
     pub async fn send_proposal(
@@ -104,10 +114,20 @@ impl Prover {
         .await
     }
 
-    pub async fn send_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle,send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_presentation(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.step(wallet_handle, pool_handle, ProverMessages::SendPresentation, Some(send_message))
-            .await
+        self.step(
+            wallet_handle,
+            pool_handle,
+            ProverMessages::SendPresentation,
+            Some(send_message),
+        )
+        .await
     }
 
     pub fn progressable_by_message(&self) -> bool {
@@ -240,7 +260,8 @@ impl Prover {
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message))
+                .await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -276,8 +297,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use messages::proof_presentation::presentation_request::PresentationRequest;
     use crate::utils::devsetup::*;
+    use messages::proof_presentation::presentation_request::PresentationRequest;
 
     use super::*;
 

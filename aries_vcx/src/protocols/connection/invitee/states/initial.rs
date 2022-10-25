@@ -1,7 +1,7 @@
+use crate::protocols::connection::invitee::states::invited::InvitedState;
 use messages::connection::invite::Invitation;
 use messages::connection::problem_report::ProblemReport;
 use messages::did_doc::DidDoc;
-use crate::protocols::connection::invitee::states::invited::InvitedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
@@ -18,6 +18,9 @@ impl From<(InitialState, Invitation, DidDoc)> for InvitedState {
 
 impl InitialState {
     pub fn new(problem_report: Option<ProblemReport>, did_doc: Option<DidDoc>) -> Self {
-        InitialState { problem_report, did_doc }
+        InitialState {
+            problem_report,
+            did_doc,
+        }
     }
 }

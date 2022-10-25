@@ -8,9 +8,9 @@ use agency_client::messages::update_message::UIDsByConn;
 
 use crate::agency_client::MessageStatusCode;
 use crate::error::prelude::*;
-use messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::a2a::A2AMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CloudAgentInfo {

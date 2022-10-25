@@ -1,16 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::problem_report::ProblemReport;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_ack::PresentationAck;
-use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use crate::indy::proofs::proof_request::PresentationRequestData;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
@@ -20,7 +14,13 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
-use crate::indy::proofs::proof_request::PresentationRequestData;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::problem_report::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_ack::PresentationAck;
+use messages::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -278,35 +278,31 @@ impl VerifierSM {
                         .await;
                     let ack = build_verification_ack(&thread_id);
                     match send_message {
-                        None => error!("Send message closure was not provided, presentation verification ack won't be sent."),
-                        Some(send_message) => {
-                            match send_message(A2AMessage::PresentationAck(ack)).await {
-                                Ok(_) => (),
-                                Err(err) => warn!("Failed to send presentation verification ack: {}", err),
-                            }
-                        }
+                        None => error!(
+                            "Send message closure was not provided, presentation verification ack won't be sent."
+                        ),
+                        Some(send_message) => match send_message(A2AMessage::PresentationAck(ack)).await {
+                            Ok(_) => (),
+                            Err(err) => warn!("Failed to send presentation verification ack: {}", err),
+                        },
                     }
                     match verification_result {
-                        Ok(()) => {
-                            (
-                                VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
+                        Ok(()) => (
+                            VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
+                            thread_id,
+                        ),
+                        Err(err) => match err.kind() {
+                            VcxErrorKind::InvalidProof => (
+                                VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
                                 thread_id,
-                            )
-                        }
-                        Err(err) => {
-                            match err.kind() {
-                                VcxErrorKind::InvalidProof => (
-                                    VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
-                                    thread_id,
-                                ),
-                                _ => {
-                                    let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
-                                    (VerifierFullState::Finished((state, problem_report).into()), thread_id)
-                                }
+                            ),
+                            _ => {
+                                let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
+                                (VerifierFullState::Finished((state, problem_report).into()), thread_id)
                             }
-                        }
+                        },
                     }
-                },
+                }
                 VerifierMessages::PresentationRejectReceived(problem_report) => {
                     (VerifierFullState::Finished((state, problem_report).into()), thread_id)
                 }
@@ -441,13 +437,13 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::indy::proofs::proof_request::test_utils::_presentation_request_data;
+    use crate::test::source_id;
+    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
     use messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
     use messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
-    use crate::test::source_id;
-    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-    use crate::indy::proofs::proof_request::test_utils::_presentation_request_data;
 
     use super::*;
 
@@ -528,11 +524,11 @@ pub mod unit_tests {
     mod build_messages {
         use super::*;
 
-        use messages::a2a::MessageId;
         use crate::protocols::proof_presentation::verifier::state_machine::{
             build_starting_presentation_request, build_verification_ack,
         };
         use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use messages::a2a::MessageId;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -599,7 +595,6 @@ pub mod unit_tests {
     mod step {
         use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
-        
 
         use super::*;
 

@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::utils::openssl::encode;
 use crate::utils::error::INVALID_ATTRIBUTES_STRUCTURE;
+use crate::utils::openssl::encode;
+use std::collections::HashMap;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();
@@ -17,10 +17,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
                             Some(x) => x,
                             None => {
-                                warn!(
-                                    "Cannot encode attribute: {}",
-                                    INVALID_ATTRIBUTES_STRUCTURE.message
-                                );
+                                warn!("Cannot encode attribute: {}", INVALID_ATTRIBUTES_STRUCTURE.message);
                                 return Err(VcxError::from_msg(
                                     VcxErrorKind::InvalidAttributesStructure,
                                     "Attribute value not found",
@@ -112,8 +109,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod unit_tests {
     use serde_json::Value;
 
-    use crate::utils::devsetup::*;
     use crate::indy::credentials::encoding::encode_attributes;
+    use crate::utils::devsetup::*;
 
     #[test]
     fn test_encode_with_several_attributes_success() {

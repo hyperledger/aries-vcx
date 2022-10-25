@@ -1,14 +1,8 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::problem_report::ProblemReport;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
-use messages::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -20,6 +14,12 @@ use crate::protocols::proof_presentation::prover::states::presentation_request_r
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::problem_report::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal};
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -188,7 +188,10 @@ impl ProverSM {
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &thread_id);
-                        error!("Failed bo build presentation, sending problem report: {:?}", problem_report);
+                        error!(
+                            "Failed bo build presentation, sending problem report: {:?}",
+                            problem_report
+                        );
                         ProverFullState::PresentationPreparationFailed((state, problem_report).into())
                     }
                 },
@@ -419,14 +422,14 @@ impl ProverSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
     use messages::proof_presentation::presentation::test_utils::_presentation;
     use messages::proof_presentation::presentation_proposal::test_utils::{
         _presentation_preview, _presentation_proposal, _presentation_proposal_data,
     };
     use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
-    use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -437,7 +440,6 @@ pub mod unit_tests {
     fn _dummy_pool_handle() -> PoolHandle {
         0
     }
-
 
     pub fn _prover_sm_from_request() -> ProverSM {
         ProverSM::from_request(_presentation_request(), source_id())
@@ -555,8 +557,8 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use messages::a2a::MessageId;
         use crate::protocols::common::build_problem_report_msg;
+        use messages::a2a::MessageId;
 
         use crate::protocols::proof_presentation::prover::state_machine::build_presentation_msg;
         use crate::utils::devsetup::{was_in_past, SetupMocks};
@@ -582,7 +584,7 @@ pub mod unit_tests {
         async fn test_prover_build_problem_report() {
             let _setup = SetupMocks::init();
 
-            let msg = build_problem_report_msg( Some("foobar".into()), "12345");
+            let msg = build_problem_report_msg(Some("foobar".into()), "12345");
 
             assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));

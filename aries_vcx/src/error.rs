@@ -3,11 +3,11 @@ use std::sync;
 
 use failure::{Backtrace, Context, Fail};
 
+use crate::utils::error;
 use agency_client;
 use agency_client::error::AgencyClientErrorKind;
 use messages;
 use messages::error::MesssagesErrorKind as MessagesErrorKind;
-use crate::utils::error;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -74,7 +74,9 @@ pub enum VcxErrorKind {
     CredDefAlreadyCreated,
     #[fail(display = "Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[fail(display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[fail(
+        display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
     RevDeltaNotFound,
     #[fail(display = "Failed to clean stored revocation delta")]
     RevDeltaFailedToClear,

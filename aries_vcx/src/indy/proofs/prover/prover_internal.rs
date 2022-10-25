@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::Value;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
+use crate::indy::ledger::transactions::{
+    get_cred_def_json, get_rev_reg_def_json, get_rev_reg_delta_json, get_schema_json,
+};
 use crate::indy::proofs::proof_request::ProofRequestData;
 use crate::indy::proofs::proof_request_internal::NonRevokedInterval;
-use crate::indy::ledger::transactions::{
-    get_cred_def_json, get_rev_reg_def_json,
-    get_rev_reg_delta_json, get_schema_json};
 use crate::indy::proofs::prover;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -158,7 +158,10 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_rev_states_json(
+    pool_handle: PoolHandle,
+    credentials_identifiers: &mut Vec<CredInfoProver>,
+) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
@@ -180,7 +183,8 @@ pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifi
 
                 let (_, rev_reg_def_json) = get_rev_reg_def_json(pool_handle, rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) =
+                    get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
 
                 let rev_state_json = prover::libindy_prover_create_revocation_state(
                     &rev_reg_def_json,
@@ -285,7 +289,9 @@ pub mod pool_tests {
 
         // empty vector
         assert_eq!(
-            build_rev_states_json(_dummy_pool_handle(), Vec::new().as_mut()).await.unwrap(),
+            build_rev_states_json(_dummy_pool_handle(), Vec::new().as_mut())
+                .await
+                .unwrap(),
             "{}".to_string()
         );
 
@@ -302,7 +308,9 @@ pub mod pool_tests {
             timestamp: None,
         };
         assert_eq!(
-            build_rev_states_json(_dummy_pool_handle(), vec![cred1].as_mut()).await.unwrap(),
+            build_rev_states_json(_dummy_pool_handle(), vec![cred1].as_mut())
+                .await
+                .unwrap(),
             "{}".to_string()
         );
     }
@@ -326,7 +334,6 @@ pub mod unit_tests {
     fn _dummy_pool_handle() -> PoolHandle {
         0
     }
-
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -373,7 +380,9 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let credential_def = build_cred_defs_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds).await.unwrap();
+        let credential_def = build_cred_defs_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds)
+            .await
+            .unwrap();
         assert!(credential_def.len() > 0);
         assert!(credential_def.contains(r#""id":"V4SGRU86Z58d6TV7PBUe6f:3:CL:47:tag1","schemaId":"47""#));
     }
@@ -428,7 +437,9 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
 
         assert_eq!(
-            build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &Vec::new()).await.unwrap(),
+            build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &Vec::new())
+                .await
+                .unwrap(),
             "{}".to_string()
         );
 
@@ -456,7 +467,9 @@ pub mod unit_tests {
         };
         let creds = vec![cred1, cred2];
 
-        let schemas = build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds).await.unwrap();
+        let schemas = build_schemas_json_prover(WalletHandle(0), _dummy_pool_handle(), &creds)
+            .await
+            .unwrap();
         assert!(schemas.len() > 0);
         assert!(schemas.contains(r#""id":"2hoqvcwupRTUNkXn6ArYzs:2:test-licence:4.4.4","name":"test-licence""#));
     }
@@ -757,7 +770,9 @@ pub mod unit_tests {
             timestamp: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(_dummy_pool_handle(), cred_info.as_mut()).await.unwrap();
+        let states = build_rev_states_json(_dummy_pool_handle(), cred_info.as_mut())
+            .await
+            .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);

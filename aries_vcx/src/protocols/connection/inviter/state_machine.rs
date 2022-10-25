@@ -4,23 +4,23 @@ use std::future::Future;
 
 use vdrtools_sys::WalletHandle;
 
-use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::connection::invite::{Invitation, PairwiseInvitation};
-use messages::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::connection::request::Request;
-use messages::connection::response::{Response, SignedResponse};
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use crate::indy::signing::sign_connection_response;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::indy::signing::sign_connection_response;
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::connection::invite::{Invitation, PairwiseInvitation};
+use messages::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::connection::request::Request;
+use messages::connection::response::{Response, SignedResponse};
+use messages::did_doc::DidDoc;
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -371,8 +371,9 @@ impl SmConnectionInviter {
                         .set_keys(new_recipient_keys, new_routing_keys)
                         .ask_for_ack()
                         .set_thread_id(&request.get_thread_id())
-                        .set_out_time()
-                ).await
+                        .set_out_time(),
+                )
+                .await
             }
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -385,14 +386,14 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::{_ack};
+    use messages::ack::test_utils::_ack;
     use messages::connection::problem_report::unit_tests::_problem_report;
     use messages::connection::request::unit_tests::_request;
     use messages::connection::response::test_utils::_signed_response;
     use messages::discovery::disclose::test_utils::_disclose;
     use messages::discovery::query::test_utils::_query;
     use messages::trust_ping::ping::unit_tests::_ping;
-    
+
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -403,7 +404,6 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
-        
 
         use super::*;
 
@@ -473,10 +473,9 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-            
 
             use messages::a2a::MessageId;
-            
+
             use crate::utils::devsetup::was_in_past;
 
             use super::*;
@@ -549,7 +548,7 @@ pub mod unit_tests {
         }
 
         mod step {
-            
+
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -785,7 +784,7 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-            
+
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;

@@ -7,15 +7,15 @@ use agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
+use crate::indy::primitives::revocation_registry;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
+use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
+use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::CredentialPreviewData;
 use messages::mime_type::MimeType;
-use crate::indy::primitives::revocation_registry;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -56,24 +56,17 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     VcxErrorKind::InvalidAttributesStructure,
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
-                credential_preview =
-                    credential_preview.add_value(
-                        &key.as_str()
-                            .ok_or(
-                                VcxError::from_msg(
-                                    VcxErrorKind::InvalidOption,
-                                    "Credential value names are currently only allowed to be strings",
-                                )
-                            )?,
-                        &value.as_str()
-                            .ok_or(
-                                VcxError::from_msg(
-                                    VcxErrorKind::InvalidOption,
-                                    "Credential values are currently only allowed to be strings",
-                                )
-                            )?,
-                        MimeType::Plain
-                    );
+                credential_preview = credential_preview.add_value(
+                    &key.as_str().ok_or(VcxError::from_msg(
+                        VcxErrorKind::InvalidOption,
+                        "Credential value names are currently only allowed to be strings",
+                    ))?,
+                    &value.as_str().ok_or(VcxError::from_msg(
+                        VcxErrorKind::InvalidOption,
+                        "Credential values are currently only allowed to be strings",
+                    ))?,
+                    MimeType::Plain,
+                );
             }
         }
         serde_json::Value::Object(values_map) => {
@@ -147,7 +140,11 @@ impl Issuer {
     }
 
     pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential(wallet_handle, send_message).await?;
+        self.issuer_sm = self
+            .issuer_sm
+            .clone()
+            .send_credential(wallet_handle, send_message)
+            .await?;
         Ok(())
     }
 
@@ -275,12 +272,12 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
+    use crate::utils::devsetup::SetupMocks;
     use messages::ack::test_utils::_ack;
     use messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use messages::issuance::credential_request::test_utils::_credential_request;
-    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
-    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -376,7 +373,8 @@ pub mod unit_tests {
         let input = json!([
             {"name":"name", "value": "Alice"},
             {"name": "age", "value": "123"}
-        ]).to_string();
+        ])
+        .to_string();
         let preview = _build_credential_preview(&input).unwrap();
         verify_preview(preview);
     }

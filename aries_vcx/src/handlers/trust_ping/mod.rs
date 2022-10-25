@@ -1,9 +1,9 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
-use messages::trust_ping::ping::Ping;
-use messages::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
+use messages::trust_ping::ping::Ping;
+use messages::trust_ping::ping_response::PingResponse;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
@@ -60,10 +60,10 @@ impl TrustPingSender {
 mod unit_tests {
     use crate::error::VcxResult;
     use crate::handlers::trust_ping::TrustPingSender;
-    use messages::a2a::A2AMessage;
     use crate::protocols::trustping::build_ping_response;
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;
+    use messages::a2a::A2AMessage;
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))

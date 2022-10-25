@@ -1,17 +1,17 @@
 use futures::stream::iter;
 use futures::StreamExt;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 
-use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::indy::ledger::transactions::add_service;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use messages::a2a::A2AMessage;
 use messages::connection::did::Did;
 use messages::connection::request::Request;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use messages::did_doc::service_aries::AriesService;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {

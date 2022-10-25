@@ -1,12 +1,10 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
 use serde_json;
 use serde_json::Value;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::indy::ledger::transactions::{
-    get_cred_def_json, get_rev_reg, get_rev_reg_def_json,
-    get_schema_json};
+use crate::indy::ledger::transactions::{get_cred_def_json, get_rev_reg, get_rev_reg_def_json, get_schema_json};
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -151,7 +149,10 @@ pub async fn build_schemas_json_verifier(
     Ok(schemas_json.to_string())
 }
 
-pub async fn build_rev_reg_defs_json(pool_handle: PoolHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_rev_reg_defs_json(
+    pool_handle: PoolHandle,
+    credential_data: &Vec<CredInfoVerifier>,
+) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
     let mut rev_reg_defs_json = json!({});

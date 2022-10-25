@@ -1,14 +1,14 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::proofs::verifier::verifier::validate_indy_proof;
+use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
-use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
-use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {

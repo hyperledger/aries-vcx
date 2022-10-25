@@ -1,14 +1,13 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
-use std::fmt;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{
-    build_cred_def_request, check_response, get_cred_def,
-    get_cred_def_json, get_schema_json, sign_and_submit_to_ledger
+    build_cred_def_request, check_response, get_cred_def, get_cred_def_json, get_schema_json, sign_and_submit_to_ledger,
 };
+use std::fmt;
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
@@ -66,7 +65,6 @@ enum_number!(PublicEntityStateType
     Published = 1,
 });
 
-
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
 pub struct CredentialDef {
     #[serde(alias = "cred_def_id")]
@@ -104,7 +102,11 @@ impl Default for PublicEntityStateType {
     }
 }
 
-async fn _try_get_cred_def_from_ledger(pool_handle: PoolHandle, issuer_did: &str, id: &str) -> VcxResult<Option<String>> {
+async fn _try_get_cred_def_from_ledger(
+    pool_handle: PoolHandle,
+    issuer_did: &str,
+    id: &str,
+) -> VcxResult<Option<String>> {
     match get_cred_def(pool_handle, Some(issuer_did), id).await {
         Ok((_, cred_def)) => Ok(Some(cred_def)),
         Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(None),
@@ -172,7 +174,9 @@ impl CredentialDef {
             self.issuer_did,
             self.id
         );
-        if let Some(ledger_cred_def_json) = _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.id).await? {
+        if let Some(ledger_cred_def_json) =
+            _try_get_cred_def_from_ledger(pool_handle, &self.issuer_did, &self.id).await?
+        {
             return Err(VcxError::from_msg(
                 VcxErrorKind::CredDefAlreadyCreated,
                 format!(
@@ -207,8 +211,12 @@ impl CredentialDef {
     }
 
     pub fn get_data_json(&self) -> VcxResult<String> {
-        serde_json::to_string(&self)
-            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
+        serde_json::to_string(&self).map_err(|_| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                "Failed to serialize credential definition",
+            )
+        })
     }
 
     pub fn get_source_id(&self) -> &String {
@@ -239,7 +247,12 @@ impl CredentialDef {
     }
 }
 
-pub async fn publish_cred_def(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str, cred_def_json: &str) -> VcxResult<()> {
+pub async fn publish_cred_def(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    issuer_did: &str,
+    cred_def_json: &str,
+) -> VcxResult<()> {
     trace!(
         "publish_cred_def >>> issuer_did: {}, cred_def_json: {}",
         issuer_did,
@@ -270,8 +283,8 @@ pub async fn libindy_create_and_store_credential_def(
         sig_type,
         config_json,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }
 
 pub async fn generate_cred_def(
@@ -299,15 +312,14 @@ pub async fn generate_cred_def(
     libindy_create_and_store_credential_def(wallet_handle, issuer_did, schema_json, tag, sig_type, &config_json).await
 }
 
-
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::indy::test_utils::create_and_write_test_schema;
-    use crate::indy::primitives::credential_definition::generate_cred_def;
     use crate::indy::ledger::transactions::get_schema_json;
+    use crate::indy::primitives::credential_definition::generate_cred_def;
     use crate::indy::primitives::credential_definition::publish_cred_def;
     use crate::indy::primitives::revocation_registry::{generate_rev_reg, publish_rev_reg_def, publish_rev_reg_delta};
+    use crate::indy::test_utils::create_and_write_test_schema;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupWalletPool;
 
@@ -315,64 +327,98 @@ pub mod integration_tests {
     async fn test_create_cred_def_real() {
         let setup = SetupWalletPool::init().await;
 
-        let (schema_id, _) =
-            create_and_write_test_schema(
-                setup.wallet_handle,
-                setup.pool_handle,
-                &setup.institution_did,
-                DEFAULT_SCHEMA_ATTRS)
-            .await;
+        let (schema_id, _) = create_and_write_test_schema(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
-        let (_, schema_json) =
-            get_schema_json(
-                setup.wallet_handle,
-                setup.pool_handle,
-                &schema_id)
+        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id)
             .await
             .unwrap();
 
-        let (_, cred_def_json) =
-            generate_cred_def(
-                setup.wallet_handle,
-                &setup.institution_did,
-                &schema_json,
-                "tag_1", None, Some(true))
-            .await
-            .unwrap();
+        let (_, cred_def_json) = generate_cred_def(
+            setup.wallet_handle,
+            &setup.institution_did,
+            &schema_json,
+            "tag_1",
+            None,
+            Some(true),
+        )
+        .await
+        .unwrap();
 
         publish_cred_def(
             setup.wallet_handle,
             setup.pool_handle,
             &setup.institution_did,
-            &cred_def_json)
-            .await
-            .unwrap();
+            &cred_def_json,
+        )
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
     async fn test_create_rev_reg_def() {
         let setup = SetupWalletPool::init().await;
 
-        let (schema_id, _) =
-            create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
-        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id).await.unwrap();
+        let (schema_id, _) = create_and_write_test_schema(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
+        let (_, schema_json) = get_schema_json(setup.wallet_handle, setup.pool_handle, &schema_id)
+            .await
+            .unwrap();
 
-        let (cred_def_id, cred_def_json) =
-            generate_cred_def(setup.wallet_handle, &setup.institution_did, &schema_json, "tag_1", None, Some(true))
-                .await
-                .unwrap();
-        publish_cred_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &cred_def_json)
-            .await
-            .unwrap();
-        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) =
-            generate_rev_reg(setup.wallet_handle, &setup.institution_did, &cred_def_id, "tails.txt", 2, "tag1")
-                .await
-                .unwrap();
-        publish_rev_reg_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_json)
-            .await
-            .unwrap();
-        publish_rev_reg_delta(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
-            .await
-            .unwrap();
+        let (cred_def_id, cred_def_json) = generate_cred_def(
+            setup.wallet_handle,
+            &setup.institution_did,
+            &schema_json,
+            "tag_1",
+            None,
+            Some(true),
+        )
+        .await
+        .unwrap();
+        publish_cred_def(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            &cred_def_json,
+        )
+        .await
+        .unwrap();
+        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
+            setup.wallet_handle,
+            &setup.institution_did,
+            &cred_def_id,
+            "tails.txt",
+            2,
+            "tag1",
+        )
+        .await
+        .unwrap();
+        publish_rev_reg_def(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            &rev_reg_def_json,
+        )
+        .await
+        .unwrap();
+        publish_rev_reg_delta(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            &rev_reg_def_id,
+            &rev_reg_entry_json,
+        )
+        .await
+        .unwrap();
     }
 }

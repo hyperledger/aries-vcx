@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
-use messages::problem_report::ProblemReport;
 use messages::issuance::credential::{Credential, CredentialData};
+use messages::problem_report::ProblemReport;
 use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -131,7 +131,7 @@ impl FinishedHolderState {
     pub fn get_cred_id(&self) -> VcxResult<String> {
         self.cred_id.clone().ok_or(VcxError::from_msg(
             VcxErrorKind::InvalidJson,
-            format!("The field 'cred_id' not found on FinishedHolderState")
+            format!("The field 'cred_id' not found on FinishedHolderState"),
         ))
     }
 

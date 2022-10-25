@@ -1,4 +1,4 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
@@ -22,13 +22,19 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
     Ok(())
 }
 
-pub async fn is_cred_def_revokable(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<bool> {
-    let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id).await.map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidLedgerResponse,
-            format!("Failed to obtain credential definition from ledger or cache: {}", err),
-        )
-    })?;
+pub async fn is_cred_def_revokable(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    cred_def_id: &str,
+) -> VcxResult<bool> {
+    let (_, cred_def_json) = get_cred_def_json(wallet_handle, pool_handle, cred_def_id)
+        .await
+        .map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidLedgerResponse,
+                format!("Failed to obtain credential definition from ledger or cache: {}", err),
+            )
+        })?;
     let parsed_cred_def: serde_json::Value = serde_json::from_str(&cred_def_json).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,

@@ -1,6 +1,6 @@
-use messages::actors::Actors;
 use crate::error::prelude::*;
 use crate::utils::qualifier;
+use messages::actors::Actors;
 
 use openssl::bn::BigNum;
 use rust_base58::FromBase58;

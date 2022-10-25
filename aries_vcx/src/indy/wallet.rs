@@ -1,10 +1,10 @@
-use vdrtools::wallet;
-use vdrtools_sys::SearchHandle;
 use crate::error::{VcxError, VcxErrorExt, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::keys;
 use crate::indy::credentials::holder;
+use crate::indy::keys;
 use crate::vdrtools::{ErrorCode, WalletHandle};
+use vdrtools::wallet;
+use vdrtools_sys::SearchHandle;
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -71,7 +71,6 @@ impl RestoreWalletConfigs {
         })
     }
 }
-
 
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);

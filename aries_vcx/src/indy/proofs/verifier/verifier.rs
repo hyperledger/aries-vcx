@@ -2,8 +2,7 @@ use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::proofs::verifier::verifier_internal::{
-    build_cred_defs_json_verifier, build_rev_reg_defs_json,
-    build_rev_reg_json, build_schemas_json_verifier,
+    build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
     get_credential_info, validate_proof_revealed_attributes,
 };
 use crate::indy::proofs::verifier::verifier_libindy;
@@ -57,10 +56,10 @@ pub async fn validate_indy_proof(
 #[cfg(feature = "pool_tests")]
 pub mod unit_tests {
     use crate::indy::proofs::proof_request::ProofRequestData;
-    use crate::indy::test_utils::create_and_store_nonrevocable_credential;
-    use crate::utils::devsetup::SetupWalletPool;
-    use crate::utils;
     use crate::indy::proofs::prover;
+    use crate::indy::test_utils::create_and_store_nonrevocable_credential;
+    use crate::utils;
+    use crate::utils::devsetup::SetupWalletPool;
 
     use super::*;
 
@@ -116,9 +115,14 @@ pub mod unit_tests {
         .unwrap();
 
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json.to_string())
-                .await
-                .unwrap(),
+            validate_indy_proof(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &prover_proof_json,
+                &proof_req_json.to_string()
+            )
+            .await
+            .unwrap(),
             true
         );
     }
@@ -158,7 +162,13 @@ pub mod unit_tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &setup.institution_did,
+                utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -184,19 +194,29 @@ pub mod unit_tests {
         .await
         .unwrap();
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
-                .await
-                .unwrap_err()
-                .kind(),
+            validate_indy_proof(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &prover_proof_json,
+                &proof_req_json
+            )
+            .await
+            .unwrap_err()
+            .kind(),
             VcxErrorKind::LibndyError(405)
         ); // AnoncredsProofRejected
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
         proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json.to_string())
-                .await
-                .unwrap(),
+            validate_indy_proof(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &prover_proof_json,
+                &proof_req_json.to_string()
+            )
+            .await
+            .unwrap(),
             true
         );
     }
@@ -237,7 +257,13 @@ pub mod unit_tests {
         let proof_req_json = serde_json::to_string(&proof_req_json).unwrap();
 
         let (schema_id, schema_json, cred_def_id, cred_def_json, _offer, _req, _req_meta, cred_id) =
-            create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &setup.institution_did,
+                utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
         let cred_def_json: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let schema_json: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
 
@@ -263,9 +289,14 @@ pub mod unit_tests {
         .await
         .unwrap();
         assert_eq!(
-            validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
-                .await
-                .unwrap(),
+            validate_indy_proof(
+                setup.wallet_handle,
+                setup.pool_handle,
+                &prover_proof_json,
+                &proof_req_json
+            )
+            .await
+            .unwrap(),
             true
         );
 
@@ -275,10 +306,15 @@ pub mod unit_tests {
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
             assert_eq!(
-                validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
-                    .await
-                    .unwrap_err()
-                    .kind(),
+                validate_indy_proof(
+                    setup.wallet_handle,
+                    setup.pool_handle,
+                    &prover_proof_json,
+                    &proof_req_json
+                )
+                .await
+                .unwrap_err()
+                .kind(),
                 VcxErrorKind::InvalidProof
             );
         }
@@ -288,10 +324,15 @@ pub mod unit_tests {
             let prover_proof_json = serde_json::to_string(&proof_obj).unwrap();
 
             assert_eq!(
-                validate_indy_proof(setup.wallet_handle, setup.pool_handle, &prover_proof_json, &proof_req_json)
-                    .await
-                    .unwrap_err()
-                    .kind(),
+                validate_indy_proof(
+                    setup.wallet_handle,
+                    setup.pool_handle,
+                    &prover_proof_json,
+                    &proof_req_json
+                )
+                .await
+                .unwrap_err()
+                .kind(),
                 VcxErrorKind::InvalidProof
             );
         }

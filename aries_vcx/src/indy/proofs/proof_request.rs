@@ -4,8 +4,8 @@ use std::vec::Vec;
 use serde_json;
 
 use crate::error::prelude::*;
-use crate::indy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 use crate::indy::anoncreds;
+use crate::indy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Clone)]
 #[builder(setter(into), default)]
@@ -140,7 +140,6 @@ mod unit_tests {
     use crate::utils::mockdata::mockdata_proof;
 
     use super::*;
-
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();

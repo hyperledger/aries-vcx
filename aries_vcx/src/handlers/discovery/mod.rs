@@ -1,11 +1,11 @@
 use vdrtools_sys::WalletHandle;
 
-use messages::did_doc::DidDoc;
 use crate::error::VcxResult;
+use messages::did_doc::DidDoc;
 
+use crate::utils::send_message;
 use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use messages::discovery::query::Query;
-use crate::utils::send_message;
 
 pub async fn send_discovery_query(
     wallet_handle: WalletHandle,

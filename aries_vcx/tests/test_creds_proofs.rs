@@ -9,11 +9,11 @@ pub mod utils;
 mod integration_tests {
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::indy::test_utils::{
         create_and_store_credential, create_and_store_nonrevocable_credential,
         create_and_store_nonrevocable_credential_def, create_indy_proof,
     };
-    use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::SetupWalletPool;
@@ -23,7 +23,13 @@ mod integration_tests {
     async fn test_retrieve_credentials() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_nonrevocable_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
         let (_, _, req, _) = create_indy_proof(setup.wallet_handle, setup.pool_handle, &setup.institution_did).await;
 
         let pres_req_data: PresentationRequestData = serde_json::from_str(&req).unwrap();
@@ -39,10 +45,17 @@ mod integration_tests {
     #[tokio::test]
     async fn test_get_credential_def() {
         let setup = SetupWalletPool::init().await;
-        let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
-        let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, setup.pool_handle, &cred_def_id).await.unwrap();
+        let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, setup.pool_handle, &cred_def_id)
+            .await
+            .unwrap();
 
         assert_eq!(id, cred_def_id);
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
@@ -85,7 +98,13 @@ mod integration_tests {
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
         let setup = SetupWalletPool::init().await;
-        create_and_store_nonrevocable_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_nonrevocable_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -140,7 +159,13 @@ mod integration_tests {
     async fn test_generate_proof() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -244,7 +269,13 @@ mod integration_tests {
     async fn test_generate_proof_with_predicates() {
         let setup = SetupWalletPool::init().await;
 
-        create_and_store_credential(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+        create_and_store_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
         let to = time::get_time().sec;
         let indy_proof_req = json!({
             "nonce": "123432421212",
@@ -316,8 +347,8 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::indy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
+    use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -514,7 +545,12 @@ mod tests {
             create_connected_connections(&mut consumer2, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(
+                issuer.wallet_handle,
+                issuer.pool_handle,
+                &issuer.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let _credential_handle1 = _exchange_credential(
@@ -552,7 +588,12 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer1, &consumer1_to_verifier, None, None).await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer1)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer1,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -571,7 +612,12 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer2, &consumer2_to_verifier, None, None).await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer2)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer2,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -604,7 +650,12 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name1, None).await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -623,7 +674,12 @@ mod tests {
         .await;
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, request_name2, None).await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -641,7 +697,12 @@ mod tests {
             create_connected_connections(&mut consumer, &mut institution).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address, city, state, zip) = attr_names();
         let credential_data = json!({address1.clone(): "5th Avenue", address.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
         let _credential_handle = _exchange_credential(
@@ -724,7 +785,13 @@ mod tests {
         }
         let attrs_list = attrs_list.to_string();
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def) =
-            create_and_store_nonrevocable_credential_def(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did, &attrs_list).await;
+            create_and_store_nonrevocable_credential_def(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+                &attrs_list,
+            )
+            .await;
         let mut credential_data = json!({});
         for i in 1..number_of_attributes {
             credential_data[format!("key{}", i)] = Value::String(format!("value{}", i));
@@ -834,7 +901,12 @@ mod tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(
+                issuer.wallet_handle,
+                issuer.pool_handle,
+                &issuer.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -873,7 +945,12 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -892,7 +969,12 @@ mod tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
@@ -910,7 +992,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -936,7 +1023,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         let mut holder = send_cred_proposal(
@@ -971,7 +1063,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         let mut holder = send_cred_proposal(
@@ -1028,7 +1125,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -1067,7 +1169,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -1096,7 +1203,12 @@ mod tests {
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, _cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let tails_file = rev_reg.get_tails_dir();
 
         _exchange_credential_with_proposal(
@@ -1129,7 +1241,7 @@ mod tests {
     }
 
     pub struct Pool {
-        handle: PoolHandle
+        handle: PoolHandle,
     }
 
     impl Pool {
@@ -1176,188 +1288,214 @@ mod tests {
 
         // Credential Presentation
         faber.request_presentation().await;
-            alice.send_presentation().await;
-            faber.verify_presentation().await;
-            alice.ensure_presentation_verified().await;
+        alice.send_presentation().await;
+        faber.verify_presentation().await;
+        alice.ensure_presentation_verified().await;
+    }
+
+    #[tokio::test]
+    async fn aries_demo_create_with_message_id_flow() {
+        let _setup = SetupEmpty::init();
+        let pool = Pool::open().await;
+
+        let mut faber = Faber::setup(pool.handle).await;
+        let mut alice = Alice::setup(pool.handle).await;
+
+        // Publish Schema and Credential Definition
+        faber.create_schema().await;
+
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
+        faber.create_nonrevocable_credential_definition().await;
+
+        // Connection
+        let invite = faber.create_invite().await;
+        alice.accept_invite(&invite).await;
+
+        faber.update_state(3).await;
+        alice.update_state(4).await;
+        faber.update_state(4).await;
+
+        /*
+         Create with message id flow
+        */
+
+        // Credential issuance
+        faber.offer_non_revocable_credential().await;
+
+        // Alice creates Credential object with message id
+        {
+            let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
+            let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).await.unwrap();
+            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
+
+            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+            alice
+                .credential
+                .send_request(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    pw_did,
+                    alice
+                        .connection
+                        .send_message_closure(alice.wallet_handle)
+                        .await
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
         }
 
-        #[tokio::test]
-        async fn aries_demo_create_with_message_id_flow() {
-            let _setup = SetupEmpty::init();
-            let pool = Pool::open().await;
+        faber.send_credential().await;
+        alice.accept_credential().await;
 
-            let mut faber = Faber::setup(pool.handle).await;
-            let mut alice = Alice::setup(pool.handle).await;
+        // Credential Presentation
+        faber.request_presentation().await;
 
-            // Publish Schema and Credential Definition
-            faber.create_schema().await;
+        // Alice creates Presentation object with message id
+        {
+            let message = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
+            let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).await.unwrap();
+            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 
-            std::thread::sleep(std::time::Duration::from_secs(2));
+            let credentials = alice.get_credentials_for_presentation().await;
 
-            faber.create_nonrevocable_credential_definition().await;
+            alice
+                .prover
+                .generate_presentation(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    credentials.to_string(),
+                    String::from("{}"),
+                )
+                .await
+                .unwrap();
+            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
 
-            // Connection
-            let invite = faber.create_invite().await;
-            alice.accept_invite(&invite).await;
-
-            faber.update_state(3).await;
-            alice.update_state(4).await;
-            faber.update_state(4).await;
-
-            /*
-             Create with message id flow
-            */
-
-            // Credential issuance
-            faber.offer_non_revocable_credential().await;
-
-            // Alice creates Credential object with message id
-            {
-                let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
-                let cred_offer = alice.get_credential_offer_by_msg_id(&message.uid).await.unwrap();
-                alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
-
-                let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-                alice
-                    .credential
-                    .send_request(
-                        alice.wallet_handle,
-                        alice.pool_handle,
-                        pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
-                    )
-                    .await
-                    .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
-            }
-
-            faber.send_credential().await;
-            alice.accept_credential().await;
-
-            // Credential Presentation
-            faber.request_presentation().await;
-
-            // Alice creates Presentation object with message id
-            {
-                let message = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
-                let presentation_request = alice.get_proof_request_by_msg_id(&message.uid).await.unwrap();
-                alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
-
-                let credentials = alice.get_credentials_for_presentation().await;
-
-                alice
-                    .prover
-                    .generate_presentation(alice.wallet_handle, alice.pool_handle, credentials.to_string(), String::from("{}"))
-                    .await
-                    .unwrap();
-                assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
-
-                alice
-                    .prover
-                    .send_presentation(
-                        alice.wallet_handle,
-                        alice.pool_handle,
-                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
-                    )
-                    .await
-                    .unwrap();
-                assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
-            }
-
-            faber.verify_presentation().await;
+            alice
+                .prover
+                .send_presentation(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    alice
+                        .connection
+                        .send_message_closure(alice.wallet_handle)
+                        .await
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(ProverState::PresentationSent, alice.prover.get_state());
         }
 
-        #[tokio::test]
-        async fn aries_demo_download_message_flow() {
-            SetupEmpty::init();
-            let pool = Pool::open().await;
+        faber.verify_presentation().await;
+    }
 
-            let mut faber = Faber::setup(pool.handle).await;
-            let mut alice = Alice::setup(pool.handle).await;
+    #[tokio::test]
+    async fn aries_demo_download_message_flow() {
+        SetupEmpty::init();
+        let pool = Pool::open().await;
 
-            // Publish Schema and Credential Definition
-            faber.create_schema().await;
+        let mut faber = Faber::setup(pool.handle).await;
+        let mut alice = Alice::setup(pool.handle).await;
 
-            std::thread::sleep(std::time::Duration::from_secs(2));
+        // Publish Schema and Credential Definition
+        faber.create_schema().await;
 
-            faber.create_nonrevocable_credential_definition().await;
+        std::thread::sleep(std::time::Duration::from_secs(2));
 
-            // Connection
-            let invite = faber.create_invite().await;
-            alice.accept_invite(&invite).await;
+        faber.create_nonrevocable_credential_definition().await;
 
-            faber.update_state(3).await;
-            alice.update_state(4).await;
-            faber.update_state(4).await;
+        // Connection
+        let invite = faber.create_invite().await;
+        alice.accept_invite(&invite).await;
 
-            /*
-             Create with message flow
-            */
+        faber.update_state(3).await;
+        alice.update_state(4).await;
+        faber.update_state(4).await;
 
-            // Credential issuance
-            faber.offer_non_revocable_credential().await;
+        /*
+         Create with message flow
+        */
 
-            // Alice creates Credential object with Offer
-            {
-                let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
+        // Credential issuance
+        faber.offer_non_revocable_credential().await;
 
-                let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
-                alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
+        // Alice creates Credential object with Offer
+        {
+            let message = alice.download_message(PayloadKinds::CredOffer).await.unwrap();
 
-                alice
-                    .connection
-                    .update_message_status(&message.uid, &alice.agency_client)
-                    .await
-                    .unwrap();
+            let cred_offer: CredentialOffer = serde_json::from_str(&message.decrypted_msg).unwrap();
+            alice.credential = Holder::create_from_offer("test", cred_offer).unwrap();
 
-                let pw_did = alice.connection.pairwise_info().pw_did.to_string();
-                alice
-                    .credential
-                    .send_request(
-                        alice.wallet_handle,
-                        alice.pool_handle,
-                        pw_did,
-                        alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
-                    )
-                    .await
-                    .unwrap();
-                assert_eq!(HolderState::RequestSent, alice.credential.get_state());
-            }
+            alice
+                .connection
+                .update_message_status(&message.uid, &alice.agency_client)
+                .await
+                .unwrap();
 
-            faber.send_credential().await;
-            alice.accept_credential().await;
+            let pw_did = alice.connection.pairwise_info().pw_did.to_string();
+            alice
+                .credential
+                .send_request(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    pw_did,
+                    alice
+                        .connection
+                        .send_message_closure(alice.wallet_handle)
+                        .await
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(HolderState::RequestSent, alice.credential.get_state());
+        }
 
-            // Credential Presentation
-            faber.request_presentation().await;
+        faber.send_credential().await;
+        alice.accept_credential().await;
 
-            // Alice creates Presentation object with Proof Request
-            {
-                let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
+        // Credential Presentation
+        faber.request_presentation().await;
 
-                let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
-                alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
+        // Alice creates Presentation object with Proof Request
+        {
+            let agency_msg = alice.download_message(PayloadKinds::ProofRequest).await.unwrap();
 
-                alice
-                    .connection
-                    .update_message_status(&agency_msg.uid, &alice.agency_client)
-                    .await
-                    .unwrap();
+            let presentation_request: PresentationRequest = serde_json::from_str(&agency_msg.decrypted_msg).unwrap();
+            alice.prover = Prover::create_from_request("test", presentation_request).unwrap();
 
-                let credentials = alice.get_credentials_for_presentation().await;
+            alice
+                .connection
+                .update_message_status(&agency_msg.uid, &alice.agency_client)
+                .await
+                .unwrap();
 
-                alice
-                    .prover
-                    .generate_presentation(alice.wallet_handle, alice.pool_handle, credentials.to_string(), String::from("{}"))
-                    .await
-                    .unwrap();
-                assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
+            let credentials = alice.get_credentials_for_presentation().await;
 
-                alice
-                    .prover
-                    .send_presentation(
-                        alice.wallet_handle,
-                        alice.pool_handle,
-                    alice.connection.send_message_closure(alice.wallet_handle).await.unwrap(),
+            alice
+                .prover
+                .generate_presentation(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    credentials.to_string(),
+                    String::from("{}"),
+                )
+                .await
+                .unwrap();
+            assert_eq!(ProverState::PresentationPrepared, alice.prover.get_state());
+
+            alice
+                .prover
+                .send_presentation(
+                    alice.wallet_handle,
+                    alice.pool_handle,
+                    alice
+                        .connection
+                        .send_message_closure(alice.wallet_handle)
+                        .await
+                        .unwrap(),
                 )
                 .await
                 .unwrap();

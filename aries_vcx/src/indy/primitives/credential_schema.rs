@@ -1,10 +1,12 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
-use crate::error::{VcxError, VcxResult, VcxErrorKind};
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger, set_endorser};
+use crate::indy::ledger::transactions::{
+    _check_schema_response, build_schema_request, get_schema_json, set_endorser, sign_and_submit_to_ledger,
+};
 use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
 use crate::utils::serialization::ObjectWithVersion;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SchemaData {
@@ -26,12 +28,24 @@ pub struct Schema {
     #[serde(default)]
     pub state: PublicEntityStateType,
     #[serde(default)]
-    schema_json: String // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
 }
 
 impl Schema {
-    pub async fn create(source_id: &str, submitter_did: &str, name: &str, version: &str, data: &Vec<String>) -> VcxResult<Self> {
-        trace!("Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}", submitter_did, name, version, data);
+    pub async fn create(
+        source_id: &str,
+        submitter_did: &str,
+        name: &str,
+        version: &str,
+        data: &Vec<String>,
+    ) -> VcxResult<Self> {
+        trace!(
+            "Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}",
+            submitter_did,
+            name,
+            version,
+            data
+        );
 
         if settings::indy_mocks_enabled() {
             return Ok(Self {
@@ -46,8 +60,12 @@ impl Schema {
             });
         }
 
-        let data_str = serde_json::to_string(data)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
+        let data_str = serde_json::to_string(data).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                format!("Failed to serialize schema attributes, err: {}", err),
+            )
+        })?;
 
         let (schema_id, schema_json) = libindy_issuer_create_schema(&submitter_did, name, version, &data_str).await?;
 
@@ -63,10 +81,16 @@ impl Schema {
         })
     }
 
-    pub async fn create_from_ledger_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, source_id: &str, schema_id: &str) -> VcxResult<Self> {
+    pub async fn create_from_ledger_json(
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        source_id: &str,
+        schema_id: &str,
+    ) -> VcxResult<Self> {
         let schema_json = get_schema_json(wallet_handle, pool_handle, schema_id).await?.1;
-        let schema_data: SchemaData = serde_json::from_str(&schema_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
+        let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
+            VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err))
+        })?;
 
         Ok(Self {
             source_id: source_id.to_string(),
@@ -80,11 +104,19 @@ impl Schema {
         })
     }
 
-    pub async fn publish(self, wallet_handle: WalletHandle, pool_handle: PoolHandle, endorser_did: Option<String>) -> VcxResult<Self> {
+    pub async fn publish(
+        self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        endorser_did: Option<String>,
+    ) -> VcxResult<Self> {
         trace!("Schema::publish >>>");
 
         if settings::indy_mocks_enabled() {
-            return Ok(Self { state: PublicEntityStateType::Published, ..self });
+            return Ok(Self {
+                state: PublicEntityStateType::Published,
+                ..self
+            });
         }
 
         let mut request = build_schema_request(&self.submitter_did, &self.schema_json).await?;
@@ -123,7 +155,10 @@ impl Schema {
     }
 
     pub async fn update_state(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<u32> {
-        if get_schema_json(wallet_handle, pool_handle, &self.schema_id).await.is_ok() {
+        if get_schema_json(wallet_handle, pool_handle, &self.schema_id)
+            .await
+            .is_ok()
+        {
             self.state = PublicEntityStateType::Published
         }
         Ok(self.state as u32)

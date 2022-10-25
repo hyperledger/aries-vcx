@@ -1,8 +1,8 @@
-use vdrtools_sys::WalletHandle;
-use vdrtools::anoncreds;
 use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
 use crate::utils;
+use vdrtools::anoncreds;
+use vdrtools_sys::WalletHandle;
 
 pub async fn libindy_prover_store_credential(
     wallet_handle: WalletHandle,
@@ -12,13 +12,18 @@ pub async fn libindy_prover_store_credential(
     cred_def_json: &str,
     rev_reg_def_json: Option<&str>,
 ) -> VcxResult<String> {
-    trace!("libindy_prover_store_credential >>> \
+    trace!(
+        "libindy_prover_store_credential >>> \
             cred_id: {:?}, \
             cred_req_meta: {}, \
             cred_json: {}, \
             cred_def_json: {}, \
             rev_reg_def_json: {:?}",
-           cred_id, cred_req_meta, cred_json, cred_def_json, rev_reg_def_json,
+        cred_id,
+        cred_req_meta,
+        cred_json,
+        cred_def_json,
+        rev_reg_def_json,
     );
 
     if settings::indy_mocks_enabled() {
@@ -33,23 +38,18 @@ pub async fn libindy_prover_store_credential(
         cred_def_json,
         rev_reg_def_json,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }
 
-pub async fn libindy_prover_get_credential(
-    wallet_handle: WalletHandle,
-    cred_id: &str,
-) -> VcxResult<String> {
-    trace!("libindy_prover_get_credential >>> \
+pub async fn libindy_prover_get_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<String> {
+    trace!(
+        "libindy_prover_get_credential >>> \
             cred_id: {:?}",
-           cred_id,
+        cred_id,
     );
 
-    anoncreds::prover_get_credential(
-        wallet_handle,
-        cred_id,
-    )
+    anoncreds::prover_get_credential(wallet_handle, cred_id)
         .await
         .map_err(VcxError::from)
 }
@@ -91,6 +91,6 @@ pub async fn libindy_prover_create_credential_req(
         credential_def_json,
         master_secret_name,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }

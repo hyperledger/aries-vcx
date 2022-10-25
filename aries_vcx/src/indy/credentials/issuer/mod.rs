@@ -1,10 +1,10 @@
-use vdrtools_sys::WalletHandle;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
 use crate::utils;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
+use vdrtools_sys::WalletHandle;
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
@@ -48,6 +48,6 @@ pub async fn libindy_issuer_create_credential(
         revocation,
         blob_handle,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }

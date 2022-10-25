@@ -30,14 +30,12 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
     set_protocol_version().await?;
 
     let config = if let Some(config) = config {
-        Some(serde_json::to_string(&config)
-                .map_err(|err|
-                    VcxError::from_msg(
-                        VcxErrorKind::SerializationError,
-                        format!("Failed to serialize pool config {:?}, err: {:?}", config, err),
-                    )
-                )?
-        )
+        Some(serde_json::to_string(&config).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                format!("Failed to serialize pool config {:?}, err: {:?}", config, err),
+            )
+        })?)
     } else {
         None
     };

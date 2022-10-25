@@ -1,11 +1,11 @@
-use vdrtools_sys::WalletHandle;
 use std::env;
 use std::path::PathBuf;
+use vdrtools_sys::WalletHandle;
 
-use messages::did_doc::DidDoc;
 use crate::error::VcxResult;
-use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::a2a::A2AMessage;
+use messages::did_doc::DidDoc;
 
 #[macro_use]
 pub mod version_constants;
@@ -77,12 +77,8 @@ pub async fn send_message(
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
 
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        wallet_handle,
-        &message,
-        Some(&sender_verkey),
-        &did_doc)
-        .await?;
+    let EncryptionEnvelope(envelope) =
+        EncryptionEnvelope::create(wallet_handle, &message, Some(&sender_verkey), &did_doc).await?;
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
 
@@ -100,12 +96,7 @@ pub async fn send_message_anonymously(
         &did_doc
     );
 
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        wallet_handle,
-        message,
-        None,
-        did_doc)
-        .await?;
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(wallet_handle, message, None, did_doc).await?;
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
 

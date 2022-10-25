@@ -1,11 +1,13 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
 use vdrtools::blob_storage;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::indy::anoncreds;
-use crate::indy::ledger::transactions::{build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger};
+use crate::indy::ledger::transactions::{
+    build_rev_reg_delta_request, build_rev_reg_request, check_response, sign_and_submit_to_ledger,
+};
+use crate::indy::primitives::credential_definition::PublicEntityStateType;
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::utils::constants::REV_REG_ID;
 
@@ -117,15 +119,26 @@ impl RevocationRegistry {
         Ok(())
     }
 
-    pub async fn publish_rev_reg_delta(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: &str) -> VcxResult<()> {
+    pub async fn publish_rev_reg_delta(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        issuer_did: &str,
+    ) -> VcxResult<()> {
         trace!(
             "RevocationRegistry::publish_rev_reg_delta >>> issuer_did:{}, rev_reg_id: {}",
             issuer_did,
             self.rev_reg_id
         );
-        publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did, &self.rev_reg_id, &self.rev_reg_entry)
-            .await
-            .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+        publish_rev_reg_delta(
+            wallet_handle,
+            pool_handle,
+            issuer_did,
+            &self.rev_reg_id,
+            &self.rev_reg_entry,
+        )
+        .await
+        .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
         Ok(())
     }
@@ -140,26 +153,38 @@ impl RevocationRegistry {
             "RevocationRegistry::publish_revocation_primitives >>> tails_url: {}",
             tails_url
         );
-        self.publish_built_rev_reg_def(wallet_handle, pool_handle, tails_url).await?;
+        self.publish_built_rev_reg_def(wallet_handle, pool_handle, tails_url)
+            .await?;
         self.publish_built_rev_reg_delta(wallet_handle, pool_handle).await
     }
 
-    async fn publish_built_rev_reg_delta(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<()> {
+    async fn publish_built_rev_reg_delta(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+    ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_delta_published() {
             info!("No unpublished revocation registry delta found, nothing to publish")
         } else {
-            self.publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did).await?;
+            self.publish_rev_reg_delta(wallet_handle, pool_handle, issuer_did)
+                .await?;
         }
         Ok(())
     }
 
-    async fn publish_built_rev_reg_def(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, tails_url: &str) -> VcxResult<()> {
+    async fn publish_built_rev_reg_def(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        tails_url: &str,
+    ) -> VcxResult<()> {
         let issuer_did = &self.issuer_did.clone();
         if self.was_rev_reg_def_published() {
             info!("No unpublished revocation registry definition found, nothing to publish")
         } else {
-            self.publish_rev_reg_def(wallet_handle, pool_handle, issuer_did, tails_url).await?;
+            self.publish_rev_reg_def(wallet_handle, pool_handle, issuer_did, tails_url)
+                .await?;
         }
         Ok(())
     }
@@ -182,15 +207,16 @@ impl RevocationRegistry {
         })
     }
 
-    pub async fn revoke_credential_local(
-        &self,
-        wallet_handle: WalletHandle,
-        cred_rev_id: &str,
-    ) -> VcxResult<()> {
+    pub async fn revoke_credential_local(&self, wallet_handle: WalletHandle, cred_rev_id: &str) -> VcxResult<()> {
         revoke_credential_local(wallet_handle, &self.tails_dir, &self.rev_reg_id, cred_rev_id).await
     }
 
-    pub async fn publish_local_revocations(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str) -> VcxResult<()> {
+    pub async fn publish_local_revocations(
+        &self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        submitter_did: &str,
+    ) -> VcxResult<()> {
         publish_local_revocations(wallet_handle, pool_handle, submitter_did, &self.rev_reg_id).await
     }
 }
@@ -220,8 +246,8 @@ pub async fn libindy_create_and_store_revoc_reg(
         &revoc_config,
         writer,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }
 
 #[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
@@ -305,7 +331,6 @@ pub async fn generate_rev_reg(
     Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
 }
 
-
 pub async fn publish_rev_reg_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -357,25 +382,38 @@ pub async fn revoke_credential_local(
     if settings::indy_mocks_enabled() {
         return Ok(());
     }
-    let mut new_delta_json = libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
+    let mut new_delta_json =
+        libindy_issuer_revoke_credential(wallet_handle, tails_file, rev_reg_id, cred_rev_id).await?;
     debug!("revoke_credential_local >>> new_delta_json: {}", new_delta_json);
     if let Some(old_delta_json) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
         debug!("revoke_credential_local >>> old_delta_json: {}", old_delta_json);
-        new_delta_json = libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
+        new_delta_json =
+            libindy_issuer_merge_revocation_registry_deltas(old_delta_json.as_str(), new_delta_json.as_str()).await?;
         debug!("revoke_credential_local >>> merged_delta_json: {}", new_delta_json);
     }
     set_rev_reg_delta(wallet_handle, rev_reg_id, &new_delta_json).await
 }
 
-pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
+pub async fn publish_local_revocations(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    submitter_did: &str,
+    rev_reg_id: &str,
+) -> VcxResult<()> {
     if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
         publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
-        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}", rev_reg_id);
+        info!(
+            "publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
+            rev_reg_id
+        );
         match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
             Ok(_) => {
-                info!("publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}", rev_reg_id);
+                info!(
+                    "publish_local_revocations >>> rev_reg_delta storage cleared for rev_reg_id {}",
+                    rev_reg_id
+                );
                 Ok(())
-            },
+            }
             Err(err) => {
                 error!("publish_local_revocations >>> failed to clear revocation delta storage for rev_reg_id: {}, error: {}", rev_reg_id, err);
                 Err(VcxError::from(VcxErrorKind::RevDeltaFailedToClear))

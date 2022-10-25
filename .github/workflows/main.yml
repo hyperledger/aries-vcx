@@ -79,6 +79,19 @@ jobs:
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
+  check-formatting:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+      - name: "Check formatting"
+        run: |
+          cargo fmt -- --check
+
   build-docker-alpine-core:
     needs: workflow-setup
     runs-on: ubuntu-20.04

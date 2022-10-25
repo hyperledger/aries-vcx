@@ -1,8 +1,8 @@
-use vdrtools::anoncreds;
 use crate::error::{VcxError, VcxResult};
 use crate::global::settings;
 use crate::indy;
 use crate::utils::constants::REV_STATE_JSON;
+use vdrtools::anoncreds;
 
 pub mod prover;
 mod prover_internal;
@@ -45,6 +45,6 @@ pub async fn libindy_prover_update_revocation_state(
         100,
         cred_rev_id,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }

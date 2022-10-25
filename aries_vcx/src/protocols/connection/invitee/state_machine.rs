@@ -4,9 +4,15 @@ use std::future::Future;
 
 use vdrtools_sys::WalletHandle;
 
-use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
+use crate::indy::signing::decode_signed_connection_response;
+use crate::protocols::connection::invitee::states::complete::CompleteState;
+use crate::protocols::connection::invitee::states::initial::InitialState;
+use crate::protocols::connection::invitee::states::invited::InvitedState;
+use crate::protocols::connection::invitee::states::requested::RequestedState;
+use crate::protocols::connection::invitee::states::responded::RespondedState;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::ack::Ack;
@@ -14,14 +20,8 @@ use messages::connection::invite::Invitation;
 use messages::connection::problem_report::{ProblemCode, ProblemReport};
 use messages::connection::request::Request;
 use messages::connection::response::{Response, SignedResponse};
+use messages::did_doc::DidDoc;
 use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use crate::protocols::connection::invitee::states::complete::CompleteState;
-use crate::protocols::connection::invitee::states::initial::InitialState;
-use crate::protocols::connection::invitee::states::invited::InvitedState;
-use crate::protocols::connection::invitee::states::requested::RequestedState;
-use crate::protocols::connection::invitee::states::responded::RespondedState;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::indy::signing::decode_signed_connection_response;
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -291,7 +291,9 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let thread_id = invitation.get_id()?;
         let state = match state {
-            InviteeFullState::Initial(state) => InviteeFullState::Invited((state.clone(), invitation, state.did_doc.unwrap()).into()),
+            InviteeFullState::Initial(state) => {
+                InviteeFullState::Invited((state.clone(), invitation, state.did_doc.unwrap()).into())
+            }
             s => {
                 return Err(VcxError::from_msg(
                     VcxErrorKind::InvalidState,
@@ -319,7 +321,9 @@ impl SmConnectionInvitee {
     {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = self.their_did_doc().await
+                let ddo = self
+                    .their_did_doc()
+                    .await
                     .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(
@@ -329,7 +333,10 @@ impl SmConnectionInvitee {
                     request.to_a2a_message(),
                 )
                 .await?;
-                (InviteeFullState::Requested((state.clone(), request, ddo).into()), thread_id)
+                (
+                    InviteeFullState::Requested((state.clone(), request, ddo).into()),
+                    thread_id,
+                )
             }
             _ => (self.state.clone(), self.get_thread_id()),
         };
@@ -421,12 +428,12 @@ pub mod unit_tests {
     use messages::connection::request::unit_tests::_request;
     use messages::connection::response::test_utils::_signed_response;
     use messages::discovery::disclose::test_utils::_disclose;
-    
+
     use messages::trust_ping::ping::unit_tests::_ping;
-    
+
+    use crate::indy::signing::sign_connection_response;
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
-    use crate::indy::signing::sign_connection_response;
 
     use super::*;
 
@@ -437,8 +444,8 @@ pub mod unit_tests {
     pub mod invitee {
         use vdrtools_sys::WalletHandle;
 
-        use messages::did_doc::test_utils::{_service_endpoint, _did_doc_inlined_recipient_keys};
         use messages::connection::response::{Response, SignedResponse};
+        use messages::did_doc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
 
         use super::*;
 
@@ -496,8 +503,10 @@ pub mod unit_tests {
                 Response::default()
                     .set_service_endpoint(_service_endpoint())
                     .set_keys(vec![key.to_string()], vec![])
-                    .set_thread_id(thread_id)
-            ).await.unwrap()
+                    .set_thread_id(thread_id),
+            )
+            .await
+            .unwrap()
         }
 
         async fn _response_1(wallet_handle: WalletHandle, key: &str) -> SignedResponse {
@@ -507,8 +516,10 @@ pub mod unit_tests {
                 Response::default()
                     .set_service_endpoint(_service_endpoint())
                     .set_keys(vec![key.to_string()], vec![])
-                    .set_thread_id("testid_1")
-            ).await.unwrap()
+                    .set_thread_id("testid_1"),
+            )
+            .await
+            .unwrap()
         }
 
         mod new {
@@ -528,9 +539,9 @@ pub mod unit_tests {
 
         mod build_messages {
             use super::*;
+            use crate::utils::devsetup::was_in_past;
             use messages::a2a::MessageId;
             use messages::ack::AckStatus;
-            use crate::utils::devsetup::was_in_past;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]

@@ -4,28 +4,21 @@ use std::collections::HashMap;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
-use vdrtools_sys::WalletHandle;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
-use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::A2AMessage;
-use messages::basic_message::message::BasicMessage;
-use messages::connection::invite::Invitation;
-use messages::connection::request::Request;
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -34,6 +27,13 @@ use crate::protocols::trustping::build_ping_response;
 use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::A2AMessage;
+use messages::basic_message::message::BasicMessage;
+use messages::connection::invite::Invitation;
+use messages::connection::request::Request;
+use messages::did_doc::DidDoc;
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {
@@ -141,7 +141,9 @@ impl Connection {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection.process_request(wallet_handle, agency_client, request).await?;
+        connection
+            .process_request(wallet_handle, agency_client, request)
+            .await?;
         Ok(connection)
     }
 
@@ -333,10 +335,7 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn send_response(
-        &mut self,
-        wallet_handle: WalletHandle,
-    ) -> VcxResult<()> {
+    pub async fn send_response(&mut self, wallet_handle: WalletHandle) -> VcxResult<()> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
@@ -750,7 +749,9 @@ impl Connection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(wallet_handle).await?).await?;
+        trust_ping
+            .send_ping(self.send_message_closure(wallet_handle).await?)
+            .await?;
         Ok(trust_ping)
     }
 
@@ -1018,6 +1019,11 @@ mod tests {
     use agency_client::testing::mocking::enable_agency_mocks;
 
     use crate::handlers::connection::public_agent::test_utils::_public_agent;
+    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
+    use crate::utils::mockdata::mockdata_connection::{
+        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
+        CONNECTION_SM_INVITER_COMPLETED,
+    };
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -1025,11 +1031,6 @@ mod tests {
     use messages::connection::response::test_utils::_signed_response;
     use messages::discovery::disclose::test_utils::_disclose;
     use messages::discovery::query::test_utils::_query;
-    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
-    use crate::utils::mockdata::mockdata_connection::{
-        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
-        CONNECTION_SM_INVITER_COMPLETED,
-    };
 
     use super::*;
 

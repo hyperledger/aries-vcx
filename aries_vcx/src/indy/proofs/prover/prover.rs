@@ -1,14 +1,14 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::{Map, Value};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
+use crate::indy::anoncreds::close_search_handle;
 use crate::indy::proofs::proof_request::ProofRequestData;
 use crate::indy::proofs::prover::prover_internal::{
     build_cred_defs_json_prover, build_requested_credentials_json, build_rev_states_json, build_schemas_json_prover,
     credential_def_identifiers,
 };
-use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::utils::mockdata::mock_settings::{get_mock_creds_retrieved_for_proof_request, get_mock_generate_indy_proof};
@@ -48,7 +48,8 @@ pub async fn generate_indy_proof(
         build_requested_credentials_json(&credentials_identifiers, self_attested_attrs, &proof_request)?;
 
     let schemas_json = build_schemas_json_prover(wallet_handle, pool_handle, &credentials_identifiers).await?;
-    let credential_defs_json = build_cred_defs_json_prover(wallet_handle, pool_handle, &credentials_identifiers).await?;
+    let credential_defs_json =
+        build_cred_defs_json_prover(wallet_handle, pool_handle, &credentials_identifiers).await?;
 
     let proof = libindy_prover_create_proof(
         wallet_handle,
@@ -86,8 +87,8 @@ pub async fn libindy_prover_create_proof(
         credential_defs_json,
         revoc_states_json,
     )
-        .await
-        .map_err(VcxError::from)
+    .await
+    .map_err(VcxError::from)
 }
 
 async fn fetch_credentials(search_handle: i32, requested_attributes: Map<String, Value>) -> VcxResult<String> {
@@ -96,18 +97,17 @@ async fn fetch_credentials(search_handle: i32, requested_attributes: Map<String,
         v[ATTRS][item_referent] = serde_json::from_str(
             &vdrtools::anoncreds::prover_fetch_credentials_for_proof_req(search_handle, item_referent, 100).await?,
         )
-            .map_err(|_| {
-                error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidConfiguration,
-                    "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
-                )
-            })?
+        .map_err(|_| {
+            error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
+            VcxError::from_msg(
+                VcxErrorKind::InvalidConfiguration,
+                "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
+            )
+        })?
     }
 
     Ok(v.to_string())
 }
-
 
 pub async fn libindy_prover_get_credentials_for_proof_req(
     wallet_handle: WalletHandle,
@@ -168,12 +168,13 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         None => (),
     }
     if !fetch_attrs.is_empty() {
-        let search_handle = vdrtools::anoncreds::prover_search_credentials_for_proof_req(wallet_handle, proof_req, None)
-            .await
-            .map_err(|ec| {
-                error!("Opening Indy Search for Credentials Failed");
-                ec
-            })?;
+        let search_handle =
+            vdrtools::anoncreds::prover_search_credentials_for_proof_req(wallet_handle, proof_req, None)
+                .await
+                .map_err(|ec| {
+                    error!("Opening Indy Search for Credentials Failed");
+                    ec
+                })?;
         let creds: String = fetch_credentials(search_handle, fetch_attrs).await?;
 
         // should an error on closing a search handle throw an error, or just a warning?

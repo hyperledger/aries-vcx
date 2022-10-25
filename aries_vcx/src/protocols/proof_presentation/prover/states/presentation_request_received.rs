@@ -1,14 +1,14 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::proofs::prover::prover::generate_indy_proof;
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
+use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
+use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
-use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
-use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PresentationRequestReceived {

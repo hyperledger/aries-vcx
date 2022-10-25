@@ -1,7 +1,7 @@
+use serde_json::Value;
 use vdrtools::did;
 use vdrtools::future::TryFutureExt;
-use vdrtools_sys::{WalletHandle, PoolHandle};
-use serde_json::Value;
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;
@@ -41,10 +41,16 @@ pub async fn libindy_replace_keys_start(wallet_handle: WalletHandle, did: &str) 
     }
 }
 
-pub async fn rotate_verkey_apply(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, temp_vk: &str) -> VcxResult<()> {
+pub async fn rotate_verkey_apply(
+    wallet_handle: WalletHandle,
+    pool_handle: PoolHandle,
+    did: &str,
+    temp_vk: &str,
+) -> VcxResult<()> {
     let nym_request = transactions::libindy_build_nym_request(did, did, Some(temp_vk), None, None).await?;
     let nym_request = transactions::append_txn_author_agreement_to_request(&nym_request).await?;
-    let nym_result = transactions::libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &nym_request).await?;
+    let nym_result =
+        transactions::libindy_sign_and_submit_request(wallet_handle, pool_handle, did, &nym_request).await?;
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,
@@ -137,12 +143,19 @@ mod test {
 
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
         PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
-        let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();
+        let local_verkey_1 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did)
+            .await
+            .unwrap();
         assert_eq!(
-            rotate_verkey(setup.wallet_handle, 1, &setup.institution_did).await.unwrap_err().kind(),
+            rotate_verkey(setup.wallet_handle, 1, &setup.institution_did)
+                .await
+                .unwrap_err()
+                .kind(),
             VcxErrorKind::InvalidLedgerResponse
         );
-        let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did).await.unwrap();
+        let local_verkey_2 = get_verkey_from_wallet(setup.wallet_handle, &setup.institution_did)
+            .await
+            .unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
     }
 }

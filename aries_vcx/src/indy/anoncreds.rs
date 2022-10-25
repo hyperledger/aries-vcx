@@ -44,12 +44,12 @@ mod unit_tests {
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
-    use crate::indy::test_utils::create_and_store_credential;
     use crate::indy::ledger::transactions::get_rev_reg_delta_json;
-    use crate::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req;
     use crate::indy::primitives::revocation_registry::{
-        libindy_issuer_revoke_credential, publish_local_revocations, revoke_credential_local
+        libindy_issuer_revoke_credential, publish_local_revocations, revoke_credential_local,
     };
+    use crate::indy::proofs::prover::prover::libindy_prover_get_credentials_for_proof_req;
+    use crate::indy::test_utils::create_and_store_credential;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
     use crate::utils::get_temp_dir_path;
@@ -83,7 +83,7 @@ pub mod integration_tests {
            }),
            "requested_predicates": json!({}),
         })
-            .to_string();
+        .to_string();
         let _result = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, &proof_req)
             .await
             .unwrap();
@@ -104,16 +104,16 @@ pub mod integration_tests {
             "",
             "",
         )
-            .await;
+        .await;
         assert!(rc.is_err());
 
-        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
-            create_and_store_credential(
-                setup.wallet_handle,
-                setup.pool_handle,
-                &setup.institution_did,
-                crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
-            ).await;
+        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) = create_and_store_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
         let rc = libindy_issuer_revoke_credential(
             setup.wallet_handle,
@@ -121,7 +121,7 @@ pub mod integration_tests {
             &rev_reg_id,
             &cred_rev_id,
         )
-            .await;
+        .await;
 
         assert!(rc.is_ok());
     }
@@ -130,19 +130,23 @@ pub mod integration_tests {
     async fn test_revoke_credential() {
         let setup = SetupWalletPool::init().await;
 
-        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
-            create_and_store_credential(
-                setup.wallet_handle,
-                setup.pool_handle,
-                &setup.institution_did,
-                crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
-            ).await;
+        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) = create_and_store_credential(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            crate::utils::constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
         let (_, first_rev_reg_delta, first_timestamp) =
-            get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
+            get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None)
+                .await
+                .unwrap();
 
         let (_, test_same_delta, test_same_timestamp) =
-            get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None).await.unwrap();
+            get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, None, None)
+                .await
+                .unwrap();
 
         assert_eq!(first_rev_reg_delta, test_same_delta);
         assert_eq!(first_timestamp, test_same_timestamp);
@@ -151,20 +155,25 @@ pub mod integration_tests {
             setup.wallet_handle,
             get_temp_dir_path(TAILS_DIR).to_str().unwrap(),
             &rev_reg_id,
-            &cred_rev_id
+            &cred_rev_id,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
 
-        publish_local_revocations(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_id)
-            .await
-            .unwrap();
+        publish_local_revocations(
+            setup.wallet_handle,
+            setup.pool_handle,
+            &setup.institution_did,
+            &rev_reg_id,
+        )
+        .await
+        .unwrap();
 
         // Delta should change after revocation
         let (_, second_rev_reg_delta, _) =
             get_rev_reg_delta_json(setup.pool_handle, &rev_reg_id, Some(first_timestamp + 1), None)
-            .await
-            .unwrap();
+                .await
+                .unwrap();
 
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
     }
