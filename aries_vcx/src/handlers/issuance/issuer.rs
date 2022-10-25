@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use messages::issuance::revocation_notification::RevocationNotification;
 use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
+use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
@@ -168,12 +168,11 @@ impl Issuer {
     pub async fn send_revocation_notification(&mut self, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
         // TODO: Check if actually revoked
         if self.issuer_sm.is_revokable() {
-            let rev_msg = RevocationNotification::create()
-                .set_credential_id(self.get_rev_reg_id()?, self.get_rev_id()?)
-                .set_comment(comment)
-                .set_thread_id(&self.get_thread_id()?)
-                .set_out_time();
-            send_message(rev_msg.to_a2a_message()).await
+            // TODO: Possibly store sender to allow checking not. status (sent, acked),
+            // allow sending repeatedly
+            RevocationNotificationSender::build(self.get_rev_reg_id()?, self.get_rev_id()?, comment)?
+                .send_revocation_notification(send_message).await?;
+            Ok(())
         } else {
             Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,

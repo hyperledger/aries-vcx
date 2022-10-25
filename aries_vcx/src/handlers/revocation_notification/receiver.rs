@@ -1,0 +1,32 @@
+use messages::ack::please_ack::AckOn;
+use messages::issuance::revocation_notification::RevocationNotification;
+
+use crate::error::prelude::*;
+use crate::protocols::SendClosure;
+use crate::protocols::revocation_notification::receiver::state_machine::RevocationNotificationReceiverSM;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RevocationNotificationReceiver {
+    receiver_sm: RevocationNotificationReceiverSM,
+}
+
+impl RevocationNotificationReceiver {
+    pub fn build(rev_reg_id: String, cred_rev_id: String) -> VcxResult<Self> {
+        Ok(Self { receiver_sm: RevocationNotificationReceiverSM::create() })
+    }
+
+    pub fn get_thread_id(&self) -> VcxResult<String> {
+        todo!()
+    }
+
+    pub async fn handle_revocation_notification(self, notification: RevocationNotification, send_message: SendClosure) -> VcxResult<Self> {
+        let receiver_sm = self.receiver_sm.handle_revocation_notification(notification, send_message).await?;
+        Ok(Self { receiver_sm })
+    }
+
+    pub async fn send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+        let receiver_sm = self.receiver_sm.send_ack(send_message).await?;
+        Ok(Self { receiver_sm })
+    }
+}
+

@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use messages::ack::please_ack::AckOn;
-use messages::issuance::revocation_ack::RevocationAck;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
@@ -74,10 +72,6 @@ fn build_credential_ack(thread_id: &str) -> Ack {
     CredentialAck::create().set_thread_id(&thread_id).set_out_time()
 }
 
-fn build_revocation_ack(thread_id: &str) -> Ack {
-    RevocationAck::create().set_thread_id(&thread_id).set_out_time()
-}
-
 impl HolderSM {
     pub fn new(source_id: String) -> Self {
         HolderSM {
@@ -148,14 +142,6 @@ impl HolderSM {
                     A2AMessage::CommonProblemReport(problem_report) => {
                         if problem_report.from_thread(&self.thread_id) {
                             return Some((uid, A2AMessage::CommonProblemReport(problem_report)));
-                        }
-                    }
-                    _ => {}
-                },
-                HolderFullState::Finished(_) => match message {
-                    A2AMessage::RevocationNotification(notification) => {
-                        if notification.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::RevocationNotification(notification)));
                         }
                     }
                     _ => {}
@@ -302,21 +288,9 @@ impl HolderSM {
                     HolderFullState::RequestSent(state_data)
                 }
             },
-            HolderFullState::Finished(state_data) => match cim {
-                CredentialIssuanceAction::RevocationNotification(notification) => {
-                    if notification.ack_on(AckOn::Receipt) {
-                        let ack = build_revocation_ack(&notification.get_thread_id());
-                        send_message.ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidState,
-                            "Attempted to call undefined send_message callback",
-                        ))?(ack.to_a2a_message()).await?;
-                    }
-                    HolderFullState::Finished(state_data)
-                }
-                _ => {
-                    warn!("Unable to process received message in this state");
-                    HolderFullState::Finished(state_data)
-                }
+            HolderFullState::Finished(state_data) => {
+                warn!("Unable to process received message in this state");
+                HolderFullState::Finished(state_data)
             }
         };
         Ok(HolderSM::step(state, source_id, thread_id))
