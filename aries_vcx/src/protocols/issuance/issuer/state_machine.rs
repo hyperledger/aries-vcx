@@ -362,7 +362,10 @@ impl IssuerSM {
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
-            s @ _ => (s, self.thread_id.clone())
+            s @ _ => {
+                warn!("Unable to receive credential proposal in state {}", s);
+                (s, self.thread_id.clone())
+            }
         };
         Ok(Self { state, thread_id, ..self })
     }
@@ -382,7 +385,10 @@ impl IssuerSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialRequest(request.clone()))?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive credential request in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -421,7 +427,10 @@ impl IssuerSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
         let state = match self.state {
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive credential ack in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -431,7 +440,10 @@ impl IssuerSM {
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive credential ack in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }

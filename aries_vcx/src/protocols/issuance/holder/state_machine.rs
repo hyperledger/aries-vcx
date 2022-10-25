@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use messages::problem_report::ProblemReport;
 use vdrtools_sys::{PoolHandle, WalletHandle};
@@ -58,6 +59,18 @@ pub struct HolderSM {
 impl Default for HolderFullState {
     fn default() -> Self {
         Self::OfferReceived(OfferReceivedState::default())
+    }
+}
+
+impl fmt::Display for HolderFullState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            HolderFullState::Initial(_) => f.write_str("Initial"),
+            HolderFullState::ProposalSent(_) => f.write_str("ProposalSent"),
+            HolderFullState::OfferReceived(_) => f.write_str("OfferReceived"),
+            HolderFullState::RequestSent(_) => f.write_str("RequestSent"),
+            HolderFullState::Finished(_) => f.write_str("Finished"),
+        }
     }
 }
 
@@ -218,7 +231,10 @@ impl HolderSM {
                 send_message(proposal.to_a2a_message()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send credential proposal in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -227,7 +243,10 @@ impl HolderSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialOffer(offer.clone()))?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive credential offer in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -248,7 +267,10 @@ impl HolderSM {
                     }
                 }
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send credential request in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -260,7 +282,10 @@ impl HolderSM {
                 send_message(problem_report.to_a2a_message()).await?;
                 HolderFullState::Finished(problem_report.into())
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to decline credential offer in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -268,15 +293,13 @@ impl HolderSM {
     pub async fn receive_credential(self, wallet_handle: WalletHandle, pool_handle: PoolHandle, credential: Credential, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::RequestSent(state_data) => {
-                let result = _store_credential(
+                match _store_credential(
                     wallet_handle,
                     pool_handle,
                     &credential,
                     &state_data.req_meta,
                     &state_data.cred_def_json,
-                )
-                .await;
-                match result {
+                ).await {
                     Ok((cred_id, rev_reg_def_json)) => {
                         if credential.please_ack.is_some() {
                             let ack = build_credential_ack(&self.thread_id);
@@ -292,7 +315,10 @@ impl HolderSM {
                     }
                 }
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive credential offer in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -301,7 +327,10 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::ProposalSent(_) |
                 HolderFullState::RequestSent(_) => HolderFullState::Finished(problem_report.into()),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive problem report in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
