@@ -240,6 +240,7 @@ impl HolderSM {
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             s @ _ => {
                 warn!("Unable to send credential proposal in state {}", s);
                 s
@@ -260,6 +261,14 @@ impl HolderSM {
             _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
 =======
             s @ _ => s
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to send credential proposal in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
@@ -268,8 +277,17 @@ impl HolderSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialOffer(offer.clone()))?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
+<<<<<<< HEAD
             s @ _ => s
 >>>>>>> 82bb3076d (Holder::handle_message)
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to receive credential offer in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
@@ -291,6 +309,7 @@ impl HolderSM {
                 }
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             s @ _ => {
                 warn!("Unable to send credential request in state {}", s);
                 s
@@ -300,6 +319,14 @@ impl HolderSM {
 =======
             s @ _ => s
 >>>>>>> 82bb3076d (Holder::handle_message)
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to send credential request in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
@@ -312,6 +339,7 @@ impl HolderSM {
                 HolderFullState::Finished(problem_report.into())
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             s @ _ => {
                 warn!("Unable to decline credential offer in state {}", s);
                 s
@@ -321,6 +349,14 @@ impl HolderSM {
 =======
             s @ _ => s
 >>>>>>> 82bb3076d (Holder::handle_message)
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to decline credential offer in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
@@ -351,6 +387,7 @@ impl HolderSM {
                 }
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             s @ _ => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
@@ -371,6 +408,14 @@ impl HolderSM {
             _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
 =======
             s @ _ => s
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to receive credential offer in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
@@ -379,8 +424,17 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::ProposalSent(_) |
                 HolderFullState::RequestSent(_) => HolderFullState::Finished(problem_report.into()),
+<<<<<<< HEAD
             s @ _ => s
 >>>>>>> 82bb3076d (Holder::handle_message)
+||||||| parent of 24bc99533 (Add warnings)
+            s @ _ => s
+=======
+            s @ _ => {
+                warn!("Unable to receive problem report in state {}", s);
+                s
+            }
+>>>>>>> 24bc99533 (Add warnings)
         };
         Ok(Self { state, ..self })
     }
