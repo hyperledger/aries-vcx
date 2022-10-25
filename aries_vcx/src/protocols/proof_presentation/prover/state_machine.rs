@@ -255,118 +255,119 @@ impl ProverSM {
         send_message: Option<SendClosure>,
     ) -> VcxResult<ProverSM> {
         trace!("ProverSM::step >>> message: {:?}", message);
-        let ProverSM {
-            source_id,
-            state,
-            thread_id,
-        } = self.clone();
-        verify_thread_id(&thread_id, &message)?;
-        let state = match state {
-            ProverFullState::Initial(state) => match message {
+        verify_thread_id(&self.thread_id, &message)?;
+        let prover_sm = match &self.state {
+            ProverFullState::Initial(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.send_presentation_proposal(proposal_data, send_message).await?.state
+                    self.send_presentation_proposal(proposal_data, send_message).await?
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    ProverFullState::Initial(state)
+                    self
                 }
             },
-            ProverFullState::PresentationProposalSent(state) => {
+            ProverFullState::PresentationProposalSent(_) => {
                 match message {
                     ProverMessages::PresentationRequestReceived(request) => {
-                        ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request))
+                        let state = ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
+                        ProverSM { state, ..self }
                     }
                     // TODO: Perhaps use a different message type?
                     ProverMessages::PresentationRejectReceived(problem_report) => {
-                        ProverFullState::Finished(FinishedState::declined(problem_report))
+                        let state = ProverFullState::Finished(FinishedState::declined(problem_report));
+                        ProverSM { state, ..self }
                     }
                     _ => {
                         warn!("Unable to process received message in this state");
-                        ProverFullState::PresentationProposalSent(state)
+                        self
                     }
                 }
             }
-            ProverFullState::PresentationRequestReceived(state) => match message {
+            ProverFullState::PresentationRequestReceived(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.send_presentation_proposal(proposal_data, send_message).await?.state
+                    self.send_presentation_proposal(proposal_data, send_message).await?
                 }
                 ProverMessages::SetPresentation(presentation) => {
-                    self.set_presentation(presentation)?.state
+                    self.set_presentation(presentation)?
                 }
                 ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                    self.generate_presentation(wallet_handle, pool_handle, credentials, self_attested_attrs).await?.state 
+                    self.generate_presentation(wallet_handle, pool_handle, credentials, self_attested_attrs).await?
                 },
                 ProverMessages::RejectPresentationRequest(reason) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.decline_presentation_request(reason, send_message).await?.state
+                    self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.negotiate_presentation(preview, send_message).await?.state
+                    self.negotiate_presentation(preview, send_message).await?
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    ProverFullState::PresentationRequestReceived(state)
+                    self
                 }
             },
-            ProverFullState::PresentationPrepared(state) => match message {
+            ProverFullState::PresentationPrepared(_) => match message {
                 ProverMessages::SendPresentation => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.send_presentation(send_message).await?.state
+                    self.send_presentation(send_message).await?
                 }
                 ProverMessages::RejectPresentationRequest(reason) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.decline_presentation_request(reason, send_message).await?.state
+                    self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.negotiate_presentation(preview, send_message).await?.state
+                    self.negotiate_presentation(preview, send_message).await?
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    ProverFullState::PresentationPrepared(state)
+                    self
                 }
             },
-            ProverFullState::PresentationPreparationFailed(state) => match message {
+            ProverFullState::PresentationPreparationFailed(_) => match message {
                 ProverMessages::SendPresentation => {
                     let send_message = send_message.ok_or(VcxError::from_msg(
                         VcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
-                    self.send_presentation(send_message).await?.state
+                    self.send_presentation(send_message).await?
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    ProverFullState::PresentationPreparationFailed(state)
+                    self
                 }
             },
             ProverFullState::PresentationSent(state) => match message {
-                ProverMessages::PresentationAckReceived(ack) => ProverFullState::Finished((state, ack).into()),
+                ProverMessages::PresentationAckReceived(ack) => {
+                    let state = ProverFullState::Finished((state.clone(), ack).into());
+                    ProverSM { state, ..self }
+                }
                 ProverMessages::PresentationRejectReceived(problem_report) => {
-                    ProverFullState::Finished((state, problem_report).into())
+                    let state = ProverFullState::Finished((state.clone(), problem_report).into());
+                    ProverSM { state, ..self }
                 }
                 ProverMessages::RejectPresentationRequest(_) => {
                     return Err(VcxError::from_msg(
@@ -376,17 +377,12 @@ impl ProverSM {
                 }
                 _ => {
                     warn!("Unable to process received message in this state");
-                    ProverFullState::PresentationSent(state)
+                    self
                 }
             },
-            ProverFullState::Finished(state) => ProverFullState::Finished(state),
+            ProverFullState::Finished(_) => self
         };
-
-        Ok(ProverSM {
-            source_id,
-            state,
-            thread_id,
-        })
+        Ok(prover_sm)
     }
 
     async fn _handle_reject_presentation_request<'a>(
