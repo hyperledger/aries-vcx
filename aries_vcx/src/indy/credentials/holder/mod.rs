@@ -37,6 +37,23 @@ pub async fn libindy_prover_store_credential(
         .map_err(VcxError::from)
 }
 
+pub async fn libindy_prover_get_credential(
+    wallet_handle: WalletHandle,
+    cred_id: &str,
+) -> VcxResult<String> {
+    trace!("libindy_prover_get_credential >>> \
+            cred_id: {:?}",
+           cred_id,
+    );
+
+    anoncreds::prover_get_credential(
+        wallet_handle,
+        cred_id,
+    )
+        .await
+        .map_err(VcxError::from)
+}
+
 pub async fn libindy_prover_delete_credential(wallet_handle: WalletHandle, cred_id: &str) -> VcxResult<()> {
     anoncreds::prover_delete_credential(wallet_handle, cred_id)
         .await

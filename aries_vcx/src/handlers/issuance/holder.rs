@@ -127,6 +127,10 @@ impl Holder {
         self.holder_sm.get_rev_reg_id()
     }
 
+    pub fn get_cred_id(&self) -> VcxResult<String> {
+        self.holder_sm.get_cred_id()
+    }
+
     pub fn get_thread_id(&self) -> VcxResult<String> {
         self.holder_sm.get_thread_id()
     }

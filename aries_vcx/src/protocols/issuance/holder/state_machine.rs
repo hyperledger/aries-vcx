@@ -382,6 +382,16 @@ impl HolderSM {
         }
     }
 
+    pub fn get_cred_id(&self) -> VcxResult<String> {
+        match self.state {
+            HolderFullState::Finished(ref state) => state.get_cred_id(),
+            _ => Err(VcxError::from_msg(
+                VcxErrorKind::NotReady,
+                "Cannot get credential id: credential exchange not finished yet",
+            )),
+        }
+    }
+
     pub fn get_offer(&self) -> VcxResult<CredentialOffer> {
         match self.state {
             HolderFullState::OfferReceived(ref state) => Ok(state.offer.clone()),

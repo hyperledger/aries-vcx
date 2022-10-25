@@ -128,6 +128,13 @@ impl FinishedHolderState {
         Ok(rev_reg_def_id.to_string())
     }
 
+    pub fn get_cred_id(&self) -> VcxResult<String> {
+        self.cred_id.clone().ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("The field 'cred_id' not found on FinishedHolderState")
+        ))
+    }
+
     pub fn is_revokable(&self) -> VcxResult<bool> {
         Ok(self.rev_reg_def_json.is_some())
     }
