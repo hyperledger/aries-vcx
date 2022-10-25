@@ -747,10 +747,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(
-                Status::Declined(ProblemReport::default()).code(),
-                verifier_sm.presentation_status()
-            );
+            assert_match!(Status::Declined(_), verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -802,7 +799,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
+            assert_eq!(Status::Success, verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -825,10 +822,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
-            assert_eq!(
-                Status::Failed(ProblemReport::create()).code(),
-                verifier_sm.presentation_status()
-            );
+            assert_match!(Status::Failed(_), verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -889,10 +883,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(
-                Status::Failed(_problem_report()).code(),
-                verifier_sm.presentation_status()
-            );
+            assert_eq!(Status::Failed(_problem_report()), verifier_sm.presentation_status());
         }
 
         #[tokio::test]

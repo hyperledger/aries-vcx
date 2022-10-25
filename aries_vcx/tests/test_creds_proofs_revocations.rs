@@ -18,8 +18,9 @@ mod integration_tests {
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
-        publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple, revoke_credential_and_publish_accumulator,
-        revoke_credential_local, rotate_rev_reg, send_proof_request, verifier_create_proof_and_send_request,
+        publish_revocation, requested_attrs, retrieved_to_selected_credentials_simple,
+        revoke_credential_and_publish_accumulator, revoke_credential_local, rotate_rev_reg, send_proof_request,
+        verifier_create_proof_and_send_request,
     };
     use crate::utils::test_macros::ProofStateType;
 
@@ -84,7 +85,10 @@ mod integration_tests {
             )
             .await
             .unwrap();
-        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(
+            ProofStateType::from(verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
+        );
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -126,8 +130,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
 
         publish_revocation(&mut institution, rev_reg.rev_reg_id.clone()).await;
@@ -151,7 +155,10 @@ mod integration_tests {
             )
             .await
             .unwrap();
-        assert_eq!(verifier.get_presentation_status(), ProofStateType::ProofInvalid as u32);
+        assert_eq!(
+            ProofStateType::from(verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
+        );
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -171,7 +178,12 @@ mod integration_tests {
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(institution.wallet_handle, institution.pool_handle, &institution.config_issuer.institution_did).await;
+            _create_address_schema(
+                institution.wallet_handle,
+                institution.pool_handle,
+                &institution.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let credential_handle1 = _exchange_credential(
@@ -271,16 +283,16 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            verifier1.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier1.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
         assert_eq!(
-            verifier2.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier2.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
         assert_eq!(
-            verifier3.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier3.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
 
         // Publish revocations and verify the two are invalid, third still valid
@@ -345,11 +357,17 @@ mod integration_tests {
             )
             .await
             .unwrap();
-        assert_eq!(verifier1.get_presentation_status(), ProofStateType::ProofInvalid as u32);
-        assert_eq!(verifier2.get_presentation_status(), ProofStateType::ProofInvalid as u32);
         assert_eq!(
-            verifier3.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier1.get_presentation_status()),
+            ProofStateType::ProofInvalid
+        );
+        assert_eq!(
+            ProofStateType::from(verifier2.get_presentation_status()),
+            ProofStateType::ProofInvalid
+        );
+        assert_eq!(
+            ProofStateType::from(verifier3.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
@@ -379,7 +397,13 @@ mod integration_tests {
 
         let from = time_before_revocation - 100;
         let to = time_before_revocation;
-        let _requested_attrs = requested_attrs(&institution.config_issuer.institution_did, &schema_id, &cred_def_id, Some(from), Some(to));
+        let _requested_attrs = requested_attrs(
+            &institution.config_issuer.institution_did,
+            &schema_id,
+            &cred_def_id,
+            Some(from),
+            Some(to),
+        );
         let interval = json!({"from": from, "to": to}).to_string();
         let requested_attrs_string = serde_json::to_string(&_requested_attrs).unwrap();
 
@@ -433,8 +457,8 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(
-            verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
@@ -450,7 +474,12 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(
+                issuer.wallet_handle,
+                issuer.pool_handle,
+                &issuer.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -491,12 +520,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofInvalid as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -510,12 +544,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
@@ -531,7 +570,12 @@ mod integration_tests {
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+            _create_address_schema(
+                issuer.wallet_handle,
+                issuer.pool_handle,
+                &issuer.config_issuer.institution_did,
+            )
+            .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -572,12 +616,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -591,12 +640,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofInvalid as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
         );
     }
 
@@ -611,8 +665,12 @@ mod integration_tests {
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
+            issuer.wallet_handle,
+            issuer.pool_handle,
+            &issuer.config_issuer.institution_did,
+        )
+        .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -652,12 +710,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -671,12 +734,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
@@ -691,8 +759,12 @@ mod integration_tests {
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
+            issuer.wallet_handle,
+            issuer.pool_handle,
+            &issuer.config_issuer.institution_did,
+        )
+        .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -734,12 +806,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofInvalid as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -753,12 +830,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
     }
 
@@ -773,8 +855,12 @@ mod integration_tests {
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
-            _create_address_schema(issuer.wallet_handle, issuer.pool_handle, &issuer.config_issuer.institution_did).await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
+            issuer.wallet_handle,
+            issuer.pool_handle,
+            &issuer.config_issuer.institution_did,
+        )
+        .await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -816,12 +902,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofValidated as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofValidated
         );
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
@@ -835,12 +926,17 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(verifier.wallet_handle, verifier.pool_handle, &verifier.agency_client, &verifier_to_consumer)
+            .update_state(
+                verifier.wallet_handle,
+                verifier.pool_handle,
+                &verifier.agency_client,
+                &verifier_to_consumer,
+            )
             .await
             .unwrap();
         assert_eq!(
-            proof_verifier.get_presentation_status(),
-            ProofStateType::ProofInvalid as u32
+            ProofStateType::from(proof_verifier.get_presentation_status()),
+            ProofStateType::ProofInvalid
         );
     }
 }

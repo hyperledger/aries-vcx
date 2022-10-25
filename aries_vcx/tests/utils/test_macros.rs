@@ -1,6 +1,5 @@
-use std::fmt;
-
 use messages::status::Status;
+use std::fmt;
 
 macro_rules! enum_number {
     ($name:ident { $($variant:ident = $value:expr, )* }) => {
