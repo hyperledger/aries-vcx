@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
@@ -53,6 +54,20 @@ pub enum ProverFullState {
     Finished(FinishedState),
 }
 
+impl fmt::Display for ProverFullState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            ProverFullState::Initial(_) => f.write_str("Initial"),
+            ProverFullState::PresentationProposalSent(_) => f.write_str("PresentationProposalSent"),
+            ProverFullState::PresentationRequestReceived(_) => f.write_str("PresentationRequestReceived"),
+            ProverFullState::PresentationPrepared(_) => f.write_str("PresentationPrepared"),
+            ProverFullState::PresentationPreparationFailed(_) => f.write_str("PresentationPreparationFailed"),
+            ProverFullState::PresentationSent(_) => f.write_str("PresentationSent"),
+            ProverFullState::Finished(_) => f.write_str("Finished"),
+        }
+    }
+}
+
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     Ok(Presentation::create()
         .set_thread_id(&thread_id)
@@ -95,7 +110,10 @@ impl ProverSM {
                 send_message(proposal.to_a2a_message()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send presentation proposal in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -112,7 +130,10 @@ impl ProverSM {
                     Self::_handle_reject_presentation_request(send_message, &reason, &self.thread_id).await?;
                 ProverFullState::Finished(FinishedState::declined(problem_report))
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to decline presentation request in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -127,7 +148,10 @@ impl ProverSM {
                 Self::_handle_presentation_proposal(send_message, presentation_preview, &self.thread_id).await?;
                 ProverFullState::Finished(state.into())
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send handle presentation proposal in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -147,7 +171,10 @@ impl ProverSM {
                     }
                 }
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send generate presentation in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -158,7 +185,10 @@ impl ProverSM {
                 let presentation = presentation.set_thread_id(&self.thread_id);
                 ProverFullState::PresentationPrepared((state, presentation).into())
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send set presentation in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -173,7 +203,10 @@ impl ProverSM {
                 send_message(state.problem_report.to_a2a_message()).await?;
                 ProverFullState::Finished((state).into())
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send send presentation in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }

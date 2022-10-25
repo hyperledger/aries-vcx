@@ -144,7 +144,10 @@ impl VerifierSM {
                     self.thread_id.clone()
                 )
             }
-            s @ _ => (s, self.thread_id.clone())
+            s @ _ => {
+                warn!("Unable to receive presentation proposal in state {}", s);
+                (s, self.thread_id.clone())
+            }
         };
         Ok(Self { state, thread_id, ..self })
     }
@@ -153,7 +156,10 @@ impl VerifierSM {
         verify_thread_id(&self.thread_id, &VerifierMessages::PresentationRejectReceived(problem_report.clone()))?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => VerifierFullState::Finished((state, problem_report).into()),
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to receive presentation request reject in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -174,7 +180,10 @@ impl VerifierSM {
                     thread_id,
                 )
             }
-            s @ _ => (s, self.thread_id.clone())
+            s @ _ => {
+                warn!("Unable to reject presentation proposal in state {}", s);
+                (s, self.thread_id.clone())
+            }
         };
         Ok(Self { state, thread_id, ..self })
     }
@@ -202,7 +211,10 @@ impl VerifierSM {
                     }
                 }
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to verify presentation in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -214,7 +226,10 @@ impl VerifierSM {
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 VerifierFullState::Finished(state)
             }
-            s @ _ => s
+            s @ _ => {
+                warn!("Unable to send presentation ack in state {}", s);
+                s
+            }
         };
         Ok(Self { state, ..self })
     }
