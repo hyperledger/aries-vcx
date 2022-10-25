@@ -80,8 +80,6 @@ impl ServiceCredentialsHolder {
         let mut holder = Holder::create("")?;
         holder
             .send_proposal(
-                self.wallet_handle,
-                self.pool_handle,
                 proposal_data,
                 connection.send_message_closure(self.wallet_handle).await?,
             )

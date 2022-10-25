@@ -37,18 +37,11 @@ impl Holder {
 
     pub async fn send_proposal(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         credential_proposal: CredentialProposalData,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.step(
-            wallet_handle,
-            pool_handle,
-            CredentialIssuanceAction::CredentialProposalSend(credential_proposal),
-            Some(send_message),
-        )
-        .await
+        self.holder_sm = self.holder_sm.clone().send_proposal(credential_proposal, send_message).await?;
+        Ok(())
     }
 
     pub async fn send_request(
@@ -58,29 +51,25 @@ impl Holder {
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.step(
+        self.holder_sm = self.holder_sm.clone().send_request(
             wallet_handle,
             pool_handle,
-            CredentialIssuanceAction::CredentialRequestSend(my_pw_did),
-            Some(send_message),
-        )
-        .await
+            my_pw_did,
+            send_message,
+        ).await?;
+        Ok(())
     }
 
     pub async fn decline_offer<'a>(
         &'a mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         comment: Option<&'a str>,
         send_message: SendClosure,
     ) -> VcxResult<()> {
-        self.step(
-            wallet_handle,
-            pool_handle,
-            CredentialIssuanceAction::CredentialOfferReject(comment.map(String::from)),
-            Some(send_message),
-        )
-        .await
+        self.holder_sm = self.holder_sm.clone().decline_offer(
+            comment.map(String::from),
+            send_message,
+        ).await?;
+        Ok(())
     }
 
     pub fn is_terminal_state(&self) -> bool {
@@ -296,8 +285,6 @@ pub mod unit_tests {
 
         holder
             .send_proposal(
-                _dummy_wallet_handle(),
-                _dummy_pool_handle(),
                 _credential_proposal_data(),
                 _send_message().unwrap(),
             )
@@ -317,8 +304,6 @@ pub mod unit_tests {
 
         holder
             .send_proposal(
-                _dummy_wallet_handle(),
-                _dummy_pool_handle(),
                 _credential_proposal_data(),
                 _send_message().unwrap(),
             )
