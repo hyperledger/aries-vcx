@@ -626,8 +626,6 @@ pub mod test_utils {
 
             self.prover
                 .send_presentation(
-                    self.wallet_handle,
-                    self.pool_handle,
                     self.connection.send_message_closure(self.wallet_handle).await.unwrap(),
                 )
                 .await

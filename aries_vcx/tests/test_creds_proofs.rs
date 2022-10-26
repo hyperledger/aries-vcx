@@ -1376,8 +1376,6 @@ mod tests {
             alice
                 .prover
                 .send_presentation(
-                    alice.wallet_handle,
-                    alice.pool_handle,
                     alice
                         .connection
                         .send_message_closure(alice.wallet_handle)
@@ -1489,8 +1487,6 @@ mod tests {
             alice
                 .prover
                 .send_presentation(
-                    alice.wallet_handle,
-                    alice.pool_handle,
                     alice
                         .connection
                         .send_message_closure(alice.wallet_handle)
