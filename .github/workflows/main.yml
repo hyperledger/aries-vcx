@@ -77,6 +77,22 @@ jobs:
           echo "::set-output name=DOCKER_IMG_CACHED_ANDROID::$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID"
 
   ##########################################################################################
+  ########################################   LINT   ########################################
+
+  check-formatting:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+      - name: "Check formatting"
+        run: |
+          cargo fmt -- --check
+
+  ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
   build-docker-alpine-core:
