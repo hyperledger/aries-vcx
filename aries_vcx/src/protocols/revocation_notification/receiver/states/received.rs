@@ -1,7 +1,5 @@
 use messages::issuance::revocation_notification::RevocationNotification;
 
-use crate::protocols::revocation_notification::receiver::state_machine::RevocationNotificationReceiverSM;
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct NotificationReceivedState {
     rev_msg: RevocationNotification

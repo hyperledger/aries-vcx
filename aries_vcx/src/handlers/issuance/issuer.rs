@@ -8,6 +8,7 @@ use agency_client::agency_client::AgencyClient;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
+use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
@@ -170,8 +171,14 @@ impl Issuer {
         // TODO: Check if actually revoked
         if self.issuer_sm.is_revokable() {
             // TODO: Store to allow checking not. status (sent, acked)
-            RevocationNotificationSender::build(self.get_rev_reg_id()?, self.get_rev_id()?, ack_on, comment)?
-                .send_revocation_notification(send_message).await?;
+            let config = SenderConfigBuilder::default()
+                .rev_reg_id(self.get_rev_reg_id()?)
+                .cred_rev_id(self.get_rev_id()?)
+                .comment(comment)
+                .ack_on(ack_on)
+                .build()?;
+            RevocationNotificationSender::build()
+                .send_revocation_notification(config, send_message).await?;
             Ok(())
         } else {
             Err(VcxError::from_msg(

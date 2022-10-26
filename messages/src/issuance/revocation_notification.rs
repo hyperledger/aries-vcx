@@ -27,7 +27,7 @@ pub struct RevocationNotification {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 #[serde(rename_all = "kebab-case")]
-enum RevocationFormat {
+pub enum RevocationFormat {
     #[default]
     IndyAnoncreds      
 }
@@ -46,8 +46,21 @@ impl RevocationNotification {
         self.id.clone()
     }
 
+    pub fn get_credential_id(&self) -> CredentialId {
+        self.credential_id.clone()
+    }
+
+    pub fn get_revocation_format(&self) -> RevocationFormat {
+        self.revocation_format.clone()
+    }
+
     pub fn set_credential_id(mut self, rev_reg_id: String, cred_rev_id: String) -> Self {
         self.credential_id = format!("{}::{}", rev_reg_id, cred_rev_id);
+        self
+    }
+
+    pub fn set_revocation_format(mut self, revocation_format: RevocationFormat) -> Self {
+        self.revocation_format = revocation_format;
         self
     }
 

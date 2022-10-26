@@ -9,6 +9,10 @@ impl PleaseAck {
         self.on.contains(&ack_on)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.on.is_empty()
+    }
+
     pub fn from(ack_on: Vec<AckOn>) -> Self {
         Self { on: ack_on }
     }
@@ -43,8 +47,13 @@ macro_rules! please_ack (($type:ident) => (
             }
         }
 
+        // Caution, some implementations assume Some(PleaseAck::default()) to be positive ack request!
         pub fn ack_on_any(&self) -> bool {
-            self.please_ack.is_some()
+            if let Some(please_ack) = &self.please_ack {
+                !please_ack.is_empty()
+            } else {
+                false
+            }
         }
     }
 ));
