@@ -468,8 +468,6 @@ pub mod test_utils {
         let mut prover = Prover::create("1").unwrap();
         prover
             .send_proposal(
-                alice.wallet_handle,
-                alice.pool_handle,
                 proposal_data,
                 connection.send_message_closure(alice.wallet_handle).await.unwrap(),
             )
@@ -498,8 +496,6 @@ pub mod test_utils {
         }
         prover
             .send_proposal(
-                alice.wallet_handle,
-                alice.pool_handle,
                 proposal_data,
                 connection.send_message_closure(alice.wallet_handle).await.unwrap(),
             )
@@ -546,8 +542,6 @@ pub mod test_utils {
         assert_eq!(verifier.get_state(), VerifierState::PresentationProposalReceived);
         verifier
             .decline_presentation_proposal(
-                faber.wallet_handle,
-                faber.pool_handle,
                 connection.send_message_closure(faber.wallet_handle).await.unwrap(),
                 "I don't like Alices",
             )
@@ -659,8 +653,6 @@ pub mod test_utils {
             info!("generate_and_send_proof :: proof generated, sending proof");
             prover
                 .send_presentation(
-                    alice.wallet_handle,
-                    alice.pool_handle,
                     connection.send_message_closure(alice.wallet_handle).await.unwrap(),
                 )
                 .await

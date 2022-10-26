@@ -6,6 +6,7 @@ use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+use aries_vcx::messages::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
@@ -84,9 +85,20 @@ impl ServiceVerifier {
         )
     }
 
-    pub fn verify_presentation(&self, thread_id: &str) -> AgentResult<Status> {
+    pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<Status> {
         let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
         Ok(Status::from_u32(verifier.get_presentation_status()))
+    }
+
+    pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {
+        let VerifierWrapper { mut verifier, connection_id } = self.verifiers.get(thread_id)?;
+        let connection = self.service_connections.get_by_id(&connection_id)?;
+        verifier.verify_presentation(self.wallet_handle, self.pool_handle, presentation, connection.send_message_closure(self.wallet_handle).await?).await?;
+        self.verifiers.set(
+            thread_id,
+            VerifierWrapper::new(verifier, &connection_id),
+        )?;
+        Ok(())
     }
 
     pub async fn update_state(&self, thread_id: &str) -> AgentResult<VerifierState> {

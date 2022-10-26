@@ -66,13 +66,8 @@ impl Prover {
             credentials,
             self_attested_attrs
         );
-        self.step(
-            wallet_handle,
-            pool_handle,
-            ProverMessages::PreparePresentation((credentials, self_attested_attrs)),
-            None,
-        )
-        .await
+        self.prover_sm = self.prover_sm.clone().generate_presentation(wallet_handle, pool_handle, credentials, self_attested_attrs).await?;
+        Ok(())
     }
 
     pub fn generate_presentation_msg(&self) -> VcxResult<String> {
@@ -81,33 +76,26 @@ impl Prover {
         Ok(json!(proof).to_string())
     }
 
-    pub async fn set_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation) -> VcxResult<()> {
+    pub fn set_presentation(&mut self, presentation: Presentation) -> VcxResult<()> {
         trace!("Prover::set_presentation >>>");
-        self.step(wallet_handle, pool_handle, ProverMessages::SetPresentation(presentation), None)
-            .await
+        self.prover_sm = self.prover_sm.clone().set_presentation(presentation)?;
+        Ok(())
     }
 
     pub async fn send_proposal(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         proposal_data: PresentationProposalData,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
-        self.step(
-            wallet_handle,
-            pool_handle,
-            ProverMessages::PresentationProposalSend(proposal_data),
-            Some(send_message),
-        )
-        .await
+        self.prover_sm = self.prover_sm.clone().send_presentation_proposal(proposal_data, send_message).await?;
+        Ok(())
     }
 
-    pub async fn send_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle,send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
-        self.step(wallet_handle, pool_handle, ProverMessages::SendPresentation, Some(send_message))
-            .await
+        self.prover_sm = self.prover_sm.clone().send_presentation(send_message).await?;
+        Ok(())
     }
 
     pub fn progressable_by_message(&self) -> bool {
@@ -177,8 +165,6 @@ impl Prover {
 
     pub async fn decline_presentation_request(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
         send_message: SendClosure,
         reason: Option<String>,
         proposal: Option<String>,
@@ -188,16 +174,8 @@ impl Prover {
             reason,
             proposal
         );
-        match (reason, proposal) {
-            (Some(reason), None) => {
-                self.step(
-                    wallet_handle,
-                    pool_handle,
-                    ProverMessages::RejectPresentationRequest(reason),
-                    Some(send_message),
-                )
-                .await
-            }
+        self.prover_sm = match (reason, proposal) {
+            (Some(reason), None) => self.prover_sm.clone().decline_presentation_request(reason, send_message).await?,
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
                     VcxError::from_msg(
@@ -205,24 +183,18 @@ impl Prover {
                         format!("Cannot serialize Presentation Preview: {:?}", err),
                     )
                 })?;
-
-                self.step(
-                    wallet_handle,
-                    pool_handle,
-                    ProverMessages::ProposePresentation(presentation_preview),
-                    Some(send_message),
-                )
-                .await
+                self.prover_sm.clone().negotiate_presentation(presentation_preview, send_message).await?
             }
-            (None, None) => Err(VcxError::from_msg(
+            (None, None) => { return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidOption,
                 "Either `reason` or `proposal` parameter must be specified.",
-            )),
-            (Some(_), Some(_)) => Err(VcxError::from_msg(
+            )); },
+            (Some(_), Some(_)) => { return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidOption,
                 "Only one of `reason` or `proposal` parameters must be specified.",
-            )),
-        }
+            )); },
+        };
+        Ok(())
     }
 
     pub async fn update_state(
