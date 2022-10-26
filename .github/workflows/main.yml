@@ -233,6 +233,12 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+      - name: "Publish branch image"
+        if: steps.loadcachedimg.outputs.cache-hit != 'true'
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
 
   publish-docker-libvcx:
     runs-on: ubuntu-20.04
@@ -255,6 +261,12 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+      - name: "Publish branch image"
+        if: steps.loadcachedimg.outputs.cache-hit != 'true'
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
 
   publish-docker-libvcx-tester:
     runs-on: ubuntu-20.04
@@ -277,6 +289,12 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+      - name: "Publish branch image"
+        if: steps.loadcachedimg.outputs.cache-hit != 'true'
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
 
   publish-docker-codecov:
     runs-on: ubuntu-20.04
@@ -299,6 +317,12 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+      - name: "Publish branch image"
+        if: steps.loadcachedimg.outputs.cache-hit != 'true'
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
 
   publish-docker-android:
     runs-on: ubuntu-20.04
@@ -322,6 +346,12 @@ jobs:
         with:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           publish-version: ${{ env.PUBLISH_VERSION }}
+      - name: "Publish branch image"
+        if: steps.loadcachedimg.outputs.cache-hit != 'true'
+        uses: ./.github/actions/publish-image
+        with:
+          docker-img: ${{ env.DOCKER_IMG_CACHED }}
+          publish-version: ${{ env.BRANCH_NAME }}
 
   #  ##########################################################################################
   #  ###############################    TESTING    ###########################################
