@@ -73,3 +73,9 @@ runs:
           docker build -t "${{ inputs.docker-img }}" --build-arg ${{ inputs.build-arg }} -f ${{ inputs.dockerfile-path }} .
         fi;
         docker save "${{ inputs.docker-img }}" > "${{ steps.setup.outputs.cache-file-path }}"
+    - name: "Publish branch image"
+      if: steps.loadcachedimg.outputs.cache-hit != 'true'
+      uses: ./.github/actions/publish-image
+      with:
+        docker-img: ${{ inputs.docker-img }}
+        publish-version: ${{ inputs.branch-name }}
