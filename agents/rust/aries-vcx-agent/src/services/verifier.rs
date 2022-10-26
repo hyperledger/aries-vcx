@@ -103,10 +103,8 @@ impl ServiceVerifier {
                 &connection,
             )
             .await?;
-        self.verifiers.set(
-            thread_id,
-            VerifierWrapper::new(verifier, &connection_id),
-        )?;
+        self.verifiers
+            .set(thread_id, VerifierWrapper::new(verifier, &connection_id))?;
         Ok(state)
     }
 

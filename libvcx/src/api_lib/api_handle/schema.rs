@@ -2,12 +2,12 @@ use std::string::ToString;
 
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 use aries_vcx::indy::ledger::transactions;
 use aries_vcx::indy::ledger::transactions::build_schema_request;
 use aries_vcx::indy::primitives::credential_schema::Schema;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -43,7 +43,10 @@ pub async fn create_and_publish_schema(
         )
     })?;
 
-    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?.publish(get_main_wallet_handle(), get_main_pool_handle()?, None).await?;
+    let schema = Schema::create(source_id, &issuer_did, &name, &version, &data)
+        .await?
+        .publish(get_main_wallet_handle(), get_main_pool_handle()?, None)
+        .await?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     debug!("created schema on ledger with id: {}", schema.get_schema_id());
 
@@ -82,10 +85,13 @@ pub async fn prepare_schema_for_endorser(
     })?;
 
     let schema = Schema::create(source_id, &issuer_did, &name, &version, &data).await?;
-    let schema_json = schema.get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?).await?;
+    let schema_json = schema
+        .get_schema_json(get_main_wallet_handle(), get_main_pool_handle()?)
+        .await?;
     let schema_id = schema.get_schema_id();
     let schema_request = build_schema_request(&issuer_did, &schema_json).await?;
-    let schema_request = transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
+    let schema_request =
+        transactions::set_endorser(get_main_wallet_handle(), &issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
@@ -94,7 +100,6 @@ pub async fn prepare_schema_for_endorser(
         .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))?;
 
     Ok((schema_handle, schema_request))
-    
 }
 
 pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult<(u32, String)> {
@@ -104,9 +109,14 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult
         schema_id
     );
 
-    let schema = Schema::create_from_ledger_json(get_main_wallet_handle(), get_main_pool_handle()?, &source_id, &schema_id)
-        .await
-        .map_err(|err| err.map(VcxErrorKind::CreateSchema, "Create schema from ledger failed"))?;
+    let schema = Schema::create_from_ledger_json(
+        get_main_wallet_handle(),
+        get_main_pool_handle()?,
+        &source_id,
+        &schema_id,
+    )
+    .await
+    .map_err(|err| err.map(VcxErrorKind::CreateSchema, "Create schema from ledger failed"))?;
     let schema_json = schema.to_string()?;
 
     let handle = SCHEMA_MAP
@@ -164,9 +174,9 @@ pub mod tests {
 
     use aries_vcx::global::settings;
     #[cfg(feature = "pool_tests")]
-    use aries_vcx::indy::test_utils::create_and_write_test_schema;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::ledger::transactions::add_new_did;
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::indy::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
@@ -311,8 +321,13 @@ pub mod tests {
     async fn test_get_schema_attrs_from_ledger() {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
-        let (schema_id, _) =
-            create_and_write_test_schema(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) = create_and_write_test_schema(
+            get_main_wallet_handle(),
+            get_main_pool_handle().unwrap(),
+            &setup.setup.institution_did,
+            constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
 
         let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
@@ -407,7 +422,13 @@ pub mod tests {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-        let (endorser_did, _) = add_new_did(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, Some("ENDORSER")).await;
+        let (endorser_did, _) = add_new_did(
+            get_main_wallet_handle(),
+            get_main_pool_handle().unwrap(),
+            &setup.setup.institution_did,
+            Some("ENDORSER"),
+        )
+        .await;
 
         let (schema_handle, schema_request) = prepare_schema_for_endorser(
             "test_vcx_schema_update_state_with_ledger",
@@ -420,15 +441,30 @@ pub mod tests {
         .await
         .unwrap();
         assert_eq!(0, get_state(schema_handle).unwrap());
-        assert_eq!(0, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
+        assert_eq!(
+            0,
+            update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle)
+                .await
+                .unwrap()
+        );
 
-        transactions::endorse_transaction(get_main_wallet_handle(), setup.setup.pool_handle, &endorser_did, &schema_request)
-            .await
-            .unwrap();
+        transactions::endorse_transaction(
+            get_main_wallet_handle(),
+            setup.setup.pool_handle,
+            &endorser_did,
+            &schema_request,
+        )
+        .await
+        .unwrap();
 
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
-        assert_eq!(1, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
+        assert_eq!(
+            1,
+            update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle)
+                .await
+                .unwrap()
+        );
         assert_eq!(1, get_state(schema_handle).unwrap());
     }
 

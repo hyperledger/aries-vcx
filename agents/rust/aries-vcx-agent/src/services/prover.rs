@@ -76,8 +76,7 @@ impl ServiceProver {
 
     async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
         let credentials = prover.retrieve_credentials(self.wallet_handle).await?;
-        let credentials: HashMap<String, Value> =
-            serde_json::from_str(&credentials).unwrap();
+        let credentials: HashMap<String, Value> = serde_json::from_str(&credentials).unwrap();
 
         let mut res_credentials = json!({});
 
@@ -94,17 +93,11 @@ impl ServiceProver {
         Ok(res_credentials.to_string())
     }
 
-    pub fn create_from_request(
-        &self,
-        connection_id: &str,
-        request: PresentationRequest,
-    ) -> AgentResult<String> {
+    pub fn create_from_request(&self, connection_id: &str, request: PresentationRequest) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
-        self.provers.set(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, connection_id),
-        )
+        self.provers
+            .set(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
 
     pub async fn send_proof_proposal(
@@ -122,10 +115,8 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.set(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, connection_id),
-        )
+        self.provers
+            .set(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
 
     pub fn is_secondary_proof_requested(&self, thread_id: &str) -> AgentResult<bool> {
@@ -144,12 +135,7 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
-            .generate_presentation(
-                self.wallet_handle,
-                self.pool_handle,
-                credentials,
-                "{}".to_string(),
-            )
+            .generate_presentation(self.wallet_handle, self.pool_handle, credentials, "{}".to_string())
             .await?;
         prover
             .send_presentation(
@@ -158,10 +144,8 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.provers.set(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, &connection_id),
-        )?;
+        self.provers
+            .set(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
         Ok(())
     }
 
@@ -179,10 +163,8 @@ impl ServiceProver {
                 &connection,
             )
             .await?;
-        self.provers.set(
-            thread_id,
-            ProverWrapper::new(prover, &connection_id),
-        )?;
+        self.provers
+            .set(thread_id, ProverWrapper::new(prover, &connection_id))?;
         Ok(state)
     }
 

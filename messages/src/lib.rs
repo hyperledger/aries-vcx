@@ -22,21 +22,21 @@ pub mod a2a;
 #[macro_use]
 pub mod ack;
 
+pub mod actors;
 pub mod attachment;
 pub mod basic_message;
 pub mod connection;
+pub mod did_doc;
 pub mod discovery;
 pub mod error;
-pub mod problem_report;
 pub mod forward;
 pub mod issuance;
 pub mod localization;
 pub mod mime_type;
 pub mod out_of_band;
+pub mod problem_report;
 pub mod proof_presentation;
 pub mod status;
 pub mod timing;
 pub mod trust_ping;
-pub mod did_doc;
-pub mod actors;
 pub mod utils;

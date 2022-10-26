@@ -70,18 +70,12 @@ where
                 Ok(obj) => Ok((*obj.deref()).clone()),
                 Err(_) => Err(AgentError::from_msg(
                     AgentErrorKind::LockError,
-                    &format!(
-                        "[ObjectCache: {}] Unable to lock Object Store",
-                        self.cache_name
-                    ),
+                    &format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
             None => Err(AgentError::from_msg(
                 AgentErrorKind::NotFound,
-                &format!(
-                    "[ObjectCache: {}] Object not found for id: {}",
-                    self.cache_name, id
-                ),
+                &format!("[ObjectCache: {}] Object not found for id: {}", self.cache_name, id),
             )),
         }
     }

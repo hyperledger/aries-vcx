@@ -4,9 +4,9 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::indy;
 use aries_vcx::utils::error;
+use aries_vcx::vdrtools_sys::CommandHandle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::*;

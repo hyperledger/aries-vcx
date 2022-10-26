@@ -1,12 +1,12 @@
-use crate::a2a_message;
-use crate::error::prelude::*;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
+use crate::a2a_message;
 use crate::attachment::Attachments;
 use crate::did_doc::service_resolvable::ServiceResolvable;
+use crate::error::prelude::*;
 use crate::mime_type::MimeType;
-use crate::timing::Timing;
 use crate::out_of_band::GoalCode;
+use crate::timing::Timing;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
 pub struct OutOfBandInvitation {

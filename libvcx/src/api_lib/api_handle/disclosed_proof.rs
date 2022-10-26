@@ -1,9 +1,9 @@
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
@@ -94,14 +94,24 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+            .handle_message(
+                get_main_wallet_handle(),
+                get_main_pool_handle()?,
+                message.into(),
+                Some(send_message),
+            )
             .await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+                .handle_message(
+                    get_main_wallet_handle(),
+                    get_main_pool_handle()?,
+                    message.into(),
+                    Some(send_message),
+                )
                 .await?;
             connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -152,7 +162,9 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
-    proof.send_presentation(get_main_wallet_handle(), get_main_pool_handle()?, send_message).await?;
+    proof
+        .send_presentation(get_main_wallet_handle(), get_main_pool_handle()?, send_message)
+        .await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
 }

@@ -24,11 +24,7 @@ pub struct ServiceConnections {
 }
 
 impl ServiceConnections {
-    pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        config_agency_client: AgencyClientConfig,
-    ) -> Self {
+    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, config_agency_client: AgencyClientConfig) -> Self {
         Self {
             wallet_handle,
             pool_handle,
@@ -49,40 +45,26 @@ impl ServiceConnections {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let mut connection =
-            Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
-        connection
-            .connect(self.wallet_handle, &self.agency_client()?)
-            .await?;
+        let mut connection = Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
+        connection.connect(self.wallet_handle, &self.agency_client()?).await?;
         let invite = connection
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
-        self.connections
-            .set(&connection.get_thread_id(), connection)?;
+        self.connections.set(&connection.get_thread_id(), connection)?;
         Ok(invite)
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let ddo = into_did_doc(self.pool_handle, &invite).await?;
-        let connection = Connection::create_with_invite(
-            "",
-            self.wallet_handle,
-            &self.agency_client()?,
-            invite,
-            ddo,
-            true,
-        )
-        .await?;
-        self.connections
-            .set(&connection.get_thread_id(), connection)
+        let connection =
+            Connection::create_with_invite("", self.wallet_handle, &self.agency_client()?, invite, ddo, true).await?;
+        self.connections.set(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.connections.get(thread_id)?;
-        connection
-            .connect(self.wallet_handle, &self.agency_client()?)
-            .await?;
+        connection.connect(self.wallet_handle, &self.agency_client()?).await?;
         connection
             .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
             .await?;
@@ -134,10 +116,7 @@ impl ServiceConnections {
         for connection in self.connections.get_all()? {
             for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
                 if let A2AMessage::PresentationRequest(request) = message {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
+                    connection.update_message_status(&uid, &agency_client).await.ok();
                     requests.push((request, connection.get_thread_id()));
                 }
             }

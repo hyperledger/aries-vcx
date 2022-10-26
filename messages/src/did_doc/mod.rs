@@ -5,8 +5,8 @@ use service_aries::AriesService;
 use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
+use crate::error::{MessagesError, MessagesResult, MesssagesErrorKind};
 use crate::utils::validation::validate_verkey;
-use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries;

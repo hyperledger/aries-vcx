@@ -70,7 +70,10 @@ impl LibvcxDefaultLogger {
             .parse_filters(pattern.as_deref().unwrap_or("warn"))
             .try_init()
             .map_err(|err| {
-                MessagesError::from_msg(MesssagesErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                MessagesError::from_msg(
+                    MesssagesErrorKind::LoggingError,
+                    format!("Cannot init logger: {:?}", err),
+                )
             })?;
         Ok(())
     }

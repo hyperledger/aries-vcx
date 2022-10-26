@@ -6,7 +6,10 @@ pub fn validate_verkey(verkey: &str) -> MessagesResult<String> {
     let check_verkey = String::from(verkey);
     match check_verkey.from_base58() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(_) => Err(MessagesError::from_msg(MesssagesErrorKind::InvalidVerkey, "Invalid Verkey length")),
+        Ok(_) => Err(MessagesError::from_msg(
+            MesssagesErrorKind::InvalidVerkey,
+            "Invalid Verkey length",
+        )),
         Err(x) => Err(MessagesError::from_msg(
             MesssagesErrorKind::NotBase58,
             format!("Invalid Verkey: {}", x),

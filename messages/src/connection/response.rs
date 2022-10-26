@@ -1,8 +1,8 @@
-use crate::did_doc::DidDoc;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::PleaseAck;
+use crate::did_doc::DidDoc;
 use crate::thread::Thread;
 use crate::timing::Timing;
 use crate::timing_optional;
@@ -166,8 +166,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
     use crate::connection::response::test_utils::{_did, _response, _thread_id};
+    use crate::did_doc::test_utils::*;
     use crate::utils::devsetup::SetupEmpty;
 
     use super::*;

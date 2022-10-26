@@ -101,10 +101,22 @@ pub mod unit_tests {
             indy_backtrace: None,
         };
 
-        assert_eq!(MessagesError::from(err100).kind(), MesssagesErrorKind::InvalidLibindyParam);
-        assert_eq!(MessagesError::from(err107).kind(), MesssagesErrorKind::InvalidLibindyParam);
-        assert_eq!(MessagesError::from(err111).kind(), MesssagesErrorKind::InvalidLibindyParam);
+        assert_eq!(
+            MessagesError::from(err100).kind(),
+            MesssagesErrorKind::InvalidLibindyParam
+        );
+        assert_eq!(
+            MessagesError::from(err107).kind(),
+            MesssagesErrorKind::InvalidLibindyParam
+        );
+        assert_eq!(
+            MessagesError::from(err111).kind(),
+            MesssagesErrorKind::InvalidLibindyParam
+        );
         // Test that RC 112 falls out of the range 100...112
-        assert_ne!(MessagesError::from(err112).kind(), MesssagesErrorKind::InvalidLibindyParam);
+        assert_ne!(
+            MessagesError::from(err112).kind(),
+            MesssagesErrorKind::InvalidLibindyParam
+        );
     }
 }

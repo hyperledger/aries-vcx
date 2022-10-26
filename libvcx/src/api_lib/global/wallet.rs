@@ -1,9 +1,9 @@
 use aries_vcx::error::VcxResult;
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
 use aries_vcx::indy;
-use aries_vcx::indy::wallet::WalletConfig;
 use aries_vcx::indy::credentials::holder;
+use aries_vcx::indy::wallet::WalletConfig;
+use aries_vcx::vdrtools::{WalletHandle, INVALID_WALLET_HANDLE};
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -65,11 +65,7 @@ pub mod test_utils {
     use aries_vcx::indy::wallet::{add_wallet_record, WalletConfig};
     use aries_vcx::utils::devsetup::TempFile;
 
-    use crate::api_lib::global::wallet::{
-        close_main_wallet,
-        create_and_open_as_main_wallet,
-        export_main_wallet,
-    };
+    use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")

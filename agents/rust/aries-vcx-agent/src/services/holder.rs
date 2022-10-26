@@ -84,23 +84,15 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_holder.set(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, connection_id),
-        )
+        self.creds_holder
+            .set(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
     }
 
-    pub fn create_from_offer(
-        &self,
-        connection_id: &str,
-        offer: CredentialOffer,
-    ) -> AgentResult<String> {
+    pub fn create_from_offer(&self, connection_id: &str, offer: CredentialOffer) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
-        self.creds_holder.set(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, connection_id),
-        )
+        self.creds_holder
+            .set(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
     }
 
     pub async fn send_credential_request(
@@ -123,10 +115,8 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_holder.set(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, &connection_id),
-        )
+        self.creds_holder
+            .set(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<HolderState> {
@@ -147,10 +137,8 @@ impl ServiceCredentialsHolder {
                 &connection,
             )
             .await?;
-        self.creds_holder.set(
-            thread_id,
-            HolderWrapper::new(holder, &connection_id),
-        )?;
+        self.creds_holder
+            .set(thread_id, HolderWrapper::new(holder, &connection_id))?;
         Ok(state)
     }
 
@@ -162,15 +150,11 @@ impl ServiceCredentialsHolder {
     }
 
     pub async fn get_rev_reg_id(&self, thread_id: &str) -> AgentResult<String> {
-        self.get_holder(thread_id)?
-            .get_rev_reg_id()
-            .map_err(|err| err.into())
+        self.get_holder(thread_id)?.get_rev_reg_id().map_err(|err| err.into())
     }
 
     pub async fn get_tails_hash(&self, thread_id: &str) -> AgentResult<String> {
-        self.get_holder(thread_id)?
-            .get_tails_hash()
-            .map_err(|err| err.into())
+        self.get_holder(thread_id)?.get_tails_hash().map_err(|err| err.into())
     }
 
     pub async fn get_tails_location(&self, thread_id: &str) -> AgentResult<String> {

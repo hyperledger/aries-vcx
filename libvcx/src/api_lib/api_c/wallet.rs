@@ -5,9 +5,9 @@ use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy;
-use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
+use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
 use crate::api_lib;
 use crate::api_lib::global::wallet::open_as_main_wallet;

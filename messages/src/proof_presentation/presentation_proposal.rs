@@ -1,7 +1,7 @@
-use crate::error::prelude::*;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
+use crate::error::prelude::*;
 use crate::mime_type::MimeType;
 use crate::thread::Thread;
 use crate::timing::Timing;

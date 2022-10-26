@@ -1,9 +1,9 @@
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
@@ -145,7 +145,9 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            credential
+                .step(wallet_handle, pool_handle, msg.into(), Some(send_message))
+                .await?;
             connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -232,7 +234,12 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
     let my_pw_did = connection::get_pw_did(connection_handle)?;
     let send_message = connection::send_message_closure(connection_handle).await?;
     credential
-        .send_request(get_main_wallet_handle(), get_main_pool_handle()?, my_pw_did, send_message)
+        .send_request(
+            get_main_wallet_handle(),
+            get_main_pool_handle()?,
+            my_pw_did,
+            send_message,
+        )
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
@@ -363,8 +370,7 @@ pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex;
     use aries_vcx::utils::mockdata::mockdata_credex::{
-        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
-        ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
+        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
     use crate::api_lib::api_handle::connection;

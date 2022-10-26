@@ -618,4 +618,3 @@ pub fn error_message(code_num: &u32) -> String {
         None => error_message(&UNKNOWN_ERROR.code_num),
     }
 }
-

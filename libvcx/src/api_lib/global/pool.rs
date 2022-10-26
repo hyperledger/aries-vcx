@@ -3,7 +3,7 @@ use std::sync::RwLock;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::ledger::pool::{create_pool_ledger_config, open_pool_ledger, close};
+use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
 use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 
 lazy_static! {
@@ -17,7 +17,7 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 
 pub fn get_main_pool_handle() -> VcxResult<i32> {
     if settings::indy_mocks_enabled() {
-        return Ok(INVALID_POOL_HANDLE)
+        return Ok(INVALID_POOL_HANDLE);
     }
     POOL_HANDLE
         .read()

@@ -9,8 +9,7 @@ use crate::error::*;
 use crate::services::{
     connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
     holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
-    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-    verifier::ServiceVerifier,
+    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas, verifier::ServiceVerifier,
 };
 
 #[derive(Clone)]

@@ -68,20 +68,14 @@ impl ServiceCredentialsIssuer {
             })
     }
 
-    pub async fn accept_proposal(
-        &self,
-        connection_id: &str,
-        proposal: &CredentialProposal,
-    ) -> AgentResult<String> {
+    pub async fn accept_proposal(&self, connection_id: &str, proposal: &CredentialProposal) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut issuer = Issuer::create_from_proposal("", proposal)?;
         issuer
             .update_state(self.wallet_handle, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, connection_id),
-        )
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, connection_id))
     }
 
     pub async fn send_credential_offer(
@@ -103,10 +97,8 @@ impl ServiceCredentialsIssuer {
         issuer
             .send_credential_offer(connection.send_message_closure(self.wallet_handle).await?)
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
 
     pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
@@ -121,10 +113,8 @@ impl ServiceCredentialsIssuer {
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())
     }
 
@@ -141,10 +131,8 @@ impl ServiceCredentialsIssuer {
         let state = issuer
             .update_state(self.wallet_handle, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.set(
-            thread_id,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .set(thread_id, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(state)
     }
 

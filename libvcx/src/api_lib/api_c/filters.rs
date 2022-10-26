@@ -3,9 +3,9 @@ use std::ptr;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::error;
 use aries_vcx::utils::filters;
+use aries_vcx::vdrtools_sys::CommandHandle;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;

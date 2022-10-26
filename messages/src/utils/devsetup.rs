@@ -4,7 +4,6 @@ use crate::utils::test_logger::LibvcxDefaultLogger;
 #[cfg(feature = "test_utils")]
 use chrono::{DateTime, Duration, Utc};
 
-
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
 }

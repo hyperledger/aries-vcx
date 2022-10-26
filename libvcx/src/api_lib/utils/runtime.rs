@@ -9,7 +9,6 @@ use tokio::runtime::Runtime;
 
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
-
 static RT: Lazy<Runtime> = Lazy::new(|| {
     tokio::runtime::Builder::new_multi_thread()
         .thread_name_fn(|| {
@@ -49,9 +48,7 @@ pub fn execute<F>(closure: F)
 where
     F: FnOnce() -> Result<(), ()> + Send + 'static,
 {
-    execute_on_tokio(async move {
-        closure()
-    });
+    execute_on_tokio(async move { closure() });
 }
 
 pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {

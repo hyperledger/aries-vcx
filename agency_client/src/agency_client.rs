@@ -1,5 +1,5 @@
-use vdrtools::WalletHandle;
 use url::Url;
+use vdrtools::WalletHandle;
 
 use crate::configuration::AgencyClientConfig;
 use crate::error::AgencyClientResult;

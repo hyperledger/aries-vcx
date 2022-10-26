@@ -4,17 +4,17 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
-use aries_vcx::utils::constants::*;
-use aries_vcx::utils::error;
 use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::transactions::get_ledger_txn;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use aries_vcx::utils::constants::*;
+use aries_vcx::utils::error;
+use aries_vcx::vdrtools_sys::CommandHandle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
@@ -425,7 +425,14 @@ pub extern "C" fn vcx_endorse_transaction(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::ledger::transactions::endorse_transaction(get_main_wallet_handle(), pool_handle, &issuer_did, &transaction).await {
+        match aries_vcx::indy::ledger::transactions::endorse_transaction(
+            get_main_wallet_handle(),
+            pool_handle,
+            &issuer_did,
+            &transaction,
+        )
+        .await
+        {
             Ok(()) => {
                 trace!(
                     "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
@@ -702,14 +709,7 @@ pub extern "C" fn vcx_get_ledger_txn(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_ledger_txn(
-            get_main_wallet_handle(),
-            pool_handle,
-            submitter_did.as_deref(),
-            seq_no,
-        )
-        .await
-        {
+        match get_ledger_txn(get_main_wallet_handle(), pool_handle, submitter_did.as_deref(), seq_no).await {
             Ok(txn) => {
                 trace!(
                     "vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",

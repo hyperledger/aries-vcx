@@ -6,16 +6,13 @@ use std::ptr;
 use libc::c_char;
 
 use chrono::{
-    Local,
     format::{DelayedFormat, StrftimeItems},
+    Local,
 };
 
 use log::{Level, LevelFilter, Metadata, Record};
 
-use env_logger::{
-    Builder as EnvLoggerBuilder,
-    fmt::Formatter,
-};
+use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 
 pub use aries_vcx::{
     error::{VcxError, VcxErrorKind, VcxResult},
@@ -26,7 +23,6 @@ pub use aries_vcx::{
 };
 
 use crate::api_lib::utils::cstring::CStringUtils;
-
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 

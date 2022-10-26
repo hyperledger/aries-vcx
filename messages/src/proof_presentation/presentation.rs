@@ -1,7 +1,7 @@
-use crate::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::PleaseAck;
 use crate::attachment::{AttachmentId, Attachments};
+use crate::error::prelude::*;
 use crate::thread::Thread;
 use crate::timing::Timing;
 use crate::timing_optional;

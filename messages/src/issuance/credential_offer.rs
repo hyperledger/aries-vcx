@@ -1,6 +1,6 @@
-use crate::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::attachment::{AttachmentId, Attachments};
+use crate::error::MessagesResult;
 use crate::issuance::CredentialPreviewData;
 use crate::mime_type::MimeType;
 use crate::thread::Thread;

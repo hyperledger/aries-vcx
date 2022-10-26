@@ -4,11 +4,11 @@ use futures::future::BoxFuture;
 use libc::c_char;
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
-use crate::api_lib::global::pool::get_main_pool_handle;
-use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::error;
+use aries_vcx::vdrtools_sys::CommandHandle;
 
 use crate::api_lib::api_handle::schema;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -574,9 +574,7 @@ mod tests {
 
     use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
     use aries_vcx::utils;
-    use aries_vcx::utils::constants::{
-        DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION,
-    };
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
 
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;

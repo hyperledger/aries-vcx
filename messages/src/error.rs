@@ -6,7 +6,7 @@ use failure::{Backtrace, Context, Fail};
 use crate::utils::error;
 
 pub mod prelude {
-    pub use super::{err_msg, MessagesError, MessagesErrorExt, MesssagesErrorKind, MessagesResult, MessagesResultExt};
+    pub use super::{err_msg, MessagesError, MessagesErrorExt, MessagesResult, MessagesResultExt, MesssagesErrorKind};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
@@ -70,7 +70,9 @@ pub enum MesssagesErrorKind {
     CredDefAlreadyCreated,
     #[fail(display = "Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[fail(display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[fail(
+        display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
     RevDeltaNotFound,
     #[fail(display = "Failed to clean stored revocation delta")]
     RevDeltaFailedToClear,
@@ -499,12 +501,16 @@ impl From<u32> for MesssagesErrorKind {
             _ if { error::INVALID_REDIRECT_DETAILS.code_num == code } => MesssagesErrorKind::InvalidRedirectDetail,
             _ if { error::CANNOT_DELETE_CONNECTION.code_num == code } => MesssagesErrorKind::DeleteConnection,
             _ if { error::CREATE_CREDENTIAL_DEF_ERR.code_num == code } => MesssagesErrorKind::CreateCredDef,
-            _ if { error::CREDENTIAL_DEF_ALREADY_CREATED.code_num == code } => MesssagesErrorKind::CredDefAlreadyCreated,
+            _ if { error::CREDENTIAL_DEF_ALREADY_CREATED.code_num == code } => {
+                MesssagesErrorKind::CredDefAlreadyCreated
+            }
             _ if { error::INVALID_CREDENTIAL_DEF_HANDLE.code_num == code } => MesssagesErrorKind::InvalidCredDefHandle,
             _ if { error::INVALID_REV_ENTRY.code_num == code } => MesssagesErrorKind::InvalidRevocationEntry,
             _ if { error::INVALID_REV_REG_DEF_CREATION.code_num == code } => MesssagesErrorKind::CreateRevRegDef,
             _ if { error::INVALID_CREDENTIAL_HANDLE.code_num == code } => MesssagesErrorKind::InvalidCredentialHandle,
-            _ if { error::CREATE_CREDENTIAL_REQUEST_ERROR.code_num == code } => MesssagesErrorKind::CreateCredentialRequest,
+            _ if { error::CREATE_CREDENTIAL_REQUEST_ERROR.code_num == code } => {
+                MesssagesErrorKind::CreateCredentialRequest
+            }
             _ if { error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num == code } => {
                 MesssagesErrorKind::InvalidIssuerCredentialHandle
             }
@@ -517,9 +523,13 @@ impl From<u32> for MesssagesErrorKind {
             }
             _ if { error::INVALID_PROOF.code_num == code } => MesssagesErrorKind::InvalidProof,
             _ if { error::INVALID_SCHEMA.code_num == code } => MesssagesErrorKind::InvalidSchema,
-            _ if { error::INVALID_PROOF_CREDENTIAL_DATA.code_num == code } => MesssagesErrorKind::InvalidProofCredentialData,
+            _ if { error::INVALID_PROOF_CREDENTIAL_DATA.code_num == code } => {
+                MesssagesErrorKind::InvalidProofCredentialData
+            }
             _ if { error::CREATE_PROOF_ERROR.code_num == code } => MesssagesErrorKind::CreateProof,
-            _ if { error::INVALID_REVOCATION_TIMESTAMP.code_num == code } => MesssagesErrorKind::InvalidRevocationTimestamp,
+            _ if { error::INVALID_REVOCATION_TIMESTAMP.code_num == code } => {
+                MesssagesErrorKind::InvalidRevocationTimestamp
+            }
             _ if { error::INVALID_SCHEMA_CREATION.code_num == code } => MesssagesErrorKind::CreateSchema,
             _ if { error::INVALID_SCHEMA_HANDLE.code_num == code } => MesssagesErrorKind::InvalidSchemaHandle,
             _ if { error::INVALID_SCHEMA_SEQ_NO.code_num == code } => MesssagesErrorKind::InvalidSchemaSeqNo,
@@ -540,7 +550,9 @@ impl From<u32> for MesssagesErrorKind {
             _ if { error::DUPLICATE_MASTER_SECRET.code_num == code } => MesssagesErrorKind::DuplicationMasterSecret,
             _ if { error::DID_ALREADY_EXISTS_IN_WALLET.code_num == code } => MesssagesErrorKind::DuplicationDid,
             _ if { error::INVALID_LEDGER_RESPONSE.code_num == code } => MesssagesErrorKind::InvalidLedgerResponse,
-            _ if { error::INVALID_ATTRIBUTES_STRUCTURE.code_num == code } => MesssagesErrorKind::InvalidAttributesStructure,
+            _ if { error::INVALID_ATTRIBUTES_STRUCTURE.code_num == code } => {
+                MesssagesErrorKind::InvalidAttributesStructure
+            }
             _ if { error::INVALID_PAYMENT_ADDRESS.code_num == code } => MesssagesErrorKind::InvalidPaymentAddress,
             _ if { error::NO_ENDPOINT.code_num == code } => MesssagesErrorKind::NoEndpoint,
             _ if { error::INVALID_PROOF_REQUEST.code_num == code } => MesssagesErrorKind::InvalidProofRequest,
@@ -559,7 +571,9 @@ impl From<u32> for MesssagesErrorKind {
             _ if { error::NOT_BASE58.code_num == code } => MesssagesErrorKind::NotBase58,
             _ if { error::INVALID_HTTP_RESPONSE.code_num == code } => MesssagesErrorKind::InvalidHttpResponse,
             _ if { error::INVALID_MESSAGES.code_num == code } => MesssagesErrorKind::InvalidMessages,
-            _ if { error::MISSING_EXPORTED_WALLET_PATH.code_num == code } => MesssagesErrorKind::MissingExportedWalletPath,
+            _ if { error::MISSING_EXPORTED_WALLET_PATH.code_num == code } => {
+                MesssagesErrorKind::MissingExportedWalletPath
+            }
             _ if { error::MISSING_BACKUP_KEY.code_num == code } => MesssagesErrorKind::MissingBackupKey,
             _ if { error::UNKNOWN_LIBINDY_ERROR.code_num == code } => MesssagesErrorKind::UnknownLibndyError,
             _ if { error::ACTION_NOT_SUPPORTED.code_num == code } => MesssagesErrorKind::ActionNotSupported,
@@ -577,4 +591,3 @@ impl From<u32> for MesssagesErrorKind {
         }
     }
 }
-

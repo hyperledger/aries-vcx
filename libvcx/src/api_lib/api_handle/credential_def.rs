@@ -1,8 +1,8 @@
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
-use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
-use aries_vcx::indy::primitives::credential_definition::CredentialDef;
 use crate::api_lib::global::pool::get_main_pool_handle;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::indy::primitives::credential_definition::CredentialDef;
+use aries_vcx::indy::primitives::credential_definition::CredentialDefConfigBuilder;
+use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -30,7 +30,14 @@ pub async fn create(
                 format!("Failed build credential config using provided parameters: {:?}", err),
             )
         })?;
-    let cred_def = CredentialDef::create(get_main_wallet_handle(), get_main_pool_handle()?, source_id, config, support_revocation).await?;
+    let cred_def = CredentialDef::create(
+        get_main_wallet_handle(),
+        get_main_pool_handle()?,
+        source_id,
+        config,
+        support_revocation,
+    )
+    .await?;
     let handle = CREDENTIALDEF_MAP.add(cred_def)?;
     Ok(handle)
 }
@@ -38,7 +45,9 @@ pub async fn create(
 pub async fn publish(handle: u32) -> VcxResult<()> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
     if !cd.was_published() {
-        cd = cd.publish_cred_def(get_main_wallet_handle(), get_main_pool_handle()?).await?;
+        cd = cd
+            .publish_cred_def(get_main_wallet_handle(), get_main_pool_handle()?)
+            .await?;
     } else {
         info!("publish >>> Credential definition was already published")
     }
@@ -78,7 +87,9 @@ pub fn release_all() {
 
 pub async fn update_state(handle: u32) -> VcxResult<u32> {
     let mut cd = CREDENTIALDEF_MAP.get_cloned(handle)?;
-    let res = cd.update_state(get_main_wallet_handle(), get_main_pool_handle()?).await?;
+    let res = cd
+        .update_state(get_main_wallet_handle(), get_main_pool_handle()?)
+        .await?;
     CREDENTIALDEF_MAP.insert(handle, cd)?;
     Ok(res)
 }
@@ -102,17 +113,16 @@ pub mod tests {
     use aries_vcx::indy::test_utils::create_and_write_test_schema;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils;
-    use aries_vcx::utils::devsetup::SetupMocks;
     use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::SetupMocks;
 
     #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::get_temp_dir_path;
 
     #[cfg(feature = "pool_tests")]
-    use crate::api_lib::api_handle::revocation_registry::RevocationRegistryConfig;
-    #[cfg(feature = "pool_tests")]
-
     use crate::api_lib::api_handle::revocation_registry;
+    #[cfg(feature = "pool_tests")]
+    use crate::api_lib::api_handle::revocation_registry::RevocationRegistryConfig;
     use crate::api_lib::api_handle::schema;
 
     #[cfg(feature = "pool_tests")]
@@ -151,8 +161,13 @@ pub mod tests {
     async fn create_revocable_cred_def_and_check_tails_location() {
         let setup = SetupGlobalsWalletPoolAgency::init().await;
 
-        let (schema_id, _) =
-            create_and_write_test_schema(get_main_wallet_handle(), setup.setup.pool_handle, &setup.setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+        let (schema_id, _) = create_and_write_test_schema(
+            get_main_wallet_handle(),
+            setup.setup.pool_handle,
+            &setup.setup.institution_did,
+            utils::constants::DEFAULT_SCHEMA_ATTRS,
+        )
+        .await;
         let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
         let revocation_details = RevocationDetailsBuilder::default()
