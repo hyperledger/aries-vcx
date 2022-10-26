@@ -1,0 +1,28 @@
+name: 'has-image'
+description: "Checks if image is loaded in docker"
+
+inputs:
+  docker-img:
+    description: 'Source image to be published'
+    required: true
+
+outputs:
+  was-found:
+    description: "True if image was found in local docker repo"
+    value: ${{ steps.main.outputs.was-found }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Check if image exists locally"
+      id: main
+      shell: bash
+      run: |
+        IFS=$':' read -a arr <<< ${{ inputs.docker-img }}
+        DOCKER_IMG_BASE=${arr[0]}
+        DOCKER_IMG_TAG=${arr[1]}
+        if docker image ls | grep $DOCKER_IMG_BASE | grep $DOCKER_IMG_TAG; then
+          echo "was-found=true" >> $GITHUB_OUTPUT
+        else 
+          echo "was-found=false" >> $GITHUB_OUTPUT
+        fi
