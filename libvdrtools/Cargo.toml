@@ -60,12 +60,7 @@ variant_count = "*"
 num-traits = "0.2"
 num-derive = "0.3"
 convert_case = "0.3.2"
-futures = "0.3.1"
-bip32 = { version = "0.2.2", features = ["alloc"] }
-bip39 = "1.0.1"
-pbkdf2 = "0.9.0"
-
-k256 = { version = "0.9.6", features = ["ecdsa-core", "ecdsa"] }
+futures = { version = "0.3", default-features = false, features = [ "executor", "alloc" ] }
 uuid = { version = "0.8", default-features = false, features = ["v4"] }
 ursa = { version = "0.3.7", optional = true}
 
@@ -76,7 +71,7 @@ android_logger = "0.5"
 criterion = "0.2"
 dirs = "2.0.2"
 rstest = "0.6.4"
-# derivative = "2.2"
+
 
 [[bench]]
 name = "wallet"

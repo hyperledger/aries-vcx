@@ -6,8 +6,6 @@ use std::{
     sync::Arc,
 };
 
-use bip32;
-use bip39;
 use failure::{Backtrace, Context, Fail};
 use log;
 
@@ -256,18 +254,6 @@ impl From<futures::channel::oneshot::Canceled> for IndyError {
 
 impl From<log::SetLoggerError> for IndyError {
     fn from(err: log::SetLoggerError) -> IndyError {
-        err.context(IndyErrorKind::InvalidState).into()
-    }
-}
-
-impl From<bip39::Error> for IndyError {
-    fn from(err: bip39::Error) -> Self {
-        err.context(IndyErrorKind::InvalidState).into()
-    }
-}
-
-impl From<bip32::Error> for IndyError {
-    fn from(err: bip32::Error) -> Self {
         err.context(IndyErrorKind::InvalidState).into()
     }
 }
