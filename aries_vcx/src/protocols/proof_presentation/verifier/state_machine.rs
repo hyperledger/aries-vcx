@@ -395,25 +395,25 @@ impl VerifierSM {
         }
     }
 
-    pub fn presentation_status(&self) -> u32 {
+    pub fn presentation_status(&self) -> Status {
         match self.state {
             VerifierFullState::Finished(ref state) => {
                 match &state.status {
                     Status::Success => {
                         match state.revocation_status {
-                            Some(RevocationStatus::NonRevoked) => Status::Success.code(),
-                            None => Status::Success.code(), // for backward compatibility
+                            Some(RevocationStatus::NonRevoked) => Status::Success,
+                            None => Status::Success, // for backward compatibility
                             Some(RevocationStatus::Revoked) => {
                                 let problem_report = ProblemReport::create()
                                     .set_comment(Some(String::from("Revoked credential was used.")));
-                                Status::Failed(problem_report).code()
+                                Status::Failed(problem_report)
                             }
                         }
                     }
-                    _ => state.status.code(),
+                    _ => state.status.clone(),
                 }
             }
-            _ => Status::Undefined.code(),
+            _ => Status::Undefined,
         }
     }
 
@@ -777,10 +777,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(
-                Status::Declined(ProblemReport::default()).code(),
-                verifier_sm.presentation_status()
-            );
+            assert_match!(Status::Declined(_), verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -833,7 +830,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(Status::Success.code(), verifier_sm.presentation_status());
+            assert_eq!(Status::Success, verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -856,10 +853,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(VerifierState::Finished, verifier_sm.get_state());
-            assert_eq!(
-                Status::Failed(ProblemReport::create()).code(),
-                verifier_sm.presentation_status()
-            );
+            assert_match!(Status::Failed(_), verifier_sm.presentation_status());
         }
 
         #[tokio::test]
@@ -921,7 +915,7 @@ pub mod unit_tests {
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
             assert_eq!(
-                Status::Failed(_problem_report()).code(),
+                Status::Failed(_problem_report()),
                 verifier_sm.presentation_status()
             );
         }

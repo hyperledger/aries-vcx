@@ -1,11 +1,11 @@
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::error;
-use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -69,14 +69,24 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+            .handle_message(
+                get_main_wallet_handle(),
+                get_main_pool_handle()?,
+                message.into(),
+                Some(send_message),
+            )
             .await?;
     } else {
         let messages = connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+                .handle_message(
+                    get_main_wallet_handle(),
+                    get_main_pool_handle()?,
+                    message.into(),
+                    Some(send_message),
+                )
                 .await?;
             connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -91,7 +101,7 @@ pub async fn get_state(handle: u32) -> VcxResult<u32> {
 }
 
 pub async fn get_proof_state(handle: u32) -> VcxResult<u32> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status()))
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {

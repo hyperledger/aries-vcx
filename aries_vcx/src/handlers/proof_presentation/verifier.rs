@@ -1,19 +1,20 @@
 use std::collections::HashMap;
 
+use messages::status::Status;
 use messages::proof_presentation::presentation::Presentation;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
-use messages::a2a::A2AMessage;
-use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use crate::indy::proofs::proof_request::PresentationRequestData;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
-use crate::indy::proofs::proof_request::PresentationRequestData;
+use messages::a2a::A2AMessage;
+use messages::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -128,13 +129,17 @@ impl Verifier {
         Ok(json!(msg).to_string())
     }
 
-    pub fn get_presentation_status(&self) -> u32 {
+    pub fn get_presentation_status(&self) -> Status {
         trace!("Verifier::presentation_state >>>");
         self.verifier_sm.presentation_status()
     }
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
-        self.verifier_sm.presentation()?.presentations_attach.content().map_err(|err| err.into())
+        self.verifier_sm
+            .presentation()?
+            .presentations_attach
+            .content()
+            .map_err(|err| err.into())
     }
 
     pub fn get_presentation_proposal(&self) -> VcxResult<PresentationProposal> {
@@ -194,7 +199,8 @@ impl Verifier {
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message))
+                .await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -204,11 +210,11 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::a2a::A2AMessage;
-    use messages::proof_presentation::presentation::test_utils::_presentation;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
+    use messages::a2a::A2AMessage;
+    use messages::proof_presentation::presentation::test_utils::_presentation;
 
     use super::*;
 

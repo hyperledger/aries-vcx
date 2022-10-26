@@ -87,7 +87,7 @@ impl ServiceVerifier {
 
     pub fn get_presentation_status(&self, thread_id: &str) -> AgentResult<Status> {
         let VerifierWrapper { verifier, .. } = self.verifiers.get(thread_id)?;
-        Ok(Status::from_u32(verifier.get_presentation_status()))
+        Ok(verifier.get_presentation_status())
     }
 
     pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {
@@ -115,10 +115,8 @@ impl ServiceVerifier {
                 &connection,
             )
             .await?;
-        self.verifiers.set(
-            thread_id,
-            VerifierWrapper::new(verifier, &connection_id),
-        )?;
+        self.verifiers
+            .set(thread_id, VerifierWrapper::new(verifier, &connection_id))?;
         Ok(state)
     }
 
