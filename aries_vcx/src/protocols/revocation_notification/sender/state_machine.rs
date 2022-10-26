@@ -32,10 +32,11 @@ pub struct SenderConfig {
 
 impl RevocationNotificationSenderSM {
     pub fn create(config: SenderConfig) -> Self {
-        // TODO: Move to the point of sending
-        let SenderConfig { rev_reg_id, cred_rev_id, comment, .. } = config;
+        // TODO: Move to the point of sending to allow creating SM before notification
+        let SenderConfig { rev_reg_id, cred_rev_id, comment, ack_on } = config;
         let rev_msg = RevocationNotification::create()
             .set_credential_id(rev_reg_id, cred_rev_id)
+            .set_ack_on(ack_on)
             .set_comment(comment);
         Self {
             state: SenderFullState::Initial(InitialState::new()),
@@ -58,8 +59,7 @@ impl RevocationNotificationSenderSM {
 
     pub fn handle_ack(self, ack: RevocationAck) -> VcxResult<Self> {
         let state = match self.state {
-            SenderFullState::NotificationSent(state) => {
-                // TODO: Check if ack was required
+            SenderFullState::NotificationSent(state) if self.rev_msg.ack_on_any() => {
                 SenderFullState::Finished(FinishedState::new())
             }
             _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack not expected in this state")); }

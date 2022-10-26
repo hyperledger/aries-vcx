@@ -8,6 +8,10 @@ impl PleaseAck {
     pub fn contains(&self, ack_on: AckOn) -> bool {
         self.on.contains(&ack_on)
     }
+
+    pub fn from(ack_on: Vec<AckOn>) -> Self {
+        Self { on: ack_on }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -26,12 +30,21 @@ macro_rules! please_ack (($type:ident) => (
             self
         }
 
+        pub fn set_ack_on(mut self, ack_on: Vec<AckOn>) -> $type {
+            self.please_ack = Some(PleaseAck::from(ack_on));
+            self
+        }
+
         pub fn ack_on(&self, ack_on: AckOn) -> bool {
             if let Some(please_ack) = &self.please_ack {
                 please_ack.contains(ack_on)
             } else {
                 false
             }
+        }
+
+        pub fn ack_on_any(&self) -> bool {
+            self.please_ack.is_some()
         }
     }
 ));

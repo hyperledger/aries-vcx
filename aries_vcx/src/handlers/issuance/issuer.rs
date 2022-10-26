@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use messages::ack::please_ack::AckOn;
 use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
@@ -165,12 +166,11 @@ impl Issuer {
         .await
     }
 
-    pub async fn send_revocation_notification(&mut self, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
         // TODO: Check if actually revoked
         if self.issuer_sm.is_revokable() {
-            // TODO: Possibly store sender to allow checking not. status (sent, acked),
-            // allow sending repeatedly
-            RevocationNotificationSender::build(self.get_rev_reg_id()?, self.get_rev_id()?, comment)?
+            // TODO: Store to allow checking not. status (sent, acked)
+            RevocationNotificationSender::build(self.get_rev_reg_id()?, self.get_rev_id()?, ack_on, comment)?
                 .send_revocation_notification(send_message).await?;
             Ok(())
         } else {

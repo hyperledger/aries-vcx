@@ -16,7 +16,7 @@ impl RevocationNotificationReceiver {
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {
-        todo!()
+        self.receiver_sm.get_thread_id()
     }
 
     pub async fn handle_revocation_notification(self, notification: RevocationNotification, send_message: SendClosure) -> VcxResult<Self> {
@@ -29,4 +29,3 @@ impl RevocationNotificationReceiver {
         Ok(Self { receiver_sm })
     }
 }
-
