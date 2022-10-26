@@ -49,11 +49,12 @@ impl RevocationNotificationReceiverSM {
 
     pub async fn handle_revocation_notification(self, notification: RevocationNotification, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
-            ReceiverFullState::NotificationReceived(_) |
-                ReceiverFullState::Finished(_) => {
+            ReceiverFullState::Initial(_) => {
                 self.validate_revocation_notification(&notification)?;
-                if notification.ack_on(AckOn::Receipt) {
-                    let ack = RevocationAck::create().set_thread_id(&self.get_thread_id()?).set_out_time();
+                if !notification.ack_on_any() {
+                    ReceiverFullState::Finished(FinishedState::new(notification))
+                } else if notification.ack_on(AckOn::Receipt) {
+                    let ack = RevocationAck::create().set_thread_id(&notification.get_thread_id()).set_out_time();
                     send_message(ack.to_a2a_message()).await?;
                     ReceiverFullState::Finished(FinishedState::new(notification))
                 } else {
@@ -70,13 +71,13 @@ impl RevocationNotificationReceiverSM {
             ReceiverFullState::NotificationReceived(_) |
                 ReceiverFullState::Finished(_) => {
                 if !self.get_notification()?.ack_on(AckOn::Outcome) {
-                    warn!("Revocation notification should have already been sent or on sent at all");
+                    warn!("Revocation notification should have already been sent or not sent at all");
                 }
                 let ack = RevocationAck::create().set_thread_id(&self.get_thread_id()?).set_out_time();
                 send_message(ack.to_a2a_message()).await?;
                 ReceiverFullState::Finished(FinishedState::new(self.get_notification()?))
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received")); }
+            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already sent")); }
         };
         Ok(Self { state, ..self })
     }
@@ -118,5 +119,147 @@ impl RevocationNotificationReceiverSM {
         check_rev_format()
             .and_then(check_rev_reg_id)
             .and_then(check_cred_rev_id)
+    }
+}
+
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use messages::a2a::A2AMessage;
+
+    use crate::protocols::revocation_notification::test_utils::{_rev_reg_id, _cred_rev_id};
+
+    use super::*;
+
+    pub fn _receiver() -> RevocationNotificationReceiverSM {
+        RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
+    }
+
+    pub fn _send_message_but_fail() -> SendClosure {
+        Box::new(|_: A2AMessage| {
+            Box::pin(async { Err(VcxError::from(VcxErrorKind::IOError)) })
+        })
+    }
+
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+pub mod unit_tests {
+    use std::sync::{Arc, Mutex};
+
+    use messages::a2a::A2AMessage;
+
+    use crate::protocols::revocation_notification::{receiver::state_machine::test_utils::*, test_utils::{_send_message, _rev_reg_id, _cred_rev_id, _revocation_notification}, receiver::state_machine::test_utils::_receiver};
+
+    use super::*;
+
+    async fn _to_revocation_notification_received_state() -> RevocationNotificationReceiverSM {
+        let sm = _receiver()
+            .handle_revocation_notification(_revocation_notification(vec![AckOn::Outcome]), _send_message()).await.unwrap();
+        assert_match!(ReceiverFullState::NotificationReceived(_), sm.state);
+        sm
+    }
+
+    async fn _to_finished_state_via_ack() -> RevocationNotificationReceiverSM {
+        let sm = _receiver()
+            .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]), _send_message()).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+        sm
+    }
+
+    async fn _to_finished_state_via_no_ack() -> RevocationNotificationReceiverSM {
+        let sm = _receiver()
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message()).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+        sm
+    }
+
+    async fn _send_ack_on(ack_on: Vec<AckOn>) {
+        let sm = _receiver()
+            .handle_revocation_notification(
+                _revocation_notification(ack_on), _send_message()
+            ).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+        let sm = sm.send_ack(_send_message()).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_sends_ack_when_requested() {
+        // let mut called = Arc::new(Mutex::from(false));
+        let send_message: SendClosure = Box::new(
+            |_: A2AMessage| Box::pin(async {
+                // let mut called_mut = called.lock().unwrap();
+                // *called_mut = true;
+                VcxResult::Ok(()) 
+            })
+        );
+        let sm = RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
+            .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]), send_message).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+        // assert!(*called.lock().unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_doesnt_send_ack_when_not_requested() {
+        let sm = RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message_but_fail()).await.unwrap();
+        assert_match!(ReceiverFullState::Finished(_), sm.state);
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_finishes_ack_requested_and_sent() {
+        _to_finished_state_via_ack().await;
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_finishes_when_ack_not_requested() {
+        _to_finished_state_via_no_ack().await;
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_waits_to_send_ack_on_outcome() {
+        _to_revocation_notification_received_state().await;
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_from_finished_state() {
+        assert!(_to_finished_state_via_ack().await
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message()).await.is_err()
+        );
+        assert!(_to_finished_state_via_no_ack().await
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message()).await.is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_handle_revocation_notification_from_notification_received_state() {
+        assert!(_to_revocation_notification_received_state().await
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message()).await.is_err()
+        );
+        assert!(_to_revocation_notification_received_state().await
+            .handle_revocation_notification(_revocation_notification(vec![]), _send_message()).await.is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_send_ack_on_outcome() {
+        assert!(_to_revocation_notification_received_state().await
+            .send_ack(_send_message()).await.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_send_ack_multiple_times_requested() {
+        _send_ack_on(vec![AckOn::Receipt, AckOn::Outcome]).await;
+    }
+
+    #[tokio::test]
+    async fn test_send_ack_multiple_times_not_requested() {
+        _send_ack_on(vec![AckOn::Receipt]).await;
+    }
+
+    #[tokio::test]
+    async fn test_send_ack_fails_before_notification_received() {
+        assert!(_receiver().send_ack(_send_message()).await.is_err());
     }
 }

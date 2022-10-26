@@ -101,6 +101,10 @@ pub mod test_utils {
             .build()
             .unwrap()
     }
+
+    pub fn _sender() -> RevocationNotificationSenderSM {
+         RevocationNotificationSenderSM::create()
+    }
 }
 
 #[cfg(test)]
@@ -113,13 +117,13 @@ pub mod unit_tests {
     use super::*;
 
     async fn _to_revocation_notification_sent_state() -> RevocationNotificationSenderSM {
-        let sm = RevocationNotificationSenderSM::create().send(_sender_config(vec![AckOn::Receipt]), _send_message()).await.unwrap();
+        let sm = _sender().send(_sender_config(vec![AckOn::Receipt]), _send_message()).await.unwrap();
         assert_match!(SenderFullState::NotificationSent(_), sm.state);
         sm
     }
 
     async fn _to_finished_state_via_no_ack() -> RevocationNotificationSenderSM {
-        let sm = RevocationNotificationSenderSM::create().send(_sender_config(vec![]), _send_message()).await.unwrap();
+        let sm = _sender().send(_sender_config(vec![]), _send_message()).await.unwrap();
         assert_match!(SenderFullState::Finished(_), sm.state);
         sm
     }
