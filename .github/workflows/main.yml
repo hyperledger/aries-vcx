@@ -181,17 +181,10 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+      - name: "Setup rust codecov environment"
+        uses: ./.github/actions/setup-codecov-rust
         with:
-          toolchain: nightly
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-          cargo install grcov --version 0.8.9
+          skip-docker-setup: true
       - name: "Run workspace tests: general_test"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -219,23 +212,8 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-          cargo install grcov --version 0.8.9
-      - name: "Setup environment"
-        run: |
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
-          sleep 5
-          docker-compose -f ./ci/agency/docker-compose.yml up -d
+      - name: "Setup rust codecov environment"
+        uses: ./.github/actions/setup-codecov-rust
       - name: "Run workspace tests: pool_tests agency_pool_tests"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
@@ -266,17 +244,12 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
         with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+          skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: |
-          RUST_TEST_THREADS=1  cargo test --workspace --exclude aries-vcx-agent -F "general_test"
+        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent -F "general_test"
 
   test-integration-aries-vcx:
     needs: workflow-setup
@@ -284,21 +257,10 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
-        run: |
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
-          sleep 5
-          docker-compose -f ./ci/agency/docker-compose.yml up -d
-          RUST_TEST_THREADS=1  cargo test --manifest-path="aries_vcx/Cargo.toml" -F "pool_tests agency_pool_tests"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "pool_tests agency_pool_tests"
 
   test-integration-aries-vcx-mysql:
     needs: workflow-setup
@@ -306,21 +268,10 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
       - name: "Run aries-vcx tests: mysql_test"
-        run: |
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
-          sleep 5
-          docker-compose -f ./ci/agency/docker-compose.yml up -d
-          RUST_TEST_THREADS=1  cargo test --manifest-path="aries_vcx/Cargo.toml" -F "mysql_test"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="aries_vcx/Cargo.toml" -F "mysql_test"
 
   test-integration-libvcx:
     needs: workflow-setup
@@ -328,21 +279,11 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
         run: |
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
-          sleep 5
-          docker-compose -f ./ci/agency/docker-compose.yml up -d
-          RUST_TEST_THREADS=1  cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
 
   test-node-wrapper:
     needs: workflow-setup
@@ -350,27 +291,8 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: Use Node.js 12
-        uses: actions/setup-node@v3
-        with:
-          node-version: 12.x
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Build libvcx"
-        run: |
-          cargo build --manifest-path="libvcx/Cargo.toml"
-      - name: "Transpile TS wrapper"
-        run: |
-          cd wrappers/node
-          npm install
-          npm run tscversion
-          npm run compile
+      - name: "Setup NodeJS libvcx testing environment"
+        uses: ./.github/actions/setup-testing-nodejs
       - name: "Run tests"
         run: |
           cd wrappers/node
@@ -383,30 +305,8 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: Use Node.js 12
-        uses: actions/setup-node@v3
-        with:
-          node-version: 12.x
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-      - uses: Swatinem/rust-cache@v2
-      - name: "Install dependencies"
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-      - name: "Build libvcx"
-        run: |
-          cargo build --manifest-path="libvcx/Cargo.toml"
-          sudo cp "target/debug/libvcx.so" /usr/lib
-      - name: "Setup environment"
-        run: |
-          docker run --rm -d --name mysql     --network host -e MYSQL_ROOT_PASSWORD=mysecretpassword mysql:5.7.35
-          docker run --rm -d --name indypool  --network host ${{ env.DOCKER_IMAGE_POOL }}
-          sleep 5
-          docker-compose -f ./ci/agency/docker-compose.yml up -d
-      - name: "Transpile TS wrapper"
-        run: (cd wrappers/node && npm install && npm run tscversion && npm run compile)
+      - name: "Setup NodeJS libvcx testing environment"
+        uses: ./.github/actions/setup-testing-nodejs
       - name: "Install vcxagent-core dependencies"
         run: (cd agents/node/vcxagent-core && npm install)
       - name: "Run demo"
@@ -592,10 +492,6 @@ jobs:
           login-server: ${{ env.URL_DOCKER_REGISTRY }}
           username: $GITHUB_ACTOR
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Load image"
-        uses: ./.github/actions/load-image
-        with:
-          docker-img: ${{ env.DOCKER_IMG_CACHED }}
       - name: "Release agent-core package"
         run: |
           if [[ "$PUBLISH_VERSION" ]]
