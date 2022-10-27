@@ -11,6 +11,8 @@ use crate::connection::request::Request;
 use crate::connection::response::SignedResponse;
 use crate::discovery::disclose::Disclose;
 use crate::discovery::query::Query;
+use crate::revocation_notification::revocation_ack::RevocationAck;
+use crate::revocation_notification::revocation_notification::RevocationNotification;
 use crate::problem_report::ProblemReport as CommonProblemReport;
 use crate::forward::Forward;
 use crate::issuance::credential::Credential;
@@ -58,6 +60,8 @@ pub enum A2AMessage {
     CredentialOffer(CredentialOffer),
     CredentialRequest(CredentialRequest),
     Credential(Credential),
+    RevocationNotification(RevocationNotification),
+    RevocationAck(Ack),
     CredentialAck(Ack),
 
     /// proof presentation
@@ -96,7 +100,11 @@ impl A2AMessage {
             Self::CredentialProposal(credential_proposal) => credential_proposal.from_thread(thread_id),
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
-            Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::Ack(ack) => ack.from_thread(thread_id),
+            Self::RevocationNotification(m) => m.from_thread(thread_id),
+            Self::PresentationAck(ack) |
+                Self::CredentialAck(ack) |
+                Self::RevocationAck(ack) |
+                Self::Ack(ack) => ack.from_thread(thread_id),
             Self::Ping(ping) => ping.from_thread(thread_id),
             Self::PingResponse(ping) => ping.from_thread(thread_id),
             Self::ConnectionResponse(m) => m.from_thread(thread_id),
@@ -239,6 +247,16 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(A2AMessage::OutOfBandHandshakeReuseAccepted)
                     .map_err(de::Error::custom)
             }
+            (MessageFamilies::RevocationNotification, A2AMessage::REVOKE) => {
+                RevocationNotification::deserialize(value)
+                    .map(A2AMessage::RevocationNotification)
+                    .map_err(de::Error::custom)
+            }
+            (MessageFamilies::RevocationNotification, A2AMessage::ACK) => {
+                RevocationAck::deserialize(value)
+                    .map(A2AMessage::RevocationAck)
+                    .map_err(de::Error::custom)
+            }
             (_, other_type) => {
                 warn!("Unexpected @type field structure: {}", other_type);
                 Ok(A2AMessage::Generic(value))
@@ -301,6 +319,12 @@ impl Serialize for A2AMessage {
             }
             A2AMessage::CredentialAck(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::CredentialIssuance, A2AMessage::ACK)
+            }
+            A2AMessage::RevocationNotification(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::RevocationNotification, A2AMessage::REVOKE)
+            }
+            A2AMessage::RevocationAck(msg) => {
+                set_a2a_message_type(msg, MessageFamilies::RevocationNotification, A2AMessage::ACK)
             }
             A2AMessage::PresentationProposal(msg) => {
                 set_a2a_message_type(msg, MessageFamilies::PresentProof, A2AMessage::PROPOSE_PRESENTATION)
@@ -386,6 +410,7 @@ impl A2AMessage {
     const CREDENTIAL: &'static str = "issue-credential";
     const PROPOSE_CREDENTIAL: &'static str = "propose-credential";
     const REQUEST_CREDENTIAL: &'static str = "request-credential";
+    const REVOKE: &'static str = "revoke";
     const PROPOSE_PRESENTATION: &'static str = "propose-presentation";
     const REQUEST_PRESENTATION: &'static str = "request-presentation";
     const PRESENTATION: &'static str = "presentation";

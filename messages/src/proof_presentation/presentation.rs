@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::ack::PleaseAck;
+use crate::ack::please_ack::PleaseAck;
 use crate::attachment::{AttachmentId, Attachments};
 use crate::thread::Thread;
 use crate::timing::Timing;
@@ -72,7 +72,7 @@ pub mod test_utils {
             comment: _comment(),
             presentations_attach: attachment,
             thread: thread(),
-            please_ack: Some(PleaseAck {}),
+            please_ack: Some(PleaseAck::default()),
             timing: None,
         }
     }
@@ -88,7 +88,7 @@ pub mod test_utils {
             comment: _comment(),
             presentations_attach: attachment,
             thread: _thread_1(),
-            please_ack: Some(PleaseAck {}),
+            please_ack: Some(PleaseAck::default()),
             timing: None,
         }
     }

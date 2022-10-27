@@ -20,6 +20,7 @@ impl ProtocolRegistry {
                 family @ MessageFamilies::Routing
                 | family @ MessageFamilies::ReportProblem
                 | family @ MessageFamilies::Notification
+                | family @ MessageFamilies::RevocationNotification
                 | family @ MessageFamilies::Connections
                 | family @ MessageFamilies::CredentialIssuance
                 | family @ MessageFamilies::PresentProof

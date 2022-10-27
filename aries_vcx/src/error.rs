@@ -8,6 +8,7 @@ use agency_client::error::AgencyClientErrorKind;
 use messages;
 use messages::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
+use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
@@ -320,6 +321,13 @@ impl From<agency_client::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
         let vcx_error_kind: VcxErrorKind = agency_err.kind().into();
         VcxError::from_msg(vcx_error_kind, agency_err.to_string())
+    }
+}
+
+impl From<SenderConfigBuilderError> for VcxError {
+    fn from(err: SenderConfigBuilderError) -> VcxError {
+        let vcx_error_kind = VcxErrorKind::InvalidConfiguration;
+        VcxError::from_msg(vcx_error_kind, err.to_string())
     }
 }
 

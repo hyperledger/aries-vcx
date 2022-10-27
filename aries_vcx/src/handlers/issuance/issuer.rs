@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
+use messages::ack::please_ack::AckOn;
 use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
+use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
+use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
@@ -149,6 +152,27 @@ impl Issuer {
     pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().send_credential(wallet_handle, send_message).await?;
         Ok(())
+    }
+
+    pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+        // TODO: Check if actually revoked
+        if self.issuer_sm.is_revokable() {
+            // TODO: Store to allow checking not. status (sent, acked)
+            let config = SenderConfigBuilder::default()
+                .rev_reg_id(self.get_rev_reg_id()?)
+                .cred_rev_id(self.get_rev_id()?)
+                .comment(comment)
+                .ack_on(ack_on)
+                .build()?;
+            RevocationNotificationSender::build()
+                .send_revocation_notification(config, send_message).await?;
+            Ok(())
+        } else {
+            Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("Can't send revocation notification in state {:?}, credential is not revokable", self.issuer_sm.get_state()),
+            ))
+        }
     }
 
     pub fn get_state(&self) -> IssuerState {

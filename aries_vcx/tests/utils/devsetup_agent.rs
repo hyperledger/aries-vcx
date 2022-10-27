@@ -1,6 +1,12 @@
 #[cfg(test)]
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
+    use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
+    use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
+    use messages::ack::please_ack::AckOn;
+    use messages::revocation_notification::revocation_ack::RevocationAck;
+    use messages::revocation_notification::revocation_notification::RevocationNotification;
     use messages::status::Status;
     use vdrtools_sys::{PoolHandle, WalletHandle};
 
@@ -109,6 +115,7 @@ pub mod test_utils {
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
+        pub rev_not_sender: RevocationNotificationSender,
         pub connection: Connection,
         pub schema: Schema,
         pub cred_def: CredentialDef,
@@ -160,6 +167,7 @@ pub mod test_utils {
             )
             .await
             .unwrap();
+            let rev_not_sender = RevocationNotificationSender::build();
             let faber = Faber {
                 wallet_handle,
                 pool_handle,
@@ -173,6 +181,7 @@ pub mod test_utils {
                 connection,
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
+                rev_not_sender,
                 agent,
             };
             faber
@@ -385,6 +394,29 @@ pub mod test_utils {
             assert_eq!(expected_state, self.verifier.get_state());
             assert_eq!(expected_status, self.verifier.get_presentation_status());
         }
+
+        pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>) {
+            let config = SenderConfigBuilder::default()
+                .ack_on(ack_on)
+                .rev_reg_id(self.issuer_credential.get_rev_reg_id().unwrap())
+                .cred_rev_id(self.issuer_credential.get_rev_id().unwrap())
+                .build()
+                .unwrap();
+            let send_message = self.connection.send_message_closure(self.wallet_handle).await.unwrap();
+            self.rev_not_sender = self.rev_not_sender
+                .clone()
+                .send_revocation_notification(config, send_message)
+                .await
+                .unwrap();
+        }
+
+        pub async fn handle_revocation_notification_ack(&mut self, ack: RevocationAck) {
+            self.rev_not_sender = self.rev_not_sender
+                .clone()
+                .handle_revocation_notification_ack(ack)
+                .await
+                .unwrap();
+        }
     }
 
     pub struct Alice {
@@ -393,6 +425,7 @@ pub mod test_utils {
         pub config_agency: AgencyClientConfig,
         pub connection: Connection,
         pub credential: Holder,
+        pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
         pub wallet_handle: WalletHandle,
         pub pool_handle: PoolHandle,
@@ -437,6 +470,7 @@ pub mod test_utils {
                 connection,
                 credential: Holder::default(),
                 prover: Prover::default(),
+                rev_not_receiver: None
             };
             alice
         }
@@ -647,6 +681,15 @@ pub mod test_utils {
                 aries_vcx::messages::status::Status::Success.code(),
                 self.prover.presentation_status()
             );
+        }
+
+        pub async fn receive_revocation_notification(&mut self, rev_not: RevocationNotification) {
+            let rev_reg_id = self.credential.get_rev_reg_id().unwrap();
+            let cred_rev_id = self.credential.get_cred_rev_id(self.wallet_handle).await.unwrap();
+            let send_message = self.connection.send_message_closure(self.wallet_handle).await.unwrap();
+            let rev_not_receiver = RevocationNotificationReceiver::build(rev_reg_id, cred_rev_id)
+                .handle_revocation_notification(rev_not, send_message).await.unwrap();
+            self.rev_not_receiver = Some(rev_not_receiver);
         }
     }
 

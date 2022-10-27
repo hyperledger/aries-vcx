@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
+use messages::revocation_notification::revocation_notification::RevocationNotification;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
+use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
+use crate::indy::credentials::get_cred_rev_id;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::CredentialProposalData;
@@ -134,6 +137,25 @@ impl Holder {
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.holder_sm.credential_status())
+    }
+
+    pub async fn get_cred_rev_id(&self, wallet_handle: WalletHandle) -> VcxResult<String> {
+        get_cred_rev_id(wallet_handle, &self.get_cred_id()?).await
+    }
+
+    pub async fn handle_revocation_notification(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, connection: &Connection, notification: RevocationNotification) -> VcxResult<()> {
+        if self.holder_sm.is_revokable(wallet_handle, pool_handle).await? {
+            let send_message = connection.send_message_closure(wallet_handle).await?;
+            // TODO: Store to remember notification was received along with details
+            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(wallet_handle).await?)
+                .handle_revocation_notification(notification, send_message).await?;
+            Ok(())
+        } else {
+            Err(VcxError::from_msg(
+                VcxErrorKind::InvalidState,
+                format!("Unexpected revocation notification, credential is not revokable"),
+            ))
+        }
     }
 
     pub async fn step(
