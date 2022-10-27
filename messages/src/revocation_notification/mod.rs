@@ -1,2 +1,2 @@
-pub mod revocation_notification;
 pub mod revocation_ack;
+pub mod revocation_notification;

@@ -1,9 +1,11 @@
-use messages::revocation_notification::{revocation_notification::RevocationNotification, revocation_ack::RevocationAck};
+use messages::revocation_notification::{
+    revocation_ack::RevocationAck, revocation_notification::RevocationNotification,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FinishedState {
     rev_msg: RevocationNotification,
-    ack: Option<RevocationAck>
+    ack: Option<RevocationAck>,
 }
 
 impl FinishedState {

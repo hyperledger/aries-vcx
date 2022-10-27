@@ -1,17 +1,17 @@
 use messages::ack::please_ack::AckOn;
 use messages::revocation_notification::revocation_ack::RevocationAck;
-use messages::revocation_notification::revocation_notification::{RevocationNotification, RevocationFormat};
+use messages::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::protocols::SendClosure;
+use crate::protocols::revocation_notification::sender::states::finished::FinishedState;
 use crate::protocols::revocation_notification::sender::states::initial::InitialState;
 use crate::protocols::revocation_notification::sender::states::sent::NotificationSentState;
-use crate::protocols::revocation_notification::sender::states::finished::FinishedState;
+use crate::protocols::SendClosure;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RevocationNotificationSenderSM {
-    state: SenderFullState
+    state: SenderFullState,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -26,13 +26,13 @@ pub struct SenderConfig {
     rev_reg_id: String,
     cred_rev_id: String,
     comment: Option<String>,
-    ack_on: Vec<AckOn>
+    ack_on: Vec<AckOn>,
 }
 
 impl RevocationNotificationSenderSM {
     pub fn create() -> Self {
         Self {
-            state: SenderFullState::Initial(InitialState::new())
+            state: SenderFullState::Initial(InitialState::new()),
         }
     }
 
@@ -40,7 +40,12 @@ impl RevocationNotificationSenderSM {
         match &self.state {
             SenderFullState::NotificationSent(state) => Ok(state.get_notification()),
             SenderFullState::Finished(state) => Ok(state.get_notification()),
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Revocation notification not yet known in this state")); }
+            _ => {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Revocation notification not yet known in this state",
+                ));
+            }
         }
     }
 
@@ -48,15 +53,24 @@ impl RevocationNotificationSenderSM {
         match &self.state {
             SenderFullState::NotificationSent(state) => Ok(state.get_thread_id()),
             SenderFullState::Finished(state) => Ok(state.get_thread_id()),
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread ID not yet known in this state")); }
+            _ => {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Thread ID not yet known in this state",
+                ));
+            }
         }
     }
 
     pub async fn send(self, config: SenderConfig, send_message: SendClosure) -> VcxResult<Self> {
         let state = match self.state {
-            SenderFullState::Initial(_) |
-                SenderFullState::NotificationSent(_) => {
-                let SenderConfig { rev_reg_id, cred_rev_id, comment, ack_on } = config;
+            SenderFullState::Initial(_) | SenderFullState::NotificationSent(_) => {
+                let SenderConfig {
+                    rev_reg_id,
+                    cred_rev_id,
+                    comment,
+                    ack_on,
+                } = config;
                 let rev_msg = RevocationNotification::create()
                     .set_credential_id(rev_reg_id, cred_rev_id)
                     .set_ack_on(ack_on)
@@ -69,7 +83,9 @@ impl RevocationNotificationSenderSM {
                     SenderFullState::NotificationSent(NotificationSentState::new(rev_msg))
                 }
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received")); }
+            _ => {
+                return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received"));
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -80,7 +96,12 @@ impl RevocationNotificationSenderSM {
                 verify_thread_id(&state.get_thread_id(), &ack.to_a2a_message())?;
                 SenderFullState::Finished(FinishedState::new(state.get_notification(), Some(ack)))
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack not expected in this state")); }
+            _ => {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Ack not expected in this state",
+                ));
+            }
         };
         Ok(Self { state, ..self })
     }
@@ -88,7 +109,7 @@ impl RevocationNotificationSenderSM {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::revocation_notification::test_utils::{_rev_reg_id, _cred_rev_id, _comment};
+    use crate::protocols::revocation_notification::test_utils::{_comment, _cred_rev_id, _rev_reg_id};
 
     use super::*;
 
@@ -103,7 +124,7 @@ pub mod test_utils {
     }
 
     pub fn _sender() -> RevocationNotificationSenderSM {
-         RevocationNotificationSenderSM::create()
+        RevocationNotificationSenderSM::create()
     }
 }
 
@@ -112,12 +133,18 @@ pub mod test_utils {
 pub mod unit_tests {
     use messages::ack::test_utils::{_ack, _ack_1};
 
-    use crate::protocols::revocation_notification::{sender::state_machine::test_utils::*, test_utils::{_send_message, _revocation_notification}};
+    use crate::protocols::revocation_notification::{
+        sender::state_machine::test_utils::*,
+        test_utils::{_revocation_notification, _send_message},
+    };
 
     use super::*;
 
     async fn _to_revocation_notification_sent_state() -> RevocationNotificationSenderSM {
-        let sm = _sender().send(_sender_config(vec![AckOn::Receipt]), _send_message()).await.unwrap();
+        let sm = _sender()
+            .send(_sender_config(vec![AckOn::Receipt]), _send_message())
+            .await
+            .unwrap();
         assert_match!(SenderFullState::NotificationSent(_), sm.state);
         sm
     }
@@ -135,11 +162,13 @@ pub mod unit_tests {
         sm
     }
 
-
     #[tokio::test]
     async fn test_get_notification_from_notification_sent_state() {
         let sm = _to_revocation_notification_sent_state().await;
-        assert_eq!(sm.get_notification().unwrap(), _revocation_notification(vec![AckOn::Receipt]));
+        assert_eq!(
+            sm.get_notification().unwrap(),
+            _revocation_notification(vec![AckOn::Receipt])
+        );
     }
 
     #[tokio::test]

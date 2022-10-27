@@ -29,7 +29,7 @@ pub struct RevocationNotification {
 #[serde(rename_all = "kebab-case")]
 pub enum RevocationFormat {
     #[default]
-    IndyAnoncreds      
+    IndyAnoncreds,
 }
 
 please_ack!(RevocationNotification);

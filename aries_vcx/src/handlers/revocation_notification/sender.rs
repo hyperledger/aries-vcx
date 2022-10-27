@@ -1,8 +1,8 @@
 use messages::revocation_notification::revocation_ack::RevocationAck;
 
 use crate::error::prelude::*;
-use crate::protocols::SendClosure;
 use crate::protocols::revocation_notification::sender::state_machine::{RevocationNotificationSenderSM, SenderConfig};
+use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevocationNotificationSender {
@@ -11,10 +11,16 @@ pub struct RevocationNotificationSender {
 
 impl RevocationNotificationSender {
     pub fn build() -> Self {
-        Self { sender_sm: RevocationNotificationSenderSM::create() }
+        Self {
+            sender_sm: RevocationNotificationSenderSM::create(),
+        }
     }
 
-    pub async fn send_revocation_notification(self, config: SenderConfig, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_revocation_notification(
+        self,
+        config: SenderConfig,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let sender_sm = self.sender_sm.send(config, send_message).await?;
         Ok(Self { sender_sm })
     }

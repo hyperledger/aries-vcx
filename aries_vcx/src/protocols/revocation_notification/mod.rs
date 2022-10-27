@@ -1,13 +1,13 @@
-pub mod sender;
 pub mod receiver;
+pub mod sender;
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
+    use messages::ack::please_ack::AckOn;
     use messages::revocation_notification::revocation_notification::RevocationFormat;
     use messages::{a2a::A2AMessage, revocation_notification::revocation_notification::RevocationNotification};
-    use messages::ack::please_ack::AckOn;
 
-    use crate::{protocols::SendClosure, utils::constants::REV_REG_ID, error::VcxResult};
+    use crate::{error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))

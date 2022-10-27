@@ -2,7 +2,7 @@ use messages::revocation_notification::revocation_notification::RevocationNotifi
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FinishedState {
-    rev_msg: RevocationNotification
+    rev_msg: RevocationNotification,
 }
 
 impl FinishedState {
