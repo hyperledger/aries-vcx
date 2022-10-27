@@ -116,8 +116,6 @@ impl ServiceProver {
         let mut prover = Prover::create("")?;
         prover
             .send_proposal(
-                self.wallet_handle,
-                self.pool_handle,
                 proposal,
                 connection.send_message_closure(self.wallet_handle).await?,
             )
@@ -153,8 +151,6 @@ impl ServiceProver {
             .await?;
         prover
             .send_presentation(
-                self.wallet_handle,
-                self.pool_handle,
                 connection.send_message_closure(self.wallet_handle).await?,
             )
             .await?;

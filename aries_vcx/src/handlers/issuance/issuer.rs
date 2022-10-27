@@ -145,26 +145,13 @@ impl Issuer {
     }
 
     pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
-        if self.issuer_sm.get_state() == IssuerState::OfferSet {
-            let cred_offer_msg = self.get_credential_offer_msg()?;
-            send_message(cred_offer_msg).await?;
-            self.issuer_sm = self.issuer_sm.clone().mark_credential_offer_msg_sent()?;
-        } else {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
-                format!("Can't send credential offer in state {:?}", self.issuer_sm.get_state()),
-            ));
-        }
+        self.issuer_sm = self.issuer_sm.clone().send_credential_offer(send_message).await?;
         Ok(())
     }
 
     pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
-        self.step(
-            wallet_handle,
-            CredentialIssuanceAction::CredentialSend(),
-            Some(send_message),
-        )
-        .await
+        self.issuer_sm = self.issuer_sm.clone().send_credential(wallet_handle, send_message).await?;
+        Ok(())
     }
 
     pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {

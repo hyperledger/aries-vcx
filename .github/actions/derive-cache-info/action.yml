@@ -1,5 +1,5 @@
 name: "derive-cache-info"
-description: "Given image <docker-img> derive cache-key and caching location on file system. This can be used for caching the image."
+description: "Produces output useful for caching docker images"
 
 inputs:
   docker-img:
@@ -28,6 +28,6 @@ runs:
         CACHE_KEY=`as_docker_cache_key $DOCKER_IMG`
         CACHE_DIR="/tmp/cachedir-$CACHE_KEY"
         CACHE_FILE_PATH="$CACHE_DIR/$CACHE_KEY.rar"
-        echo "::set-output name=cache-key::$CACHE_KEY"
-        echo "::set-output name=cache-dir::$CACHE_DIR"
-        echo "::set-output name=cache-file-path::$CACHE_FILE_PATH"
+        echo "cache-key=$CACHE_KEY" >> $GITHUB_OUTPUT
+        echo "cache-dir=$CACHE_DIR" >> $GITHUB_OUTPUT
+        echo "cache-file-path=$CACHE_FILE_PATH" >> $GITHUB_OUTPUT

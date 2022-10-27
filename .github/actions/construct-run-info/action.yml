@@ -62,10 +62,11 @@ runs:
         if [[ "$IS_FORK" == "false" ]]; then
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             if [[ "${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }}" == "true" ]]; then
+              echo "This CI run will create pre-release!"
               PRERELEASE="true"
             fi;
           elif [[ "${{ github.event_name }}" == "push" ]]; then
-            if [[ "$BRANCH_NAME" == "main" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
+            if [[ "$BRANCH_NAME" == "$MAIN_BRANCH" && "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]; then
               PUBLISH_VERSION="$REPO_VERSION_DESIRED"
               RELEASE="true"
               echo "This is push to main, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
@@ -74,6 +75,7 @@ runs:
         
           if [[ -z "$PUBLISH_VERSION" ]]; then
             PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
+            echo "Setting PUBLISH_VERSION to ${PUBLISH_VERSION} based on branch name and CI run number."
           fi;
         
           echo "CI will publish artifacts at version: $PUBLISH_VERSION"
@@ -86,3 +88,5 @@ runs:
         echo "pre-release=$(echo $PRERELEASE)" >> $GITHUB_OUTPUT
         echo "publish-version=$(echo $PUBLISH_VERSION)" >> $GITHUB_OUTPUT
         echo "branch-name=$(echo $BRANCH_NAME)" >> $GITHUB_OUTPUT
+        
+        echo "Finished, GITHUB_OUTPUT:\n`cat $GITHUB_OUTPUT`"

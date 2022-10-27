@@ -14,8 +14,6 @@ use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
 
 use crate::error::prelude::*;
-use crate::indy;
-
 
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
