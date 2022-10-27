@@ -293,6 +293,8 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup NodeJS libvcx testing environment"
         uses: ./.github/actions/setup-testing-nodejs
+        with:
+          skip-docker-setup: true
       - name: "Run tests"
         run: |
           cd wrappers/node
