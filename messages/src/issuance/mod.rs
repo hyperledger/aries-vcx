@@ -8,8 +8,6 @@ pub mod credential_ack;
 pub mod credential_offer;
 pub mod credential_proposal;
 pub mod credential_request;
-pub mod revocation_notification;
-pub mod revocation_ack;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct CredentialPreviewData {

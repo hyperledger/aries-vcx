@@ -30,6 +30,7 @@ pub mod error;
 pub mod problem_report;
 pub mod forward;
 pub mod issuance;
+pub mod revocation_notification;
 pub mod localization;
 pub mod mime_type;
 pub mod out_of_band;

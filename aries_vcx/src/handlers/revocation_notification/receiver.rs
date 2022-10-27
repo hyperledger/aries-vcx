@@ -1,4 +1,4 @@
-use messages::issuance::revocation_notification::RevocationNotification;
+use messages::revocation_notification::revocation_notification::RevocationNotification;
 
 use crate::error::prelude::*;
 use crate::protocols::SendClosure;

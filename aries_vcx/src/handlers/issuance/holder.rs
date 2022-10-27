@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use messages::issuance::revocation_notification::RevocationNotification;
+use messages::revocation_notification::revocation_notification::RevocationNotification;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;

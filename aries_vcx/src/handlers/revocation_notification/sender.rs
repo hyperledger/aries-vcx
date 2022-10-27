@@ -1,4 +1,4 @@
-use messages::issuance::revocation_ack::RevocationAck;
+use messages::revocation_notification::revocation_ack::RevocationAck;
 
 use crate::error::prelude::*;
 use crate::protocols::SendClosure;

@@ -5,7 +5,7 @@ pub mod receiver;
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
     use messages::ack::Ack;
-    use messages::issuance::revocation_notification::RevocationNotification;
+    use messages::revocation_notification::revocation_notification::RevocationNotification;
 
     use crate::error::prelude::*;
     use crate::handlers::connection::connection::Connection;

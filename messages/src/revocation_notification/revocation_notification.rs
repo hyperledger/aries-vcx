@@ -1,4 +1,3 @@
-// TODO: Move to a separate module
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::please_ack::PleaseAck;
 use crate::thread::Thread;

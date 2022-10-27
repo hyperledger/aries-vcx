@@ -1,6 +1,6 @@
 use messages::ack::please_ack::AckOn;
-use messages::issuance::revocation_ack::RevocationAck;
-use messages::issuance::revocation_notification::{RevocationNotification, RevocationFormat};
+use messages::revocation_notification::revocation_ack::RevocationAck;
+use messages::revocation_notification::revocation_notification::{RevocationNotification, RevocationFormat};
 
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;

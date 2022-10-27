@@ -5,8 +5,8 @@ pub mod test_utils {
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use messages::ack::please_ack::AckOn;
-    use messages::issuance::revocation_ack::RevocationAck;
-    use messages::issuance::revocation_notification::RevocationNotification;
+    use messages::revocation_notification::revocation_ack::RevocationAck;
+    use messages::revocation_notification::revocation_notification::RevocationNotification;
     use vdrtools_sys::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;

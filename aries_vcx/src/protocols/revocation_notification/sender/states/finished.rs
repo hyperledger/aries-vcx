@@ -1,4 +1,4 @@
-use messages::issuance::{revocation_notification::RevocationNotification, revocation_ack::RevocationAck};
+use messages::revocation_notification::{revocation_notification::RevocationNotification, revocation_ack::RevocationAck};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FinishedState {
