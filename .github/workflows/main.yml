@@ -458,10 +458,34 @@ jobs:
       - name: "Publish libvcx.so"
         run: cargo build --release
       - uses: actions/upload-artifact@v2
-        if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         with:
           name: libvcx.so
           path: target/release/libvcx.so
+
+  build-and-publish-darwin-lib:
+    needs: workflow-setup
+    runs-on: macos-11
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+      - uses: Swatinem/rust-cache@v2
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          brew install openssl
+          brew install zeromq
+          brew install libsodium
+      - name: "Build libvcx.dylib"
+        run: cargo build --release
+      - name: "Publish libvcx.dylib"
+        run: cargo build --release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: libvcx.dylib
+          path: target/release/libvcx.dylib
 
 #  #  ##########################################################################################
 #  #  ############################   NPMJS PUBLISHING   #######################################
