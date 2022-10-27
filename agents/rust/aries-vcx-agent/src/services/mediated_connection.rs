@@ -16,6 +16,8 @@ use aries_vcx::{
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
     messages::a2a::A2AMessage,
 };
+use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
+use aries_vcx::agency_client::MessageStatusCode;
 
 pub struct ServiceMediatedConnections {
     profile: Arc<dyn Profile>,
@@ -96,10 +98,22 @@ impl ServiceMediatedConnections {
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection.send_ping(&self.profile, None).await?;
-        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
+    pub async fn send_message(&self, thread_id: &str, message: &str) -> AgentResult<()> {
+        let connection = self.mediated_connections.get(thread_id)?;
+        connection.send_generic_message(&self.profile, message).await?;
+        Ok(())
+    }
+
+    pub async fn download_messages(&self, thread_id: &str, status_codes: Option<Vec<MessageStatusCode>>, uids: Option<Vec<String>>)
+                                   -> AgentResult<Vec<DownloadedMessage>> {
+        let connection = self.mediated_connections.get(thread_id)?;
+        Ok(connection.download_messages(&self.agency_client().unwrap(), status_codes, uids)
+            .await
+            .unwrap())
+    }
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
         Ok(self.mediated_connections.get(thread_id)?.get_state())
     }

@@ -272,8 +272,8 @@ jobs:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
 
-#  #  ##########################################################################################
-#  #  ###############################    TESTING    ###########################################
+#  ###########################################################################################
+#  ################################    TESTING    ###########################################
 
   test-unit-workspace:
     needs: workflow-setup
@@ -287,6 +287,17 @@ jobs:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
         run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent -F "general_test"
+
+  test-integration-aries-vcx-agent:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust testing environment"
+        uses: ./.github/actions/setup-testing-rust
+      - name: "Run aries-vcx tests: pool_tests agency_pool_tests"
+        run: RUST_TEST_THREADS=1 cargo test --manifest-path="agents/rust/aries-vcx-agent/Cargo.toml" -F "agency_pool_tests"
 
   test-integration-aries-vcx:
     needs: workflow-setup
