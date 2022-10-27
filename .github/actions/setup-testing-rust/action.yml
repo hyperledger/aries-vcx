@@ -1,5 +1,5 @@
 name: "setup-testing-rust"
-description: 'Install library deps, build libvcx'
+description: 'Setup host environment to run rust tests'
 
 inputs:
   skip-docker-setup:

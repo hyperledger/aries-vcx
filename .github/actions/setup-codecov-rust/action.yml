@@ -1,5 +1,5 @@
-name: "setup-testing-rust"
-description: 'Install library deps, build libvcx'
+name: "setup-codecov-rust"
+description: 'Setup host environment for measuring rust code coverage'
 
 inputs:
   skip-docker-setup:

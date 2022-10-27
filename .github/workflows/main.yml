@@ -296,10 +296,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run tests"
-        run: |
-          cd wrappers/node
-          sudo cp "../../target/debug/libvcx.so" /usr/lib
-          npm run test
+        run: cd wrappers/node && npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
