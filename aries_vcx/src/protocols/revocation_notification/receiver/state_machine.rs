@@ -145,7 +145,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    // use std::sync::{Arc, Mutex, mpsc::sync_channel};
+    use std::sync::mpsc::sync_channel;
 
     use messages::a2a::A2AMessage;
 
@@ -186,18 +186,18 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_handle_revocation_notification_sends_ack_when_requested() {
-        // let (sender, receiver) = sync_channel(1);
-        // let sender_cl = sender.clone();
+        let (sender, receiver) = sync_channel(1);
+        let sender_cl = sender.clone();
         let send_message: SendClosure = Box::new(
             move |_: A2AMessage| Box::pin(async move {
-                // sender_cl.send(true).unwrap();
+                sender_cl.send(true).unwrap();
                 VcxResult::Ok(()) 
             })
         );
         let sm = RevocationNotificationReceiverSM::create(_rev_reg_id(), _cred_rev_id())
             .handle_revocation_notification(_revocation_notification(vec![AckOn::Receipt]), send_message).await.unwrap();
         assert_match!(ReceiverFullState::Finished(_), sm.state);
-        // assert!(receiver.recv().unwrap());
+        assert!(receiver.recv().unwrap());
     }
 
     #[tokio::test]
