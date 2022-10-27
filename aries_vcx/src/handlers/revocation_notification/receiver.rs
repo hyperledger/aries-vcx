@@ -10,8 +10,8 @@ pub struct RevocationNotificationReceiver {
 }
 
 impl RevocationNotificationReceiver {
-    pub fn build(rev_reg_id: String, cred_rev_id: String) -> VcxResult<Self> {
-        Ok(Self { receiver_sm: RevocationNotificationReceiverSM::create(rev_reg_id, cred_rev_id) })
+    pub fn build(rev_reg_id: String, cred_rev_id: String) -> Self {
+        Self { receiver_sm: RevocationNotificationReceiverSM::create(rev_reg_id, cred_rev_id) }
     }
 
     pub fn get_thread_id(&self) -> VcxResult<String> {

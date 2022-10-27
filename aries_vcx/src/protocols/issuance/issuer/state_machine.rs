@@ -139,6 +139,7 @@ impl IssuerSM {
     }
 
     pub fn get_rev_id(&self) -> VcxResult<String> {
+        println!("The state is {:?}", self.get_state());
         let err = VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
         let rev_id = match &self.state {
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),

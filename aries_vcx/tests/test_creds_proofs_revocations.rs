@@ -89,6 +89,50 @@ mod integration_tests {
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
+    async fn test_revocation_notification() {
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
+
+        let (consumer_to_institution, institution_to_consumer) =
+            create_connected_connections(&mut consumer, &mut institution).await;
+        let (_, _, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
+            &mut consumer,
+            &mut institution,
+            &consumer_to_institution,
+            &institution_to_consumer,
+        )
+        .await;
+
+        info!("test_revocation_notification :: verifier :: Going to revoke credential");
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+        thread::sleep(Duration::from_millis(2000));
+
+        let config = aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
+            .ack_on(vec![messages::ack::please_ack::AckOn::Receipt])
+            .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
+            .cred_rev_id(issuer_credential.get_rev_id().unwrap())
+            .comment(None)
+            .build()
+            .unwrap();
+        let send_message = institution_to_consumer.send_message_closure(institution.wallet_handle).await.unwrap();
+        aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender::build()
+            .clone()
+            .send_revocation_notification(config, send_message)
+            .await
+            .unwrap();
+
+        let rev_nots = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_messages(&consumer.agency_client, &consumer_to_institution).await.unwrap();
+        assert_eq!(rev_nots.len(), 1);
+
+        // consumer.receive_revocation_notification(rev_not).await;
+        // let ack = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_ack_messages(&institution.agency_client, &institution_to_consumer).await.unwrap().pop().unwrap();
+        // institution.handle_revocation_notification_ack(ack).await;
+
+    }
+
+    #[cfg(feature = "agency_pool_tests")]
+    #[tokio::test]
     async fn test_local_revocation() {
         let setup = SetupPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;

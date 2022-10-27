@@ -158,7 +158,7 @@ impl Holder {
         if self.holder_sm.is_revokable(wallet_handle, pool_handle).await? {
             let send_message = connection.send_message_closure(wallet_handle).await?;
             // TODO: Store to remember notification was received along with details
-            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(wallet_handle).await?)?
+            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(wallet_handle).await?)
                 .handle_revocation_notification(notification, send_message).await?;
             Ok(())
         } else {

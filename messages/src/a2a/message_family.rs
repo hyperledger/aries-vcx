@@ -48,7 +48,7 @@ impl MessageFamilies {
             MessageFamilies::Routing => None,
             MessageFamilies::Connections => Some((Actors::Inviter, Actors::Invitee)),
             MessageFamilies::Notification => None,
-            MessageFamilies::RevocationNotification => Some((Actors::Issuer, Actors::Holder)),
+            MessageFamilies::RevocationNotification => Some((Actors::Sender, Actors::Receiver)),
             MessageFamilies::Signature => None,
             MessageFamilies::CredentialIssuance => Some((Actors::Issuer, Actors::Holder)),
             MessageFamilies::ReportProblem => None,
