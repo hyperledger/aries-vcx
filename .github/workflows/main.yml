@@ -301,6 +301,10 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+      - uses: Swatinem/rust-cache@v2
       - name: "Install dependencies"
         run: |
           sudo apt-get update -y -qq

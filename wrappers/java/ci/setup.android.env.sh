@@ -54,9 +54,8 @@ create_avd(){
 
         # TODO sdkmanager upgrades by default. Hack to downgrade Android Emulator so as to work in headless mode (node display).
         # Remove as soon as headless mode is fixed.
-        mv /home/indy/emu.zip emu.zip
-        mv emulator emulator_backup
-        unzip emu.zip
+        mv ${HOME}/emu.zip emu.zip
+        yes | unzip emu.zip
         rm "emu.zip"
     else
         echo "Skipping sdkmanager activity"
@@ -123,7 +122,7 @@ EOF
 }
 
 download_emulator() {
-    curl -o /home/indy/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
+    curl -o ${HOME}/emu.zip https://dl.google.com/android/repository/emulator-linux-5889189.zip
 }
 
 download_and_unzip_if_missed() {
