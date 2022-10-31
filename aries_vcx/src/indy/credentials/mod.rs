@@ -45,7 +45,7 @@ pub async fn is_cred_revoked(
     let from = None;
     let to = Some(get_time().sec as u64 + 100);
     let rev_reg_delta = RevocationRegistryDelta::create_from_ledger(pool_handle, rev_reg_id, from, to).await?;
-    Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(&rev_id)))
+    Ok(rev_reg_delta.revoked().iter().any(|s| s.to_string().eq(rev_id)))
 }
 
 #[cfg(test)]
@@ -116,13 +116,12 @@ mod integration_tests {
             DEFAULT_SCHEMA_ATTRS,
         )
         .await;
-        let cred_id = res.7;
         let rev_reg_id = res.8;
         let cred_rev_id = res.9;
         let tails_file = res.10;
 
         assert!(
-            !is_cred_revoked(setup.pool_handle, &rev_reg_id, &cred_id)
+            !is_cred_revoked(setup.pool_handle, &rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap()
         );
@@ -139,8 +138,10 @@ mod integration_tests {
         .await
         .unwrap();
 
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
         assert!(
-            is_cred_revoked(setup.pool_handle, &rev_reg_id, &cred_id)
+            is_cred_revoked(setup.pool_handle, &rev_reg_id, &cred_rev_id)
                 .await
                 .unwrap()
         );
