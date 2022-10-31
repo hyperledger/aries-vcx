@@ -5,6 +5,7 @@ use messages::problem_report::ProblemReport;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
+use crate::indy::credentials::{is_cred_revoked, get_cred_rev_id};
 use messages::a2a::{A2AMessage, MessageId};
 use messages::ack::Ack;
 use messages::issuance::credential::Credential;
@@ -452,6 +453,17 @@ impl HolderSM {
             HolderFullState::OfferReceived(ref state) => state.is_revokable(wallet_handle, pool_handle).await,
             HolderFullState::RequestSent(ref state) => state.is_revokable(),
             HolderFullState::Finished(ref state) => state.is_revokable(),
+        }
+    }
+
+    pub async fn is_revoked(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
+        if self.is_revokable(wallet_handle, pool_handle).await? {
+            let rev_reg_id = self.get_rev_reg_id()?;
+            let cred_id = self.get_cred_id()?;
+            let rev_id = get_cred_rev_id(wallet_handle, &cred_id).await?;
+            is_cred_revoked(pool_handle, &rev_reg_id, &rev_id).await
+        } else {
+            Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Unable to check revocation status - this credential is not revokable"))
         }
     }
 

@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use messages::ack::Ack;
 use messages::problem_report::ProblemReport;
-use vdrtools_sys::WalletHandle;
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::credentials::encoding::encode_attributes;
@@ -14,7 +14,7 @@ use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::issuance::CredentialPreviewData;
 use messages::status::Status;
-use crate::indy::credentials::issuer;
+use crate::indy::credentials::{issuer, is_cred_revoked};
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;
@@ -141,7 +141,6 @@ impl IssuerSM {
     }
 
     pub fn get_rev_id(&self) -> VcxResult<String> {
-        println!("The state is {:?}", self.get_state());
         let err = VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
         let rev_id = match &self.state {
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
@@ -204,6 +203,16 @@ impl IssuerSM {
             IssuerFullState::CredentialSent(state) => _is_revokable(&state.revocation_info_v1),
             IssuerFullState::Finished(state) => _is_revokable(&state.revocation_info_v1),
             _ => false,
+        }
+    }
+
+    pub async fn is_revoked(&self, pool_handle: PoolHandle) -> VcxResult<bool> {
+        if self.is_revokable() {
+            let rev_reg_id = self.get_rev_reg_id()?;
+            let rev_id = self.get_rev_id()?;
+            is_cred_revoked(pool_handle, &rev_reg_id, &rev_id).await
+        } else {
+            Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Unable to check revocation status - this credential is not revokable"))
         }
     }
 

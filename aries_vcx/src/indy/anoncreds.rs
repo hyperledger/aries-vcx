@@ -107,7 +107,7 @@ pub mod integration_tests {
             .await;
         assert!(rc.is_err());
 
-        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
+        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) =
             create_and_store_credential(
                 setup.wallet_handle,
                 setup.pool_handle,
@@ -130,7 +130,7 @@ pub mod integration_tests {
     async fn test_revoke_credential() {
         let setup = SetupWalletPool::init().await;
 
-        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id) =
+        let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) =
             create_and_store_credential(
                 setup.wallet_handle,
                 setup.pool_handle,
