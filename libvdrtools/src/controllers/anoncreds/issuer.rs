@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use async_std::task::spawn_blocking;
+// use async_std::task::spawn_blocking;
 use indy_api_types::{domain::wallet::Tags, errors::prelude::*, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
 
@@ -245,14 +245,15 @@ impl IssuerController {
         CredentialPrivateKey,
         CredentialKeyCorrectnessProof,
     )> {
-        let attr_names = attr_names.clone();
+        // let attr_names = attr_names.clone();
 
-        let res = spawn_blocking(move || {
-            IssuerService::new_credential_definition(&attr_names, support_revocation)
-        })
-        .await?;
+        IssuerService::new_credential_definition(attr_names, support_revocation)
+        // let res = spawn_blocking(move || {
+        //     IssuerService::new_credential_definition(&attr_names, support_revocation)
+        // })
+        // .await?;
 
-        Ok(res)
+        // Ok(res)
     }
 
     pub async fn rotate_credential_definition_start(

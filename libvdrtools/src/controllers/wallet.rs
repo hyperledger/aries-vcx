@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use async_std::task::spawn_blocking;
+// use async_std::task::spawn_blocking;
 
 use indy_api_types::{
     domain::wallet::{Config, Credentials, ExportConfig, KeyConfig},
@@ -108,7 +108,7 @@ impl WalletController {
             &credentials.key_derivation_method,
         );
 
-        let key = Self::_derive_key(key_data.clone()).await?;
+        let key = Self::_derive_key(&key_data).await?;
 
         let res = self
             .wallet_service
@@ -132,10 +132,10 @@ impl WalletController {
             .open_wallet_prepare(&config, &credentials)
             .await?;
 
-        let key = Self::_derive_key(key_derivation_data).await?;
+        let key = Self::_derive_key(&key_derivation_data).await?;
 
         let rekey = if let Some(rekey_data) = rekey_data {
-            Some(Self::_derive_key(rekey_data).await?)
+            Some(Self::_derive_key(&rekey_data).await?)
         } else {
             None
         };
@@ -172,7 +172,7 @@ impl WalletController {
             .delete_wallet_prepare(&config, &credentials)
             .await?;
 
-        let key = Self::_derive_key(key_derivation_data).await?;
+        let key = Self::_derive_key(&key_derivation_data).await?;
 
         let res = self
             .wallet_service
@@ -199,7 +199,7 @@ impl WalletController {
             &export_config.key_derivation_method,
         );
 
-        let key = Self::_derive_key(key_data.clone()).await?;
+        let key = Self::_derive_key(&key_data).await?;
 
         let res = self
             .wallet_service
@@ -229,8 +229,8 @@ impl WalletController {
             .import_wallet_prepare(&config, &credentials, &import_config)
             .await?;
 
-        let import_key = Self::_derive_key(import_key_data).await?;
-        let key = Self::_derive_key(key_data).await?;
+        let import_key = Self::_derive_key(&import_key_data).await?;
+        let key = Self::_derive_key(&key_data).await?;
 
         let res = self
             .wallet_service
@@ -263,8 +263,9 @@ impl WalletController {
         Ok(res)
     }
 
-    async fn _derive_key(key_data: KeyDerivationData) -> IndyResult<MasterKey> {
-        let res = spawn_blocking(move || key_data.calc_master_key()).await?;
-        Ok(res)
+    async fn _derive_key(key_data: &KeyDerivationData) -> IndyResult<MasterKey> {
+        key_data.calc_master_key()
+        // let res = spawn_blocking(move || key_data.calc_master_key()).await?;
+        // Ok(res)
     }
 }

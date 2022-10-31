@@ -11,7 +11,7 @@ use std::{
     unimplemented,
 };
 
-use futures::lock::Mutex;
+use std::sync::Mutex;
 use indy_api_types::{
     domain::wallet::{Config, Credentials, ExportConfig, Tags},
     errors::prelude::*,
@@ -52,7 +52,7 @@ mod wallet;
 mod cache;
 
 pub struct WalletService {
-    storage_types: Mutex<HashMap<String, Box<dyn WalletStorageType>>>,
+    storage_types: Mutex<HashMap<String, Arc<dyn WalletStorageType>>>,
     wallets: Mutex<HashMap<WalletHandle, Arc<Wallet>>>,
     wallet_ids: Mutex<HashSet<String>>,
     pending_for_open: Mutex<
@@ -84,10 +84,15 @@ pub struct WalletService {
 impl WalletService {
     pub fn new() -> WalletService {
         let storage_types = {
-            let mut map: HashMap<String, Box<dyn WalletStorageType>> = HashMap::new();
-            map.insert("default".to_string(), Box::new(SQLiteStorageType::new()));
-            map.insert("mysql".to_string(), Box::new(MySqlStorageType::new()));
-            Mutex::new(map)
+
+            let s1 : Arc<dyn WalletStorageType> = Arc::new(SQLiteStorageType::new());
+            let s2 : Arc<dyn WalletStorageType> = Arc::new(MySqlStorageType::new());
+
+            Mutex::new(HashMap::from(
+                [ ("default".to_string(), s1),
+                    ("mysql".to_string(), s2),
+                ]
+            ))
         };
 
         WalletService {
@@ -175,13 +180,11 @@ impl WalletService {
             secret!(credentials)
         );
 
-        let storage_types = self.storage_types.lock().await;
-
-        let (storage_type, storage_config, storage_credentials) =
-            WalletService::_get_config_and_cred_for_storage(config, credentials, &storage_types)?;
-
         let keys = Keys::new();
         let metadata = self._prepare_metadata(master_key, key_data, &keys)?;
+
+        let (storage_type, storage_config, storage_credentials) =
+            self._get_config_and_cred_for_storage(config, credentials)?;
 
         storage_type
             .create_storage(
@@ -209,7 +212,7 @@ impl WalletService {
         if self
             .wallet_ids
             .lock()
-            .await
+            .unwrap()
             .contains(&WalletService::_get_wallet_id(config))
         {
             return Err(err_msg(
@@ -247,10 +250,8 @@ impl WalletService {
             self._restore_keys(metadata, &master_key)?;
         }
 
-        let storage_types = self.storage_types.lock().await;
-
         let (storage_type, storage_config, storage_credentials) =
-            WalletService::_get_config_and_cred_for_storage(config, credentials, &storage_types)?;
+            self._get_config_and_cred_for_storage(config, credentials)?;
 
         storage_type
             .delete_storage(
@@ -275,7 +276,7 @@ impl WalletService {
             secret!(&credentials)
         );
 
-        self._is_id_from_config_not_used(config).await?;
+        self._is_id_from_config_not_used(config)?;
 
         let (storage, metadata, key_derivation_data) = self
             ._open_storage_and_fetch_metadata(config, credentials)
@@ -290,7 +291,10 @@ impl WalletService {
             )
         });
 
-        self.pending_for_open.lock().await.insert(
+        self.pending_for_open
+            .lock()
+            .unwrap()
+            .insert(
             wallet_handle,
             (
                 WalletService::_get_wallet_id(config),
@@ -311,7 +315,8 @@ impl WalletService {
     ) -> IndyResult<WalletHandle> {
         let (id, storage, metadata, rekey_data) = self
             .pending_for_open
-            .lock().await
+            .lock()
+            .unwrap()
             .remove(&wallet_handle)
             .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "Open data not found"))?;
 
@@ -331,17 +336,18 @@ impl WalletService {
             WalletCache::new(cache_config)
         );
 
-        {
-            let mut wallets = self.wallets.lock().await;
-            wallets.insert(wallet_handle, Arc::new(wallet));
-        }
+        self.wallets
+            .lock()
+            .unwrap()
+            .insert(wallet_handle, Arc::new(wallet));
 
-        {
-            let mut wallet_ids = self.wallet_ids.lock().await;
-            wallet_ids.insert(id.to_string());
-        }
+        self.wallet_ids
+            .lock()
+            .unwrap()
+            .insert(id.to_string());
 
         trace!("open_wallet <<< res: {:?}", wallet_handle);
+
         Ok(wallet_handle)
     }
 
@@ -371,7 +377,10 @@ impl WalletService {
     pub async fn close_wallet(&self, handle: WalletHandle) -> IndyResult<()> {
         trace!("close_wallet >>> handle: {:?}", handle);
 
-        let wallet = self.wallets.lock().await.remove(&handle);
+        let wallet = self.wallets
+            .lock()
+            .unwrap()
+            .remove(&handle);
 
         let wallet = if let Some(wallet) = wallet {
             wallet
@@ -382,9 +391,13 @@ impl WalletService {
             ));
         };
 
-        self.wallet_ids.lock().await.remove(wallet.get_id());
+        self.wallet_ids
+            .lock()
+            .unwrap()
+            .remove(wallet.get_id());
 
         trace!("close_wallet <<<");
+
         Ok(())
     }
 
@@ -665,7 +678,7 @@ impl WalletService {
         options_json: &str,
     ) -> IndyResult<WalletSearch> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        
+
         Ok(WalletSearch {
             iter: wallet.search(type_, query_json, Some(options_json)).await?,
         })
@@ -806,10 +819,13 @@ impl WalletService {
 
         let stashed_key_data = key_data.clone();
 
-        self.pending_for_import.lock().await.insert(
-            wallet_handle,
-            (reader, nonce, chunk_size, header_bytes, stashed_key_data),
-        );
+        self.pending_for_import
+            .lock()
+            .unwrap()
+            .insert(
+                wallet_handle,
+                (reader, nonce, chunk_size, header_bytes, stashed_key_data),
+            );
 
         Ok((wallet_handle, key_data, import_key_derivation_data))
     }
@@ -823,7 +839,8 @@ impl WalletService {
     ) -> IndyResult<()> {
         let (reader, nonce, chunk_size, header_bytes, key_data) = self
             .pending_for_import
-            .lock().await
+            .lock()
+            .unwrap()
             .remove(&wallet_handle)
             .unwrap();
 
@@ -833,7 +850,8 @@ impl WalletService {
             ._create_wallet(config, credentials, (&key_data, &master_key))
             .await?;
 
-        self._is_id_from_config_not_used(config).await?;
+        self._is_id_from_config_not_used(config)?;
+
         let storage = self._open_storage(config, credentials).await?;
         let metadata = storage.get_storage_metadata().await?;
 
@@ -862,48 +880,66 @@ impl WalletService {
         res
     }
 
-    pub async fn get_wallets_count(&self) -> usize {
-        self.wallets.lock().await.len()
+    pub fn get_wallets_count(&self) -> usize {
+        self.wallets
+            .lock()
+            .unwrap()
+            .len()
     }
 
-    pub async fn get_wallet_ids_count(&self) -> usize {
-        self.wallet_ids.lock().await.len()
+    pub fn get_wallet_ids_count(&self) -> usize {
+        self.wallet_ids
+            .lock()
+            .unwrap()
+            .len()
     }
 
-    pub async fn get_pending_for_import_count(&self) -> usize {
-        self.pending_for_import.lock().await.len()
+    pub fn get_pending_for_import_count(&self) -> usize {
+        self.pending_for_import
+            .lock()
+            .unwrap()
+            .len()
     }
 
-    pub async fn get_pending_for_open_count(&self) -> usize {
-        self.pending_for_open.lock().await.len()
+    pub fn get_pending_for_open_count(&self) -> usize {
+        self.pending_for_open
+            .lock()
+            .unwrap()
+            .len()
     }
 
     pub async fn get_wallet_cache_hit_metrics_data(&self) -> HashMap<String, WalletCacheHitData> {
-        self.cache_hit_metrics.get_data().await
+        self.cache_hit_metrics.get_data()
     }
 
-    fn _get_config_and_cred_for_storage<'a>(
+    fn _get_config_and_cred_for_storage(
+        &self,
         config: &Config,
         credentials: &Credentials,
-        storage_types: &'a HashMap<String, Box<dyn WalletStorageType>>,
     ) -> IndyResult<(
-        &'a Box<dyn WalletStorageType>,
+        Arc<dyn WalletStorageType>,
         Option<String>,
         Option<String>,
     )> {
         let storage_type = {
+
             let storage_type = config
                 .storage_type
                 .as_ref()
                 .map(String::as_str)
                 .unwrap_or("default");
 
-            storage_types.get(storage_type).ok_or_else(|| {
-                err_msg(
-                    IndyErrorKind::UnknownWalletStorageType,
-                    "Unknown wallet storage type",
-                )
-            })?
+            self.storage_types
+                .lock()
+                .unwrap()
+                .get(storage_type)
+                .ok_or_else(|| {
+                    err_msg(
+                        IndyErrorKind::UnknownWalletStorageType,
+                        "Unknown wallet storage type",
+                    )
+                })?
+                .clone()
         };
 
         let storage_config = config.storage_config.as_ref().map(SValue::to_string);
@@ -916,9 +952,9 @@ impl WalletService {
         Ok((storage_type, storage_config, storage_credentials))
     }
 
-    async fn _is_id_from_config_not_used(&self, config: &Config) -> IndyResult<()> {
+    fn _is_id_from_config_not_used(&self, config: &Config) -> IndyResult<()> {
         let id = WalletService::_get_wallet_id(config);
-        if self.wallet_ids.lock().await.contains(&id) {
+        if self.wallet_ids.lock().unwrap().contains(&id) {
             return Err(err_msg(
                 IndyErrorKind::WalletAlreadyOpened,
                 format!(
@@ -946,10 +982,8 @@ impl WalletService {
         config: &Config,
         credentials: &Credentials,
     ) -> IndyResult<Box<dyn WalletStorage>> {
-        let storage_types = self.storage_types.lock().await;
-
         let (storage_type, storage_config, storage_credentials) =
-            WalletService::_get_config_and_cred_for_storage(config, credentials, &storage_types)?;
+            self._get_config_and_cred_for_storage(config, credentials)?;
 
         let storage = storage_type
             .open_storage(
@@ -1010,7 +1044,7 @@ impl WalletService {
     }
 
     async fn get_wallet(&self, wallet_handle: WalletHandle) -> IndyResult<Arc<Wallet>> {
-        let wallets = self.wallets.lock().await;
+        let wallets = self.wallets.lock().unwrap(); //await;
         let w = wallets.get(&wallet_handle);
         if let Some(w) = w {
             Ok(w.clone())
@@ -1251,7 +1285,7 @@ mod tests {
             config: &Config,
             credentials: &Credentials,
         ) -> IndyResult<WalletHandle> {
-            self._is_id_from_config_not_used(config).await?;
+            self._is_id_from_config_not_used(config)?;
 
             let (storage, metadata, key_derivation_data) = self
                 ._open_storage_and_fetch_metadata(config, credentials)

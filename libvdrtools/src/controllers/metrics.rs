@@ -45,22 +45,22 @@ impl MetricsController {
 
         wallet_count.push(self.get_labeled_metric_json(
             OPENED_WALLETS_COUNT,
-            self.wallet_service.get_wallets_count().await
+            self.wallet_service.get_wallets_count()
         )?);
 
         wallet_count.push(self.get_labeled_metric_json(
             OPENED_WALLET_IDS_COUNT,
-            self.wallet_service.get_wallet_ids_count().await
+            self.wallet_service.get_wallet_ids_count()
         )?);
 
         wallet_count.push(self.get_labeled_metric_json(
             PENDING_FOR_IMPORT_WALLETS_COUNT,
-            self.wallet_service.get_pending_for_import_count().await
+            self.wallet_service.get_pending_for_import_count()
         )?);
 
         wallet_count.push(self.get_labeled_metric_json(
         PENDING_FOR_OPEN_WALLETS_COUNT,
-        self.wallet_service.get_pending_for_open_count().await
+        self.wallet_service.get_pending_for_open_count()
         )?);
 
         metrics_map.insert(

@@ -178,7 +178,7 @@ impl Wallet {
         );
 
         self.storage.add(&etype, &ename, &evalue, &etags).await?;
-        self.cache.add(type_, &etype, &ename, &evalue, &etags).await;
+        self.cache.add(type_, &etype, &ename, &evalue, &etags);
 
         Ok(())
     }
@@ -337,7 +337,7 @@ impl Wallet {
 
                     // save to cache only if valid data is returned (this should be always true).
                     if let (Some(evalue), Some(etags)) = (&full_result.value, &full_result.tags) {
-                        self.cache.add(type_, &etype, &ename, evalue, etags).await;
+                        self.cache.add(type_, &etype, &ename, evalue, etags);
                     }
                     StorageRecord {
                         id: full_result.id,
@@ -392,8 +392,8 @@ impl Wallet {
         Ok(())
     }
 
-    pub async fn search<'a>(
-        &'a self,
+    pub async fn search(
+        &self,
         type_: &str,
         query: &str,
         options: Option<&str>,

@@ -17,7 +17,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
-use async_std::sync::{RwLock, Mutex};
+use std::sync::{Mutex, RwLock};
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct WalletCacheKey {
@@ -60,7 +60,7 @@ impl WalletCache {
         self.cache.is_some() && self.cache_entities.contains(&type_.to_owned())
     }
 
-    pub async fn add(
+    pub fn add(
         &self,
         type_: &str,
         etype: &[u8],
@@ -78,7 +78,10 @@ impl WalletCache {
                     value: evalue.to_owned(),
                     tags: etags.to_owned(),
                 };
-                let _ = protected_cache.lock().await.put(key, value);
+                let _ = protected_cache
+                    .lock()
+                    .unwrap()
+                    .put(key, value);
             }
         }
     }
@@ -96,9 +99,11 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock().await.get_mut(&key).map(|v|{
-                    v.tags.append(&mut etags.to_owned())
-                });
+                let _ = protected_cache.lock()
+                    .unwrap() //await
+                    .get_mut(&key).map(|v|{
+                        v.tags.append(&mut etags.to_owned())
+                    });
             }
         }
     }
@@ -116,9 +121,11 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock().await.get_mut(&key).map(|v|{
-                    v.tags = etags.to_vec()
-                });
+                let _ = protected_cache.lock()
+                    .unwrap() //await
+                    .get_mut(&key).map(|v|{
+                        v.tags = etags.to_vec()
+                    });
             }
         }
     }
@@ -144,18 +151,20 @@ impl WalletCache {
                         OfPlain(value) => plain_tag_names.insert(value),
                     };
                 }
-                let _ = protected_cache.lock().await.get_mut(&key).map(|v|{
-                    v.tags.retain(|el| {
-                        match el {
-                            Encrypted(tag_name, _) => {
-                                !enc_tag_names.contains(tag_name)
-                            },
-                            PlainText(tag_name, _) => {
-                                !plain_tag_names.contains(tag_name)
+                let _ = protected_cache.lock()
+                    .unwrap() //await
+                    .get_mut(&key).map(|v|{
+                        v.tags.retain(|el| {
+                            match el {
+                                Encrypted(tag_name, _) => {
+                                    !enc_tag_names.contains(tag_name)
+                                },
+                                PlainText(tag_name, _) => {
+                                    !plain_tag_names.contains(tag_name)
+                                }
                             }
-                        }
+                        });
                     });
-                });
             }
         }
     }
@@ -173,9 +182,11 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock().await.get_mut(&key).map(|v|{
-                    v.value = evalue.to_owned()
-                });
+                let _ = protected_cache.lock()
+                    .unwrap() // await
+                    .get_mut(&key).map(|v|{
+                        v.value = evalue.to_owned()
+                    });
             }
         }
     }
@@ -193,14 +204,16 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                protected_cache.lock().await.get(&key).map(|v|{
-                    StorageRecord {
-                        id: eid.to_owned(),
-                        value: if options.retrieve_value {Some(v.value.clone())} else {None},
-                        type_: if options.retrieve_type {Some(etype.to_owned())} else {None},
-                        tags: if options.retrieve_tags {Some(v.tags.clone())} else {None},
-                    }
-                })
+                protected_cache.lock()
+                    .unwrap() //await
+                    .get(&key).map(|v|{
+                        StorageRecord {
+                            id: eid.to_owned(),
+                            value: if options.retrieve_value {Some(v.value.clone())} else {None},
+                            type_: if options.retrieve_type {Some(etype.to_owned())} else {None},
+                            tags: if options.retrieve_tags {Some(v.tags.clone())} else {None},
+                        }
+                    })
             } else {
                 None
             }
@@ -216,7 +229,9 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock().await.pop(&key);
+                let _ = protected_cache.lock()
+                    .unwrap() //await
+                    .pop(&key);
             }
         }
     }
@@ -303,12 +318,12 @@ impl WalletCacheHitMetrics {
     }
 
     async fn update_data(&self, type_: &str, f: fn(&WalletCacheHitData) -> usize) -> usize {
-        let read_guard = self.data.read().await;
+        let read_guard = self.data.read().unwrap(); //await;
         match read_guard.get(type_) {
             Some(x) => f(x),
             None => {
                 drop(read_guard);
-                let mut write_guard = self.data.write().await;
+                let mut write_guard = self.data.write().unwrap(); //await;
                 // check if data is inserted in the mean time until write lock is acquired.
                 match write_guard.get(type_) {
                     Some(x) => f(x),
@@ -326,11 +341,15 @@ impl WalletCacheHitMetrics {
 
     #[allow(dead_code)]
     pub async fn get_data_for_type(&self, type_: &str) -> Option<WalletCacheHitData> {
-        self.data.read().await.get(type_).map(|x|x.clone())
+        self.data.read()
+            .unwrap()
+            .get(type_).map(|x|x.clone())
     }
 
-    pub async fn get_data(&self) -> HashMap<String, WalletCacheHitData> {
-        self.data.read().await.clone()
+    pub fn get_data(&self) -> HashMap<String, WalletCacheHitData> {
+        self.data.read()
+            .unwrap()
+            .clone()
     }
 }
 
@@ -504,7 +523,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
@@ -525,7 +544,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
@@ -548,7 +567,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
 
         let mut internal_cache = cache.cache.unwrap();
         let lru = internal_cache.get_mut();
@@ -563,7 +582,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         assert!(cache.cache.is_none());
     }
 
@@ -576,7 +595,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.add_tags(TYPE_A, ETYPE1, EID1, &[tag3.clone()]).await;
 
         let key = WalletCacheKey {
@@ -600,7 +619,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         cache.add_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone(), tag2.clone()]).await;
 
         let key = WalletCacheKey {
@@ -625,7 +644,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.add_tags(TYPE_A, ETYPE1, EID2, &[tag3]).await;
 
         let key = WalletCacheKey {
@@ -657,7 +676,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.add_tags(TYPE_NON_CACHED, ETYPE1, EID1, &[tag3]).await;
 
         let mut internal_cache = cache.cache.unwrap();
@@ -674,7 +693,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.add_tags(TYPE_A, ETYPE1, EID1, &[tag3]).await;
 
         assert!(cache.cache.is_none());
@@ -689,7 +708,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.update_tags(TYPE_A, ETYPE1, EID1, &[tag3.clone()]).await;
 
         let key = WalletCacheKey {
@@ -712,7 +731,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         cache.update_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone()]).await;
 
         let key = WalletCacheKey {
@@ -738,7 +757,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.update_tags(TYPE_A, ETYPE1, EID2, &[tag3, tag4]).await;
 
         let key = WalletCacheKey {
@@ -770,7 +789,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.update_tags(TYPE_NON_CACHED, ETYPE1, EID1, &[tag3]).await;
 
         let mut internal_cache = cache.cache.unwrap();
@@ -787,7 +806,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.update_tags(TYPE_A, ETYPE1, EID1, &[tag3]).await;
 
         assert!(cache.cache.is_none());
@@ -802,7 +821,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1, tag3])).await;
 
         let key = WalletCacheKey {
@@ -825,7 +844,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1])).await;
 
         let key = WalletCacheKey {
@@ -849,7 +868,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.delete_tags(TYPE_A, ETYPE1, EID2, &_tag_names(&[tag1.clone()])).await;
 
         let key = WalletCacheKey {
@@ -880,7 +899,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.delete_tags(TYPE_NON_CACHED, ETYPE1, EID1, &_tag_names(&[tag1.clone()])).await;
 
         let mut internal_cache = cache.cache.unwrap();
@@ -896,7 +915,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1])).await;
 
         assert!(cache.cache.is_none());
@@ -911,7 +930,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.update(TYPE_A, ETYPE1, EID1, &value2).await;
 
         let key = WalletCacheKey {
@@ -934,7 +953,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         cache.update(TYPE_A, ETYPE1, EID1, &value2).await;
 
         let key = WalletCacheKey {
@@ -959,7 +978,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.update(TYPE_A, ETYPE1, EID2, &value2).await;
 
         let key = WalletCacheKey {
@@ -991,7 +1010,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.update(TYPE_NON_CACHED, ETYPE1, EID1, &value2).await;
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1008,7 +1027,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.update(TYPE_A, ETYPE1, EID1, &value2).await;
 
         assert!(cache.cache.is_none());
@@ -1022,7 +1041,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.delete(TYPE_A, ETYPE1, EID1).await;
 
         let key = WalletCacheKey {
@@ -1042,7 +1061,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         cache.delete(TYPE_A, ETYPE1, EID1).await;
 
         let key = WalletCacheKey {
@@ -1064,7 +1083,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         cache.delete(TYPE_A, ETYPE1, EID2).await;
 
         let key = WalletCacheKey {
@@ -1095,7 +1114,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.delete(TYPE_NON_CACHED, ETYPE1, EID1).await;
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1111,7 +1130,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         cache.delete(TYPE_A, ETYPE1, EID1).await;
 
         assert!(cache.cache.is_none());
@@ -1125,7 +1144,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await.unwrap();
 
         assert_eq!(result.id, EID1);
@@ -1152,7 +1171,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
         let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await.unwrap();
 
         assert_eq!(result.id, EID1);
@@ -1181,7 +1200,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
         let result = cache.get(TYPE_A, ETYPE1, EID2, &FULL_OPTIONS).await;
 
         assert!(result.is_none());
@@ -1207,7 +1226,7 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
         let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await;
 
         assert!(result.is_none());
@@ -1225,7 +1244,7 @@ mod tests {
 
         let cache = _no_cache();
 
-        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]).await;
+        cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
         let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await;
 
         assert!(result.is_none());
@@ -1288,7 +1307,7 @@ mod tests {
         let result = futures::future::join4(fut1, fut2, fut3, fut4).await;
         assert_eq!(result, (0, 0, 0, 0));
 
-        let data = metrics.get_data().await;
+        let data = metrics.get_data();
 
         assert_eq!(data.len(), 3);
         assert_eq!(data.get(TYPE_A).unwrap().get_hit(), 1);
@@ -1333,7 +1352,7 @@ mod tests {
     async fn wallet_cache_hit_metrics_get_data_works_with_empty() {
         let metrics = WalletCacheHitMetrics::new();
 
-        assert!(metrics.get_data().await.is_empty());
+        assert!(metrics.get_data().is_empty());
     }
 
     #[async_std::test]
