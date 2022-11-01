@@ -10,6 +10,7 @@ on:
 
 env:
   DOCKER_BUILDKIT: 1
+  MAIN_BRANCH: main
   URL_DOCKER_REGISTRY: ghcr.io
   DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0
   DOCKER_IMAGE_POOL: pstas/indypool-localhost:1.15.0-localhost
@@ -91,6 +92,7 @@ jobs:
           build-arg: "USER_ID=$UID"
           dockerfile-path: "ci/alpine_core.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ALPINE_CORE }}
 
   build-docker-libvcx:
@@ -120,6 +122,7 @@ jobs:
           build-arg: "ALPINE_CORE_IMAGE=$DOCKER_IMG_CACHED_ALPINE_CORE"
           dockerfile-path: "ci/libvcx.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_LIBVCX }}
 
   build-docker-android:
@@ -144,6 +147,7 @@ jobs:
           docker-img: ${{ env.DOCKER_IMG_CACHED }}
           dockerfile-path: "wrappers/java/ci/android.dockerfile"
           branch-name: ${{ env.BRANCH_NAME }}
+          branch-main: ${{ env.MAIN_BRANCH }}
           docker-repo-local-name: ${{ env.DOCKER_REPO_LOCAL_ANDROID }}
 
 #
