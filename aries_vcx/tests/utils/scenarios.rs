@@ -825,6 +825,7 @@ pub mod test_utils {
             true,
         )
         .await;
+        assert!(!holder_credential.is_revoked(consumer.wallet_handle, consumer.pool_handle).await.unwrap());
         issuer_credential
     }
 

@@ -131,6 +131,10 @@ impl Holder {
         self.holder_sm.is_revokable(wallet_handle, pool_handle).await
     }
 
+    pub async fn is_revoked(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
+        self.holder_sm.is_revoked(wallet_handle, pool_handle).await
+    }
+
     pub async fn delete_credential(&self, wallet_handle: WalletHandle) -> VcxResult<()> {
         self.holder_sm.delete_credential(wallet_handle).await
     }

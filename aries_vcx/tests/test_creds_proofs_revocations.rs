@@ -43,11 +43,15 @@ mod integration_tests {
         )
         .await;
 
+        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
         revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
+
+        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
 
         let _requested_attrs = requested_attrs(
             &institution.config_issuer.institution_did,
@@ -108,10 +112,13 @@ mod integration_tests {
         )
         .await;
 
+        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+
         info!("test_revocation_notification :: verifier :: Going to revoke credential");
         revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
 
+        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
         let config = aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
             .ack_on(vec![messages::ack::please_ack::AckOn::Receipt])
             .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
@@ -153,6 +160,7 @@ mod integration_tests {
         .await;
 
         revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
+        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
         let request_name1 = Some("request1");
         let mut verifier = verifier_create_proof_and_send_request(
             &mut institution,
@@ -177,6 +185,8 @@ mod integration_tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+
+        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
 
         publish_revocation(&mut institution, rev_reg.rev_reg_id.clone()).await;
         let request_name2 = Some("request2");
@@ -203,6 +213,8 @@ mod integration_tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofInvalid
         );
+
+        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
     }
 
     #[cfg(feature = "agency_pool_tests")]
@@ -230,7 +242,7 @@ mod integration_tests {
             .await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer1,
             &mut institution,
             credential_data1,
@@ -242,7 +254,7 @@ mod integration_tests {
         )
         .await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer2,
             &mut institution,
             credential_data2,
@@ -254,7 +266,7 @@ mod integration_tests {
         )
         .await;
         let credential_data3 = json!({address1.clone(): "5th Avenue", address2.clone(): "Suite 1234", city.clone(): "NYC", state.clone(): "NYS", zip.clone(): "84712"}).to_string();
-        let _credential_handle3 = _exchange_credential(
+        let issuer_credential3 = _exchange_credential(
             &mut consumer3,
             &mut institution,
             credential_data3,
@@ -266,8 +278,11 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_local(&mut institution, &credential_handle1, &rev_reg.rev_reg_id).await;
-        revoke_credential_local(&mut institution, &credential_handle2, &rev_reg.rev_reg_id).await;
+        revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
+        revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
+        assert!(!issuer_credential1.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(institution.pool_handle).await.unwrap());
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
@@ -342,6 +357,11 @@ mod integration_tests {
         // Publish revocations and verify the two are invalid, third still valid
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
         thread::sleep(Duration::from_millis(2000));
+
+        assert!(issuer_credential1.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(issuer_credential2.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(institution.pool_handle).await.unwrap());
+
         let request_name2 = Some("request2");
         let mut verifier1 = verifier_create_proof_and_send_request(
             &mut institution,
@@ -424,7 +444,7 @@ mod integration_tests {
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
-        let (schema_id, cred_def_id, _, _cred_def, rev_reg, credential_handle) = issue_address_credential(
+        let (schema_id, cred_def_id, _, _cred_def, rev_reg, issuer_credential) = issue_address_credential(
             &mut consumer,
             &mut institution,
             &consumer_to_institution,
@@ -432,11 +452,13 @@ mod integration_tests {
         )
         .await;
 
+        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
         thread::sleep(Duration::from_millis(2000));
         info!("test_revoked_credential_might_still_work :: verifier :: Going to revoke credential");
-        revoke_credential_and_publish_accumulator(&mut institution, &credential_handle, &rev_reg.rev_reg_id).await;
+        revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
 
         let from = time_before_revocation - 100;
@@ -527,7 +549,7 @@ mod integration_tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data1.clone(),
@@ -539,7 +561,7 @@ mod integration_tests {
         )
         .await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data2.clone(),
@@ -551,7 +573,10 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle1, &rev_reg_id.unwrap()).await;
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg_id.unwrap()).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -600,6 +625,9 @@ mod integration_tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+
+        assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
     }
 
     #[tokio::test]
@@ -623,7 +651,7 @@ mod integration_tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data1.clone(),
@@ -635,7 +663,7 @@ mod integration_tests {
         )
         .await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data2.clone(),
@@ -647,7 +675,10 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle2, &rev_reg_id.unwrap()).await;
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_id.unwrap()).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -696,6 +727,9 @@ mod integration_tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofInvalid
         );
+
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
     }
 
     #[tokio::test]
@@ -718,7 +752,7 @@ mod integration_tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data1.clone(),
@@ -731,7 +765,7 @@ mod integration_tests {
         .await;
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data2.clone(),
@@ -790,6 +824,9 @@ mod integration_tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
     }
 
     #[tokio::test]
@@ -812,7 +849,7 @@ mod integration_tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data1.clone(),
@@ -825,7 +862,7 @@ mod integration_tests {
         .await;
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let _credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data2.clone(),
@@ -837,7 +874,10 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle1, &rev_reg.rev_reg_id).await;
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -886,6 +926,9 @@ mod integration_tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+
+        assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
     }
 
     #[tokio::test]
@@ -908,7 +951,7 @@ mod integration_tests {
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
-        let _credential_handle1 = _exchange_credential(
+        let issuer_credential1 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data1.clone(),
@@ -921,7 +964,7 @@ mod integration_tests {
         .await;
         let rev_reg_2 = rotate_rev_reg(&mut issuer, &cred_def, &rev_reg).await;
         let credential_data2 = json!({address1.clone(): "101 Tela Lane", address2.clone(): "Suite 1", city.clone(): "SLC", state.clone(): "WA", zip.clone(): "8721"}).to_string();
-        let credential_handle2 = _exchange_credential(
+        let issuer_credential2 = _exchange_credential(
             &mut consumer,
             &mut issuer,
             credential_data2.clone(),
@@ -933,7 +976,10 @@ mod integration_tests {
         )
         .await;
 
-        revoke_credential_and_publish_accumulator(&mut issuer, &credential_handle2, &rev_reg_2.rev_reg_id).await;
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+
+        revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2.rev_reg_id).await;
 
         let mut proof_verifier = verifier_create_proof_and_send_request(
             &mut verifier,
@@ -982,5 +1028,8 @@ mod integration_tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofInvalid
         );
+
+        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
     }
 }

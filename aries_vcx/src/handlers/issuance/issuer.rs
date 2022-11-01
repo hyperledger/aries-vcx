@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use messages::ack::please_ack::AckOn;
-use vdrtools_sys::WalletHandle;
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -233,6 +233,10 @@ impl Issuer {
 
     pub fn is_revokable(&self) -> bool {
         self.issuer_sm.is_revokable()
+    }
+
+    pub async fn is_revoked(&self, pool_handle: PoolHandle) -> VcxResult<bool> {
+        self.issuer_sm.is_revoked(pool_handle).await
     }
 
     pub async fn step(

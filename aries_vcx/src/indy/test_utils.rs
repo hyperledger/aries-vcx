@@ -166,6 +166,7 @@ pub async fn create_and_store_credential(
     String,
     String,
     String,
+    String
 ) {
     let (schema_id, schema_json, cred_def_id, cred_def_json, rev_reg_id, _, _) =
         create_and_store_credential_def(wallet_handle, pool_handle, institution_did, attr_list).await;
@@ -184,7 +185,7 @@ pub async fn create_and_store_credential(
         &req,
         &encoded_attributes,
         Some(rev_reg_id.clone()),
-        Some(tails_file),
+        Some(tails_file.clone()),
     )
         .await
         .unwrap();
@@ -210,6 +211,7 @@ pub async fn create_and_store_credential(
         cred_id,
         rev_reg_id,
         cred_rev_id.unwrap(),
+        tails_file
     )
 }
 
