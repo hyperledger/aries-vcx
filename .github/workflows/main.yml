@@ -219,7 +219,7 @@ jobs:
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests';
-          
+
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
       - name: "Upload coverage to Codecov"
@@ -317,8 +317,7 @@ jobs:
 
   test-android-build:
     runs-on: ubuntu-20.04
-    needs:
-      - workflow-setup
+    needs: [ workflow-setup, build-docker-android ]
     env:
       DOCKER_IMG_CACHED_ANDROID: ${{needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID}}
     steps:
