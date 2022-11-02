@@ -1,6 +1,7 @@
 use std::ptr;
 
 use aries_vcx::indy::crypto;
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
@@ -765,6 +766,50 @@ pub extern "C" fn vcx_unpack(
                 Err(err) => {
                     error!(
                         "vcx_unpack(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_create_pairwise_info(
+    command_handle: CommandHandle,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, pw_info: *const c_char)>,
+) -> u32 {
+    info!("vcx_create_pairwise_info >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_create_pairwise_info(command_handle: {})",
+        command_handle,
+    );
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match PairwiseInfo::create(get_main_wallet_handle()).await {
+                Ok(pw_info) => {
+                    trace!(
+                        "vcx_create_pairwise_info(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let pw_info = CStringUtils::string_to_cstring(json!(pw_info).to_string());
+                    cb(command_handle, error::SUCCESS.code_num, pw_info.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_create_pairwise_info(command_handle: {}, rc: {})",
                         command_handle, err
                     );
 
