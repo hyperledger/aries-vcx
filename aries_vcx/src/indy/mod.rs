@@ -8,5 +8,6 @@ pub mod wallet_non_secrets;
 pub mod anoncreds;
 pub mod ledger;
 pub mod primitives;
+pub mod crypto;
 #[cfg(feature = "test_utils")]
 pub mod test_utils;

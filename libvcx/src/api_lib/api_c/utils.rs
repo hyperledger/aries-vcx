@@ -1,5 +1,6 @@
 use std::ptr;
 
+use aries_vcx::indy::crypto;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
@@ -729,6 +730,52 @@ pub extern "C" fn vcx_get_ledger_txn(
 
         Ok(())
     }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_unpack(
+    command_handle: CommandHandle,
+    payload: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, decrypted_payload: *const c_char)>,
+) -> u32 {
+    info!("vcx_unpack >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(payload, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_unpack(command_handle: {}, payload: ...)",
+        command_handle,
+    );
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match crypto::unpack(get_main_wallet_handle(), payload.as_bytes().to_vec()).await {
+                Ok(msg) => {
+                    trace!(
+                        "vcx_unpack(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let msg = CStringUtils::string_to_cstring(msg);
+                    cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_unpack(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
 
     error::SUCCESS.code_num
 }
