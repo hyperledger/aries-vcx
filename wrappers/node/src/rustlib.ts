@@ -588,6 +588,13 @@ export interface IFFIEntryPoint {
   vcx_revocation_registry_release: (handle: number) => number;
   vcx_unpack: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_create_pairwise_info: (commandId: number, cb: ICbRef) => number;
+  vcx_create_service: (
+    commandId: number,
+    did: string,
+    endpoint: string,
+    recipientKeys: string,
+    routingKeys: string,
+    cb: ICbRef) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1251,6 +1258,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],
   vcx_unpack: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_create_pairwise_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_create_service: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]
+  ],
 };
 
 let _rustAPI: IFFIEntryPoint;

@@ -399,7 +399,9 @@ pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> V
 
 pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
-    add_attr(wallet_handle, pool_handle, did, &attrib_json).await
+    let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
+    check_response(&res)?;
+    Ok(res)
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
