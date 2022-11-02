@@ -5,6 +5,11 @@ import { rustAPI } from '../rustlib'
 import { IConnectionDownloadAllMessages } from './connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 
+export interface IPwInfo {
+  pw_did: string;
+  pw_vk: string;
+}
+
 export async function provisionCloudAgent (configAgent: object): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
@@ -320,9 +325,9 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
   }
 }
 
-export async function createPwInfo(): Promise<string> {
+export async function createPwInfo(): Promise<IPwInfo> {
   try {
-    return await createFFICallbackPromise<string>(
+    return await createFFICallbackPromise<IPwInfo>(
       (_resolve, reject, cb) => {
         const rc = rustAPI().vcx_create_pairwise_info(0, cb);
         if (rc) {
@@ -335,7 +340,7 @@ export async function createPwInfo(): Promise<string> {
             reject(err);
             return;
           }
-          resolve(pwInfo);
+          resolve(JSON.parse(pwInfo));
         }),
     );
   } catch (err) {
