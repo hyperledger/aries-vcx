@@ -319,3 +319,76 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
     throw new VCXInternalError(err);
   }
 }
+
+export async function createPwInfo(): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI().vcx_create_pairwise_info(0, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, pwInfo: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(pwInfo);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function createService(
+  did: string, endpoint: string, recipientKeys: string[], routingKeys: string[]
+): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI()
+          .vcx_create_service(0, did, endpoint, JSON.stringify(recipientKeys), JSON.stringify(routingKeys), cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, service: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(service);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function unpack(payload: string): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI()
+          .vcx_unpack(0, payload, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, decryptedPayload: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(decryptedPayload);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
