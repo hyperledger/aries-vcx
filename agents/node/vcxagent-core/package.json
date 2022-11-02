@@ -43,7 +43,8 @@
     "test:integration:trustping": "jest --forceExit --env=node --runInBand test/trustping.spec.js",
     "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js",
     "test:integration:public-invite": "jest --forceExit --env=node --runInBand test/public-invite.spec.js",
-    "test:integration:out-of-band": "jest --forceExit --env=node --runInBand test/out-of-band.spec.js"
+    "test:integration:out-of-band": "jest --forceExit --env=node --runInBand test/out-of-band.spec.js",
+    "test:integration:nonmediation": "jest --forceExit --env=node --runInBand test/nonmediated-endpoint.spec.js"
   },
   "dependencies": {
     "axios": "^0.21.4",

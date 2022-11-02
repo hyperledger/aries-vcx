@@ -1,6 +1,8 @@
 /* eslint-env jest */
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite } = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
+  createPwInfo, createService, unpack
+} = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 const sleep = require('sleep-promise')
 
@@ -56,6 +58,31 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
 
     return publicInvitation
+  }
+
+  async function publishService (endpoint) {
+    logger.info('Faber is going to write nonmediated service on the ledger')
+    await vcxAgent.agentInitVcx()
+
+    logger.info(`Faber creating pairwise info`)
+    const { pw_vk: pwVk } = await createPwInfo();
+    logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwVk}`)
+    await createService(institutionDid, endpoint, [pwVk], [])
+
+    await vcxAgent.agentShutdownVcx()
+
+    return pwVk
+  }
+
+  async function unpackMsg (encryptedMsg) {
+    logger.info('Faber is going to unpack message')
+    await vcxAgent.agentInitVcx()
+
+    const { message, sender_verkey: senderVerkey } = await unpack(encryptedMsg);
+
+    await vcxAgent.agentShutdownVcx()
+
+    return { message, senderVerkey }
   }
 
   async function createOobMessageWithService (wrappedMessage) {
@@ -259,12 +286,13 @@ module.exports.createFaber = async function createFaber () {
     return JSON.parse(connectionRequests)
   }
 
-  async function createConnectionFromReceivedRequest () {
-    logger.info('Faber is going to download connection requests')
+  async function createConnectionFromReceivedRequest (pwVk, request) {
+    logger.info('Faber is going to create a connection from a request')
     await vcxAgent.agentInitVcx()
 
-    const requests = await _downloadConnectionRequests()
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
+    pwVk = pwVk || await vcxAgent.servicePublicAgents.getPwVk(agentId)
+    const requests = request ? [request] : await _downloadConnectionRequests()
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwVk, requests[0])
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
@@ -351,6 +379,8 @@ module.exports.createFaber = async function createFaber () {
     getTailsFile,
     getTailsHash,
     updateMessageStatus,
-    updateAllReceivedMessages
+    updateAllReceivedMessages,
+    publishService,
+    unpackMsg
   }
 }

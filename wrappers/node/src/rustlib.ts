@@ -593,7 +593,7 @@ export interface IFFIEntryPoint {
   vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_release: (handle: number) => number;
-  vcx_unpack: (commandId: number, data: string, cb: ICbRef) => number;
+  vcx_unpack: (commandId: number, payload: number, payloadLen: number, cb: ICbRef) => number;
   vcx_create_pairwise_info: (commandId: number, cb: ICbRef) => number;
   vcx_create_service: (
     commandId: number,
@@ -1267,7 +1267,7 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],
-  vcx_unpack: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
+  vcx_unpack: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_UNSIGNED_INT_PTR, FFI_UNSIGNED_INT, FFI_CALLBACK_PTR]],
   vcx_create_pairwise_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
   vcx_create_service: [
     FFI_ERROR_CODE,

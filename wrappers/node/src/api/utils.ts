@@ -4,10 +4,16 @@ import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { IConnectionDownloadAllMessages } from './connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
+import * as ref from 'ref-napi';
 
 export interface IPwInfo {
   pw_did: string;
   pw_vk: string;
+}
+
+export interface IMsgUnpacked {
+  sender_verkey: string;
+  message: string;
 }
 
 export async function provisionCloudAgent (configAgent: object): Promise<string> {
@@ -374,12 +380,12 @@ export async function createService(
   }
 }
 
-export async function unpack(payload: string): Promise<string> {
+export async function unpack(payload: Buffer): Promise<IMsgUnpacked> {
   try {
-    return await createFFICallbackPromise<string>(
+    return await createFFICallbackPromise<IMsgUnpacked>(
       (_resolve, reject, cb) => {
         const rc = rustAPI()
-          .vcx_unpack(0, payload, cb);
+          .vcx_unpack(0, ref.address(payload), payload.length, cb);
         if (rc) {
           reject(rc);
         }
@@ -390,7 +396,7 @@ export async function unpack(payload: string): Promise<string> {
             reject(err);
             return;
           }
-          resolve(decryptedPayload);
+          resolve(JSON.parse(decryptedPayload));
         }),
     );
   } catch (err) {

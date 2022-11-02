@@ -739,13 +739,14 @@ pub extern "C" fn vcx_get_ledger_txn(
 #[no_mangle]
 pub extern "C" fn vcx_unpack(
     command_handle: CommandHandle,
-    payload: *const c_char,
+    payload: *const u8,
+    payload_len: u32,
     cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, decrypted_payload: *const c_char)>,
 ) -> u32 {
     info!("vcx_unpack >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(payload, VcxErrorKind::InvalidOption);
+    check_useful_c_byte_array!(payload, payload_len, VcxErrorKind::InvalidOption, VcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_unpack(command_handle: {}, payload: ...)",
@@ -754,7 +755,7 @@ pub extern "C" fn vcx_unpack(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match crypto::unpack(get_main_wallet_handle(), payload.as_bytes().to_vec()).await {
+            match crypto::unpack(get_main_wallet_handle(), payload).await {
                 Ok(msg) => {
                     trace!(
                         "vcx_unpack(command_handle: {}, rc: {})",
