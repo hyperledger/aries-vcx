@@ -131,9 +131,12 @@ export interface IRecipientInviteInfo extends IConnectionCreateData {
 }
 
 export interface IFromRequestInfo extends IConnectionCreateData {
-  // Invitation provided by an entity that wishes to make a connection.
-  invite: IConnectionInvite;
   agent: PublicAgent;
+  request: string;
+}
+
+export interface IFromRequestInfoV2 extends IConnectionCreateData {
+  pwVk: string;
   request: string;
 }
 
@@ -377,6 +380,23 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     try {
       await connection._create((cb) =>
         rustAPI().vcx_connection_create_with_connection_request(commandHandle, id, agent.handle, request, cb),
+      );
+      return connection;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public static async createWithConnectionRequestV2({
+    id,
+    pwVk,
+    request
+  }: IFromRequestInfoV2): Promise<Connection> {
+    const connection = new Connection(id);
+    const commandHandle = 0;
+    try {
+      await connection._create((cb) =>
+        rustAPI().vcx_connection_create_with_connection_request_v2(commandHandle, id, pwVk, request, cb),
       );
       return connection;
     } catch (err) {

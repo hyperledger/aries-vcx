@@ -332,6 +332,7 @@ pub extern "C" fn vcx_connection_create_with_invite(
 }
 
 #[no_mangle]
+#[deprecated(since = "0.45.0", note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2.")]
 pub extern "C" fn vcx_connection_create_with_connection_request(
     command_handle: CommandHandle,
     source_id: *const c_char,
@@ -356,6 +357,42 @@ pub extern "C" fn vcx_connection_create_with_connection_request(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_connection_create_with_connection_request_v2(
+    command_handle: CommandHandle,
+    source_id: *const c_char,
+    pw_vk: *const c_char,
+    request: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>,
+) -> u32 {
+    info!("vcx_connection_create_with_connection_request_v2 >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(pw_vk, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_connection_create_with_connection_request_v2(command_handle: {}, pw_vk: {}, request: {}) source_id: {}", command_handle, pw_vk, request, source_id);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match create_with_request_v2(&request, pw_vk).await {
+            Ok(handle) => {
+                trace!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, error::SUCCESS.message, handle, source_id);
+                cb(command_handle, error::SUCCESS.code_num, handle);
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };

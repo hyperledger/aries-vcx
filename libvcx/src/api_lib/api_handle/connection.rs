@@ -134,7 +134,24 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     let connection = Connection::create_with_request(
         get_main_wallet_handle(),
         request,
-        &agent,
+        agent.pairwise_info().pw_vk,
+        &get_main_agency_client().unwrap(),
+    )
+    .await?;
+    store_connection(connection)
+}
+
+pub async fn create_with_request_v2(request: &str, pw_vk: String) -> VcxResult<u32> {
+    let request: Request = serde_json::from_str(request).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize connection request: {:?}", err),
+        )
+    })?;
+    let connection = Connection::create_with_request(
+        get_main_wallet_handle(),
+        request,
+        pw_vk,
         &get_main_agency_client().unwrap(),
     )
     .await?;

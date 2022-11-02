@@ -392,7 +392,7 @@ pub mod unit_tests {
     use messages::discovery::disclose::test_utils::_disclose;
     use messages::discovery::query::test_utils::_query;
     use messages::trust_ping::ping::unit_tests::_ping;
-    
+
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
 
@@ -403,7 +403,7 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
-        
+
 
         use super::*;
 
@@ -473,10 +473,10 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-            
+
 
             use messages::a2a::MessageId;
-            
+
             use crate::utils::devsetup::was_in_past;
 
             use super::*;
@@ -549,7 +549,7 @@ pub mod unit_tests {
         }
 
         mod step {
-            
+
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -785,7 +785,7 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-            
+
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;

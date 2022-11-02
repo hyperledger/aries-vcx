@@ -179,6 +179,13 @@ export interface IFFIEntryPoint {
     request: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_create_with_connection_request_v2: (
+    commandId: number,
+    sourceId: string,
+    pwVk: string,
+    request: string,
+    cb: ICbRef,
+  ) => number;
   vcx_connection_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_connection_release: (handle: number) => number;
   vcx_connection_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -723,6 +730,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_connection_create_with_connection_request: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_create_with_connection_request_v2: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
   vcx_connection_deserialize: [
     FFI_ERROR_CODE,

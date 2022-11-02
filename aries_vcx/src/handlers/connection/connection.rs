@@ -17,7 +17,6 @@ use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
-use crate::handlers::connection::public_agent::PublicAgent;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
 use messages::a2a::protocol_registry::ProtocolRegistry;
@@ -127,17 +126,20 @@ impl Connection {
     pub async fn create_with_request(
         wallet_handle: WalletHandle,
         request: Request,
-        public_agent: &PublicAgent,
+        pw_vk: String,
         agency_client: &AgencyClient,
     ) -> VcxResult<Self> {
         trace!(
-            "Connection::create_with_request >>> request: {:?}, public_agent: {:?}",
+            "Connection::create_with_request >>> request: {:?}, pw_vk: {:?}",
             request,
-            public_agent
+            pw_vk
         );
-        let pairwise_info: PairwiseInfo = public_agent.into();
+        let pairwise_info = PairwiseInfo {
+            pw_vk,
+            ..PairwiseInfo::default()
+        };
         let mut connection = Self {
-            cloud_agent_info: public_agent.cloud_agent_info(),
+            cloud_agent_info: CloudAgentInfo::default(),
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
@@ -1017,7 +1019,7 @@ mod tests {
 
     use agency_client::testing::mocking::enable_agency_mocks;
 
-    use crate::handlers::connection::public_agent::test_utils::_public_agent;
+    use crate::handlers::connection::public_agent::test_utils::_pw_vk;
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -1117,7 +1119,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client)
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_vk(), &agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1132,7 +1134,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_request(WalletHandle(0), _request(), &_public_agent(), &agency_client)
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_vk(), &agency_client)
             .await
             .unwrap();
         assert_eq!(
