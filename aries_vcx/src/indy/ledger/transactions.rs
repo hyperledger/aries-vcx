@@ -742,6 +742,9 @@ pub fn _check_schema_response(response: &str) -> VcxResult<()> {
 }
 
 pub(in crate::indy) fn check_response(response: &str) -> VcxResult<()> {
+    if settings::indy_mocks_enabled() {
+        return Ok(());
+    }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
         Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(
