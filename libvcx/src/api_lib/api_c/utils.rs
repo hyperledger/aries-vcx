@@ -1,6 +1,6 @@
 use std::ptr;
 
-use aries_vcx::indy::crypto;
+use aries_vcx::indy::signing::unpack_message_to_string;
 use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::{BoxFuture, FutureExt};
@@ -755,7 +755,7 @@ pub extern "C" fn vcx_unpack(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match crypto::unpack(get_main_wallet_handle(), payload).await {
+            match unpack_message_to_string(get_main_wallet_handle(), payload.as_slice()).await {
                 Ok(msg) => {
                     trace!(
                         "vcx_unpack(command_handle: {}, rc: {})",

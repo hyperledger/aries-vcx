@@ -19,16 +19,16 @@ async fn get_signature_data(wallet_handle: WalletHandle, data: String, key: &str
     let now: u64 = time::get_time().sec as u64;
     let mut sig_data = now.to_be_bytes().to_vec();
     sig_data.extend(data.as_bytes());
-    
+
     let signature = sign(wallet_handle, key, &sig_data).await?;
-    
+
     Ok((signature, sig_data))
 }
 
 pub async fn sign_connection_response(wallet_handle: WalletHandle, key: &str, response: Response) -> VcxResult<SignedResponse> {
     let connection_data = response.get_connection_data();
     let (signature, sig_data) = get_signature_data(wallet_handle, connection_data, key).await?;
-    
+
     let sig_data = base64::encode_config(&sig_data, base64::URL_SAFE);
     let signature = base64::encode_config(&signature, base64::URL_SAFE);
 
@@ -124,6 +124,24 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResul
     }
 
     crypto::unpack_message(wallet_handle, msg).await.map_err(VcxError::from)
+}
+
+pub async fn unpack_message_to_string(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResult<String> {
+    if settings::indy_mocks_enabled() {
+        return Ok(String::new());
+    }
+
+    String::from_utf8(
+        crypto::unpack_message(wallet_handle, &msg)
+            .await
+            .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Failed to unpack message"))?,
+    )
+    .map_err(|_| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidMessageFormat,
+            "Failed to convert message to utf8 string",
+        )
+    })
 }
 
 pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxResult<String> {
