@@ -35,7 +35,7 @@ describe('test connecting via unmediated endpoint', () => {
 
       await alice.acceptInvite(invite)
       const { message } = await faber.unpackMsg(msg)
-      await faber.createConnectionFromReceivedRequest(pwVk, message)
+      await faber.createConnectionFromReceivedRequestV2(pwVk, message)
       await alice.updateConnection(ConnectionStateType.Finished)
       await faber.updateConnection(ConnectionStateType.Finished)
     } catch (err) {

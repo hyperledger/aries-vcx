@@ -2,18 +2,32 @@ const { createFaber } = require('./faber')
 const { createAlice } = require('./alice')
 const { ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 
+module.exports.createAliceAndFaber = async function createAliceAndFaber () {
+  const alice = await createAlice()
+  const faber = await createFaber()
+  return { alice, faber }
+}
+
 module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFaber () {
   const alice = await createAlice()
   const faber = await createFaber()
   const invite = await faber.createInvite()
-  return progressConnectionFromInvite(alice, faber, invite)
+  await alice.acceptInvite(invite)
+  await faber.updateConnection(ConnectionStateType.Responded)
+  await alice.updateConnection(ConnectionStateType.Finished)
+  await faber.updateConnection(ConnectionStateType.Finished)
+  return { alice, faber }
 }
 
 module.exports.createPairedAliceAndFaberViaPublicInvite = async function createPairedAliceAndFaberViaPublicInvite () {
   const alice = await createAlice()
   const faber = await createFaber()
   const invite = await faber.createPublicInvite()
-  return progressConnectionFromInvite(alice, faber, invite)
+  await alice.acceptInvite(invite)
+  await faber.createConnectionFromReceivedRequest()
+  await alice.updateConnection(ConnectionStateType.Finished)
+  await faber.updateConnection(ConnectionStateType.Finished)
+  return { alice, faber }
 }
 
 module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedAliceAndFaberViaOobMsg (usePublicDid) {
@@ -34,19 +48,5 @@ module.exports.connectViaOobMessage = async function connectViaOobMessage (alice
   await faber.createConnectionFromReceivedRequest()
   await alice.updateConnection(ConnectionStateType.Finished)
   await faber.updateConnection(ConnectionStateType.Finished)
-  return { alice, faber }
-}
-
-module.exports.connectViaInvite = async function connectViaInvite (alice, faber, invite) {
-  await alice.acceptInvite(invite)
-  await faber.updateConnection(ConnectionStateType.Responded)
-  await alice.updateConnection(ConnectionStateType.Finished)
-  await faber.updateConnection(ConnectionStateType.Finished)
-  return { alice, faber }
-}
-
-module.exports.createAliceAndFaber = async function createAliceAndFaber () {
-  const alice = await createAlice()
-  const faber = await createFaber()
   return { alice, faber }
 }

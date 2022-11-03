@@ -17,15 +17,8 @@ module.exports.createServicePublicAgents = function createServicePublicAgents ({
     return agent.downloadConnectionRequests()
   }
 
-  async function getPwVk (agentId) {
-    logger.info(`Public agent with id ${agentId} is getting pw vk`)
-    const agent = await loadAgent(agentId)
-    return JSON.parse(await agent.serialize()).pairwise_info.my_pw_vk
-  }
-
   return {
     publicAgentCreate,
-    downloadConnectionRequests,
-    getPwVk,
+    downloadConnectionRequests
   }
 }

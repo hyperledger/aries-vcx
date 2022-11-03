@@ -286,13 +286,22 @@ module.exports.createFaber = async function createFaber () {
     return JSON.parse(connectionRequests)
   }
 
-  async function createConnectionFromReceivedRequest (pwVk, request) {
+  async function createConnectionFromReceivedRequest () {
+    logger.info('Faber is going to download connection requests')
+    await vcxAgent.agentInitVcx()
+
+    const requests = await _downloadConnectionRequests()
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function createConnectionFromReceivedRequestV2 (pwVk, request) {
     logger.info('Faber is going to create a connection from a request')
     await vcxAgent.agentInitVcx()
 
-    pwVk = pwVk || await vcxAgent.servicePublicAgents.getPwVk(agentId)
-    const requests = request ? [request] : await _downloadConnectionRequests()
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwVk, requests[0])
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwVk, request)
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
@@ -365,6 +374,7 @@ module.exports.createFaber = async function createFaber () {
     createOobMessageWithService,
     createOobProofRequest,
     createConnectionFromReceivedRequest,
+    createConnectionFromReceivedRequestV2,
     updateConnection,
     handleMessage,
     sendConnectionResponse,
