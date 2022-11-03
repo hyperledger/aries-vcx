@@ -2,17 +2,17 @@ use std::collections::HashMap;
 
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::protocols::SendClosure;
-use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
@@ -41,12 +41,28 @@ pub fn is_valid_handle(handle: u32) -> bool {
 
 pub fn get_agent_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.cloud_agent_info().agent_did.to_string())
+        Ok(connection
+            .cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
+            .agent_did
+            .to_string())
     })
 }
 
 pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| Ok(connection.cloud_agent_info().agent_vk.clone()))
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection
+            .cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
+            .agent_vk
+            .clone())
+    })
 }
 
 pub fn get_pw_did(handle: u32) -> VcxResult<String> {

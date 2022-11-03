@@ -4,27 +4,20 @@ use std::collections::HashMap;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
-use vdrtools_sys::WalletHandle;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use vdrtools_sys::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
-use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::A2AMessage;
-use messages::basic_message::message::BasicMessage;
-use messages::connection::invite::Invitation;
-use messages::connection::request::Request;
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -33,11 +26,18 @@ use crate::protocols::trustping::build_ping_response;
 use crate::protocols::SendClosure;
 use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::A2AMessage;
+use messages::basic_message::message::BasicMessage;
+use messages::connection::invite::Invitation;
+use messages::connection::request::Request;
+use messages::did_doc::DidDoc;
+use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {
     connection_sm: SmConnection,
-    cloud_agent_info: CloudAgentInfo,
+    cloud_agent_info: Option<CloudAgentInfo>,
     autohop_enabled: bool,
 }
 
@@ -91,7 +91,7 @@ impl Connection {
     ) -> VcxResult<Self> {
         trace!("Connection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
-        let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
+        let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         Ok(Self {
             cloud_agent_info,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(source_id, pairwise_info)),
@@ -113,7 +113,7 @@ impl Connection {
             invitation
         );
         let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
-        let cloud_agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
+        let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         let mut connection = Self {
             cloud_agent_info,
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(source_id, pairwise_info, did_doc)),
@@ -139,11 +139,13 @@ impl Connection {
             ..PairwiseInfo::default()
         };
         let mut connection = Self {
-            cloud_agent_info: CloudAgentInfo::default(),
+            cloud_agent_info: None,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection.process_request(wallet_handle, agency_client, request).await?;
+        connection
+            .process_request(wallet_handle, agency_client, request)
+            .await?;
         Ok(connection)
     }
 
@@ -151,7 +153,7 @@ impl Connection {
         source_id: String,
         thread_id: String,
         pairwise_info: PairwiseInfo,
-        cloud_agent_info: CloudAgentInfo,
+        cloud_agent_info: Option<CloudAgentInfo>,
         state: SmConnectionState,
         autohop_enabled: bool,
     ) -> Self {
@@ -208,7 +210,7 @@ impl Connection {
         }
     }
 
-    pub fn cloud_agent_info(&self) -> CloudAgentInfo {
+    pub fn cloud_agent_info(&self) -> Option<CloudAgentInfo> {
         self.cloud_agent_info.clone()
     }
 
@@ -331,14 +333,11 @@ impl Connection {
             }
         };
         self.connection_sm = connection_sm;
-        self.cloud_agent_info = new_cloud_agent_info;
+        self.cloud_agent_info = Some(new_cloud_agent_info);
         Ok(())
     }
 
-    pub async fn send_response(
-        &mut self,
-        wallet_handle: WalletHandle,
-    ) -> VcxResult<()> {
+    pub async fn send_response(&mut self, wallet_handle: WalletHandle) -> VcxResult<()> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
@@ -505,6 +504,10 @@ impl Connection {
                 self.update_state_with_message(wallet_handle, agency_client.clone(), Some(message))
                     .await?;
                 self.cloud_agent_info()
+                    .ok_or(VcxError::from_msg(
+                        VcxErrorKind::NoAgentInformation,
+                        "Missing cloud agent info",
+                    ))?
                     .update_message_status(agency_client, self.pairwise_info(), uid)
                     .await?;
             }
@@ -568,7 +571,7 @@ impl Connection {
                 };
 
                 let connection = Self {
-                    cloud_agent_info: new_cloud_agent_info.unwrap_or(self.cloud_agent_info.clone()),
+                    cloud_agent_info: new_cloud_agent_info.or(self.cloud_agent_info.clone()),
                     connection_sm: SmConnection::Inviter(sm_inviter),
                     autohop_enabled: self.autohop_enabled,
                 };
@@ -632,18 +635,22 @@ impl Connection {
 
     pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::connect >>> source_id: {}", self.source_id());
+        let cloud_agent_info = self.cloud_agent_info.clone().ok_or(VcxError::from_msg(
+            VcxErrorKind::NoAgentInformation,
+            "Missing cloud agent info",
+        ))?;
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => SmConnection::Inviter(sm_inviter.clone().create_invitation(
-                self.cloud_agent_info.routing_keys(agency_client)?,
-                self.cloud_agent_info.service_endpoint(agency_client)?,
+                cloud_agent_info.routing_keys(agency_client)?,
+                cloud_agent_info.service_endpoint(agency_client)?,
             )?),
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
                     .clone()
                     .send_connection_request(
                         wallet_handle,
-                        self.cloud_agent_info.routing_keys(agency_client)?,
-                        self.cloud_agent_info.service_endpoint(agency_client)?,
+                        cloud_agent_info.routing_keys(agency_client)?,
+                        cloud_agent_info.service_endpoint(agency_client)?,
                         send_message,
                     )
                     .await?,
@@ -655,6 +662,10 @@ impl Connection {
     pub async fn update_message_status(&self, uid: &str, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection::update_message_status >>> uid: {:?}", uid);
         self.cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
             .update_message_status(agency_client, self.pairwise_info(), uid.to_string())
             .await
     }
@@ -664,6 +675,10 @@ impl Connection {
             SmConnection::Inviter(sm_inviter) => {
                 let messages = self
                     .cloud_agent_info()
+                    .ok_or(VcxError::from_msg(
+                        VcxErrorKind::NoAgentInformation,
+                        "Missing cloud agent info",
+                    ))?
                     .get_messages_noauth(agency_client, sm_inviter.pairwise_info(), None)
                     .await?;
                 Ok(messages)
@@ -671,6 +686,10 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => {
                 let messages = self
                     .cloud_agent_info()
+                    .ok_or(VcxError::from_msg(
+                        VcxErrorKind::NoAgentInformation,
+                        "Missing cloud agent info",
+                    ))?
                     .get_messages_noauth(agency_client, sm_invitee.pairwise_info(), None)
                     .await?;
                 Ok(messages)
@@ -683,10 +702,18 @@ impl Connection {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
                 .cloud_agent_info()
+                .ok_or(VcxError::from_msg(
+                    VcxErrorKind::NoAgentInformation,
+                    "Missing cloud agent info",
+                ))?
                 .get_messages(agency_client, &expected_sender_vk, sm_inviter.pairwise_info())
                 .await?),
             SmConnection::Invitee(sm_invitee) => Ok(self
                 .cloud_agent_info()
+                .ok_or(VcxError::from_msg(
+                    VcxErrorKind::NoAgentInformation,
+                    "Missing cloud agent info",
+                ))?
                 .get_messages(agency_client, &expected_sender_vk, sm_invitee.pairwise_info())
                 .await?),
         }
@@ -706,6 +733,10 @@ impl Connection {
         trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
             .get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info())
             .await
     }
@@ -752,7 +783,9 @@ impl Connection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping.send_ping(self.send_message_closure(wallet_handle).await?).await?;
+        trust_ping
+            .send_ping(self.send_message_closure(wallet_handle).await?)
+            .await?;
         Ok(trust_ping)
     }
 
@@ -792,6 +825,10 @@ impl Connection {
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
         self.cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
             .destroy(agency_client, self.pairwise_info())
             .await
     }
@@ -818,7 +855,10 @@ impl Connection {
     pub async fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("Connection::get_connection_info >>>");
 
-        let agent_info = self.cloud_agent_info();
+        let agent_info = self.cloud_agent_info().ok_or(VcxError::from_msg(
+            VcxErrorKind::NoAgentInformation,
+            "Missing cloud agent info",
+        ))?;
         let pairwise_info = self.pairwise_info();
         let recipient_keys = vec![pairwise_info.pw_vk.clone()];
 
@@ -868,6 +908,10 @@ impl Connection {
             | ConnectionState::Inviter(InviterState::Invited) => {
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
+                        .ok_or(VcxError::from_msg(
+                            VcxErrorKind::NoAgentInformation,
+                            "Missing cloud agent info",
+                        ))?
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                         .await?,
                 )
@@ -881,6 +925,10 @@ impl Connection {
                 let expected_sender_vk = self.remote_vk().await?;
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
+                        .ok_or(VcxError::from_msg(
+                            VcxErrorKind::NoAgentInformation,
+                            "Missing cloud agent info",
+                        ))?
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                         .await?,
                 )
@@ -918,11 +966,12 @@ impl Serialize for Connection {
         S: Serializer,
     {
         let (state, pairwise_info, cloud_agent_info, source_id, thread_id) = self.to_owned().into();
+        let CloudAgentInfo { agent_did, agent_vk } = cloud_agent_info.unwrap_or_default();
         let data = LegacyAgentInfo {
             pw_did: pairwise_info.pw_did,
             pw_vk: pairwise_info.pw_vk,
-            agent_did: cloud_agent_info.agent_did,
-            agent_vk: cloud_agent_info.agent_vk,
+            agent_did,
+            agent_vk,
         };
         let object = SerializableObjectWithState::V1 {
             data,
@@ -971,7 +1020,7 @@ impl<'de> Visitor<'de> for ConnectionVisitor {
                     agent_did: data.agent_did,
                     agent_vk: data.agent_vk,
                 };
-                Ok((state, pairwise_info, cloud_agent_info, source_id, thread_id).into())
+                Ok((state, pairwise_info, Some(cloud_agent_info), source_id, thread_id).into())
             }
         }
     }
@@ -986,8 +1035,8 @@ impl<'de> Deserialize<'de> for Connection {
     }
 }
 
-impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
-    fn into(self) -> (SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String) {
+impl Into<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String)> for Connection {
+    fn into(self) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
         (
             self.state_object(),
             self.pairwise_info().to_owned(),
@@ -998,12 +1047,12 @@ impl Into<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for
     }
 }
 
-impl From<(SmConnectionState, PairwiseInfo, CloudAgentInfo, String, String)> for Connection {
+impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String)> for Connection {
     fn from(
         (state, pairwise_info, cloud_agent_info, source_id, thread_id): (
             SmConnectionState,
             PairwiseInfo,
-            CloudAgentInfo,
+            Option<CloudAgentInfo>,
             String,
             String,
         ),
@@ -1020,6 +1069,11 @@ mod tests {
     use agency_client::testing::mocking::enable_agency_mocks;
 
     use crate::handlers::connection::public_agent::test_utils::_pw_vk;
+    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
+    use crate::utils::mockdata::mockdata_connection::{
+        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
+        CONNECTION_SM_INVITER_COMPLETED,
+    };
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -1027,11 +1081,6 @@ mod tests {
     use messages::connection::response::test_utils::_signed_response;
     use messages::discovery::disclose::test_utils::_disclose;
     use messages::discovery::query::test_utils::_query;
-    use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
-    use crate::utils::mockdata::mockdata_connection::{
-        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
-        CONNECTION_SM_INVITER_COMPLETED,
-    };
 
     use super::*;
 
@@ -1155,9 +1204,12 @@ mod tests {
             connection.pairwise_info().pw_vk,
             "rCw3x5h1jS6gPo7rRrt3EYbXXe5nNjnGbdf1jAwUxuj"
         );
-        assert_eq!(connection.cloud_agent_info().agent_did, "EZrZyu4bfydm4ByNm56kPP");
         assert_eq!(
-            connection.cloud_agent_info().agent_vk,
+            connection.cloud_agent_info().unwrap().agent_did,
+            "EZrZyu4bfydm4ByNm56kPP"
+        );
+        assert_eq!(
+            connection.cloud_agent_info().unwrap().agent_vk,
             "8Ps2WosJ9AV1eXPoJKsEJdM3NchPhSyS8qFt6LQUTKv2"
         );
         assert_eq!(
