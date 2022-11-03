@@ -162,6 +162,13 @@ pub mod test_utils {
         "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string()
     }
 
+    pub fn _pw_info() -> PairwiseInfo {
+        PairwiseInfo {
+            pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
+            pw_vk: _pw_vk(),
+        }
+    }
+
     pub fn _public_agent() -> PublicAgent {
         PublicAgent {
             source_id: "test-public-agent".to_string(),

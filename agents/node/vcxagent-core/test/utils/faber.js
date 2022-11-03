@@ -65,13 +65,13 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
 
     logger.info(`Faber creating pairwise info`)
-    const { pw_vk: pwVk } = await createPwInfo();
-    logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwVk}`)
-    await createService(institutionDid, endpoint, [pwVk], [])
+    const pwInfo = await createPwInfo();
+    logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwInfo.pw_vk}`)
+    await createService(institutionDid, endpoint, [pwInfo.pw_vk], [])
 
     await vcxAgent.agentShutdownVcx()
 
-    return pwVk
+    return pwInfo
   }
 
   async function unpackMsg (encryptedMsg) {
@@ -297,11 +297,11 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function createConnectionFromReceivedRequestV2 (pwVk, request) {
+  async function createConnectionFromReceivedRequestV2 (pwInfo, request) {
     logger.info('Faber is going to create a connection from a request')
     await vcxAgent.agentInitVcx()
 
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwVk, request)
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwInfo, request)
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()

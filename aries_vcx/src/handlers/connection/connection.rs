@@ -126,18 +126,14 @@ impl Connection {
     pub async fn create_with_request(
         wallet_handle: WalletHandle,
         request: Request,
-        pw_vk: String,
+        pairwise_info: PairwiseInfo,
         agency_client: &AgencyClient,
     ) -> VcxResult<Self> {
         trace!(
-            "Connection::create_with_request >>> request: {:?}, pw_vk: {:?}",
+            "Connection::create_with_request >>> request: {:?}, pairwise_info: {:?}",
             request,
-            pw_vk
+            pairwise_info
         );
-        let pairwise_info = PairwiseInfo {
-            pw_vk,
-            ..PairwiseInfo::default()
-        };
         let mut connection = Self {
             cloud_agent_info: None,
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
@@ -1068,7 +1064,7 @@ mod tests {
 
     use agency_client::testing::mocking::enable_agency_mocks;
 
-    use crate::handlers::connection::public_agent::test_utils::_pw_vk;
+    use crate::handlers::connection::public_agent::test_utils::_pw_info;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
     use crate::utils::mockdata::mockdata_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
@@ -1168,7 +1164,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_vk(), &agency_client)
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_info(), &agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1183,7 +1179,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_vk(), &agency_client)
+        let connection = Connection::create_with_request(WalletHandle(0), _request(), _pw_info(), &agency_client)
             .await
             .unwrap();
         assert_eq!(

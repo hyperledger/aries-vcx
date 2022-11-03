@@ -22,7 +22,7 @@ describe('test connecting via unmediated endpoint', () => {
 
       const { alice, faber } = await createAliceAndFaber()
       const invite = await faber.createPublicInvite()
-      const pwVk = await faber.publishService(endpoint)
+      const pwInfo = await faber.publishService(endpoint)
 
       let encryptedMsg
       const app = express()
@@ -35,7 +35,7 @@ describe('test connecting via unmediated endpoint', () => {
 
       await alice.acceptInvite(invite)
       const { message } = await faber.unpackMsg(encryptedMsg)
-      await faber.createConnectionFromReceivedRequestV2(pwVk, message)
+      await faber.createConnectionFromReceivedRequestV2(pwInfo, message)
       await alice.updateConnection(ConnectionStateType.Finished)
       await faber.updateConnection(ConnectionStateType.Finished)
 

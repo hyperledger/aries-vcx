@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use serde_json;
 
 use crate::api_lib::global::pool::get_main_pool_handle;
@@ -150,14 +151,14 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     let connection = Connection::create_with_request(
         get_main_wallet_handle(),
         request,
-        agent.pairwise_info().pw_vk,
+        agent.pairwise_info(),
         &get_main_agency_client().unwrap(),
     )
     .await?;
     store_connection(connection)
 }
 
-pub async fn create_with_request_v2(request: &str, pw_vk: String) -> VcxResult<u32> {
+pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> VcxResult<u32> {
     let request: Request = serde_json::from_str(request).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
@@ -167,7 +168,7 @@ pub async fn create_with_request_v2(request: &str, pw_vk: String) -> VcxResult<u
     let connection = Connection::create_with_request(
         get_main_wallet_handle(),
         request,
-        pw_vk,
+        pw_info,
         &get_main_agency_client().unwrap(),
     )
     .await?;

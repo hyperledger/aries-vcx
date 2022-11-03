@@ -1015,7 +1015,7 @@ pub mod test_utils {
         let mut institution_to_consumer = Connection::create_with_request(
             faber.wallet_handle,
             conn_requests.pop().unwrap(),
-            faber.agent.pairwise_info().pw_vk,
+            faber.agent.pairwise_info(),
             &faber.agency_client,
         )
         .await
