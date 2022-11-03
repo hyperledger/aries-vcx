@@ -1,5 +1,8 @@
 use std::ptr;
 
+use aries_vcx::indy::signing::unpack_message_to_string;
+use aries_vcx::messages::did_doc::service_aries::AriesService;
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 use serde_json;
@@ -13,7 +16,7 @@ use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::transactions::get_ledger_txn;
+use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
@@ -729,6 +732,183 @@ pub extern "C" fn vcx_get_ledger_txn(
 
         Ok(())
     }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_unpack(
+    command_handle: CommandHandle,
+    payload: *const u8,
+    payload_len: u32,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, decrypted_payload: *const c_char)>,
+) -> u32 {
+    info!("vcx_unpack >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_byte_array!(payload, payload_len, VcxErrorKind::InvalidOption, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_unpack(command_handle: {}, payload: ...)",
+        command_handle,
+    );
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match unpack_message_to_string(get_main_wallet_handle(), payload.as_slice()).await {
+                Ok(msg) => {
+                    trace!(
+                        "vcx_unpack(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let msg = CStringUtils::string_to_cstring(msg);
+                    cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_unpack(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_create_pairwise_info(
+    command_handle: CommandHandle,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, pw_info: *const c_char)>,
+) -> u32 {
+    info!("vcx_create_pairwise_info >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_create_pairwise_info(command_handle: {})",
+        command_handle,
+    );
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match PairwiseInfo::create(get_main_wallet_handle()).await {
+                Ok(pw_info) => {
+                    trace!(
+                        "vcx_create_pairwise_info(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let pw_info = CStringUtils::string_to_cstring(json!(pw_info).to_string());
+                    cb(command_handle, error::SUCCESS.code_num, pw_info.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_create_pairwise_info(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_create_service(
+    command_handle: CommandHandle,
+    institution_did: *const c_char,
+    endpoint: *const c_char,
+    recipient_keys: *const c_char,
+    routing_keys: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>,
+) -> u32 {
+    info!("vcx_create_service >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(institution_did, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(endpoint, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(recipient_keys, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(routing_keys, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_create_service(command_handle: {})",
+        command_handle,
+    );
+
+    let recipient_keys: Vec<String> = match serde_json::from_str(&recipient_keys) {
+        Ok(recipient_keys) => recipient_keys,
+        Err(err) => {
+            set_current_error(&err);
+            error!(
+                "vcx_create_service >>> Cannot deserialize recipient_keys: {:?}",
+                err
+            );
+            return error::INVALID_CONFIGURATION.code_num;
+        }
+    };
+
+    let routing_keys: Vec<String> = match serde_json::from_str(&routing_keys) {
+        Ok(recipient_keys) => recipient_keys,
+        Err(err) => {
+            set_current_error(&err);
+            error!(
+                "vcx_create_service >>> Cannot deserialize routing keys: {:?}",
+                err
+            );
+            return error::INVALID_CONFIGURATION.code_num;
+        }
+    };
+
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
+    let service = AriesService::create()
+        .set_service_endpoint(endpoint)
+        .set_recipient_keys(recipient_keys)
+        .set_routing_keys(routing_keys);
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match add_service(get_main_wallet_handle(), pool_handle, &institution_did, &service).await {
+                Ok(_res) => {
+                    trace!(
+                        "vcx_create_service(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let service = CStringUtils::string_to_cstring(json!(service).to_string());
+                    cb(command_handle, error::SUCCESS.code_num, service.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_create_service(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
 
     error::SUCCESS.code_num
 }

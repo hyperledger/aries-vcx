@@ -34,6 +34,17 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     return connection
   }
 
+  async function inviterConnectionCreateFromRequestV2 (connectionId, pwInfo, request) {
+    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and pw info ${pwInfo}`)
+    const connection = await Connection.createWithConnectionRequestV2({
+      id: connectionId,
+      pwInfo,
+      request
+    })
+    await saveConnection(connectionId, connection)
+    return connection
+  }
+
   async function inviterConnectionCreateAndAccept (conenctionId, cbInvitation, attemptThreshold = 20, timeoutMs = 500) {
     const invite = await inviterConnectionCreate(conenctionId, cbInvitation)
     const connection = await loadConnection(conenctionId)
@@ -185,6 +196,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     // inviter
     inviterConnectionCreate,
     inviterConnectionCreateFromRequest,
+    inviterConnectionCreateFromRequestV2,
     inviterConnectionCreateAndAccept,
 
     // invitee

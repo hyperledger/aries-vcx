@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use serde_json;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::protocols::SendClosure;
-use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
@@ -41,12 +42,28 @@ pub fn is_valid_handle(handle: u32) -> bool {
 
 pub fn get_agent_did(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
-        Ok(connection.cloud_agent_info().agent_did.to_string())
+        Ok(connection
+            .cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
+            .agent_did
+            .to_string())
     })
 }
 
 pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
-    CONNECTION_MAP.get(handle, |connection| Ok(connection.cloud_agent_info().agent_vk.clone()))
+    CONNECTION_MAP.get(handle, |connection| {
+        Ok(connection
+            .cloud_agent_info()
+            .ok_or(VcxError::from_msg(
+                VcxErrorKind::NoAgentInformation,
+                "Missing cloud agent info",
+            ))?
+            .agent_vk
+            .clone())
+    })
 }
 
 pub fn get_pw_did(handle: u32) -> VcxResult<String> {
@@ -134,7 +151,24 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     let connection = Connection::create_with_request(
         get_main_wallet_handle(),
         request,
-        &agent,
+        agent.pairwise_info(),
+        &get_main_agency_client().unwrap(),
+    )
+    .await?;
+    store_connection(connection)
+}
+
+pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> VcxResult<u32> {
+    let request: Request = serde_json::from_str(request).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize connection request: {:?}", err),
+        )
+    })?;
+    let connection = Connection::create_with_request(
+        get_main_wallet_handle(),
+        request,
+        pw_info,
         &get_main_agency_client().unwrap(),
     )
     .await?;

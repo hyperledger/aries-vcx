@@ -6,7 +6,7 @@ import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
 import { PublicAgent } from './public-agent';
-import { PtrBuffer } from './utils';
+import { PtrBuffer, IPwInfo } from './utils';
 
 /**
  *   The object of the VCX API representing a pairwise relationship with another identity owner.
@@ -131,9 +131,12 @@ export interface IRecipientInviteInfo extends IConnectionCreateData {
 }
 
 export interface IFromRequestInfo extends IConnectionCreateData {
-  // Invitation provided by an entity that wishes to make a connection.
-  invite: IConnectionInvite;
   agent: PublicAgent;
+  request: string;
+}
+
+export interface IFromRequestInfoV2 extends IConnectionCreateData {
+  pwInfo: IPwInfo;
   request: string;
 }
 
@@ -377,6 +380,23 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     try {
       await connection._create((cb) =>
         rustAPI().vcx_connection_create_with_connection_request(commandHandle, id, agent.handle, request, cb),
+      );
+      return connection;
+    } catch (err) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public static async createWithConnectionRequestV2({
+    id,
+    pwInfo,
+    request
+  }: IFromRequestInfoV2): Promise<Connection> {
+    const connection = new Connection(id);
+    const commandHandle = 0;
+    try {
+      await connection._create((cb) =>
+        rustAPI().vcx_connection_create_with_connection_request_v2(commandHandle, id, JSON.stringify(pwInfo), request, cb),
       );
       return connection;
     } catch (err) {

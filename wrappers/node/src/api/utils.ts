@@ -4,6 +4,17 @@ import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
 import { IConnectionDownloadAllMessages } from './connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
+import * as ref from 'ref-napi';
+
+export interface IPwInfo {
+  pw_did: string;
+  pw_vk: string;
+}
+
+export interface IMsgUnpacked {
+  sender_verkey: string;
+  message: string;
+}
 
 export async function provisionCloudAgent (configAgent: object): Promise<string> {
   try {
@@ -313,6 +324,79 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
             return;
           }
           resolve(txn);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function createPwInfo(): Promise<IPwInfo> {
+  try {
+    return await createFFICallbackPromise<IPwInfo>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI().vcx_create_pairwise_info(0, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, pwInfo: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(JSON.parse(pwInfo));
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function createService(
+  did: string, endpoint: string, recipientKeys: string[], routingKeys: string[]
+): Promise<string> {
+  try {
+    return await createFFICallbackPromise<string>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI()
+          .vcx_create_service(0, did, endpoint, JSON.stringify(recipientKeys), JSON.stringify(routingKeys), cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, service: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(service);
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function unpack(payload: Buffer): Promise<IMsgUnpacked> {
+  try {
+    return await createFFICallbackPromise<IMsgUnpacked>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI()
+          .vcx_unpack(0, ref.address(payload), payload.length, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, decryptedPayload: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(JSON.parse(decryptedPayload));
         }),
     );
   } catch (err) {

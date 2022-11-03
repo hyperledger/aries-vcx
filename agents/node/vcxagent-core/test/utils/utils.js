@@ -2,6 +2,12 @@ const { createFaber } = require('./faber')
 const { createAlice } = require('./alice')
 const { ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 
+module.exports.createAliceAndFaber = async function createAliceAndFaber () {
+  const alice = await createAlice()
+  const faber = await createFaber()
+  return { alice, faber }
+}
+
 module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFaber () {
   const alice = await createAlice()
   const faber = await createFaber()
@@ -42,11 +48,5 @@ module.exports.connectViaOobMessage = async function connectViaOobMessage (alice
   await faber.createConnectionFromReceivedRequest()
   await alice.updateConnection(ConnectionStateType.Finished)
   await faber.updateConnection(ConnectionStateType.Finished)
-  return { alice, faber }
-}
-
-module.exports.createAliceAndFaber = async function createAliceAndFaber () {
-  const alice = await createAlice()
-  const faber = await createFaber()
   return { alice, faber }
 }

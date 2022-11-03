@@ -1,5 +1,6 @@
 use std::ptr;
 
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::BoxFuture;
 use libc::c_char;
 
@@ -13,7 +14,7 @@ use crate::api_lib::api_handle::connection::*;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -332,6 +333,7 @@ pub extern "C" fn vcx_connection_create_with_invite(
 }
 
 #[no_mangle]
+#[deprecated(since = "0.45.0", note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2.")]
 pub extern "C" fn vcx_connection_create_with_connection_request(
     command_handle: CommandHandle,
     source_id: *const c_char,
@@ -356,6 +358,54 @@ pub extern "C" fn vcx_connection_create_with_connection_request(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
+                cb(command_handle, err.into(), 0);
+            }
+        };
+
+        Ok(())
+    }));
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_connection_create_with_connection_request_v2(
+    command_handle: CommandHandle,
+    source_id: *const c_char,
+    pw_info: *const c_char,
+    request: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>,
+) -> u32 {
+    info!("vcx_connection_create_with_connection_request_v2 >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(pw_info, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
+
+    trace!("vcx_connection_create_with_connection_request_v2(command_handle: {}, pw_info: {}, request: {}) source_id: {}", command_handle, pw_info, request, source_id);
+
+    let pw_info: PairwiseInfo = match serde_json::from_str(&pw_info) {
+        Ok(pw_info) => pw_info,
+        Err(err) => {
+            set_current_error(&err);
+            error!(
+                "vcx_connection_create_with_connection_request_v2 >>> Cannot deserialize pw info: {:?}",
+                err
+            );
+            return error::INVALID_CONFIGURATION.code_num;
+        }
+    };
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
+        match create_with_request_v2(&request, pw_info).await {
+            Ok(handle) => {
+                trace!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, error::SUCCESS.message, handle, source_id);
+                cb(command_handle, error::SUCCESS.code_num, handle);
+            }
+            Err(err) => {
+                set_current_error_vcx(&err);
+                error!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };
