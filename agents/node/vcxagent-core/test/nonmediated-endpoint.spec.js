@@ -24,20 +24,41 @@ describe('test connecting via unmediated endpoint', () => {
       const invite = await faber.createPublicInvite()
       const pwVk = await faber.publishService(endpoint)
 
-      let msg
+      let encryptedMsg
       const app = express()
       app.use(bodyParser.raw({ type: '*/*' }))
       app.post(path, (req, res) => {
-        msg = req.body
+        encryptedMsg = req.body
         res.status(200).send()
       })
       server = app.listen(port)
 
       await alice.acceptInvite(invite)
-      const { message } = await faber.unpackMsg(msg)
+      const { message } = await faber.unpackMsg(encryptedMsg)
       await faber.createConnectionFromReceivedRequestV2(pwVk, message)
       await alice.updateConnection(ConnectionStateType.Finished)
       await faber.updateConnection(ConnectionStateType.Finished)
+
+      await alice.sendMessage('Hello Faber')
+      const msgsFaber = await faber.downloadReceivedMessagesV2()
+      expect(msgsFaber.length).toBe(1)
+      expect(msgsFaber[0].uid).toBeDefined()
+      expect(msgsFaber[0].statusCode).toBe('MS-103')
+      const payloadFaber = JSON.parse(msgsFaber[0].decryptedMsg)
+      expect(payloadFaber['@id']).toBeDefined()
+      expect(payloadFaber['@type']).toBeDefined()
+      expect(payloadFaber.content).toBe('Hello Faber')
+
+      await faber.sendMessage('Hello Alice')
+      const msgsAlice = await alice.downloadReceivedMessagesV2()
+      expect(msgsAlice.length).toBe(1)
+      expect(msgsAlice[0].uid).toBeDefined()
+      expect(msgsAlice[0].statusCode).toBe('MS-103')
+      const payloadAlice = JSON.parse(msgsAlice[0].decryptedMsg)
+      expect(payloadAlice['@id']).toBeDefined()
+      expect(payloadAlice['@type']).toBeDefined()
+      expect(payloadAlice.content).toBe('Hello Alice')
+
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)
