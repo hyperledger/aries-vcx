@@ -16,6 +16,15 @@ export interface IMsgUnpacked {
   message: string;
 }
 
+export interface IAriesService {
+  id: string;
+  type: string;
+  priority: number;
+  recipientKeys: string[];
+  routingKeys: string[];
+  serviceEndpoint: string;
+}
+
 export async function provisionCloudAgent (configAgent: object): Promise<string> {
   try {
     return await createFFICallbackPromise<string>(
@@ -356,9 +365,9 @@ export async function createPwInfo(): Promise<IPwInfo> {
 
 export async function createService(
   did: string, endpoint: string, recipientKeys: string[], routingKeys: string[]
-): Promise<string> {
+): Promise<IAriesService> {
   try {
-    return await createFFICallbackPromise<string>(
+    return await createFFICallbackPromise<IAriesService>(
       (_resolve, reject, cb) => {
         const rc = rustAPI()
           .vcx_create_service(0, did, endpoint, JSON.stringify(recipientKeys), JSON.stringify(routingKeys), cb);
@@ -372,7 +381,31 @@ export async function createService(
             reject(err);
             return;
           }
-          resolve(service);
+          resolve(JSON.parse(service));
+        }),
+    );
+  } catch (err) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function getServiceFromLedger (did: string): Promise<IAriesService> {
+  try {
+    return await createFFICallbackPromise<IAriesService>(
+      (_resolve, reject, cb) => {
+        const rc = rustAPI()
+          .vcx_get_service_from_ledger(0, did, cb);
+        if (rc) {
+          reject(rc);
+        }
+      },
+      (resolve, reject) =>
+        Callback('void', ['uint32', 'uint32', 'string'], (_xhandle: number, err: number, service: string) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(JSON.parse(service));
         }),
     );
   } catch (err) {

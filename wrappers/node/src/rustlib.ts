@@ -602,6 +602,10 @@ export interface IFFIEntryPoint {
     recipientKeys: string,
     routingKeys: string,
     cb: ICbRef) => number;
+  vcx_get_service_from_ledger: (
+    commandId: number,
+    did: string,
+    cb: ICbRef) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1272,6 +1276,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_create_service: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]
+  ],
+  vcx_get_service_from_ledger: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]
   ],
 };
 

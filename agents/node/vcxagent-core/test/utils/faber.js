@@ -1,7 +1,7 @@
 /* eslint-env jest */
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
 const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
-  createPwInfo, createService, unpack
+  createPwInfo, createService, getServiceFromLedger, unpack
 } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 const sleep = require('sleep-promise')
@@ -72,6 +72,17 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
 
     return pwInfo
+  }
+
+  async function readServiceFromLedger () {
+    logger.info('Faber is going to read service from the ledger')
+    await vcxAgent.agentInitVcx()
+
+    const service = await getServiceFromLedger(institutionDid)
+
+    await vcxAgent.agentShutdownVcx()
+
+    return service
   }
 
   async function unpackMsg (encryptedMsg) {
@@ -391,6 +402,7 @@ module.exports.createFaber = async function createFaber () {
     updateMessageStatus,
     updateAllReceivedMessages,
     publishService,
+    readServiceFromLedger,
     unpackMsg
   }
 }

@@ -362,7 +362,6 @@ pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvabl
     }
 }
 
-
 pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> VcxResult<DidDoc> {
     let mut did_doc: DidDoc = DidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
