@@ -23,6 +23,8 @@ describe('test connecting via unmediated endpoint', () => {
       const { alice, faber } = await createAliceAndFaber()
       const invite = await faber.createPublicInvite()
       const pwInfo = await faber.publishService(endpoint)
+      const service = await faber.readServiceFromLedger()
+      expect(service.recipientKeys[0]).toBe(pwInfo.pw_vk)
 
       let encryptedMsg
       const app = express()

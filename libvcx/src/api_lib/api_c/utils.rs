@@ -1,6 +1,7 @@
 use std::ptr;
 
 use aries_vcx::indy::signing::unpack_message_to_string;
+use aries_vcx::messages::connection::did::Did;
 use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::{BoxFuture, FutureExt};
@@ -16,7 +17,7 @@ use aries_vcx::vdrtools_sys::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service};
+use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service, get_service};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::connection;
@@ -898,6 +899,62 @@ pub extern "C" fn vcx_create_service(
                 Err(err) => {
                     error!(
                         "vcx_create_service(command_handle: {}, rc: {})",
+                        command_handle, err
+                    );
+
+                    cb(command_handle, err.into(), ptr::null_mut());
+                }
+            };
+
+            Ok(())
+        }
+        .boxed(),
+    );
+
+    error::SUCCESS.code_num
+}
+
+#[no_mangle]
+pub extern "C" fn vcx_get_service_from_ledger(
+    command_handle: CommandHandle,
+    institution_did: *const c_char,
+    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>,
+) -> u32 {
+    info!("vcx_get_service_from_ledger >>>");
+
+    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(institution_did, VcxErrorKind::InvalidOption);
+
+    trace!(
+        "vcx_get_service_from_ledger(command_handle: {})",
+        command_handle,
+    );
+
+    let pool_handle = match get_main_pool_handle() {
+        Ok(handle) => handle,
+        Err(err) => return err.into(),
+    };
+
+    let institution_did = match Did::new(&institution_did) {
+        Ok(did) => did,
+        Err(err) => return err.into(),
+    };
+
+    execute_async::<BoxFuture<'static, Result<(), ()>>>(
+        async move {
+            match get_service(pool_handle, &institution_did).await {
+                Ok(service) => {
+                    trace!(
+                        "vcx_get_service_from_ledger_cb(command_handle: {}, rc: {})",
+                        command_handle,
+                        error::SUCCESS.message
+                    );
+                    let service = CStringUtils::string_to_cstring(json!(service).to_string());
+                    cb(command_handle, error::SUCCESS.code_num, service.as_ptr());
+                }
+                Err(err) => {
+                    error!(
+                        "vcx_get_service_from_ledger_cb(command_handle: {}, rc: {})",
                         command_handle, err
                     );
 
