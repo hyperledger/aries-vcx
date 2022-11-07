@@ -8,7 +8,6 @@
 #import "IndyCallbacks.h"
 #import "NSError+VcxError.h"
 #import "IndyTypes.h"
-#import "VcxLogger.h"
 
 static NSString *commandCallbackKey = @"commandCallback";
 

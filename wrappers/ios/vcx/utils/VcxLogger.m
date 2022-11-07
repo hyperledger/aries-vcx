@@ -7,10 +7,7 @@
 //
 
 #import "VcxLogger.h"
-#import "NSError+VcxError.h"
-#import "VcxTypes.h"
-#import "VcxErrors.h"
-#include "vcx.h"
+#import "libvcx.h"
 
 @interface VcxLogger ()
 
@@ -19,6 +16,8 @@
 @end
 
 @implementation VcxLogger : NSObject
+
+@synthesize callbacks;
 
 + (void)setDefaultLogger:(NSString *)pattern {
     vcx_set_default_logger([pattern UTF8String]);
@@ -48,13 +47,15 @@
     return self;
 }
 
-void logCallback(const void *context,
+void logCallback(
+        const void *context,
         uint32_t level,
         const char *target,
         const char *message,
         const char *modulePath,
         const char *file,
-        uint32_t line) {
+        uint32_t line
+) {
     id block = [VcxLogger sharedInstance].callbacks[0];
 
     void (^completion)(NSObject *, NSNumber *, NSString *, NSString *, NSString *, NSString *, NSNumber *) =
