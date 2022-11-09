@@ -338,7 +338,12 @@ pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> Vc
 }
 
 pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesService> {
-    let attr_resp = get_attr(pool_handle, &did.to_string(), "service").await?;
+    let did_raw = did.to_string();
+    let  did_raw = match  did_raw.rsplit_once(':'){
+        None => {did_raw}
+        Some((_,value)) => {value.to_string()}
+    };
+    let attr_resp = get_attr(pool_handle, &did_raw, "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),

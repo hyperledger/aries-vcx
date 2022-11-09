@@ -102,7 +102,9 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
-    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
+    let mut did_sov = "did:sov:".to_owned();
+    did_sov.push_str(&did);
+    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(&did_sov)?));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
@@ -246,7 +248,7 @@ pub mod tests {
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
         assert_eq!(
-            ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()),
+            ServiceResolvable::Did(Did::new("did:sov:V4SGRU86Z58d6TV7PBUe6f").unwrap()),
             resolved_service[1]
         );
     }
