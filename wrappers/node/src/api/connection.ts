@@ -201,7 +201,7 @@ export function voidPtrToUint8Array(origPtr: Buffer, length: number): Buffer {
    * Read the contents of the pointer and copy it into a new Buffer
    */
   const ptrType = ref.refType('uint8 *');
-  return ref.readPointer(origPtr, 0, length * ptrType.size)
+  return ref.reinterpret(origPtr, length * ptrType.size)
 }
 
 export interface IDownloadMessagesConfigsV2 {
