@@ -1,12 +1,12 @@
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::future::Future;
 
 use vdrtools_sys::WalletHandle;
 
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
+use crate::protocols::SendClosure;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::ack::Ack;
@@ -245,19 +245,13 @@ impl SmConnectionInvitee {
     }
 
     // todo: extract response validation to different function
-    async fn _send_ack<F, T>(
+    async fn _send_ack(
         &self,
-        wallet_handle: WalletHandle,
         did_doc: &DidDoc,
         request: &Request,
         response: &SignedResponse,
-        pairwise_info: &PairwiseInfo,
-        send_message: F,
-    ) -> VcxResult<Response>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
+        send_message: &SendClosure,
+    ) -> VcxResult<Response> {
         let remote_vk: String = did_doc.recipient_keys().get(0).cloned().ok_or(VcxError::from_msg(
             VcxErrorKind::InvalidState,
             "Cannot handle response: remote verkey not found",
@@ -277,13 +271,7 @@ impl SmConnectionInvitee {
 
         let message = self.build_connection_ack_msg()?.to_a2a_message();
 
-        send_message(
-            wallet_handle,
-            pairwise_info.pw_vk.clone(),
-            response.connection.did_doc.clone(),
-            message,
-        )
-        .await?;
+        send_message(message).await?;
         Ok(response)
     }
 
@@ -306,29 +294,18 @@ impl SmConnectionInvitee {
         })
     }
 
-    pub async fn send_connection_request<F, T>(
+    pub async fn send_connection_request(
         self,
-        wallet_handle: WalletHandle,
         routing_keys: Vec<String>,
         service_endpoint: String,
-        send_message: F,
-    ) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
                 let ddo = self.their_did_doc().await
                     .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
-                send_message(
-                    wallet_handle,
-                    self.pairwise_info.pw_vk.clone(),
-                    ddo.clone(),
-                    request.to_a2a_message(),
-                )
-                .await?;
+                send_message(request.to_a2a_message()).await?;
                 (InviteeFullState::Requested((state.clone(), request, ddo).into()), thread_id)
             }
             _ => (self.state.clone(), self.get_thread_id()),
@@ -358,20 +335,15 @@ impl SmConnectionInvitee {
     }
 
     // todo: send ack is validaiting connection response, should be moved to handle_connection_response
-    pub async fn handle_send_ack<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
+    pub async fn handle_send_ack(self, send_message: SendClosure) -> VcxResult<Self>
     {
         let state = match self.state {
             InviteeFullState::Responded(ref state) => match self
                 ._send_ack(
-                    wallet_handle,
                     &state.did_doc,
                     &state.request,
                     &state.response,
-                    &self.pairwise_info,
-                    send_message,
+                    &send_message,
                 )
                 .await
             {
@@ -383,9 +355,6 @@ impl SmConnectionInvitee {
                         .set_thread_id(&self.thread_id)
                         .set_out_time();
                     send_message(
-                        wallet_handle,
-                        self.pairwise_info.pw_vk.clone(),
-                        state.did_doc.clone(),
                         problem_report.to_a2a_message(),
                     )
                     .await
@@ -421,9 +390,9 @@ pub mod unit_tests {
     use messages::connection::request::unit_tests::_request;
     use messages::connection::response::test_utils::_signed_response;
     use messages::discovery::disclose::test_utils::_disclose;
-    
+
     use messages::trust_ping::ping::unit_tests::_ping;
-    
+
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
     use crate::indy::signing::sign_connection_response;
@@ -442,14 +411,10 @@ pub mod unit_tests {
 
         use super::*;
 
-        async fn _send_message(
-            _wallet_handle: WalletHandle,
-            _pv_wk: String,
-            _did_doc: DidDoc,
-            _a2a_message: A2AMessage,
-        ) -> VcxResult<()> {
-            VcxResult::Ok(())
+        pub fn _send_message() -> SendClosure {
+            Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))
         }
+
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
             let pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();
@@ -469,7 +434,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 self = self
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(routing_keys, service_endpoint, _send_message())
                     .await
                     .unwrap();
                 self
@@ -482,7 +447,7 @@ pub mod unit_tests {
                     .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
                     .unwrap();
                 self = self
-                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_ack(_send_message())
                     .await
                     .unwrap();
                 self
@@ -606,7 +571,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 invitee = invitee
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(routing_keys, service_endpoint, _send_message())
                     .await
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
@@ -655,7 +620,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(routing_keys, service_endpoint, _send_message())
                     .await
                     .unwrap();
                 assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
@@ -684,7 +649,7 @@ pub mod unit_tests {
                 let routing_keys: Vec<String> = vec!["verkey123".into()];
                 let service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
-                    .send_connection_request(_dummy_wallet_handle(), routing_keys, service_endpoint, _send_message)
+                    .send_connection_request(routing_keys, service_endpoint, _send_message())
                     .await
                     .unwrap();
 
@@ -716,7 +681,7 @@ pub mod unit_tests {
                     .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
                     .unwrap();
                 did_exchange_sm = did_exchange_sm
-                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_ack(_send_message())
                     .await
                     .unwrap();
 
@@ -746,7 +711,7 @@ pub mod unit_tests {
 
                 did_exchange_sm = did_exchange_sm.handle_connection_response(signed_response).unwrap();
                 did_exchange_sm = did_exchange_sm
-                    .handle_send_ack(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_ack(_send_message())
                     .await
                     .unwrap();
 

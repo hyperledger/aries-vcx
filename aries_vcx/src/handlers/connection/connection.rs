@@ -585,6 +585,7 @@ impl Connection {
     async fn step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
+                let send_message = self.send_message_closure(wallet_handle).await?;
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionInvitationPublic(invitation) => {
@@ -601,7 +602,7 @@ impl Connection {
                         }
                         _ => (sm_invitee, false),
                     },
-                    None => (sm_invitee.handle_send_ack(wallet_handle, &send_message).await?, false),
+                    None => (sm_invitee.handle_send_ack(send_message).await?, false),
                 };
                 let connection = Self {
                     connection_sm: SmConnection::Invitee(sm_invitee),
@@ -640,17 +641,19 @@ impl Connection {
                 cloud_agent_info.routing_keys(agency_client)?,
                 cloud_agent_info.service_endpoint(agency_client)?,
             )?),
-            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
-                sm_invitee
-                    .clone()
-                    .send_connection_request(
-                        wallet_handle,
-                        cloud_agent_info.routing_keys(agency_client)?,
-                        cloud_agent_info.service_endpoint(agency_client)?,
-                        send_message,
-                    )
-                    .await?,
-            ),
+            SmConnection::Invitee(sm_invitee) => {
+                let send_message = self.send_message_closure(wallet_handle).await?;
+                SmConnection::Invitee(
+                    sm_invitee
+                        .clone()
+                        .send_connection_request(
+                            cloud_agent_info.routing_keys(agency_client)?,
+                            cloud_agent_info.service_endpoint(agency_client)?,
+                            send_message,
+                        )
+                        .await?
+                )
+            }
         };
         Ok(())
     }
@@ -719,7 +722,7 @@ impl Connection {
         self.remote_vk().await.map_err(|_err| {
             VcxError::from_msg(
                 VcxErrorKind::NotReady,
-                "Verkey of connection counterparty \
+                "Verkey of Connection counterparty \
                 is not known, hence it would be impossible to authenticate message downloaded by id.",
             )
         })
