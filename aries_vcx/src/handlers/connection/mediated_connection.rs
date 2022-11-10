@@ -89,7 +89,7 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
         autohop_enabled: bool,
     ) -> VcxResult<Self> {
-        trace!("Connection::create >>> source_id: {}", source_id);
+        trace!("MediatedConnection::create >>> source_id: {}", source_id);
         let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         Ok(Self {
@@ -108,7 +108,7 @@ impl MediatedConnection {
         autohop_enabled: bool,
     ) -> VcxResult<Self> {
         trace!(
-            "Connection::create_with_invite >>> source_id: {}, invitation: {:?}",
+            "MediatedConnection::create_with_invite >>> source_id: {}, invitation: {:?}",
             source_id,
             invitation
         );
@@ -130,7 +130,7 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<Self> {
         trace!(
-            "Connection::create_with_request >>> request: {:?}, pairwise_info: {:?}",
+            "MediatedConnection::create_with_request >>> request: {:?}, pairwise_info: {:?}",
             request,
             pairwise_info
         );
@@ -282,7 +282,7 @@ impl MediatedConnection {
     }
 
     pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
-        trace!("Connection::process_invite >>> invitation: {:?}", invitation);
+        trace!("MediatedConnection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -300,9 +300,10 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
         request: Request,
     ) -> VcxResult<()> {
-        trace!("Connection::process_request >>> request: {:?}", request);
+        trace!("MediatedConnection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
+                let send_message = self.send_message_closure(wallet_handle).await?;
                 let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                 let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
@@ -334,11 +335,12 @@ impl MediatedConnection {
     }
 
     pub async fn send_response(&mut self, wallet_handle: WalletHandle) -> VcxResult<()> {
-        trace!("Connection::send_response >>>");
+        trace!("MediatedConnection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
+                let send_message = self.send_message_closure(wallet_handle).await?;
                 if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                    sm_inviter.handle_send_response(wallet_handle, &send_message).await?
+                    sm_inviter.handle_send_response(send_message).await?
                 } else {
                     return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
                 }
@@ -352,7 +354,7 @@ impl MediatedConnection {
     }
 
     pub fn get_invite_details(&self) -> Option<&Invitation> {
-        trace!("Connection::get_invite_details >>>");
+        trace!("MediatedConnection::get_invite_details >>>");
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.get_invitation(),
             SmConnection::Invitee(_sm_invitee) => None,
@@ -393,7 +395,7 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if !self.is_in_final_state() {
-            warn!("Connection::find_and_handle_message >> connection is not in final state, skipping");
+            warn!("MediatedConnection::find_and_handle_message >> connection is not in final state, skipping");
             return Ok(());
         }
         let messages = self.get_messages_noauth(agency_client).await?;
@@ -479,24 +481,24 @@ impl MediatedConnection {
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if self.is_in_null_state() {
-            warn!("Connection::update_state :: update state on connection in null state is ignored");
+            warn!("MediatedConnection::update_state :: update state on connection in null state is ignored");
             return Ok(());
         }
         if self.is_in_final_state() {
-            warn!("Connection::update_state :: update state on connection in final state is ignored");
+            warn!("MediatedConnection::update_state :: update state on connection in final state is ignored");
             return Ok(());
         }
         trace!(
-            "Connection::update_state >>> before update_state {:?}",
+            "MediatedConnection::update_state >>> before update_state {:?}",
             self.get_state()
         );
 
         let messages = self.get_messages_noauth(agency_client).await?;
-        trace!("Connection::update_state >>> retrieved messages {:?}", messages);
+        trace!("MediatedConnection::update_state >>> retrieved messages {:?}", messages);
 
         match self.find_message_to_update_state(messages) {
             Some((uid, message)) => {
-                trace!("Connection::update_state >>> handling message uid: {:?}", uid);
+                trace!("MediatedConnection::update_state >>> handling message uid: {:?}", uid);
                 self.update_state_with_message(wallet_handle, agency_client.clone(), Some(message))
                     .await?;
                 self.cloud_agent_info()
@@ -508,13 +510,13 @@ impl MediatedConnection {
                     .await?;
             }
             None => {
-                trace!("Connection::update_state >>> trying to update state without message");
+                trace!("MediatedConnection::update_state >>> trying to update state without message");
                 self.update_state_with_message(wallet_handle, agency_client.clone(), None)
                     .await?;
             }
         }
 
-        trace!("Connection::update_state >>> after update_state {:?}", self.get_state());
+        trace!("MediatedConnection::update_state >>> after update_state {:?}", self.get_state());
         Ok(())
     }
 
@@ -529,6 +531,7 @@ impl MediatedConnection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
+                            let send_message = self.send_message_closure(wallet_handle).await?;
                             let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
@@ -555,8 +558,9 @@ impl MediatedConnection {
                     },
                     None => {
                         if let InviterFullState::Requested(_) = sm_inviter.state_object() {
+                            let send_message = self.send_message_closure(wallet_handle).await?;
                             (
-                                sm_inviter.handle_send_response(wallet_handle, &send_message).await?,
+                                sm_inviter.handle_send_response(send_message).await?,
                                 None,
                                 false,
                             )
@@ -585,6 +589,7 @@ impl MediatedConnection {
     async fn step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
+                let send_message = self.send_message_closure(wallet_handle).await?;
                 let (sm_invitee, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionInvitationPublic(invitation) => {
@@ -601,7 +606,7 @@ impl MediatedConnection {
                         }
                         _ => (sm_invitee, false),
                     },
-                    None => (sm_invitee.handle_send_ack(wallet_handle, &send_message).await?, false),
+                    None => (sm_invitee.handle_send_ack(send_message).await?, false),
                 };
                 let connection = Self {
                     connection_sm: SmConnection::Invitee(sm_invitee),
@@ -630,7 +635,8 @@ impl MediatedConnection {
     }
 
     pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
-        trace!("Connection::connect >>> source_id: {}", self.source_id());
+        trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
+        let send_message = self.send_message_closure(wallet_handle).await?;
         let cloud_agent_info = self.cloud_agent_info.clone().ok_or(VcxError::from_msg(
             VcxErrorKind::NoAgentInformation,
             "Missing cloud agent info",
@@ -644,7 +650,6 @@ impl MediatedConnection {
                 sm_invitee
                     .clone()
                     .send_connection_request(
-                        wallet_handle,
                         cloud_agent_info.routing_keys(agency_client)?,
                         cloud_agent_info.service_endpoint(agency_client)?,
                         send_message,
@@ -656,7 +661,7 @@ impl MediatedConnection {
     }
 
     pub async fn update_message_status(&self, uid: &str, agency_client: &AgencyClient) -> VcxResult<()> {
-        trace!("Connection::update_message_status >>> uid: {:?}", uid);
+        trace!("MediatedConnection::update_message_status >>> uid: {:?}", uid);
         self.cloud_agent_info()
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NoAgentInformation,
@@ -719,14 +724,14 @@ impl MediatedConnection {
         self.remote_vk().await.map_err(|_err| {
             VcxError::from_msg(
                 VcxErrorKind::NotReady,
-                "Verkey of connection counterparty \
+                "Verkey of MediatedConnection counterparty \
                 is not known, hence it would be impossible to authenticate message downloaded by id.",
             )
         })
     }
 
     pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
+        trace!("MediatedConnection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
             .ok_or(VcxError::from_msg(
@@ -761,14 +766,14 @@ impl MediatedConnection {
     }
 
     pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
-        trace!("Connection::send_generic_message >>> message: {:?}", message);
+        trace!("MediatedConnection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
         let send_message = self.send_message_closure(wallet_handle).await?;
         send_message(message).await.map(|_| String::new())
     }
 
     pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, message: &A2AMessage) -> VcxResult<String> {
-        trace!("Connection::send_a2a_message >>> message: {:?}", message);
+        trace!("MediatedConnection::send_a2a_message >>> message: {:?}", message);
         let send_message = self.send_message_closure(wallet_handle).await?;
         send_message(message.clone()).await.map(|_| String::new())
     }
@@ -786,7 +791,7 @@ impl MediatedConnection {
     }
 
     pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
-        trace!("Connection::send_handshake_reuse >>>");
+        trace!("MediatedConnection::send_handshake_reuse >>>");
         // todo: oob_msg argument should be typed OutOfBandInvitation, not string
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
             Ok(a2a_msg) => match a2a_msg {
@@ -819,7 +824,7 @@ impl MediatedConnection {
     }
 
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {
-        trace!("Connection: delete >>> {:?}", self.source_id());
+        trace!("MediatedConnection: delete >>> {:?}", self.source_id());
         self.cloud_agent_info()
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NoAgentInformation,
@@ -836,7 +841,7 @@ impl MediatedConnection {
         comment: Option<String>,
     ) -> VcxResult<()> {
         trace!(
-            "Connection::send_discovery_features_query >>> query: {:?}, comment: {:?}",
+            "MediatedConnection::send_discovery_features_query >>> query: {:?}, comment: {:?}",
             query,
             comment
         );
@@ -849,7 +854,7 @@ impl MediatedConnection {
     }
 
     pub async fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
-        trace!("Connection::get_connection_info >>>");
+        trace!("MediatedConnection::get_connection_info >>>");
 
         let agent_info = self.cloud_agent_info().ok_or(VcxError::from_msg(
             VcxErrorKind::NoAgentInformation,
