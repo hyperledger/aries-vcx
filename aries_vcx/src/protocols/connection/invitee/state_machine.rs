@@ -1,8 +1,6 @@
 use std::clone::Clone;
 use std::collections::HashMap;
 
-use vdrtools_sys::WalletHandle;
-
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
@@ -392,6 +390,7 @@ pub mod unit_tests {
     use messages::discovery::disclose::test_utils::_disclose;
 
     use messages::trust_ping::ping::unit_tests::_ping;
+    use vdrtools_sys::WalletHandle;
 
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
@@ -411,10 +410,9 @@ pub mod unit_tests {
 
         use super::*;
 
-        pub fn _send_message() -> SendClosure {
+        fn _send_message() -> SendClosure {
             Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))
         }
-
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
             let pairwise_info = PairwiseInfo::create(_dummy_wallet_handle()).await.unwrap();

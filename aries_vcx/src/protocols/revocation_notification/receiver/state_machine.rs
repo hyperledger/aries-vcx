@@ -172,10 +172,6 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use std::sync::mpsc::sync_channel;
-
-    use messages::a2a::A2AMessage;
-
     use crate::protocols::revocation_notification::{
         receiver::state_machine::test_utils::_receiver,
         receiver::state_machine::test_utils::*,
@@ -223,6 +219,10 @@ pub mod unit_tests {
 
 //     #[tokio::test]
 //     async fn test_handle_revocation_notification_sends_ack_when_requested() {
+//         use std::sync::mpsc::sync_channel;
+//
+//         use messages::a2a::A2AMessage;
+//
 //         let (sender, receiver) = sync_channel(1);
 //         let sender_cl = sender.clone();
 //         let send_message: SendClosure = Box::new(|_: A2AMessage| {
