@@ -72,7 +72,7 @@ export async function createWallet (config: object): Promise<void> {
           resolve()
         })
     )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
@@ -98,14 +98,14 @@ export async function configureIssuerWallet (seed: string): Promise<string> {
         })
     )
     return issuerConfig
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
 
 export async function openMainWallet (config: object): Promise<void> {
   try {
-    await createFFICallbackPromise<number>(
+    await createFFICallbackPromise<void>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_open_main_wallet(0, JSON.stringify(config), cb)
         if (rc) {
@@ -123,14 +123,14 @@ export async function openMainWallet (config: object): Promise<void> {
           resolve()
         })
     )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
 
 export async function closeMainWallet (): Promise<void> {
   try {
-    await createFFICallbackPromise<number>(
+    await createFFICallbackPromise<void>(
       (resolve, reject, cb) => {
         const rc = rustAPI().vcx_close_main_wallet(0, cb)
         if (rc) {
@@ -148,7 +148,7 @@ export async function closeMainWallet (): Promise<void> {
           resolve()
         })
     )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
@@ -198,7 +198,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -224,7 +224,7 @@ export class Wallet {
   public static async updateRecordValue(record: IRecordUpdate): Promise<void> {
     const commandHandle = 0;
     try {
-      await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_wallet_update_record_value(
             commandHandle,
@@ -246,7 +246,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -274,7 +274,7 @@ export class Wallet {
   public static async updateRecordTags(record: IRecord): Promise<void> {
     const commandHandle = 0;
     try {
-      await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_wallet_update_record_tags(
             commandHandle,
@@ -296,7 +296,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -327,7 +327,7 @@ export class Wallet {
   public static async addRecordTags(record: IRecord): Promise<void> {
     const commandHandle = 0;
     try {
-      await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_wallet_add_record_tags(
             commandHandle,
@@ -349,7 +349,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -386,7 +386,7 @@ export class Wallet {
   ): Promise<void> {
     const commandHandle = 0;
     try {
-      await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_wallet_delete_record_tags(
             commandHandle,
@@ -408,7 +408,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -440,7 +440,7 @@ export class Wallet {
   public static async deleteRecord({ type, id }: IDeleteRecordData): Promise<void> {
     const commandHandle = 0;
     try {
-      await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_wallet_delete_record(commandHandle, type, id, cb);
           if (rc) {
@@ -456,7 +456,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -511,7 +511,7 @@ export class Wallet {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -557,7 +557,7 @@ export class Wallet {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -590,7 +590,7 @@ export class Wallet {
             resolve(handle);
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -631,7 +631,7 @@ export class Wallet {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -670,7 +670,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -702,7 +702,7 @@ export class Wallet {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

@@ -36,7 +36,7 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -73,7 +73,7 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
           ),
       );
       return stateRes;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

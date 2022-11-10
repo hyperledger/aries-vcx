@@ -1,7 +1,7 @@
 import * as ffi from 'ffi-napi';
 import * as os from 'os';
 
-import { FFIConfiguration, IFFIEntryPoint } from './rustlib';
+import { FFIConfiguration } from './rustlib';
 
 export interface IVCXRuntimeConfig {
   basepath?: string;
@@ -16,7 +16,7 @@ const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' };
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' };
 
 export class VCXRuntime {
-  public readonly ffi: IFFIEntryPoint;
+  public readonly ffi: any;
   private _config: IVCXRuntimeConfig;
 
   constructor(config: IVCXRuntimeConfig = {}) {

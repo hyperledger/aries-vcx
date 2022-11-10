@@ -62,7 +62,7 @@ describe('Connection:', () => {
     it('success: signs data', async () => {
       const connection = await connectionCreateInviterNull();
       await connection.connect({ data: '{}' });
-      const signature = await connection.signData(new Buffer('random string'));
+      const signature = await connection.signData(Buffer.from('random string'));
       assert(signature);
     });
   });
@@ -71,8 +71,8 @@ describe('Connection:', () => {
     it('success: verifies the signature', async () => {
       const connection = await createConnectionInviterRequested();
       const valid = await connection.verifySignature({
-        data: new Buffer('random string'),
-        signature: new Buffer('random string'),
+        data: Buffer.from('random string'),
+        signature: Buffer.from('random string'),
       });
       assert(valid);
     });

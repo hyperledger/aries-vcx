@@ -31,7 +31,7 @@ export async function createAgencyClientForMainWallet (config: object): Promise<
                   resolve()
                 })
         )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
@@ -56,7 +56,7 @@ export async function initIssuerConfig (config: object): Promise<void> {
                   resolve()
                 })
         )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
@@ -81,7 +81,7 @@ export async function openMainPool (config: object): Promise<void> {
                   resolve()
                 })
         )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }

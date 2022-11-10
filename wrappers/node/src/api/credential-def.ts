@@ -89,7 +89,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
         ),
       );
       return credentialDef;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -151,7 +151,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -195,7 +195,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ),
       );
       return credDefId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -232,7 +232,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -268,7 +268,7 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           ),
       );
       return stateRes;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

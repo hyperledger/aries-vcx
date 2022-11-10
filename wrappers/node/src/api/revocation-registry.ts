@@ -45,14 +45,14 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
         rustAPI().vcx_revocation_registry_create(commandHandle, JSON.stringify(_config), cb),
       );
       return revReg;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
   public async publish(tailsUrl: string): Promise<void> {
     try {
-      const revRegId = await createFFICallbackPromise<string>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_revocation_registry_publish(0, this.handle, tailsUrl, cb);
           if (rc) {
@@ -72,14 +72,14 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
   public async publishRevocations(): Promise<void> {
     try {
-      await createFFICallbackPromise<number>(
+      await createFFICallbackPromise<void>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_revocation_registry_publish_revocations(0, this.handle, cb);
           if (rc) {
@@ -98,7 +98,7 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -127,7 +127,7 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
           ),
       );
       return revRegId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -155,7 +155,7 @@ export class RevocationRegistry extends VCXBase<IRevocationRegistryData> {
           ),
       );
       return tailsHash;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

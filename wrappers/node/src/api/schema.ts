@@ -135,7 +135,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
       );
       await schema.getSchemaId();
       return schema;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -206,7 +206,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
       schema._transaction = schemaForEndorser.transaction;
       await schema.getSchemaId();
       return schema;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -304,7 +304,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
       const newSchema = new Schema(sourceId, schemaParams);
       newSchema._setHandle(schemaLookupData.handle);
       return newSchema;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -355,7 +355,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -391,7 +391,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
           ),
       );
       return stateRes;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -439,7 +439,7 @@ export class Schema extends VCXBase<ISchemaSerializedData> {
           ),
       );
       return schemaId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

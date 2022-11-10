@@ -47,13 +47,13 @@
     "test:integration:nonmediation": "jest --forceExit --env=node --runInBand test/nonmediated-endpoint.spec.js"
   },
   "dependencies": {
-    "axios": "^0.21.4",
-    "ffi-napi": "^2.4.7",
-    "fs-extra": "^4.0.2",
+    "axios": "^0.27.2",
+    "ffi-napi": "^4.0.3",
+    "fs-extra": "^4.0.3",
     "lodash": "^4.17.21",
     "mkdirp": "^1.0.4",
     "node-persist": "^3.1.0",
-    "sleep-promise": "^8.0.1",
+    "sleep-promise": "^9.0.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
