@@ -10,7 +10,7 @@ pub mod utils;
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use aries_vcx::agency_client::MessageStatusCode;
-    use aries_vcx::handlers::connection::connection::ConnectionState;
+    use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::messages::out_of_band::{GoalCode, HandshakeProtocol};

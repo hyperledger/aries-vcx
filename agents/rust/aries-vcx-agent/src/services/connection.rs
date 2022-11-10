@@ -10,7 +10,7 @@ use aries_vcx::messages::proof_presentation::presentation_proposal::Presentation
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
-    handlers::connection::connection::{Connection, ConnectionState},
+    handlers::connection::mediated_connection::{MediatedConnection, ConnectionState},
     indy::ledger::transactions::into_did_doc,
     messages::a2a::A2AMessage,
     vdrtools_sys::{PoolHandle, WalletHandle},
@@ -20,7 +20,7 @@ pub struct ServiceConnections {
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     config_agency_client: AgencyClientConfig,
-    connections: Arc<ObjectCache<Connection>>,
+    connections: Arc<ObjectCache<MediatedConnection>>,
 }
 
 impl ServiceConnections {
@@ -50,7 +50,7 @@ impl ServiceConnections {
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
         let mut connection =
-            Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
+            MediatedConnection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
         connection
             .connect(self.wallet_handle, &self.agency_client()?)
             .await?;
@@ -65,7 +65,7 @@ impl ServiceConnections {
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let ddo = into_did_doc(self.pool_handle, &invite).await?;
-        let connection = Connection::create_with_invite(
+        let connection = MediatedConnection::create_with_invite(
             "",
             self.wallet_handle,
             &self.agency_client()?,
@@ -120,7 +120,7 @@ impl ServiceConnections {
         Ok(self.connections.get(thread_id)?.get_state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<Connection> {
+    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<MediatedConnection> {
         self.connections.get(thread_id)
     }
 

@@ -7,7 +7,7 @@ use vdrtools_sys::{PoolHandle, WalletHandle};
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::indy::proofs::proof_request::PresentationRequestData;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
@@ -189,7 +189,7 @@ impl Verifier {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<VerifierState> {
         trace!("Verifier::update_state >>> ");
         if !self.progressable_by_message() {

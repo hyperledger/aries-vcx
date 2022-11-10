@@ -6,7 +6,7 @@ pub mod test_utils {
     use serde_json::{json, Value};
     use vdrtools_sys::{PoolHandle, WalletHandle};
 
-    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::mediated_connection::{MediatedConnection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
@@ -136,7 +136,7 @@ pub mod test_utils {
     pub async fn create_and_send_nonrevocable_cred_offer(
         faber: &mut Faber,
         cred_def: &CredentialDef,
-        connection: &Connection,
+        connection: &MediatedConnection,
         credential_json: &str,
         comment: Option<&str>,
     ) -> Issuer {
@@ -166,7 +166,7 @@ pub mod test_utils {
         faber: &mut Faber,
         cred_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
-        connection: &Connection,
+        connection: &MediatedConnection,
         credential_json: &str,
         comment: Option<&str>,
     ) -> Issuer {
@@ -192,7 +192,7 @@ pub mod test_utils {
         issuer
     }
 
-    pub async fn send_cred_req(alice: &mut Alice, connection: &Connection, comment: Option<&str>) -> Holder {
+    pub async fn send_cred_req(alice: &mut Alice, connection: &MediatedConnection, comment: Option<&str>) -> Holder {
         info!("send_cred_req >>> switching to consumer");
         info!("send_cred_req :: getting offers");
         let credential_offers = get_credential_offer_messages(&alice.agency_client, connection)
@@ -234,7 +234,7 @@ pub mod test_utils {
 
     pub async fn send_cred_proposal(
         alice: &mut Alice,
-        connection: &Connection,
+        connection: &MediatedConnection,
         schema_id: &str,
         cred_def_id: &str,
         comment: &str,
@@ -266,7 +266,7 @@ pub mod test_utils {
     pub async fn send_cred_proposal_1(
         holder: &mut Holder,
         alice: &mut Alice,
-        connection: &Connection,
+        connection: &MediatedConnection,
         schema_id: &str,
         cred_def_id: &str,
         comment: &str,
@@ -300,7 +300,7 @@ pub mod test_utils {
 
     pub async fn accept_cred_proposal(
         faber: &mut Faber,
-        connection: &Connection,
+        connection: &MediatedConnection,
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) -> Issuer {
@@ -336,7 +336,7 @@ pub mod test_utils {
     pub async fn accept_cred_proposal_1(
         issuer: &mut Issuer,
         faber: &mut Faber,
-        connection: &Connection,
+        connection: &MediatedConnection,
         rev_reg_id: Option<String>,
         tails_file: Option<String>,
     ) {
@@ -365,7 +365,7 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(100));
     }
 
-    pub async fn accept_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+    pub async fn accept_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
         holder
             .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
@@ -385,7 +385,7 @@ pub mod test_utils {
         assert_eq!(HolderState::RequestSent, holder.get_state());
     }
 
-    pub async fn decline_offer(alice: &mut Alice, connection: &Connection, holder: &mut Holder) {
+    pub async fn decline_offer(alice: &mut Alice, connection: &MediatedConnection, holder: &mut Holder) {
         holder
             .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
             .await
@@ -405,8 +405,8 @@ pub mod test_utils {
         alice: &mut Alice,
         faber: &mut Faber,
         issuer_credential: &mut Issuer,
-        issuer_to_consumer: &Connection,
-        consumer_to_issuer: &Connection,
+        issuer_to_consumer: &MediatedConnection,
+        consumer_to_issuer: &MediatedConnection,
         holder_credential: &mut Holder,
         revokable: bool,
     ) {
@@ -473,7 +473,7 @@ pub mod test_utils {
         }
     }
 
-    pub async fn send_proof_proposal(alice: &mut Alice, connection: &Connection, cred_def_id: &str) -> Prover {
+    pub async fn send_proof_proposal(alice: &mut Alice, connection: &MediatedConnection, cred_def_id: &str) -> Prover {
         let attrs = requested_attr_objects(cred_def_id);
         let mut proposal_data = PresentationProposalData::create();
         for attr in attrs.into_iter() {
@@ -495,7 +495,7 @@ pub mod test_utils {
     pub async fn send_proof_proposal_1(
         alice: &mut Alice,
         prover: &mut Prover,
-        connection: &Connection,
+        connection: &MediatedConnection,
         cred_def_id: &str,
     ) {
         prover
@@ -519,7 +519,7 @@ pub mod test_utils {
         thread::sleep(Duration::from_millis(100));
     }
 
-    pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
+    pub async fn accept_proof_proposal(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
         verifier
             .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, connection)
             .await
@@ -547,7 +547,7 @@ pub mod test_utils {
             .unwrap();
     }
 
-    pub async fn reject_proof_proposal(faber: &mut Faber, connection: &Connection) -> Verifier {
+    pub async fn reject_proof_proposal(faber: &mut Faber, connection: &MediatedConnection) -> Verifier {
         let mut verifier = Verifier::create("1").unwrap();
         verifier
             .update_state(faber.wallet_handle, faber.pool_handle, &faber.agency_client, connection)
@@ -565,7 +565,7 @@ pub mod test_utils {
         verifier
     }
 
-    pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &Connection) {
+    pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &MediatedConnection) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover
             .update_state(alice.wallet_handle, alice.pool_handle, &alice.agency_client, connection)
@@ -576,7 +576,7 @@ pub mod test_utils {
 
     pub async fn send_proof_request(
         faber: &mut Faber,
-        connection: &Connection,
+        connection: &MediatedConnection,
         requested_attrs: &str,
         requested_preds: &str,
         revocation_interval: &str,
@@ -620,7 +620,7 @@ pub mod test_utils {
         verifier.get_presentation_request().unwrap()
     }
 
-    pub async fn create_proof(alice: &mut Alice, connection: &Connection, request_name: Option<&str>) -> Prover {
+    pub async fn create_proof(alice: &mut Alice, connection: &MediatedConnection, request_name: Option<&str>) -> Prover {
         info!("create_proof >>> getting proof request messages");
         let requests = {
             let _requests = get_proof_request_messages(&alice.agency_client, connection)
@@ -650,7 +650,7 @@ pub mod test_utils {
     pub async fn generate_and_send_proof(
         alice: &mut Alice,
         prover: &mut Prover,
-        connection: &Connection,
+        connection: &MediatedConnection,
         selected_credentials: &str,
     ) {
         let thread_id = prover.get_thread_id().unwrap();
@@ -682,7 +682,7 @@ pub mod test_utils {
         }
     }
 
-    pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &Connection) {
+    pub async fn verify_proof(faber: &mut Faber, verifier: &mut Verifier, connection: &MediatedConnection) {
         verifier
             .update_state(
                 faber.wallet_handle,
@@ -798,8 +798,8 @@ pub mod test_utils {
         credential_data: String,
         cred_def: &CredentialDef,
         rev_reg: &RevocationRegistry,
-        consumer_to_issuer: &Connection,
-        issuer_to_consumer: &Connection,
+        consumer_to_issuer: &MediatedConnection,
+        issuer_to_consumer: &MediatedConnection,
         comment: Option<&str>,
     ) -> Issuer {
         info!("Generated credential data: {}", credential_data);
@@ -832,8 +832,8 @@ pub mod test_utils {
     pub async fn _exchange_credential_with_proposal(
         consumer: &mut Alice,
         institution: &mut Faber,
-        consumer_to_issuer: &Connection,
-        issuer_to_consumer: &Connection,
+        consumer_to_issuer: &MediatedConnection,
+        issuer_to_consumer: &MediatedConnection,
         schema_id: &str,
         cred_def_id: &str,
         rev_reg_id: Option<String>,
@@ -859,8 +859,8 @@ pub mod test_utils {
     pub async fn issue_address_credential(
         consumer: &mut Alice,
         institution: &mut Faber,
-        consumer_to_institution: &Connection,
-        institution_to_consumer: &Connection,
+        consumer_to_institution: &MediatedConnection,
+        institution_to_consumer: &MediatedConnection,
     ) -> (
         String,
         String,
@@ -899,7 +899,7 @@ pub mod test_utils {
 
     pub async fn verifier_create_proof_and_send_request(
         institution: &mut Faber,
-        institution_to_consumer: &Connection,
+        institution_to_consumer: &MediatedConnection,
         schema_id: &str,
         cred_def_id: &str,
         request_name: Option<&str>,
@@ -926,7 +926,7 @@ pub mod test_utils {
     pub async fn prover_select_credentials(
         prover: &mut Prover,
         alice: &mut Alice,
-        connection: &Connection,
+        connection: &MediatedConnection,
         requested_values: Option<&str>,
     ) -> String {
         prover
@@ -952,7 +952,7 @@ pub mod test_utils {
 
     pub async fn prover_select_credentials_and_send_proof_and_assert(
         alice: &mut Alice,
-        consumer_to_institution: &Connection,
+        consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
         requested_values: Option<&str>,
         expected_prover_state: ProverState,
@@ -970,7 +970,7 @@ pub mod test_utils {
 
     pub async fn prover_select_credentials_and_send_proof(
         consumer: &mut Alice,
-        consumer_to_institution: &Connection,
+        consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
         requested_values: Option<&str>,
     ) {
@@ -986,7 +986,7 @@ pub mod test_utils {
 
     pub async fn prover_select_credentials_and_fail_to_generate_proof(
         consumer: &mut Alice,
-        consumer_to_institution: &Connection,
+        consumer_to_institution: &MediatedConnection,
         request_name: Option<&str>,
         requested_values: Option<&str>,
     ) {
@@ -1003,8 +1003,8 @@ pub mod test_utils {
     pub async fn connect_using_request_sent_to_public_agent(
         alice: &mut Alice,
         faber: &mut Faber,
-        consumer_to_institution: &mut Connection,
-    ) -> Connection {
+        consumer_to_institution: &mut MediatedConnection,
+    ) -> MediatedConnection {
         thread::sleep(Duration::from_millis(100));
         let mut conn_requests = faber
             .agent
@@ -1012,7 +1012,7 @@ pub mod test_utils {
             .await
             .unwrap();
         assert_eq!(conn_requests.len(), 1);
-        let mut institution_to_consumer = Connection::create_with_request(
+        let mut institution_to_consumer = MediatedConnection::create_with_request(
             faber.wallet_handle,
             conn_requests.pop().unwrap(),
             faber.agent.pairwise_info(),
@@ -1063,12 +1063,12 @@ pub mod test_utils {
     pub async fn create_connected_connections_via_public_invite(
         alice: &mut Alice,
         institution: &mut Faber,
-    ) -> (Connection, Connection) {
+    ) -> (MediatedConnection, MediatedConnection) {
         let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
         let ddo = into_did_doc(alice.pool_handle, &public_invite).await.unwrap();
 
-        let mut consumer_to_institution = Connection::create_with_invite(
+        let mut consumer_to_institution = MediatedConnection::create_with_invite(
             "institution",
             alice.wallet_handle,
             &alice.agency_client,
@@ -1092,10 +1092,10 @@ pub mod test_utils {
         (consumer_to_institution, institution_to_consumer)
     }
 
-    pub async fn create_connected_connections(alice: &mut Alice, faber: &mut Faber) -> (Connection, Connection) {
+    pub async fn create_connected_connections(alice: &mut Alice, faber: &mut Faber) -> (MediatedConnection, MediatedConnection) {
         debug!("Institution is going to create connection.");
         let mut institution_to_consumer =
-            Connection::create("consumer", faber.wallet_handle, &faber.agency_client, true)
+            MediatedConnection::create("consumer", faber.wallet_handle, &faber.agency_client, true)
                 .await
                 .unwrap();
         institution_to_consumer
@@ -1106,7 +1106,7 @@ pub mod test_utils {
 
         debug!("Consumer is going to accept connection invitation.");
         let ddo = into_did_doc(alice.pool_handle, &details).await.unwrap();
-        let mut consumer_to_institution = Connection::create_with_invite(
+        let mut consumer_to_institution = MediatedConnection::create_with_invite(
             "institution",
             alice.wallet_handle,
             &alice.agency_client,
