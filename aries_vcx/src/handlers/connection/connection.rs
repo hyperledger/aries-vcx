@@ -118,9 +118,9 @@ impl Connection {
     }
 
     // ----------------------------- MSG PROCESSING ------------------------------------
-    pub fn process_invite(&mut self, invitation: Invitation) -> VcxResult<()> {
+    pub fn process_invite(self, invitation: Invitation) -> VcxResult<Self> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
-        self.connection_sm = match &self.connection_sm {
+        let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
@@ -128,22 +128,21 @@ impl Connection {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
             }
         };
-        Ok(())
+        Ok(Self { connection_sm, ..self })
     }
 
     pub async fn process_request(
-        &mut self,
+        self,
         wallet_handle: WalletHandle,
         request: Request,
         routing_keys: Vec<String>,
         service_endpoint: String,
-    ) -> VcxResult<()> {
+    ) -> VcxResult<Self> {
         trace!("Connection::process_request >>> request: {:?}", request);
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 let send_message = self.send_message_closure_connection(wallet_handle);
                 let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
-                let send_message = self.send_message_closure(wallet_handle).await?;
                 SmConnection::Inviter(
                     sm_inviter
                         .clone()
@@ -162,8 +161,7 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        self.connection_sm = connection_sm;
-        Ok(())
+        Ok(Self { connection_sm, ..self })
     }
 
     // TODO: Does Query, Disclose, Ping, OOB processing REALLY belong here?
@@ -184,10 +182,7 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self {
-            connection_sm,
-            ..self
-        })
+        Ok(Self { connection_sm, ..self })
     }
 
     pub async fn send_request(
@@ -199,7 +194,10 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Inviter cannot send connection request"));
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::NotReady,
+                    "Inviter cannot send connection request",
+                ));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(
@@ -214,32 +212,26 @@ impl Connection {
                 )
             }
         };
-        Ok(Self {
-            connection_sm,
-            ..self
-        })
+        Ok(Self { connection_sm, ..self })
     }
 
-    pub async fn create_invite(
-        self,
-        service_endpoint: String,
-        routing_keys: Vec<String>,
-    ) -> VcxResult<Self> {
+    pub async fn create_invite(self, service_endpoint: String, routing_keys: Vec<String>) -> VcxResult<Self> {
         trace!("Connection::create_invite >>>");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 SmConnection::Inviter(sm_inviter.clone().create_invitation(routing_keys, service_endpoint)?)
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invitee cannot create invite"));
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::NotReady,
+                    "Invitee cannot create invite",
+                ));
             }
         };
-        Ok(Self {
-            connection_sm,
-            ..self
-        })
+        Ok(Self { connection_sm, ..self })
     }
 
+    // TODO: send message impl should be pluggable
     pub async fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
@@ -257,5 +249,103 @@ impl Connection {
         Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
             Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
         })
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod tests {
+    use crate::utils::devsetup::SetupMocks;
+    use messages::connection::invite::test_utils::{
+        _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
+    };
+    use messages::connection::request::unit_tests::_request;
+    use messages::did_doc::test_utils::_routing_keys;
+
+    use super::*;
+
+    // TODO: Deduplicate test helpers to reduce build times
+    fn _wallet_handle() -> WalletHandle {
+        WalletHandle(0)
+    }
+
+    fn _service_endpoint() -> String {
+        String::from("https://service-endpoint.org")
+    }
+
+    #[tokio::test]
+    async fn test_create_with_pairwise_invite() {
+        let _setup = SetupMocks::init();
+        let invite = Invitation::Pairwise(_pairwise_invitation());
+        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(invite)
+            .unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[tokio::test]
+    async fn test_create_with_public_invite() {
+        let _setup = SetupMocks::init();
+        let invite = Invitation::Public(_public_invitation());
+        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(invite)
+            .unwrap();
+        assert_eq!(connection.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+    }
+
+    #[tokio::test]
+    async fn test_connect_sets_correct_thread_id_based_on_invitation_type() {
+        let _setup = SetupMocks::init();
+
+        let invite = _public_invitation_random_id();
+        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(Invitation::Public(invite.clone()))
+            .unwrap()
+            .send_request(_wallet_handle(), _service_endpoint(), vec![])
+            .await
+            .unwrap();
+        assert_eq!(
+            connection.get_state(),
+            ConnectionState::Invitee(InviteeState::Requested)
+        );
+        assert_ne!(connection.get_thread_id(), invite.id.0);
+
+        let invite = _pairwise_invitation_random_id();
+        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(Invitation::Pairwise(invite.clone()))
+            .unwrap()
+            .send_request(_wallet_handle(), _service_endpoint(), vec![])
+            .await
+            .unwrap();
+        assert_eq!(
+            connection.get_state(),
+            ConnectionState::Invitee(InviteeState::Requested)
+        );
+        assert_eq!(connection.get_thread_id(), invite.id.0);
+    }
+
+    #[tokio::test]
+    async fn test_create_with_request() {
+        let _setup = SetupMocks::init();
+
+        let connection = Connection::create_inviter(_wallet_handle())
+            .await
+            .unwrap()
+            .process_request(_wallet_handle(), _request(), _routing_keys(), _service_endpoint())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            connection.get_state(),
+            ConnectionState::Inviter(InviterState::Requested)
+        );
     }
 }
