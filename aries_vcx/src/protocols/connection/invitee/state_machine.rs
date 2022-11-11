@@ -134,6 +134,21 @@ impl SmConnectionInvitee {
         }
     }
 
+    // TODO: Workaround, remove with mediated connection
+    pub async fn response_did_doc(&self) -> VcxResult<Option<DidDoc>> {
+        match self.state {
+            InviteeFullState::Responded(ref state) => {
+                let remote_vk = state.did_doc.recipient_keys().get(0).cloned().ok_or(VcxError::from_msg(
+                    VcxErrorKind::InvalidState,
+                    "Cannot handle response: remote verkey not found",
+                ))?;
+                let response = decode_signed_connection_response(state.response.clone(), &remote_vk).await?;
+                Ok(Some(response.connection.did_doc.clone()))
+            },
+            _ => Ok(None)
+        }
+    }
+
     pub fn get_invitation(&self) -> Option<&Invitation> {
         match self.state {
             InviteeFullState::Invited(ref state) => Some(&state.invitation),

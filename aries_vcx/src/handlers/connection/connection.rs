@@ -303,7 +303,6 @@ impl Connection {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                // TODO: Fix this
                 let did_doc = request.connection.did_doc.clone();
                 let sender_vk = self.pairwise_info().pw_vk.clone();
                 let send_message: SendClosure = Box::new(move |message: A2AMessage| {
@@ -536,7 +535,6 @@ impl Connection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
-                            // TODO: Fix this
                             let did_doc = request.connection.did_doc.clone();
                             let sender_vk = self.pairwise_info().pw_vk.clone();
                             let send_message: SendClosure = Box::new(move |message: A2AMessage| {
@@ -616,8 +614,15 @@ impl Connection {
                         _ => (sm_invitee, false),
                     },
                     None => {
-                        let send_message = self.send_message_closure(wallet_handle).await?;
-                        (sm_invitee.handle_send_ack(send_message).await?, false)
+                        if let Some(did_doc) = sm_invitee.response_did_doc().await? {
+                            let sender_vk = self.pairwise_info().pw_vk.clone();
+                            let send_message: SendClosure = Box::new(move |message: A2AMessage| {
+                                Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
+                            });
+                            (sm_invitee.handle_send_ack(send_message).await?, false)
+                        } else {
+                            (sm_invitee, false)
+                        }
                     }
                 };
                 let connection = Self {
