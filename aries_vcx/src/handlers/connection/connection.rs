@@ -303,7 +303,12 @@ impl Connection {
         trace!("Connection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let send_message = self.send_message_closure(wallet_handle).await?;
+                // TODO: Fix this
+                let did_doc = request.connection.did_doc.clone();
+                let sender_vk = self.pairwise_info().pw_vk.clone();
+                let send_message: SendClosure = Box::new(move |message: A2AMessage| {
+                    Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
+                });
                 let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                 let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
@@ -531,7 +536,12 @@ impl Connection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
-                            let send_message = self.send_message_closure(wallet_handle).await?;
+                            // TODO: Fix this
+                            let did_doc = request.connection.did_doc.clone();
+                            let sender_vk = self.pairwise_info().pw_vk.clone();
+                            let send_message: SendClosure = Box::new(move |message: A2AMessage| {
+                                Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
+                            });
                             let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
