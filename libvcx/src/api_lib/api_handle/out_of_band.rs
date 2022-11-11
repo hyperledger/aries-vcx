@@ -102,9 +102,7 @@ pub fn append_service(handle: u32, service: &str) -> VcxResult<()> {
 pub fn append_service_did(handle: u32, did: &str) -> VcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
-    let mut did_sov = "did:sov:".to_owned();
-    did_sov.push_str(&did);
-    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(&did_sov)?));
+    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
@@ -244,6 +242,34 @@ pub mod tests {
         );
         append_service(oob_handle, &json!(service).to_string()).unwrap();
         append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
+        let resolved_service = get_services(oob_handle).unwrap();
+        assert_eq!(resolved_service.len(), 2);
+        assert_eq!(service, resolved_service[0]);
+        assert_eq!(
+            ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()),
+            resolved_service[1]
+        );
+    }
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_build_oob_sender_append_services_prefix_did_sov() {
+        let _setup = SetupMocks::init();
+        let config = json!(OOBConfig {
+            label: Some("foo".into()),
+            goal_code: Some(GoalCode::IssueVC),
+            goal: Some("foobar".into())
+        })
+            .to_string();
+        let oob_handle = create_out_of_band(&config).await.unwrap();
+        assert!(oob_handle > 0);
+        let service = ServiceResolvable::AriesService(
+            AriesService::create()
+                .set_service_endpoint("http://example.org/agent".into())
+                .set_routing_keys(vec!["12345".into()])
+                .set_recipient_keys(vec!["abcde".into()]),
+        );
+        append_service(oob_handle, &json!(service).to_string()).unwrap();
+        append_service_did(oob_handle, "did:sov:V4SGRU86Z58d6TV7PBUe6f").unwrap();
         let resolved_service = get_services(oob_handle).unwrap();
         assert_eq!(resolved_service.len(), 2);
         assert_eq!(service, resolved_service[0]);
