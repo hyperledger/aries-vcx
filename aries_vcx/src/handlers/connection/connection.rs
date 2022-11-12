@@ -164,8 +164,6 @@ impl Connection {
         Ok(Self { connection_sm, ..self })
     }
 
-    // TODO: Does Query, Disclose, Ping, OOB processing REALLY belong here?
-
     // ----------------------------- MSG SENDING ------------------------------------
     pub async fn send_response(self, wallet_handle: WalletHandle) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");

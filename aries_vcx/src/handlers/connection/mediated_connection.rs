@@ -735,7 +735,7 @@ impl MediatedConnection {
     }
 
     pub async fn get_message_by_id(&self, msg_id: &str, agency_client: &AgencyClient) -> VcxResult<A2AMessage> {
-        trace!("Connection: get_message_by_id >>> msg_id: {}", msg_id);
+        trace!("MediatedConnection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
             .ok_or(VcxError::from_msg(
