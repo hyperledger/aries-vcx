@@ -606,7 +606,7 @@ impl Connection {
                             (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
-                            (sm_invitee.handle_connection_response(response)?, true)
+                            (sm_invitee.handle_connection_response(response).await?, true)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)

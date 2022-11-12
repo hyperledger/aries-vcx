@@ -266,21 +266,8 @@ impl SmConnectionInviter {
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
-                match send_message(state.signed_response.to_a2a_message()).await {
-                    Ok(_) => InviterFullState::Responded(state.into()),
-                    Err(err) => {
-                        // todo: we should distinguish errors - probably should not send problem report
-                        //       if we just lost internet connectivity
-                        let problem_report = ProblemReport::create()
-                            .set_problem_code(ProblemCode::RequestProcessingError)
-                            .set_explain(err.to_string())
-                            .set_thread_id(&self.thread_id)
-                            .set_out_time();
-
-                        send_message(problem_report.to_a2a_message()).await.ok();
-                        InviterFullState::Initial((state, problem_report).into())
-                    }
-                }
+                send_message(state.signed_response.to_a2a_message()).await?;
+                InviterFullState::Responded(state.into())
             }
             _ => self.state,
         };

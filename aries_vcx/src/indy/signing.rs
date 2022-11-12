@@ -55,7 +55,7 @@ pub async fn decode_signed_connection_response(response: SignedResponse, their_v
         base64::decode_config(&response.connection_sig.signature.as_bytes(), base64::URL_SAFE).map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
-                format!("Cannot decode ConnectionResponse: {:?}", err),
+                format!("Cannot decode ConnectionResponse signature: {:?}", err),
             )
         })?;
 
@@ -63,7 +63,7 @@ pub async fn decode_signed_connection_response(response: SignedResponse, their_v
         base64::decode_config(&response.connection_sig.sig_data.as_bytes(), base64::URL_SAFE).map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
-                format!("Cannot decode ConnectionResponse: {:?}", err),
+                format!("Cannot decode ConnectionResponse signature data: {:?}", err),
             )
         })?;
 
