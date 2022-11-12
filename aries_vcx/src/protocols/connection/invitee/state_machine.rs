@@ -9,7 +9,7 @@ use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::ack::Ack;
 use messages::connection::invite::Invitation;
-use messages::connection::problem_report::ProblemReport;
+use messages::connection::problem_report::{ProblemReport, ProblemCode};
 use messages::connection::request::Request;
 use messages::connection::response::SignedResponse;
 use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
@@ -291,7 +291,7 @@ impl SmConnectionInvitee {
         })
     }
 
-    pub async fn handle_connection_response(self, response: SignedResponse) -> VcxResult<Self> {
+    pub async fn handle_connection_response(self, response: SignedResponse, send_message: SendClosure) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
@@ -300,18 +300,30 @@ impl SmConnectionInvitee {
                     "Cannot handle response: remote verkey not found",
                 ))?;
 
-                let response = decode_signed_connection_response(response.clone(), &remote_vk).await?;
-
-                if !response.from_thread(&state.request.get_thread_id()) {
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
-                        format!(
-                            "Cannot handle response: thread id does not match: {:?}",
-                            response.thread
-                        ),
-                    ));
+                match decode_signed_connection_response(response.clone(), &remote_vk).await {
+                    Ok(response) => {
+                        if !response.from_thread(&state.request.get_thread_id()) {
+                            return Err(VcxError::from_msg(
+                                VcxErrorKind::InvalidJson,
+                                format!(
+                                    "Cannot handle response: thread id does not match: {:?}",
+                                    response.thread
+                                ),
+                            ));
+                        }
+                        InviteeFullState::Responded((state, response).into())
+                    }
+                    Err(err) => {
+                        let problem_report = ProblemReport::create()
+                            .set_problem_code(ProblemCode::ResponseProcessingError)
+                            .set_explain(err.to_string())
+                            .set_thread_id(&self.thread_id)
+                            .set_out_time();
+                        send_message(problem_report.to_a2a_message()).await.ok();
+                        InviteeFullState::Initial((state.clone(), problem_report).into())
+                    }
                 }
-                InviteeFullState::Responded((state, response).into())
+
             }
             _ => self.state.clone(),
         };
@@ -414,7 +426,7 @@ pub mod unit_tests {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 self = self.to_invitee_requested_state().await;
                 self = self
-                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
+                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await, _send_message())
                     .await
                     .unwrap();
                 self = self
@@ -509,7 +521,7 @@ pub mod unit_tests {
                 let msg_request = &_request();
                 let recipient_key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 invitee = invitee
-                    .handle_connection_response(_response(WalletHandle(0), &recipient_key, &msg_request.id.0).await)
+                    .handle_connection_response(_response(WalletHandle(0), &recipient_key, &msg_request.id.0).await, _send_message())
                     .await
                     .unwrap();
 
@@ -548,7 +560,7 @@ pub mod unit_tests {
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
                 assert!(invitee
-                    .handle_connection_response(_response_1(WalletHandle(0), &key).await)
+                    .handle_connection_response(_response_1(WalletHandle(0), &key).await, _send_message())
                     .await
                     .is_err());
             }
@@ -608,7 +620,7 @@ pub mod unit_tests {
 
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL";
                 assert!(did_exchange_sm
-                    .handle_connection_response(_response(WalletHandle(0), key, &_request().id.0).await)
+                    .handle_connection_response(_response(WalletHandle(0), key, &_request().id.0).await, _send_message())
                     .await
                     .is_err());
             }
@@ -652,7 +664,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await)
+                    .handle_connection_response(_response(WalletHandle(0), &key, &_request().id.0).await, _send_message())
                     .await
                     .unwrap();
                 did_exchange_sm = did_exchange_sm
@@ -679,12 +691,18 @@ pub mod unit_tests {
             async fn test_did_exchange_handle_invalid_response_message_from_requested_state() {
                 let _setup = SetupIndyMocks::init();
 
-                let did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
+                let mut did_exchange_sm = invitee_sm().await.to_invitee_requested_state().await;
 
                 let mut signed_response = _signed_response();
                 signed_response.connection_sig.signature = String::from("other");
 
-                assert!(did_exchange_sm.handle_connection_response(signed_response).await.is_err());
+                did_exchange_sm = did_exchange_sm.handle_connection_response(signed_response, _send_message()).await.unwrap();
+                did_exchange_sm = did_exchange_sm
+                    .handle_send_ack(_send_message())
+                    .await
+                    .unwrap();
+
+                assert_match!(InviteeFullState::Initial(_), did_exchange_sm.state);
             }
 
             #[tokio::test]

@@ -606,7 +606,8 @@ impl Connection {
                             (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
-                            (sm_invitee.handle_connection_response(response).await?, true)
+                            let send_message = self.send_message_closure(wallet_handle).await?;
+                            (sm_invitee.handle_connection_response(response, send_message).await?, true)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
