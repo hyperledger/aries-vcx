@@ -137,11 +137,19 @@ impl Connection {
         request: Request,
         routing_keys: Vec<String>,
         service_endpoint: String,
+        send_message: Option<SendClosureConnection>
     ) -> VcxResult<Self> {
-        trace!("Connection::process_request >>> request: {:?}", request);
+        trace!(
+            "Connection::process_request >>> request: {:?}, routing_keys: {:?}, service_endpoint: {}",
+            request,
+            routing_keys,
+            service_endpoint
+        );
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
                 let send_message = self.send_message_closure_connection(wallet_handle);
+                let did_doc = request.connection.did_doc.clone();
+                let sender_vk = self.pairwise_info().pw_vk.clone();
                 let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                 SmConnection::Inviter(
                     sm_inviter
@@ -165,7 +173,7 @@ impl Connection {
     }
 
     // ----------------------------- MSG SENDING ------------------------------------
-    pub async fn send_response(self, wallet_handle: WalletHandle) -> VcxResult<Self> {
+    pub async fn send_response(self, wallet_handle: WalletHandle, send_message: Option<SendClosure>) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
@@ -188,6 +196,7 @@ impl Connection {
         wallet_handle: WalletHandle,
         service_endpoint: String,
         routing_keys: Vec<String>,
+        send_message: Option<SendClosure>
     ) -> VcxResult<Self> {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
@@ -229,17 +238,20 @@ impl Connection {
         Ok(Self { connection_sm, ..self })
     }
 
-    // TODO: send message impl should be pluggable
-    pub async fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
+    pub async fn send_message_closure(&self, wallet_handle: WalletHandle, send_message: Option<SendClosure>) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
-        Ok(Box::new(move |message: A2AMessage| {
-            Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
-        }))
+        Ok(send_message.unwrap_or(self.send_message_default(wallet_handle, sender_vk, did_doc)))
+    }
+
+    fn send_message_default(&self, wallet_handle: WalletHandle, sender_vk: String, did_doc: DidDoc) -> SendClosure {
+        Box::new(move |message: A2AMessage| {
+            Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
+        })
     }
 
     fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
@@ -305,7 +317,7 @@ mod tests {
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![])
+            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -320,7 +332,7 @@ mod tests {
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![])
+            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -337,7 +349,7 @@ mod tests {
         let connection = Connection::create_inviter(_wallet_handle())
             .await
             .unwrap()
-            .process_request(_wallet_handle(), _request(), _routing_keys(), _service_endpoint())
+            .process_request(_wallet_handle(), _request(), _routing_keys(), _service_endpoint(), None)
             .await
             .unwrap();
 
