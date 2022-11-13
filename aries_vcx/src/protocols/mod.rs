@@ -1,12 +1,14 @@
 use futures::future::BoxFuture;
 
 use crate::error::VcxResult;
-use crate::messages::a2a::A2AMessage;
+use messages::a2a::A2AMessage;
 
 pub mod connection;
 pub mod issuance;
+pub mod oob;
 pub mod proof_presentation;
-// pub mod proof_presentation;
-// pub mod out_of_band;
+pub mod trustping;
+pub mod common;
+pub mod revocation_notification;
 
-pub type SendClosure = Box<dyn Fn(A2AMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
+pub type SendClosure = Box<dyn FnOnce(A2AMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;

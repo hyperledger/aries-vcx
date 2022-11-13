@@ -11,3 +11,7 @@ need to:
 ```
 node vcxclient-cli.js --help
 ```
+Example:
+```
+npm run interactive -- --agencyUrl 'https://localhost:8080' --rustLog aries-vcx=trace,vcx=info --name dev
+```

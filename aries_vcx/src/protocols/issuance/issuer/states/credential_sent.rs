@@ -1,4 +1,4 @@
-use crate::messages::status::Status;
+use messages::status::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
 
@@ -6,7 +6,6 @@ use crate::protocols::issuance::issuer::states::finished::FinishedState;
 pub struct CredentialSentState {
     pub revocation_info_v1: Option<RevocationInfoV1>,
 }
-
 
 impl From<CredentialSentState> for FinishedState {
     fn from(state: CredentialSentState) -> Self {

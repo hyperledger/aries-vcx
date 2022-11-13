@@ -1,6 +1,8 @@
 /* eslint-env jest */
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite } = require('@hyperledger/node-vcx-wrapper')
+const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
+  createPwInfo, createService, getServiceFromLedger, unpack
+} = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 const sleep = require('sleep-promise')
 
@@ -56,6 +58,42 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
 
     return publicInvitation
+  }
+
+  async function publishService (endpoint) {
+    logger.info('Faber is going to write nonmediated service on the ledger')
+    await vcxAgent.agentInitVcx()
+
+    logger.info(`Faber creating pairwise info`)
+    const pwInfo = await createPwInfo();
+    logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwInfo.pw_vk}`)
+    await createService(institutionDid, endpoint, [pwInfo.pw_vk], [])
+
+    await vcxAgent.agentShutdownVcx()
+
+    return pwInfo
+  }
+
+  async function readServiceFromLedger () {
+    logger.info('Faber is going to read service from the ledger')
+    await vcxAgent.agentInitVcx()
+
+    const service = await getServiceFromLedger(institutionDid)
+
+    await vcxAgent.agentShutdownVcx()
+
+    return service
+  }
+
+  async function unpackMsg (encryptedMsg) {
+    logger.info('Faber is going to unpack message')
+    await vcxAgent.agentInitVcx()
+
+    const { message, sender_verkey: senderVerkey } = await unpack(encryptedMsg);
+
+    await vcxAgent.agentShutdownVcx()
+
+    return { message, senderVerkey }
   }
 
   async function createOobMessageWithService (wrappedMessage) {
@@ -128,7 +166,16 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function buildLedgerPrimitivesV2 (revocationDetails) {
+  async function handleMessage (ariesMsg) {
+    logger.info(`Faber is going to try handle incoming messages`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function buildLedgerPrimitives (revocationDetails) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Faber writing schema on ledger')
@@ -163,7 +210,7 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendCredentialOfferV2 () {
+  async function sendCredentialOffer () {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer sending credential offer')
@@ -173,7 +220,7 @@ module.exports.createFaber = async function createFaber () {
 
     await vcxAgent.agentShutdownVcx()
   }
-  async function updateStateCredentialV2 (expectedState) {
+  async function updateStateCredential (expectedState) {
     await vcxAgent.agentInitVcx()
 
     logger.info('Issuer updating state of credential with connection')
@@ -216,7 +263,7 @@ module.exports.createFaber = async function createFaber () {
     return proofRequestMessage
   }
 
-  async function updateStateVerifierProofV2 (expectedNextState) {
+  async function updateStateVerifierProof (expectedNextState) {
     logger.info(`Verifier updating state of proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
@@ -256,6 +303,16 @@ module.exports.createFaber = async function createFaber () {
 
     const requests = await _downloadConnectionRequests()
     await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
+    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function createConnectionFromReceivedRequestV2 (pwInfo, request) {
+    logger.info('Faber is going to create a connection from a request')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwInfo, request)
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
@@ -316,7 +373,7 @@ module.exports.createFaber = async function createFaber () {
   }
 
   return {
-    buildLedgerPrimitivesV2,
+    buildLedgerPrimitives,
     rotateRevReg,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
@@ -328,19 +385,24 @@ module.exports.createFaber = async function createFaber () {
     createOobMessageWithService,
     createOobProofRequest,
     createConnectionFromReceivedRequest,
+    createConnectionFromReceivedRequestV2,
     updateConnection,
+    handleMessage,
     sendConnectionResponse,
-    sendCredentialOfferV2,
+    sendCredentialOffer,
     createOobCredOffer,
-    updateStateCredentialV2,
+    updateStateCredential,
     sendCredential,
     receiveCredentialAck,
     requestProofFromAlice,
-    updateStateVerifierProofV2,
+    updateStateVerifierProof,
     getCredentialRevRegId,
     getTailsFile,
     getTailsHash,
     updateMessageStatus,
-    updateAllReceivedMessages
+    updateAllReceivedMessages,
+    publishService,
+    readServiceFromLedger,
+    unpackMsg
   }
 }

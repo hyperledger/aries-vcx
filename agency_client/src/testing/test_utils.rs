@@ -1,7 +1,5 @@
 use std::sync::Once;
 
-use env_logger;
-
 use crate::testing::mocking;
 use crate::testing::mocking::AgencyMockDecrypted;
 
@@ -47,4 +45,3 @@ impl SetupWallet {
 impl Drop for SetupWallet {
     fn drop(&mut self) {}
 }
-

@@ -9,14 +9,16 @@ use rand::Rng;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 pub struct ObjectCache<T>
-    where T: Clone
+where
+    T: Clone,
 {
     pub cache_name: String,
     pub store: RwLock<HashMap<u32, Mutex<T>>>,
 }
 
 impl<T> ObjectCache<T>
-    where T: Clone
+where
+    T: Clone,
 {
     pub fn new(cache_name: &str) -> ObjectCache<T> {
         ObjectCache {
@@ -30,7 +32,13 @@ impl<T> ObjectCache<T>
             Ok(g) => Ok(g),
             Err(e) => {
                 error!("Unable to read-lock Object Store: {:?}", e);
-                Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store: {:?}", self.cache_name, e)))
+                Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!(
+                        "[ObjectCache: {}] Unable to lock Object Store: {:?}",
+                        self.cache_name, e
+                    ),
+                ))
             }
         }
     }
@@ -40,7 +48,13 @@ impl<T> ObjectCache<T>
             Ok(g) => Ok(g),
             Err(e) => {
                 error!("Unable to write-lock Object Store: {:?}", e);
-                Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store: {:?}", self.cache_name, e)))
+                Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!(
+                        "[ObjectCache: {}] Unable to lock Object Store: {:?}",
+                        self.cache_name, e
+                    ),
+                ))
             }
         }
     }
@@ -48,20 +62,31 @@ impl<T> ObjectCache<T>
     pub fn has_handle(&self, handle: u32) -> bool {
         let store = match self._lock_store_read() {
             Ok(g) => g,
-            Err(_) => return false
+            Err(_) => return false,
         };
         store.contains_key(&handle)
     }
 
     pub fn get<F, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-        where F: Fn(&T) -> VcxResult<R> {
+    where
+        F: Fn(&T) -> VcxResult<R>,
+    {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref()),
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+                Err(_) => Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                )), //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
@@ -70,49 +95,87 @@ impl<T> ObjectCache<T>
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => Ok((*obj.deref()).clone()),
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+                Err(_) => Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                )), //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
     pub async fn get_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-        where
-                for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
+    where
+        for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>,
     {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref(), []).await,
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+                Err(_) => Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                )), //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
     pub fn get_mut<F, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-        where F: Fn(&mut T) -> VcxResult<R> {
+    where
+        F: Fn(&mut T) -> VcxResult<R>,
+    {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
             Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut()),
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+                Err(_) => Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                )), //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
     pub async fn get_mut_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> VcxResult<R>
-        where
-                for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>
+    where
+        for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, VcxResult<R>>,
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
             Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut(), []).await,
-                Err(_) => Err(VcxError::from_msg(VcxErrorKind::Common(10), format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name))) //TODO better error
+                Err(_) => Err(VcxError::from_msg(
+                    VcxErrorKind::Common(10),
+                    format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
+                )), //TODO better error
             },
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
@@ -129,7 +192,7 @@ impl<T> ObjectCache<T>
 
         match store.insert(new_handle, Mutex::new(obj)) {
             Some(_) => Ok(new_handle),
-            None => Ok(new_handle)
+            None => Ok(new_handle),
         }
     }
 
@@ -145,7 +208,13 @@ impl<T> ObjectCache<T>
         let mut store = self._lock_store_write()?;
         match store.remove(&handle) {
             Some(_) => Ok(()),
-            None => Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, format!("[ObjectCache: {}] Object not found for handle: {}", self.cache_name, handle)))
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidHandle,
+                format!(
+                    "[ObjectCache: {}] Object not found for handle: {}",
+                    self.cache_name, handle
+                ),
+            )),
         }
     }
 
@@ -192,9 +261,7 @@ mod tests {
 
         let test: ObjectCache<u32> = ObjectCache::new("cache2-u32");
         let handle = test.add(2222).unwrap();
-        let string: String = test.get(handle, |_| {
-            Ok(String::from("TEST"))
-        }).unwrap();
+        let string: String = test.get(handle, |_| Ok(String::from("TEST"))).unwrap();
 
         assert_eq!("TEST", string);
     }
@@ -210,11 +277,10 @@ mod tests {
         test.get_mut(handle, |obj| {
             obj.make_ascii_uppercase();
             Ok(())
-        }).unwrap();
+        })
+        .unwrap();
 
-        let string: String = test.get(handle, |obj| {
-            Ok(obj.clone())
-        }).unwrap();
+        let string: String = test.get(handle, |obj| Ok(obj.clone())).unwrap();
 
         assert_eq!("TEST", string);
     }

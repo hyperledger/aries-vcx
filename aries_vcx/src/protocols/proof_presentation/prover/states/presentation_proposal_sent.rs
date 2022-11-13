@@ -1,4 +1,4 @@
-use crate::messages::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::proof_presentation::presentation_proposal::PresentationProposal;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PresentationProposalSent {

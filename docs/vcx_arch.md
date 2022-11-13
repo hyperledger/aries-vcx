@@ -18,10 +18,6 @@ Thread each API call with callback
 -----
 Each call to libvcx run on separate thread picked up from thread pool. Number of threads in pool is configurable.
 
-MsgPack
------
-The current agent to agent communcation protocol uses MsgPack. This will change in the future.
-
 No explicit contract for libindy objects
 -----
 libindy objects such as credentials, credential_offers, proofs, proof_requests, etc are represented by 

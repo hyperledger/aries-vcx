@@ -65,6 +65,15 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function handleMessage (ariesMsg) {
+    logger.info(`Alice is going to try handle incoming messages`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function acceptCredentialOffer () {
     await vcxAgent.agentInitVcx()
     logger.info('Alice accepting credential offer')
@@ -102,7 +111,7 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateStateHolderProofV2 (expectedNextState) {
+  async function updateStateHolderProof (expectedNextState) {
     logger.info(`Holder updating state of disclosed proof, expecting it to be in state ${expectedNextState}`)
     await vcxAgent.agentInitVcx()
 
@@ -111,7 +120,7 @@ module.exports.createAlice = async function createAlice () {
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function updateStateCredentialV2 (expectedState) {
+  async function updateStateCredential (expectedState) {
     logger.info('Holder updating state of credential with connection')
     await vcxAgent.agentInitVcx()
 
@@ -201,10 +210,11 @@ module.exports.createAlice = async function createAlice () {
     createOrReuseConnectionUsingOobMsg,
     acceptOobCredentialOffer,
     updateConnection,
+    handleMessage,
     acceptCredentialOffer,
-    updateStateCredentialV2,
+    updateStateCredential,
     sendHolderProof,
-    updateStateHolderProofV2,
+    updateStateHolderProof,
     getTailsLocation,
     getTailsHash,
     downloadReceivedMessagesV2,

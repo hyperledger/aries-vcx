@@ -1,4 +1,4 @@
-use crate::messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::issuer::states::offer_sent::OfferSentState;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -11,7 +11,13 @@ pub struct OfferSetState {
 }
 
 impl OfferSetState {
-    pub fn new(cred_offer_msg: CredentialOffer, credential_json: &str, cred_def_id: &str, rev_reg_id: Option<String>, tails_file: Option<String>) -> Self {
+    pub fn new(
+        cred_offer_msg: CredentialOffer,
+        credential_json: &str,
+        cred_def_id: &str,
+        rev_reg_id: Option<String>,
+        tails_file: Option<String>,
+    ) -> Self {
         OfferSetState {
             offer: cred_offer_msg,
             credential_json: credential_json.into(),

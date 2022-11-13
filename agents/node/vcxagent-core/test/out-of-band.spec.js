@@ -56,15 +56,15 @@ describe('test out of band communication', () => {
     try {
       const { alice, faber } = await createAliceAndFaber()
       const tailsDir = `${__dirname}/tmp/faber/tails`
-      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
+      await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
       const oobCredOfferMsg = await faber.createOobCredOffer()
 
       await connectViaOobMessage(alice, faber, oobCredOfferMsg)
 
       await alice.acceptOobCredentialOffer(oobCredOfferMsg)
-      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.updateStateCredential(IssuerStateType.RequestReceived)
       await faber.sendCredential()
-      await alice.updateStateCredentialV2(HolderStateType.Finished)
+      await alice.updateStateCredential(HolderStateType.Finished)
     } catch (e) {
       console.error(e.stack)
       await sleep(1000)
@@ -75,19 +75,19 @@ describe('test out of band communication', () => {
     try {
       const { alice, faber } = await createPairedAliceAndFaber()
       const tailsDir = `${__dirname}/tmp/faber/tails`
-      await faber.buildLedgerPrimitivesV2({ tailsDir, maxCreds: 5 })
-      await faber.sendCredentialOfferV2()
+      await faber.buildLedgerPrimitives({ tailsDir, maxCreds: 5 })
+      await faber.sendCredentialOffer()
       await alice.acceptCredentialOffer()
-      await faber.updateStateCredentialV2(IssuerStateType.RequestReceived)
+      await faber.updateStateCredential(IssuerStateType.RequestReceived)
       await faber.sendCredential()
-      await alice.updateStateCredentialV2(HolderStateType.Finished)
+      await alice.updateStateCredential(HolderStateType.Finished)
 
       const oobPresentationRequestMsg = await faber.createOobProofRequest()
 
       const oobReceiver = await OutOfBandReceiver.createWithMessage(oobPresentationRequestMsg)
       const presentationRequest = await oobReceiver.extractMessage()
       await alice.sendHolderProof(presentationRequest, revRegId => tailsDir)
-      await faber.updateStateVerifierProofV2(VerifierStateType.Finished)
+      await faber.updateStateVerifierProof(VerifierStateType.Finished)
     } catch (e) {
       console.error(e.stack)
       await sleep(1000)

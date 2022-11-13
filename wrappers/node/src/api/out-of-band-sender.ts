@@ -44,7 +44,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
         rustAPI().vcx_out_of_band_sender_create(commandHandle, JSON.stringify(config), cb),
       );
       return oob;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -84,7 +84,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -117,7 +117,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
                       },
                   ),
           );
-      } catch (err) {
+      } catch (err: any) {
           throw new VCXInternalError(err);
       }
   }
@@ -150,7 +150,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -183,7 +183,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
           ),
       );
       return msg
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -216,7 +216,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
           ),
       );
       return thid;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

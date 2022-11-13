@@ -29,16 +29,18 @@ build_test_artifacts(){
 
         SET_OF_TESTS=''
 
-        # This is needed to get the correct message if test are not built. Next call will just reuse old results and parse the response.
-        RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -L${OPENSSL_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-        LIBINDY_DIR=${INDY_LIB_DIR} \
-            cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run
+        # This is needed to get the correct message if test are not
+        # built. Next call will just reuse old results and parse the
+        # response.
+        cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} \
+                 --no-run --features general_test
 
-        # Collect items to execute tests, uses resulting files from previous step
+        # Collect items to execute tests, uses resulting files from
+        # previous step
         EXE_ARRAY=($(
-            RUSTFLAGS="-L${TOOLCHAIN_DIR}/sysroot/usr/${TOOLCHAIN_SYSROOT_LIB} -lc -lz -L${LIBZMQ_LIB_DIR} -L${SODIUM_LIB_DIR} -L${INDY_LIB_DIR} -lsodium -lzmq -lc++_shared -lindy" \
-            LIBINDY_DIR=${INDY_LIB_DIR} \
-                cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]"))
+            cargo test ${BUILD_TYPE} --target=${TRIPLET} ${SET_OF_TESTS} \
+                     --features general_test --no-run --message-format=json \
+                | jq -r "select(.profile.test == true) | .filenames[]"))
 
     popd
 }
@@ -56,17 +58,14 @@ execute_on_device(){
 
     set -x
 
-    adb -e push \
-    "${TOOLCHAIN_DIR}/sysroot/usr/lib/${ANDROID_TRIPLET}/libc++_shared.so" "/data/local/tmp/libc++_shared.so"
+    # adb -e push \
+    # "${TOOLCHAIN_DIR}/sysroot/usr/lib/${ANDROID_TRIPLET}/libc++_shared.so" "/data/local/tmp/libc++_shared.so"
 
-    adb -e push \
-    "${SODIUM_LIB_DIR}/libsodium.so" "/data/local/tmp/libsodium.so"
+    # adb -e push \
+    # "${SODIUM_LIB_DIR}/libsodium.so" "/data/local/tmp/libsodium.so"
 
     adb -e push \
     "${LIBZMQ_LIB_DIR}/libzmq.so" "/data/local/tmp/libzmq.so"
-
-    adb -e push \
-    "${INDY_LIB_DIR}/libindy.so" "/data/local/tmp/libindy.so"
 
     adb -e logcat | grep indy &
 
@@ -76,12 +75,11 @@ execute_on_device(){
         EXE="${i}"
         EXE_NAME=`basename ${EXE}`
 
-
         adb -e push "$EXE" "/data/local/tmp/$EXE_NAME"
         adb -e shell "chmod 755 /data/local/tmp/$EXE_NAME"
         OUT="$(mktemp)"
         MARK="ADB_SUCCESS!"
-        time adb -e shell "TEST_POOL_IP=10.0.0.2 LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=1 RUST_LOG=debug /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
+        time adb -e shell "TEST_POOL_IP=10.0.0.2 LD_LIBRARY_PATH=/data/local/tmp RUST_TEST_THREADS=1 RUST_BACKTRACE=full RUST_LOG=debug /data/local/tmp/$EXE_NAME && echo $MARK" 2>&1 | tee $OUT
         grep $MARK $OUT
     done
 

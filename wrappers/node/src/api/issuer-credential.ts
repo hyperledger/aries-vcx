@@ -137,7 +137,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         rustAPI().vcx_issuer_create_credential(commandHandle, sourceId, cb),
       );
       return credential;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -174,7 +174,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         credentialData,
         params,
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -218,7 +218,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -264,7 +264,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -295,7 +295,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -326,7 +326,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -367,7 +367,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -395,7 +395,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return threadId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -406,9 +406,9 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
    *
    * Credential is made up of the data sent during Credential Offer
    */
-  public async sendCredential(connection: Connection): Promise<void> {
+  public async sendCredential(connection: Connection): Promise<number> {
     try {
-      await createFFICallbackPromise<void>(
+      const state = await createFFICallbackPromise<number>(
         (resolve, reject, cb) => {
           const rc = rustAPI().vcx_issuer_send_credential(0, this.handle, connection.handle, cb);
           if (rc) {
@@ -416,15 +416,16 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           }
         },
         (resolve, reject) =>
-          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
+          ffi.Callback('void', ['uint32', 'uint32', 'uint32'], (xcommandHandle: number, err: number, _state: number) => {
             if (err) {
               reject(err);
               return;
             }
-            resolve();
+            resolve(_state);
           }),
       );
-    } catch (err) {
+      return state;
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -460,35 +461,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  /**
-   * Revokes credential.
-   *
-   * Credential is made up of the data sent during Credential Offer
-   */
-  public async revokeCredential(): Promise<void> {
-    try {
-      await createFFICallbackPromise<void>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_issuer_revoke_credential(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback('void', ['uint32', 'uint32'], (xcommandHandle: number, err: number) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve();
-          }),
-      );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -511,7 +484,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -538,7 +511,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -566,7 +539,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return revRegId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

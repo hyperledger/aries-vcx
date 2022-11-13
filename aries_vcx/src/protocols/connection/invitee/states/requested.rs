@@ -1,7 +1,7 @@
-use crate::did_doc::DidDoc;
-use crate::messages::connection::problem_report::ProblemReport;
-use crate::messages::connection::request::Request;
-use crate::messages::connection::response::SignedResponse;
+use messages::did_doc::DidDoc;
+use messages::connection::problem_report::ProblemReport;
+use messages::connection::request::Request;
+use messages::connection::response::SignedResponse;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 
@@ -13,14 +13,21 @@ pub struct RequestedState {
 
 impl From<(RequestedState, ProblemReport)> for InitialState {
     fn from((_state, problem_report): (RequestedState, ProblemReport)) -> InitialState {
-        trace!("ConnectionInvitee: transit state from RequestedState to InitialState, problem_report: {:?}", problem_report);
-        InitialState::new(Some(problem_report))
+        trace!(
+            "ConnectionInvitee: transit state from RequestedState to InitialState, problem_report: {:?}",
+            problem_report
+        );
+        InitialState::new(Some(problem_report), None)
     }
 }
 
 impl From<(RequestedState, SignedResponse)> for RespondedState {
     fn from((state, response): (RequestedState, SignedResponse)) -> RespondedState {
         trace!("ConnectionInvitee: transit state from RequestedState to RespondedState");
-        RespondedState { response, did_doc: state.did_doc, request: state.request }
+        RespondedState {
+            response,
+            did_doc: state.did_doc,
+            request: state.request,
+        }
     }
 }

@@ -1,0 +1,81 @@
+name: 'build-image'
+description: |
+  Tries to load <docker-img> from github cache. 
+  On cache miss, load up layers of last build of this image within the same branch. If no such image is found, try 
+    to load last build of this image from master branch.
+  Then image is built ( and reusing the pre-loaded layers from last branch/master build ).
+  Finally, image is pushed to docker registry.
+
+inputs:
+  docker-img:
+    description: "<repo>:<tag> reference of the final image"
+    required: true
+  build-arg:
+    description: "Optional additional argument for dockerfile"
+    required: false
+  dockerfile-path:
+    description: "Dockerfile to use for building image"
+    required: true
+  docker-repo-local-name:
+    description: "Local docker repository / name, eg 'vcxs-ui', 'vcxs-api'"
+    required: true
+  branch-name:
+    description: "Current branch name. This is used to optimize build by loading latest docker build from the same branch"
+    required: true
+  branch-main:
+    description: "Current branch name. This is used to optimize build if no image is resolved using 'branch-name' input"
+    default: main
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Derive cache info for image ${{ inputs.docker-img }}"
+      id: setup
+      uses: ./.github/actions/derive-cache-info
+      with:
+        docker-img: ${{ inputs.docker-img }}
+    - name: "Try to load image from cache"
+      id: loadcachedimg
+      uses: ./.github/actions/load-image
+      with:
+        docker-img: ${{ inputs.docker-img }}
+        exit-on-cache-miss: false
+    - name: "If NOT found in cache, try to pull latest image build from current (or master branch as fallback)"
+      if: steps.loadcachedimg.outputs.cache-hit == 'true'
+      shell: bash
+      run: echo "Image {{ inputs.docker-img }} was found in cache. No need to rebuild."
+    - name: "If NOT found in cache, try to pull latest image build from current (or master branch as fallback)"
+      if: steps.loadcachedimg.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -x
+        GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
+        REMOTE_DOCKER_REPOSITORY="${URL_DOCKER_REGISTRY}/${GITHUB_REPOSITORY_LOWERCASE}/${{ inputs.docker-repo-local-name }}"
+        
+        LAST_BRANCH_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-name }}"
+        if ! docker pull "$LAST_BRANCH_BUILD"; then
+          LAST_MASTER_BUILD="$REMOTE_DOCKER_REPOSITORY:${{ inputs.branch-main }}"
+          echo "Could not pull $LAST_MASTER_BUILD, will try last master build $LAST_MASTER_BUILD"
+          if ! docker pull "$LAST_MASTER_BUILD"; then
+            echo "Could not pull $LAST_MASTER_BUILD either ¯\_(ツ)_/¯. Will just have to build the image from scratch."
+          fi;
+        fi;
+    - name: "If NOT found in cache, build and cache image."
+      if: steps.loadcachedimg.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -x
+        mkdir -p "${{ steps.setup.outputs.cache-dir }}"
+        if [ -z ${{ inputs.build-arg }} ]
+        then
+          docker build -t "${{ inputs.docker-img }}" -f ${{ inputs.dockerfile-path }} .
+        else
+          docker build -t "${{ inputs.docker-img }}" --build-arg ${{ inputs.build-arg }} -f ${{ inputs.dockerfile-path }} .
+        fi;
+        docker save "${{ inputs.docker-img }}" > "${{ steps.setup.outputs.cache-file-path }}"
+    - name: "Publish branch image"
+      if: steps.loadcachedimg.outputs.cache-hit != 'true'
+      uses: ./.github/actions/publish-image
+      with:
+        docker-img: ${{ inputs.docker-img }}
+        publish-version: ${{ inputs.branch-name }}

@@ -37,10 +37,8 @@ describe('send ping, get ping', () => {
       await alice.updateConnection(4)
       const aliceMessages2 = await alice.downloadReceivedMessagesV2()
       expect(aliceMessages2.length).toBe(0)
-    } catch (err) {
-      console.error(`err = ${err.message} stack = ${err.stack}`)
-      await sleep(2000)
-      throw Error(err)
+    } finally {
+      await sleep(500)
     }
   })
 })

@@ -2,14 +2,18 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import {
-  connectionCreateInviterNull,
+  connectionCreateInviterNull, createConnectionInviterFinished,
   createConnectionInviterInvited,
   createConnectionInviterRequested,
   dataConnectionCreate,
-} from 'helpers/entities';
-import { INVITE_ACCEPTED_MESSAGE } from 'helpers/test-constants';
-import { initVcxTestMode, shouldThrow, sleep } from 'helpers/utils';
-import { Connection, ConnectionStateType, VCXCode, VCXMock, VCXMockMessage } from 'src';
+} from 'helpers/entities'
+import { initVcxTestMode, shouldThrow } from 'helpers/utils';
+import { Connection, ConnectionStateType, VCXCode } from 'src';
+import {
+  ARIES_PING,
+  ARIES_PING_RESPONSE,
+  ARIES_UNKNOWN_TYPE
+} from '../helpers/mockdata'
 
 describe('Connection:', () => {
   before(() => initVcxTestMode());
@@ -58,7 +62,7 @@ describe('Connection:', () => {
     it('success: signs data', async () => {
       const connection = await connectionCreateInviterNull();
       await connection.connect({ data: '{}' });
-      const signature = await connection.signData(new Buffer('random string'));
+      const signature = await connection.signData(Buffer.from('random string'));
       assert(signature);
     });
   });
@@ -67,8 +71,8 @@ describe('Connection:', () => {
     it('success: verifies the signature', async () => {
       const connection = await createConnectionInviterRequested();
       const valid = await connection.verifySignature({
-        data: new Buffer('random string'),
-        signature: new Buffer('random string'),
+        data: Buffer.from('random string'),
+        signature: Buffer.from('random string'),
       });
       assert(valid);
     });
@@ -147,51 +151,14 @@ describe('Connection:', () => {
       assert.equal(await connection.getState(), ConnectionStateType.Initial);
     });
 
-    // todo : restore for aries
-    it.skip(`returns ${ConnectionStateType.Finished}: connected`, async () => {
-      const connection = await createConnectionInviterRequested();
-      VCXMock.setVcxMock(VCXMockMessage.AcceptInvite); // todo: must return Aries mock data
-      await connection.updateState();
+    it(`returns ${ConnectionStateType.Finished}: mocked accepted`, async () => {
+      const connection = await createConnectionInviterFinished();
       assert.equal(await connection.getState(), ConnectionStateType.Finished);
     });
 
-    // todo : restore for aries
-    it.skip(`returns ${ConnectionStateType.Finished}: mocked accepted`, async () => {
-      const connection = await createConnectionInviterRequested();
-      VCXMock.setVcxMock(VCXMockMessage.GetMessages);
-      await connection.updateState();
-      assert.equal(await connection.getState(), ConnectionStateType.Finished);
-    });
-
-    // todo : restore for aries
-    it.skip(`returns ${ConnectionStateType.Finished}: mocked accepted`, async () => {
-      const connection = await createConnectionInviterRequested();
-      await connection.updateStateWithMessage(INVITE_ACCEPTED_MESSAGE);
-      assert.equal(await connection.getState(), ConnectionStateType.Finished);
-    });
-
-    // todo : restore for aries
-    it.skip(`returns ${ConnectionStateType.Finished}: mocked accepted in parallel`, async () => {
-      const numConnections = 50;
-      const interval = 50;
-      const sleepTime = 100;
-      const connectionsWithTimers = await Promise.all(
-        new Array(numConnections).fill(0).map(async () => {
-          const connection = await connectionCreateInviterNull();
-          const timer = setInterval(() => connection.updateState(), interval);
-          return { connection, timer };
-        }),
-      );
-      let cond = false;
-      while (cond) {
-        const states = await Promise.all(
-          connectionsWithTimers.map(({ connection }) => connection.getState()),
-        );
-        cond = states.every((state) => state === ConnectionStateType.Finished);
-        VCXMock.setVcxMock(VCXMockMessage.GetMessages);
-        await sleep(sleepTime);
-      }
-      connectionsWithTimers.forEach(({ timer }) => clearInterval(timer));
+    it('should not fail on attempt to handle unknown message type',async () => {
+      const connection = await createConnectionInviterFinished();
+      await connection.handleMessage(JSON.stringify(ARIES_UNKNOWN_TYPE));
     });
   });
 
@@ -214,16 +181,26 @@ describe('Connection:', () => {
     });
   });
 
-  describe('sendPing:', () => {
-    it('success: send ping', async () => {
-      const connection = await connectionCreateInviterNull();
+  describe('trustping:', () => {
+    it('should handle ping message', async () => {
+      const connection = await createConnectionInviterFinished();
+      await connection.handleMessage(JSON.stringify(ARIES_PING));
+    });
+
+    it('should handle ping response message', async () => {
+      const connection = await createConnectionInviterFinished();
+      await connection.handleMessage(JSON.stringify(ARIES_PING_RESPONSE));
+    });
+
+    it('should send ping message', async () => {
+      const connection = await createConnectionInviterFinished();
       await connection.sendPing('ping');
     });
   });
 
   describe('sendDiscoveryFeatures:', () => {
     it('success: send discovery features', async () => {
-      const connection = await connectionCreateInviterNull();
+      const connection = await createConnectionInviterFinished();
       await connection.sendDiscoveryFeatures('*', 'comment');
     });
   });

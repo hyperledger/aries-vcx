@@ -20,7 +20,7 @@ fi
 test_wrapper(){
     ANDROID_JNI_LIB="${JAVA_WRAPPER_DIR}/android/src/main/jniLibs"
     mkdir -p ${ANDROID_JNI_LIB}
-    mv ${LIBVCX_DIR}/target/${TRIPLET}/release/{libvcx.a,libvcx.so} ${ANDROID_JNI_LIB}
+    mv ${LIBVCX_DIR}/target/${TRIPLET}/release/libvcx.so ${ANDROID_JNI_LIB}
 
     pushd ${JAVA_WRAPPER_DIR}
 

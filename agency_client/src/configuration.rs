@@ -6,7 +6,7 @@ pub struct AgentProvisionConfig {
     pub agent_seed: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct AgencyClientConfig {
     pub agency_did: String,
     pub agency_endpoint: String,

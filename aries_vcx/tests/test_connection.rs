@@ -1,11 +1,8 @@
-extern crate async_trait;
 #[macro_use]
 extern crate log;
-extern crate serde;
-extern crate serde_derive;
+
 #[macro_use]
 extern crate serde_json;
-extern crate tokio;
 
 pub mod utils;
 
@@ -14,42 +11,52 @@ pub mod utils;
 mod integration_tests {
     use aries_vcx::agency_client::MessageStatusCode;
     use aries_vcx::handlers::connection::connection::ConnectionState;
-    use aries_vcx::handlers::out_of_band::{GoalCode, HandshakeProtocol};
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
+    use aries_vcx::messages::out_of_band::{GoalCode, HandshakeProtocol};
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::utils::service_resolvable::ServiceResolvable;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
+    use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber, TestAgent};
-    use crate::utils::scenarios::test_utils::{connect_using_request_sent_to_public_agent, create_connected_connections, create_connected_connections_via_public_invite, create_proof_request};
+    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
+    use crate::utils::scenarios::test_utils::{
+        connect_using_request_sent_to_public_agent, create_connected_connections,
+        create_connected_connections_via_public_invite, create_proof_request,
+    };
 
     use super::*;
 
     #[tokio::test]
     async fn test_establish_connection_via_public_invite() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
-        let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
+        let (consumer_to_institution, institution_to_consumer) =
+            create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution_to_consumer.send_generic_message(institution.wallet_handle, "Hello Alice, Faber here").await.unwrap();
+        institution_to_consumer
+            .send_generic_message(institution.wallet_handle, "Hello Alice, Faber here")
+            .await
+            .unwrap();
 
-        consumer.activate().await.unwrap();
-        let consumer_msgs = consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let consumer_msgs = consumer_to_institution
+            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .await
+            .unwrap();
         assert_eq!(consumer_msgs.len(), 1);
     }
 
     #[tokio::test]
     async fn test_oob_connection_bootstrap() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        use messages::connection::invite::Invitation;
+        use aries_vcx::indy::ledger::transactions::into_did_doc;
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
-        institution.activate().await.unwrap();
         let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
         let service = institution.agent.service(&institution.agency_client).unwrap();
@@ -58,61 +65,89 @@ mod integration_tests {
             .set_goal_code(&GoalCode::P2PMessaging)
             .set_goal("To exchange message")
             .append_service(&ServiceResolvable::AriesService(service))
-            .append_handshake_protocol(&HandshakeProtocol::ConnectionV1).unwrap()
-            .append_a2a_message(request_sender.to_a2a_message()).unwrap();
+            .append_handshake_protocol(&HandshakeProtocol::ConnectionV1)
+            .unwrap()
+            .append_a2a_message(request_sender.to_a2a_message())
+            .unwrap();
+        let invitation = Invitation::OutOfBand(oob_sender.oob.clone());
+        let ddo = into_did_doc(setup.pool_handle, &invitation).await.unwrap();
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
-        let mut conn_receiver = oob_receiver.build_connection(&consumer.agency_client, true).await.unwrap();
-        conn_receiver.connect(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
-        conn_receiver.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
-        assert_eq!(ConnectionState::Invitee(InviteeState::Requested), conn_receiver.get_state());
+        let mut conn_receiver = oob_receiver
+            .build_connection(&consumer.agency_client, ddo, true)
+            .await
+            .unwrap();
+        conn_receiver
+            .connect(consumer.wallet_handle, &consumer.agency_client)
+            .await
+            .unwrap();
+        conn_receiver
+            .find_message_and_update_state(consumer.wallet_handle, &consumer.agency_client)
+            .await
+            .unwrap();
+        assert_eq!(
+            ConnectionState::Invitee(InviteeState::Requested),
+            conn_receiver.get_state()
+        );
         assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
-        let conn_sender = connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver).await;
+        let conn_sender =
+            connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver).await;
 
         let (conn_receiver_pw1, _conn_sender_pw1) = create_connected_connections(&mut consumer, &mut institution).await;
         let (conn_receiver_pw2, _conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution).await;
 
         let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         assert!(*conn.unwrap() == conn_receiver);
 
         let conns = vec![&conn_receiver_pw1, &conn_receiver_pw2];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_none());
 
         let a2a_msg = oob_receiver.extract_a2a_message().unwrap().unwrap();
         assert!(matches!(a2a_msg, A2AMessage::PresentationRequest(..)));
         if let A2AMessage::PresentationRequest(request_receiver) = a2a_msg {
-            assert_eq!(request_receiver.request_presentations_attach, request_sender.request_presentations_attach);
+            assert_eq!(
+                request_receiver.request_presentations_attach,
+                request_sender.request_presentations_attach
+            );
         }
 
-        conn_sender.send_generic_message(institution.wallet_handle, "Hello oob receiver, from oob sender").await.unwrap();
-        consumer.activate().await.unwrap();
-        conn_receiver.send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver").await.unwrap();
-        institution.activate().await.unwrap();
-        let sender_msgs = conn_sender.download_messages(&institution.agency_client, None, None).await.unwrap();
-        consumer.activate().await.unwrap();
-        let receiver_msgs = conn_receiver.download_messages(&consumer.agency_client, None, None).await.unwrap();
+        conn_sender
+            .send_generic_message(institution.wallet_handle, "Hello oob receiver, from oob sender")
+            .await
+            .unwrap();
+        conn_receiver
+            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .await
+            .unwrap();
+        let sender_msgs = conn_sender
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
+        let receiver_msgs = conn_receiver
+            .download_messages(&consumer.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(sender_msgs.len(), 2);
         assert_eq!(receiver_msgs.len(), 2);
     }
 
     #[tokio::test]
     async fn test_oob_connection_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
-        let (consumer_to_institution, institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
+        let (consumer_to_institution, institution_to_consumer) =
+            create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution.activate().await.unwrap();
         let service = institution.agent.service(&institution.agency_client).unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
@@ -121,27 +156,31 @@ mod integration_tests {
             .append_service(&ServiceResolvable::AriesService(service));
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
-        conn.unwrap().send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver").await.unwrap();
+        conn.unwrap()
+            .send_generic_message(consumer.wallet_handle, "Hello oob sender, from oob receiver")
+            .await
+            .unwrap();
 
-        institution.activate().await.unwrap();
-        let msgs = institution_to_consumer.download_messages(&institution.agency_client, None, None).await.unwrap();
+        let msgs = institution_to_consumer
+            .download_messages(&institution.agency_client, None, None)
+            .await
+            .unwrap();
         assert_eq!(msgs.len(), 2);
     }
 
     #[tokio::test]
     async fn test_oob_connection_handshake_reuse() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer = Alice::setup().await;
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer = Alice::setup(setup.pool_handle).await;
 
-        let (mut consumer_to_institution, mut institution_to_consumer) = create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
+        let (mut consumer_to_institution, mut institution_to_consumer) =
+            create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-        institution.activate().await.unwrap();
         let service = institution.agent.service(&institution.agency_client).unwrap();
         let oob_sender = OutOfBandSender::create()
             .set_label("test-label")
@@ -151,17 +190,25 @@ mod integration_tests {
         let sender_oob_id = oob_sender.get_id();
         let oob_msg = oob_sender.to_a2a_message();
 
-        consumer.activate().await.unwrap();
         let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
         let conns = vec![&consumer_to_institution];
-        let conn = oob_receiver.connection_exists(&conns).await.unwrap();
+        let conn = oob_receiver.connection_exists(setup.pool_handle, &conns).await.unwrap();
         assert!(conn.is_some());
         let receiver_oob_id = oob_receiver.get_id();
         let receiver_msg = serde_json::to_string(&oob_receiver.to_a2a_message()).unwrap();
-        conn.unwrap().send_handshake_reuse(consumer.wallet_handle, &receiver_msg).await.unwrap();
+        conn.unwrap()
+            .send_handshake_reuse(consumer.wallet_handle, &receiver_msg)
+            .await
+            .unwrap();
 
-        institution.activate().await.unwrap();
-        let mut msgs = institution_to_consumer.download_messages(&institution.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let mut msgs = institution_to_consumer
+            .download_messages(
+                &institution.agency_client,
+                Some(vec![MessageStatusCode::Received]),
+                None,
+            )
+            .await
+            .unwrap();
         assert_eq!(msgs.len(), 1);
         let reuse_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuse(ref a2a_msg) => {
@@ -170,32 +217,53 @@ mod integration_tests {
                 assert_eq!(a2a_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
                 a2a_msg.clone()
             }
-            _ => { panic!("Expected OutOfBandHandshakeReuse message type"); }
+            _ => {
+                panic!("Expected OutOfBandHandshakeReuse message type");
+            }
         };
-        institution_to_consumer.update_state_with_message(institution.wallet_handle, &institution.agency_client, &A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone())).await.unwrap();
+        institution_to_consumer
+            .handle_message(
+                A2AMessage::OutOfBandHandshakeReuse(reuse_msg.clone()),
+                institution.wallet_handle,
+            )
+            .await
+            .unwrap();
 
-        consumer.activate().await.unwrap();
-        let mut msgs = consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap();
+        let mut msgs = consumer_to_institution
+            .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+            .await
+            .unwrap();
         assert_eq!(msgs.len(), 1);
-        let reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
+        let _reuse_ack_msg = match serde_json::from_str::<A2AMessage>(&msgs.pop().unwrap().decrypted_msg).unwrap() {
             A2AMessage::OutOfBandHandshakeReuseAccepted(ref a2a_msg) => {
                 assert_eq!(sender_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(receiver_oob_id, a2a_msg.thread.pthid.as_ref().unwrap().to_string());
                 assert_eq!(reuse_msg.id.0, a2a_msg.thread.thid.as_ref().unwrap().to_string());
                 a2a_msg.clone()
             }
-            _ => { panic!("Expected OutOfBandHandshakeReuseAccepted message type"); }
+            _ => {
+                panic!("Expected OutOfBandHandshakeReuseAccepted message type");
+            }
         };
-        consumer_to_institution.update_state_with_message(consumer.wallet_handle, &consumer.agency_client, &A2AMessage::OutOfBandHandshakeReuseAccepted(reuse_ack_msg)).await.unwrap();
-        consumer_to_institution.update_state(consumer.wallet_handle, &consumer.agency_client).await.unwrap();
-        assert_eq!(consumer_to_institution.download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None).await.unwrap().len(), 0);
+        consumer_to_institution
+            .find_and_handle_message(consumer.wallet_handle, &consumer.agency_client)
+            .await
+            .unwrap();
+        assert_eq!(
+            consumer_to_institution
+                .download_messages(&consumer.agency_client, Some(vec![MessageStatusCode::Received]), None)
+                .await
+                .unwrap()
+                .len(),
+            0
+        );
     }
 
     #[tokio::test]
     pub async fn test_two_enterprise_connections() {
-        let _setup = SetupLibraryAgencyV2::init().await;
-        let mut institution = Faber::setup().await;
-        let mut consumer1 = Alice::setup().await;
+        let setup = SetupPool::init().await;
+        let mut institution = Faber::setup(setup.pool_handle).await;
+        let mut consumer1 = Alice::setup(setup.pool_handle).await;
 
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
         let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
@@ -203,17 +271,10 @@ mod integration_tests {
 
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
-        let _setup = SetupLibraryAgencyV2::init().await;
+        let setup = SetupPool::init().await;
 
-        let mut faber = Faber::setup().await;
-        let mut alice = Alice::setup().await;
-
-        // Publish Schema and Credential Definition
-        faber.create_schema().await;
-
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        faber.create_nonrevocable_credential_definition().await;
+        let mut faber = Faber::setup(setup.pool_handle).await;
+        let mut alice = Alice::setup(setup.pool_handle).await;
 
         // Connection
         let invite = faber.create_invite().await;
@@ -226,9 +287,9 @@ mod integration_tests {
         // Ping
         faber.ping().await;
 
-        alice.update_state(4).await;
+        alice.handle_messages().await;
 
-        faber.update_state(4).await;
+        faber.handle_messages().await;
 
         let faber_connection_info = faber.connection_info().await;
         assert!(faber_connection_info["their"]["protocols"].as_array().is_none());
@@ -236,11 +297,12 @@ mod integration_tests {
         // Discovery Features
         faber.discovery_features().await;
 
-        alice.update_state(4).await;
+        alice.handle_messages().await;
 
-        faber.update_state(4).await;
+        faber.handle_messages().await;
 
         let faber_connection_info = faber.connection_info().await;
+        warn!("faber_connection_info: {}", faber_connection_info);
         assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
     }
 }

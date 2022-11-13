@@ -1,14 +1,7 @@
 import * as ref from 'ref-napi';
-import * as StructType from 'ref-struct-di';
 import { ICbRef } from './utils/ffi-helpers';
 
 import { VCXRuntime } from './vcx';
-
-export const VcxStatus = StructType({
-  handle: 'int',
-  msg: 'string',
-  status: 'int',
-});
 
 interface IUintTypes {
   [key: string]: string;
@@ -179,6 +172,13 @@ export interface IFFIEntryPoint {
     request: string,
     cb: ICbRef,
   ) => number;
+  vcx_connection_create_with_connection_request_v2: (
+    commandId: number,
+    sourceId: string,
+    pwVk: string,
+    request: string,
+    cb: ICbRef,
+  ) => number;
   vcx_connection_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_connection_release: (handle: number) => number;
   vcx_connection_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
@@ -188,6 +188,12 @@ export interface IFFIEntryPoint {
     handle: number,
     message: string,
     cb: ICbRef,
+  ) => number;
+  vcx_connection_handle_message: (
+      commandId: number,
+      handle: number,
+      message: string,
+      cb: ICbRef,
   ) => number;
   vcx_connection_get_state: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_connection_invite_details: (
@@ -279,7 +285,6 @@ export interface IFFIEntryPoint {
     sourceId: string,
     cb: ICbRef,
   ) => number;
-  vcx_issuer_revoke_credential: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_revoke_credential_local: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_credential_is_revokable: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_issuer_send_credential: (
@@ -581,6 +586,19 @@ export interface IFFIEntryPoint {
   vcx_revocation_registry_deserialize: (commandId: number, data: string, cb: ICbRef) => number;
   vcx_revocation_registry_serialize: (commandId: number, handle: number, cb: ICbRef) => number;
   vcx_revocation_registry_release: (handle: number) => number;
+  vcx_unpack: (commandId: number, payload: number, payloadLen: number, cb: ICbRef) => number;
+  vcx_create_pairwise_info: (commandId: number, cb: ICbRef) => number;
+  vcx_create_service: (
+    commandId: number,
+    did: string,
+    endpoint: string,
+    recipientKeys: string,
+    routingKeys: string,
+    cb: ICbRef) => number;
+  vcx_get_service_from_ledger: (
+    commandId: number,
+    did: string,
+    cb: ICbRef) => number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -710,6 +728,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_AGENT_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
+  vcx_connection_create_with_connection_request_v2: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
   vcx_connection_deserialize: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
@@ -724,6 +746,10 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_connection_update_state_with_message: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
+  ],
+  vcx_connection_handle_message: [
     FFI_ERROR_CODE,
     [FFI_COMMAND_HANDLE, FFI_CONNECTION_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR],
   ],
@@ -832,10 +858,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
       FFI_SOURCE_ID,
       FFI_CALLBACK_PTR,
     ],
-  ],
-  vcx_issuer_revoke_credential: [
-    FFI_ERROR_CODE,
-    [FFI_COMMAND_HANDLE, FFI_CREDENTIAL_HANDLE, FFI_CALLBACK_PTR],
   ],
   vcx_issuer_revoke_credential_local: [
     FFI_ERROR_CODE,
@@ -1242,6 +1264,16 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
   vcx_revocation_registry_serialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_REV_REG_HANDLE, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_deserialize: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]],
   vcx_revocation_registry_release: [FFI_ERROR_CODE, [FFI_REV_REG_HANDLE]],
+  vcx_unpack: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_UNSIGNED_INT_PTR, FFI_UNSIGNED_INT, FFI_CALLBACK_PTR]],
+  vcx_create_pairwise_info: [FFI_ERROR_CODE, [FFI_COMMAND_HANDLE, FFI_CALLBACK_PTR]],
+  vcx_create_service: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_STRING_DATA, FFI_CALLBACK_PTR]
+  ],
+  vcx_get_service_from_ledger: [
+    FFI_ERROR_CODE,
+    [FFI_COMMAND_HANDLE, FFI_STRING_DATA, FFI_CALLBACK_PTR]
+  ],
 };
 
 let _rustAPI: IFFIEntryPoint;

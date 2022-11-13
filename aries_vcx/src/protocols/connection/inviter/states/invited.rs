@@ -1,7 +1,7 @@
-use crate::messages::connection::invite::Invitation;
-use crate::messages::connection::problem_report::ProblemReport;
-use crate::messages::connection::request::Request;
-use crate::messages::connection::response::SignedResponse;
+use messages::connection::invite::Invitation;
+use messages::connection::problem_report::ProblemReport;
+use messages::connection::request::Request;
+use messages::connection::response::SignedResponse;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 
@@ -13,7 +13,10 @@ pub struct InvitedState {
 // TODO: These have no justification for being here anymore
 impl From<ProblemReport> for InitialState {
     fn from(problem_report: ProblemReport) -> InitialState {
-        trace!("ConnectionInviter: transit state to InitialState, problem_report: {:?}", problem_report);
+        trace!(
+            "ConnectionInviter: transit state to InitialState, problem_report: {:?}",
+            problem_report
+        );
         InitialState::new(Some(problem_report))
     }
 }

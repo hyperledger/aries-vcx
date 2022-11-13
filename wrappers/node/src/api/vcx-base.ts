@@ -17,7 +17,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
       const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
       await obj._initFromData(objData);
       return obj;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -72,7 +72,7 @@ export abstract class VCXBase<SerializedData> extends GCWatcher {
       );
       const data: ISerializedData<SerializedData> = JSON.parse(dataStr);
       return data;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

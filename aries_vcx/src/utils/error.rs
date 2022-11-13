@@ -8,123 +8,460 @@ use std::fmt;
 // STEP 2: Add Error to the static MAP (used for getting messages to wrappers)
 // STEP 3: create a test making sure that your message can be retrieved
 
-pub static SUCCESS: Error = Error { code_num: 0, message: "Success" };
-pub static INDY_WALLET_RECORD_NOT_FOUND: Error = Error { code_num: 212, message: "Error from Indy: Wallet Item not found" };
-pub static INDY_DUPLICATE_WALLET_RECORD: Error = Error { code_num: 213, message: "Error from Indy: Duplicate Wallet Record" };
-pub static UNKNOWN_ERROR: Error = Error { code_num: 1001, message: "Unknown Error" };
-pub static CONNECTION_ERROR: Error = Error { code_num: 1002, message: "Error with Connection" };
-pub static INVALID_CONNECTION_HANDLE: Error = Error { code_num: 1003, message: "Invalid Connection Handle" };
-pub static INVALID_CONFIGURATION: Error = Error { code_num: 1004, message: "Invalid Configuration" };
-pub static NOT_READY: Error = Error { code_num: 1005, message: "Object not ready for specified action" };
-pub static NO_ENDPOINT: Error = Error { code_num: 1006, message: "No Endpoint set for Connection Object" };
-pub static INVALID_OPTION: Error = Error { code_num: 1007, message: "Invalid Option" };
-pub static INVALID_DID: Error = Error { code_num: 1008, message: "Invalid DID" };
-pub static INVALID_VERKEY: Error = Error { code_num: 1009, message: "Invalid VERKEY" };
-pub static POST_MSG_FAILURE: Error = Error { code_num: 1010, message: "Message failed in post" };
-pub static INVALID_NONCE: Error = Error { code_num: 1011, message: "Invalid NONCE" };
-pub static INVALID_KEY_DELEGATE: Error = Error { code_num: 1012, message: "Invalid DELEGATE" };
-pub static INVALID_URL: Error = Error { code_num: 1013, message: "Invalid URL" };
-pub static NOT_BASE58: Error = Error { code_num: 1014, message: "Value needs to be base58" };
-pub static INVALID_ISSUER_CREDENTIAL_HANDLE: Error = Error { code_num: 1015, message: "Invalid Credential Issuer Handle" };
-pub static INVALID_JSON: Error = Error { code_num: 1016, message: "Invalid JSON string" };
-pub static INVALID_PROOF_HANDLE: Error = Error { code_num: 1017, message: "Invalid Proof Handle" };
-pub static INVALID_CREDENTIAL_REQUEST: Error = Error { code_num: 1018, message: "Invalid Credential Request" };
-pub static INVALID_MSGPACK: Error = Error { code_num: 1019, message: "Invalid MessagePack" };
-pub static INVALID_MESSAGES: Error = Error { code_num: 1020, message: "Error Retrieving messages from API" };
-pub static INVALID_ATTRIBUTES_STRUCTURE: Error = Error { code_num: 1021, message: "Attributes provided to Credential Offer are not correct, possibly malformed" };
-pub static BIG_NUMBER_ERROR: Error = Error { code_num: 1022, message: "Could not encode string to a big integer." };
-pub static INVALID_PROOF: Error = Error { code_num: 1023, message: "Proof had invalid format" };
-pub static INVALID_GENESIS_TXN_PATH: Error = Error { code_num: 1024, message: "Must have valid genesis txn file path" };
-pub static POOL_LEDGER_CONNECT: Error = Error { code_num: 1025, message: "Connection to Pool Ledger." };
-pub static CREATE_POOL_CONFIG: Error = Error { code_num: 1026, message: "Formatting for Pool Config are incorrect." };
-pub static INVALID_PROOF_CREDENTIAL_DATA: Error = Error { code_num: 1027, message: "The Proof received does not have valid credentials listed." };
-pub static INDY_SUBMIT_REQUEST_ERR: Error = Error { code_num: 1028, message: "Call to indy submit request failed" };
-pub static BUILD_CREDENTIAL_DEF_REQ_ERR: Error = Error { code_num: 1029, message: "Call to indy credential def request failed" };
-pub static NO_POOL_OPEN: Error = Error { code_num: 1030, message: "No Pool open. Can't return handle." };
-pub static INVALID_SCHEMA: Error = Error { code_num: 1031, message: "Schema was invalid or corrupt" };
-pub static FAILED_PROOF_COMPLIANCE: Error = Error { code_num: 1032, message: "Proof is not compliant to proof request" };
-pub static INVALID_HTTP_RESPONSE: Error = Error { code_num: 1033, message: "Invalid HTTP response." };
-pub static CREATE_CREDENTIAL_DEF_ERR: Error = Error { code_num: 1034, message: "Call to create Credential Definition failed" };
-pub static UNKNOWN_LIBINDY_ERROR: Error = Error { code_num: 1035, message: "Unknown libindy error" };
-pub static INVALID_CREDENTIAL_DEF_JSON: Error = Error { code_num: 1036, message: "Credential Def not in valid json" };
-pub static INVALID_CREDENTIAL_DEF_HANDLE: Error = Error { code_num: 1037, message: "Invalid Credential Definition handle" };
-pub static TIMEOUT_LIBINDY_ERROR: Error = Error { code_num: 1038, message: "Waiting for callback timed out" };
-pub static CREDENTIAL_DEF_ALREADY_CREATED: Error = Error { code_num: 1039, message: "Can't create, Credential Def already exists in wallet" };
-pub static INVALID_SCHEMA_SEQ_NO: Error = Error { code_num: 1040, message: "No Schema for that schema sequence number" };
-pub static INVALID_SCHEMA_CREATION: Error = Error { code_num: 1041, message: "Could not create schema" };
-pub static INVALID_SCHEMA_HANDLE: Error = Error { code_num: 1042, message: "Invalid Schema Handle" };
-pub static INVALID_MASTER_SECRET: Error = Error { code_num: 1043, message: "Invalid master secret" };
-pub static ALREADY_INITIALIZED: Error = Error { code_num: 1044, message: "Library already initialized" };
-pub static INVALID_INVITE_DETAILS: Error = Error { code_num: 1045, message: "Invalid invite details structure" };
-pub static INVALID_SELF_ATTESTED_VAL: Error = Error { code_num: 1046, message: "Self Attested Value invalid" };
-pub static INVALID_PREDICATE: Error = Error { code_num: 1047, message: "Predicate in proof is invalid" };
-pub static INVALID_OBJ_HANDLE: Error = Error { code_num: 1048, message: "Obj was not found with handle" };
-pub static INVALID_DISCLOSED_PROOF_HANDLE: Error = Error { code_num: 1049, message: "Obj was not found with handle" };
-pub static SERIALIZATION_ERROR: Error = Error { code_num: 1050, message: "Unable to serialize" };
-pub static WALLET_ALREADY_EXISTS: Error = Error { code_num: 1051, message: "Indy wallet already exists" };
-pub static WALLET_ALREADY_OPEN: Error = Error { code_num: 1052, message: "Indy wallet already open" };
-pub static INVALID_CREDENTIAL_HANDLE: Error = Error { code_num: 1053, message: "Invalid credential handle" };
-pub static INVALID_CREDENTIAL_JSON: Error = Error { code_num: 1054, message: "Invalid credential json" };
-pub static CREATE_CREDENTIAL_REQUEST_ERROR: Error = Error { code_num: 1055, message: "could not create credential request" };
-pub static CREATE_PROOF_ERROR: Error = Error { code_num: 1056, message: "could not create proof" };
-pub static INVALID_WALLET_HANDLE: Error = Error { code_num: 1057, message: "Invalid Wallet or Search Handle" };
-pub static INVALID_WALLET_CREATION: Error = Error { code_num: 1058, message: "Error Creating a wallet" };
-pub static INVALID_POOL_NAME: Error = Error { code_num: 1059, message: "Pool Name in config was invalid" };
-pub static CANNOT_DELETE_CONNECTION: Error = Error { code_num: 1060, message: "Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency." };
-pub static CREATE_CONNECTION_ERROR: Error = Error { code_num: 1061, message: "Could not create connection" };
-pub static INVALID_WALLET_SETUP: Error = Error { code_num: 1062, message: "Invalid wallet keys...have you provisioned correctly?" };
-pub static COMMON_ERROR: Error = Error { code_num: 1063, message: "Common Error" };
-pub static INSUFFICIENT_TOKEN_AMOUNT: Error = Error { code_num: 1064, message: "Insufficient amount of tokens to process request" };
-pub static UNKNOWN_TXN_TYPE: Error = Error { code_num: 1065, message: "Unknown ledger transaction type" };
-pub static INVALID_PAYMENT_ADDRESS: Error = Error { code_num: 1066, message: "Invalid payment address" };
-pub static INVALID_LIBINDY_PARAM: Error = Error { code_num: 1067, message: "Parameter passed to libindy was invalid" };
-pub static INVALID_PAYMENT: Error = Error { code_num: 1068, message: "Invalid Payment Details" };
-pub static MISSING_WALLET_KEY: Error = Error { code_num: 1069, message: "Configuration is missing wallet key" };
-pub static OBJECT_CACHE_ERROR: Error = Error { code_num: 1070, message: "Object cache error" };
-pub static NO_PAYMENT_INFORMATION: Error = Error { code_num: 1071, message: "No payment information associated with object" };
-pub static DUPLICATE_WALLET_RECORD: Error = Error { code_num: 1072, message: "Record already exists in the wallet" };
-pub static WALLET_RECORD_NOT_FOUND: Error = Error { code_num: 1073, message: "Wallet record not found" };
-pub static IOERROR: Error = Error { code_num: 1074, message: "IO Error, possibly creating a backup wallet" };
-pub static WALLET_ACCESS_FAILED: Error = Error { code_num: 1075, message: "Attempt to open wallet with invalid credentials" };
-pub static MISSING_WALLET_NAME: Error = Error { code_num: 1076, message: "Missing wallet name in config" };
-pub static MISSING_EXPORTED_WALLET_PATH: Error = Error { code_num: 1077, message: "Missing exported wallet path in config" };
-pub static MISSING_BACKUP_KEY: Error = Error { code_num: 1078, message: "Missing exported backup key in config" };
-pub static WALLET_NOT_FOUND: Error = Error { code_num: 1079, message: "Wallet Not Found" };
-pub static LIBINDY_INVALID_STRUCTURE: Error = Error { code_num: 1080, message: "Object (json, config, key, credential and etc...) passed to libindy has invalid structure" };
-pub static INVALID_STATE: Error = Error { code_num: 1081, message: "Object is in invalid state for requested operation" };
-pub static INVALID_LEDGER_RESPONSE: Error = Error { code_num: 1082, message: "Invalid response from ledger for paid transaction" };
-pub static DID_ALREADY_EXISTS_IN_WALLET: Error = Error { code_num: 1083, message: "Attempted to add a DID to wallet when that DID already exists in wallet" };
-pub static DUPLICATE_MASTER_SECRET: Error = Error { code_num: 1084, message: "Attempted to add a Master Secret that already existed in wallet" };
-pub static THREAD_ERROR: Error = Error { code_num: 1085, message: "Unable to create thread" };
-pub static INVALID_PROOF_REQUEST: Error = Error { code_num: 1086, message: "Proof Request Passed into Libindy Call Was Invalid" };
-pub static MISSING_PAYMENT_METHOD: Error = Error { code_num: 1087, message: "Configuration is missing the Payment Method parameter" };
-pub static DUPLICATE_SCHEMA: Error = Error { code_num: 1088, message: "Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination" };
-pub static UKNOWN_LIBINDY_TRANSACTION_REJECTION: Error = Error { code_num: 1089, message: "Unknown Libindy Rejection" };
-pub static LOGGING_ERROR: Error = Error { code_num: 1090, message: "Logging Error" };
-pub static INVALID_REVOCATION_DETAILS: Error = Error { code_num: 1091, message: "Invalid Revocation Details" };
-pub static INVALID_REV_ENTRY: Error = Error { code_num: 1092, message: "Unable to Update Revocation Delta On Ledger" };
-pub static INVALID_REVOCATION_TIMESTAMP: Error = Error { code_num: 1093, message: "Invalid Credential Revocation timestamp" };
-pub static UNKNOWN_SCHEMA_REJECTION: Error = Error { code_num: 1094, message: "Unknown Rejection of Schema Creation, refer to libindy documentation" };
-pub static INVALID_REV_REG_DEF_CREATION: Error = Error { code_num: 1095, message: "Failed to create Revocation Registration Definition" };
+pub static SUCCESS: Error = Error {
+    code_num: 0,
+    message: "Success",
+};
+pub static INDY_WALLET_RECORD_NOT_FOUND: Error = Error {
+    code_num: 212,
+    message: "Error from Indy: Wallet Item not found",
+};
+pub static INDY_DUPLICATE_WALLET_RECORD: Error = Error {
+    code_num: 213,
+    message: "Error from Indy: Duplicate Wallet Record",
+};
+pub static UNKNOWN_ERROR: Error = Error {
+    code_num: 1001,
+    message: "Unknown Error",
+};
+pub static CONNECTION_ERROR: Error = Error {
+    code_num: 1002,
+    message: "Error with Connection",
+};
+pub static INVALID_CONNECTION_HANDLE: Error = Error {
+    code_num: 1003,
+    message: "Invalid Connection Handle",
+};
+pub static INVALID_CONFIGURATION: Error = Error {
+    code_num: 1004,
+    message: "Invalid Configuration",
+};
+pub static NOT_READY: Error = Error {
+    code_num: 1005,
+    message: "Object not ready for specified action",
+};
+pub static NO_ENDPOINT: Error = Error {
+    code_num: 1006,
+    message: "No Endpoint set for Connection Object",
+};
+pub static INVALID_OPTION: Error = Error {
+    code_num: 1007,
+    message: "Invalid Option",
+};
+pub static INVALID_DID: Error = Error {
+    code_num: 1008,
+    message: "Invalid DID",
+};
+pub static INVALID_VERKEY: Error = Error {
+    code_num: 1009,
+    message: "Invalid VERKEY",
+};
+pub static POST_MSG_FAILURE: Error = Error {
+    code_num: 1010,
+    message: "Message failed in post",
+};
+pub static INVALID_NONCE: Error = Error {
+    code_num: 1011,
+    message: "Invalid NONCE",
+};
+pub static INVALID_KEY_DELEGATE: Error = Error {
+    code_num: 1012,
+    message: "Invalid DELEGATE",
+};
+pub static INVALID_URL: Error = Error {
+    code_num: 1013,
+    message: "Invalid URL",
+};
+pub static NOT_BASE58: Error = Error {
+    code_num: 1014,
+    message: "Value needs to be base58",
+};
+pub static INVALID_ISSUER_CREDENTIAL_HANDLE: Error = Error {
+    code_num: 1015,
+    message: "Invalid Credential Issuer Handle",
+};
+pub static INVALID_JSON: Error = Error {
+    code_num: 1016,
+    message: "Invalid JSON string",
+};
+pub static INVALID_PROOF_HANDLE: Error = Error {
+    code_num: 1017,
+    message: "Invalid Proof Handle",
+};
+pub static INVALID_CREDENTIAL_REQUEST: Error = Error {
+    code_num: 1018,
+    message: "Invalid Credential Request",
+};
+pub static INVALID_MSGPACK: Error = Error {
+    code_num: 1019,
+    message: "Invalid MessagePack",
+};
+pub static INVALID_MESSAGES: Error = Error {
+    code_num: 1020,
+    message: "Error Retrieving messages from API",
+};
+pub static INVALID_ATTRIBUTES_STRUCTURE: Error = Error {
+    code_num: 1021,
+    message: "Attributes provided to Credential Offer are not correct, possibly malformed",
+};
+pub static BIG_NUMBER_ERROR: Error = Error {
+    code_num: 1022,
+    message: "Could not encode string to a big integer.",
+};
+pub static INVALID_PROOF: Error = Error {
+    code_num: 1023,
+    message: "Proof had invalid format",
+};
+pub static INVALID_GENESIS_TXN_PATH: Error = Error {
+    code_num: 1024,
+    message: "Must have valid genesis txn file path",
+};
+pub static POOL_LEDGER_CONNECT: Error = Error {
+    code_num: 1025,
+    message: "Connection to Pool Ledger.",
+};
+pub static CREATE_POOL_CONFIG: Error = Error {
+    code_num: 1026,
+    message: "Formatting for Pool Config are incorrect.",
+};
+pub static INVALID_PROOF_CREDENTIAL_DATA: Error = Error {
+    code_num: 1027,
+    message: "The Proof received does not have valid credentials listed.",
+};
+pub static INDY_SUBMIT_REQUEST_ERR: Error = Error {
+    code_num: 1028,
+    message: "Call to indy submit request failed",
+};
+pub static BUILD_CREDENTIAL_DEF_REQ_ERR: Error = Error {
+    code_num: 1029,
+    message: "Call to indy credential def request failed",
+};
+pub static NO_POOL_OPEN: Error = Error {
+    code_num: 1030,
+    message: "No Pool open. Can't return handle.",
+};
+pub static INVALID_SCHEMA: Error = Error {
+    code_num: 1031,
+    message: "Schema was invalid or corrupt",
+};
+pub static FAILED_PROOF_COMPLIANCE: Error = Error {
+    code_num: 1032,
+    message: "Proof is not compliant to proof request",
+};
+pub static INVALID_HTTP_RESPONSE: Error = Error {
+    code_num: 1033,
+    message: "Invalid HTTP response.",
+};
+pub static CREATE_CREDENTIAL_DEF_ERR: Error = Error {
+    code_num: 1034,
+    message: "Call to create Credential Definition failed",
+};
+pub static UNKNOWN_LIBINDY_ERROR: Error = Error {
+    code_num: 1035,
+    message: "Unknown libindy error",
+};
+pub static INVALID_CREDENTIAL_DEF_JSON: Error = Error {
+    code_num: 1036,
+    message: "Credential Def not in valid json",
+};
+pub static INVALID_CREDENTIAL_DEF_HANDLE: Error = Error {
+    code_num: 1037,
+    message: "Invalid Credential Definition handle",
+};
+pub static TIMEOUT_LIBINDY_ERROR: Error = Error {
+    code_num: 1038,
+    message: "Waiting for callback timed out",
+};
+pub static CREDENTIAL_DEF_ALREADY_CREATED: Error = Error {
+    code_num: 1039,
+    message: "Can't create, Credential Def already exists in wallet",
+};
+pub static INVALID_SCHEMA_SEQ_NO: Error = Error {
+    code_num: 1040,
+    message: "No Schema for that schema sequence number",
+};
+pub static INVALID_SCHEMA_CREATION: Error = Error {
+    code_num: 1041,
+    message: "Could not create schema",
+};
+pub static INVALID_SCHEMA_HANDLE: Error = Error {
+    code_num: 1042,
+    message: "Invalid Schema Handle",
+};
+pub static INVALID_MASTER_SECRET: Error = Error {
+    code_num: 1043,
+    message: "Invalid master secret",
+};
+pub static ALREADY_INITIALIZED: Error = Error {
+    code_num: 1044,
+    message: "Library already initialized",
+};
+pub static INVALID_INVITE_DETAILS: Error = Error {
+    code_num: 1045,
+    message: "Invalid invite details structure",
+};
+pub static INVALID_SELF_ATTESTED_VAL: Error = Error {
+    code_num: 1046,
+    message: "Self Attested Value invalid",
+};
+pub static INVALID_PREDICATE: Error = Error {
+    code_num: 1047,
+    message: "Predicate in proof is invalid",
+};
+pub static INVALID_OBJ_HANDLE: Error = Error {
+    code_num: 1048,
+    message: "Obj was not found with handle",
+};
+pub static INVALID_DISCLOSED_PROOF_HANDLE: Error = Error {
+    code_num: 1049,
+    message: "Obj was not found with handle",
+};
+pub static SERIALIZATION_ERROR: Error = Error {
+    code_num: 1050,
+    message: "Unable to serialize",
+};
+pub static WALLET_ALREADY_EXISTS: Error = Error {
+    code_num: 1051,
+    message: "Indy wallet already exists",
+};
+pub static WALLET_ALREADY_OPEN: Error = Error {
+    code_num: 1052,
+    message: "Indy wallet already open",
+};
+pub static INVALID_CREDENTIAL_HANDLE: Error = Error {
+    code_num: 1053,
+    message: "Invalid credential handle",
+};
+pub static INVALID_CREDENTIAL_JSON: Error = Error {
+    code_num: 1054,
+    message: "Invalid credential json",
+};
+pub static CREATE_CREDENTIAL_REQUEST_ERROR: Error = Error {
+    code_num: 1055,
+    message: "could not create credential request",
+};
+pub static CREATE_PROOF_ERROR: Error = Error {
+    code_num: 1056,
+    message: "could not create proof",
+};
+pub static INVALID_WALLET_HANDLE: Error = Error {
+    code_num: 1057,
+    message: "Invalid Wallet or Search Handle",
+};
+pub static INVALID_WALLET_CREATION: Error = Error {
+    code_num: 1058,
+    message: "Error Creating a wallet",
+};
+pub static INVALID_POOL_NAME: Error = Error {
+    code_num: 1059,
+    message: "Pool Name in config was invalid",
+};
+pub static CANNOT_DELETE_CONNECTION: Error = Error {
+    code_num: 1060,
+    message: "Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency.",
+};
+pub static CREATE_CONNECTION_ERROR: Error = Error {
+    code_num: 1061,
+    message: "Could not create connection",
+};
+pub static INVALID_WALLET_SETUP: Error = Error {
+    code_num: 1062,
+    message: "Invalid wallet keys...have you provisioned correctly?",
+};
+pub static COMMON_ERROR: Error = Error {
+    code_num: 1063,
+    message: "Common Error",
+};
+pub static INSUFFICIENT_TOKEN_AMOUNT: Error = Error {
+    code_num: 1064,
+    message: "Insufficient amount of tokens to process request",
+};
+pub static UNKNOWN_TXN_TYPE: Error = Error {
+    code_num: 1065,
+    message: "Unknown ledger transaction type",
+};
+pub static INVALID_PAYMENT_ADDRESS: Error = Error {
+    code_num: 1066,
+    message: "Invalid payment address",
+};
+pub static INVALID_LIBINDY_PARAM: Error = Error {
+    code_num: 1067,
+    message: "Parameter passed to libindy was invalid",
+};
+pub static INVALID_PAYMENT: Error = Error {
+    code_num: 1068,
+    message: "Invalid Payment Details",
+};
+pub static MISSING_WALLET_KEY: Error = Error {
+    code_num: 1069,
+    message: "Configuration is missing wallet key",
+};
+pub static OBJECT_CACHE_ERROR: Error = Error {
+    code_num: 1070,
+    message: "Object cache error",
+};
+pub static NO_PAYMENT_INFORMATION: Error = Error {
+    code_num: 1071,
+    message: "No payment information associated with object",
+};
+pub static DUPLICATE_WALLET_RECORD: Error = Error {
+    code_num: 1072,
+    message: "Record already exists in the wallet",
+};
+pub static WALLET_RECORD_NOT_FOUND: Error = Error {
+    code_num: 1073,
+    message: "Wallet record not found",
+};
+pub static IOERROR: Error = Error {
+    code_num: 1074,
+    message: "IO Error, possibly creating a backup wallet",
+};
+pub static WALLET_ACCESS_FAILED: Error = Error {
+    code_num: 1075,
+    message: "Attempt to open wallet with invalid credentials",
+};
+pub static MISSING_WALLET_NAME: Error = Error {
+    code_num: 1076,
+    message: "Missing wallet name in config",
+};
+pub static MISSING_EXPORTED_WALLET_PATH: Error = Error {
+    code_num: 1077,
+    message: "Missing exported wallet path in config",
+};
+pub static MISSING_BACKUP_KEY: Error = Error {
+    code_num: 1078,
+    message: "Missing exported backup key in config",
+};
+pub static WALLET_NOT_FOUND: Error = Error {
+    code_num: 1079,
+    message: "Wallet Not Found",
+};
+pub static LIBINDY_INVALID_STRUCTURE: Error = Error {
+    code_num: 1080,
+    message: "Object (json, config, key, credential and etc...) passed to libindy has invalid structure",
+};
+pub static INVALID_STATE: Error = Error {
+    code_num: 1081,
+    message: "Object is in invalid state for requested operation",
+};
+pub static INVALID_LEDGER_RESPONSE: Error = Error {
+    code_num: 1082,
+    message: "Invalid response from ledger for paid transaction",
+};
+pub static DID_ALREADY_EXISTS_IN_WALLET: Error = Error {
+    code_num: 1083,
+    message: "Attempted to add a DID to wallet when that DID already exists in wallet",
+};
+pub static DUPLICATE_MASTER_SECRET: Error = Error {
+    code_num: 1084,
+    message: "Attempted to add a Master Secret that already existed in wallet",
+};
+pub static THREAD_ERROR: Error = Error {
+    code_num: 1085,
+    message: "Unable to create thread",
+};
+pub static INVALID_PROOF_REQUEST: Error = Error {
+    code_num: 1086,
+    message: "Proof Request Passed into Libindy Call Was Invalid",
+};
+pub static MISSING_PAYMENT_METHOD: Error = Error {
+    code_num: 1087,
+    message: "Configuration is missing the Payment Method parameter",
+};
+pub static DUPLICATE_SCHEMA: Error = Error {
+    code_num: 1088,
+    message: "Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination",
+};
+pub static UKNOWN_LIBINDY_TRANSACTION_REJECTION: Error = Error {
+    code_num: 1089,
+    message: "Unknown Libindy Rejection",
+};
+pub static LOGGING_ERROR: Error = Error {
+    code_num: 1090,
+    message: "Logging Error",
+};
+pub static INVALID_REVOCATION_DETAILS: Error = Error {
+    code_num: 1091,
+    message: "Invalid Revocation Details",
+};
+pub static INVALID_REV_ENTRY: Error = Error {
+    code_num: 1092,
+    message: "Unable to Update Revocation Delta On Ledger",
+};
+pub static INVALID_REVOCATION_TIMESTAMP: Error = Error {
+    code_num: 1093,
+    message: "Invalid Credential Revocation timestamp",
+};
+pub static UNKNOWN_SCHEMA_REJECTION: Error = Error {
+    code_num: 1094,
+    message: "Unknown Rejection of Schema Creation, refer to libindy documentation",
+};
+pub static INVALID_REV_REG_DEF_CREATION: Error = Error {
+    code_num: 1095,
+    message: "Failed to create Revocation Registration Definition",
+};
 /* EC 1096 - 1099 are reserved for proprietary forks of libVCX */
-pub static INVALID_ATTACHMENT_ENCODING: Error = Error { code_num: 1100, message: "Failed to decode attachment" };
-pub static UNKNOWN_ATTACHMENT_ENCODING: Error = Error { code_num: 1101, message: "This type of attachment can not be used" };
-pub static UNKNOWN_MIME_TYPE: Error = Error { code_num: 1102, message: "Unknown mime type" };
-pub static ACTION_NOT_SUPPORTED: Error = Error { code_num: 1103, message: "Action is not supported" };
-pub static INVALID_REDIRECT_DETAILS: Error = Error { code_num: 1104, message: "Invalid redirect details structure" };
+pub static INVALID_ATTACHMENT_ENCODING: Error = Error {
+    code_num: 1100,
+    message: "Failed to decode attachment",
+};
+pub static UNKNOWN_ATTACHMENT_ENCODING: Error = Error {
+    code_num: 1101,
+    message: "This type of attachment can not be used",
+};
+pub static UNKNOWN_MIME_TYPE: Error = Error {
+    code_num: 1102,
+    message: "Unknown mime type",
+};
+pub static ACTION_NOT_SUPPORTED: Error = Error {
+    code_num: 1103,
+    message: "Action is not supported",
+};
+pub static INVALID_REDIRECT_DETAILS: Error = Error {
+    code_num: 1104,
+    message: "Invalid redirect details structure",
+};
 /* EC 1105 is reserved for proprietary forks of libVCX */
-pub static NO_AGENT_INFO: Error = Error { code_num: 1106, message: "Agent pairwise information not found" };
-pub static REV_REG_DEF_NOT_FOUND: Error = Error { code_num: 1107, message: "No revocation definition found" };
-pub static REV_DELTA_NOT_FOUND: Error = Error { code_num: 1108, message: "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?" };
-pub static POISONED_LOCK: Error = Error { code_num: 1109, message: "Attempted to lock a poisoned lock" };
-pub static CREATE_PUBLIC_AGENT: Error = Error { code_num: 1110, message: "Error creating public agent" };
-pub static INVALID_MESSAGE_FORMAT: Error = Error { code_num: 1111, message: "Invalid message format" };
-pub static CREATE_OUT_OF_BAND: Error = Error { code_num: 1112, message: "Error creating out of band message" };
-pub static CREATE_AGENT: Error = Error { code_num: 1113, message: "Error creating agent in agency" };
+pub static NO_AGENT_INFO: Error = Error {
+    code_num: 1106,
+    message: "Agent pairwise information not found",
+};
+pub static REV_REG_DEF_NOT_FOUND: Error = Error {
+    code_num: 1107,
+    message: "No revocation definition found",
+};
+pub static REV_DELTA_NOT_FOUND: Error = Error {
+    code_num: 1108,
+    message: "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?",
+};
+pub static POISONED_LOCK: Error = Error {
+    code_num: 1109,
+    message: "Attempted to lock a poisoned lock",
+};
+pub static CREATE_PUBLIC_AGENT: Error = Error {
+    code_num: 1110,
+    message: "Error creating public agent",
+};
+pub static INVALID_MESSAGE_FORMAT: Error = Error {
+    code_num: 1111,
+    message: "Invalid message format",
+};
+pub static CREATE_OUT_OF_BAND: Error = Error {
+    code_num: 1112,
+    message: "Error creating out of band message",
+};
+pub static CREATE_AGENT: Error = Error {
+    code_num: 1113,
+    message: "Error creating agent in agency",
+};
+pub static REV_DELTA_FAILED_TO_CLEAR: Error = Error {
+    code_num: 1114,
+    message: "Failed to clear stored revocation deltas",
+};
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {
-       let mut m = HashMap::new();
+        let mut m = HashMap::new();
         insert_c_message(&mut m, &SUCCESS);
         insert_c_message(&mut m, &UNKNOWN_ERROR);
         insert_c_message(&mut m, &CONNECTION_ERROR);
@@ -227,7 +564,14 @@ lazy_static! {
         insert_c_message(&mut m, &ACTION_NOT_SUPPORTED);
         insert_c_message(&mut m, &INVALID_REDIRECT_DETAILS);
         insert_c_message(&mut m, &NO_AGENT_INFO);
-
+        insert_c_message(&mut m, &REV_REG_DEF_NOT_FOUND);
+        insert_c_message(&mut m, &REV_DELTA_NOT_FOUND);
+        insert_c_message(&mut m, &POISONED_LOCK);
+        insert_c_message(&mut m, &CREATE_PUBLIC_AGENT);
+        insert_c_message(&mut m, &INVALID_MESSAGE_FORMAT);
+        insert_c_message(&mut m, &CREATE_OUT_OF_BAND);
+        insert_c_message(&mut m, &CREATE_AGENT);
+        insert_c_message(&mut m, &REV_DELTA_FAILED_TO_CLEAR);
         m
     };
 }

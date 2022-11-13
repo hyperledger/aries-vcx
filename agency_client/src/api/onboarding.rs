@@ -1,32 +1,51 @@
-use indy::WalletHandle;
 use crate::agency_client::AgencyClient;
+use crate::configuration::AgencyClientConfig;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
-use crate::configuration::AgencyClientConfig;
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::testing::test_constants;
+use vdrtools::WalletHandle;
 
 impl AgencyClient {
-    async fn _connect(&self, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str) -> AgencyClientResult<(String, String)> {
-        trace!("connect >>> my_did: {}, my_vk: {}, agency_did: {}", my_did, my_vk, agency_did);
+    async fn _connect(
+        &self,
+        my_did: &str,
+        my_vk: &str,
+        agency_did: &str,
+        agency_vk: &str,
+    ) -> AgencyClientResult<(String, String)> {
+        trace!(
+            "connect >>> my_did: {}, my_vk: {}, agency_did: {}",
+            my_did,
+            my_vk,
+            agency_did
+        );
         let message = Client2AgencyMessage::Connect(Connect::build(my_did, my_vk));
 
         let mut response = self.send_message_to_agency(&message, agency_did, agency_vk).await?;
 
-        let ConnectResponse { from_vk: agency_pw_vk, from_did: agency_pw_did, .. } =
-            match response.remove(0) {
-                Client2AgencyMessage::ConnectResponse(resp) => resp,
-                _ => return
-                    Err(AgencyClientError::from_msg(
-                        AgencyClientErrorKind::InvalidHttpResponse,
-                        "Message does not match any variant of ConnectResponse")
-                    )
-            };
+        let ConnectResponse {
+            from_vk: agency_pw_vk,
+            from_did: agency_pw_did,
+            ..
+        } = match response.remove(0) {
+            Client2AgencyMessage::ConnectResponse(resp) => resp,
+            _ => {
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
+                    "Message does not match any variant of ConnectResponse",
+                ))
+            }
+        };
 
-        trace!("connect <<< agency_pw_did: {}, agency_pw_vk: {}", agency_pw_did, agency_pw_vk);
+        trace!(
+            "connect <<< agency_pw_did: {}, agency_pw_vk: {}",
+            agency_pw_did,
+            agency_pw_vk
+        );
         Ok((agency_pw_did, agency_pw_vk))
     }
 
@@ -34,31 +53,54 @@ impl AgencyClient {
         let message = Client2AgencyMessage::SignUp(SignUp::build());
 
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::REGISTER_RESPONSE_DECRYPTED);
-        let mut response = self.send_message_to_agency(&message, agency_pw_did, agency_pw_vk).await?;
+        let mut response = self
+            .send_message_to_agency(&message, agency_pw_did, agency_pw_vk)
+            .await?;
 
-        let _response: SignUpResponse =
-            match response.remove(0) {
-                Client2AgencyMessage::SignUpResponse(resp) => resp,
-                _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of SignUpResponse"))
-            };
+        let _response: SignUpResponse = match response.remove(0) {
+            Client2AgencyMessage::SignUpResponse(resp) => resp,
+            _ => {
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
+                    "Message does not match any variant of SignUpResponse",
+                ))
+            }
+        };
         Ok(())
     }
 
     async fn _create_agent(&self, agency_pw_did: &str, agency_pw_vk: &str) -> AgencyClientResult<CreateAgentResponse> {
         let message = Client2AgencyMessage::CreateAgent(CreateAgent::build());
         AgencyMockDecrypted::set_next_decrypted_response(test_constants::AGENT_CREATED_DECRYPTED);
-        let mut response = self.send_message_to_agency(&message, agency_pw_did, agency_pw_vk).await?;
+        let mut response = self
+            .send_message_to_agency(&message, agency_pw_did, agency_pw_vk)
+            .await?;
 
-        let response: CreateAgentResponse =
-            match response.remove(0) {
-                Client2AgencyMessage::CreateAgentResponse(resp) => resp,
-                _ => return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, "Message does not match any variant of CreateAgentResponse"))
-            };
+        let response: CreateAgentResponse = match response.remove(0) {
+            Client2AgencyMessage::CreateAgentResponse(resp) => resp,
+            _ => {
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
+                    "Message does not match any variant of CreateAgentResponse",
+                ))
+            }
+        };
         Ok(response)
     }
 
-    pub async fn provision_cloud_agent(&mut self, wallet_handle: WalletHandle, my_did: &str, my_vk: &str, agency_did: &str, agency_vk: &str, agency_url: &str) -> AgencyClientResult<()> {
-        info!("provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}", my_did, my_vk, agency_did, agency_vk, agency_url);
+    pub async fn provision_cloud_agent(
+        &mut self,
+        wallet_handle: WalletHandle,
+        my_did: &str,
+        my_vk: &str,
+        agency_did: &str,
+        agency_vk: &str,
+        agency_url: &str,
+    ) -> AgencyClientResult<()> {
+        info!(
+            "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}",
+            my_did, my_vk, agency_did, agency_vk, agency_url
+        );
         self.set_wallet_handle(wallet_handle);
         self.set_agency_url(agency_url);
         self.set_agency_vk(agency_vk);
@@ -73,13 +115,17 @@ impl AgencyClient {
 
         let agent_did = create_agent_response.from_did;
         let agent_vk = create_agent_response.from_vk;
-        trace!("provision_cloud_agent <<< agent_did: {}, agent_vk: {}", agent_did, agent_vk);
+        trace!(
+            "provision_cloud_agent <<< agent_did: {}, agent_vk: {}",
+            agent_did,
+            agent_vk
+        );
         self.set_agent_pwdid(&agent_did);
         self.set_agent_vk(&agent_vk);
         Ok(())
     }
 
-    pub fn get_config(&self) -> AgencyClientResult<AgencyClientConfig>{
+    pub fn get_config(&self) -> AgencyClientResult<AgencyClientConfig> {
         Ok(AgencyClientConfig {
             agency_did: self.get_agency_did(),
             agency_verkey: self.get_agency_vk(),

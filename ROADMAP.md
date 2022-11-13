@@ -27,22 +27,33 @@ the library into 3 pieces.
 - ✅ `libvcx` - adds memory management and C bindings on top of `aries-vcx` - making it consumable
    on Android, iOS and any programming language.
 
-# Phase 2 - In progress 🚧
-- 🚧 Migration from `libindy` to its fork [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools).
-- 🚧 Concise `aries-vcx` crate API and start publishing on crates.io
-- 🚧 Implement testing backchannel for aries-vcx. [WIP](https://github.com/hyperledger/aries-agent-test-harness/pull/243)
-- Support for public DID-based connection invitations
-- Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
+# Phase 2 - Done ✅
+- ✅ Migration from `libindy` to its fork [vdr-tools](https://gitlab.com/evernym/verity/vdr-tools).
+- ✅ Removal of blocking calls to `vdr-tools`
+- ✅ Support for public DID-based connection invitations
+- ✅ Support for [out-of-band protocol](https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband)
+- ✅ Implement testing backchannel for aries-vcx. [Test runs](https://github.com/hyperledger/aries-agent-test-harness/actions)
+- ✅ Removal of global state from `aries-vcx`
+- ✅ Support wallet multi-tenancy on aries-vcx level
 
-# Future work 
+# Phase 2 - In progress 🚧 / Planned
+- ✅ Extract `aries-vcx::messages` module into `aries-messages` crate
+- ✅ Implement simple aries agent on top aries-vcx
+- ✅ Implement `aries-vcx - AFJ` AATH back-channel pair
+- 🚧 Remove FFI layer between `aries-vcx --- vdr-tools`
+- 🚧 Concise `aries-vcx` public crate API
+- Update public agents' API to enable for receiving messages directly, without a mediator intermediary.
+- Update connection protocol implementation to make use of mediator optional
+- Extract `aries-vcx::protocols` module into `aries-protocols` crate
+- Extract `aries-vcx::did_doc` module into `did-doc` crate
+- Publish crates to crates.io
+- Implement `did-exchange` protocol
+- Add support for full did format, such as `did:sov`, `did:peer`
+- Unify approach for Aries FSM interface across protocols
+- Abstract away concept "wallet handle" and "pool handle" from `aries-vcx` codebase
 
-### AIP 2.0
-Our current priority is to get satisfying AIP1.0 results
-  on [aries-agent-test-harness](https://github.com/hyperledger/aries-agent-test-harness) tests, 
-  followed by support for AIP 2.0 in the future.
-  
-### Multitenancy 
-AriesVCX currently can not manage more than 1 wallet simultaneously. Adding this capability is on our roadmap.
+# Phase 3
+- Use `indy-vdr` to facilitate ledger calls
 
 # Future vision architecture diagram
-# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_180821.png"/>
+# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_future_150922.png"/>

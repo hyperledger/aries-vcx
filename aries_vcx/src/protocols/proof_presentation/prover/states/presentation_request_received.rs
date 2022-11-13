@@ -1,11 +1,11 @@
-use indy_sys::WalletHandle;
+use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
-use crate::libindy::proofs::prover::prover::generate_indy_proof;
-use crate::messages::error::ProblemReport;
-use crate::messages::proof_presentation::presentation::Presentation;
-use crate::messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::messages::status::Status;
+use crate::indy::proofs::prover::prover::generate_indy_proof;
+use messages::problem_report::ProblemReport;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use crate::protocols::proof_presentation::prover::states::presentation_preparation_failed::PresentationPreparationFailedState;
 use crate::protocols::proof_presentation::prover::states::presentation_prepared::PresentationPreparedState;
@@ -15,17 +15,26 @@ pub struct PresentationRequestReceived {
     pub presentation_request: PresentationRequest,
 }
 
-
 impl PresentationRequestReceived {
     pub fn new(presentation_request: PresentationRequest) -> Self {
         Self { presentation_request }
     }
 
-    pub async fn build_presentation(&self, wallet_handle: WalletHandle, credentials: &str, self_attested_attrs: &str) -> VcxResult<String> {
-        generate_indy_proof(wallet_handle,
-                            credentials,
-                            self_attested_attrs,
-                            &self.presentation_request.request_presentations_attach.content()?).await
+    pub async fn build_presentation(
+        &self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        credentials: &str,
+        self_attested_attrs: &str,
+    ) -> VcxResult<String> {
+        generate_indy_proof(
+            wallet_handle,
+            pool_handle,
+            credentials,
+            self_attested_attrs,
+            &self.presentation_request.request_presentations_attach.content()?,
+        )
+        .await
     }
 }
 

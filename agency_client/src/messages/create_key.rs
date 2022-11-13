@@ -1,6 +1,6 @@
 use crate::error::AgencyClientResult;
-use crate::messages::message_type::MessageType;
 use crate::messages::a2a_message::A2AMessageKinds;
+use crate::messages::message_type::MessageType;
 use crate::validation;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -67,7 +67,6 @@ impl CreateKeyBuilder {
 mod tests {
     use crate::agency_client::AgencyClient;
     use crate::error::AgencyClientErrorKind;
-    use crate::testing::test_constants;
     use crate::testing::test_utils::SetupMocks;
 
     use super::*;
@@ -79,11 +78,13 @@ mod tests {
         let for_verkey = "EkVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
 
         CreateKeyBuilder::create()
-            .for_did(for_did).unwrap()
-            .for_verkey(for_verkey).unwrap();
+            .for_did(for_did)
+            .unwrap()
+            .for_verkey(for_verkey)
+            .unwrap();
     }
 
-    #[async_std::test]
+    #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_parse_create_keys_v2_response() {
         let _setup = SetupMocks::init();
@@ -101,10 +102,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_create_key_set_invalid_did_errors() {
         let for_did = "11235yBzrpJQmNyZzgoT";
-        let res = CreateKeyBuilder::create()
-            .for_did(for_did)
-            .unwrap_err();
+        let res = CreateKeyBuilder::create().for_did(for_did).unwrap_err();
         assert_eq!(res.kind(), AgencyClientErrorKind::InvalidDid);
     }
 }
-

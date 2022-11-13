@@ -175,7 +175,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
         rustAPI().vcx_disclosed_proof_create_with_request(0, sourceId, request, cb),
       );
       return newObj;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -225,7 +225,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -247,7 +247,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
     try {
       const newObj = await super._deserialize<DisclosedProof>(DisclosedProof, data);
       return newObj;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -331,7 +331,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
       );
       const creds: IRetrievedCreds = JSON.parse(credsStr);
       return creds;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -359,7 +359,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
           ),
       );
       return attrs;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -387,7 +387,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
           ),
       );
       return threadId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -428,7 +428,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -467,7 +467,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -513,7 +513,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -553,7 +553,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -602,7 +602,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -653,7 +653,7 @@ export class DisclosedProof extends VCXBaseWithState<IDisclosedProofData, Prover
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

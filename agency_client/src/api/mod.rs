@@ -1,4 +1,4 @@
-pub mod onboarding;
 pub mod agent;
-pub mod messaging;
 pub mod downloaded_message;
+pub mod messaging;
+pub mod onboarding;

@@ -1,11 +1,9 @@
 # Testing
 You can filter out tests by specifying features they require / use.
 ```
-- general_test       :: does not require any external component
+- general_test       :: unit tests which do not require any external component
 - pool_tests         :: requires indypool to be running
-- agency_v2          :: requires agency talking libvcx client2agency v2 protocol (nodevcx-agency)
-- agency_pool_tests  :: requires both indypool and agency 
-- aries              :: group of quick unit tests related to aries
+- agency_pool_tests  :: requires agency and/or indypool 
 ```
 
 Run quick unit tests:

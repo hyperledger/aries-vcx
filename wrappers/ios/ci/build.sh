@@ -4,19 +4,17 @@ set -ex
 
 export PKG_CONFIG_ALLOW_CROSS=1
 export CARGO_INCREMENTAL=1
-export RUST_LOG=indy=trace
+export RUST_LOG=vdrtools=trace
 export RUST_TEST_THREADS=1
 
-INDY_VERSION="b5fd711a" # in vdr-tools repo
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
-INDY_SDK_DIR=$OUTPUT_DIR/vdr-tools
 
 setup() {
     echo "ios/ci/build.sh: running setup()"
     echo "Setup rustup"
-    rustup default 1.62.1
+    rustup default 1.64.0
     rustup component add rls-preview rust-analysis rust-src
 
     echo "Setup rustup target platforms"
@@ -47,7 +45,6 @@ setup() {
     which autoconf &>/dev/null || brew install autoconf
     which cmake &>/dev/null || brew install cmake
     which wget &>/dev/null || brew install wget
-    which truncate &>/dev/null || brew install truncate
     brew list openssl &>/dev/null || brew install openssl@1.1
     brew list zmq &>/dev/null || brew install zmq
     brew list libzip &>/dev/null || brew install libzip
@@ -144,44 +141,6 @@ extract_architectures() {
     popd
 }
 
-checkout_indy_sdk() {
-    echo "ios/ci/build.sh: running checkout_indy_sdk(), $INDY_SDK_DIR=${INDY_SDK_DIR}"
-    if [ ! -d $INDY_SDK_DIR ]; then
-        git clone https://gitlab.com/PatrikStas/vdr-tools $INDY_SDK_DIR
-    fi
-
-    pushd $INDY_SDK_DIR
-        git fetch --all
-        git checkout $INDY_VERSION
-    popd
-}
-
-build_libindy() {
-    echo "ios/ci/build.sh: running build_libindy()"
-    TRIPLETS="aarch64-apple-ios,x86_64-apple-ios"
-
-    pushd $INDY_SDK_DIR/libindy
-        cargo lipo --release --targets="${TRIPLETS}"
-    popd
-}
-
-copy_libindy_architectures() {
-    echo "ios/ci/build.sh: running copy_libindy_architectures()"
-    ARCHS="arm64 x86_64"
-    LIB_NAME="indy"
-
-    echo "Copying architectures for $LIB_NAME..."
-    for ARCH in ${ARCHS[*]}; do
-        generate_flags $ARCH
-
-        echo ARCH=$ARCH
-        echo TRIPLET=$TRIPLET
-
-        mkdir -p $OUTPUT_DIR/libs/$LIB_NAME/$ARCH
-        cp -v $INDY_SDK_DIR/libindy/target/$TRIPLET/release/libindy.a $OUTPUT_DIR/libs/$LIB_NAME/$ARCH/libindy.a
-    done
-}
-
 build_libvcx() {
     echo "ios/ci/build.sh: running build_libvcx()"
     WORK_DIR=$(abspath "$OUTPUT_DIR")
@@ -196,8 +155,7 @@ build_libvcx() {
             echo TRIPLET=$TRIPLET
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
-            export LIBINDY_DIR=$WORK_DIR/libs/indy/${ARCH}
-            echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR} LIBINDY_DIR=${LIBINDY_DIR}"
+            echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR}"
             cargo build -vv --target "${TRIPLET}" --release --no-default-features
         done
     popd
@@ -399,11 +357,6 @@ extract_architectures $OUTPUT_DIR/libsodium-ios/dist/ios/lib/libsodium.a libsodi
 extract_architectures $OUTPUT_DIR/libzmq-ios/dist/ios/lib/libzmq.a libzmq zmq
 extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a libssl openssl
 extract_architectures $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libcrypto.a libcrypto openssl
-
-# Build libindy
-checkout_indy_sdk
-build_libindy
-copy_libindy_architectures
 
 # Build vcx
 build_libvcx

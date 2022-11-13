@@ -1,3 +1,4 @@
+use messages::status::Status;
 use std::fmt;
 
 macro_rules! enum_number {
@@ -56,3 +57,13 @@ enum_number!(ProofStateType
     ProofValidated = 1,
     ProofInvalid = 2,
 });
+
+impl From<Status> for ProofStateType {
+    fn from(state: Status) -> Self {
+        match state {
+            Status::Success => ProofStateType::ProofValidated,
+            Status::Failed(_) => ProofStateType::ProofInvalid,
+            _ => ProofStateType::ProofUndefined,
+        }
+    }
+}

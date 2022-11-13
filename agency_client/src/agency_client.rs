@@ -1,9 +1,9 @@
-use indy::WalletHandle;
+use vdrtools::WalletHandle;
 use url::Url;
 
-use crate::{AgencyClientError, AgencyClientErrorKind, validation};
-use crate::error::AgencyClientResult;
 use crate::configuration::AgencyClientConfig;
+use crate::error::AgencyClientResult;
+use crate::{validation, AgencyClientError, AgencyClientErrorKind};
 
 #[derive(Clone)]
 pub struct AgencyClient {
@@ -18,25 +18,46 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
-pub fn validate_mandotory_config_val<F, S, E>(val: &str, err: AgencyClientErrorKind, closure: F) -> AgencyClientResult<()>
-    where F: Fn(&str) -> Result<S, E> {
-    closure(val)
-        .or(Err(AgencyClientError::from(err)))?;
+pub fn validate_mandotory_config_val<F, S, E>(
+    val: &str,
+    err: AgencyClientErrorKind,
+    closure: F,
+) -> AgencyClientResult<()>
+where
+    F: Fn(&str) -> Result<S, E>,
+{
+    closure(val).or(Err(AgencyClientError::from(err)))?;
     Ok(())
 }
 
 impl AgencyClient {
-    pub fn get_wallet_handle(&self) -> WalletHandle { self.wallet_handle }
-    pub fn get_agency_url_full(&self) -> String { format!("{}/agency/msg", self.agency_url.clone()) }
-    pub(crate) fn get_agency_url_config(&self) -> String { self.agency_url.clone() }
+    pub fn get_wallet_handle(&self) -> WalletHandle {
+        self.wallet_handle
+    }
+    pub fn get_agency_url_full(&self) -> String {
+        format!("{}/agency/msg", self.agency_url.clone())
+    }
+    pub(crate) fn get_agency_url_config(&self) -> String {
+        self.agency_url.clone()
+    }
 
-    pub fn get_agency_did(&self) -> String { self.agency_did.clone() }
-    pub fn get_agency_vk(&self) -> String { self.agency_vk.clone() }
+    pub fn get_agency_did(&self) -> String {
+        self.agency_did.clone()
+    }
+    pub fn get_agency_vk(&self) -> String {
+        self.agency_vk.clone()
+    }
 
-    pub fn get_agent_pwdid(&self) -> String { self.agent_pwdid.clone() }
-    pub fn get_agent_vk(&self) -> String { self.agent_vk.clone() }
+    pub fn get_agent_pwdid(&self) -> String {
+        self.agent_pwdid.clone()
+    }
+    pub fn get_agent_vk(&self) -> String {
+        self.agent_vk.clone()
+    }
 
-    pub fn get_my_vk(&self) -> String { self.my_vk.clone() }
+    pub fn get_my_vk(&self) -> String {
+        self.my_vk.clone()
+    }
 
     pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
         self.wallet_handle = wallet_handle;
@@ -64,15 +85,39 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(&mut self, config: &AgencyClientConfig) -> AgencyClientResult<()> {
+    pub fn configure(mut self, wallet_handle: WalletHandle, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
-        validate_mandotory_config_val(&config.agency_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        validate_mandotory_config_val(&config.agency_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-        validate_mandotory_config_val(&config.sdk_to_remote_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        validate_mandotory_config_val(&config.sdk_to_remote_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
-        validate_mandotory_config_val(&config.remote_to_sdk_did, AgencyClientErrorKind::InvalidDid, validation::validate_did)?;
-        validate_mandotory_config_val(&config.remote_to_sdk_verkey, AgencyClientErrorKind::InvalidVerkey, validation::validate_verkey)?;
+        validate_mandotory_config_val(
+            &config.agency_did,
+            AgencyClientErrorKind::InvalidDid,
+            validation::validate_did,
+        )?;
+        validate_mandotory_config_val(
+            &config.agency_verkey,
+            AgencyClientErrorKind::InvalidVerkey,
+            validation::validate_verkey,
+        )?;
+        validate_mandotory_config_val(
+            &config.sdk_to_remote_did,
+            AgencyClientErrorKind::InvalidDid,
+            validation::validate_did,
+        )?;
+        validate_mandotory_config_val(
+            &config.sdk_to_remote_verkey,
+            AgencyClientErrorKind::InvalidVerkey,
+            validation::validate_verkey,
+        )?;
+        validate_mandotory_config_val(
+            &config.remote_to_sdk_did,
+            AgencyClientErrorKind::InvalidDid,
+            validation::validate_did,
+        )?;
+        validate_mandotory_config_val(
+            &config.remote_to_sdk_verkey,
+            AgencyClientErrorKind::InvalidVerkey,
+            validation::validate_verkey,
+        )?;
         validate_mandotory_config_val(&config.agency_endpoint, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
 
         self.set_agency_url(&config.agency_endpoint);
@@ -82,8 +127,9 @@ impl AgencyClient {
         self.set_agent_vk(&config.remote_to_sdk_verkey);
         self.set_my_pwdid(&config.sdk_to_remote_did);
         self.set_my_vk(&config.sdk_to_remote_verkey);
+        self.set_wallet_handle(wallet_handle);
 
-        Ok(())
+        Ok(self)
     }
 
     pub fn set_testing_defaults_agency(&mut self) {
@@ -112,7 +158,7 @@ impl AgencyClient {
             agent_pwdid: "".to_string(),
             agent_vk: "".to_string(),
             my_pwdid: "".to_string(),
-            my_vk: "".to_string()
+            my_vk: "".to_string(),
         }
     }
 
