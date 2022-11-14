@@ -22,6 +22,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate derive_builder;
 
+extern crate async_channel;
+
 pub extern crate messages;
 
 #[macro_use]

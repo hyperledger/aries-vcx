@@ -1,14 +1,15 @@
 use std::clone::Clone;
 
 use messages::a2a::A2AMessage;
+use messages::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 use vdrtools_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::protocols::SendClosureConnection;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::SendClosureConnection;
 use crate::utils::send_message;
 use messages::connection::invite::Invitation;
 use messages::connection::request::Request;
@@ -136,7 +137,7 @@ impl Connection {
         request: Request,
         routing_keys: Vec<String>,
         service_endpoint: String,
-        send_message: Option<SendClosureConnection>
+        send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!(
             "Connection::process_request >>> request: {:?}, routing_keys: {:?}, service_endpoint: {}",
@@ -169,8 +170,62 @@ impl Connection {
         Ok(Self { connection_sm, ..self })
     }
 
+    pub async fn process_response(
+        self,
+        wallet_handle: WalletHandle,
+        response: SignedResponse,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<Self> {
+        let connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(_) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+                SmConnection::Invitee(
+                    sm_invitee
+                        .clone()
+                        .handle_connection_response(
+                            response,
+                            send_message,
+                        )
+                        .await?,
+                )
+            }
+        };
+        Ok(Self { connection_sm, ..self })
+    }
+
+    pub async fn process_ack(
+        self,
+        message: A2AMessage
+    ) -> VcxResult<Self> {
+        trace!(
+            "Connection::process_ack >>> message: {:?}",
+            message
+        );
+        let connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(
+                    sm_inviter
+                        .clone()
+                        .handle_confirmation_message(&message)
+                        .await?,
+                )
+            }
+            SmConnection::Invitee(_) => {
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+            }
+        };
+        Ok(Self { connection_sm, ..self })
+    }
+
     // ----------------------------- MSG SENDING ------------------------------------
-    pub async fn send_response(self, wallet_handle: WalletHandle, send_message: Option<SendClosureConnection>) -> VcxResult<Self> {
+    pub async fn send_response(
+        self,
+        wallet_handle: WalletHandle,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
@@ -193,7 +248,7 @@ impl Connection {
         wallet_handle: WalletHandle,
         service_endpoint: String,
         routing_keys: Vec<String>,
-        send_message: Option<SendClosureConnection>
+        send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
@@ -203,18 +258,41 @@ impl Connection {
                     "Inviter cannot send connection request",
                 ));
             }
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(
-                    sm_invitee
-                        .clone()
-                        .send_connection_request(
-                            routing_keys,
-                            service_endpoint,
-                            send_message.unwrap_or(self.send_message_closure_connection(wallet_handle))
-                        )
-                        .await?
-                )
+            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
+                sm_invitee
+                    .clone()
+                    .send_connection_request(
+                        routing_keys,
+                        service_endpoint,
+                        send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)),
+                    )
+                    .await?,
+            ),
+        };
+        Ok(Self { connection_sm, ..self })
+    }
+
+    pub async fn send_ack(
+        self,
+        wallet_handle: WalletHandle,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<Self> {
+        trace!("Connection::send_request");
+        let connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(_) => {
+                return Err(VcxError::from_msg(
+                    VcxErrorKind::NotReady,
+                    "Inviter cannot send ack",
+                ));
             }
+            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
+                sm_invitee
+                    .clone()
+                    .handle_send_ack(
+                        send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)),
+                    )
+                    .await?,
+            ),
         };
         Ok(Self { connection_sm, ..self })
     }
@@ -243,28 +321,53 @@ impl Connection {
     }
 }
 
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod tests {
-    use crate::utils::devsetup::SetupMocks;
-    use messages::connection::invite::test_utils::{
-        _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
-    };
-    use messages::connection::request::unit_tests::_request;
-    use messages::did_doc::test_utils::_routing_keys;
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use async_channel::Sender;
 
     use super::*;
 
     // TODO: Deduplicate test helpers to reduce build times
-    fn _wallet_handle() -> WalletHandle {
+    pub(super) fn _wallet_handle() -> WalletHandle {
         WalletHandle(0)
     }
 
-    fn _service_endpoint() -> String {
+    pub(super) fn _routing_keys() -> Vec<String> {
+        vec![]
+    }
+
+    pub(super) fn _service_endpoint() -> String {
         String::from("https://service-endpoint.org")
     }
 
+    pub(super) fn _send_message(sender: Sender<A2AMessage>) -> Option<SendClosureConnection> {
+        Some(Box::new(
+            move |message: A2AMessage, _sender_vk: String, _did_doc: DidDoc| {
+                Box::pin(async move {
+                    sender.send(message).await.map_err(|err| {
+                        VcxError::from_msg(VcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
+                    })
+                })
+            },
+        ))
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_tests {
+    use crate::utils::devsetup::SetupMocks;
+
+    use messages::connection::invite::test_utils::{
+        _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
+    };
+    use messages::connection::request::unit_tests::_request;
+
+    use super::test_utils::*;
+    use super::*;
+
     #[tokio::test]
+    #[ignore]
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
@@ -338,5 +441,123 @@ mod tests {
             connection.get_state(),
             ConnectionState::Inviter(InviterState::Requested)
         );
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod integration_tests {
+    use async_channel::bounded;
+    use messages::a2a::A2AMessage;
+
+    use crate::utils::devsetup::SetupInstitutionWallet;
+
+    use super::test_utils::*;
+    use super::*;
+
+    #[tokio::test]
+    async fn test_connection_e2e() {
+        let setup = SetupInstitutionWallet::init().await;
+
+        let (sender, receiver) = bounded(1);
+
+        let inviter = Connection::create_inviter(setup.wallet_handle)
+            .await
+            .unwrap()
+            .create_invite(_service_endpoint(), _routing_keys())
+            .await
+            .unwrap();
+        let invite = if let Invitation::Pairwise(invite) = inviter.get_invite_details().unwrap().clone() {
+            invite
+        } else {
+            panic!("Invalid invitation type");
+        };
+
+        sender
+            .send(A2AMessage::ConnectionInvitationPairwise(invite))
+            .await
+            .unwrap();
+
+        let invite = if let A2AMessage::ConnectionInvitationPairwise(invite) = receiver.recv().await.unwrap() {
+            invite
+        } else {
+            panic!("Received invalid message type")
+        };
+        let invitee = Connection::create_invitee(setup.wallet_handle, DidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(Invitation::Pairwise(invite))
+            .unwrap();
+        assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+
+        let invitee = invitee
+            .send_request(
+                setup.wallet_handle,
+                _service_endpoint(),
+                _routing_keys(),
+                _send_message(sender.clone()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+
+        let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
+            request
+        } else {
+            panic!("Received invalid message type")
+        };
+
+        let inviter = inviter
+            .process_request(
+                setup.wallet_handle,
+                request,
+                _routing_keys(),
+                _service_endpoint(),
+                _send_message(sender.clone()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
+
+        let inviter = inviter
+            .send_response(
+                setup.wallet_handle,
+                _send_message(sender.clone()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
+
+        let response = if let A2AMessage::ConnectionResponse(response) = receiver.recv().await.unwrap() {
+            response
+        } else {
+            panic!("Received invalid message type")
+        };
+
+        let invitee = invitee
+            .process_response(
+                setup.wallet_handle,
+                response,
+                _send_message(sender.clone()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
+
+        let invitee = invitee
+            .send_ack(
+                setup.wallet_handle,
+                _send_message(sender.clone()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
+
+        let ack = receiver.recv().await.unwrap();
+        let inviter = inviter
+            .process_ack(ack)
+            .await
+            .unwrap();
+        assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Completed));
     }
 }
