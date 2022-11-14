@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use vdrtools_sys::WalletHandle;
 
 use crate::error::prelude::*;
-use crate::protocols::{SendClosure, SendClosureConnection};
+use crate::protocols::SendClosureConnection;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -59,7 +59,6 @@ impl Connection {
     }
 
     // ----------------------------- GETTERS ------------------------------------
-    // TODO: Do clones ALWAYS make sense?
     pub fn get_thread_id(&self) -> String {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.get_thread_id(),
@@ -147,9 +146,7 @@ impl Connection {
         );
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let send_message = self.send_message_closure_connection(wallet_handle);
-                let did_doc = request.connection.did_doc.clone();
-                let sender_vk = self.pairwise_info().pw_vk.clone();
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
                 let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
                 SmConnection::Inviter(
                     sm_inviter
@@ -173,12 +170,12 @@ impl Connection {
     }
 
     // ----------------------------- MSG SENDING ------------------------------------
-    pub async fn send_response(self, wallet_handle: WalletHandle, send_message: Option<SendClosure>) -> VcxResult<Self> {
+    pub async fn send_response(self, wallet_handle: WalletHandle, send_message: Option<SendClosureConnection>) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                    let send_message = self.send_message_closure_connection(wallet_handle);
+                    let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
                     SmConnection::Inviter(sm_inviter.handle_send_response(send_message).await?)
                 } else {
                     return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -196,7 +193,7 @@ impl Connection {
         wallet_handle: WalletHandle,
         service_endpoint: String,
         routing_keys: Vec<String>,
-        send_message: Option<SendClosure>
+        send_message: Option<SendClosureConnection>
     ) -> VcxResult<Self> {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
@@ -213,7 +210,7 @@ impl Connection {
                         .send_connection_request(
                             routing_keys,
                             service_endpoint,
-                            self.send_message_closure_connection(wallet_handle)
+                            send_message.unwrap_or(self.send_message_closure_connection(wallet_handle))
                         )
                         .await?
                 )
@@ -236,22 +233,6 @@ impl Connection {
             }
         };
         Ok(Self { connection_sm, ..self })
-    }
-
-    pub async fn send_message_closure(&self, wallet_handle: WalletHandle, send_message: Option<SendClosure>) -> VcxResult<SendClosure> {
-        trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
-            "Cannot send message: Remote Connection information is not set",
-        ))?;
-        let sender_vk = self.pairwise_info().pw_vk.clone();
-        Ok(send_message.unwrap_or(self.send_message_default(wallet_handle, sender_vk, did_doc)))
-    }
-
-    fn send_message_default(&self, wallet_handle: WalletHandle, sender_vk: String, did_doc: DidDoc) -> SendClosure {
-        Box::new(move |message: A2AMessage| {
-            Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
-        })
     }
 
     fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
