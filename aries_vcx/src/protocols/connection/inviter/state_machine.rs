@@ -6,7 +6,7 @@ use vdrtools_sys::WalletHandle;
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::protocols::SendClosure;
+use crate::protocols::SendClosureConnection;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::connection::invite::{Invitation, PairwiseInvitation};
@@ -208,7 +208,7 @@ impl SmConnectionInviter {
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: String,
-        send_message: SendClosure,
+        send_message: SendClosureConnection
     ) -> VcxResult<Self> {
         let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
@@ -223,8 +223,9 @@ impl SmConnectionInviter {
                             .set_explain(err.to_string())
                             .set_thread_id(&thread_id)
                             .set_out_time();
-
-                        send_message(problem_report.to_a2a_message()).await.ok();
+                        let sender_vk = self.pairwise_info().pw_vk.clone();
+                        let did_doc = request.connection.did_doc.clone();
+                        send_message(problem_report.to_a2a_message(), sender_vk, did_doc).await.ok();
                         return Ok(Self {
                             state: InviterFullState::Initial((problem_report).into()),
                             ..self
@@ -262,11 +263,11 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_send_response(self, send_message: SendClosure) -> VcxResult<Self>
+    pub async fn handle_send_response(self, send_message: SendClosureConnection) -> VcxResult<Self>
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
-                send_message(state.signed_response.to_a2a_message()).await?;
+                send_message(state.signed_response.to_a2a_message(), self.pairwise_info.pw_vk.clone(), state.did_doc.clone()).await?;
                 InviterFullState::Responded(state.into())
             }
             _ => self.state,
@@ -351,8 +352,8 @@ pub mod unit_tests {
     pub mod inviter {
         use super::*;
 
-        fn _send_message() -> SendClosure {
-            Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))
+        fn _send_message() -> SendClosureConnection {
+            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
         }
 
         pub async fn inviter_sm() -> SmConnectionInviter {
