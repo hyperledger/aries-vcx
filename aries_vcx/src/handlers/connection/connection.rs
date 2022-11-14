@@ -598,7 +598,7 @@ impl Connection {
                             (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
-                            let send_message = self.send_message_closure(wallet_handle).await?;
+                            let send_message = self.send_message_closure_connection(wallet_handle);
                             (sm_invitee.handle_connection_response(response, send_message).await?, true)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
@@ -607,15 +607,8 @@ impl Connection {
                         _ => (sm_invitee, false),
                     },
                     None => {
-                        if let Some(did_doc) = sm_invitee.response_did_doc().await? {
-                            let sender_vk = self.pairwise_info().pw_vk.clone();
-                            let send_message: SendClosure = Box::new(move |message: A2AMessage| {
-                                Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
-                            });
-                            (sm_invitee.handle_send_ack(send_message).await?, false)
-                        } else {
-                            (sm_invitee, false)
-                        }
+                        let send_message = self.send_message_closure_connection(wallet_handle);
+                        (sm_invitee.handle_send_ack(send_message).await?, false)
                     }
                 };
                 let connection = Self {
@@ -662,7 +655,7 @@ impl Connection {
                         .send_connection_request(
                             cloud_agent_info.routing_keys(agency_client)?,
                             cloud_agent_info.service_endpoint(agency_client)?,
-                            self.send_message_closure(wallet_handle).await?
+                            self.send_message_closure_connection(wallet_handle)
                         )
                         .await?
                 )

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::protocols::SendClosure;
+use crate::protocols::SendClosureConnection;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::ack::Ack;
@@ -131,14 +131,6 @@ impl SmConnectionInvitee {
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Completed(ref state) => Some(state.bootstrap_did_doc.clone()),
-        }
-    }
-
-    // TODO: Workaround, remove with mediated connection
-    pub async fn response_did_doc(&self) -> VcxResult<Option<DidDoc>> {
-        match self.state {
-            InviteeFullState::Responded(ref state) => Ok(Some(state.response.connection.did_doc.clone())),
-            _ => Ok(None)
         }
     }
 
@@ -272,14 +264,14 @@ impl SmConnectionInvitee {
         self,
         routing_keys: Vec<String>,
         service_endpoint: String,
-        send_message: SendClosure,
+        send_message: SendClosureConnection,
     ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
                 let ddo = self.their_did_doc().await
                     .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
-                send_message(request.to_a2a_message()).await?;
+                send_message(request.to_a2a_message(), self.pairwise_info.pw_vk.clone(), ddo.clone()).await?;
                 (InviteeFullState::Requested((state.clone(), request, ddo).into()), thread_id)
             }
             _ => (self.state.clone(), self.get_thread_id()),
@@ -291,7 +283,11 @@ impl SmConnectionInvitee {
         })
     }
 
-    pub async fn handle_connection_response(self, response: SignedResponse, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn handle_connection_response(
+        self,
+        response: SignedResponse,
+        send_message: SendClosureConnection
+    ) -> VcxResult<Self> {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
@@ -319,7 +315,11 @@ impl SmConnectionInvitee {
                             .set_explain(err.to_string())
                             .set_thread_id(&self.thread_id)
                             .set_out_time();
-                        send_message(problem_report.to_a2a_message()).await.ok();
+                        send_message(
+                            problem_report.to_a2a_message(),
+                            self.pairwise_info.pw_vk.clone(),
+                            state.did_doc.clone()
+                        ).await.ok();
                         InviteeFullState::Initial((state.clone(), problem_report).into())
                     }
                 }
@@ -338,10 +338,12 @@ impl SmConnectionInvitee {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_send_ack(self, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn handle_send_ack(self, send_message: SendClosureConnection) -> VcxResult<Self> {
         let state = match self.state {
             InviteeFullState::Responded(ref state) => {
-                send_message(self.build_connection_ack_msg()?.to_a2a_message()).await?;
+                let sender_vk = self.pairwise_info().pw_vk.clone();
+                let did_doc = state.response.connection.did_doc.clone();
+                send_message(self.build_connection_ack_msg()?.to_a2a_message(), sender_vk, did_doc).await?;
                 InviteeFullState::Completed((state.clone()).into())
             },
             _ => self.state.clone(),
@@ -394,8 +396,8 @@ pub mod unit_tests {
 
         use super::*;
 
-        fn _send_message() -> SendClosure {
-            Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))
+        fn _send_message() -> SendClosureConnection {
+            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
         }
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
