@@ -57,8 +57,6 @@ jobs:
           HASH_SRC_AGENCYCLIENT=${{ hashFiles('agency_client') }}
           HASH_SRC_MESSAGES=${{ hashFiles('messages') }}
           HASH_SRC_WRAPPER_JAVA=${{ hashFiles('wrappers/java') }}
-          HASH_SRC_WRAPPER_NODEJS=${{ hashFiles('wrappers/node') }}
-          HASH_SRC_AGENT_NODEJS=${{ hashFiles('agents/node') }}
 
           HASH_DOCKER_LIBVCX=${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_MESSAGES:0:11}
           HASH_DOCKER_ANDROID=${HASH_DOCKER_LIBVCX}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:15}
@@ -292,6 +290,9 @@ jobs:
   test-node-wrapper:
     needs: workflow-setup
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node-version: [12.x, 18.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -299,17 +300,23 @@ jobs:
         uses: ./.github/actions/setup-testing-nodejs
         with:
           skip-docker-setup: true
+          node-version: ${{ matrix.node-version }}
       - name: "Run tests"
         run: cd wrappers/node && npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node-version: [12.x, 18.x, 19.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
       - name: "Setup NodeJS libvcx testing environment"
         uses: ./.github/actions/setup-testing-nodejs
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: "Install vcxagent-core dependencies"
         run: (cd agents/node/vcxagent-core && npm install)
       - name: "Run demo"

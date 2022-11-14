@@ -6,14 +6,17 @@ inputs:
     description: 'If true, skip spinning up docker containers'
     required: false
     default: false
+  node-version:
+    description: 'Version of nodejs'
+    required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Use Node.js 12
+    - name: Use Node.js ${{ inputs.node-version }}
       uses: actions/setup-node@v3
       with:
-        node-version: 12.x
+        node-version: ${{ inputs.node-version }}
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: 1.64.0
