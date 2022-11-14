@@ -26,7 +26,7 @@ regex = "1.1.0"
 rust-base58 = "0.0.4"
 base64 = "0.10"
 num-traits = "0.2.0"
-libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "d5ff658d3" }
+libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "191949219" }
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
 failure = "0.1.6"
 strum = "0.16.0"
