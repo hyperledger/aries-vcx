@@ -1,4 +1,4 @@
-use crate::handlers::connection::connection::ConnectionState;
+use crate::handlers::connection::mediated_connection::ConnectionState;
 use crate::protocols::connection::invitee::state_machine::InviteeState;
 use crate::protocols::connection::inviter::state_machine::InviterState;
 use crate::protocols::issuance::holder::state_machine::HolderState;

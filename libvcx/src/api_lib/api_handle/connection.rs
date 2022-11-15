@@ -7,7 +7,7 @@ use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
 use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -22,7 +22,7 @@ use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
-    pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
+    pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
 }
 
 pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
@@ -99,7 +99,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_source_id()))
 }
 
-pub fn store_connection(connection: Connection) -> VcxResult<u32> {
+pub fn store_connection(connection: MediatedConnection) -> VcxResult<u32> {
     CONNECTION_MAP
         .add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
@@ -107,7 +107,7 @@ pub fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(
+    let connection = MediatedConnection::create(
         source_id,
         get_main_wallet_handle(),
         &get_main_agency_client().unwrap(),
@@ -121,7 +121,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Vc
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
         let ddo = into_did_doc(get_main_pool_handle()?, &invitation).await?;
-        let connection = Connection::create_with_invite(
+        let connection = MediatedConnection::create_with_invite(
             source_id,
             get_main_wallet_handle(),
             &get_main_agency_client().unwrap(),
@@ -148,7 +148,7 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let connection = Connection::create_with_request(
+    let connection = MediatedConnection::create_with_request(
         get_main_wallet_handle(),
         request,
         agent.pairwise_info(),
@@ -165,7 +165,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Vcx
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let connection = Connection::create_with_request(
+    let connection = MediatedConnection::create_with_request(
         get_main_wallet_handle(),
         request,
         pw_info,
@@ -286,7 +286,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let connection = Connection::from_string(connection_data)?;
+    let connection = MediatedConnection::from_string(connection_data)?;
     CONNECTION_MAP.add(connection)
 }
 

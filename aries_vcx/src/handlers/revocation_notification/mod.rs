@@ -8,12 +8,12 @@ pub mod test_utils {
     use messages::revocation_notification::revocation_notification::RevocationNotification;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
     pub async fn get_revocation_notification_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<Vec<RevocationNotification>> {
         let mut messages = Vec::<RevocationNotification>::new();
         for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
@@ -27,7 +27,7 @@ pub mod test_utils {
 
     pub async fn get_revocation_notification_ack_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<Vec<Ack>> {
         let mut messages = Vec::<Ack>::new();
         for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {

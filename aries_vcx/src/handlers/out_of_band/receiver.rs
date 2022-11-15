@@ -4,7 +4,7 @@ use vdrtools_sys::PoolHandle;
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::out_of_band::invitation::OutOfBandInvitation;
 use messages::a2a::A2AMessage;
 use messages::attachment::AttachmentId;
@@ -41,8 +41,8 @@ impl OutOfBandReceiver {
     pub async fn connection_exists<'a>(
         &self,
         pool_handle: PoolHandle,
-        connections: &'a Vec<&'a Connection>,
-    ) -> VcxResult<Option<&'a Connection>> {
+        connections: &'a Vec<&'a MediatedConnection>,
+    ) -> VcxResult<Option<&'a MediatedConnection>> {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
@@ -133,12 +133,12 @@ impl OutOfBandReceiver {
         Ok(None)
     }
 
-    pub async fn build_connection(&self, agency_client: &AgencyClient, did_doc: DidDoc, autohop_enabled: bool) -> VcxResult<Connection> {
+    pub async fn build_connection(&self, agency_client: &AgencyClient, did_doc: DidDoc, autohop_enabled: bool) -> VcxResult<MediatedConnection> {
         trace!(
             "OutOfBandReceiver::build_connection >>> autohop_enabled: {}",
             autohop_enabled
         );
-        Connection::create_with_invite(
+        MediatedConnection::create_with_invite(
             &self.oob.id.0,
             agency_client.get_wallet_handle(),
             agency_client,

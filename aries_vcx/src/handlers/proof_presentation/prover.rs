@@ -5,7 +5,7 @@ use vdrtools_sys::{PoolHandle, WalletHandle};
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
@@ -202,7 +202,7 @@ impl Prover {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<ProverState> {
         trace!("Prover::update_state >>> ");
         if !self.progressable_by_message() {
@@ -224,12 +224,12 @@ pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
     pub async fn get_proof_request_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<String> {
         let presentation_requests: Vec<A2AMessage> = connection
             .get_messages(agency_client)

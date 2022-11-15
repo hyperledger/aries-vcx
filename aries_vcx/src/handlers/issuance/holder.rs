@@ -6,7 +6,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::indy::credentials::get_cred_rev_id;
 use messages::a2a::A2AMessage;
@@ -147,7 +147,7 @@ impl Holder {
         get_cred_rev_id(wallet_handle, &self.get_cred_id()?).await
     }
 
-    pub async fn handle_revocation_notification(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, connection: &Connection, notification: RevocationNotification) -> VcxResult<()> {
+    pub async fn handle_revocation_notification(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, connection: &MediatedConnection, notification: RevocationNotification) -> VcxResult<()> {
         if self.holder_sm.is_revokable(wallet_handle, pool_handle).await? {
             let send_message = connection.send_message_closure(wallet_handle).await?;
             // TODO: Store to remember notification was received along with details
@@ -182,7 +182,7 @@ impl Holder {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<HolderState> {
         trace!("Holder::update_state >>>");
         if self.is_terminal_state() {
@@ -204,12 +204,12 @@ pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
     pub async fn get_credential_offer_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<String> {
         let credential_offers: Vec<A2AMessage> = connection
             .get_messages(agency_client)

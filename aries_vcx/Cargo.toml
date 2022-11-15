@@ -54,4 +54,5 @@ zmq = { version = "0.9.2" }
 android_logger = "0.5"
 
 [dev-dependencies]
+async-channel = "1.7.1"
 tokio = { version = "1.15", features = [ "rt", "macros" ] }

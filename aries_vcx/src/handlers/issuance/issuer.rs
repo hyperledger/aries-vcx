@@ -6,7 +6,7 @@ use vdrtools_sys::{WalletHandle, PoolHandle};
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
@@ -257,7 +257,7 @@ impl Issuer {
         &mut self,
         wallet_handle: WalletHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<IssuerState> {
         trace!("Issuer::update_state >>>");
         if self.is_terminal_state() {
@@ -278,13 +278,13 @@ pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
     use messages::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<String> {
         let credential_proposals: Vec<CredentialProposal> = connection
             .get_messages(agency_client)
