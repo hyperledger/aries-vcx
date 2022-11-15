@@ -9,7 +9,7 @@ use crate::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::protocols::SendClosureConnection;
+use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
 use messages::connection::invite::Invitation;
 use messages::connection::request::Request;
@@ -294,6 +294,23 @@ impl Connection {
         Ok(Self { connection_sm, ..self })
     }
 
+    pub async fn send_message_closure(
+        &self,
+        wallet_handle: WalletHandle,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<SendClosure> {
+        trace!("send_message_closure >>>");
+        let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
+            VcxErrorKind::NotReady,
+            "Cannot send message: Remote Connection information is not set",
+        ))?;
+        let sender_vk = self.pairwise_info().pw_vk.clone();
+        let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+        Ok(Box::new(move |message: A2AMessage| {
+            Box::pin(send_message(message, sender_vk.clone(), did_doc.clone()))
+        }))
+    }
+
     fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
         Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
@@ -347,6 +364,7 @@ mod unit_tests {
     use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
 
     use async_channel::bounded;
+    use messages::basic_message::message::BasicMessage;
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -518,5 +536,23 @@ mod unit_tests {
         let ack = receiver.recv().await.unwrap();
         let inviter = inviter.process_ack(ack).await.unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Completed));
+
+        // Invitee sends basic message
+        let content = "Hello";
+        let basic_message = BasicMessage::create().set_content(content.to_string()).to_a2a_message();
+        invitee
+            .send_message_closure(setup.wallet_handle, _send_message(sender.clone()))
+            .await
+            .unwrap()(basic_message)
+        .await
+        .unwrap();
+
+        // Inviter receives basic message
+        let message = if let A2AMessage::BasicMessage(message) = receiver.recv().await.unwrap() {
+            message
+        } else {
+            panic!("Received invalid message type")
+        };
+        assert_eq!(message.content, content.to_string());
     }
 }
