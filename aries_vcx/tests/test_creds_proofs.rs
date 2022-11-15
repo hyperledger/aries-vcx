@@ -333,7 +333,6 @@ mod tests {
     use vdrtools_sys::PoolHandle;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
-    use crate::utils::force_debug_stack;
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, _exchange_credential_with_proposal, accept_cred_proposal,
         accept_cred_proposal_1, accept_offer, accept_proof_proposal, attr_names,
