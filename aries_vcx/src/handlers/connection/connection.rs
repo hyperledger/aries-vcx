@@ -185,10 +185,7 @@ impl Connection {
                 SmConnection::Invitee(
                     sm_invitee
                         .clone()
-                        .handle_connection_response(
-                            response,
-                            send_message,
-                        )
+                        .handle_connection_response(response, send_message)
                         .await?,
                 )
             }
@@ -196,22 +193,11 @@ impl Connection {
         Ok(Self { connection_sm, ..self })
     }
 
-    pub async fn process_ack(
-        self,
-        message: A2AMessage
-    ) -> VcxResult<Self> {
-        trace!(
-            "Connection::process_ack >>> message: {:?}",
-            message
-        );
+    pub async fn process_ack(self, message: A2AMessage) -> VcxResult<Self> {
+        trace!("Connection::process_ack >>> message: {:?}", message);
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                SmConnection::Inviter(
-                    sm_inviter
-                        .clone()
-                        .handle_confirmation_message(&message)
-                        .await?,
-                )
+                SmConnection::Inviter(sm_inviter.clone().handle_confirmation_message(&message).await?)
             }
             SmConnection::Invitee(_) => {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -280,17 +266,12 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotReady,
-                    "Inviter cannot send ack",
-                ));
+                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Inviter cannot send ack"));
             }
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
                     .clone()
-                    .handle_send_ack(
-                        send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)),
-                    )
+                    .handle_send_ack(send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)))
                     .await?,
             ),
         };
@@ -322,14 +303,20 @@ impl Connection {
 }
 
 #[cfg(feature = "test_utils")]
+#[cfg(test)]
 pub mod test_utils {
     use async_channel::Sender;
+    use vdrtools_sys::PoolHandle;
 
     use super::*;
 
     // TODO: Deduplicate test helpers to reduce build times
     pub(super) fn _wallet_handle() -> WalletHandle {
         WalletHandle(0)
+    }
+
+    pub(super) fn _pool_handle() -> PoolHandle {
+        0
     }
 
     pub(super) fn _routing_keys() -> Vec<String> {
@@ -356,8 +343,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::utils::devsetup::SetupMocks;
+    use crate::indy::ledger::transactions::into_did_doc;
+    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
 
+    use async_channel::bounded;
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -442,18 +431,6 @@ mod unit_tests {
             ConnectionState::Inviter(InviterState::Requested)
         );
     }
-}
-
-#[cfg(test)]
-#[cfg(feature = "general_test")]
-mod integration_tests {
-    use async_channel::bounded;
-    use messages::a2a::A2AMessage;
-
-    use crate::utils::devsetup::SetupInstitutionWallet;
-
-    use super::test_utils::*;
-    use super::*;
 
     #[tokio::test]
     async fn test_connection_e2e() {
@@ -461,6 +438,7 @@ mod integration_tests {
 
         let (sender, receiver) = bounded(1);
 
+        // Inviter creates connection and sends invite
         let inviter = Connection::create_inviter(setup.wallet_handle)
             .await
             .unwrap()
@@ -473,23 +451,16 @@ mod integration_tests {
             panic!("Invalid invitation type");
         };
 
-        sender
-            .send(A2AMessage::ConnectionInvitationPairwise(invite))
+        // Invitee receives an invite and sends request
+        let did_doc = into_did_doc(_pool_handle(), &Invitation::Pairwise(invite.clone()))
             .await
             .unwrap();
-
-        let invite = if let A2AMessage::ConnectionInvitationPairwise(invite) = receiver.recv().await.unwrap() {
-            invite
-        } else {
-            panic!("Received invalid message type")
-        };
-        let invitee = Connection::create_invitee(setup.wallet_handle, DidDoc::default())
+        let invitee = Connection::create_invitee(setup.wallet_handle, did_doc)
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite))
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
-
         let invitee = invitee
             .send_request(
                 setup.wallet_handle,
@@ -501,6 +472,7 @@ mod integration_tests {
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Requested));
 
+        // Inviter receives requests and sends response
         let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
             request
         } else {
@@ -518,16 +490,13 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
-
         let inviter = inviter
-            .send_response(
-                setup.wallet_handle,
-                _send_message(sender.clone()),
-            )
+            .send_response(setup.wallet_handle, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
 
+        // Invitee receives response and sends ack
         let response = if let A2AMessage::ConnectionResponse(response) = receiver.recv().await.unwrap() {
             response
         } else {
@@ -535,29 +504,19 @@ mod integration_tests {
         };
 
         let invitee = invitee
-            .process_response(
-                setup.wallet_handle,
-                response,
-                _send_message(sender.clone()),
-            )
+            .process_response(setup.wallet_handle, response, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
-
         let invitee = invitee
-            .send_ack(
-                setup.wallet_handle,
-                _send_message(sender.clone()),
-            )
+            .send_ack(setup.wallet_handle, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
 
+        // Inviter receives an ack
         let ack = receiver.recv().await.unwrap();
-        let inviter = inviter
-            .process_ack(ack)
-            .await
-            .unwrap();
+        let inviter = inviter.process_ack(ack).await.unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Completed));
     }
 }
