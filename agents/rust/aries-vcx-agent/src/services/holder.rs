@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::services::connection::ServiceConnections;
+use crate::services::mediated_connection::ServiceMediatedConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
@@ -31,7 +31,7 @@ pub struct ServiceCredentialsHolder {
     pool_handle: PoolHandle,
     config_agency_client: AgencyClientConfig,
     creds_holder: ObjectCache<HolderWrapper>,
-    service_connections: Arc<ServiceConnections>,
+    service_connections: Arc<ServiceMediatedConnections>,
 }
 
 impl ServiceCredentialsHolder {
@@ -39,7 +39,7 @@ impl ServiceCredentialsHolder {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         config_agency_client: AgencyClientConfig,
-        service_connections: Arc<ServiceConnections>,
+        service_connections: Arc<ServiceMediatedConnections>,
     ) -> Self {
         Self {
             wallet_handle,

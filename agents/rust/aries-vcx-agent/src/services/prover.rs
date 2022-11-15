@@ -12,7 +12,7 @@ use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
-use super::connection::ServiceConnections;
+use super::mediated_connection::ServiceMediatedConnections;
 
 #[derive(Clone)]
 struct ProverWrapper {
@@ -34,7 +34,7 @@ pub struct ServiceProver {
     pool_handle: PoolHandle,
     config_agency_client: AgencyClientConfig,
     provers: ObjectCache<ProverWrapper>,
-    service_connections: Arc<ServiceConnections>,
+    service_connections: Arc<ServiceMediatedConnections>,
 }
 
 impl ServiceProver {
@@ -42,7 +42,7 @@ impl ServiceProver {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         config_agency_client: AgencyClientConfig,
-        service_connections: Arc<ServiceConnections>,
+        service_connections: Arc<ServiceMediatedConnections>,
     ) -> Self {
         Self {
             wallet_handle,

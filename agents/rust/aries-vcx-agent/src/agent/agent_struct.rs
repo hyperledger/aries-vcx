@@ -6,8 +6,9 @@ use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use crate::agent::agent_config::AgentConfig;
 
 use crate::error::*;
+use crate::services::connection::ServiceConnections;
 use crate::services::{
-    connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+    mediated_connection::ServiceMediatedConnections, credential_definition::ServiceCredentialDefinitions,
     holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
     revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
     verifier::ServiceVerifier,
@@ -19,6 +20,7 @@ pub struct Agent {
     pub(super) pool_handle: PoolHandle,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
+    pub(super) mediated_connections: Arc<ServiceMediatedConnections>,
     pub(super) schemas: Arc<ServiceSchemas>,
     pub(super) cred_defs: Arc<ServiceCredentialDefinitions>,
     pub(super) rev_regs: Arc<ServiceRevocationRegistries>,
@@ -58,6 +60,10 @@ impl Agent {
 
     pub fn connections(&self) -> Arc<ServiceConnections> {
         self.connections.clone()
+    }
+
+    pub fn mediated_connections(&self) -> Arc<ServiceMediatedConnections> {
+        self.mediated_connections.clone()
     }
 
     pub fn schemas(&self) -> Arc<ServiceSchemas> {

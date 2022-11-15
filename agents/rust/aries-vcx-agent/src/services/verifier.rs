@@ -12,7 +12,7 @@ use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 
-use super::connection::ServiceConnections;
+use super::mediated_connection::ServiceMediatedConnections;
 
 #[derive(Clone)]
 struct VerifierWrapper {
@@ -34,7 +34,7 @@ pub struct ServiceVerifier {
     pool_handle: PoolHandle,
     config_agency_client: AgencyClientConfig,
     verifiers: ObjectCache<VerifierWrapper>,
-    service_connections: Arc<ServiceConnections>,
+    service_connections: Arc<ServiceMediatedConnections>,
 }
 
 impl ServiceVerifier {
@@ -42,7 +42,7 @@ impl ServiceVerifier {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         config_agency_client: AgencyClientConfig,
-        service_connections: Arc<ServiceConnections>,
+        service_connections: Arc<ServiceMediatedConnections>,
     ) -> Self {
         Self {
             wallet_handle,

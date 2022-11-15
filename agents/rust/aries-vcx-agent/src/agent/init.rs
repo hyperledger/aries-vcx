@@ -16,10 +16,10 @@ use crate::{
     agent::{agent_config::AgentConfig, agent_struct::Agent},
     error::AgentResult,
     services::{
-        connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
+        mediated_connection::ServiceMediatedConnections, credential_definition::ServiceCredentialDefinitions,
         holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
         revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-        verifier::ServiceVerifier,
+        verifier::ServiceVerifier, connection::{ServiceConnections, ServiceEndpoint},
     },
 };
 
@@ -33,6 +33,7 @@ pub struct InitConfig {
     pub wallet_name: String,
     pub wallet_key: String,
     pub wallet_kdf: String,
+    pub service_endpoint: ServiceEndpoint
 }
 
 impl Agent {
@@ -84,6 +85,11 @@ impl Agent {
         let connections = Arc::new(ServiceConnections::new(
             wallet_handle,
             pool_handle,
+            init_config.service_endpoint
+        ));
+        let mediated_connections = Arc::new(ServiceMediatedConnections::new(
+            wallet_handle,
+            pool_handle,
             config_agency_client.clone(),
         ));
         let schemas = Arc::new(ServiceSchemas::new(
@@ -103,31 +109,32 @@ impl Agent {
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
             wallet_handle,
             config_agency_client.clone(),
-            connections.clone(),
+            mediated_connections.clone(),
         ));
         let holder = Arc::new(ServiceCredentialsHolder::new(
             wallet_handle,
             pool_handle,
             config_agency_client.clone(),
-            connections.clone(),
+            mediated_connections.clone(),
         ));
         let verifier = Arc::new(ServiceVerifier::new(
             wallet_handle,
             pool_handle,
             config_agency_client.clone(),
-            connections.clone(),
+            mediated_connections.clone(),
         ));
         let prover = Arc::new(ServiceProver::new(
             wallet_handle,
             pool_handle,
             config_agency_client.clone(),
-            connections.clone(),
+            mediated_connections.clone(),
         ));
 
         Ok(Self {
             wallet_handle,
             pool_handle,
             connections,
+            mediated_connections,
             schemas,
             cred_defs,
             rev_regs,
