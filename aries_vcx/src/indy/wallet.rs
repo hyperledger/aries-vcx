@@ -112,7 +112,7 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
     Ok(handle)
 }
 
-pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
+pub(crate) fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage_config: Option<&str>) -> String {
     let mut config = json!({
         "id": wallet_name,
         "storage_type": wallet_type
@@ -123,7 +123,7 @@ pub fn build_wallet_config(wallet_name: &str, wallet_type: Option<&str>, storage
     config.to_string()
 }
 
-pub fn build_wallet_credentials(
+pub(crate) fn build_wallet_credentials(
     key: &str,
     storage_credentials: Option<&str>,
     key_derivation_method: &str,
@@ -145,7 +145,7 @@ pub fn build_wallet_credentials(
     })
 }
 
-pub async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
+pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("create_wallet >>> {}", &wallet_config.wallet_name);
     let config = build_wallet_config(
         &wallet_config.wallet_name,
@@ -251,7 +251,7 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
-pub async fn add_wallet_record(
+pub(crate) async fn add_wallet_record(
     wallet_handle: WalletHandle,
     xtype: &str,
     id: &str,
@@ -275,7 +275,7 @@ pub async fn add_wallet_record(
         .map_err(VcxError::from)
 }
 
-pub async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, options: &str) -> VcxResult<String> {
+pub(crate) async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, options: &str) -> VcxResult<String> {
     trace!(
         "get_record >>> xtype: {}, id: {}, options: {}",
         secret!(&xtype),
@@ -292,7 +292,7 @@ pub async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &st
         .map_err(VcxError::from)
 }
 
-pub async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxResult<()> {
+pub(crate) async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str) -> VcxResult<()> {
     trace!("delete_record >>> xtype: {}, id: {}", secret!(&xtype), secret!(&id));
 
     if settings::indy_mocks_enabled() {
@@ -304,7 +304,7 @@ pub async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: 
         .map_err(VcxError::from)
 }
 
-pub async fn update_wallet_record_value(
+pub(crate) async fn update_wallet_record_value(
     wallet_handle: WalletHandle,
     xtype: &str,
     id: &str,
@@ -326,7 +326,7 @@ pub async fn update_wallet_record_value(
         .map_err(VcxError::from)
 }
 
-pub async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub(crate) async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
     trace!(
         "add_record_tags >>> xtype: {}, id: {}, tags: {:?}",
         secret!(&xtype),
@@ -343,7 +343,7 @@ pub async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id
         .map_err(VcxError::from)
 }
 
-pub async fn update_wallet_record_tags(
+pub(crate) async fn update_wallet_record_tags(
     wallet_handle: WalletHandle,
     xtype: &str,
     id: &str,
@@ -365,7 +365,7 @@ pub async fn update_wallet_record_tags(
         .map_err(VcxError::from)
 }
 
-pub async fn delete_wallet_record_tags(
+pub(crate) async fn delete_wallet_record_tags(
     wallet_handle: WalletHandle,
     xtype: &str,
     id: &str,
@@ -387,7 +387,7 @@ pub async fn delete_wallet_record_tags(
         .map_err(VcxError::from)
 }
 
-pub async fn open_search_wallet(
+pub(crate) async fn open_search_wallet(
     wallet_handle: WalletHandle,
     xtype: &str,
     query: &str,
@@ -409,7 +409,7 @@ pub async fn open_search_wallet(
         .map_err(VcxError::from)
 }
 
-pub async fn fetch_next_records_wallet(
+pub(crate) async fn fetch_next_records_wallet(
     wallet_handle: WalletHandle,
     search_handle: SearchHandle,
     count: usize,
@@ -429,7 +429,7 @@ pub async fn fetch_next_records_wallet(
         .map_err(VcxError::from)
 }
 
-pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
+pub(crate) async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
     trace!("close_search >>> search_handle: {}", search_handle);
 
     if settings::indy_mocks_enabled() {
@@ -441,6 +441,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
         .map_err(VcxError::from)
 }
 
+// todo - can this be moved externally - move of a setup util?
 pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
         keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;

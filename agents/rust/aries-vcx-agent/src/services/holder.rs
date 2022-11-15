@@ -5,11 +5,12 @@ use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 
 #[derive(Clone)]
 struct HolderWrapper {
@@ -27,8 +28,7 @@ impl HolderWrapper {
 }
 
 pub struct ServiceCredentialsHolder {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     config_agency_client: AgencyClientConfig,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
@@ -36,14 +36,12 @@ pub struct ServiceCredentialsHolder {
 
 impl ServiceCredentialsHolder {
     pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: Arc<dyn Profile>,
         config_agency_client: AgencyClientConfig,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             config_agency_client,
             service_connections,
             creds_holder: ObjectCache::new("creds-holder"),
@@ -61,8 +59,9 @@ impl ServiceCredentialsHolder {
     }
 
     fn agency_client(&self) -> AgentResult<AgencyClient> {
+        let wallet = self.profile.inject_wallet();
         AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
+            .configure(wallet.to_base_agency_client_wallet(), &self.config_agency_client)
             .map_err(|err| {
                 AgentError::from_msg(
                     AgentErrorKind::GenericAriesVcxError,
@@ -81,7 +80,7 @@ impl ServiceCredentialsHolder {
         holder
             .send_proposal(
                 proposal_data,
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(&self.profile).await?,
             )
             .await?;
         self.creds_holder.set(
@@ -117,10 +116,9 @@ impl ServiceCredentialsHolder {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         holder
             .send_request(
-                self.wallet_handle,
-                self.pool_handle,
+                &self.profile,
                 connection.pairwise_info().pw_did.to_string(),
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(&self.profile).await?,
             )
             .await?;
         self.creds_holder.set(
@@ -141,8 +139,7 @@ impl ServiceCredentialsHolder {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = holder
             .update_state(
-                self.wallet_handle,
-                self.pool_handle,
+               &self.profile,
                 &self.agency_client()?,
                 &connection,
             )
@@ -156,7 +153,7 @@ impl ServiceCredentialsHolder {
 
     pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {
         self.get_holder(thread_id)?
-            .is_revokable(self.wallet_handle, self.pool_handle)
+            .is_revokable(&self.profile)
             .await
             .map_err(|err| err.into())
     }

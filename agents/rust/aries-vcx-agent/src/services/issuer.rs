@@ -5,11 +5,12 @@ use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::vdrtools_sys::WalletHandle;
 
 #[derive(Clone)]
 struct IssuerWrapper {
@@ -27,7 +28,7 @@ impl IssuerWrapper {
 }
 
 pub struct ServiceCredentialsIssuer {
-    wallet_handle: WalletHandle,
+    profile: Arc<dyn Profile>,
     config_agency_client: AgencyClientConfig,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
@@ -35,12 +36,12 @@ pub struct ServiceCredentialsIssuer {
 
 impl ServiceCredentialsIssuer {
     pub fn new(
-        wallet_handle: WalletHandle,
+        profile: Arc<dyn Profile>,
         config_agency_client: AgencyClientConfig,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
+            profile,
             config_agency_client,
             service_connections,
             creds_issuer: ObjectCache::new("creds-issuer"),
@@ -58,8 +59,9 @@ impl ServiceCredentialsIssuer {
     }
 
     fn agency_client(&self) -> AgentResult<AgencyClient> {
+        let wallet = self.profile.inject_wallet();
         AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
+            .configure(wallet.to_base_agency_client_wallet(), &self.config_agency_client)
             .map_err(|err| {
                 AgentError::from_msg(
                     AgentErrorKind::GenericAriesVcxError,
@@ -68,20 +70,14 @@ impl ServiceCredentialsIssuer {
             })
     }
 
-    pub async fn accept_proposal(
-        &self,
-        connection_id: &str,
-        proposal: &CredentialProposal,
-    ) -> AgentResult<String> {
+    pub async fn accept_proposal(&self, connection_id: &str, proposal: &CredentialProposal) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut issuer = Issuer::create_from_proposal("", proposal)?;
         issuer
-            .update_state(self.wallet_handle, &self.agency_client()?, &connection)
+            .update_state(&self.profile, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, connection_id),
-        )
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, connection_id))
     }
 
     pub async fn send_credential_offer(
@@ -98,15 +94,13 @@ impl ServiceCredentialsIssuer {
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .build_credential_offer_msg(self.wallet_handle, offer_info, None)
+            .build_credential_offer_msg(&self.profile, offer_info, None)
             .await?;
         issuer
-            .send_credential_offer(connection.send_message_closure(self.wallet_handle).await?)
+            .send_credential_offer(connection.send_message_closure(&self.profile).await?)
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
 
     pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
@@ -116,15 +110,10 @@ impl ServiceCredentialsIssuer {
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .send_credential(
-                self.wallet_handle,
-                connection.send_message_closure(self.wallet_handle).await?,
-            )
+            .send_credential(&self.profile, connection.send_message_closure(&self.profile).await?)
             .await?;
-        self.creds_issuer.set(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .set(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())
     }
 
@@ -139,12 +128,10 @@ impl ServiceCredentialsIssuer {
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let state = issuer
-            .update_state(self.wallet_handle, &self.agency_client()?, &connection)
+            .update_state(&self.profile, &self.agency_client()?, &connection)
             .await?;
-        self.creds_issuer.set(
-            thread_id,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .set(thread_id, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(state)
     }
 

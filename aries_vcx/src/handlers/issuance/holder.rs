@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 
 use messages::revocation_notification::revocation_notification::RevocationNotification;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
-use crate::indy::credentials::get_cred_rev_id;
+use crate::xyz::credentials::get_cred_rev_id;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::CredentialProposalData;
@@ -49,14 +50,12 @@ impl Holder {
 
     pub async fn send_request(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         my_pw_did: String,
         send_message: SendClosure,
     ) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().send_request(
-            wallet_handle,
-            pool_handle,
+            profile,
             my_pw_did,
             send_message,
         ).await?;
@@ -127,31 +126,31 @@ impl Holder {
         self.holder_sm.get_thread_id()
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
-        self.holder_sm.is_revokable(wallet_handle, pool_handle).await
+    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+        self.holder_sm.is_revokable(profile).await
     }
 
-    pub async fn is_revoked(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
-        self.holder_sm.is_revoked(wallet_handle, pool_handle).await
+    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+        self.holder_sm.is_revoked(profile).await
     }
 
-    pub async fn delete_credential(&self, wallet_handle: WalletHandle) -> VcxResult<()> {
-        self.holder_sm.delete_credential(wallet_handle).await
+    pub async fn delete_credential(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
+        self.holder_sm.delete_credential(profile).await
     }
 
     pub fn get_credential_status(&self) -> VcxResult<u32> {
         Ok(self.holder_sm.credential_status())
     }
 
-    pub async fn get_cred_rev_id(&self, wallet_handle: WalletHandle) -> VcxResult<String> {
-        get_cred_rev_id(wallet_handle, &self.get_cred_id()?).await
+    pub async fn get_cred_rev_id(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
+        get_cred_rev_id(profile, &self.get_cred_id()?).await
     }
 
-    pub async fn handle_revocation_notification(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle, connection: &Connection, notification: RevocationNotification) -> VcxResult<()> {
-        if self.holder_sm.is_revokable(wallet_handle, pool_handle).await? {
-            let send_message = connection.send_message_closure(wallet_handle).await?;
+    pub async fn handle_revocation_notification(&self, profile: &Arc<dyn Profile>, connection: &Connection, notification: RevocationNotification) -> VcxResult<()> {
+        if self.holder_sm.is_revokable(profile).await? {
+            let send_message = connection.send_message_closure(profile).await?;
             // TODO: Store to remember notification was received along with details
-            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(wallet_handle).await?)
+            RevocationNotificationReceiver::build(self.get_rev_reg_id()?, self.get_cred_rev_id(profile).await?)
                 .handle_revocation_notification(notification, send_message).await?;
             Ok(())
         } else {
@@ -164,23 +163,21 @@ impl Holder {
 
     pub async fn step(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.holder_sm = self
             .holder_sm
             .clone()
-            .handle_message(wallet_handle, pool_handle, message, send_message)
+            .handle_message(profile, message, send_message)
             .await?;
         Ok(())
     }
 
     pub async fn update_state(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<HolderState> {
@@ -188,11 +185,11 @@ impl Holder {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle).await?;
+        let send_message = connection.send_message_closure(profile).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            self.step(profile, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -228,7 +225,6 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use vdrtools_sys::PoolHandle;
 
     use messages::issuance::credential::test_utils::_credential;
     use messages::issuance::credential_offer::test_utils::_credential_offer;

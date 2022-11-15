@@ -10,14 +10,10 @@ use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::keys::create_and_store_my_did;
 use messages::connection::did::Did;
-use messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE, SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE};
 use crate::utils::random::generate_random_did;
-use messages::did_doc::service_resolvable::ServiceResolvable;
-use messages::did_doc::DidDoc;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     ledger::multi_sign_request(wallet_handle, did, request)
@@ -360,47 +356,6 @@ pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesS
     })
 }
 
-pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvable) -> VcxResult<AriesService> {
-    match service {
-        ServiceResolvable::AriesService(service) => Ok(service.clone()),
-        ServiceResolvable::Did(did) => get_service(pool_handle, did).await,
-    }
-}
-
-pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> VcxResult<DidDoc> {
-    let mut did_doc: DidDoc = DidDoc::default();
-    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
-        Invitation::Public(invitation) => {
-            did_doc.set_id(invitation.did.to_string());
-            let service = get_service(pool_handle, &invitation.did).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-        Invitation::Pairwise(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            (
-                invitation.service_endpoint.clone(),
-                invitation.recipient_keys.clone(),
-                invitation.routing_keys.clone(),
-            )
-        }
-        Invitation::OutOfBand(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            let service = resolve_service(pool_handle, &invitation.services[0]).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-    };
-    did_doc.set_service_endpoint(service_endpoint);
-    did_doc.set_recipient_keys(recipient_keys);
-    did_doc.set_routing_keys(routing_keys);
-    Ok(did_doc)
-}
-
 pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
     let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
@@ -474,19 +429,20 @@ pub async fn sign_and_submit_to_ledger(wallet_handle: WalletHandle, pool_handle:
     Ok(response)
 }
 
-pub async fn add_new_did(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
-    let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
-    let mut req_nym = ledger::build_nym_request(&submitter_did, &did, Some(&verkey), None, role)
-        .await
-        .unwrap();
+// todo - bring back in some location with modular profile
+// pub async fn add_new_did(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, role: Option<&str>) -> (String, String) {
+//     let (did, verkey) = create_and_store_my_did(wallet_handle, None, None).await.unwrap();
+//     let mut req_nym = ledger::build_nym_request(&submitter_did, &did, Some(&verkey), None, role)
+//         .await
+//         .unwrap();
 
-    req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
+//     req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
 
-    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
-        .await
-        .unwrap();
-    (did, verkey)
-}
+//     libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
+//         .await
+//         .unwrap();
+//     (did, verkey)
+// }
 
 pub async fn libindy_build_revoc_reg_def_request(submitter_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
     if settings::indy_mocks_enabled() {
@@ -712,8 +668,8 @@ pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> 
 pub async fn get_ledger_txn(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
-    submitter_did: Option<&str>,
     seq_no: i32,
+    submitter_did: Option<&str>,
 ) -> VcxResult<String> {
     trace!(
         "get_ledger_txn >>> submitter_did: {:?}, seq_no: {}",
@@ -839,17 +795,17 @@ mod test {
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
     use crate::indy::ledger::transactions::get_ledger_txn;
-    use crate::utils::devsetup::SetupWalletPool;
+    use crate::utils::devsetup::SetupIndyWalletPool;
 
     #[tokio::test]
     async fn test_get_txn() {
         let setup = SetupWalletPool::init().await;
-        get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, None).await;
         assert!(txn.is_ok());
 
-        get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, Some(&setup.institution_did)).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, Some(&setup.institution_did)).await;
         assert!(txn.is_ok());
     }
 }

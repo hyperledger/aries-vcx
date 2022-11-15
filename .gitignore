@@ -4,3 +4,4 @@
 **/node_modules
 wrappers/ios/vcx/vcx.framework/**
 wrappers/ios/vcx/vcx.framework.dSYM/**
+.vscode

@@ -39,8 +39,6 @@ mod dbtests {
     use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::indy::wallet::WalletConfigBuilder;
-    use aries_vcx::indy::wallet::{close_wallet, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig};
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;

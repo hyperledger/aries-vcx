@@ -1,5 +1,6 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use messages::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
@@ -38,7 +39,7 @@ impl OfferReceivedState {
         Ok(serde_json::Value::Object(new_map).to_string())
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
+    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
         let offer = self.offer.offers_attach.content().map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
@@ -54,7 +55,7 @@ impl OfferReceivedState {
                 ),
             )
         })?;
-        is_cred_def_revokable(wallet_handle, pool_handle, &cred_def_id).await
+        is_cred_def_revokable(profile, &cred_def_id).await
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {

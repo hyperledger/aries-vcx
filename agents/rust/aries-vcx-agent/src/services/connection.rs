@@ -2,44 +2,43 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::xyz::ledger::transactions::into_did_doc;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::connection::{Connection, ConnectionState},
-    indy::ledger::transactions::into_did_doc,
     messages::a2a::A2AMessage,
-    vdrtools_sys::{PoolHandle, WalletHandle},
 };
 
 pub struct ServiceConnections {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     config_agency_client: AgencyClientConfig,
     connections: Arc<ObjectCache<Connection>>,
 }
 
 impl ServiceConnections {
     pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: Arc<dyn Profile>,
         config_agency_client: AgencyClientConfig,
     ) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             config_agency_client,
             connections: Arc::new(ObjectCache::new("connections")),
         }
     }
 
     fn agency_client(&self) -> AgentResult<AgencyClient> {
+        let wallet = self.profile.inject_wallet();
         AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
+            .configure(wallet.to_base_agency_client_wallet(), &self.config_agency_client)
             .map_err(|err| {
                 AgentError::from_msg(
                     AgentErrorKind::GenericAriesVcxError,
@@ -50,9 +49,9 @@ impl ServiceConnections {
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
         let mut connection =
-            Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
+            Connection::create("", &self.profile, &self.agency_client()?, true).await?;
         connection
-            .connect(self.wallet_handle, &self.agency_client()?)
+            .connect(&self.profile, &self.agency_client()?)
             .await?;
         let invite = connection
             .get_invite_details()
@@ -64,10 +63,10 @@ impl ServiceConnections {
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
-        let ddo = into_did_doc(self.pool_handle, &invite).await?;
+        let ddo = into_did_doc(&self.profile, &invite).await?;
         let connection = Connection::create_with_invite(
             "",
-            self.wallet_handle,
+            &self.profile,
             &self.agency_client()?,
             invite,
             ddo,
@@ -81,10 +80,10 @@ impl ServiceConnections {
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.connections.get(thread_id)?;
         connection
-            .connect(self.wallet_handle, &self.agency_client()?)
+            .connect(&self.profile, &self.agency_client()?)
             .await?;
         connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
+            .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
         self.connections.set(thread_id, connection)?;
         Ok(())
@@ -93,16 +92,16 @@ impl ServiceConnections {
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
         let mut connection = self.connections.get(thread_id)?;
         connection
-            .process_request(self.wallet_handle, &self.agency_client()?, request)
+            .process_request(&self.profile, &self.agency_client()?, request)
             .await?;
-        connection.send_response(self.wallet_handle).await?;
+        connection.send_response(&self.profile).await?;
         self.connections.set(thread_id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.connections.get(thread_id)?;
-        connection.send_ping(self.wallet_handle, None).await?;
+        connection.send_ping(&self.profile, None).await?;
         self.connections.set(thread_id, connection)?;
         Ok(())
     }
@@ -114,7 +113,7 @@ impl ServiceConnections {
     pub async fn update_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
         let mut connection = self.connections.get(thread_id)?;
         connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
+            .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
         self.connections.set(thread_id, connection)?;
         Ok(self.connections.get(thread_id)?.get_state())

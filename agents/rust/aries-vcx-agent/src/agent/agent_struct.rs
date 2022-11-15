@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 
 use crate::agent::agent_config::AgentConfig;
 
@@ -9,14 +10,12 @@ use crate::error::*;
 use crate::services::{
     connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
     holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
-    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-    verifier::ServiceVerifier,
+    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas, verifier::ServiceVerifier,
 };
 
 #[derive(Clone)]
 pub struct Agent {
-    pub(super) wallet_handle: WalletHandle,
-    pub(super) pool_handle: PoolHandle,
+    pub(super) profile: Arc<dyn Profile>,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
     pub(super) schemas: Arc<ServiceSchemas>,
@@ -29,12 +28,8 @@ pub struct Agent {
 }
 
 impl Agent {
-    pub fn wallet_handle(&self) -> WalletHandle {
-        self.wallet_handle
-    }
-
-    pub fn pool_handle(&self) -> PoolHandle {
-        self.pool_handle
+    pub fn profile(&self) -> Arc<dyn Profile> {
+        Arc::clone(&self.profile)
     }
 
     pub fn agent_config(&self) -> AgentConfig {
@@ -46,8 +41,9 @@ impl Agent {
     }
 
     pub fn agency_client(&self) -> AgentResult<AgencyClient> {
+        let wallet = self.profile.inject_wallet();
         AgencyClient::new()
-            .configure(self.wallet_handle, &self.config.config_agency_client)
+            .configure(wallet.to_base_agency_client_wallet(), &self.config.config_agency_client)
             .map_err(|err| {
                 AgentError::from_msg(
                     AgentErrorKind::GenericAriesVcxError,

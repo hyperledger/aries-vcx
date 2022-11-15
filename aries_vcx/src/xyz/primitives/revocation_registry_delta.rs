@@ -1,6 +1,6 @@
-use vdrtools_sys::PoolHandle;
+use std::sync::Arc;
 
-use crate::{error::prelude::*, indy::ledger::transactions::get_rev_reg_delta_json};
+use crate::{error::prelude::*, core::profile::profile::Profile};
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]
 pub struct RevocationRegistryDelta {
@@ -32,12 +32,13 @@ impl RevocationRegistryDeltaValue {
 
 impl RevocationRegistryDelta {
     pub async fn create_from_ledger(
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         rev_reg_id: &str,
         from: Option<u64>,
         to: Option<u64>,
     ) -> VcxResult<Self> {
-        let (_, rev_reg_delta_json, _) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
+        let ledger = Arc::clone(profile).inject_ledger();
+        let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
             VcxError::from_msg(
                 VcxErrorKind::SerializationError,
@@ -59,7 +60,7 @@ impl RevocationRegistryDelta {
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
     use super::*;
-    use crate::{indy::test_utils::create_and_store_credential_def, utils::devsetup::SetupWalletPool};
+    use crate::{indy::test_utils::create_and_store_credential_def, utils::devsetup::SetupIndyWalletPool};
 
     #[tokio::test]
     async fn test_create_rev_reg_delta_from_ledger() {

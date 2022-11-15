@@ -1,12 +1,12 @@
 use vdrtools::future::TryFutureExt;
-use vdrtools_sys::WalletHandle;
+use std::sync::Arc;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::indy::signing;
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
 use messages::forward::Forward;
 
@@ -15,7 +15,7 @@ pub struct EncryptionEnvelope(pub Vec<u8>);
 
 impl EncryptionEnvelope {
     pub async fn create(
-        wallet_handle: WalletHandle,
+        wallet: &Arc<dyn BaseWallet>,
         message: &A2AMessage,
         pw_verkey: Option<&str>,
         did_doc: &DidDoc,
@@ -31,16 +31,16 @@ impl EncryptionEnvelope {
             return Ok(EncryptionEnvelope(vec![]));
         }
 
-        EncryptionEnvelope::encrypt_for_pairwise(wallet_handle, message, pw_verkey, did_doc)
+        EncryptionEnvelope::encrypt_for_pairwise(wallet, message, pw_verkey, did_doc)
             .and_then(|message| async move {
-                EncryptionEnvelope::wrap_into_forward_messages(wallet_handle, message, did_doc).await
+                EncryptionEnvelope::wrap_into_forward_messages(wallet, message, did_doc).await
             })
             .await
             .map(EncryptionEnvelope)
     }
 
     async fn encrypt_for_pairwise(
-        wallet_handle: WalletHandle,
+        wallet: &Arc<dyn BaseWallet>,
         message: &A2AMessage,
         pw_verkey: Option<&str>,
         did_doc: &DidDoc,
@@ -56,11 +56,12 @@ impl EncryptionEnvelope {
             "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
             pw_verkey, receiver_keys
         );
-        signing::pack_message(wallet_handle, pw_verkey, &receiver_keys, message.as_bytes()).await
+
+        wallet.pack_message(pw_verkey, &receiver_keys, message.as_bytes()).await
     }
 
     async fn wrap_into_forward_messages(
-        wallet_handle: WalletHandle,
+        wallet: &Arc<dyn BaseWallet>,
         mut message: Vec<u8>,
         did_doc: &DidDoc,
     ) -> VcxResult<Vec<u8>> {
@@ -73,7 +74,7 @@ impl EncryptionEnvelope {
         ))?;
 
         for routing_key in routing_keys.iter() {
-            message = EncryptionEnvelope::wrap_into_forward(wallet_handle, message, &to, routing_key).await?;
+            message = EncryptionEnvelope::wrap_into_forward(wallet, message, &to, routing_key).await?;
             to = routing_key.clone();
         }
 
@@ -81,7 +82,7 @@ impl EncryptionEnvelope {
     }
 
     async fn wrap_into_forward(
-        wallet_handle: WalletHandle,
+        wallet: &Arc<dyn BaseWallet>,
         message: Vec<u8>,
         to: &str,
         routing_key: &str,
@@ -91,16 +92,16 @@ impl EncryptionEnvelope {
         let message = json!(message).to_string();
         let receiver_keys = json!(vec![routing_key]).to_string();
 
-        signing::pack_message(wallet_handle, None, &receiver_keys, message.as_bytes()).await
+        wallet.pack_message(None, &receiver_keys, message.as_bytes()).await
     }
 
-    async fn _unpack_a2a_message(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
+    async fn _unpack_a2a_message(wallet: &Arc<dyn BaseWallet>, payload: Vec<u8>) -> VcxResult<(String, Option<String>)> {
         trace!(
             "EncryptionEnvelope::_unpack_a2a_message >>> processing payload of {} bytes",
             payload.len()
         );
 
-        let unpacked_msg = signing::unpack_message(wallet_handle, &payload).await?;
+        let unpacked_msg = wallet.unpack_message(&payload).await?;
 
         let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
             VcxError::from_msg(
@@ -123,7 +124,7 @@ impl EncryptionEnvelope {
     }
 
     // todo: we should use auth_unpack wherever possible
-    pub async fn anon_unpack(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<A2AMessage> {
+    pub async fn anon_unpack(wallet: &Arc<dyn BaseWallet>, payload: Vec<u8>) -> VcxResult<A2AMessage> {
         trace!(
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             payload.len()
@@ -132,7 +133,7 @@ impl EncryptionEnvelope {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
-            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
+            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(wallet, payload).await?;
             a2a_message
         };
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
@@ -145,7 +146,7 @@ impl EncryptionEnvelope {
     }
 
     pub async fn auth_unpack(
-        wallet_handle: WalletHandle,
+        wallet: &Arc<dyn BaseWallet>,
         payload: Vec<u8>,
         expected_vk: &str,
     ) -> VcxResult<A2AMessage> {
@@ -159,7 +160,7 @@ impl EncryptionEnvelope {
             trace!("EncryptionEnvelope::auth_unpack >>> returning decrypted mock message");
             AgencyMockDecrypted::get_next_decrypted_message()
         } else {
-            let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
+            let (a2a_message, sender_vk) = Self::_unpack_a2a_message(wallet, payload).await?;
             trace!("anon_unpack >> a2a_msg: {:?}, sender_vk: {:?}", a2a_message, sender_vk);
 
             match sender_vk {
@@ -196,9 +197,6 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use crate::indy::signing::create_key;
-    use crate::indy::utils::test_setup;
-    use crate::indy::utils::test_setup::create_trustee_key;
     use messages::ack::test_utils::_ack;
     use crate::utils::devsetup::SetupEmpty;
 

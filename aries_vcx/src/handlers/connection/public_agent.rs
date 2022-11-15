@@ -1,13 +1,15 @@
+use std::sync::Arc;
+
 use futures::stream::iter;
 use futures::StreamExt;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+
+use crate::core::profile::profile::Profile;
 
 use agency_client::agency_client::AgencyClient;
 
 use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::indy::ledger::transactions::add_service;
 use messages::a2a::A2AMessage;
 use messages::connection::did::Did;
 use messages::connection::request::Request;
@@ -23,19 +25,22 @@ pub struct PublicAgent {
 
 impl PublicAgent {
     pub async fn create(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         source_id: &str,
         institution_did: &str,
     ) -> VcxResult<Self> {
-        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+        let wallet = profile.inject_wallet();
+
+        let pairwise_info = PairwiseInfo::create(&wallet).await?;
         let agent_info = CloudAgentInfo::create(agency_client, &pairwise_info).await?;
         let service = AriesService::create()
             .set_service_endpoint(agency_client.get_agency_url_full())
             .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
             .set_routing_keys(agent_info.routing_keys(agency_client)?);
-        add_service(wallet_handle, pool_handle, institution_did, &service).await?;
+
+        Arc::clone(profile).inject_ledger().add_service(institution_did, &service).await?;
+        
         let institution_did = Did::new(institution_did)?;
         let source_id = String::from(source_id);
         Ok(Self {

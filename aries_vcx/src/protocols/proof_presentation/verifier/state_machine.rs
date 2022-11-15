@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Display;
+use std::sync::Arc;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
-
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
+use crate::xyz::proofs::proof_request::PresentationRequestData;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
@@ -20,7 +21,6 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
-use crate::indy::proofs::proof_request::PresentationRequestData;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -188,12 +188,12 @@ impl VerifierSM {
         Ok(Self { state, thread_id, ..self })
     }
 
-    pub async fn verify_presentation(self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn verify_presentation(self, profile: &Arc<dyn Profile>, presentation: Presentation, send_message: SendClosure) -> VcxResult<Self> {
         verify_thread_id(&self.thread_id, &VerifierMessages::VerifyPresentation(presentation.clone()))?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
                 let verification_result = state
-                    .verify_presentation(wallet_handle, pool_handle, &presentation, &self.thread_id)
+                    .verify_presentation(profile, &presentation, &self.thread_id)
                     .await;
                 let ack = build_verification_ack(&self.thread_id);
                 send_message(A2AMessage::PresentationAck(ack)).await?;
@@ -325,8 +325,7 @@ impl VerifierSM {
 
     pub async fn step(
         self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<Self> {
@@ -345,7 +344,7 @@ impl VerifierSM {
                     VcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
-                self.verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?
+                self.verify_presentation(profile, presentation, send_message).await?
             }
             VerifierMessages::SendPresentationAck() => {
                 let send_message = send_message.ok_or(VcxError::from_msg(
@@ -472,7 +471,6 @@ pub mod unit_tests {
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-    use crate::indy::proofs::proof_request::test_utils::_presentation_request_data;
 
     use super::*;
 

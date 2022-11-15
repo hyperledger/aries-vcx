@@ -9,7 +9,7 @@ use aries_vcx::{
             create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, WalletConfig,
         },
     },
-    utils::provision::provision_cloud_agent,
+    utils::provision::provision_cloud_agent, core::profile::{indy_profile::IndySdkProfile, profile::Profile},
 };
 
 use crate::{
@@ -75,58 +75,54 @@ impl Agent {
             .await
             .unwrap();
 
+        let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
+        let profile: Arc<dyn Profile> = Arc::new(indy_profile);
+        let wallet = profile.inject_wallet();
+
         let mut agency_client = AgencyClient::new();
         let config_agency_client =
-            provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
+            provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
                 .await
                 .unwrap();
 
         let connections = Arc::new(ServiceConnections::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_agency_client.clone(),
         ));
         let schemas = Arc::new(ServiceSchemas::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_issuer.institution_did.clone(),
         ));
         let cred_defs = Arc::new(ServiceCredentialDefinitions::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
         ));
         let rev_regs = Arc::new(ServiceRevocationRegistries::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_issuer.institution_did.clone(),
         ));
         let issuer = Arc::new(ServiceCredentialsIssuer::new(
-            wallet_handle,
+            Arc::clone(&profile),
             config_agency_client.clone(),
             connections.clone(),
         ));
         let holder = Arc::new(ServiceCredentialsHolder::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_agency_client.clone(),
             connections.clone(),
         ));
         let verifier = Arc::new(ServiceVerifier::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_agency_client.clone(),
             connections.clone(),
         ));
         let prover = Arc::new(ServiceProver::new(
-            wallet_handle,
-            pool_handle,
+            Arc::clone(&profile),
             config_agency_client.clone(),
             connections.clone(),
         ));
 
         Ok(Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             connections,
             schemas,
             cred_defs,

@@ -1,11 +1,13 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::vec::Vec;
 
 use serde_json;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
-use crate::indy::proofs::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
-use crate::indy::anoncreds;
+
+use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 
 #[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Clone)]
 #[builder(setter(into), default)]
@@ -25,10 +27,11 @@ pub struct ProofRequestData {
 impl ProofRequestData {
     const DEFAULT_VERSION: &'static str = "1.0";
 
-    pub async fn create(name: &str) -> VcxResult<Self> {
+    pub async fn create(profile: &Arc<dyn Profile>, name: &str) -> VcxResult<Self> {
+        let nonce = Arc::clone(profile).inject_anoncreds().generate_nonce().await?;
         Ok(Self {
             name: name.to_string(),
-            nonce: anoncreds::generate_nonce().await?,
+            nonce,
             ..Self::default()
         })
     }

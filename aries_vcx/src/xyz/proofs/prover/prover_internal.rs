@@ -1,15 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
-use crate::error::prelude::*;
-use crate::indy::proofs::proof_request::ProofRequestData;
-use crate::indy::proofs::proof_request_internal::NonRevokedInterval;
-use crate::indy::ledger::transactions::{
-    get_cred_def_json, get_rev_reg_def_json,
-    get_rev_reg_delta_json, get_schema_json};
-use crate::indy::proofs::prover;
+use crate::{error::prelude::*, xyz::proofs::{proof_request_internal::NonRevokedInterval, proof_request::ProofRequestData}, core::profile::profile::Profile};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -25,19 +18,19 @@ pub struct CredInfoProver {
 }
 
 pub async fn build_schemas_json_prover(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: &Arc<dyn Profile>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_schemas_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let (_, schema_json) = get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
+            let schema_json = ledger.get_schema( &cred_info.schema_id, None)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -55,19 +48,19 @@ pub async fn build_schemas_json_prover(
 }
 
 pub async fn build_cred_defs_json_prover(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: &Arc<dyn Profile>,
     credentials_identifiers: &Vec<CredInfoProver>,
 ) -> VcxResult<String> {
     trace!(
         "build_cred_defs_json_prover >>> credentials_identifiers: {:?}",
         credentials_identifiers
     );
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut rtn: Value = json!({});
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let (_, credential_def) = get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id)
+            let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None)
                 .await
                 .map_err(|err| {
                     err.map(
@@ -158,11 +151,13 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
     );
+    let ledger = Arc::clone(profile).inject_ledger();
+    let anoncreds = Arc::clone(profile).inject_anoncreds();
     let mut rtn: Value = json!({});
     let mut timestamps: HashMap<String, u64> = HashMap::new();
 
@@ -178,15 +173,16 @@ pub async fn build_rev_states_json(pool_handle: PoolHandle, credentials_identifi
                     (None, None)
                 };
 
-                let (_, rev_reg_def_json) = get_rev_reg_def_json(pool_handle, rev_reg_id).await?;
+                let rev_reg_def_json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = get_rev_reg_delta_json(pool_handle, rev_reg_id, from, to).await?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
-                let rev_state_json = prover::libindy_prover_create_revocation_state(
+                let rev_state_json = anoncreds.create_revocation_state(
+                    tails_file,
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
+                    100, // todo - timestamp as 100?
                     cred_rev_id,
-                    tails_file,
                 )
                 .await?;
 
@@ -268,11 +264,9 @@ pub fn build_requested_credentials_json(
 #[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod pool_tests {
-    use vdrtools_sys::PoolHandle;
 
-    use crate::indy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
-    use crate::utils::devsetup::SetupWalletPool;
+    use crate::utils::devsetup::SetupIndyWalletPool;
     use crate::utils::get_temp_dir_path;
 
     fn _dummy_pool_handle() -> PoolHandle {
@@ -311,7 +305,6 @@ pub mod pool_tests {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::indy::proofs::prover::prover_internal::CredInfoProver;
     use crate::utils::devsetup::*;
     use crate::utils::{
         constants::{

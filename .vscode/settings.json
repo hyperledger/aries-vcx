@@ -1,0 +1,4 @@
+{
+    // "rust-analyzer.cargo.features": "all"
+    "rust-analyzer.cargo.features": ["temp_gm_tests", "agency_pool_tests"]
+}

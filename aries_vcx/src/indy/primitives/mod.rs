@@ -1,5 +1,4 @@
 pub mod revocation_registry;
-pub mod revocation_registry_delta;
 pub mod credential_definition;
 pub mod credential_schema;
 
@@ -17,7 +16,7 @@ pub mod integration_tests {
     };
     use crate::indy::primitives::revocation_registry::generate_rev_reg;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::SetupWalletPool;
+    use crate::utils::devsetup::SetupIndyWalletPool;
     use crate::utils::get_temp_dir_path;
 
     #[tokio::test]

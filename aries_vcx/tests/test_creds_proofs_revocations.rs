@@ -14,7 +14,7 @@ mod integration_tests {
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::utils::devsetup::*;
 
-    use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
+    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::{
         _create_address_schema, _exchange_credential, attr_names, create_connected_connections, create_proof,
         generate_and_send_proof, issue_address_credential, prover_select_credentials_and_send_proof,
@@ -29,9 +29,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_basic_revocation() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -43,7 +43,7 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
         let time_before_revocation = time::get_time().sec as u64;
         info!("test_basic_revocation :: verifier :: Going to revoke credential");
@@ -51,7 +51,7 @@ mod integration_tests {
         thread::sleep(Duration::from_millis(2000));
         let time_after_revocation = time::get_time().sec as u64;
 
-        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
         let _requested_attrs = requested_attrs(
             &institution.config_issuer.institution_did,
@@ -82,8 +82,7 @@ mod integration_tests {
         info!("test_basic_revocation :: verifier :: going to verify proof");
         verifier
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -98,9 +97,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revocation_notification() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -112,42 +111,50 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
         info!("test_revocation_notification :: verifier :: Going to revoke credential");
         revoke_credential_and_publish_accumulator(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
         thread::sleep(Duration::from_millis(2000));
 
-        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
-        let config = aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
-            .ack_on(vec![messages::ack::please_ack::AckOn::Receipt])
-            .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
-            .cred_rev_id(issuer_credential.get_rev_id().unwrap())
-            .comment(None)
-            .build()
+        assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
+        let config =
+            aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder::default()
+                .ack_on(vec![messages::ack::please_ack::AckOn::Receipt])
+                .rev_reg_id(issuer_credential.get_rev_reg_id().unwrap())
+                .cred_rev_id(issuer_credential.get_rev_id().unwrap())
+                .comment(None)
+                .build()
+                .unwrap();
+        let send_message = institution_to_consumer
+            .send_message_closure(&institution.profile)
+            .await
             .unwrap();
-        let send_message = institution_to_consumer.send_message_closure(institution.wallet_handle).await.unwrap();
         aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender::build()
             .clone()
             .send_revocation_notification(config, send_message)
             .await
             .unwrap();
 
-        let rev_nots = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_messages(&consumer.agency_client, &consumer_to_institution).await.unwrap();
+        let rev_nots = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_messages(
+            &consumer.agency_client,
+            &consumer_to_institution,
+        )
+        .await
+        .unwrap();
         assert_eq!(rev_nots.len(), 1);
 
         // consumer.receive_revocation_notification(rev_not).await;
         // let ack = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_ack_messages(&institution.agency_client, &institution_to_consumer).await.unwrap().pop().unwrap();
         // institution.handle_revocation_notification_ack(ack).await;
-
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_local_revocation() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -160,7 +167,7 @@ mod integration_tests {
         .await;
 
         revoke_credential_local(&mut institution, &issuer_credential, &rev_reg.rev_reg_id).await;
-        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
         let request_name1 = Some("request1");
         let mut verifier = verifier_create_proof_and_send_request(
             &mut institution,
@@ -174,8 +181,7 @@ mod integration_tests {
 
         verifier
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -186,7 +192,7 @@ mod integration_tests {
             ProofStateType::ProofValidated
         );
 
-        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
         publish_revocation(&mut institution, rev_reg.rev_reg_id.clone()).await;
         let request_name2 = Some("request2");
@@ -202,8 +208,7 @@ mod integration_tests {
 
         verifier
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -214,17 +219,18 @@ mod integration_tests {
             ProofStateType::ProofInvalid
         );
 
-        assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(issuer_credential.is_revoked(&institution.profile).await.unwrap());
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_batch_revocation() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer1 = Alice::setup(setup.pool_handle).await;
-        let mut consumer2 = Alice::setup(setup.pool_handle).await;
-        let mut consumer3 = Alice::setup(setup.pool_handle).await;
+        let mut consumer1 = create_test_alice_instance(&setup).await;
+        let mut consumer2 = create_test_alice_instance(&setup).await;
+        let mut consumer3 = create_test_alice_instance(&setup).await;
+
         let (consumer_to_institution1, institution_to_consumer1) =
             create_connected_connections(&mut consumer1, &mut institution).await;
         let (consumer_to_institution2, institution_to_consumer2) =
@@ -234,12 +240,7 @@ mod integration_tests {
 
         // Issue and send three credentials of the same schema
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(
-                institution.wallet_handle,
-                institution.pool_handle,
-                &institution.config_issuer.institution_did,
-            )
-            .await;
+            _create_address_schema(&institution.profile, &institution.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
         let issuer_credential1 = _exchange_credential(
@@ -280,9 +281,9 @@ mod integration_tests {
 
         revoke_credential_local(&mut institution, &issuer_credential1, &rev_reg.rev_reg_id).await;
         revoke_credential_local(&mut institution, &issuer_credential2, &rev_reg.rev_reg_id).await;
-        assert!(!issuer_credential1.is_revoked(institution.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(institution.pool_handle).await.unwrap());
-        assert!(!issuer_credential3.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&institution.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&institution.profile).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(&institution.profile).await.unwrap());
 
         // Revoke two locally and verify their are all still valid
         let request_name1 = Some("request1");
@@ -316,8 +317,7 @@ mod integration_tests {
 
         verifier1
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -325,8 +325,7 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -334,8 +333,7 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -358,9 +356,9 @@ mod integration_tests {
         publish_revocation(&mut institution, rev_reg_id.clone().unwrap()).await;
         thread::sleep(Duration::from_millis(2000));
 
-        assert!(issuer_credential1.is_revoked(institution.pool_handle).await.unwrap());
-        assert!(issuer_credential2.is_revoked(institution.pool_handle).await.unwrap());
-        assert!(!issuer_credential3.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&institution.profile).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&institution.profile).await.unwrap());
+        assert!(!issuer_credential3.is_revoked(&institution.profile).await.unwrap());
 
         let request_name2 = Some("request2");
         let mut verifier1 = verifier_create_proof_and_send_request(
@@ -396,8 +394,7 @@ mod integration_tests {
 
         verifier1
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer1,
             )
@@ -405,8 +402,7 @@ mod integration_tests {
             .unwrap();
         verifier2
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer2,
             )
@@ -414,8 +410,7 @@ mod integration_tests {
             .unwrap();
         verifier3
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer3,
             )
@@ -438,9 +433,9 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revoked_credential_might_still_work() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut institution = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
 
         let (consumer_to_institution, institution_to_consumer) =
             create_connected_connections(&mut consumer, &mut institution).await;
@@ -452,7 +447,7 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        assert!(!issuer_credential.is_revoked(&institution.profile).await.unwrap());
 
         thread::sleep(Duration::from_millis(1000));
         let time_before_revocation = time::get_time().sec as u64;
@@ -491,7 +486,7 @@ mod integration_tests {
         let mut prover = create_proof(&mut consumer, &consumer_to_institution, None).await;
         info!("test_revoked_credential_might_still_work :: retrieving matching credentials");
 
-        let retrieved_credentials = prover.retrieve_credentials(consumer.wallet_handle).await.unwrap();
+        let retrieved_credentials = prover.retrieve_credentials(&consumer.profile).await.unwrap();
         info!(
             "test_revoked_credential_might_still_work :: prover :: based on proof, retrieved credentials: {}",
             &retrieved_credentials
@@ -515,8 +510,7 @@ mod integration_tests {
         info!("test_revoked_credential_might_still_work :: verifier :: going to verify proof");
         verifier
             .update_state(
-                institution.wallet_handle,
-                institution.pool_handle,
+                &institution.profile,
                 &institution.agency_client,
                 &institution_to_consumer,
             )
@@ -531,21 +525,17 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_first() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
+
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(
-                issuer.wallet_handle,
-                issuer.pool_handle,
-                &issuer.config_issuer.institution_did,
-            )
-            .await;
+            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -573,8 +563,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg_id.unwrap()).await;
 
@@ -589,12 +579,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -613,12 +598,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -626,28 +606,24 @@ mod integration_tests {
             ProofStateType::ProofValidated
         );
 
-        assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_second() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
+
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
         let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, rev_reg_id) =
-            _create_address_schema(
-                issuer.wallet_handle,
-                issuer.pool_handle,
-                &issuer.config_issuer.institution_did,
-            )
-            .await;
+            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -675,8 +651,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_id.unwrap()).await;
 
@@ -691,12 +667,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -715,12 +686,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -728,27 +694,24 @@ mod integration_tests {
             ProofStateType::ProofInvalid
         );
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
+
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
-            issuer.wallet_handle,
-            issuer.pool_handle,
-            &issuer.config_issuer.institution_did,
-        )
-        .await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -788,12 +751,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -812,12 +770,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -825,27 +778,24 @@ mod integration_tests {
             ProofStateType::ProofValidated
         );
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_first() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
+
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
-            issuer.wallet_handle,
-            issuer.pool_handle,
-            &issuer.config_issuer.institution_did,
-        )
-        .await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -874,8 +824,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential1, &rev_reg.rev_reg_id).await;
 
@@ -890,12 +840,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -914,12 +859,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -927,27 +867,24 @@ mod integration_tests {
             ProofStateType::ProofValidated
         );
 
-        assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_second() {
-        let setup = SetupPool::init().await;
+        let setup = SetupIndyPool::init().await;
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
-        let mut consumer = Alice::setup(setup.pool_handle).await;
+        let mut consumer = create_test_alice_instance(&setup).await;
+
         let (consumer_to_verifier, verifier_to_consumer) =
             create_connected_connections(&mut consumer, &mut verifier).await;
         let (consumer_to_issuer, issuer_to_consumer) = create_connected_connections(&mut consumer, &mut issuer).await;
 
-        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) = _create_address_schema(
-            issuer.wallet_handle,
-            issuer.pool_handle,
-            &issuer.config_issuer.institution_did,
-        )
-        .await;
+        let (schema_id, _schema_json, cred_def_id, _cred_def_json, cred_def, rev_reg, _) =
+            _create_address_schema(&issuer.profile, &issuer.config_issuer.institution_did).await;
         let (address1, address2, city, state, zip) = attr_names();
         let (req1, req2) = (Some("request1"), Some("request2"));
         let credential_data1 = json!({address1.clone(): "123 Main St", address2.clone(): "Suite 3", city.clone(): "Draper", state.clone(): "UT", zip.clone(): "84000"}).to_string();
@@ -976,8 +913,8 @@ mod integration_tests {
         )
         .await;
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(!issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
 
         revoke_credential_and_publish_accumulator(&mut issuer, &issuer_credential2, &rev_reg_2.rev_reg_id).await;
 
@@ -992,12 +929,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req1, Some(&credential_data1))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -1016,12 +948,7 @@ mod integration_tests {
         prover_select_credentials_and_send_proof(&mut consumer, &consumer_to_verifier, req2, Some(&credential_data2))
             .await;
         proof_verifier
-            .update_state(
-                verifier.wallet_handle,
-                verifier.pool_handle,
-                &verifier.agency_client,
-                &verifier_to_consumer,
-            )
+            .update_state(&verifier.profile, &verifier.agency_client, &verifier_to_consumer)
             .await
             .unwrap();
         assert_eq!(
@@ -1029,7 +956,7 @@ mod integration_tests {
             ProofStateType::ProofInvalid
         );
 
-        assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
-        assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        assert!(!issuer_credential1.is_revoked(&issuer.profile).await.unwrap());
+        assert!(issuer_credential2.is_revoked(&issuer.profile).await.unwrap());
     }
 }

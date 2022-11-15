@@ -1,21 +1,20 @@
 use std::collections::HashMap;
 
 use messages::ack::please_ack::AckOn;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::connection::Connection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
-use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
 use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::CredentialPreviewData;
 use messages::mime_type::MimeType;
-use crate::indy::primitives::revocation_registry;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;
@@ -119,12 +118,13 @@ impl Issuer {
     // todo: "build_credential_offer_msg" should take optional revReg as parameter, build OfferInfo from that
     pub async fn build_credential_offer_msg(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         offer_info: OfferInfo,
         comment: Option<String>,
     ) -> VcxResult<()> {
+        let anoncreds = Arc::clone(profile).inject_anoncreds();
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = libindy_issuer_create_credential_offer(wallet_handle, &offer_info.cred_def_id).await?;
+        let libindy_cred_offer = anoncreds.issuer_create_credential_offer(&offer_info.cred_def_id).await?;
         self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
             &libindy_cred_offer,
             credential_preview,
@@ -149,8 +149,8 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
-        self.issuer_sm = self.issuer_sm.clone().send_credential(wallet_handle, send_message).await?;
+    pub async fn send_credential(&mut self, profile: &Arc<dyn Profile>, send_message: SendClosure) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().send_credential(profile, send_message).await?;
         Ok(())
     }
 
@@ -176,7 +176,8 @@ impl Issuer {
     }
 
     pub fn get_state(&self) -> IssuerState {
-        self.issuer_sm.get_state()
+        let x = self.issuer_sm.get_state();
+        x
     }
 
     pub fn get_source_id(&self) -> VcxResult<String> {
@@ -191,7 +192,7 @@ impl Issuer {
         self.issuer_sm.find_message_to_handle(messages)
     }
 
-    pub async fn revoke_credential_local(&self, wallet_handle: WalletHandle) -> VcxResult<()> {
+    pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(VcxError::from_msg(
             VcxErrorKind::InvalidState,
             "Credential is not revocable, no revocation info has been found.",
@@ -201,7 +202,8 @@ impl Issuer {
             revocation_info.rev_reg_id,
             revocation_info.tails_file,
         ) {
-            revocation_registry::revoke_credential_local(wallet_handle, &tails_file, &rev_reg_id, &cred_rev_id).await?;
+            let anoncreds = Arc::clone(profile).inject_anoncreds();
+            anoncreds.revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id).await?;
         } else {
             return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,
@@ -235,27 +237,27 @@ impl Issuer {
         self.issuer_sm.is_revokable()
     }
 
-    pub async fn is_revoked(&self, pool_handle: PoolHandle) -> VcxResult<bool> {
-        self.issuer_sm.is_revoked(pool_handle).await
+    pub async fn is_revoked(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+        self.issuer_sm.is_revoked(profile).await
     }
 
     pub async fn step(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         message: CredentialIssuanceAction,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.issuer_sm = self
             .issuer_sm
             .clone()
-            .handle_message(wallet_handle, message, send_message)
+            .handle_message(profile, message, send_message)
             .await?;
         Ok(())
     }
 
     pub async fn update_state(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         connection: &Connection,
     ) -> VcxResult<IssuerState> {
@@ -263,10 +265,10 @@ impl Issuer {
         if self.is_terminal_state() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle).await?;
+        let send_message = connection.send_message_closure(profile).await?;
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, msg.into(), Some(send_message)).await?;
+            self.step(profile, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())

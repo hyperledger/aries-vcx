@@ -1,5 +1,6 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use messages::issuance::credential_proposal::CredentialProposal;
 use crate::protocols::issuance::is_cred_def_revokable;
@@ -14,7 +15,7 @@ impl ProposalSentState {
         Self { credential_proposal }
     }
 
-    pub async fn is_revokable(&self, wallet_handle: WalletHandle, pool_handle: PoolHandle) -> VcxResult<bool> {
-        is_cred_def_revokable(wallet_handle, pool_handle, &self.credential_proposal.cred_def_id).await
+    pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
+        is_cred_def_revokable(profile, &self.credential_proposal.cred_def_id).await
     }
 }

@@ -51,7 +51,7 @@ pub mod integration_tests {
         libindy_issuer_revoke_credential, publish_local_revocations, revoke_credential_local
     };
     use crate::utils::constants::TAILS_DIR;
-    use crate::utils::devsetup::{SetupLibraryWallet, SetupWalletPool};
+    use crate::utils::devsetup::{SetupLibraryWallet, SetupIndyWalletPool};
     use crate::utils::get_temp_dir_path;
 
     use super::*;
