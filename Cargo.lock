@@ -1256,6 +1256,7 @@ dependencies = [
  "futures-core",
  "futures-task",
  "futures-util",
+ "num_cpus",
 ]
 
 [[package]]
@@ -1598,7 +1599,7 @@ dependencies = [
 [[package]]
 name = "indy-api-types"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=191949219#191949219be6cbbd6a7e5b7207052eb390c944d4"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=debf776c8#debf776c8ea4da49f09f559f03f6d85a8768b8f4"
 dependencies = [
  "aes 0.7.5",
  "bs58",
@@ -1619,7 +1620,7 @@ dependencies = [
 [[package]]
 name = "indy-utils"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=191949219#191949219be6cbbd6a7e5b7207052eb390c944d4"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=debf776c8#debf776c8ea4da49f09f559f03f6d85a8768b8f4"
 dependencies = [
  "base64 0.10.1",
  "dirs",
@@ -1639,7 +1640,7 @@ dependencies = [
 [[package]]
 name = "indy-wallet"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=191949219#191949219be6cbbd6a7e5b7207052eb390c944d4"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=debf776c8#debf776c8ea4da49f09f559f03f6d85a8768b8f4"
 dependencies = [
  "async-trait",
  "bs58",
@@ -1816,7 +1817,7 @@ dependencies = [
 [[package]]
 name = "libvdrtools"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=191949219#191949219be6cbbd6a7e5b7207052eb390c944d4"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=debf776c8#debf776c8ea4da49f09f559f03f6d85a8768b8f4"
 dependencies = [
  "android_logger",
  "async-std",
@@ -1825,6 +1826,7 @@ dependencies = [
  "byteorder",
  "cfg-if 1.0.0",
  "convert_case",
+ "env_logger",
  "etcommon-rlp",
  "failure",
  "futures",
@@ -1839,6 +1841,7 @@ dependencies = [
  "log-panics",
  "num-derive",
  "num-traits",
+ "num_cpus",
  "rand 0.8.5",
  "regex",
  "rmp-serde",
