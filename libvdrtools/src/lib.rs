@@ -16,8 +16,8 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
-// #[cfg(feature = "ffi_api")]
-// #[macro_use]
+#[allow(unused_imports)]
+#[macro_use]
 extern crate indy_utils;
 
 pub use indy_api_types as types;

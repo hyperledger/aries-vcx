@@ -21,7 +21,7 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-ffi_api = [ "env_logger", "num_cpus" ]
+ffi_api = [ "env_logger", "num_cpus", "futures/thread-pool" ]
 
 # Causes the build to fail on all warnings
 fatal_warnings = []

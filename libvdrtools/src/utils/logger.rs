@@ -1,27 +1,23 @@
-// extern crate env_logger;
-// extern crate log_panics;
-// extern crate log;
-
 #[cfg(target_os = "android")]
 extern crate android_logger;
 
+#[cfg(feature = "ffi_api")]
+use env_logger::Builder as EnvLoggerBuilder;
+#[cfg(feature = "ffi_api")]
+use log::{LevelFilter, Level, Record, Metadata};
 
-// use env_logger::Builder as EnvLoggerBuilder;
-// use log::{LevelFilter, Level};
-// use std::env;
-// use std::io::Write;
+#[cfg(feature = "ffi_api")]
+use std::{env, io::Write, ffi::CString, ptr};
+#[cfg(feature = "ffi_api")]
+use libc::{c_void, c_char};
 
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
 
-// use log::{Record, Metadata};
-
-// use libc::{c_void, c_char};
-// use std::ffi::CString;
-// use std::ptr;
-
-// use indy_api_types::errors::prelude::*;
-// use indy_utils::ctypes;
+#[cfg(feature = "ffi_api")]
+use indy_api_types::errors::prelude::*;
+#[cfg(feature = "ffi_api")]
+use indy_utils::ctypes;
 
 #[cfg(feature = "ffi_api")]
 use indy_api_types::errors::IndyErrorKind::InvalidStructure;
@@ -50,20 +46,22 @@ impl LoggerState {
     }
 }
 
+#[cfg(feature = "ffi_api")]
+pub type EnabledCB = extern fn(context: *const c_void,
+                               level: u32,
+                               target: *const c_char) -> bool;
 
-// pub type EnabledCB = extern fn(context: *const c_void,
-//                                level: u32,
-//                                target: *const c_char) -> bool;
+#[cfg(feature = "ffi_api")]
+pub type LogCB = extern fn(context: *const c_void,
+                           level: u32,
+                           target: *const c_char,
+                           message: *const c_char,
+                           module_path: *const c_char,
+                           file: *const c_char,
+                           line: u32);
 
-// pub type LogCB = extern fn(context: *const c_void,
-//                            level: u32,
-//                            target: *const c_char,
-//                            message: *const c_char,
-//                            module_path: *const c_char,
-//                            file: *const c_char,
-//                            line: u32);
-
-// pub type FlushCB = extern fn(context: *const c_void);
+#[cfg(feature = "ffi_api")]
+pub type FlushCB = extern fn(context: *const c_void);
 
 #[cfg(feature = "ffi_api")]
 static mut CONTEXT: *const c_void = ptr::null();
@@ -74,11 +72,13 @@ static mut LOG_CB: Option<LogCB> = None;
 #[cfg(feature = "ffi_api")]
 static mut FLUSH_CB: Option<FlushCB> = None;
 
-// #[cfg(debug_assertions)]
-// const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Trace;
+#[cfg(feature = "ffi_api")]
+#[cfg(debug_assertions)]
+const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Trace;
 
-// #[cfg(not(debug_assertions))]
-// const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Info;
+#[cfg(feature = "ffi_api")]
+#[cfg(not(debug_assertions))]
+const DEFAULT_MAX_LEVEL: LevelFilter = LevelFilter::Info;
 
 #[cfg(feature = "ffi_api")]
 pub struct LibvdrtoolsLogger {
