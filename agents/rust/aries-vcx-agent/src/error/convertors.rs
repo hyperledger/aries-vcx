@@ -11,7 +11,7 @@ impl From<VcxError> for AgentError {
             _ => AgentErrorKind::GenericAriesVcxError,
         };
         error!("AriesVCX Error: {}", err.to_string());
-        let message = format!("AriesVCX Error: {}", err.to_string());
+        let message = format!("AriesVCX Error: {}", err);
         AgentError { message, kind }
     }
 }

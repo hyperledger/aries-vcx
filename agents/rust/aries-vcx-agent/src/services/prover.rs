@@ -67,7 +67,7 @@ impl ServiceProver {
 
         for (key, val) in credentials["attrs"].as_object().unwrap().iter() {
             let cred_array = val.as_array().unwrap();
-            if cred_array.len() > 0 {
+            if !cred_array.is_empty() {
                 let first_cred = &cred_array[0];
                 res_credentials["attrs"][key]["credential"] = first_cred.clone();
                 if let Some(tails_dir) = tails_dir {

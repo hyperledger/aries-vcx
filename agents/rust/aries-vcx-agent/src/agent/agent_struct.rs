@@ -68,7 +68,7 @@ impl Agent {
     }
 
     pub fn mediated_connections(&self) -> AgentResult<Arc<ServiceMediatedConnections>> {
-        self.mediated_connections.clone().ok_or(AgentError::from_kind(
+        self.mediated_connections.clone().ok_or_else(|| AgentError::from_kind(
             AgentErrorKind::MediatedConnectionServiceUnavailable,
         ))
     }
