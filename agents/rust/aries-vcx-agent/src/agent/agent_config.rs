@@ -6,6 +6,6 @@ use aries_vcx::{
 #[derive(Clone)]
 pub struct AgentConfig {
     pub config_wallet: WalletConfig,
-    pub config_agency_client: AgencyClientConfig,
+    pub config_agency_client: Option<AgencyClientConfig>,
     pub config_issuer: IssuerConfig,
 }

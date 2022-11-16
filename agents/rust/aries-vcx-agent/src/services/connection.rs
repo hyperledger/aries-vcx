@@ -66,7 +66,15 @@ impl ServiceConnections {
             .connections
             .get(thread_id)?
             .process_request(self.wallet_handle, request, self.service_endpoint.clone(), vec![], None)
-            .await?
+            .await?;
+        self.connections.set(thread_id, inviter)?;
+        Ok(())
+    }
+
+    pub async fn send_response(&self, thread_id: &str) -> AgentResult<()> {
+        let inviter = self
+            .connections
+            .get(thread_id)?
             .send_response(self.wallet_handle, None)
             .await?;
         self.connections.set(thread_id, inviter)?;
@@ -78,8 +86,6 @@ impl ServiceConnections {
             .connections
             .get(thread_id)?
             .process_response(self.wallet_handle, response, None)
-            .await?
-            .send_response(self.wallet_handle, None)
             .await?;
         self.connections.set(thread_id, invitee)?;
         Ok(())
@@ -107,6 +113,10 @@ impl ServiceConnections {
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
         Ok(self.connections.get(thread_id)?.get_state())
+    }
+
+    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<Connection> {
+        self.connections.get(thread_id)
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {

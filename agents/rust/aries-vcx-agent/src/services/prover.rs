@@ -3,8 +3,6 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
@@ -12,7 +10,7 @@ use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState
 use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
-use super::mediated_connection::ServiceMediatedConnections;
+use super::connection::ServiceConnections;
 
 #[derive(Clone)]
 struct ProverWrapper {
@@ -32,22 +30,19 @@ impl ProverWrapper {
 pub struct ServiceProver {
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
-    config_agency_client: AgencyClientConfig,
     provers: ObjectCache<ProverWrapper>,
-    service_connections: Arc<ServiceMediatedConnections>,
+    service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceProver {
     pub fn new(
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
-        config_agency_client: AgencyClientConfig,
-        service_connections: Arc<ServiceMediatedConnections>,
+        service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
             wallet_handle,
             pool_handle,
-            config_agency_client,
             service_connections,
             provers: ObjectCache::new("provers"),
         }
@@ -61,17 +56,6 @@ impl ServiceProver {
     pub fn get_connection_id(&self, thread_id: &str) -> AgentResult<String> {
         let ProverWrapper { connection_id, .. } = self.provers.get(thread_id)?;
         Ok(connection_id)
-    }
-
-    fn agency_client(&self) -> AgentResult<AgencyClient> {
-        AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
-            .map_err(|err| {
-                AgentError::from_msg(
-                    AgentErrorKind::GenericAriesVcxError,
-                    &format!("Failed to configure agency client: {}", err),
-                )
-            })
     }
 
     async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
@@ -117,7 +101,7 @@ impl ServiceProver {
         prover
             .send_proposal(
                 proposal,
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
         self.provers.set(
@@ -151,7 +135,7 @@ impl ServiceProver {
             .await?;
         prover
             .send_presentation(
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
         self.provers.set(
@@ -159,27 +143,6 @@ impl ServiceProver {
             ProverWrapper::new(prover, &connection_id),
         )?;
         Ok(())
-    }
-
-    pub async fn update_state(&self, thread_id: &str) -> AgentResult<ProverState> {
-        let ProverWrapper {
-            mut prover,
-            connection_id,
-        } = self.provers.get(thread_id)?;
-        let connection = self.service_connections.get_by_id(&connection_id)?;
-        let state = prover
-            .update_state(
-                self.wallet_handle,
-                self.pool_handle,
-                &self.agency_client()?,
-                &connection,
-            )
-            .await?;
-        self.provers.set(
-            thread_id,
-            ProverWrapper::new(prover, &connection_id),
-        )?;
-        Ok(state)
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ProverState> {

@@ -120,10 +120,6 @@ impl ServiceMediatedConnections {
         Ok(self.mediated_connections.get(thread_id)?.get_state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<MediatedConnection> {
-        self.mediated_connections.get(thread_id)
-    }
-
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.mediated_connections.has_id(thread_id)
     }
