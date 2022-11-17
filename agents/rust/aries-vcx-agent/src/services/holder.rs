@@ -4,6 +4,7 @@ use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::issuance::credential::Credential;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -104,6 +105,28 @@ impl ServiceCredentialsHolder {
                 self.wallet_handle,
                 self.pool_handle,
                 connection.pairwise_info().pw_did.to_string(),
+                connection.send_message_closure(self.wallet_handle, None).await?,
+            )
+            .await?;
+        self.creds_holder.set(
+            &holder.get_thread_id()?,
+            HolderWrapper::new(holder, &connection_id),
+        )
+    }
+
+    pub async fn process_credential(
+        &self,
+        thread_id: &str,
+        credential: Credential,
+    ) -> AgentResult<String> {
+        let mut holder = self.get_holder(thread_id)?;
+        let connection_id = self.get_connection_id(thread_id)?;
+        let connection = self.service_connections.get_by_id(&connection_id)?;
+        holder
+            .process_credential(
+                self.wallet_handle,
+                self.pool_handle,
+                credential,
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
