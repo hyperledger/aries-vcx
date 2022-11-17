@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use messages::ack::please_ack::AckOn;
+use messages::issuance::credential_request::CredentialRequest;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
@@ -146,6 +147,11 @@ impl Issuer {
 
     pub async fn send_credential_offer(&mut self, send_message: SendClosure) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().send_credential_offer(send_message).await?;
+        Ok(())
+    }
+
+    pub fn process_credential_request(&mut self, request: CredentialRequest) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
         Ok(())
     }
 

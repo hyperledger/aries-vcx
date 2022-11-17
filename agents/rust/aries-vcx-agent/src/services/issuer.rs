@@ -6,6 +6,7 @@ use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use aries_vcx::vdrtools_sys::WalletHandle;
 
@@ -87,6 +88,19 @@ impl ServiceCredentialsIssuer {
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )
+    }
+
+    pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_request(request)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
     }
 
     pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
