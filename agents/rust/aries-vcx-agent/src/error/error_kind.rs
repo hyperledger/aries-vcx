@@ -16,4 +16,6 @@ pub enum AgentErrorKind {
     InvalidArguments,
     #[fail(display = "Credential definition already exists on the ledger")]
     CredDefAlreadyCreated,
+    #[fail(display = "Mediated connections not configured")]
+    MediatedConnectionServiceUnavailable,
 }

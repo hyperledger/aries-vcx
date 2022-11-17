@@ -1,4 +1,5 @@
 pub(crate) mod connection;
+pub(crate) mod mediated_connection;
 pub(crate) mod credential_definition;
 pub(crate) mod holder;
 pub(crate) mod issuer;

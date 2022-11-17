@@ -135,15 +135,15 @@ impl Connection {
         self,
         wallet_handle: WalletHandle,
         request: Request,
-        routing_keys: Vec<String>,
         service_endpoint: String,
+        routing_keys: Vec<String>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!(
-            "Connection::process_request >>> request: {:?}, routing_keys: {:?}, service_endpoint: {}",
+            "Connection::process_request >>> request: {:?}, service_endpoint: {}, routing_keys: {:?}",
             request,
+            service_endpoint,
             routing_keys,
-            service_endpoint
         );
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
@@ -440,7 +440,7 @@ mod unit_tests {
         let connection = Connection::create_inviter(_wallet_handle())
             .await
             .unwrap()
-            .process_request(_wallet_handle(), _request(), _routing_keys(), _service_endpoint(), None)
+            .process_request(_wallet_handle(), _request(), _service_endpoint(), _routing_keys(), None)
             .await
             .unwrap();
 
@@ -501,8 +501,8 @@ mod unit_tests {
             .process_request(
                 setup.wallet_handle,
                 request,
-                _routing_keys(),
                 _service_endpoint(),
+                _routing_keys(),
                 _send_message(sender.clone()),
             )
             .await
