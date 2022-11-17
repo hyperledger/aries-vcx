@@ -210,17 +210,17 @@ impl MediatedConnection {
         self.cloud_agent_info.clone()
     }
 
-    pub async fn remote_did(&self) -> VcxResult<String> {
+    pub fn remote_did(&self) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_did(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did().await,
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_did(),
         }
     }
 
-    pub async fn remote_vk(&self) -> VcxResult<String> {
+    pub fn remote_vk(&self) -> VcxResult<String> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.remote_vk(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk().await,
+            SmConnection::Invitee(sm_invitee) => sm_invitee.remote_vk(),
         }
     }
 
@@ -253,10 +253,10 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<DidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
-            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc().await,
+            SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
         }
     }
 
@@ -425,7 +425,7 @@ impl MediatedConnection {
     }
 
     pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
-        let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!(
                 "Can't answer message {:?} because counterparty did doc is not available",
@@ -725,7 +725,7 @@ impl MediatedConnection {
     }
 
     async fn get_expected_sender_vk(&self) -> VcxResult<String> {
-        self.remote_vk().await.map_err(|_err| {
+        self.remote_vk().map_err(|_err| {
             VcxError::from_msg(
                 VcxErrorKind::NotReady,
                 "Verkey of Connection counterparty \
@@ -748,7 +748,7 @@ impl MediatedConnection {
 
     pub async fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
@@ -847,7 +847,7 @@ impl MediatedConnection {
             query,
             comment
         );
-        let did_doc = self.their_did_doc().await.ok_or(VcxError::from_msg(
+        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
@@ -873,7 +873,7 @@ impl MediatedConnection {
             protocols: Some(self.get_protocols()),
         };
 
-        let remote = match self.their_did_doc().await {
+        let remote = match self.their_did_doc() {
             Some(did_doc) => Some(SideConnectionInfo {
                 did: did_doc.id.clone(),
                 recipient_keys: did_doc.recipient_keys(),
@@ -925,7 +925,7 @@ impl MediatedConnection {
                 Ok(msgs)
             }
             _ => {
-                let expected_sender_vk = self.remote_vk().await?;
+                let expected_sender_vk = self.remote_vk()?;
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
                         .ok_or(VcxError::from_msg(

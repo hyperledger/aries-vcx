@@ -7,6 +7,7 @@ use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::signing;
+use crate::utils::constants;
 use messages::a2a::A2AMessage;
 use messages::forward::Forward;
 
@@ -123,17 +124,16 @@ impl EncryptionEnvelope {
     }
 
     // todo: we should use auth_unpack wherever possible
-    pub async fn anon_unpack(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<A2AMessage> {
+    pub async fn anon_unpack(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<(A2AMessage, Option<String>)> {
         trace!(
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             payload.len()
         );
-        let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
+        let (message, sender_vk) = if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
-            AgencyMockDecrypted::get_next_decrypted_message()
+            (AgencyMockDecrypted::get_next_decrypted_message(), Some(constants::VERKEY.to_string()))
         } else {
-            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
-            a2a_message
+            Self::_unpack_a2a_message(wallet_handle, payload).await?
         };
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
             VcxError::from_msg(
@@ -141,7 +141,7 @@ impl EncryptionEnvelope {
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
-        Ok(a2a_message)
+        Ok((a2a_message, sender_vk))
     }
 
     pub async fn auth_unpack(
@@ -237,7 +237,7 @@ pub mod unit_tests {
             message,
             EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0)
                 .await
-                .unwrap()
+                .unwrap().0
         );
     }
 
@@ -263,7 +263,7 @@ pub mod unit_tests {
 
         let message_1 = EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0)
             .await
-            .unwrap();
+            .unwrap().0;
 
         let message_1 = match message_1 {
             A2AMessage::Forward(forward) => {
@@ -275,7 +275,7 @@ pub mod unit_tests {
 
         let message_2 = EncryptionEnvelope::anon_unpack(setup.wallet_handle, message_1)
             .await
-            .unwrap();
+            .unwrap().0;
 
         let message_2 = match message_2 {
             A2AMessage::Forward(forward) => {
@@ -289,7 +289,7 @@ pub mod unit_tests {
             ack,
             EncryptionEnvelope::anon_unpack(setup.wallet_handle, message_2)
                 .await
-                .unwrap()
+                .unwrap().0
         );
     }
 

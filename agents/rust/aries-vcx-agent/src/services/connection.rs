@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
@@ -118,6 +118,19 @@ impl ServiceConnections {
     pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<Connection> {
         self.connections.get(thread_id)
     }
+
+    pub fn get_by_their_vk(&self, their_vk: &str) -> AgentResult<Vec<String>> {
+        let their_vk = their_vk.to_string();
+        let f = |(id, m): (&String, &Mutex<Connection>)| -> Option<String> {
+            let connection = m.lock().unwrap();
+            match connection.remote_vk() {
+                Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),
+                _ => None
+            }
+        };
+        self.connections.find_by(f)
+    }
+
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.connections.has_id(thread_id)

@@ -122,7 +122,13 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
+    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<CredentialProposal> {
+        let issuer = self.get_issuer(thread_id)?;
+        issuer.get_proposal().map_err(|err| err.into())
+    }
+
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.creds_issuer.has_id(thread_id)
     }
 }
+
