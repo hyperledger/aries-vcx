@@ -1,4 +1,4 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};

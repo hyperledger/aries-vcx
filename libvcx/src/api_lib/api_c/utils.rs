@@ -13,7 +13,7 @@ use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;

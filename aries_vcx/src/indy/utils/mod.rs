@@ -1,11 +1,10 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Mutex;
 
-use vdrtools_sys::CommandHandle;
+use vdrtools::CommandHandle;
 
 use crate::global::settings;
 
-pub mod logger;
 pub mod mocks;
 
 pub mod error_codes;
@@ -40,47 +39,50 @@ impl LibindyMock {
 // TODO:  move to devsetup, see if we can reuse this / merge with different setup
 #[cfg(feature = "test_utils")]
 pub mod test_setup {
-    use vdrtools;
 
-    pub const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
-    pub const WALLET_CREDENTIALS: &'static str =
-        r#"{"key":"8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY", "key_derivation_method":"RAW"}"#;
+    use crate::indy;
+
+    const TRUSTEE_SEED: &'static str = "000000000000000000000000Trustee1";
+    const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
+    const WALLET_KEY_DERIVATION: &str = "RAW";
 
     pub struct WalletSetup {
-        pub name: String,
-        pub wallet_config: String,
+        pub wallet_config: indy::wallet::WalletConfig,
         pub wallet_handle: vdrtools::WalletHandle,
     }
 
     pub async fn setup_wallet() -> WalletSetup {
-        let name: String = crate::utils::random::generate_random_name();
-        let wallet_config = json!({ "id": name }).to_string();
+        let wallet_config = indy::wallet::WalletConfig{
+            wallet_name: crate::utils::random::generate_random_name(),
+            wallet_key: WALLET_KEY.into(),
+            wallet_key_derivation: WALLET_KEY_DERIVATION.into(),
+            .. Default::default()
+        };
 
-        vdrtools::wallet::create_wallet(&wallet_config, WALLET_CREDENTIALS)
+        indy::wallet::create_indy_wallet(&wallet_config)
             .await
             .unwrap();
-        let wallet_handle = vdrtools::wallet::open_wallet(&wallet_config, WALLET_CREDENTIALS)
+
+        let wallet_handle = indy::wallet::open_wallet(&wallet_config)
             .await
             .unwrap();
 
         WalletSetup {
-            name,
             wallet_config,
             wallet_handle,
         }
     }
 
     pub async fn create_trustee_key(wallet_handle: vdrtools::WalletHandle) -> String {
-        let key_config = json!({ "seed": TRUSTEE_SEED }).to_string();
-        vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
+        indy::signing::create_key(wallet_handle, Some(TRUSTEE_SEED))
             .await
             .unwrap()
     }
 
     pub async fn create_key(wallet_handle: vdrtools::WalletHandle) -> String {
         let seed: String = crate::utils::random::generate_random_seed();
-        let key_config = json!({ "seed": seed }).to_string();
-        vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
+
+        indy::signing::create_key(wallet_handle, Some(&seed))
             .await
             .unwrap()
     }
@@ -88,9 +90,15 @@ pub mod test_setup {
     impl Drop for WalletSetup {
         fn drop(&mut self) {
             if self.wallet_handle.0 != 0 {
-                futures::executor::block_on(vdrtools::wallet::close_wallet(self.wallet_handle)).unwrap();
-                futures::executor::block_on(vdrtools::wallet::delete_wallet(&self.wallet_config, WALLET_CREDENTIALS))
-                    .unwrap();
+                tokio::runtime::Handle::current().block_on(async {
+                    indy::wallet::close_wallet(self.wallet_handle)
+                        .await
+                        .unwrap();
+
+                    indy::wallet::delete_wallet(&self.wallet_config)
+                        .await
+                        .unwrap();
+                })
             }
         }
     }

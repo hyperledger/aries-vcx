@@ -1,4 +1,4 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use messages::did_doc::DidDoc;
 use crate::error::VcxResult;

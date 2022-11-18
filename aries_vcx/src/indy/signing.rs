@@ -1,18 +1,29 @@
 use time;
 use base64;
-use vdrtools::crypto;
-use vdrtools_sys::WalletHandle;
+
+use vdrtools::{Locator, KeyInfo};
+
+use vdrtools::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::global::settings;
 use messages::connection::response::{Response, SignedResponse, ConnectionSignature, ConnectionData};
+
 
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
         return Ok(Vec::from(msg));
     }
 
-    crypto::sign(wallet_handle, my_vk, msg).await.map_err(VcxError::from)
+    let res = Locator::instance()
+        .crypto_controller
+        .crypto_sign(
+            wallet_handle,
+            my_vk,
+            msg,
+        ).await?;
+
+    Ok(res)
 }
 
 async fn get_signature_data(wallet_handle: WalletHandle, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
@@ -100,7 +111,12 @@ pub async fn verify(vk: &str, msg: &[u8], signature: &[u8]) -> VcxResult<bool> {
         return Ok(true);
     }
 
-    crypto::verify(vk, msg, signature).await.map_err(VcxError::from)
+    let res = Locator::instance()
+        .crypto_controller
+        .crypto_verify(vk, msg, signature)
+        .await?;
+
+    Ok(res)
 }
 
 pub async fn pack_message(
@@ -113,9 +129,37 @@ pub async fn pack_message(
         return Ok(msg.to_vec());
     }
 
-    crypto::pack_message(wallet_handle, msg, receiver_keys, sender_vk)
-        .await
-        .map_err(VcxError::from)
+    // parse json array of keys
+    let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys)
+        .map_err(|_| {
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                "Invalid RecipientKeys has been passed",
+            )
+        })
+        .and_then(|list| {
+            // break early and error out if no receivers keys are provided
+            if list.is_empty() {
+                Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidJson,
+                    "Empty RecipientKeys has been passed",
+                ))
+            } else {
+                Ok(list)
+            }
+        })
+        ?;
+
+    let res = Locator::instance()
+        .crypto_controller
+        .pack_msg(
+            msg.into(),
+            receiver_list,
+            sender_vk.map(ToOwned::to_owned),
+            wallet_handle,
+        ).await?;
+
+    Ok(res)
 }
 
 pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResult<Vec<u8>> {
@@ -123,7 +167,15 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResul
         return Ok(Vec::from(msg));
     }
 
-    crypto::unpack_message(wallet_handle, msg).await.map_err(VcxError::from)
+    let res = Locator::instance()
+        .crypto_controller
+        .unpack_msg(
+            serde_json::from_slice(msg)?,
+            wallet_handle,
+        )
+        .await?;
+
+    Ok(res)
 }
 
 pub async fn unpack_message_to_string(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResult<String> {
@@ -132,7 +184,7 @@ pub async fn unpack_message_to_string(wallet_handle: WalletHandle, msg: &[u8]) -
     }
 
     String::from_utf8(
-        crypto::unpack_message(wallet_handle, &msg)
+        unpack_message(wallet_handle, &msg)
             .await
             .map_err(|_| VcxError::from_msg(VcxErrorKind::InvalidMessagePack, "Failed to unpack message"))?,
     )
@@ -145,11 +197,17 @@ pub async fn unpack_message_to_string(wallet_handle: WalletHandle, msg: &[u8]) -
 }
 
 pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxResult<String> {
-    let key_json = json!({ "seed": seed }).to_string();
+    let res = Locator::instance()
+        .crypto_controller
+        .create_key(
+            wallet_handle,
+            &KeyInfo{
+                seed: seed.map(ToOwned::to_owned),
+                crypto_type: None,
+            },
+        ).await?;
 
-    crypto::create_key(wallet_handle, Some(&key_json))
-        .await
-        .map_err(VcxError::from)
+    Ok(res)
 }
 
 #[cfg(test)]

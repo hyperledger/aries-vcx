@@ -5,7 +5,7 @@ use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy;
-use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
+use aries_vcx::vdrtools::{SearchHandle, WalletHandle, CommandHandle};
 use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::utils::error;
 
@@ -790,15 +790,15 @@ pub extern "C" fn vcx_wallet_open_search(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match indy::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
-            Ok(err) => {
+            Ok(handle) => {
                 trace!(
-                    "vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {})",
+                    "vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {:?})",
                     command_handle,
                     error::SUCCESS.message,
-                    err
+                    handle
                 );
 
-                cb(command_handle, error::SUCCESS.code_num, err);
+                cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -809,7 +809,7 @@ pub extern "C" fn vcx_wallet_open_search(
                     "null"
                 );
 
-                cb(command_handle, err.into(), 0);
+                cb(command_handle, err.into(), SearchHandle(0));
             }
         };
 
@@ -851,22 +851,22 @@ pub extern "C" fn vcx_wallet_search_next_records(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     trace!(
-        "vcx_wallet_search_next_records(command_handle: {}, wallet_search_handle: {})",
+        "vcx_wallet_search_next_records(command_handle: {}, wallet_search_handle: {:?})",
         command_handle,
         wallet_search_handle
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match indy::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
-            Ok(err) => {
+            Ok(handle) => {
                 trace!(
                     "vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
                     command_handle,
                     error::SUCCESS.message,
-                    err
+                    handle
                 );
 
-                let msg = CStringUtils::string_to_cstring(err);
+                let msg = CStringUtils::string_to_cstring(handle);
 
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
@@ -913,7 +913,7 @@ pub extern "C" fn vcx_wallet_close_search(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     trace!(
-        "vcx_wallet_close_search(command_handle: {}, search_handle: {})",
+        "vcx_wallet_close_search(command_handle: {}, search_handle: {:?})",
         command_handle,
         search_handle
     );

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use messages::proof_presentation::presentation_ack::PresentationAck;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use messages::a2a::{A2AMessage, MessageId};

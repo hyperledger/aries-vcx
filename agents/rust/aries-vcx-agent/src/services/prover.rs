@@ -8,7 +8,7 @@ use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
 use super::connection::ServiceConnections;

@@ -3,8 +3,8 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
+    use vdrtools::{PoolHandle, WalletHandle};
     use serde_json::{json, Value};
-    use vdrtools_sys::{PoolHandle, WalletHandle};
 
     use aries_vcx::handlers::connection::mediated_connection::{MediatedConnection, ConnectionState};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;

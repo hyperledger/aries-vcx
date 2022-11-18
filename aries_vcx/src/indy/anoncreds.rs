@@ -1,32 +1,52 @@
-use vdrtools::{anoncreds, blob_storage};
+use vdrtools::{Locator, SearchHandle, AnoncredsHelpers};
 
 use crate::error::prelude::*;
 
 pub(super) async fn blob_storage_open_reader(base_dir: &str) -> VcxResult<i32> {
-    let tails_config = json!({"base_dir": base_dir,"uri_pattern": ""}).to_string();
-    blob_storage::open_reader("default", &tails_config)
-        .await
-        .map_err(VcxError::from)
+    let tails_config = json!(
+        {
+            "base_dir":    base_dir,
+            "uri_pattern": ""         // TODO remove, unused
+        }
+    ).to_string();
+
+    let res = Locator::instance()
+        .blob_storage_controller
+        .open_reader(
+            "default".into(),
+            tails_config,
+        )
+        .await?;
+
+    Ok(res)
 }
 
-pub(super) async fn close_search_handle(search_handle: i32) -> VcxResult<()> {
-    anoncreds::prover_close_credentials_search_for_proof_req(search_handle)
-        .await
-        .map_err(VcxError::from)
+pub(super) async fn close_search_handle(search_handle: SearchHandle) -> VcxResult<()> {
+    Locator::instance()
+        .prover_controller
+        .close_credentials_search_for_proof_req(search_handle)
+        .await?;
+
+    Ok(())
 }
 
-pub async fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
-    anoncreds::to_unqualified(entity).await.map_err(VcxError::from)
+pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
+    Ok(AnoncredsHelpers::to_unqualified(entity)?)
 }
 
 pub async fn generate_nonce() -> VcxResult<String> {
-    anoncreds::generate_nonce().await.map_err(VcxError::from)
+    let res = Locator::instance()
+        .verifier_controller
+        .generate_nonce()?;
+
+    Ok(res)
 }
+
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use vdrtools_sys::WalletHandle;
+    use vdrtools::WalletHandle;
 
     use crate::indy::ledger::transactions::get_schema_json;
     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};

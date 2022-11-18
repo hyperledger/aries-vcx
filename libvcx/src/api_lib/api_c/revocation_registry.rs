@@ -5,7 +5,7 @@ use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools_sys::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig};

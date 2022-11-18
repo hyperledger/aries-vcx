@@ -3,7 +3,7 @@ use std::clone::Clone;
 use messages::a2a::A2AMessage;
 use messages::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
@@ -323,7 +323,7 @@ impl Connection {
 #[cfg(test)]
 pub mod test_utils {
     use async_channel::Sender;
-    use vdrtools_sys::PoolHandle;
+    use vdrtools::PoolHandle;
 
     use super::*;
 

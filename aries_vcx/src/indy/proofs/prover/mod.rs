@@ -1,5 +1,6 @@
-use vdrtools::anoncreds;
-use crate::error::{VcxError, VcxResult};
+use vdrtools::Locator;
+
+use crate::error::VcxResult;
 use crate::global::settings;
 use crate::indy;
 use crate::utils::constants::REV_STATE_JSON;
@@ -17,11 +18,21 @@ pub async fn libindy_prover_create_revocation_state(
         return Ok(REV_STATE_JSON.to_string());
     }
 
-    let blob_handle = indy::anoncreds::blob_storage_open_reader(tails_file).await?;
+    let blob_handle =
+        indy::anoncreds::blob_storage_open_reader(tails_file)
+        .await?;
 
-    anoncreds::create_revocation_state(blob_handle, rev_reg_def_json, rev_reg_delta_json, 100, cred_rev_id)
-        .await
-        .map_err(VcxError::from)
+    let res = Locator::instance()
+        .prover_controller
+        .create_revocation_state(
+            blob_handle,
+            serde_json::from_str(rev_reg_def_json)?,
+            serde_json::from_str(rev_reg_delta_json)?,
+            100,
+            cred_rev_id.into(),
+        ).await?;
+
+    Ok(res)
 }
 
 pub async fn libindy_prover_update_revocation_state(
@@ -37,14 +48,16 @@ pub async fn libindy_prover_update_revocation_state(
 
     let blob_handle = indy::anoncreds::blob_storage_open_reader(tails_file).await?;
 
-    anoncreds::update_revocation_state(
-        blob_handle,
-        rev_state_json,
-        rev_reg_def_json,
-        rev_reg_delta_json,
-        100,
-        cred_rev_id,
-    )
-        .await
-        .map_err(VcxError::from)
+    let res = Locator::instance()
+        .prover_controller
+        .update_revocation_state(
+            blob_handle,
+            serde_json::from_str(rev_state_json)?,
+            serde_json::from_str(rev_reg_def_json)?,
+            serde_json::from_str(rev_reg_delta_json)?,
+            100,
+            cred_rev_id.into(),
+        ).await?;
+
+    Ok(res)
 }

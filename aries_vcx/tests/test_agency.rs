@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate log;
+
 #[macro_use]
 extern crate serde_json;
-
-extern crate vdrtoolsrs as vdrtools;
 
 pub mod utils;
 
@@ -13,7 +12,7 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use vdrtools::wallet::close_wallet;
+    use aries_vcx::indy::wallet::close_wallet;
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;

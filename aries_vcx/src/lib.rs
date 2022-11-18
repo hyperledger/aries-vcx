@@ -2,10 +2,12 @@
 #![crate_name = "aries_vcx"]
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
+
+
 pub extern crate agency_client;
 
-pub extern crate vdrtools_sys;
-pub extern crate vdrtoolsrs as vdrtools;
+// TODO: remove reexports
+pub extern crate vdrtools;
 
 #[macro_use]
 extern crate lazy_static;

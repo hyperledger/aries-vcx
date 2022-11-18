@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use messages::problem_report::ProblemReport;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::credentials::{is_cred_revoked, get_cred_rev_id};

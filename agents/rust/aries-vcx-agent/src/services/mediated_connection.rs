@@ -13,7 +13,7 @@ use aries_vcx::{
     handlers::connection::mediated_connection::{MediatedConnection, ConnectionState},
     indy::ledger::transactions::into_did_doc,
     messages::a2a::A2AMessage,
-    vdrtools_sys::{PoolHandle, WalletHandle},
+    vdrtools::{PoolHandle, WalletHandle},
 };
 
 pub struct ServiceMediatedConnections {

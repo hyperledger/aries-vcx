@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use messages::proof_presentation::presentation_ack::PresentationAck;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 

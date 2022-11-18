@@ -8,7 +8,7 @@ use aries_vcx::messages::issuance::credential::Credential;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 #[derive(Clone)]
 struct HolderWrapper {

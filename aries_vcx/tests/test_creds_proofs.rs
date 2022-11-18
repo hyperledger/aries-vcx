@@ -342,7 +342,7 @@ mod integration_tests {
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
     use serde_json::Value;
-    use vdrtools_sys::PoolHandle;
+    use vdrtools::PoolHandle;
 
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
