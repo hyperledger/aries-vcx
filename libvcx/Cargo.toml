@@ -17,6 +17,7 @@ pool_tests = [ "test_utils" ]
 general_test = [ "test_utils" ]
 # to_restore = []
 fatal_warnings = []
+ios-wrapper = ["aries-vcx/ios-wrapper"]
 
 [dependencies]
 once_cell = { version = "1.15" }
