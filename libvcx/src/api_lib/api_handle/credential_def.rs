@@ -149,7 +149,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn create_revocable_cred_def_and_check_tails_location() {
-        let setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(get_main_wallet_handle(), setup.setup.pool_handle, &setup.setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
@@ -180,18 +180,20 @@ pub mod tests {
         revocation_registry::publish(handle_rev_reg, tails_url).await.unwrap();
         let rev_reg_def = revocation_registry::get_rev_reg_def(handle_rev_reg).unwrap();
         assert_eq!(rev_reg_def.value.tails_location, tails_url);
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_credential_def_real() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let (_, handle) = create_and_publish_nonrevocable_creddef().await;
 
         let _source_id = get_source_id(handle).unwrap();
         let _cred_def_id = get_cred_def_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
+        }).await;
     }
 
     #[cfg(feature = "general_test")]

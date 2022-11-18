@@ -639,13 +639,14 @@ mod test {
 
     #[tokio::test]
     async fn test_add_record() {
-        let setup = SetupLibraryWallet::init().await;
-        add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
-            .await
-            .unwrap();
-        let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
-            .await
-            .unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::DuplicationWalletRecord);
+        SetupLibraryWallet::run(|setup| async move {
+            add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
+                .await
+                .unwrap();
+            let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
+                .await
+                .unwrap_err();
+            assert_eq!(err.kind(), VcxErrorKind::DuplicationWalletRecord);
+        }).await;
     }
 }

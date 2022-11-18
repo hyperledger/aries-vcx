@@ -141,7 +141,7 @@ pub async fn pack_message(
             // break early and error out if no receivers keys are provided
             if list.is_empty() {
                 Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                    VcxErrorKind::InvalidLibindyParam,
                     "Empty RecipientKeys has been passed",
                 ))
             } else {
@@ -214,7 +214,7 @@ pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxR
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use crate::indy::utils::test_setup::{create_trustee_key, setup_wallet};
+    use crate::indy::utils::test_setup::{create_trustee_key, with_wallet};
     use messages::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::utils::devsetup::SetupEmpty;
 
@@ -235,19 +235,46 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_response_encode_works() {
         SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
-        assert_eq!(_response(), decode_signed_connection_response(signed_response, &trustee_key).await.unwrap());
+
+        with_wallet(|wallet_handle| async move {
+            let trustee_key = create_trustee_key(wallet_handle)
+                .await;
+
+            let signed_response: SignedResponse =
+                sign_connection_response(
+                    wallet_handle,
+                    &trustee_key,
+                    _response(),
+                ).await.unwrap();
+
+            assert_eq!(
+                _response(),
+                decode_signed_connection_response(signed_response, &trustee_key)
+                    .await
+                    .unwrap(),
+            );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_decode_returns_error_if_signer_differs() {
         SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
-        let mut signed_response: SignedResponse = sign_connection_response(setup.wallet_handle, &trustee_key, _response()).await.unwrap();
-        signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
-        decode_signed_connection_response(signed_response, &trustee_key).await.unwrap_err();
+        with_wallet(|wallet_handle| async move {
+            let trustee_key = create_trustee_key(wallet_handle)
+                .await;
+            let mut signed_response: SignedResponse =
+                sign_connection_response(
+                    wallet_handle,
+                    &trustee_key,
+                    _response(),
+                ).await.unwrap();
+
+            signed_response.connection_sig.signer =
+                String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
+
+            decode_signed_connection_response(signed_response, &trustee_key)
+                .await
+                .unwrap_err();
+        }).await;
     }
 }

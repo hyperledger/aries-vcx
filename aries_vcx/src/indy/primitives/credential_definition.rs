@@ -325,7 +325,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_create_cred_def_real() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(
@@ -359,11 +359,12 @@ pub mod integration_tests {
             &cred_def_json)
             .await
             .unwrap();
+        }).await;
     }
 
     #[tokio::test]
     async fn test_create_rev_reg_def() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -386,5 +387,6 @@ pub mod integration_tests {
         publish_rev_reg_delta(setup.wallet_handle, setup.pool_handle, &setup.institution_did, &rev_reg_def_id, &rev_reg_entry_json)
             .await
             .unwrap();
+        }).await;
     }
 }

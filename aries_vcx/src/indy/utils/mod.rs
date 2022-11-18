@@ -46,12 +46,10 @@ pub mod test_setup {
     const WALLET_KEY: &str = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY";
     const WALLET_KEY_DERIVATION: &str = "RAW";
 
-    pub struct WalletSetup {
-        pub wallet_config: indy::wallet::WalletConfig,
-        pub wallet_handle: vdrtools::WalletHandle,
-    }
-
-    pub async fn setup_wallet() -> WalletSetup {
+    pub async fn with_wallet<F>(f: impl FnOnce(vdrtools::WalletHandle) -> F)
+    where
+        F: std::future::Future<Output=()>,
+    {
         let wallet_config = indy::wallet::WalletConfig{
             wallet_name: crate::utils::random::generate_random_name(),
             wallet_key: WALLET_KEY.into(),
@@ -67,10 +65,15 @@ pub mod test_setup {
             .await
             .unwrap();
 
-        WalletSetup {
-            wallet_config,
-            wallet_handle,
-        }
+        f(wallet_handle).await;
+
+        indy::wallet::close_wallet(wallet_handle)
+            .await
+            .unwrap();
+
+        indy::wallet::delete_wallet(&wallet_config)
+            .await
+            .unwrap();
     }
 
     pub async fn create_trustee_key(wallet_handle: vdrtools::WalletHandle) -> String {
@@ -85,21 +88,5 @@ pub mod test_setup {
         indy::signing::create_key(wallet_handle, Some(&seed))
             .await
             .unwrap()
-    }
-
-    impl Drop for WalletSetup {
-        fn drop(&mut self) {
-            if self.wallet_handle.0 != 0 {
-                tokio::runtime::Handle::current().block_on(async {
-                    indy::wallet::close_wallet(self.wallet_handle)
-                        .await
-                        .unwrap();
-
-                    indy::wallet::delete_wallet(&self.wallet_config)
-                        .await
-                        .unwrap();
-                })
-            }
-        }
     }
 }

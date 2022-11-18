@@ -1093,7 +1093,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_get_txn() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
         get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 0).await.unwrap_err();
         let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 1).await;
         assert!(txn.is_ok());
@@ -1101,5 +1101,6 @@ pub mod integration_tests {
         get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 0).await.unwrap_err();
         let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 1).await;
         assert!(txn.is_ok());
+        }).await;
     }
 }

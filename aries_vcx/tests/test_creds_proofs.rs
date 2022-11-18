@@ -21,7 +21,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_retrieve_credentials() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         create_and_store_nonrevocable_credential(
             setup.wallet_handle,
@@ -40,11 +40,12 @@ mod integration_tests {
 
         let retrieved_creds = proof.retrieve_credentials(setup.wallet_handle).await.unwrap();
         assert!(retrieved_creds.len() > 500);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_credential_def() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
         let (_, _, cred_def_id, cred_def_json, _) = create_and_store_nonrevocable_credential_def(
             setup.wallet_handle,
             setup.pool_handle,
@@ -61,11 +62,12 @@ mod integration_tests {
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_retrieve_credentials_empty() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let mut req = json!({
            "nonce":"123432421212",
@@ -93,11 +95,12 @@ mod integration_tests {
 
         let retrieved_creds = proof.retrieve_credentials(setup.wallet_handle).await.unwrap();
         assert_eq!(retrieved_creds, json!({"attrs":{"address1_1":[]}}).to_string());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_case_for_proof_req_doesnt_matter_for_retrieve_creds() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
         create_and_store_nonrevocable_credential(
             setup.wallet_handle,
             setup.pool_handle,
@@ -153,11 +156,12 @@ mod integration_tests {
         let proof: Prover = Prover::create_from_request("1", proof_req).unwrap();
         let retrieved_creds3 = proof.retrieve_credentials(setup.wallet_handle).await.unwrap();
         assert!(retrieved_creds3.contains(r#""zip":"84000""#));
+        }).await;
     }
 
     #[tokio::test]
     async fn test_generate_proof() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         create_and_store_credential(
             setup.wallet_handle,
@@ -221,11 +225,12 @@ mod integration_tests {
             )
             .await;
         assert!(generated_proof.is_ok());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_generate_self_attested_proof() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let indy_proof_req = json!({
            "nonce":"123432421212",
@@ -263,11 +268,12 @@ mod integration_tests {
             )
             .await;
         assert!(generated_proof.is_ok());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_generate_proof_with_predicates() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         create_and_store_credential(
             setup.wallet_handle,
@@ -335,6 +341,7 @@ mod integration_tests {
             )
             .await;
         assert!(generated_proof.is_ok());
+        }).await;
     }
 }
 
@@ -373,7 +380,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_proof_should_be_validated() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -427,11 +434,12 @@ mod tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_proof_with_predicates_should_be_validated() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -486,11 +494,12 @@ mod tests {
             "test_proof_with_predicates_should_be_validated :: verifier received presentation!: {}",
             verifier.get_presentation_attachment().unwrap()
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_it_should_fail_to_select_credentials_for_predicate() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -526,11 +535,12 @@ mod tests {
         .await;
 
         prover_select_credentials_and_fail_to_generate_proof(&mut consumer, &consumer_to_institution, None, None).await;
+        }).await;
     }
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer_and_consumers() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
@@ -624,11 +634,12 @@ mod tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_double_issuance_separate_issuer() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -686,11 +697,12 @@ mod tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_double_issuance_issuer_is_verifier() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
         let (consumer_to_institution, institution_to_consumer) =
@@ -764,11 +776,12 @@ mod tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_real_proof() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -888,11 +901,12 @@ mod tests {
             ProofStateType::ProofValidated
         );
         assert_eq!(presentation_thread_id, verifier.get_thread_id().unwrap());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_two_creds_one_rev_reg() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -981,11 +995,12 @@ mod tests {
             ProofStateType::from(proof_verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1012,11 +1027,12 @@ mod tests {
             "comment",
         )
         .await;
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_failed() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1052,11 +1068,12 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(IssuerState::Failed, issuer.get_state());
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_credential_exchange_via_proposal_with_negotiation() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1114,11 +1131,12 @@ mod tests {
             true,
         )
         .await;
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1158,11 +1176,12 @@ mod tests {
         )
         .await;
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_rejection() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1192,11 +1211,12 @@ mod tests {
         let mut prover = send_proof_proposal(&mut consumer, &consumer_to_institution, &cred_def_id).await;
         reject_proof_proposal(&mut institution, &institution_to_consumer).await;
         receive_proof_proposal_rejection(&mut consumer, &mut prover, &consumer_to_institution).await;
+        }).await;
     }
 
     #[tokio::test]
     pub async fn test_presentation_via_proposal_with_negotiation() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -1238,6 +1258,7 @@ mod tests {
         )
         .await;
         verify_proof(&mut institution, &mut verifier, &institution_to_consumer).await;
+        }).await;
     }
 
     pub struct Pool {
