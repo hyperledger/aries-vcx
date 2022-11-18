@@ -35,15 +35,15 @@ rust-base58 = "0.0.4"
 base64 = "0.10"
 openssl = { version = "0.10.35" }
 num-traits = "0.2.0"
-libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "ca5ec2a10" }
-futures = "0.3.15"
+libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "d5ff658d3" }
+futures = { version = "0.3", default-features = false }
 libloading = "0.5.0"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
 failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
 agency_client = { path = "../agency_client" }
-sqlx = { optional = true, version = "0.5", features = [ "migrate", "mysql", "runtime-async-std-native-tls" ] }
+sqlx = { optional = true, version = "0.5.11", features = [ "migrate", "mysql", "runtime-tokio-rustls" ] }
 derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
 messages = { path  = "../messages" }
@@ -54,4 +54,4 @@ android_logger = "0.5"
 
 [dev-dependencies]
 async-channel = "1.7.1"
-tokio = { version = "1.15", features = [ "rt", "macros" ] }
+tokio = { version = "1.15", features = [ "rt", "macros", "rt-multi-thread" ] }

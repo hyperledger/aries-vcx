@@ -458,25 +458,25 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
 
-    #[tokio::test]
     #[cfg(feature = "general_test")]
+    #[tokio::test]
     async fn test_vcx_create_credentialdef_fails() {
-        let _setup = SetupLibraryWallet::init().await;
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(
-            vcx_credentialdef_create_v2(
-                cb.command_handle,
-                CString::new("Test Source ID").unwrap().into_raw(),
-                CString::new(SCHEMA_ID).unwrap().into_raw(),
-                ptr::null(),
-                CString::new("tag").unwrap().into_raw(),
-                true,
-                Some(cb.get_callback())
-            ),
-            error::SUCCESS.code_num
-        );
-        assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
+        SetupLibraryWallet::run(|_setup| async {
+            let cb = return_types_u32::Return_U32_U32::new().unwrap();
+            assert_eq!(
+                vcx_credentialdef_create_v2(
+                    cb.command_handle,
+                    CString::new("Test Source ID").unwrap().into_raw(),
+                    CString::new(SCHEMA_ID).unwrap().into_raw(),
+                    ptr::null(),
+                    CString::new("tag").unwrap().into_raw(),
+                    true,
+                    Some(cb.get_callback())
+                ),
+                error::SUCCESS.code_num
+            );
+            assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
+        }).await;
     }
 
     #[test]

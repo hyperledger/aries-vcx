@@ -309,7 +309,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_get_schema_attrs_from_ledger() {
-        let setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(get_main_wallet_handle(), get_main_pool_handle().unwrap(), &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS).await;
@@ -322,24 +322,26 @@ pub mod tests {
             &schema_id,
             constants::DEFAULT_SCHEMA_ATTRS,
         );
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_create_schema_with_pool() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let handle = create_schema_real().await;
 
         let _source_id = get_source_id(handle).unwrap();
         let _schema_id = get_schema_id(handle).unwrap();
         let _schema_json = to_string(handle).unwrap();
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "pool_tests")]
     async fn test_create_duplicate_fails() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -357,7 +359,8 @@ pub mod tests {
             .await
             .unwrap_err();
 
-        assert_eq!(err.kind(), VcxErrorKind::DuplicationSchema)
+        assert_eq!(err.kind(), VcxErrorKind::DuplicationSchema);
+        }).await;
     }
 
     #[tokio::test]
@@ -403,7 +406,7 @@ pub mod tests {
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_endorse_schema() {
-        let setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|setup| async move {
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
 
@@ -430,33 +433,36 @@ pub mod tests {
 
         assert_eq!(1, update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle).await.unwrap());
         assert_eq!(1, get_state(schema_handle).unwrap());
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_state_with_ledger() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let handle = create_schema_real().await;
         assert_eq!(1, get_state(handle).unwrap());
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_create_schema_with_pool() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let _schema_handle =
             schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
                 .await
                 .unwrap();
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_serialize_contains_version() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let schema_handle =
@@ -469,12 +475,13 @@ pub mod tests {
         let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
         assert_eq!(j["version"], "1.0");
+        }).await;
     }
 
     #[cfg(feature = "pool_tests")]
     #[tokio::test]
     async fn test_vcx_schema_get_attrs_with_pool() {
-        let _setup = SetupGlobalsWalletPoolAgency::init().await;
+        SetupGlobalsWalletPoolAgency::run(|_setup| async move {
 
         let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
         let schema_handle =
@@ -488,5 +495,6 @@ pub mod tests {
         let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
         let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
         assert_eq!(j["version"], "1.0");
+        }).await;
     }
 }

@@ -872,20 +872,24 @@ mod tests {
     async fn test_vcx_init_called_twice_passes_after_shutdown() {
         let _setup_defaults = SetupDefaults::init();
         for _ in 0..2 {
-            let _setup_wallet = TestSetupCreateWallet::init().await.skip_cleanup();
-            let setup_pool = SetupPoolConfig::init().await;
 
-            let wallet_config = _vcx_create_wallet().unwrap();
-            _vcx_init_threadpool("{}").unwrap();
-            _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
-            _vcx_open_wallet(&wallet_config).unwrap();
+            TestSetupCreateWallet::run(|_| async {
+                let setup_pool = SetupPoolConfig::init().await;
 
-            //Assert config values were set correctly
-            assert_ne!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+                let wallet_config = _vcx_create_wallet().unwrap();
+                _vcx_init_threadpool("{}").unwrap();
+                _vcx_open_pool(&json!(setup_pool.pool_config).to_string()).unwrap();
+                _vcx_open_wallet(&wallet_config).unwrap();
 
-            //Verify shutdown was successful
-            vcx_shutdown(true);
-            assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+                //Assert config values were set correctly
+                assert_ne!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+
+                //Verify shutdown was successful
+                vcx_shutdown(true);
+                assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+
+                return true; // skip_cleanup in TestSetupCreateWallet
+            }).await;
         }
     }
 

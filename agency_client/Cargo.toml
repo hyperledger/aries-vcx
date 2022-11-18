@@ -22,7 +22,7 @@ serde_derive = "1.0.97"
 reqwest = "0.11.10"
 regex = "1.1.0"
 rust-base58 = "0.0.4"
-libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "ca5ec2a10" }
+libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "d5ff658d3" }
 url = "2.3"
 failure = "0.1.6"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
