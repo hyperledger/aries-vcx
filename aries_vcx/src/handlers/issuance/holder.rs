@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use messages::issuance::credential::Credential;
 use messages::revocation_notification::revocation_notification::RevocationNotification;
 use vdrtools_sys::{WalletHandle, PoolHandle};
 
@@ -70,6 +71,22 @@ impl Holder {
     ) -> VcxResult<()> {
         self.holder_sm = self.holder_sm.clone().decline_offer(
             comment.map(String::from),
+            send_message,
+        ).await?;
+        Ok(())
+    }
+
+    pub async fn process_credential(
+        &mut self,
+        wallet_handle: WalletHandle,
+        pool_handle: PoolHandle,
+        credential: Credential,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.holder_sm = self.holder_sm.clone().receive_credential(
+            wallet_handle,
+            pool_handle,
+            credential,
             send_message,
         ).await?;
         Ok(())

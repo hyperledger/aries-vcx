@@ -4,8 +4,10 @@ use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::messages::issuance::credential_ack::CredentialAck;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 use aries_vcx::vdrtools_sys::WalletHandle;
 
@@ -89,6 +91,32 @@ impl ServiceCredentialsIssuer {
         )
     }
 
+    pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_request(request)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
+    }
+
+    pub fn process_credential_ack(&self, thread_id: &str, ack: CredentialAck) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_ack(ack)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
+    }
+
     pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
@@ -122,7 +150,13 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
+    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<CredentialProposal> {
+        let issuer = self.get_issuer(thread_id)?;
+        issuer.get_proposal().map_err(|err| err.into())
+    }
+
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.creds_issuer.has_id(thread_id)
     }
 }
+

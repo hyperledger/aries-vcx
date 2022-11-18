@@ -114,7 +114,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<DidDoc> {
         match self.state {
             InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
@@ -161,9 +161,8 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn remote_did(&self) -> VcxResult<String> {
+    pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .await
             .map(|did_doc: DidDoc| did_doc.id)
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -171,9 +170,8 @@ impl SmConnectionInvitee {
             ))
     }
 
-    pub async fn remote_vk(&self) -> VcxResult<String> {
+    pub fn remote_vk(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .await
             .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
             .ok_or(VcxError::from_msg(
                 VcxErrorKind::NotReady,
@@ -268,7 +266,7 @@ impl SmConnectionInvitee {
     ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = self.their_did_doc().await
+                let ddo = self.their_did_doc()
                     .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(request.to_a2a_message(), self.pairwise_info.pw_vk.clone(), ddo.clone()).await?;

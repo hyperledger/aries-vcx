@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use messages::proof_presentation::presentation_ack::PresentationAck;
 use vdrtools_sys::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
@@ -95,6 +96,12 @@ impl Prover {
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
         self.prover_sm = self.prover_sm.clone().send_presentation(send_message).await?;
+        Ok(())
+    }
+
+    pub fn process_presentation_ack(&mut self, ack: PresentationAck) -> VcxResult<()> {
+        trace!("Prover::process_presentation_ack >>>");
+        self.prover_sm = self.prover_sm.clone().receive_presentation_ack(ack)?;
         Ok(())
     }
 

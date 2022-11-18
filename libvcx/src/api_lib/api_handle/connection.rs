@@ -74,14 +74,14 @@ pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.pairwise_info().pw_vk.clone()))
 }
 
-pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.remote_did().await.map_err(|err| err.into())
+    connection.remote_did().map_err(|err| err.into())
 }
 
-pub async fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.remote_vk().await.map_err(|err| err.into())
+    connection.remote_vk().map_err(|err| err.into())
 }
 
 pub fn get_thread_id(handle: u32) -> VcxResult<String> {

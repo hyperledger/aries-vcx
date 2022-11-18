@@ -256,6 +256,6 @@ impl CloudAgentInfo {
         wallet_handle: WalletHandle,
         message: &DownloadedMessageEncrypted,
     ) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::anon_unpack(wallet_handle, message.payload()?).await
+        Ok(EncryptionEnvelope::anon_unpack(wallet_handle, message.payload()?).await?.0)
     }
 }
