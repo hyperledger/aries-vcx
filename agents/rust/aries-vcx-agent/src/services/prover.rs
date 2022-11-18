@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -113,7 +114,6 @@ impl ServiceProver {
     pub fn is_secondary_proof_requested(&self, thread_id: &str) -> AgentResult<bool> {
         let prover = self.get_prover(thread_id)?;
         let attach = prover.get_proof_request_attachment()?;
-        info!("Proof request attachment: {}", attach);
         let attach: Value = serde_json::from_str(&attach)?;
         Ok(!attach["non_revoked"].is_null())
     }
@@ -143,6 +143,19 @@ impl ServiceProver {
             ProverWrapper::new(prover, &connection_id),
         )?;
         Ok(())
+    }
+
+    pub fn process_presentation_ack(
+        &self,
+        thread_id: &str,
+        ack: PresentationAck,
+    ) -> AgentResult<String> {
+        let ProverWrapper { mut prover, connection_id } = self.provers.get(thread_id)?;
+        prover.process_presentation_ack(ack)?;
+        self.provers.set(
+            &prover.get_thread_id()?,
+            ProverWrapper::new(prover, &connection_id),
+        )
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ProverState> {

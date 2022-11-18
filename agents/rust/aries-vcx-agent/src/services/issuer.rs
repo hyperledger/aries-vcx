@@ -4,6 +4,7 @@ use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::messages::issuance::credential_ack::CredentialAck;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::issuance::credential_request::CredentialRequest;
@@ -96,6 +97,19 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_request(request)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
+    }
+
+    pub fn process_credential_ack(&self, thread_id: &str, ack: CredentialAck) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_ack(ack)?;
         self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
