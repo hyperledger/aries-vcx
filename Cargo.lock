@@ -186,7 +186,6 @@ dependencies = [
  "failure",
  "futures",
  "lazy_static",
- "libc",
  "libloading",
  "log",
  "messages",
