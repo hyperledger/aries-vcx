@@ -30,6 +30,7 @@ typedef unsigned int vcx_credential_handle_t;
 typedef unsigned int vcx_proof_handle_t;
 typedef unsigned int vcx_search_handle_t;
 typedef unsigned int vcx_command_handle_t;
+typedef unsigned int vcx_oob_handle_t;
 typedef unsigned int vcx_bool_t;
 typedef unsigned int vcx_payment_handle_t;
 typedef unsigned int vcx_u32_t;
@@ -164,6 +165,8 @@ vcx_error_t vcx_connection_get_their_pw_did(vcx_command_handle_t command_handle,
 vcx_error_t vcx_connection_messages_download(vcx_command_handle_t command_handle,  vcx_connection_handle_t connection_handle, const char *message_status, const char *uids, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *messages));
 
 vcx_error_t vcx_connection_send_handshake_reuse(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, const char *oob_msg, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
+vcx_error_t vcx_connection_send_ping(vcx_command_handle_t command_handle, vcx_connection_handle_t connection_handle, const char *comment, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
 
 /** Send a message to the specified connection
 ///
@@ -422,6 +425,45 @@ vcx_error_t vcx_v2_messages_download(vcx_command_handle_t command_handle, const 
 
 /** Update Message status */
 vcx_error_t vcx_messages_update_status( vcx_command_handle_t command_handle, const char *message_status, const char *msg_json, void(*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
+  /**
+   * Out of band
+   *
+   **/
+
+vcx_error_t vcx_out_of_band_sender_create(vcx_command_handle_t command_handle, const char *config, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, vcx_oob_handle_t handle));
+
+vcx_error_t vcx_out_of_band_receiver_create(vcx_command_handle_t command_handle, const char *message, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, vcx_oob_handle_t handle));
+
+vcx_error_t vcx_out_of_band_sender_get_thread_id(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *thid));
+
+vcx_error_t vcx_out_of_band_receiver_get_thread_id(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *thid));
+
+vcx_error_t vcx_out_of_band_sender_append_message(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, const char *message, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
+vcx_error_t vcx_out_of_band_sender_append_service(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, const char *service, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
+vcx_error_t vcx_out_of_band_sender_append_service_did(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, const char *did, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err));
+
+vcx_error_t vcx_out_of_band_receiver_extract_message(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *message));
+
+vcx_error_t vcx_out_of_band_to_message(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *message));
+
+vcx_error_t vcx_out_of_band_receiver_connection_exists(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, const char *conn_handles, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, int conn_handle, bool found_one));
+
+vcx_error_t vcx_out_of_band_receiver_build_connection(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *connection));
+
+vcx_error_t vcx_out_of_band_sender_serialize(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *oob_json));
+
+vcx_error_t vcx_out_of_band_receiver_serialize(vcx_command_handle_t command_handle, vcx_oob_handle_t handle, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, const char *oob_json));
+
+vcx_error_t vcx_out_of_band_sender_deserialize(vcx_command_handle_t command_handle, const char *oob_json, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, vcx_oob_handle_t handle));
+
+vcx_error_t vcx_out_of_band_receiver_deserialize(vcx_command_handle_t command_handle, const char *oob_json, void (*cb)(vcx_command_handle_t xhandle, vcx_error_t err, vcx_oob_handle_t handle));
+
+vcx_error_t vcx_out_of_band_sender_release(vcx_command_handle_t command_handle);
+
+vcx_error_t vcx_out_of_band_receiver_release(vcx_command_handle_t command_handle);
 
 /**
  * logging

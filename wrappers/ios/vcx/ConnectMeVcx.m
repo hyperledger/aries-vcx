@@ -112,6 +112,24 @@ void VcxWrapperCommonBoolCallback(vcx_command_handle_t xcommand_handle,
     }
 }
 
+void VcxWrapperCommonNumberBoolCallback(vcx_command_handle_t xcommand_handle,
+                                  vcx_error_t err,
+                                  vcx_u32_t arg1,
+                                  unsigned int arg2) {
+    id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
+    [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
+
+    void (^completion)(NSError *, vcx_u32_t, BOOL) = (void (^)(NSError *, vcx_u32_t arg1, BOOL arg2)) block;
+
+    if (completion) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSError *error = [NSError errorFromVcxError:err];
+            completion(error, arg1, (BOOL) arg2);
+        });
+    }
+}
+
+
 void VcxWrapperCommonStringStringCallback(vcx_command_handle_t xcommand_handle,
                                           vcx_error_t err,
                                           const char *const arg1,
@@ -719,6 +737,24 @@ void VcxWrapperCommonNumberStringCallback(vcx_command_handle_t xcommand_handle,
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char *oobMsg_ctype = [oobMsg cStringUsingEncoding:NSUTF8StringEncoding];
     vcx_error_t ret = vcx_connection_send_handshake_reuse(handle, connectionHandle, oobMsg_ctype, VcxWrapperCommonCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
+}
+
+
+- (void)connectionSendPing:(VcxHandle)connectionHandle
+                              comment:(NSString *)comment
+                          completion:(void (^)(NSError *error))completion {
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *comment_ctype = [comment cStringUsingEncoding:NSUTF8StringEncoding];
+    vcx_error_t ret = vcx_connection_send_ping(handle, connectionHandle, comment_ctype, VcxWrapperCommonCallback);
 
     if( ret != 0 )
     {
@@ -1670,5 +1706,298 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
         timestamp
     );
 }
+
+
+- (void) outOfBandSenderCreate:(NSString *)config
+              completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+
+    ret = vcx_out_of_band_sender_create(handle, config_char, VcxWrapperCommonNumberCallback);
+
+    if ( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
+        });
+    }
+}
+
+- (void) outOfBandReceiverCreate:(NSString *)config
+              completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *config_char = [config cStringUsingEncoding:NSUTF8StringEncoding];
+
+    ret = vcx_out_of_band_receiver_create(handle, config_char, VcxWrapperCommonNumberCallback);
+
+    if ( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
+        });
+    }
+
+}
+
+- (void) outOfBandSenderGetThreadId:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *thid))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_sender_get_thread_id(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandReceiverGetThreadId:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *thid))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_receiver_get_thread_id(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandSenderAppendMessage:(vcx_oob_handle_t)oobHandle
+                              message:(NSString*)message
+              completion:(void (^)(NSError *error))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char * message_char = [message cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_out_of_band_sender_append_message(handle, oobHandle, message_char, VcxWrapperCommonCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
+}
+
+- (void) outOfBandSenderAppendService:(vcx_oob_handle_t)oobHandle
+                              service:(NSString*)service
+              completion:(void (^)(NSError *error))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char * service_char = [service cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_out_of_band_sender_append_service(handle, oobHandle, service_char, VcxWrapperCommonCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
+}
+
+- (void) outOfBandSenderAppendServiceDid:(vcx_oob_handle_t)oobHandle
+                              did:(NSString*)did
+              completion:(void (^)(NSError *error))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char * did_char = [did cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_out_of_band_sender_append_service_did(handle, oobHandle, did_char, VcxWrapperCommonCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret]);
+        });
+    }
+}
+
+- (void) outOfBandReceiverExtractMessage:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *message))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_receiver_extract_message(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandToMessage:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *message))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_to_message(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandReceiverConnectionExists:(vcx_oob_handle_t)oobHandle
+                              conn_handles:(NSString *)conn_handles
+               completion:(void (^)(NSError *error, vcx_connection_handle_t conn_handle, BOOL found_one))completion
+{
+   vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char * connHandles = [conn_handles cStringUsingEncoding:NSUTF8StringEncoding];
+    ret = vcx_out_of_band_receiver_connection_exists(handle, oobHandle, connHandles, VcxWrapperCommonNumberBoolCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0, false);
+        });
+    }
+
+}
+
+- (void) outOfBandReceiverBuildConnection:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *connection))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_receiver_build_connection(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandSenderSeriallize:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *oob_json))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_sender_serialize(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandReceiverSeriallize:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *oob_json))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+
+    ret = vcx_out_of_band_receiver_serialize(handle, oobHandle, VcxWrapperCommonStringCallback);
+
+    if( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], nil);
+        });
+    }
+}
+
+- (void) outOfBandSenderDeseriallize:(NSString *)oob_json
+               completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *oobJson = [oob_json cStringUsingEncoding:NSUTF8StringEncoding];
+
+    ret = vcx_out_of_band_sender_deserialize(handle, oobJson, VcxWrapperCommonNumberCallback);
+
+    if ( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
+        });
+    }
+
+}
+
+- (void) outOfBandReceiverDeseriallize:(NSString *)oob_json
+               completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion
+{
+    vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *oobJson = [oob_json cStringUsingEncoding:NSUTF8StringEncoding];
+
+    ret = vcx_out_of_band_receiver_deserialize(handle, oobJson, VcxWrapperCommonNumberCallback);
+
+    if ( ret != 0 )
+    {
+        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion([NSError errorFromVcxError: ret], 0);
+        });
+    }
+}
+
+- (vcx_error_t) outOfBandSenderRelease:(vcx_oob_handle_t) oobHandle
+{
+    return vcx_out_of_band_sender_release(oobHandle);
+}
+
+- (vcx_error_t) outOfBandReceiverRelease:(vcx_oob_handle_t) oobHandle
+{
+    return vcx_out_of_band_receiver_release(oobHandle);
+}
+
 
 @end

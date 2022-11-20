@@ -346,6 +346,11 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
                     uid_s:(NSString *)uid_s
               completion:(void (^)(NSError *error, NSString* messages))completion;
 
+
+- (void)connectionSendPing:(NSInteger)connectionHandle
+                              comment:(NSString *)comment
+                          completion:(void (^)(NSError *error))completion ;
+
 - (void)updateMessages:(NSString *)messageStatus
             pwdidsJson:(NSString *)pwdidsJson
             completion:(void (^)(NSError *error))completion;
@@ -361,6 +366,60 @@ withConnectionHandle:(vcx_connection_handle_t)connection_handle
                                   withHash:(NSString *)hash
                              withMechanism:(NSString *)mechanism
                              withTimestamp:(long)timestamp;
+
+- (void) outOfBandSenderCreate:(NSString *)config
+              completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion;
+
+- (void) outOfBandReceiverCreate:(NSString *)config
+              completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion;
+
+- (void) outOfBandSenderGetThreadId:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *thid))completion;
+
+- (void) outOfBandReceiverGetThreadId:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *thid))completion;
+
+- (void) outOfBandSenderAppendMessage:(vcx_oob_handle_t)oobHandle
+                              message:(NSString*)message
+              completion:(void (^)(NSError *error))completion;
+
+- (void) outOfBandSenderAppendService:(vcx_oob_handle_t)oobHandle
+                              service:(NSString*)service
+              completion:(void (^)(NSError *error))completion;
+
+- (void) outOfBandSenderAppendServiceDid:(vcx_oob_handle_t)oobHandle
+                              did:(NSString*)did
+              completion:(void (^)(NSError *error))completion;
+
+- (void) outOfBandReceiverExtractMessage:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *message))completion;
+
+- (void) outOfBandToMessage:(vcx_oob_handle_t)oobHandle
+              completion:(void (^)(NSError *error, NSString *message))completion;
+
+- (void) outOfBandReceiverConnectionExists:(vcx_oob_handle_t)oobHandle
+                              conn_handles:(NSString *)conn_handles
+               completion:(void (^)(NSError *error, vcx_connection_handle_t conn_handle, BOOL found_one))completion;
+
+- (void) outOfBandReceiverBuildConnection:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *connection))completion;
+
+- (void) outOfBandSenderSeriallize:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *oob_json))completion;
+
+- (void) outOfBandReceiverSeriallize:(vcx_oob_handle_t)oobHandle
+               completion:(void (^)(NSError *error, NSString *oob_json))completion;
+
+- (void) outOfBandSenderDeseriallize:(NSString *)oob_json
+               completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion;
+
+- (void) outOfBandReceiverDeseriallize:(NSString *)oob_json
+               completion:(void (^)(NSError *error, vcx_oob_handle_t oobHandle))completion;
+
+- (vcx_error_t) outOfBandSenderRelease:(vcx_oob_handle_t) oobHandle;
+
+- (vcx_error_t) outOfBandReceiverRelease:(vcx_oob_handle_t) oobHandle;
+
 @end
 
 #endif /* init_h */
