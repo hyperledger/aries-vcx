@@ -180,7 +180,6 @@ dependencies = [
  "failure",
  "futures",
  "lazy_static",
- "libc",
  "libloading",
  "libvdrtools",
  "log",
