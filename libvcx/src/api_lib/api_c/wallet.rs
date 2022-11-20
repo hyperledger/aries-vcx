@@ -1345,7 +1345,7 @@ pub mod tests {
         close_main_wallet().await.unwrap();
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     #[cfg(feature = "general_test")]
     async fn test_wallet_export_import() {
         let _setup = SetupDefaults::init();
