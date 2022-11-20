@@ -34,8 +34,8 @@ rust-base58 = "0.0.4"
 base64 = "0.10"
 openssl = { version = "0.10.35" }
 num-traits = "0.2.0"
-vdrtoolsrs = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "aa446cb8d" }
-vdrtools-sys = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "aa446cb8d" }
+vdrtoolsrs = { git = "https://gitlab.com/PatrikStas/vdr-tools.git", rev = "ee9dad4d1" }
+vdrtools-sys = { git = "https://gitlab.com/PatrikStas/vdr-tools.git", rev = "ee9dad4d1" }
 futures = "0.3.15"
 libloading = "0.5.0"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
