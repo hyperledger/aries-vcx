@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, IssuerStateType } from './common';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { CredentialDef } from './credential-def';
 import { VCXBase } from './vcx-base';
 

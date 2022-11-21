@@ -1148,7 +1148,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
-    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -1194,7 +1194,7 @@ mod tests {
     async fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
-        let cxn = connection::tests::build_test_connection_inviter_requested().await;
+        let cxn = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(
@@ -1298,7 +1298,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
+        let handle_conn = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
@@ -1319,7 +1319,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
@@ -1342,7 +1342,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let _connection_handle = connection::tests::build_test_connection_inviter_requested().await;
+        let _connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
@@ -1357,7 +1357,7 @@ mod tests {
     async fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
-        let cxn = connection::tests::build_test_connection_inviter_requested().await;
+        let cxn = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);

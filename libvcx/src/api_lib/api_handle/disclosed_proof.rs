@@ -13,7 +13,7 @@ use aries_vcx::{
     messages::proof_presentation::presentation_request::PresentationRequest,
 };
 
-use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
@@ -80,7 +80,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("disclosed_proof::update_state >> found no available transition");
         return Ok(proof.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
@@ -97,13 +97,13 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
             .await?;
     } else {
-        let messages = connection::get_messages(connection_handle).await?;
+        let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
                 .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
                 .await?;
-            connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
     let state: u32 = proof.get_state().into();
@@ -151,7 +151,7 @@ pub fn generate_proof_msg(handle: u32) -> VcxResult<String> {
 
 pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
@@ -166,7 +166,7 @@ pub fn generate_reject_proof_msg(_handle: u32) -> VcxResult<String> {
 
 pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
             send_message,
@@ -199,7 +199,7 @@ pub async fn decline_presentation_request(
     proposal: Option<&str>,
 ) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof
         .decline_presentation_request(
             send_message,
@@ -252,7 +252,7 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<St
             msg_id
         );
 
-        let message = connection::get_message_by_id(connection_handle, msg_id).await?;
+        let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
 
         match message {
             A2AMessage::PresentationRequest(presentation_request) => presentation_request,
@@ -274,7 +274,7 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> VcxResult<Str
         connection_handle
     );
 
-    let presentation_requests: Vec<A2AMessage> = connection::get_messages(connection_handle)
+    let presentation_requests: Vec<A2AMessage> = mediated_connection::get_messages(connection_handle)
         .await?
         .into_iter()
         .filter_map(|(_, message)| match message {
@@ -344,7 +344,7 @@ mod tests {
     async fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -376,7 +376,7 @@ mod tests {
     async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
@@ -397,8 +397,8 @@ mod tests {
         send_proof(handle, connection_handle).await.unwrap();
         assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
 
-        connection::release(connection_handle).unwrap();
-        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
+        mediated_connection::release(connection_handle).unwrap();
+        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
@@ -412,7 +412,7 @@ mod tests {
     async fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -469,7 +469,7 @@ mod tests {
     async fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_invitee_completed();
+        let connection_h = mediated_connection::tests::build_test_connection_invitee_completed();
 
         let request = get_proof_request(connection_h, "123").await.unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
@@ -491,7 +491,7 @@ mod tests {
     async fn test_get_proof_request_attachment() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);

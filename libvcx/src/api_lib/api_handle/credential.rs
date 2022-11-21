@@ -12,7 +12,7 @@ use aries_vcx::{
     messages::issuance::credential_offer::CredentialOffer,
 };
 
-use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
@@ -130,7 +130,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
@@ -143,10 +143,10 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             .step(wallet_handle, pool_handle, message.into(), Some(send_message))
             .await?;
     } else {
-        let messages = connection::get_messages(connection_handle).await?;
+        let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
-            connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
     let state = credential.get_state().into();
@@ -229,8 +229,8 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
         connection_handle
     );
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
-    let my_pw_did = connection::get_pw_did(connection_handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential
         .send_request(get_main_wallet_handle(), get_main_pool_handle()?, my_pw_did, send_message)
         .await?;
@@ -249,7 +249,7 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxRe
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match connection::get_message_by_id(connection_handle, msg_id).await {
+    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id).await {
         Ok(message) => match message {
             A2AMessage::CredentialOffer(_) => Ok(message),
             msg => {
@@ -279,7 +279,7 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
     AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
     AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
 
-    let credential_offers: Vec<A2AMessage> = connection::get_messages(connection_handle)
+    let credential_offers: Vec<A2AMessage> = mediated_connection::get_messages(connection_handle)
         .await?
         .into_iter()
         .filter_map(|(_, a2a_message)| match a2a_message {
@@ -351,7 +351,7 @@ pub fn get_thread_id(handle: u32) -> VcxResult<String> {
 
 pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> VcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.decline_offer(comment, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
@@ -367,7 +367,7 @@ pub mod tests {
         ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
-    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
@@ -439,7 +439,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
-        let handle_conn = connection::tests::build_test_connection_inviter_requested().await;
+        let handle_conn = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         info!("full_credential_test:: going to _get_offer");
         let offer = _get_offer(handle_conn).await;
@@ -507,7 +507,7 @@ pub mod tests {
     async fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_invitee_completed();
+        let connection_h = mediated_connection::tests::build_test_connection_invitee_completed();
 
         let offer = get_credential_offer_messages_with_conn_handle(connection_h)
             .await
