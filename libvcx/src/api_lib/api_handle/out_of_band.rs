@@ -11,7 +11,7 @@ use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
 use aries_vcx::indy::ledger::transactions::into_did_doc;
 use crate::api_lib::global::pool::get_main_pool_handle;
 
-use crate::api_lib::api_handle::connection::CONNECTION_MAP;
+use crate::api_lib::api_handle::mediated_connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
 

@@ -20,8 +20,8 @@ use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service, get_service};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
-use crate::api_lib::api_handle::connection;
-use crate::api_lib::api_handle::connection::{parse_connection_handles, parse_status_codes};
+use crate::api_lib::api_handle::mediated_connection;
+use crate::api_lib::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::api_handle::utils::agency_update_messages;
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -231,7 +231,7 @@ pub extern "C" fn vcx_v2_messages_download(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match connection::download_messages(conn_handles, message_statuses, uids).await {
+            match mediated_connection::download_messages(conn_handles, message_statuses, uids).await {
                 Ok(err) => {
                     match serde_json::to_string(&err) {
                         Ok(err) => {

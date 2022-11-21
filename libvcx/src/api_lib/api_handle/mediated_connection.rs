@@ -469,7 +469,7 @@ pub mod tests {
     };
 
     use crate::api_lib::api_handle::agent::create_public_agent;
-    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::VcxStateType;
 
     use super::*;
@@ -490,31 +490,31 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(0, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(1, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(1, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -523,19 +523,19 @@ pub mod tests {
         let _setup = SetupMocks::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
-        let connection_handle = connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
+        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(2, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(2, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        assert_eq!(0, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -543,12 +543,12 @@ pub mod tests {
     async fn test_connection_delete() {
         let _setup = SetupMocks::init();
         warn!(">> test_connection_delete going to create connection");
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
         warn!(">> test_connection_delete checking is valid handle");
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
 
-        connection::release(connection_handle).unwrap();
-        assert!(!connection::is_valid_handle(connection_handle));
+        mediated_connection::release(connection_handle).unwrap();
+        assert!(!mediated_connection::is_valid_handle(connection_handle));
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {
@@ -745,7 +745,7 @@ pub mod tests {
     async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = connection::tests::build_test_connection_inviter_invited().await;
+        let handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
 
         let err = send_generic_message(handle, "this is the message").await.unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);

@@ -7,7 +7,7 @@ use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
@@ -55,7 +55,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if !proof.progressable_by_message() {
         return Ok(proof.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
@@ -77,7 +77,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
             .await?;
     } else {
-        let messages = connection::get_messages(connection_handle).await?;
+        let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
@@ -88,7 +88,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                     Some(send_message),
                 )
                 .await?;
-            connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
     }
     let state: u32 = proof.get_state().into();
@@ -145,7 +145,7 @@ pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
 pub async fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof
-        .send_presentation_request(connection::send_message_closure(connection_handle).await?)
+        .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
     PROOF_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS.code_num)
@@ -183,7 +183,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
 
-    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 
@@ -309,7 +309,7 @@ pub mod tests {
             VerifierState::PresentationRequestSent as u32
         );
 
-        connection::release(handle_conn).unwrap();
+        mediated_connection::release(handle_conn).unwrap();
         let handle_conn = build_test_connection_inviter_requested().await;
 
         update_state(

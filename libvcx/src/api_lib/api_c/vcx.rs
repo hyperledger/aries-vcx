@@ -311,7 +311,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
     };
 
     crate::api_lib::api_handle::schema::release_all();
-    crate::api_lib::api_handle::connection::release_all();
+    crate::api_lib::api_handle::mediated_connection::release_all();
     crate::api_lib::api_handle::issuer_credential::release_all();
     crate::api_lib::api_handle::credential_def::release_all();
     crate::api_lib::api_handle::proof::release_all();
@@ -799,7 +799,7 @@ mod tests {
 
     use crate::api_lib;
     use crate::api_lib::api_c;
-    use crate::api_lib::api_c::connection::vcx_connection_create;
+    use crate::api_lib::api_c::mediated_connection::vcx_connection_create;
     use crate::api_lib::api_c::vcx::test_utils::{
         _test_add_and_get_wallet_record,
         _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_threadpool,
@@ -808,7 +808,7 @@ mod tests {
         _vcx_open_wallet,
     };
     use crate::api_lib::api_handle::{
-        connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema,
+        mediated_connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema,
     };
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -1011,7 +1011,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
-        let connection = connection::tests::build_test_connection_inviter_invited().await;
+        let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create(
             "SID".to_string(),
             "4fUDR9R7fjwELRvH9JT6HH".to_string(),
@@ -1049,7 +1049,7 @@ mod tests {
 
         vcx_shutdown(true);
         assert_eq!(
-            connection::release(connection).unwrap_err().kind(),
+            mediated_connection::release(connection).unwrap_err().kind(),
             VcxErrorKind::InvalidConnectionHandle
         );
         assert_eq!(
