@@ -1,4 +1,4 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::proofs::verifier::verifier_internal::{

@@ -1,6 +1,6 @@
 use std::thread;
 use std::time::Duration;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::indy::primitives::credential_definition::CredentialDefConfigBuilder;
 use crate::indy::primitives::revocation_registry::RevocationRegistry;

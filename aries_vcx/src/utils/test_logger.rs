@@ -4,7 +4,6 @@ extern crate android_logger;
 use self::android_logger::Filter;
 
 extern crate env_logger;
-extern crate vdrtools_sys;
 extern crate log;
 
 use std::env;

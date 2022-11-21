@@ -1,7 +1,5 @@
 #![crate_name = "agency_client"]
 
-extern crate vdrtoolsrs as vdrtools;
-
 #[macro_use]
 extern crate lazy_static;
 
@@ -14,17 +12,18 @@ extern crate serde_derive;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use self::error::prelude::*;
-use self::utils::validation;
+pub mod error;
+use error::prelude::*;
 
-pub mod utils;
+mod utils;
+use utils::validation;
 
 #[macro_use]
 pub mod agency_client;
 
 pub mod api;
 pub mod configuration;
-pub mod error;
+
 pub mod httpclient;
 pub mod messages;
 pub mod testing;

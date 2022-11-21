@@ -10,6 +10,8 @@ use messages::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
+use vdrtools::types;
+
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorExt, VcxErrorKind, VcxResult, VcxResultExt};
 }
@@ -410,6 +412,12 @@ impl From<MessagesErrorKind> for VcxErrorKind {
     }
 }
 
+impl From<types::errors::IndyErrorKind> for VcxErrorKind {
+    fn from(_other: types::errors::IndyErrorKind) -> Self {
+        todo!()
+    }
+}
+
 impl<T> From<sync::PoisonError<T>> for VcxError {
     fn from(_: sync::PoisonError<T>) -> Self {
         VcxError {
@@ -672,6 +680,24 @@ impl From<u32> for VcxErrorKind {
             _ if { error::CREATE_AGENT.code_num == code } => VcxErrorKind::CreateAgent,
             _ if { error::REV_DELTA_FAILED_TO_CLEAR.code_num == code } => VcxErrorKind::RevDeltaFailedToClear,
             _ => VcxErrorKind::UnknownError,
+        }
+    }
+}
+
+impl From<serde_json::Error> for VcxError {
+    fn from(_err: serde_json::Error) -> Self {
+        VcxErrorKind::InvalidJson.into()
+    }
+}
+
+impl From<types::errors::IndyError> for VcxError {
+    fn from(indy: types::errors::IndyError) -> Self {
+        use types::errors::IndyErrorKind;
+
+        match indy.kind() {
+            IndyErrorKind::InvalidState     => VcxErrorKind::InvalidState.into(),
+            IndyErrorKind::InvalidStructure => VcxErrorKind::AlreadyInitialized.into(),
+            _ => todo!(),
         }
     }
 }

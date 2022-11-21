@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use messages::status::Status;
 use messages::proof_presentation::presentation::Presentation;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 

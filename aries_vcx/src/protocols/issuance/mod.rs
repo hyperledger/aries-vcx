@@ -1,4 +1,4 @@
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use crate::global::settings;

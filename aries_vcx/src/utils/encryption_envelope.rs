@@ -1,5 +1,5 @@
-use vdrtools::future::TryFutureExt;
-use vdrtools_sys::WalletHandle;
+use futures::TryFutureExt;
+use vdrtools::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 

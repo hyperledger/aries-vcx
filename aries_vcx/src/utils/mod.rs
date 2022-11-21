@@ -1,4 +1,4 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 use std::env;
 use std::path::PathBuf;
 

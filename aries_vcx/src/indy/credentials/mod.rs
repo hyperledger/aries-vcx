@@ -5,7 +5,7 @@ pub mod issuer;
 use std::collections::HashMap;
 
 use time::get_time;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 

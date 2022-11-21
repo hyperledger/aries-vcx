@@ -3,8 +3,6 @@ extern crate log;
 #[macro_use]
 extern crate serde_json;
 
-extern crate vdrtoolsrs as vdrtools;
-
 pub mod utils;
 
 #[cfg(test)]
@@ -20,7 +18,7 @@ mod integration_tests {
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
-    use vdrtools::ledger::append_request_endorser;
+    use aries_vcx::indy::ledger::transactions::append_request_endorser;
     use std::thread;
     use std::time::Duration;
 

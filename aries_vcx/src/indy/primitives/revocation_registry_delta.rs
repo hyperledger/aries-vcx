@@ -1,4 +1,4 @@
-use vdrtools_sys::PoolHandle;
+use vdrtools::PoolHandle;
 
 use crate::{error::prelude::*, indy::ledger::transactions::get_rev_reg_delta_json};
 

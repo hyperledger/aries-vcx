@@ -91,6 +91,7 @@ dependencies = [
  "env_logger",
  "failure",
  "lazy_static",
+ "libvdrtools",
  "log",
  "regex",
  "reqwest",
@@ -101,7 +102,6 @@ dependencies = [
  "tokio",
  "url",
  "uuid 0.8.2",
- "vdrtoolsrs",
 ]
 
 [[package]]
@@ -168,9 +168,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.65"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602"
+checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
 
 [[package]]
 name = "aries-vcx"
@@ -188,6 +188,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "libloading",
+ "libvdrtools",
  "log",
  "messages",
  "num-traits",
@@ -204,8 +205,6 @@ dependencies = [
  "time",
  "tokio",
  "uuid 0.8.2",
- "vdrtools-sys",
- "vdrtoolsrs",
  "zmq",
 ]
 
@@ -1016,17 +1015,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derivative"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "derive_builder"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1734,7 +1722,7 @@ dependencies = [
 [[package]]
 name = "indy-api-types"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=ca5ec2a10#ca5ec2a10f0ea2b23da24b3f49e9a023b9d1c7ea"
 dependencies = [
  "aes 0.7.5",
  "anyhow",
@@ -1759,7 +1747,7 @@ dependencies = [
 [[package]]
 name = "indy-utils"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=ca5ec2a10#ca5ec2a10f0ea2b23da24b3f49e9a023b9d1c7ea"
 dependencies = [
  "base64 0.10.1",
  "dirs",
@@ -1779,7 +1767,7 @@ dependencies = [
 [[package]]
 name = "indy-wallet"
 version = "0.1.0"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=ca5ec2a10#ca5ec2a10f0ea2b23da24b3f49e9a023b9d1c7ea"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1958,20 +1946,17 @@ dependencies = [
 [[package]]
 name = "libvdrtools"
 version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
+source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=ca5ec2a10#ca5ec2a10f0ea2b23da24b3f49e9a023b9d1c7ea"
 dependencies = [
  "android_logger",
  "async-std",
  "async-trait",
- "backtrace",
  "bip32",
  "bip39",
  "bs58",
  "byteorder",
  "cfg-if 1.0.0",
  "convert_case",
- "derivative",
- "env_logger",
  "etcommon-rlp",
  "failure",
  "futures",
@@ -1987,7 +1972,6 @@ dependencies = [
  "log-panics",
  "num-derive",
  "num-traits",
- "num_cpus",
  "pbkdf2 0.9.0",
  "rand 0.8.5",
  "regex",
@@ -2093,6 +2077,7 @@ dependencies = [
  "env_logger",
  "failure",
  "lazy_static",
+ "libvdrtools",
  "log",
  "num-traits",
  "regex",
@@ -2106,7 +2091,6 @@ dependencies = [
  "tokio",
  "url",
  "uuid 0.8.2",
- "vdrtoolsrs",
 ]
 
 [[package]]
@@ -3857,37 +3841,6 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
-
-[[package]]
-name = "vdrtools-sys"
-version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
-dependencies = [
- "libc",
- "libvdrtools",
- "serde",
- "serde_derive",
-]
-
-[[package]]
-name = "vdrtoolsrs"
-version = "0.8.6"
-source = "git+https://gitlab.com/left-arm/vdr-tools.git?rev=aa446cb8d#aa446cb8de5014ce749627ba5b1ae3a8dacb149e"
-dependencies = [
- "async-std",
- "async-trait",
- "failure",
- "futures",
- "lazy_static",
- "libc",
- "log",
- "num-derive",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
- "vdrtools-sys",
-]
 
 [[package]]
 name = "version_check"

@@ -1,8 +1,10 @@
-use chrono::{DateTime, Duration, Utc};
 use std::fs;
 use std::sync::Once;
+use std::future::Future;
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use chrono::{DateTime, Duration, Utc};
+
+use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
@@ -75,6 +77,13 @@ pub struct SetupPool {
     pub pool_handle: PoolHandle
 }
 
+fn do_async(f: impl Future<Output=()>) {
+    tokio::task::block_in_place(move || {
+        tokio::runtime::Handle::current()
+            .block_on(f);
+    });
+}
+
 fn reset_global_state() {
     warn!("reset_global_state >>");
     AgencyMockDecrypted::clear_mocks();
@@ -130,15 +139,18 @@ impl Drop for SetupMocks {
 impl SetupLibraryWallet {
     pub async fn init() -> SetupLibraryWallet {
         init_test_logging();
+
         debug!("SetupLibraryWallet::init >>");
+
         set_test_configs();
+
         let wallet_name: String = format!("Test_SetupLibraryWallet_{}", uuid::Uuid::new_v4().to_string());
         let wallet_key: String = settings::DEFAULT_WALLET_KEY.into();
         let wallet_kdf: String = settings::WALLET_KDF_RAW.into();
         let wallet_config = WalletConfig {
-            wallet_name: wallet_name.clone(),
-            wallet_key: wallet_key.clone(),
-            wallet_key_derivation: wallet_kdf.to_string(),
+            wallet_name,
+            wallet_key,
+            wallet_key_derivation: wallet_kdf,
             wallet_type: None,
             storage_config: None,
             storage_credentials: None,
@@ -156,9 +168,17 @@ impl SetupLibraryWallet {
 
 impl Drop for SetupLibraryWallet {
     fn drop(&mut self) {
-        let _res = futures::executor::block_on(close_wallet(self.wallet_handle)).unwrap();
-        futures::executor::block_on(delete_wallet(&self.wallet_config)).unwrap();
-        reset_global_state();
+        do_async(async {
+            close_wallet(self.wallet_handle)
+                .await
+                .unwrap();
+
+            delete_wallet(&self.wallet_config)
+                .await
+                .unwrap();
+
+            reset_global_state();
+        })
     }
 }
 
@@ -195,8 +215,11 @@ impl TestSetupCreateWallet {
 impl Drop for TestSetupCreateWallet {
     fn drop(&mut self) {
         if self.skip_cleanup == false {
-            futures::executor::block_on(delete_wallet(&self.wallet_config))
-                .unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
+            do_async(async {
+                delete_wallet(&self.wallet_config)
+                    .await
+                    .unwrap_or_else(|_e| error!("Failed to delete wallet while dropping SetupWallet test config."));
+            })
         }
         reset_global_state();
     }
@@ -211,6 +234,7 @@ impl SetupPoolConfig {
             .to_str()
             .unwrap()
             .to_string();
+
         let pool_config = PoolConfig {
             genesis_path,
             pool_name: None,
@@ -268,8 +292,11 @@ impl SetupWalletPoolAgency {
 
 impl Drop for SetupWalletPoolAgency {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool(self.pool_handle));
-        reset_global_state();
+        do_async(async {
+            delete_test_pool(self.pool_handle)
+                .await;
+            reset_global_state();
+        })
     }
 }
 
@@ -296,8 +323,11 @@ impl SetupWalletPool {
 
 impl Drop for SetupWalletPool {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool(self.pool_handle));
-        reset_global_state();
+        do_async(async {
+            delete_test_pool(self.pool_handle)
+                .await;
+            reset_global_state();
+        });
     }
 }
 
@@ -332,6 +362,7 @@ impl SetupPool {
         )
         .unwrap();
         let pool_handle = open_test_pool().await;
+
         debug!("SetupPool init >> completed");
         SetupPool {
             pool_handle
@@ -341,8 +372,11 @@ impl SetupPool {
 
 impl Drop for SetupPool {
     fn drop(&mut self) {
-        futures::executor::block_on(delete_test_pool(self.pool_handle));
-        reset_global_state();
+        do_async(async {
+            delete_test_pool(self.pool_handle)
+                .await;
+            reset_global_state();
+        });
     }
 }
 

@@ -374,11 +374,11 @@ pub mod unit_tests {
     use messages::discovery::disclose::test_utils::_disclose;
 
     use messages::trust_ping::ping::unit_tests::_ping;
-    use vdrtools_sys::WalletHandle;
 
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
     use crate::indy::signing::sign_connection_response;
+    use vdrtools::WalletHandle;
 
     use super::*;
 
@@ -387,7 +387,7 @@ pub mod unit_tests {
     }
 
     pub mod invitee {
-        use vdrtools_sys::WalletHandle;
+        use vdrtools::WalletHandle;
 
         use messages::did_doc::test_utils::{_service_endpoint, _did_doc_inlined_recipient_keys};
         use messages::connection::response::{Response, SignedResponse};

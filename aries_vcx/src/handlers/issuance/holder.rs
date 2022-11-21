@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use messages::issuance::credential::Credential;
 use messages::revocation_notification::revocation_notification::RevocationNotification;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -245,7 +245,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use vdrtools_sys::PoolHandle;
+    use vdrtools::PoolHandle;
 
     use messages::issuance::credential::test_utils::_credential;
     use messages::issuance::credential_offer::test_utils::_credential_offer;

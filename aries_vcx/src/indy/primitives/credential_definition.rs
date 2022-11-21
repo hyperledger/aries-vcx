@@ -1,4 +1,6 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{Locator, DidValue};
+
+use vdrtools::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
@@ -208,7 +210,7 @@ impl CredentialDef {
 
     pub fn get_data_json(&self) -> VcxResult<String> {
         serde_json::to_string(&self)
-            .map_err(|_| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
+            .map_err(|_err| VcxError::from_msg(VcxErrorKind::SerializationError, "Failed to serialize credential definition"))
     }
 
     pub fn get_source_id(&self) -> &String {
@@ -262,16 +264,19 @@ pub async fn libindy_create_and_store_credential_def(
     sig_type: Option<&str>,
     config_json: &str,
 ) -> VcxResult<(String, String)> {
-    vdrtools::anoncreds::issuer_create_and_store_credential_def(
-        wallet_handle,
-        issuer_did,
-        schema_json,
-        tag,
-        sig_type,
-        config_json,
-    )
-        .await
-        .map_err(VcxError::from)
+
+    let res = Locator::instance()
+        .issuer_controller
+        .create_and_store_credential_definition(
+            wallet_handle,
+            DidValue(issuer_did.into()),
+            serde_json::from_str(schema_json)?,
+            tag.into(),
+            sig_type.map(|s| s.into()),
+            serde_json::from_str(config_json)?,
+        ).await?;
+
+    Ok(res)
 }
 
 pub async fn generate_cred_def(
@@ -296,7 +301,14 @@ pub async fn generate_cred_def(
 
     let config_json = json!({"support_revocation": support_revocation.unwrap_or(false)}).to_string();
 
-    libindy_create_and_store_credential_def(wallet_handle, issuer_did, schema_json, tag, sig_type, &config_json).await
+    libindy_create_and_store_credential_def(
+        wallet_handle,
+        issuer_did,
+        schema_json,
+        tag,
+        sig_type,
+        &config_json,
+    ).await
 }
 
 

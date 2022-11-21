@@ -184,6 +184,7 @@ impl A2AMessageKinds {
     }
 }
 
+#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
     use crate::messages::a2a_message::{A2AMessageKinds, Client2AgencyMessage};
@@ -192,7 +193,6 @@ mod test {
     use serde_json::json;
 
     #[test]
-    #[cfg(feature = "general_test")]
     fn test_serialize_deserialize_agency_message() {
         let _setup = SetupMocks::init();
         let msg = Client2AgencyMessage::GetMessages(GetMessages::build(

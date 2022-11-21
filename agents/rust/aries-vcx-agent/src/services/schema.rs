@@ -4,7 +4,7 @@ use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::ledger::transactions::get_schema_json;
 use aries_vcx::indy::primitives::credential_schema::Schema;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 pub struct ServiceSchemas {
     wallet_handle: WalletHandle,
