@@ -1,7 +1,7 @@
 import '../module-resolver-helper';
 
 import { initVcxTestMode } from 'helpers/utils'
-import { GoalCode, OutOfBandSender, OutOfBandReceiver } from 'src'
+import { GoalCode, OutOfBandSender, OutOfBandReceiver, HandshakeProtocol } from 'src'
 import { assert } from 'chai';
 
 const credentialOffer = {
@@ -27,12 +27,12 @@ const credentialOffer = {
   ]
 }
 
-describe('Connection:', () => {
+describe('Out of Band:', () => {
   before(() => initVcxTestMode())
 
   describe('create:', () => {
     it('success', async () => {
-      const oobSender = await OutOfBandSender.create({source_id: "abcd", label: "foo", goalCode: GoalCode.P2PMessaging, goal: "bar"})
+      const oobSender = await OutOfBandSender.create({source_id: "abcd", label: "foo", goalCode: GoalCode.P2PMessaging, goal: "bar", handshake_protocols: [HandshakeProtocol.ConnectionV1]})
       await oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
       const service = {
         "id": "did:example:123456789abcdefghi;indy",
@@ -48,6 +48,7 @@ describe('Connection:', () => {
       assert.equal(msg["@type"], "https://didcomm.org/out-of-band/1.1/invitation")
       assert.equal(msg["goal"], "bar")
       assert.equal(msg["label"], "foo")
+      assert.equal(msg["handshake_protocols"][0], "https://didcomm.org/connections/1.0")
     })
   })
 
