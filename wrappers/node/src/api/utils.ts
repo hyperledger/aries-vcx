@@ -2,7 +2,7 @@ import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
-import { IConnectionDownloadAllMessages } from './connection'
+import { IConnectionDownloadAllMessages } from './mediated-connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import * as ref from 'ref-napi';
 

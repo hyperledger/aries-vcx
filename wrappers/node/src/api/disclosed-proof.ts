@@ -4,7 +4,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, ProverStateType } from './common';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
 /**
