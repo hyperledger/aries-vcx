@@ -1,8 +1,8 @@
+import * as ffi from 'node-napi-rs';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { VCXBase } from './vcx-base';
 import { ISerializedData } from './common';
-import * as ffi from 'node-napi-rs';
 
 export interface IOOBSerializedData {
   source_id: string;
