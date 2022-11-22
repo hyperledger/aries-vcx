@@ -1,3 +1,5 @@
+extern crate napi_build;
+
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -33,4 +35,5 @@ fn main() {
             }
         }
     }
+    napi_build::setup();
 }

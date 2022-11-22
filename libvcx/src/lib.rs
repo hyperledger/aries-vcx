@@ -21,5 +21,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate cfg_if;
 
+extern crate napi;
+
 #[macro_use]
 pub mod api_lib;

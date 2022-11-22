@@ -333,6 +333,22 @@ impl From<SenderConfigBuilderError> for VcxError {
     }
 }
 
+impl From<VcxError> for napi::Error {
+    fn from(err: VcxError) -> Self {
+        let reason = err.to_string();
+        error!("{}", reason);
+        napi::Error::new(napi::Status::Unknown, reason)
+    }
+}
+
+impl From<napi::Error> for VcxError {
+    fn from(err: napi::Error) -> Self {
+        let reason = err.to_string();
+        error!("{}", reason);
+        VcxError::from_msg(VcxErrorKind::UnknownError, reason)
+    }
+}
+
 impl From<AgencyClientErrorKind> for VcxErrorKind {
     fn from(agency_err: AgencyClientErrorKind) -> VcxErrorKind {
         match agency_err {

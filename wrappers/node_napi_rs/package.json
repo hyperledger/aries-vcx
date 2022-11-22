@@ -1,0 +1,18 @@
+{
+  "package": "node-napi-rs",
+  "devDependencies": {
+    "typescript": "^4.8.4"
+  },
+  "napi": {
+    "name": "index"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.13.1",
+    "typescript": "^4.8.4"
+  },
+  "scripts": {
+    "build:ts": "tsc -p ./tsconfig.json",
+    "build:napi": "napi build --cargo-cwd ../../libvcx/ --release --cargo-name vcx .",
+    "build:napi:debug": "napi build --cargo-cwd ../../libvcx/ --cargo-name vcx ."
+  }
+}

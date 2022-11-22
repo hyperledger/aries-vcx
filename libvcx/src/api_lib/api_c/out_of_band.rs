@@ -30,7 +30,7 @@ pub extern "C" fn vcx_out_of_band_sender_create(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match out_of_band::create_out_of_band(&config).await {
+        match out_of_band::create_out_of_band(config).await {
             Ok(handle) => {
                 trace!(
                     "vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
@@ -41,6 +41,7 @@ pub extern "C" fn vcx_out_of_band_sender_create(
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
@@ -73,7 +74,7 @@ pub extern "C" fn vcx_out_of_band_receiver_create(
     );
 
     execute(move || {
-        match out_of_band::create_out_of_band_msg_from_msg(&message) {
+        match out_of_band::create_out_of_band_msg_from_msg(message) {
             Ok(handle) => {
                 trace!(
                     "vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {})",
@@ -84,6 +85,7 @@ pub extern "C" fn vcx_out_of_band_receiver_create(
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {}):",
@@ -127,6 +129,7 @@ pub extern "C" fn vcx_out_of_band_sender_get_thread_id(
                 cb(command_handle, error::SUCCESS.code_num, thid.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
@@ -170,6 +173,7 @@ pub extern "C" fn vcx_out_of_band_receiver_get_thread_id(
                 cb(command_handle, error::SUCCESS.code_num, thid.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
@@ -204,7 +208,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_message(
     );
 
     execute(move || {
-        match out_of_band::append_message(handle, &message) {
+        match out_of_band::append_message(handle, message) {
             Ok(()) => {
                 trace!(
                     "vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
@@ -214,6 +218,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_message(
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
@@ -248,7 +253,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service(
     );
 
     execute(move || {
-        match out_of_band::append_service(handle, &service) {
+        match out_of_band::append_service(handle, service) {
             Ok(()) => {
                 trace!(
                     "vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
@@ -258,6 +263,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service(
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
@@ -292,7 +298,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service_did(
     );
 
     execute(move || {
-        match out_of_band::append_service_did(handle, &did) {
+        match out_of_band::append_service_did(handle, did) {
             Ok(()) => {
                 trace!(
                     "vcx_out_of_band_sender_append_service_did_cb(command_handle: {}, rc: {})",
@@ -302,6 +308,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service_did(
                 cb(command_handle, error::SUCCESS.code_num);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_append_service_did_cb(command_handle: {}, rc: {})",
@@ -345,6 +352,7 @@ pub extern "C" fn vcx_out_of_band_receiver_extract_message(
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
@@ -388,6 +396,7 @@ pub extern "C" fn vcx_out_of_band_to_message(
                 cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
@@ -434,12 +443,14 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match out_of_band::connection_exists(handle, &conn_handles).await {
-            Ok((conn_handle, found_one)) => {
+        match out_of_band::connection_exists(handle, conn_handles).await {
+            Ok(conn_handle) => {
+                let found_one = conn_handle == 0;
                 trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})", command_handle, error::SUCCESS.message, conn_handle, found_one);
                 cb(command_handle, error::SUCCESS.code_num, conn_handle, found_one);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})", command_handle, err, 0, false);
                 cb(command_handle, err.into(), 0, false);
@@ -480,6 +491,7 @@ pub extern "C" fn vcx_out_of_band_receiver_build_connection(
                 cb(command_handle, error::SUCCESS.code_num, connection.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
@@ -523,6 +535,7 @@ pub extern "C" fn vcx_out_of_band_sender_serialize(
                 cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
@@ -566,6 +579,7 @@ pub extern "C" fn vcx_out_of_band_receiver_serialize(
                 cb(command_handle, error::SUCCESS.code_num, oob_json.as_ptr());
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
@@ -598,7 +612,7 @@ pub extern "C" fn vcx_out_of_band_sender_deserialize(
     );
 
     execute(move || {
-        match out_of_band::from_string_sender(&oob_json) {
+        match out_of_band::from_string_sender(oob_json) {
             Ok(handle) => {
                 trace!(
                     "vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
@@ -609,6 +623,7 @@ pub extern "C" fn vcx_out_of_band_sender_deserialize(
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
@@ -641,7 +656,7 @@ pub extern "C" fn vcx_out_of_band_receiver_deserialize(
     );
 
     execute(move || {
-        match out_of_band::from_string_receiver(&oob_json) {
+        match out_of_band::from_string_receiver(oob_json) {
             Ok(handle) => {
                 trace!(
                     "vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
@@ -652,6 +667,7 @@ pub extern "C" fn vcx_out_of_band_receiver_deserialize(
                 cb(command_handle, error::SUCCESS.code_num, handle);
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
@@ -680,6 +696,7 @@ pub extern "C" fn vcx_out_of_band_sender_release(handle: u32) -> u32 {
             error::SUCCESS.code_num
         }
         Err(err) => {
+            let err: VcxError = err.into();
             error!("vcx_out_of_band_sender_release(handle: {}), rc: {})", handle, err);
             err.into()
         }
@@ -700,6 +717,7 @@ pub extern "C" fn vcx_out_of_band_receiver_release(handle: u32) -> u32 {
             error::SUCCESS.code_num
         }
         Err(err) => {
+            let err: VcxError = err.into();
             error!("vcx_out_of_band_receiver_release(handle: {}), rc: {})", handle, err);
             err.into()
         }
