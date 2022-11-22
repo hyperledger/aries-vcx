@@ -3,8 +3,6 @@ extern crate log;
 #[macro_use]
 extern crate serde_json;
 
-extern crate vdrtoolsrs as vdrtools;
-
 pub mod utils;
 
 #[cfg(test)]
@@ -20,19 +18,20 @@ mod integration_tests {
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::SetupWalletPool;
-    use vdrtools::ledger::append_request_endorser;
+    use aries_vcx::indy::ledger::transactions::append_request_endorser;
     use std::thread;
     use std::time::Duration;
 
     #[tokio::test]
     async fn test_open_close_pool() {
-        let setup = SetupWalletPool::init().await;
-        assert!(setup.pool_handle > 0);
+        SetupWalletPool::run(|setup| async move {
+            assert!(setup.pool_handle > 0);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_credential_def() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
         let (_, _, cred_def_id, cred_def_json, _) =
             create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
@@ -42,11 +41,12 @@ mod integration_tests {
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_rotate_verkey() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
         let (did, verkey) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, None).await;
         rotate_verkey(setup.wallet_handle, setup.pool_handle, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));
@@ -54,11 +54,12 @@ mod integration_tests {
         let ledger_verkey = get_verkey_from_ledger(setup.pool_handle, &did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_endorse_transaction() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (author_did, _) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, None).await;
         let (endorser_did, _) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, Some("ENDORSER")).await;
@@ -70,11 +71,12 @@ mod integration_tests {
             .unwrap();
 
         endorse_transaction(setup.wallet_handle, setup.pool_handle, &endorser_did, &schema_request).await.unwrap();
+        }).await;
     }
 
     #[tokio::test]
     async fn test_add_get_service() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
@@ -83,5 +85,6 @@ mod integration_tests {
         let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
 
         assert_eq!(expect_service, service)
+        }).await;
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use messages::ack::please_ack::AckOn;
 use messages::issuance::credential_ack::CredentialAck;
 use messages::issuance::credential_request::CredentialRequest;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 

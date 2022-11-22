@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use messages::ack::Ack;
 use messages::problem_report::ProblemReport;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::credentials::encoding::encode_attributes;

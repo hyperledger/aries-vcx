@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use libc::c_char;
 
-use aries_vcx::vdrtools_sys::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::utils::callback::{build_buf, build_string, get_cb};
 

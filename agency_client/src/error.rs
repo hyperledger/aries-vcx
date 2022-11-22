@@ -1,7 +1,7 @@
 use std::fmt;
 
 use failure::{Backtrace, Context, Fail};
-use vdrtools::IndyError;
+use vdrtools::types::errors::IndyError;
 
 use crate::utils::error_utils::kind_to_error_message;
 
@@ -159,22 +159,16 @@ impl From<Context<AgencyClientErrorKind>> for AgencyClientError {
     }
 }
 
+// TODO: provide REAL implementation
 impl From<IndyError> for AgencyClientError {
-    fn from(error: IndyError) -> Self {
-        match error.error_code as u32 {
-            100..=111 => AgencyClientError::from_msg(AgencyClientErrorKind::InvalidLibindyParam, error.message),
-            113 => AgencyClientError::from_msg(AgencyClientErrorKind::LibindyInvalidStructure, error.message),
-            114 => AgencyClientError::from_msg(AgencyClientErrorKind::IOError, error.message),
-            200 => AgencyClientError::from_msg(AgencyClientErrorKind::InvalidWalletHandle, error.message),
-            203 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationWallet, error.message),
-            204 => AgencyClientError::from_msg(AgencyClientErrorKind::WalletNotFound, error.message),
-            206 => AgencyClientError::from_msg(AgencyClientErrorKind::WalletAlreadyOpen, error.message),
-            212 => AgencyClientError::from_msg(AgencyClientErrorKind::WalletRecordNotFound, error.message),
-            213 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationWalletRecord, error.message),
-            404 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationMasterSecret, error.message),
-            600 => AgencyClientError::from_msg(AgencyClientErrorKind::DuplicationDid, error.message),
-            error_code => AgencyClientError::from_msg(AgencyClientErrorKind::LibndyError(error_code), error.message),
-        }
+    fn from(_indy: IndyError) -> Self {
+        AgencyClientErrorKind::InvalidState.into()
+    }
+}
+
+impl From<serde_json::Error> for AgencyClientError {
+    fn from(_err: serde_json::Error) -> Self {
+        AgencyClientErrorKind::InvalidJson.into()
     }
 }
 

@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 pub struct ServiceRevocationRegistries {
     wallet_handle: WalletHandle,

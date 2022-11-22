@@ -1,4 +1,4 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use crate::error::VcxResult;
 use crate::indy::keys::create_and_store_my_did;

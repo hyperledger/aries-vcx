@@ -1,4 +1,6 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
+
+use vdrtools::{Locator, DidValue, AttributeNames};
 use crate::error::{VcxError, VcxResult, VcxErrorKind};
 use crate::global::settings;
 use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, get_schema_json, sign_and_submit_to_ledger, set_endorser};
@@ -156,7 +158,16 @@ pub async fn libindy_issuer_create_schema(
         attrs
     );
 
-    vdrtools::anoncreds::issuer_create_schema(issuer_did, name, version, attrs)
-        .await
-        .map_err(VcxError::from)
+    let attrs = serde_json::from_str::<AttributeNames>(attrs)?;
+
+    let res = Locator::instance()
+        .issuer_controller
+        .create_schema(
+            DidValue(issuer_did.into()),
+            name.into(),
+            version.into(),
+            attrs,
+        )?;
+
+    Ok(res)
 }

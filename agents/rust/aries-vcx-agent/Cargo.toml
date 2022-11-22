@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 failure = "0.1.8"
-futures = "0.3.24"
 serde = "1.0.145"
 aries-vcx = { path = "../../../aries_vcx" }
 derive_builder = "0.11.2"

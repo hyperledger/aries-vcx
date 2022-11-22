@@ -1,4 +1,4 @@
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::proofs::verifier::verifier_internal::{
@@ -66,7 +66,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_proof_self_attested_proof_validation() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -121,11 +121,12 @@ pub mod unit_tests {
                 .unwrap(),
             true
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_proof_restrictions() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -199,11 +200,12 @@ pub mod unit_tests {
                 .unwrap(),
             true
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_proof_validate_attribute() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -295,5 +297,6 @@ pub mod unit_tests {
                 VcxErrorKind::InvalidProof
             );
         }
+        }).await;
     }
 }

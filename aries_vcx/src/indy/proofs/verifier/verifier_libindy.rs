@@ -1,5 +1,5 @@
-use vdrtools::anoncreds;
-use crate::error::{VcxError, VcxResult};
+use vdrtools::Locator;
+use crate::error::VcxResult;
 
 pub async fn libindy_verifier_verify_proof(
     proof_req_json: &str,
@@ -9,16 +9,19 @@ pub async fn libindy_verifier_verify_proof(
     rev_reg_defs_json: &str,
     rev_regs_json: &str,
 ) -> VcxResult<bool> {
-    anoncreds::verifier_verify_proof(
-        proof_req_json,
-        proof_json,
-        schemas_json,
-        credential_defs_json,
-        rev_reg_defs_json,
-        rev_regs_json,
-    )
-        .await
-        .map_err(VcxError::from)
+
+    let res = Locator::instance()
+        .verifier_controller
+        .verify_proof(
+            serde_json::from_str(proof_req_json)?,
+            serde_json::from_str(proof_json)?,
+            serde_json::from_str(schemas_json)?,
+            serde_json::from_str(credential_defs_json)?,
+            serde_json::from_str(rev_reg_defs_json)?,
+            serde_json::from_str(rev_regs_json)?,
+        )?;
+
+    Ok(res)
 }
 
 
@@ -34,7 +37,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_prover_verify_proof() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) = create_indy_proof(setup.wallet_handle, setup.pool_handle, &setup.institution_did).await;
 
@@ -43,11 +46,12 @@ pub mod integration_tests {
             .unwrap();
 
         assert!(proof_validation);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_success_case() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, true).await;
 
@@ -56,16 +60,18 @@ pub mod integration_tests {
             .unwrap();
 
         assert!(proof_validation);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_fail_case() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) = create_proof_with_predicate(setup.wallet_handle, setup.pool_handle, &setup.institution_did, false).await;
 
         libindy_verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await
             .unwrap_err();
+        }).await;
     }
 }
