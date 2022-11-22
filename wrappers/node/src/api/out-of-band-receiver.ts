@@ -1,4 +1,4 @@
-import * as ffiNapi from 'node-napi-rs';
+import * as ffi from 'node-napi-rs';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { IOOBSerializedData } from './out-of-band-sender';
@@ -10,7 +10,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
   public static createWithMessage(msg: string): OutOfBandReceiver {
     const oob = new OutOfBandReceiver("");
     try {
-      oob._setHandle(ffiNapi.createOutOfBandMsgFromMsg(msg))
+      oob._setHandle(ffi.createOutOfBandMsgFromMsg(msg))
       return oob;
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -26,7 +26,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
 
   public extractMessage(): string {
     try {
-      return ffiNapi.extractA2AMessage(this.handle);
+      return ffi.extractA2AMessage(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -35,7 +35,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
   public async connectionExists(connections: [Connection]): Promise<void | Connection> {
     try {
       const connHandles = connections.map((conn) => conn.handle);
-      const connHandle = await ffiNapi.connectionExists(this.handle, connHandles);
+      const connHandle = await ffi.connectionExists(this.handle, connHandles);
       return connections.find((conn) => conn.handle === connHandle);
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -44,7 +44,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
 
   public async buildConnection(): Promise<Connection> {
     try {
-      const connection = await ffiNapi.buildConnection(this.handle);
+      const connection = await ffi.buildConnection(this.handle);
       return await Connection.deserialize(JSON.parse(connection));
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -53,7 +53,15 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
 
   public getThreadId(): string {
     try {
-      return ffiNapi.getThreadIdReceiver(this.handle)
+      return ffi.getThreadIdReceiver(this.handle)
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public serialize_(): ISerializedData<IOOBSerializedData> {
+    try {
+      return JSON.parse(ffi.toStringReceiver(this.handle))
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

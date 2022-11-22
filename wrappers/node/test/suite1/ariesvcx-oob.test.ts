@@ -33,7 +33,7 @@ describe('Out of Band:', () => {
   describe('create:', () => {
     it('success', async () => {
       const oobSender = await OutOfBandSender.create({source_id: "abcd", label: "foo", goalCode: GoalCode.P2PMessaging, goal: "bar", handshake_protocols: [HandshakeProtocol.ConnectionV1]})
-      await oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
+      oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
       const service = {
         "id": "did:example:123456789abcdefghi;indy",
         "priority": 0,
@@ -42,9 +42,9 @@ describe('Out of Band:', () => {
         "serviceEndpoint": "http://example.org/agent",
         "type": "IndyAgent"
       }
-      await oobSender.appendService(JSON.stringify(service))
-      await oobSender.appendMessage(JSON.stringify(credentialOffer))
-      const msg = JSON.parse(await oobSender.toMessage())
+      oobSender.appendService(JSON.stringify(service))
+      oobSender.appendMessage(JSON.stringify(credentialOffer))
+      const msg = JSON.parse(oobSender.toMessage())
       assert.equal(msg["@type"], "https://didcomm.org/out-of-band/1.1/invitation")
       assert.equal(msg["goal"], "bar")
       assert.equal(msg["label"], "foo")
@@ -55,8 +55,8 @@ describe('Out of Band:', () => {
   describe('sender serde:', () => {
     it('success', async () => {
       const oobSender = await OutOfBandSender.create({ source_id: "abcd" })
-      await oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
-      const serialized = await oobSender.serialize()
+      oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
+      const serialized = oobSender.serialize_()
       await OutOfBandSender.deserialize(serialized)
     })
   })
@@ -64,7 +64,7 @@ describe('Out of Band:', () => {
   describe('receiver serde:', () => {
     it('success', async () => {
       const oobSender = await OutOfBandSender.create({ source_id: "abcd" })
-      const oobReceiver = await OutOfBandReceiver.createWithMessage(await oobSender.toMessage())
+      const oobReceiver = OutOfBandReceiver.createWithMessage(oobSender.toMessage())
       const serialized = await oobReceiver.serialize()
       await OutOfBandReceiver.deserialize(serialized)
     })

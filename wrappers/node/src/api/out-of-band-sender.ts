@@ -93,6 +93,14 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
     }
   }
 
+  public serialize_(): ISerializedData<IOOBSerializedData> {
+    try {
+      return JSON.parse(ffi.toStringSender(this.handle))
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   protected _serializeFn = rustAPI().vcx_out_of_band_sender_serialize;
   protected _deserializeFn = rustAPI().vcx_out_of_band_sender_deserialize;
   protected _releaseFn = rustAPI().vcx_out_of_band_sender_release;
