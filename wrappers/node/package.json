@@ -36,7 +36,8 @@
     "lodash": "^4.17.21",
     "ref-napi": "^3.0.3",
     "uuid": "^8.3.2",
-    "weak-napi": "^2.0.2"
+    "weak-napi": "^2.0.2",
+    "node-napi-rs": "../node_napi_rs"
   },
   "devDependencies": {
     "@types/app-module-path": "^2.2.0",
