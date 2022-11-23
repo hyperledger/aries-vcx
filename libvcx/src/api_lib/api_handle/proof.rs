@@ -88,7 +88,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                     Some(send_message),
                 )
                 .await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, uid).await?;
         };
     }
     let state: u32 = proof.get_state().into();

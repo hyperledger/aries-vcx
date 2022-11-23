@@ -146,7 +146,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, uid).await?;
         }
     }
     let state = credential.get_state().into();
@@ -249,7 +249,7 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxRe
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
     }
-    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id).await {
+    let credential_offer = match mediated_connection::get_message_by_id(connection_handle, msg_id.to_string()).await {
         Ok(message) => match message {
             A2AMessage::CredentialOffer(_) => Ok(message),
             msg => {

@@ -51,7 +51,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             credential
                 .step(get_main_wallet_handle(), msg.into(), Some(send_message))
                 .await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, uid).await?;
         }
     }
     let res: u32 = credential.get_state().into();

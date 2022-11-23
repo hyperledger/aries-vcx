@@ -196,7 +196,10 @@ pub extern "C" fn vcx_v2_messages_download(
 
     let conn_handles = match parse_connection_handles(conn_handles) {
         Ok(handles) => handles,
-        Err(err) => return err.into(),
+        Err(err) => {
+            let err: VcxError = err.into();
+            return err.into();
+        }
     };
 
     let message_statuses = if !message_statuses.is_null() {
@@ -260,6 +263,7 @@ pub extern "C" fn vcx_v2_messages_download(
                     };
                 }
                 Err(err) => {
+                    let err: VcxError = err.into();
                     set_current_error_vcx(&err);
                     error!(
                         "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",

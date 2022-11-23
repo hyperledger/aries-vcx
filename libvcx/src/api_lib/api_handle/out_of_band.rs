@@ -122,7 +122,8 @@ pub fn append_service_did(handle: u32, did: String) -> ::napi::Result<()> {
 
 pub fn get_services(handle: u32) -> ::napi::Result<Vec<ServiceResolvable>> {
     trace!("get_services >>> handle: {}", handle);
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| Ok(oob.get_services()))
+    OUT_OF_BAND_SENDER_MAP
+        .get(handle, |oob| Ok(oob.get_services()))
         .map_err(|err| Into::<::napi::Error>::into(err))
 }
 
@@ -148,17 +149,17 @@ pub fn extract_a2a_message(handle: u32) -> ::napi::Result<String> {
 
 #[napi]
 pub fn to_a2a_message(handle: u32) -> ::napi::Result<String> {
-    OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
-        let msg = oob.to_a2a_message();
-        serde_json::to_string(&msg)
-            .map_err(|err| {
+    OUT_OF_BAND_SENDER_MAP
+        .get(handle, |oob| {
+            let msg = oob.to_a2a_message();
+            serde_json::to_string(&msg).map_err(|err| {
                 VcxError::from_msg(
                     VcxErrorKind::SerializationError,
                     format!("Cannot serialize message {:?}, err: {:?}", msg, err),
                 )
             })
-    })
-    .map_err(|err| Into::<::napi::Error>::into(err))
+        })
+        .map_err(|err| Into::<::napi::Error>::into(err))
 }
 
 #[napi]
@@ -273,7 +274,7 @@ pub mod tests {
             "goal": "foobar"
         })
         .to_string();
-        let oob_handle = create_out_of_band(config).await.unwrap();
+        let oob_handle = create_out_of_band(config).unwrap();
         assert!(oob_handle > 0);
         let service = ServiceResolvable::AriesService(
             AriesService::create()
@@ -283,13 +284,10 @@ pub mod tests {
         );
         append_service(oob_handle, json!(service).to_string()).unwrap();
         append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
-        let resolved_service = get_services(oob_handle).unwrap();
-        assert_eq!(resolved_service.len(), 2);
-        assert_eq!(service, resolved_service[0]);
-        assert_eq!(
-            ServiceResolvable::Did(Did::new(did).unwrap()),
-            resolved_services[1]
-        );
+        let resolved_services = get_services(oob_handle).unwrap();
+        assert_eq!(resolved_services.len(), 2);
+        assert_eq!(service, resolved_services[0]);
+        assert_eq!(ServiceResolvable::Did(Did::new(did).unwrap()), resolved_services[1]);
     }
 
     #[tokio::test]

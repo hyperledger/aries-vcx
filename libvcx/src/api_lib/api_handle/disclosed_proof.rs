@@ -103,7 +103,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             proof
                 .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
                 .await?;
-            mediated_connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, uid).await?;
         };
     }
     let state: u32 = proof.get_state().into();
@@ -252,7 +252,7 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> VcxResult<St
             msg_id
         );
 
-        let message = mediated_connection::get_message_by_id(connection_handle, msg_id).await?;
+        let message = mediated_connection::get_message_by_id(connection_handle, msg_id.to_string()).await?;
 
         match message {
             A2AMessage::PresentationRequest(presentation_request) => presentation_request,

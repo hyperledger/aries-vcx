@@ -1053,7 +1053,7 @@ mod tests {
 
         vcx_shutdown(true);
         assert_eq!(
-            mediated_connection::release(connection).unwrap_err().kind(),
+            Into::<VcxError>::into(mediated_connection::release(connection).unwrap_err()).kind(),
             VcxErrorKind::InvalidConnectionHandle
         );
         assert_eq!(

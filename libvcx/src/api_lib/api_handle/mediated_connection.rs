@@ -16,6 +16,8 @@ use aries_vcx::messages::connection::request::Request;
 use aries_vcx::protocols::SendClosure;
 use aries_vcx::utils::error;
 
+use napi_derive::napi;
+
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
@@ -25,14 +27,15 @@ lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
 }
 
-pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
+#[napi]
+pub fn generate_public_invitation(public_did: String, label: String) -> ::napi::Result<String> {
     trace!(
         "generate_public_invite >>> label: {}, public_did: {}",
         public_did,
         label
     );
     let invitation =
-        A2AMessage::ConnectionInvitationPublic(PublicInvitation::create().set_public_did(public_did)?.set_label(label));
+        A2AMessage::ConnectionInvitationPublic(PublicInvitation::create().set_public_did(&public_did).map_err(|err| Into::<VcxError>::into(err))?.set_label(&label));
     Ok(json!(invitation).to_string())
 }
 
@@ -40,7 +43,8 @@ pub fn is_valid_handle(handle: u32) -> bool {
     CONNECTION_MAP.has_handle(handle)
 }
 
-pub fn get_agent_did(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_agent_did(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection
             .cloud_agent_info()
@@ -51,9 +55,11 @@ pub fn get_agent_did(handle: u32) -> VcxResult<String> {
             .agent_did
             .to_string())
     })
+    .map_err(|err| err.into())
 }
 
-pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_agent_verkey(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection
             .cloud_agent_info()
@@ -64,30 +70,40 @@ pub fn get_agent_verkey(handle: u32) -> VcxResult<String> {
             .agent_vk
             .clone())
     })
+    .map_err(|err| err.into())
 }
 
-pub fn get_pw_did(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_pw_did(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.pairwise_info().pw_did.to_string()))
+        .map_err(|err| err.into())
 }
 
-pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_pw_verkey(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.pairwise_info().pw_vk.clone()))
+        .map_err(|err| err.into())
 }
 
-pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_their_pw_did(handle: u32) -> ::napi::Result<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.remote_did().map_err(|err| err.into())
 }
 
-pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_their_pw_verkey(handle: u32) -> ::napi::Result<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.remote_vk().map_err(|err| err.into())
 }
 
-pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_thread_id(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_thread_id()))
+        .map_err(|err| err.into())
 }
 
+#[napi]
 pub fn get_state(handle: u32) -> u32 {
     trace!("get_state >>> handle = {:?}", handle);
     CONNECTION_MAP
@@ -95,20 +111,24 @@ pub fn get_state(handle: u32) -> u32 {
         .unwrap_or(0)
 }
 
-pub fn get_source_id(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_source_id(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_source_id()))
+        .map_err(|err| err.into())
 }
 
-pub fn store_connection(connection: MediatedConnection) -> VcxResult<u32> {
+pub fn store_connection(connection: MediatedConnection) -> ::napi::Result<u32> {
     CONNECTION_MAP
         .add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
+        .map_err(|err| err.into())
 }
 
-pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
+#[napi]
+pub async fn create_connection(source_id: String) -> ::napi::Result<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = MediatedConnection::create(
-        source_id,
+        &source_id,
         get_main_wallet_handle(),
         &get_main_agency_client().unwrap(),
         true,
@@ -117,12 +137,13 @@ pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     store_connection(connection)
 }
 
-pub async fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
+#[napi]
+pub async fn create_connection_with_invite(source_id: String, details: String) -> ::napi::Result<u32> {
     debug!("create connection {} with invite {}", source_id, details);
-    if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
+    if let Some(invitation) = serde_json::from_str::<InvitationV3>(&details).ok() {
         let ddo = into_did_doc(get_main_pool_handle()?, &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
-            source_id,
+            &source_id,
             get_main_wallet_handle(),
             &get_main_agency_client().unwrap(),
             invitation,
@@ -135,14 +156,15 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Vc
         Err(VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             "Used invite has invalid structure",
-        ))
+        ).into())
         // TODO: Specific error type
     }
 }
 
-pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<u32> {
+#[napi]
+pub async fn create_with_request(request: String, agent_handle: u32) -> ::napi::Result<u32> {
     let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
-    let request: Request = serde_json::from_str(request).map_err(|err| {
+    let request: Request = serde_json::from_str(&request).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             format!("Cannot deserialize connection request: {:?}", err),
@@ -158,8 +180,8 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
     store_connection(connection)
 }
 
-pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> VcxResult<u32> {
-    let request: Request = serde_json::from_str(request).map_err(|err| {
+pub async fn create_with_request_v2(request: String, pw_info: PairwiseInfo) -> ::napi::Result<u32> {
+    let request: Request = serde_json::from_str(&request).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             format!("Cannot deserialize connection request: {:?}", err),
@@ -175,25 +197,28 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Vcx
     store_connection(connection)
 }
 
-pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
+#[napi]
+pub async fn send_generic_message(handle: u32, msg: String) -> ::napi::Result<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .send_generic_message(get_main_wallet_handle(), msg)
+        .send_generic_message(get_main_wallet_handle(), &msg)
         .await
         .map_err(|err| err.into())
 }
 
-pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> VcxResult<()> {
+#[napi]
+pub async fn send_handshake_reuse(handle: u32, oob_msg: String) -> ::napi::Result<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .send_handshake_reuse(get_main_wallet_handle(), oob_msg)
+        .send_handshake_reuse(get_main_wallet_handle(), &oob_msg)
         .await
         .map_err(|err| err.into())
 }
 
-pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<u32> {
+#[napi]
+pub async fn update_state_with_message(handle: u32, message: String) -> ::napi::Result<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             format!(
@@ -213,9 +238,10 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
     Ok(error::SUCCESS.code_num)
 }
 
-pub async fn handle_message(handle: u32, message: &str) -> VcxResult<u32> {
+#[napi]
+pub async fn handle_message(handle: u32, message: String) -> ::napi::Result<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+    let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             format!(
@@ -229,7 +255,8 @@ pub async fn handle_message(handle: u32, message: &str) -> VcxResult<u32> {
     Ok(error::SUCCESS.code_num)
 }
 
-pub async fn update_state(handle: u32) -> VcxResult<u32> {
+#[napi]
+pub async fn update_state(handle: u32) -> ::napi::Result<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let res = if connection.is_in_final_state() {
         info!(
@@ -260,14 +287,16 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
     res
 }
 
-pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
+#[napi]
+pub async fn delete_connection(handle: u32) -> ::napi::Result<u32> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.delete(&get_main_agency_client().unwrap()).await?;
     release(handle)?;
     Ok(error::SUCCESS.code_num)
 }
 
-pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
+#[napi]
+pub async fn connect(handle: u32) -> ::napi::Result<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .connect(get_main_wallet_handle(), &get_main_agency_client().unwrap())
@@ -281,26 +310,34 @@ pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
     Ok(invitation)
 }
 
-pub fn to_string(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn to_string(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP.get(handle, |connection| connection.to_string().map_err(|err| err.into()))
+        .map_err(|err| err.into())
 }
 
-pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let connection = MediatedConnection::from_string(connection_data)?;
+#[napi]
+pub fn from_string(connection_data: String) -> ::napi::Result<u32> {
+    let connection = MediatedConnection::from_string(&connection_data)?;
     CONNECTION_MAP.add(connection)
+        .map_err(|err| err.into())
 }
 
-pub fn release(handle: u32) -> VcxResult<()> {
+#[napi]
+pub fn release(handle: u32) -> ::napi::Result<()> {
     CONNECTION_MAP
         .release(handle)
         .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        .map_err(|err| err.into())
 }
 
+#[napi]
 pub fn release_all() {
     CONNECTION_MAP.drain().ok();
 }
 
-pub fn get_invite_details(handle: u32) -> VcxResult<String> {
+#[napi]
+pub fn get_invite_details(handle: u32) -> ::napi::Result<String> {
     CONNECTION_MAP
         .get(handle, |connection| {
             connection
@@ -313,9 +350,10 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
                 .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
         })
         .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        .map_err(|err| err.into())
 }
 
-pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {
+pub async fn get_messages(handle: u32) -> ::napi::Result<HashMap<String, A2AMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .get_messages(&get_main_agency_client().unwrap())
@@ -323,23 +361,24 @@ pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>>
         .map_err(|err| err.into())
 }
 
-pub async fn update_message_status(handle: u32, uid: &str) -> VcxResult<()> {
+#[napi]
+pub async fn update_message_status(handle: u32, uid: String) -> ::napi::Result<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .update_message_status(uid, &get_main_agency_client().unwrap())
+        .update_message_status(&uid, &get_main_agency_client().unwrap())
         .await
         .map_err(|err| err.into())
 }
 
-pub async fn get_message_by_id(handle: u32, msg_id: &str) -> VcxResult<A2AMessage> {
+pub async fn get_message_by_id(handle: u32, msg_id: String) -> ::napi::Result<A2AMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_message_by_id(msg_id, &get_main_agency_client().unwrap())
+        .get_message_by_id(&msg_id, &get_main_agency_client().unwrap())
         .await
         .map_err(|err| err.into())
 }
 
-pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
+pub async fn send_message(handle: u32, message: A2AMessage) -> ::napi::Result<()> {
     trace!("connection::send_message >>>");
     let send_message = send_message_closure(handle).await?;
     send_message(message).await.map_err(|err| err.into())
@@ -353,15 +392,18 @@ pub async fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
         .map_err(|err| err.into())
 }
 
-pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
+#[napi]
+pub async fn send_ping(handle: u32, comment: Option<String>) -> ::napi::Result<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .send_ping(get_main_wallet_handle(), comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
+        .map_err(|err| err.into())
 }
 
-pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
+#[napi]
+pub async fn send_discovery_features(handle: u32, query: Option<String>, comment: Option<String>) -> ::napi::Result<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .send_discovery_query(
@@ -371,9 +413,11 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
         )
         .await?;
     CONNECTION_MAP.insert(handle, connection)
+        .map_err(|err| err.into())
 }
 
-pub async fn get_connection_info(handle: u32) -> VcxResult<String> {
+#[napi]
+pub async fn get_connection_info(handle: u32) -> ::napi::Result<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .get_connection_info(&get_main_agency_client().unwrap())
@@ -388,7 +432,7 @@ pub struct MessageByConnection {
     pub msgs: Vec<DownloadedMessage>,
 }
 
-pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option<Vec<MessageStatusCode>>> {
+pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> ::napi::Result<Option<Vec<MessageStatusCode>>> {
     match status_codes {
         Some(codes) => {
             let codes = codes
@@ -398,17 +442,18 @@ pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> VcxResult<Option
                         VcxError::from_msg(
                             VcxErrorKind::InvalidJson,
                             format!("Cannot parse message status code: {}", err),
-                        )
+                        ).into()
                     })
                 })
-                .collect::<VcxResult<Vec<MessageStatusCode>>>()?;
+                .collect::<::napi::Result<Vec<MessageStatusCode>>>()?;
             Ok(Some(codes))
         }
         None => Ok(None),
     }
 }
 
-pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>> {
+#[napi]
+pub fn parse_connection_handles(conn_handles: Vec<String>) -> ::napi::Result<Vec<u32>> {
     trace!("parse_connection_handles >>> conn_handles: {:?}", conn_handles);
     let codes = conn_handles
         .iter()
@@ -417,10 +462,10 @@ pub fn parse_connection_handles(conn_handles: Vec<String>) -> VcxResult<Vec<u32>
                 VcxError::from_msg(
                     VcxErrorKind::InvalidJson,
                     format!("Cannot parse connection handles: {}", err),
-                )
+                ).into()
             })
         })
-        .collect::<VcxResult<Vec<u32>>>()?;
+        .collect::<::napi::Result<Vec<u32>>>()?;
     Ok(codes)
 }
 
@@ -428,7 +473,7 @@ pub async fn download_messages(
     conn_handles: Vec<u32>,
     status_codes: Option<Vec<MessageStatusCode>>,
     uids: Option<Vec<String>>,
-) -> VcxResult<Vec<MessageByConnection>> {
+) -> ::napi::Result<Vec<MessageByConnection>> {
     trace!(
         "download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}",
         conn_handles,
@@ -482,8 +527,8 @@ pub mod tests {
         let _setup = SetupEmpty::init();
     }
 
-    fn _source_id() -> &'static str {
-        "test connection"
+    fn _source_id() -> String {
+        "test connection".to_string()
     }
 
     #[tokio::test]
@@ -499,7 +544,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), _pairwise_invitation_json())
             .await
             .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
@@ -510,7 +555,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), _public_invitation_json())
             .await
             .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
@@ -523,7 +568,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
-        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
+        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST.to_string(), agent_handle)
             .await
             .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
@@ -552,23 +597,23 @@ pub mod tests {
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {
-        let handle = create_connection("faber_to_alice").await.unwrap();
+        let handle = create_connection("faber_to_alice".to_string()).await.unwrap();
         handle
     }
 
     pub async fn build_test_connection_inviter_invited() -> u32 {
-        let handle = create_connection("faber_to_alice").await.unwrap();
+        let handle = create_connection("faber_to_alice".to_string()).await.unwrap();
         connect(handle).await.unwrap();
         handle
     }
 
     pub fn build_test_connection_invitee_completed() -> u32 {
-        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
+        from_string(CONNECTION_SM_INVITEE_COMPLETED.to_string()).unwrap()
     }
 
     pub async fn build_test_connection_inviter_requested() -> u32 {
         let handle = build_test_connection_inviter_invited().await;
-        update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
+        update_state_with_message(handle, ARIES_CONNECTION_REQUEST.to_string())
             .await
             .unwrap();
         handle
@@ -579,7 +624,7 @@ pub mod tests {
     async fn test_create_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_create_connection").await.unwrap();
+        let handle = create_connection("test_create_connection".to_string()).await.unwrap();
         assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
         connect(handle).await.unwrap();
@@ -605,14 +650,14 @@ pub mod tests {
     async fn test_create_drop_create() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_create_drop_create").await.unwrap();
+        let handle = create_connection("test_create_drop_create".to_string()).await.unwrap();
 
         assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
         let did1 = get_pw_did(handle).unwrap();
 
         release(handle).unwrap();
 
-        let handle2 = create_connection("test_create_drop_create").await.unwrap();
+        let handle2 = create_connection("test_create_drop_create".to_string()).await.unwrap();
 
         assert_eq!(get_state(handle2), VcxStateType::VcxStateNone as u32);
         let did2 = get_pw_did(handle2).unwrap();
@@ -629,7 +674,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = release(1);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(rc.unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[tokio::test]
@@ -647,7 +692,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = to_string(0);
-        assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(Into::<VcxError>::into(rc.unwrap_err()).kind(), VcxErrorKind::InvalidHandle);
     }
 
     #[tokio::test]
@@ -655,7 +700,7 @@ pub mod tests {
     async fn test_get_service_endpoint() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_get_qr_code_data").await.unwrap();
+        let handle = create_connection("test_get_qr_code_data".to_string()).await.unwrap();
 
         connect(handle).await.unwrap();
 
@@ -663,7 +708,7 @@ pub mod tests {
         assert!(details.contains("\"serviceEndpoint\":"));
 
         assert_eq!(
-            get_invite_details(0).unwrap_err().kind(),
+            Into::<VcxError>::into(get_invite_details(0).unwrap_err()).kind(),
             VcxErrorKind::InvalidConnectionHandle
         );
     }
@@ -673,7 +718,7 @@ pub mod tests {
     async fn test_retry_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_serialize_deserialize").await.unwrap();
+        let handle = create_connection("test_serialize_deserialize".to_string()).await.unwrap();
 
         assert_eq!(get_state(handle), VcxStateType::VcxStateNone as u32);
 
@@ -686,17 +731,17 @@ pub mod tests {
     async fn test_release_all() {
         let _setup = SetupMocks::init();
 
-        let h1 = create_connection("rel1").await.unwrap();
-        let h2 = create_connection("rel2").await.unwrap();
-        let h3 = create_connection("rel3").await.unwrap();
-        let h4 = create_connection("rel4").await.unwrap();
-        let h5 = create_connection("rel5").await.unwrap();
+        let h1 = create_connection("rel1".to_string()).await.unwrap();
+        let h2 = create_connection("rel2".to_string()).await.unwrap();
+        let h3 = create_connection("rel3".to_string()).await.unwrap();
+        let h4 = create_connection("rel4".to_string()).await.unwrap();
+        let h5 = create_connection("rel5".to_string()).await.unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(release(h1).unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(release(h2).unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(release(h3).unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(release(h4).unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(Into::<VcxError>::into(release(h5).unwrap_err()).kind(), VcxErrorKind::InvalidConnectionHandle);
     }
 
     #[tokio::test]
@@ -704,12 +749,12 @@ pub mod tests {
     async fn test_create_with_valid_invite_details() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION)
+        let handle = create_connection_with_invite("alice".to_string(), ARIES_CONNECTION_INVITATION.to_string())
             .await
             .unwrap();
         connect(handle).await.unwrap();
 
-        let handle_2 = create_connection_with_invite("alice", ARIES_CONNECTION_INVITATION)
+        let handle_2 = create_connection_with_invite("alice".to_string(), ARIES_CONNECTION_INVITATION.to_string())
             .await
             .unwrap();
         connect(handle_2).await.unwrap();
@@ -720,10 +765,10 @@ pub mod tests {
     async fn test_process_acceptance_message() {
         let _setup = SetupMocks::init();
 
-        let handle = create_connection("test_process_acceptance_message").await.unwrap();
+        let handle = create_connection("test_process_acceptance_message".to_string()).await.unwrap();
         assert_eq!(
             error::SUCCESS.code_num,
-            update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
+            update_state_with_message(handle, ARIES_CONNECTION_REQUEST.to_string())
                 .await
                 .unwrap()
         );
@@ -747,8 +792,8 @@ pub mod tests {
 
         let handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
 
-        let err = send_generic_message(handle, "this is the message").await.unwrap_err();
-        assert_eq!(err.kind(), VcxErrorKind::NotReady);
+        let err = send_generic_message(handle, "this is the message".to_string()).await.unwrap_err();
+        assert_eq!(Into::<VcxError>::into(err).kind(), VcxErrorKind::NotReady);
     }
 
     #[test]
@@ -756,7 +801,7 @@ pub mod tests {
     fn test_generate_public_invitation() {
         let _setup = SetupMocks::init();
 
-        let invitation = generate_public_invitation(constants::INSTITUTION_DID, "faber-enterprise").unwrap();
+        let invitation = generate_public_invitation(constants::INSTITUTION_DID.to_string(), "faber-enterprise".to_string()).unwrap();
         let parsed: Value = serde_json::from_str(&invitation).unwrap();
         assert!(parsed["@id"].is_string());
         assert_eq!(parsed["@type"], "https://didcomm.org/connections/1.0/invitation");
