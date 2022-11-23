@@ -34,6 +34,7 @@ export function sendPing(handle: number, comment?: string | undefined | null): P
 export function sendDiscoveryFeatures(handle: number, query?: string | undefined | null, comment?: string | undefined | null): Promise<void>
 export function getConnectionInfo(handle: number): Promise<string>
 export function parseConnectionHandles(connHandles: Array<string>): Array<number>
+export function downloadMessages(connHandles: Array<number>, statusCodes?: string | undefined | null, uids?: string | undefined | null): Promise<string>
 export function createOutOfBand(config: string): number
 export function createOutOfBandMsgFromMsg(msg: string): number
 export function appendMessage(handle: number, msg: string): void

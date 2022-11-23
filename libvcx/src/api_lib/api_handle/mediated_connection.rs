@@ -476,17 +476,40 @@ pub fn parse_connection_handles(conn_handles: Vec<String>) -> ::napi::Result<Vec
     Ok(codes)
 }
 
+#[napi]
 pub async fn download_messages(
     conn_handles: Vec<u32>,
-    status_codes: Option<Vec<MessageStatusCode>>,
-    uids: Option<Vec<String>>,
-) -> ::napi::Result<Vec<MessageByConnection>> {
+    status_codes: Option<String>,
+    uids: Option<String>,
+) -> ::napi::Result<String> {
     trace!(
         "download_messages >>> cann_handles: {:?}, status_codes: {:?}, uids: {:?}",
         conn_handles,
         status_codes,
         uids
     );
+
+    let status_codes = if let Some(status_codes) = status_codes {
+        let v: Vec<&str> = status_codes.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        Some(v.to_owned())
+    } else {
+        None
+    };
+
+    let status_codes = match parse_status_codes(status_codes) {
+        Ok(statuses) => statuses,
+        Err(_err) => return Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle).into()),
+    };
+
+    let uids = if let Some(uids) = uids {
+        let v: Vec<&str> = uids.split(',').collect();
+        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        Some(v.to_owned())
+    } else {
+        None
+    };
+
     let mut res = Vec::new();
     let mut connections = Vec::new();
     for conn_handle in conn_handles {
@@ -502,6 +525,12 @@ pub async fn download_messages(
             msgs,
         });
     }
+    let res = serde_json::to_string(&res).map_err(|err|
+        Into::<::napi::Error>::into(VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot parse connection handles: {}", err),
+        ))
+    )?;
     trace!("download_messages <<< res: {:?}", res);
     Ok(res)
 }

@@ -21,7 +21,7 @@ use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service, get_ser
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::mediated_connection;
-use crate::api_lib::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
+use crate::api_lib::api_handle::mediated_connection::parse_connection_handles;
 use crate::api_lib::api_handle::utils::agency_update_messages;
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -184,6 +184,8 @@ pub extern "C" fn vcx_v2_messages_download(
     info!("vcx_v2_messages_download >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(message_statuses, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(uids, VcxErrorKind::InvalidOption);
 
     let conn_handles = if !conn_handles.is_null() {
         check_useful_c_str!(conn_handles, VcxErrorKind::InvalidOption);
@@ -202,29 +204,6 @@ pub extern "C" fn vcx_v2_messages_download(
         }
     };
 
-    let message_statuses = if !message_statuses.is_null() {
-        check_useful_c_str!(message_statuses, VcxErrorKind::InvalidOption);
-        let v: Vec<&str> = message_statuses.split(',').collect();
-        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
-    } else {
-        None
-    };
-
-    let message_statuses = match parse_status_codes(message_statuses) {
-        Ok(statuses) => statuses,
-        Err(_err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into(),
-    };
-
-    let uids = if !uids.is_null() {
-        check_useful_c_str!(uids, VcxErrorKind::InvalidOption);
-        let v: Vec<&str> = uids.split(',').collect();
-        let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
-    } else {
-        None
-    };
-
     trace!(
         "vcx_v2_messages_download(command_handle: {}, message_statuses: {:?}, uids: {:?})",
         command_handle,
@@ -235,36 +214,21 @@ pub extern "C" fn vcx_v2_messages_download(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
             match mediated_connection::download_messages(conn_handles, message_statuses, uids).await {
-                Ok(err) => {
-                    match serde_json::to_string(&err) {
-                        Ok(err) => {
-                            trace!(
-                                "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                                command_handle,
-                                error::SUCCESS.message,
-                                err
-                            );
-
-                            let msg = CStringUtils::string_to_cstring(err);
-                            cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-                        }
-                        Err(err) => {
-                            let err = VcxError::from_msg(
-                                VcxErrorKind::InvalidJson,
-                                format!("Cannot serialize messages: {}", err),
-                            );
-                            error!(
-                                "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
-                                command_handle, err, "null"
-                            );
-
-                            cb(command_handle, err.into(), ptr::null_mut());
-                        }
-                    };
+                Ok(res) => {
+                    trace!(
+                        "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
+                        command_handle,
+                        error::SUCCESS.message,
+                        res
+                    );
+                    let msg = CStringUtils::string_to_cstring(res);
+                    cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
                 }
                 Err(err) => {
-                    let err: VcxError = err.into();
-                    set_current_error_vcx(&err);
+                    let err = VcxError::from_msg(
+                        VcxErrorKind::InvalidJson,
+                        format!("Cannot serialize messages: {}", err),
+                    );
                     error!(
                         "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                         command_handle, err, "null"

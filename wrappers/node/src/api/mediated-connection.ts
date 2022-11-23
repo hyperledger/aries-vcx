@@ -669,26 +669,7 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
 
   public async downloadMessages({ status, uids }: IConnectionDownloadMessages): Promise<string> {
     try {
-      return await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_connection_messages_download(0, this.handle, status, uids, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xhandle: number, err: number, messages: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(messages);
-            },
-          ),
-      );
+      return await ffiNapi.downloadMessages([this.handle], status, uids)
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
