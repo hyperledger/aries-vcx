@@ -682,31 +682,7 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
    */
   public async info(): Promise<IConnectionInfo> {
     try {
-      const data = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = this._infoFn(0, this.handle, cb);
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: number, err: number, info: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!info) {
-                reject('no info returned');
-                return;
-              }
-              resolve(info);
-            },
-          ),
-      );
-      return data;
+      return await ffiNapi.getConnectionInfo(this.handle)
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
