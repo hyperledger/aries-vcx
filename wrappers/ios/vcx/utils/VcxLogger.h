@@ -31,7 +31,7 @@
 
  @param logCb: function will be called to log a record.
  */
-+ (void)setLogger:(id)logCb;
++ (void)setLogger:(void (^)(NSObject *context, NSNumber *level, NSString *target, NSString *message, NSString *modulePath, NSString *file, NSNumber *line))logCb;
 
 + (VcxLogger *)sharedInstance;
 

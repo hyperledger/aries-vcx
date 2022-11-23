@@ -23,7 +23,7 @@
     vcx_set_default_logger([pattern UTF8String]);
 }
 
-+ (void)setLogger:(id)logCb {
++ (void)setLogger:(void (^)(NSObject *, NSNumber *, NSString *, NSString *, NSString *, NSString *, NSNumber *))logCb {
     [VcxLogger sharedInstance].callbacks[0] = [logCb copy];
     vcx_set_logger(nil, nil, logCallback, nil);
 }

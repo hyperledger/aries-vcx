@@ -529,14 +529,13 @@ vcx_error_t vcx_connection_create_with_invite(
         void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_connection_handle_t connection_handle)
 );
 
-vcx_error_t vcx_connection_create_with_connection_request(
+vcx_error_t vcx_connection_create_with_connection_request_v2(
         vcx_command_handle_t command_handle,
         const char *source_id,
-        vcx_u32_t agent_handle,
+        const char *pw_info,
         const char *request,
         void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_connection_handle_t connection_handle)
 );
-
 
 /** Deletes a connection, send an API call to agency to stop sending messages from this connection */
 vcx_error_t vcx_connection_delete_connection(

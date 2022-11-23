@@ -8,7 +8,6 @@
 #include "VcxCallbacks.h"
 #include "NSError+VcxError.h"
 #include "VcxWrapperCallbacks.h"
-// #import "VcxTypes.h"
 
 void completeCallback(void (^completion)()) {
     if (completion) {
