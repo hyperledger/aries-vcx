@@ -1,7 +1,7 @@
 import * as ffi from 'node-napi-rs';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { VCXBase } from './vcx-base';
+import { VCXBase1 } from './vcx-base-1';
 import { ISerializedData } from './common';
 
 export interface IOOBSerializedData {
@@ -35,7 +35,7 @@ export enum HandshakeProtocol {
   DidExchangeV1 = "DidExchangeV1",
 }
 
-export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
+export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
   public static async create(config: IOOBCreateData): Promise<OutOfBandSender> {
     const oob = new OutOfBandSender(config.source_id);
     try {
@@ -101,7 +101,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
     }
   }
 
-  protected _serializeFn = rustAPI().vcx_out_of_band_sender_serialize;
-  protected _deserializeFn = rustAPI().vcx_out_of_band_sender_deserialize;
-  protected _releaseFn = rustAPI().vcx_out_of_band_sender_release;
+  protected _serializeFn = ffi.toStringSender;
+  protected _deserializeFn = ffi.fromStringSender;
+  protected _releaseFn = ffi.releaseSender;
 }
