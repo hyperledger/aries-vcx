@@ -56,7 +56,7 @@ describe('Out of Band:', () => {
     it('success', async () => {
       const oobSender = await OutOfBandSender.create({ source_id: "abcd" })
       oobSender.appendServiceDid("VsKV7grR1BUE29mG2Fm2kX")
-      const serialized = oobSender.serialize_()
+      const serialized = oobSender.serialize()
       await OutOfBandSender.deserialize(serialized)
     })
   })
@@ -65,7 +65,7 @@ describe('Out of Band:', () => {
     it('success', async () => {
       const oobSender = await OutOfBandSender.create({ source_id: "abcd" })
       const oobReceiver = OutOfBandReceiver.createWithMessage(oobSender.toMessage())
-      const serialized = await oobReceiver.serialize()
+      const serialized = oobReceiver.serialize()
       await OutOfBandReceiver.deserialize(serialized)
     })
   })

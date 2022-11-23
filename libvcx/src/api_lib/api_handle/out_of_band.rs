@@ -46,7 +46,7 @@ fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
 }
 
 #[napi]
-pub async fn create_out_of_band(config: String) -> ::napi::Result<u32> {
+pub fn create_out_of_band(config: String) -> ::napi::Result<u32> {
     trace!("create_out_of_band >>> config: {}", config);
     let config: OOBConfig = serde_json::from_str(&config).map_err(|err| {
         VcxError::from_msg(

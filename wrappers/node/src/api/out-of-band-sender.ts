@@ -1,6 +1,5 @@
 import * as ffi from 'node-napi-rs';
 import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
 import { VCXBase1 } from './vcx-base-1';
 import { ISerializedData } from './common';
 
@@ -36,19 +35,19 @@ export enum HandshakeProtocol {
 }
 
 export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
-  public static async create(config: IOOBCreateData): Promise<OutOfBandSender> {
+  public static create(config: IOOBCreateData): OutOfBandSender {
     const oob = new OutOfBandSender(config.source_id);
     try {
-      oob._setHandle(await ffi.createOutOfBand(JSON.stringify(config)));
+      oob._setHandle(ffi.createOutOfBand(JSON.stringify(config)));
       return oob;
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  public static async deserialize(
+  public static deserialize(
     data: ISerializedData<IOOBSerializedData>,
-  ): Promise<OutOfBandSender> {
+  ): OutOfBandSender {
     const newObj = { ...data, source_id: 'foo' };
     return super._deserialize(OutOfBandSender, newObj);
   }
@@ -88,14 +87,6 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
   public getThreadId(): string {
     try {
       return ffi.getThreadIdSender(this.handle)
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  public serialize_(): ISerializedData<IOOBSerializedData> {
-    try {
-      return JSON.parse(ffi.toStringSender(this.handle))
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

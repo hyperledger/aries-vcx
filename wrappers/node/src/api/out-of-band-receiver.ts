@@ -1,12 +1,11 @@
 import * as ffi from 'node-napi-rs';
 import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
 import { IOOBSerializedData } from './out-of-band-sender';
 import { Connection } from './mediated-connection';
-import { VCXBase } from './vcx-base';
+import { VCXBase1 } from './vcx-base-1';
 import { ISerializedData } from './common';
 
-export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
+export class OutOfBandReceiver extends VCXBase1<IOOBSerializedData> {
   public static createWithMessage(msg: string): OutOfBandReceiver {
     const oob = new OutOfBandReceiver("");
     try {
@@ -17,9 +16,9 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
     }
   }
 
-  public static async deserialize(
+  public static deserialize(
     data: ISerializedData<IOOBSerializedData>,
-  ): Promise<OutOfBandReceiver> {
+  ): OutOfBandReceiver {
     const newObj = { ...data, source_id: 'foo' };
     return super._deserialize(OutOfBandReceiver, newObj);
   }
@@ -59,15 +58,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
     }
   }
 
-  public serialize_(): ISerializedData<IOOBSerializedData> {
-    try {
-      return JSON.parse(ffi.toStringReceiver(this.handle))
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
-  }
-
-  protected _serializeFn = rustAPI().vcx_out_of_band_receiver_serialize;
-  protected _deserializeFn = rustAPI().vcx_out_of_band_receiver_deserialize;
-  protected _releaseFn = rustAPI().vcx_out_of_band_receiver_release;
+  protected _serializeFn = ffi.toStringReceiver;
+  protected _deserializeFn = ffi.fromStringReceiver;
+  protected _releaseFn = ffi.releaseReceiver;
 }

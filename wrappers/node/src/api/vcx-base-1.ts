@@ -1,22 +1,18 @@
-import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
-import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData } from './common';
-
-export type IVCXBaseCreateFn = (cb: ICbRef) => number;
 
 export abstract class VCXBase1<SerializedData> {
   private _handleRef!: number;
 
-  protected static async _deserialize<T extends VCXBase1<unknown>, P = unknown>(
+  protected static _deserialize<T extends VCXBase1<unknown>, P = unknown>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     VCXClass: new (sourceId: string, args?: any) => T,
     objData: ISerializedData<{ source_id: string }>,
     constructorParams?: P,
-  ): Promise<T> {
+  ): T {
     try {
       const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
-      await obj._initFromData(objData);
+      obj._initFromData(objData);
       return obj;
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -31,19 +27,7 @@ export abstract class VCXBase1<SerializedData> {
     this._sourceId = sourceId;
   }
 
-  /**
-   *
-   * Data returned can be used to recreate an entity by passing it to the deserialize function.
-   *
-   * Same json object structure that is passed to the deserialize function.
-   *
-   * Example:
-   *
-   * ```
-   *  data = await object.serialize()
-   * ```
-   */
-  public async serialize(): Promise<ISerializedData<SerializedData>> {
+  public serialize(): ISerializedData<SerializedData> {
     try {
       return JSON.parse(this._serializeFn(this.handle));
     } catch (err: any) {
@@ -56,31 +40,7 @@ export abstract class VCXBase1<SerializedData> {
     return this._sourceId;
   }
 
-  protected async _create(createFn: IVCXBaseCreateFn): Promise<void> {
-    const handleRes = await createFFICallbackPromise<number>(
-      (resolve, reject, cb) => {
-        const rc = createFn(cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'uint32'],
-          (xHandle: number, err: number, handle: number) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(handle);
-          },
-        ),
-    );
-    this._setHandle(handleRes);
-  }
-
-  private async _initFromData(objData: ISerializedData<{ source_id: string }>): Promise<void> {
+  private _initFromData(objData: ISerializedData<{ source_id: string }>): void {
     const objHandle = this._deserializeFn(JSON.stringify(objData))
     this._setHandle(objHandle);
   }
