@@ -287,15 +287,10 @@
                      inviteDetails:(NSString *)inviteDetails
                         completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
 
-- (void)connectionCreateWithConnectionRequest:(NSString *)sourceId
-                                       pwInfo:(NSString *)pwInfo
-                                      request:(NSString *)request
-                                   completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
-
 - (void)connectionCreateWithConnectionRequestV2:(NSString *)sourceId
-                                  agentHandle:(NSUInteger)agentHandle
-                                      request:(NSString *)request
-                                   completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
+                                    agentHandle:(NSUInteger)agentHandle
+                                        request:(NSString *)request
+                                     completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
 
 - (void)connectionConnect:(NSUInteger)connectionHandle
            connectionType:(NSString *)connectionType
