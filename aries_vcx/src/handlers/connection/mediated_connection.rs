@@ -776,11 +776,11 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
+    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<()> {
         trace!("MediatedConnection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
         let send_message = self.send_message_closure(wallet_handle).await?;
-        send_message(message).await.map(|_| String::new())
+        send_message(message).await
     }
 
     pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, message: &A2AMessage) -> VcxResult<String> {

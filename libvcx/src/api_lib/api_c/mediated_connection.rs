@@ -916,7 +916,7 @@ pub extern "C" fn vcx_connection_invite_details(
 ///
 /// send_msg_options: deprecated, has not effect
 ///
-/// cb: Callback that provides id of retrieved response message
+/// cb: Callback that provides error code if any
 ///
 /// #Returns
 /// Error code as a u32
@@ -942,15 +942,14 @@ pub extern "C" fn vcx_connection_send_message(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match send_generic_message(connection_handle, msg).await {
-            Ok(err) => {
+            Ok(()) => {
                 trace!(
-                    "vcx_connection_send_message_cb(command_handle: {}, rc: {}, msg_id: {})",
+                    "vcx_connection_send_message_cb(command_handle: {}, rc: {})",
                     command_handle,
                     error::SUCCESS.message,
-                    err
                 );
 
-                let msg_id = CStringUtils::string_to_cstring(err);
+                let msg_id = CStringUtils::string_to_cstring(String::new());
                 cb(command_handle, error::SUCCESS.code_num, msg_id.as_ptr());
             }
             Err(err) => {

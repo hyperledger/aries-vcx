@@ -205,7 +205,7 @@ pub async fn create_with_request_v2(request: String, pw_info: String) -> ::napi:
 }
 
 #[napi]
-pub async fn send_generic_message(handle: u32, msg: String) -> ::napi::Result<String> {
+pub async fn send_generic_message(handle: u32, msg: String) -> ::napi::Result<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
         .send_generic_message(get_main_wallet_handle(), &msg)

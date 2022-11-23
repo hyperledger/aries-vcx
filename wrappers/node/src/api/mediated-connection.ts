@@ -466,42 +466,16 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
    * msg_id = await connection.send_message(
    *     {msg:"are you there?",type:"question","title":"Sending you a question"})
    * ```
-   * @returns {Promise<string>} Promise of String representing UID of created message in 1.0 VCX protocol. When using
-   * 2.0 / 3.0 / Aries protocol, return empty string.
+   * @returns {Promise<void>}
    */
-  public async sendMessage(msgData: IMessageData): Promise<string> {
+  public async sendMessage(msgData: IMessageData): Promise<void> {
     const sendMsgOptions = {
       msg_title: msgData.title,
       msg_type: msgData.type,
       ref_msg_id: msgData.refMsgId,
     };
     try {
-      return await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_connection_send_message(
-            0,
-            this.handle,
-            msgData.msg,
-            JSON.stringify(sendMsgOptions),
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (xHandle: number, err: number, details: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(details);
-            },
-          ),
-      );
+      return await ffiNapi.sendGenericMessage(this.handle, JSON.stringify(sendMsgOptions))
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
