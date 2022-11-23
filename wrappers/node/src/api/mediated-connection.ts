@@ -624,28 +624,7 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     comment: string | null | undefined,
   ): Promise<void> {
     try {
-      return await createFFICallbackPromise<void>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_connection_send_discovery_features(
-            0,
-            this.handle,
-            query,
-            comment,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback('void', ['uint32', 'uint32'], (xhandle: number, err: number) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve();
-          }),
-      );
+      return await ffiNapi.sendDiscoveryFeatures(this.handle, query, comment)
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
