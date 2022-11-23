@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
+use aries_vcx::indy;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use napi::bindgen_prelude::Buffer;
 use serde_json;
 
 use crate::api_lib::global::pool::get_main_pool_handle;
@@ -533,6 +535,25 @@ pub async fn download_messages(
     )?;
     trace!("download_messages <<< res: {:?}", res);
     Ok(res)
+}
+
+#[napi]
+pub async fn sign_data(handle: u32, data: Buffer) -> ::napi::Result<Buffer> {
+    let vk = get_their_pw_verkey(handle)?;
+    Ok(Buffer::from(indy::signing::sign(get_main_wallet_handle(), &vk, &data.to_vec())
+        .await
+        .map_err(|err|
+            Into::<::napi::Error>::into(err)
+        )?
+    ))
+}
+
+#[napi]
+pub async fn verify_signature(handle: u32, data: Buffer, signature: Buffer) -> ::napi::Result<bool> {
+    let vk = get_their_pw_verkey(handle)?;
+    indy::signing::verify(&vk, &data.to_vec(), &signature.to_vec())
+        .await
+        .map_err(|err| err.into())
 }
 
 #[cfg(test)]

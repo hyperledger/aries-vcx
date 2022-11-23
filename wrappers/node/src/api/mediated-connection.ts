@@ -7,7 +7,7 @@ import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState } from './vcx-base-with-state';
 import { PublicAgent } from './public-agent';
-import { PtrBuffer, IPwInfo } from './utils';
+import { IPwInfo } from './utils';
 
 /**
  *   The object of the VCX API representing a pairwise relationship with another identity owner.
@@ -500,37 +500,7 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
    */
   public async signData(data: Buffer): Promise<Buffer> {
     try {
-      return await createFFICallbackPromise<Buffer>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_connection_sign_data(
-            0,
-            this.handle,
-            ref.address(data),
-            data.length,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'pointer', 'uint32'],
-            (xHandle: number, err: number, detailsPtr: PtrBuffer, length: number) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              if (!detailsPtr) {
-                reject(`Connection ${this.sourceId}  returned empty buffer`);
-                return;
-              }
-              const newBuffer = voidPtrToUint8Array(detailsPtr, length);
-              resolve(newBuffer);
-            },
-          ),
-      );
+      return await ffiNapi.signData(this.handle, data)
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -547,34 +517,7 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
    */
   public async verifySignature(signatureData: ISignatureData): Promise<boolean> {
     try {
-      return await createFFICallbackPromise<boolean>(
-        (resolve, reject, cb) => {
-          const rc = rustAPI().vcx_connection_verify_signature(
-            0,
-            this.handle,
-            ref.address(signatureData.data),
-            signatureData.data.length,
-            ref.address(signatureData.signature),
-            signatureData.signature.length,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'bool'],
-            (xHandle: number, err: number, valid: boolean) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(valid);
-            },
-          ),
-      );
+      return await ffiNapi.verifySignature(this.handle, signatureData.data, signatureData.data)
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
