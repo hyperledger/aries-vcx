@@ -28,10 +28,14 @@ pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
     indy::wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await
 }
 
-pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
-    let handle = indy::wallet::open_wallet(wallet_config).await?;
+#[napi]
+pub async fn open_as_main_wallet(wallet_config: String) -> ::napi::Result<i32> {
+    let wallet_config = serde_json::from_str::<WalletConfig>(&wallet_config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Serialization error: {:?}", err)))?;
+    let handle = indy::wallet::open_wallet(&wallet_config).await
+        .map_err(|err| Into::<::napi::Error>::into(err))?;
     set_main_wallet_handle(handle);
-    Ok(handle)
+    Ok(handle.0)
 }
 
 pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {

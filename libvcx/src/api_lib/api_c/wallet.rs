@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy;
 use aries_vcx::vdrtools::{SearchHandle, WalletHandle, CommandHandle};
-use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::indy::wallet::{import, RestoreWalletConfigs};
 use aries_vcx::utils::error;
 
 use crate::api_lib;
@@ -158,20 +158,12 @@ pub extern "C" fn vcx_open_main_wallet(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
 
-    let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
-        Ok(wallet_config) => wallet_config,
-        Err(err) => {
-            set_current_error(&err);
-            error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num;
-        }
-    };
-
     trace!("vcx_open_main_wallet(command_handle: {})", command_handle);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match open_as_main_wallet(&wallet_config).await {
+        match open_as_main_wallet(wallet_config).await {
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}",
@@ -184,9 +176,9 @@ pub extern "C" fn vcx_open_main_wallet(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                     command_handle,
                     error::SUCCESS.message,
-                    wh.0
+                    wh
                 );
-                cb(command_handle, 0, wh.0);
+                cb(command_handle, 0, wh);
             }
         }
         Ok(())
