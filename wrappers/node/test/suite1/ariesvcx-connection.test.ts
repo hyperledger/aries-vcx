@@ -35,7 +35,7 @@ describe('Connection:', () => {
   describe('connect:', () => {
     it('success', async () => {
       const connection = await connectionCreateInviterNull();
-      const inviteDetails = await connection.connect({ data: '{}' });
+      const inviteDetails = await connection.connect();
       assert.notEqual(inviteDetails, '');
     });
 
@@ -50,7 +50,7 @@ describe('Connection:', () => {
   describe('sendMessage:', () => {
     it.skip('success: sends message', async () => {
       const connection = await connectionCreateInviterNull();
-      await connection.connect({ data: '{"connection_type":"QR"}' });
+      await connection.connect();
       const error = await shouldThrow(() =>
         connection.sendMessage({ msg: 'msg', type: 'msg', title: 'title' }),
       );
@@ -61,7 +61,7 @@ describe('Connection:', () => {
   describe('signData:', () => {
     it('success: signs data', async () => {
       const connection = await connectionCreateInviterNull();
-      await connection.connect({ data: '{}' });
+      await connection.connect();
       const signature = await connection.signData(Buffer.from('random string'));
       assert(signature);
     });
@@ -108,8 +108,8 @@ describe('Connection:', () => {
     // TODO: Is this op supported in 3.0?
     it.skip('throws: connection deleted', async () => {
       const connection = await connectionCreateInviterNull();
-      await connection.connect({ data: '{"connection_type":"QR"}' });
-      await connection.delete();
+      await connection.connect();
+      connection.delete();
       const error = await shouldThrow(() => connection.serialize());
       assert.equal(error.vcxCode, VCXCode.INVALID_CONNECTION_HANDLE);
     });
@@ -165,7 +165,7 @@ describe('Connection:', () => {
   describe('inviteDetails:', () => {
     it('success', async () => {
       const connection = await createConnectionInviterInvited();
-      const details = await connection.inviteDetails(true);
+      const details = connection.inviteDetails();
       const parsedInvitation = JSON.parse(details);
       assert.isString(parsedInvitation['@id']);
       assert.equal(

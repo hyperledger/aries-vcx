@@ -16,6 +16,7 @@ export function getSourceId(handle: number): string
 export function createConnection(sourceId: string): Promise<number>
 export function createConnectionWithInvite(sourceId: string, details: string): Promise<number>
 export function createWithRequest(request: string, agentHandle: number): Promise<number>
+export function createWithRequestV2(request: string, pwInfo: string): Promise<number>
 export function sendGenericMessage(handle: number, msg: string): Promise<string>
 export function sendHandshakeReuse(handle: number, oobMsg: string): Promise<void>
 export function updateStateWithMessage(handle: number, message: string): Promise<number>

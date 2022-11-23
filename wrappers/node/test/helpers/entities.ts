@@ -14,9 +14,7 @@ import {
   ICredentialDefCreateDataV2,
   IDisclosedProofCreateData,
   IDisclosedProofCreateWithMsgIdData, IIssuerCredentialBuildOfferDataV2,
-  IIssuerCredentialCreateData,
-  IIssuerCredentialOfferSendData,
-  IProofCreateData, IRevocationRegistryConfig,
+  IProofCreateData,
   ISchemaCreateData,
   ISchemaLookupData,
   ISchemaPrepareForEndorserData,
@@ -44,7 +42,7 @@ export const createConnectionInviterInvited = async (
   data = dataConnectionCreate(),
 ): Promise<Connection> => {
   const connection = await connectionCreateInviterNull(data);
-  const inviteDetails = await connection.connect({ data: '{}' });
+  const inviteDetails = await connection.connect();
   assert.ok(inviteDetails);
   return connection;
 };

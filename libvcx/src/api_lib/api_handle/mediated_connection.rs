@@ -180,8 +180,15 @@ pub async fn create_with_request(request: String, agent_handle: u32) -> ::napi::
     store_connection(connection)
 }
 
-pub async fn create_with_request_v2(request: String, pw_info: PairwiseInfo) -> ::napi::Result<u32> {
+#[napi]
+pub async fn create_with_request_v2(request: String, pw_info: String) -> ::napi::Result<u32> {
     let request: Request = serde_json::from_str(&request).map_err(|err| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidJson,
+            format!("Cannot deserialize connection request: {:?}", err),
+        )
+    })?;
+    let pw_info: PairwiseInfo = serde_json::from_str(&pw_info).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::InvalidJson,
             format!("Cannot deserialize connection request: {:?}", err),

@@ -332,12 +332,9 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
     pwInfo,
     request
   }: IFromRequestInfoV2): Promise<Connection> {
-    const connection = new Connection(id);
-    const commandHandle = 0;
     try {
-      await connection._create((cb) =>
-        rustAPI().vcx_connection_create_with_connection_request_v2(commandHandle, id, JSON.stringify(pwInfo), request, cb),
-      );
+      const connection = new Connection(id);
+      connection._setHandle(await ffiNapi.createWithRequestV2(request, JSON.stringify(pwInfo)))
       return connection;
     } catch (err: any) {
       throw new VCXInternalError(err);
