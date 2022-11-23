@@ -35,6 +35,7 @@
     "fs-extra": "^4.0.2",
     "lodash": "^4.17.21",
     "ref-napi": "^3.0.3",
+    "sleep-promise": "^9.1.0",
     "uuid": "^8.3.2",
     "weak-napi": "^2.0.2"
   },
