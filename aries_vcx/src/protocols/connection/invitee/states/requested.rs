@@ -1,7 +1,7 @@
 use messages::did_doc::DidDoc;
 use messages::connection::problem_report::ProblemReport;
 use messages::connection::request::Request;
-use messages::connection::response::SignedResponse;
+use messages::connection::response::Response;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 
@@ -21,8 +21,8 @@ impl From<(RequestedState, ProblemReport)> for InitialState {
     }
 }
 
-impl From<(RequestedState, SignedResponse)> for RespondedState {
-    fn from((state, response): (RequestedState, SignedResponse)) -> RespondedState {
+impl From<(RequestedState, Response)> for RespondedState {
+    fn from((state, response): (RequestedState, Response)) -> RespondedState {
         trace!("ConnectionInvitee: transit state from RequestedState to RespondedState");
         RespondedState {
             response,

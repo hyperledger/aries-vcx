@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use messages::proof_presentation::presentation_ack::PresentationAck;
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::error::prelude::*;
 use messages::a2a::{A2AMessage, MessageId};
@@ -187,6 +188,19 @@ impl ProverSM {
             }
             s @ _ => {
                 warn!("Unable to send set presentation in state {}", s);
+                s
+            }
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub fn receive_presentation_ack(self, ack: PresentationAck) -> VcxResult<Self> {
+        let state = match self.state {
+            ProverFullState::PresentationSent(state) => {
+                ProverFullState::Finished((state.clone(), ack).into())
+            }
+            s @ _ => {
+                warn!("Unable to process presentation ack in state {}", s);
                 s
             }
         };

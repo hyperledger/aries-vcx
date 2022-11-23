@@ -21,7 +21,7 @@ pub struct OutOfBandInvitation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub handshake_protocols: Option<Vec<MessageType>>,
+    pub handshake_protocols: Option<Vec<MessageType>>, // TODO: Make a separate type
     pub services: Vec<ServiceResolvable>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,

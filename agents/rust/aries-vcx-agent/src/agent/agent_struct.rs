@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::agent::agent_config::AgentConfig;
 
 use crate::error::*;
+use crate::services::connection::ServiceConnections;
 use crate::services::{
-    connection::ServiceConnections, credential_definition::ServiceCredentialDefinitions,
-    holder::ServiceCredentialsHolder, issuer::ServiceCredentialsIssuer, prover::ServiceProver,
-    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas,
-    verifier::ServiceVerifier,
+    credential_definition::ServiceCredentialDefinitions, holder::ServiceCredentialsHolder,
+    issuer::ServiceCredentialsIssuer, mediated_connection::ServiceMediatedConnections, prover::ServiceProver,
+    revocation_registry::ServiceRevocationRegistries, schema::ServiceSchemas, verifier::ServiceVerifier,
 };
 
 #[derive(Clone)]
@@ -19,6 +19,7 @@ pub struct Agent {
     pub(super) pool_handle: PoolHandle,
     pub(super) config: AgentConfig,
     pub(super) connections: Arc<ServiceConnections>,
+    pub(super) mediated_connections: Option<Arc<ServiceMediatedConnections>>,
     pub(super) schemas: Arc<ServiceSchemas>,
     pub(super) cred_defs: Arc<ServiceCredentialDefinitions>,
     pub(super) rev_regs: Arc<ServiceRevocationRegistries>,
@@ -46,18 +47,30 @@ impl Agent {
     }
 
     pub fn agency_client(&self) -> AgentResult<AgencyClient> {
-        AgencyClient::new()
-            .configure(self.wallet_handle, &self.config.config_agency_client)
-            .map_err(|err| {
-                AgentError::from_msg(
-                    AgentErrorKind::GenericAriesVcxError,
-                    &format!("Failed to configure agency client: {}", err),
-                )
-            })
+        if let Some(config_agency_client) = &self.config.config_agency_client {
+            AgencyClient::new()
+                .configure(self.wallet_handle, config_agency_client)
+                .map_err(|err| {
+                    AgentError::from_msg(
+                        AgentErrorKind::GenericAriesVcxError,
+                        &format!("Failed to configure agency client: {}", err),
+                    )
+                })
+        } else {
+            Err(AgentError::from_kind(
+                AgentErrorKind::MediatedConnectionServiceUnavailable,
+            ))
+        }
     }
 
     pub fn connections(&self) -> Arc<ServiceConnections> {
         self.connections.clone()
+    }
+
+    pub fn mediated_connections(&self) -> AgentResult<Arc<ServiceMediatedConnections>> {
+        self.mediated_connections.clone().ok_or_else(|| AgentError::from_kind(
+            AgentErrorKind::MediatedConnectionServiceUnavailable,
+        ))
     }
 
     pub fn schemas(&self) -> Arc<ServiceSchemas> {

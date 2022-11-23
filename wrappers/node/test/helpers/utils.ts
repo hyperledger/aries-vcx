@@ -79,7 +79,7 @@ export const shouldThrow = (fn: () => any): Promise<vcx.VCXInternalError> =>
     try {
       await fn();
       reject(new Error(`${fn.toString()} should have thrown!`));
-    } catch (e) {
+    } catch (e: any) {
       resolve(e);
     }
   });
@@ -95,11 +95,13 @@ let garbageCollectionBeforeExitIsScheduled = false;
 // To solve this issue, we call global.gc() on `beforeExit` event.
 // NB: This solution only works with Mocha.
 //     With Jest the 'beforeExit' event doesn't seem fired, so we are instead still using --forceExit before it segfaults.
+// TODO: Avoid using --exit
 const scheduleGarbageCollectionBeforeExit = () => {
   if (!garbageCollectionBeforeExitIsScheduled) {
-    assert(global.gc);
     process.on('beforeExit', () => {
-      global.gc();
+      if (typeof global.gc != 'undefined') {
+        global.gc();
+      };
     });
   }
   garbageCollectionBeforeExitIsScheduled = true;

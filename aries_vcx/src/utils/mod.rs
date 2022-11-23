@@ -1,4 +1,4 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 use std::env;
 use std::path::PathBuf;
 
@@ -84,6 +84,7 @@ pub async fn send_message(
         &did_doc)
         .await?;
 
+    // TODO: Extract from agency client
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
 
     Ok(())

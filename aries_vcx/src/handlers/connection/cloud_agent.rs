@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessageEncrypted;
@@ -256,6 +256,6 @@ impl CloudAgentInfo {
         wallet_handle: WalletHandle,
         message: &DownloadedMessageEncrypted,
     ) -> VcxResult<A2AMessage> {
-        EncryptionEnvelope::anon_unpack(wallet_handle, message.payload()?).await
+        Ok(EncryptionEnvelope::anon_unpack(wallet_handle, message.payload()?).await?.0)
     }
 }

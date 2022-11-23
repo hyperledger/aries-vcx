@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
 use crate::error::prelude::*;
@@ -268,7 +268,7 @@ pub fn build_requested_credentials_json(
 #[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod pool_tests {
-    use vdrtools_sys::PoolHandle;
+    use vdrtools::PoolHandle;
 
     use crate::indy::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
@@ -281,7 +281,7 @@ pub mod pool_tests {
 
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
-        let _setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|_setup| async move {
 
         // empty vector
         assert_eq!(
@@ -305,6 +305,7 @@ pub mod pool_tests {
             build_rev_states_json(_dummy_pool_handle(), vec![cred1].as_mut()).await.unwrap(),
             "{}".to_string()
         );
+        }).await;
     }
 }
 
@@ -380,47 +381,48 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_find_credential_def_fails() {
-        let setup = SetupLibraryWallet::init().await;
-        let credential_ids = vec![CredInfoProver {
-            requested_attr: "1".to_string(),
-            referent: "2".to_string(),
-            schema_id: "3".to_string(),
-            cred_def_id: "3".to_string(),
-            rev_reg_id: Some("4".to_string()),
-            cred_rev_id: Some("5".to_string()),
-            revocation_interval: None,
-            tails_file: None,
-            timestamp: None,
-        }];
-        let err_kind = build_cred_defs_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
-            .await
-            .unwrap_err()
-            .kind();
-        assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
+        SetupLibraryWallet::run(|setup| async move {
+            let credential_ids = vec![CredInfoProver {
+                requested_attr: "1".to_string(),
+                referent: "2".to_string(),
+                schema_id: "3".to_string(),
+                cred_def_id: "3".to_string(),
+                rev_reg_id: Some("4".to_string()),
+                cred_rev_id: Some("5".to_string()),
+                revocation_interval: None,
+                tails_file: None,
+                timestamp: None,
+            }];
+            let err_kind = build_cred_defs_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
+                .await
+                .unwrap_err()
+                .kind();
+            assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_find_schemas_fails() {
-        let setup = SetupLibraryWallet::init().await;
-
-        let credential_ids = vec![CredInfoProver {
-            requested_attr: "1".to_string(),
-            referent: "2".to_string(),
-            schema_id: "3".to_string(),
-            cred_def_id: "3".to_string(),
-            rev_reg_id: Some("4".to_string()),
-            cred_rev_id: Some("5".to_string()),
-            revocation_interval: None,
-            tails_file: None,
-            timestamp: None,
-        }];
-        assert_eq!(
-            build_schemas_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
-                .await
-                .unwrap_err()
-                .kind(),
-            VcxErrorKind::InvalidSchema
-        );
+        SetupLibraryWallet::run(|setup| async move {
+            let credential_ids = vec![CredInfoProver {
+                requested_attr: "1".to_string(),
+                referent: "2".to_string(),
+                schema_id: "3".to_string(),
+                cred_def_id: "3".to_string(),
+                rev_reg_id: Some("4".to_string()),
+                cred_rev_id: Some("5".to_string()),
+                revocation_interval: None,
+                tails_file: None,
+                timestamp: None,
+            }];
+            assert_eq!(
+                build_schemas_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
+                    .await
+                    .unwrap_err()
+                    .kind(),
+                VcxErrorKind::InvalidSchema
+            );
+        }).await;
     }
 
     #[tokio::test]

@@ -4,13 +4,13 @@ export type ICbRef = Buffer;
 
 // LibVCX function which accepts a callback and rejects with a return code if needed
 export type ICreateFFICallbackPromiseFn<T> = (
-  resolve: (value?: T) => void,
+  resolve: (value: T | PromiseLike<T>) => void,
   reject: (reason?: number | string | Error) => void,
   cbRef: ICbRef,
 ) => void;
 
 export type ICreateFFICallbackPromiseCb<T> = (
-  resolve: (value?: T) => void,
+  resolve: (value: T | PromiseLike<T>) => void,
   reject: (reason?: number | string | Error) => void,
 ) => ICbRef;
 

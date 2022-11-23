@@ -3,7 +3,7 @@ use std::ptr;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::utils::error;
 use aries_vcx::utils::filters;
 
@@ -81,7 +81,7 @@ mod tests {
     use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, error, mockdata::mockdata_proof};
 
     use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;
-    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -91,7 +91,7 @@ mod tests {
     async fn test_vcx_filter_proof_requests_by_name() {
         let _setup = SetupMocks::init();
 
-        let connection_h = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::PRESENTATION_REQUEST_MESSAGE_1);

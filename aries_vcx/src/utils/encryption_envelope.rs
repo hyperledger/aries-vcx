@@ -1,5 +1,5 @@
-use vdrtools::future::TryFutureExt;
-use vdrtools_sys::WalletHandle;
+use futures::TryFutureExt;
+use vdrtools::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
@@ -7,6 +7,7 @@ use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::signing;
+use crate::utils::constants;
 use messages::a2a::A2AMessage;
 use messages::forward::Forward;
 
@@ -123,17 +124,16 @@ impl EncryptionEnvelope {
     }
 
     // todo: we should use auth_unpack wherever possible
-    pub async fn anon_unpack(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<A2AMessage> {
+    pub async fn anon_unpack(wallet_handle: WalletHandle, payload: Vec<u8>) -> VcxResult<(A2AMessage, Option<String>)> {
         trace!(
             "EncryptionEnvelope::anon_unpack >>> processing payload of {} bytes",
             payload.len()
         );
-        let message = if AgencyMockDecrypted::has_decrypted_mock_messages() {
+        let (message, sender_vk) = if AgencyMockDecrypted::has_decrypted_mock_messages() {
             trace!("EncryptionEnvelope::anon_unpack >>> returning decrypted mock message");
-            AgencyMockDecrypted::get_next_decrypted_message()
+            (AgencyMockDecrypted::get_next_decrypted_message(), Some(constants::VERKEY.to_string()))
         } else {
-            let (a2a_message, _sender_vk) = Self::_unpack_a2a_message(wallet_handle, payload).await?;
-            a2a_message
+            Self::_unpack_a2a_message(wallet_handle, payload).await?
         };
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
             VcxError::from_msg(
@@ -141,7 +141,7 @@ impl EncryptionEnvelope {
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
-        Ok(a2a_message)
+        Ok((a2a_message, sender_vk))
     }
 
     pub async fn auth_unpack(
@@ -207,26 +207,28 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_encryption_envelope_works_for_no_keys() {
         SetupEmpty::init();
-        let setup = test_setup::setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
+        test_setup::with_wallet(|wallet_handle| async move {
+        let trustee_key = create_trustee_key(wallet_handle).await;
 
         let message = A2AMessage::Ack(_ack());
 
         let res =
-            EncryptionEnvelope::create(setup.wallet_handle, &message, Some(&trustee_key), &DidDoc::default()).await;
+            EncryptionEnvelope::create(wallet_handle, &message, Some(&trustee_key), &DidDoc::default()).await;
+
         assert_eq!(res.unwrap_err().kind(), VcxErrorKind::InvalidLibindyParam);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_encryption_envelope_works_for_recipient_only() {
         SetupEmpty::init();
-        let setup = test_setup::setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
+        test_setup::with_wallet(|wallet_handle| async move {
+        let trustee_key = create_trustee_key(wallet_handle).await;
 
         let message = A2AMessage::Ack(_ack());
 
         let envelope = EncryptionEnvelope::create(
-            setup.wallet_handle,
+            wallet_handle,
             &message,
             Some(&trustee_key),
             &_did_doc_empty_routing(),
@@ -235,20 +237,22 @@ pub mod unit_tests {
         .unwrap();
         assert_eq!(
             message,
-            EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0)
+            EncryptionEnvelope::anon_unpack(wallet_handle, envelope.0)
                 .await
-                .unwrap()
+                .unwrap().0
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_encryption_envelope_works_for_routing_keys() {
         SetupEmpty::init();
-        let setup = test_setup::setup_wallet().await;
-        let trustee_key = create_trustee_key(setup.wallet_handle).await;
+        test_setup::with_wallet(|wallet_handle| async move {
+        let trustee_key = create_trustee_key(wallet_handle).await;
 
-        let key_1 = create_key(setup.wallet_handle, None).await.unwrap();
-        let key_2 = create_key(setup.wallet_handle, None).await.unwrap();
+        let key_1 = create_key(wallet_handle, None).await.unwrap();
+
+        let key_2 = create_key(wallet_handle, None).await.unwrap();
 
         let mut did_doc = DidDoc::default();
         did_doc.set_service_endpoint(_service_endpoint());
@@ -257,13 +261,13 @@ pub mod unit_tests {
 
         let ack = A2AMessage::Ack(_ack());
 
-        let envelope = EncryptionEnvelope::create(setup.wallet_handle, &ack, Some(&trustee_key), &did_doc)
+        let envelope = EncryptionEnvelope::create(wallet_handle, &ack, Some(&trustee_key), &did_doc)
             .await
             .unwrap();
 
-        let message_1 = EncryptionEnvelope::anon_unpack(setup.wallet_handle, envelope.0)
+        let message_1 = EncryptionEnvelope::anon_unpack(wallet_handle, envelope.0)
             .await
-            .unwrap();
+            .unwrap().0;
 
         let message_1 = match message_1 {
             A2AMessage::Forward(forward) => {
@@ -273,9 +277,9 @@ pub mod unit_tests {
             _ => return assert!(false),
         };
 
-        let message_2 = EncryptionEnvelope::anon_unpack(setup.wallet_handle, message_1)
+        let message_2 = EncryptionEnvelope::anon_unpack(wallet_handle, message_1)
             .await
-            .unwrap();
+            .unwrap().0;
 
         let message_2 = match message_2 {
             A2AMessage::Forward(forward) => {
@@ -287,51 +291,71 @@ pub mod unit_tests {
 
         assert_eq!(
             ack,
-            EncryptionEnvelope::anon_unpack(setup.wallet_handle, message_2)
+            EncryptionEnvelope::anon_unpack(wallet_handle, message_2)
                 .await
-                .unwrap()
+                .unwrap().0
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_auth_unpack_message_should_succeed_if_sender_key_matches_expectation() {
         SetupEmpty::init();
-        let recipient_wallet = test_setup::setup_wallet().await;
-        let recipient_key = test_setup::create_key(recipient_wallet.wallet_handle).await;
 
-        let sender_wallet = test_setup::setup_wallet().await;
-        let sender_key = test_setup::create_key(sender_wallet.wallet_handle).await;
+        test_setup::with_wallet(|recipient_wallet| async move {
+            let recipient_key = test_setup::create_key(recipient_wallet).await;
 
-        let mut did_doc = DidDoc::default();
-        did_doc.set_recipient_keys(vec![recipient_key]);
+            test_setup::with_wallet(|sender_wallet| async move {
+                let sender_key = test_setup::create_key(sender_wallet).await;
 
-        let ack = A2AMessage::Ack(_ack());
-        let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key), &did_doc)
-            .await
-            .unwrap();
-        let _message_1 = EncryptionEnvelope::auth_unpack(recipient_wallet.wallet_handle, envelope.0, &sender_key)
-            .await
-            .unwrap();
+                let mut did_doc = DidDoc::default();
+                did_doc.set_recipient_keys(vec![recipient_key]);
+
+                let ack = A2AMessage::Ack(_ack());
+                let envelope = EncryptionEnvelope::create(sender_wallet, &ack, Some(&sender_key), &did_doc)
+                    .await
+                    .unwrap();
+                let _message_1 = EncryptionEnvelope::auth_unpack(recipient_wallet, envelope.0, &sender_key)
+                    .await
+                    .unwrap();
+            }).await;
+
+        }).await;
     }
 
     #[tokio::test]
     async fn test_auth_unpack_message_should_fail_if_sender_key_does_not_match_expectation() {
-        SetupEmpty::init();
-        let recipient_wallet = test_setup::setup_wallet().await;
-        let recipient_key = test_setup::create_key(recipient_wallet.wallet_handle).await;
+        let _setup = SetupEmpty::init();
 
-        let sender_wallet = test_setup::setup_wallet().await;
-        let sender_key_1 = test_setup::create_key(sender_wallet.wallet_handle).await;
-        let sender_key_2 = test_setup::create_key(sender_wallet.wallet_handle).await;
+        test_setup::with_wallet(|recipient_wallet| async move {
+            let recipient_key = test_setup::create_key(recipient_wallet).await;
 
-        let mut did_doc = DidDoc::default();
-        did_doc.set_recipient_keys(vec![recipient_key]);
+            test_setup::with_wallet(|sender_wallet| async move {
+                let sender_key_1 = test_setup::create_key(sender_wallet).await;
+                let sender_key_2 = test_setup::create_key(sender_wallet).await;
 
-        let ack = A2AMessage::Ack(_ack());
-        let envelope = EncryptionEnvelope::create(sender_wallet.wallet_handle, &ack, Some(&sender_key_2), &did_doc)
-            .await
-            .unwrap();
-        let result = EncryptionEnvelope::auth_unpack(recipient_wallet.wallet_handle, envelope.0, &sender_key_1).await;
-        assert!(result.is_err());
+                let mut did_doc = DidDoc::default();
+
+                did_doc.set_recipient_keys(vec![recipient_key]);
+
+                let ack = A2AMessage::Ack(_ack());
+                let envelope =
+                    EncryptionEnvelope::create(
+                        sender_wallet,
+                        &ack,
+                        Some(&sender_key_2),
+                        &did_doc,
+                    ).await.unwrap();
+
+                let result =
+                    EncryptionEnvelope::auth_unpack(
+                        recipient_wallet,
+                        envelope.0,
+                        &sender_key_1,
+                    ).await;
+
+                assert!(result.is_err());
+            }).await;
+        }).await;
     }
 }

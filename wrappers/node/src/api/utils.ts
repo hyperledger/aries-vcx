@@ -2,7 +2,7 @@ import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors'
 import { rustAPI } from '../rustlib'
-import { IConnectionDownloadAllMessages } from './connection'
+import { IConnectionDownloadAllMessages } from './mediated-connection'
 import { createFFICallbackPromise } from '../utils/ffi-helpers'
 import * as ref from 'ref-napi';
 
@@ -45,7 +45,7 @@ export async function provisionCloudAgent (configAgent: object): Promise<string>
           resolve(config)
         })
     )
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err)
   }
 }
@@ -86,7 +86,7 @@ export async function getLedgerAuthorAgreement(): Promise<string> {
         ),
     );
     return agreement;
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -137,7 +137,7 @@ export async function vcxUpdateWebhookUrl({ webhookUrl }: IUpdateWebhookUrl): Pr
           resolve();
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -167,7 +167,7 @@ export async function updateMessages({ msgJson }: IUpdateMessagesConfigs): Promi
           resolve(err);
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -197,7 +197,7 @@ export async function endorseTransaction(transaction: string): Promise<void> {
           resolve();
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -220,7 +220,7 @@ export async function rotateVerkey(did: string): Promise<void> {
           resolve();
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -243,7 +243,7 @@ export async function rotateVerkeyStart(did: string): Promise<string> {
           resolve(tempVk);
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -266,7 +266,7 @@ export async function rotateVerkeyApply(did: string, tempVk: string): Promise<vo
           resolve();
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -289,7 +289,7 @@ export async function getVerkeyFromWallet(did: string): Promise<string> {
           resolve(vk);
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -312,7 +312,7 @@ export async function getVerkeyFromLedger(did: string): Promise<string> {
           resolve(vk);
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -335,7 +335,7 @@ export async function getLedgerTxn(did: string, seqNo: number): Promise<string> 
           resolve(txn);
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -358,7 +358,7 @@ export async function createPwInfo(): Promise<IPwInfo> {
           resolve(JSON.parse(pwInfo));
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -384,7 +384,7 @@ export async function createService(
           resolve(JSON.parse(service));
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -408,7 +408,7 @@ export async function getServiceFromLedger (did: string): Promise<IAriesService>
           resolve(JSON.parse(service));
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }
@@ -432,7 +432,7 @@ export async function unpack(payload: Buffer): Promise<IMsgUnpacked> {
           resolve(JSON.parse(decryptedPayload));
         }),
     );
-  } catch (err) {
+  } catch (err: any) {
     throw new VCXInternalError(err);
   }
 }

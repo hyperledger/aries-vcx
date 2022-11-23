@@ -31,7 +31,7 @@ export class PublicAgent extends VCXBase<IAgentSerializedData> {
         rustAPI().vcx_public_agent_create(commandHandle, sourceId, institution_did, cb),
       );
       return agent;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -69,7 +69,7 @@ export class PublicAgent extends VCXBase<IAgentSerializedData> {
           ),
       );
       return data;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -106,7 +106,7 @@ export class PublicAgent extends VCXBase<IAgentSerializedData> {
           ),
       );
       return data;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -144,7 +144,7 @@ export class PublicAgent extends VCXBase<IAgentSerializedData> {
           ),
       );
       return data;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

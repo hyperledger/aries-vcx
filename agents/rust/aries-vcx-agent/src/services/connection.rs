@@ -1,109 +1,113 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+use aries_vcx::indy::ledger::transactions::into_did_doc;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::ack::Ack;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries_vcx::{
-    agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
-    handlers::connection::connection::{Connection, ConnectionState},
-    indy::ledger::transactions::into_did_doc,
-    messages::a2a::A2AMessage,
-    vdrtools_sys::{PoolHandle, WalletHandle},
-};
+use aries_vcx::messages::connection::response::SignedResponse;
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+
+pub type ServiceEndpoint = String;
 
 pub struct ServiceConnections {
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
-    config_agency_client: AgencyClientConfig,
+    service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<Connection>>,
 }
 
 impl ServiceConnections {
-    pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        config_agency_client: AgencyClientConfig,
-    ) -> Self {
+    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, service_endpoint: ServiceEndpoint) -> Self {
         Self {
             wallet_handle,
             pool_handle,
-            config_agency_client,
+            service_endpoint,
             connections: Arc::new(ObjectCache::new("connections")),
         }
     }
 
-    fn agency_client(&self) -> AgentResult<AgencyClient> {
-        AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
-            .map_err(|err| {
-                AgentError::from_msg(
-                    AgentErrorKind::GenericAriesVcxError,
-                    &format!("Failed to configure agency client: {}", err),
-                )
-            })
-    }
-
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let mut connection =
-            Connection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
-        connection
-            .connect(self.wallet_handle, &self.agency_client()?)
+        let inviter = Connection::create_inviter(self.wallet_handle)
+            .await?
+            .create_invite(self.service_endpoint.clone(), vec![])
             .await?;
-        let invite = connection
+        let invite = inviter
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
-        self.connections
-            .set(&connection.get_thread_id(), connection)?;
+        self.connections.set(&inviter.get_thread_id(), inviter)?;
         Ok(invite)
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
-        let ddo = into_did_doc(self.pool_handle, &invite).await?;
-        let connection = Connection::create_with_invite(
-            "",
-            self.wallet_handle,
-            &self.agency_client()?,
-            invite,
-            ddo,
-            true,
-        )
-        .await?;
-        self.connections
-            .set(&connection.get_thread_id(), connection)
+        let did_doc = into_did_doc(self.pool_handle, &invite).await?;
+        let invitee = Connection::create_invitee(self.wallet_handle, did_doc)
+            .await?
+            .process_invite(invite)?;
+        self.connections.set(&invitee.get_thread_id(), invitee)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
-        let mut connection = self.connections.get(thread_id)?;
-        connection
-            .connect(self.wallet_handle, &self.agency_client()?)
+        let invitee = self
+            .connections
+            .get(thread_id)?
+            .send_request(self.wallet_handle, self.service_endpoint.clone(), vec![], None)
             .await?;
-        connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
-            .await?;
-        self.connections.set(thread_id, connection)?;
+        self.connections.set(thread_id, invitee)?;
         Ok(())
     }
 
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
-        let mut connection = self.connections.get(thread_id)?;
-        connection
-            .process_request(self.wallet_handle, &self.agency_client()?, request)
+        let inviter = self
+            .connections
+            .get(thread_id)?
+            .process_request(self.wallet_handle, request, self.service_endpoint.clone(), vec![], None)
             .await?;
-        connection.send_response(self.wallet_handle).await?;
-        self.connections.set(thread_id, connection)?;
+        self.connections.set(thread_id, inviter)?;
         Ok(())
     }
 
-    pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
-        let mut connection = self.connections.get(thread_id)?;
-        connection.send_ping(self.wallet_handle, None).await?;
-        self.connections.set(thread_id, connection)?;
+    pub async fn send_response(&self, thread_id: &str) -> AgentResult<()> {
+        let inviter = self
+            .connections
+            .get(thread_id)?
+            .send_response(self.wallet_handle, None)
+            .await?;
+        self.connections.set(thread_id, inviter)?;
+        Ok(())
+    }
+
+    pub async fn accept_response(&self, thread_id: &str, response: SignedResponse) -> AgentResult<()> {
+        let invitee = self
+            .connections
+            .get(thread_id)?
+            .process_response(self.wallet_handle, response, None)
+            .await?;
+        self.connections.set(thread_id, invitee)?;
+        Ok(())
+    }
+
+    pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
+        let invitee = self
+            .connections
+            .get(thread_id)?
+            .send_ack(self.wallet_handle, None)
+            .await?;
+        self.connections.set(thread_id, invitee)?;
+        Ok(())
+    }
+
+    pub async fn process_ack(&self, thread_id: &str, ack: Ack) -> AgentResult<()> {
+        let inviter = self
+            .connections
+            .get(thread_id)?
+            .process_ack(A2AMessage::Ack(ack))
+            .await?;
+        self.connections.set(thread_id, inviter)?;
         Ok(())
     }
 
@@ -111,62 +115,24 @@ impl ServiceConnections {
         Ok(self.connections.get(thread_id)?.get_state())
     }
 
-    pub async fn update_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
-        let mut connection = self.connections.get(thread_id)?;
-        connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
-            .await?;
-        self.connections.set(thread_id, connection)?;
-        Ok(self.connections.get(thread_id)?.get_state())
-    }
-
     pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<Connection> {
         self.connections.get(thread_id)
     }
 
+    pub fn get_by_their_vk(&self, their_vk: &str) -> AgentResult<Vec<String>> {
+        let their_vk = their_vk.to_string();
+        let f = |(id, m): (&String, &Mutex<Connection>)| -> Option<String> {
+            let connection = m.lock().unwrap();
+            match connection.remote_vk() {
+                Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),
+                _ => None
+            }
+        };
+        self.connections.find_by(f)
+    }
+
+
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.connections.has_id(thread_id)
     }
-
-    pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {
-        let agency_client = self.agency_client()?;
-        let mut requests = Vec::<(PresentationRequest, String)>::new();
-        for connection in self.connections.get_all()? {
-            for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-                if let A2AMessage::PresentationRequest(request) = message {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    requests.push((request, connection.get_thread_id()));
-                }
-            }
-        }
-        Ok(requests)
-    }
 }
-
-macro_rules! get_messages (($msg_type:ty, $a2a_msg:ident, $name:ident) => (
-    impl ServiceConnections {
-        pub async fn $name(&self, thread_id: &str) -> AgentResult<Vec<$msg_type>> {
-            let connection = self.connections.get(thread_id)?;
-            let agency_client = self.agency_client()?;
-            let mut messages = Vec::<$msg_type>::new();
-            for (uid, message) in connection.get_messages_noauth(&agency_client).await?.into_iter() {
-                if let A2AMessage::$a2a_msg(message) = message {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    messages.push(message);
-                }
-            }
-            Ok(messages)
-        }
-    }
-));
-
-get_messages!(Request, ConnectionRequest, get_connection_requests);
-get_messages!(CredentialProposal, CredentialProposal, get_credential_proposals);
-get_messages!(CredentialOffer, CredentialOffer, get_credential_offers);
-get_messages!(PresentationProposal, PresentationProposal, get_proof_proposals);

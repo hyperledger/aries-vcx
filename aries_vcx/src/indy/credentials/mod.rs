@@ -5,7 +5,7 @@ pub mod issuer;
 use std::collections::HashMap;
 
 use time::get_time;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 
@@ -60,7 +60,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_prover_get_credential() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let res = create_and_store_credential(
             setup.wallet_handle,
@@ -84,11 +84,12 @@ mod integration_tests {
         assert_eq!(prover_cred.cred_def_id, cred_def_id);
         assert_eq!(prover_cred.cred_rev_id.unwrap().to_string(), cred_rev_id);
         assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg_id);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_cred_rev_id() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let res = create_and_store_credential(
             setup.wallet_handle,
@@ -103,11 +104,12 @@ mod integration_tests {
         let cred_rev_id_ = get_cred_rev_id(setup.wallet_handle, &cred_id).await.unwrap();
 
         assert_eq!(cred_rev_id, cred_rev_id_.to_string());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_is_cred_revoked() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let res = create_and_store_credential(
             setup.wallet_handle,
@@ -145,5 +147,6 @@ mod integration_tests {
                 .await
                 .unwrap()
         );
+        }).await;
     }
 }

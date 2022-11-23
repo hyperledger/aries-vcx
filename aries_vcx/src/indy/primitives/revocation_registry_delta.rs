@@ -1,4 +1,4 @@
-use vdrtools_sys::PoolHandle;
+use vdrtools::PoolHandle;
 
 use crate::{error::prelude::*, indy::ledger::transactions::get_rev_reg_delta_json};
 
@@ -63,7 +63,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_create_rev_reg_delta_from_ledger() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) =
@@ -75,5 +75,6 @@ pub mod integration_tests {
                 .await
                 .is_ok()
         );
+        }).await;
     }
 }

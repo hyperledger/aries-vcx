@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { IOOBSerializedData } from './out-of-band-sender';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBase } from './vcx-base';
 import { ISerializedData } from './common';
 
@@ -16,7 +16,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
         rustAPI().vcx_out_of_band_receiver_create(commandHandle, msg, cb),
       );
       return oob;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -56,7 +56,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
           ),
       );
       return msg
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -100,7 +100,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
           ),
       );
       return res
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -133,7 +133,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
           ),
       );
       return await Connection.deserialize(JSON.parse(connection));
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -166,7 +166,7 @@ export class OutOfBandReceiver extends VCXBase<IOOBSerializedData> {
           ),
       );
       return thid;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

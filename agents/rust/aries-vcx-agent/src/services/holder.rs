@@ -3,13 +3,12 @@ use std::sync::Arc;
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::issuance::credential::Credential;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 #[derive(Clone)]
 struct HolderWrapper {
@@ -29,7 +28,6 @@ impl HolderWrapper {
 pub struct ServiceCredentialsHolder {
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
-    config_agency_client: AgencyClientConfig,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
@@ -38,13 +36,11 @@ impl ServiceCredentialsHolder {
     pub fn new(
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
-        config_agency_client: AgencyClientConfig,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
             wallet_handle,
             pool_handle,
-            config_agency_client,
             service_connections,
             creds_holder: ObjectCache::new("creds-holder"),
         }
@@ -60,17 +56,6 @@ impl ServiceCredentialsHolder {
         Ok(connection_id)
     }
 
-    fn agency_client(&self) -> AgentResult<AgencyClient> {
-        AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
-            .map_err(|err| {
-                AgentError::from_msg(
-                    AgentErrorKind::GenericAriesVcxError,
-                    &format!("Failed to configure agency client: {}", err),
-                )
-            })
-    }
-
     pub async fn send_credential_proposal(
         &self,
         connection_id: &str,
@@ -81,7 +66,7 @@ impl ServiceCredentialsHolder {
         holder
             .send_proposal(
                 proposal_data,
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
         self.creds_holder.set(
@@ -120,7 +105,29 @@ impl ServiceCredentialsHolder {
                 self.wallet_handle,
                 self.pool_handle,
                 connection.pairwise_info().pw_did.to_string(),
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(self.wallet_handle, None).await?,
+            )
+            .await?;
+        self.creds_holder.set(
+            &holder.get_thread_id()?,
+            HolderWrapper::new(holder, &connection_id),
+        )
+    }
+
+    pub async fn process_credential(
+        &self,
+        thread_id: &str,
+        credential: Credential,
+    ) -> AgentResult<String> {
+        let mut holder = self.get_holder(thread_id)?;
+        let connection_id = self.get_connection_id(thread_id)?;
+        let connection = self.service_connections.get_by_id(&connection_id)?;
+        holder
+            .process_credential(
+                self.wallet_handle,
+                self.pool_handle,
+                credential,
+                connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
         self.creds_holder.set(
@@ -131,27 +138,6 @@ impl ServiceCredentialsHolder {
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<HolderState> {
         Ok(self.get_holder(thread_id)?.get_state())
-    }
-
-    pub async fn update_state(&self, thread_id: &str) -> AgentResult<HolderState> {
-        let HolderWrapper {
-            mut holder,
-            connection_id,
-        } = self.creds_holder.get(thread_id)?;
-        let connection = self.service_connections.get_by_id(&connection_id)?;
-        let state = holder
-            .update_state(
-                self.wallet_handle,
-                self.pool_handle,
-                &self.agency_client()?,
-                &connection,
-            )
-            .await?;
-        self.creds_holder.set(
-            thread_id,
-            HolderWrapper::new(holder, &connection_id),
-        )?;
-        Ok(state)
     }
 
     pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {

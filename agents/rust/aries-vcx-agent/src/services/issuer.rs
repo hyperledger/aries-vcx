@@ -3,13 +3,13 @@ use std::sync::Arc;
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::messages::issuance::credential_ack::CredentialAck;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::vdrtools_sys::WalletHandle;
+use aries_vcx::vdrtools::WalletHandle;
 
 #[derive(Clone)]
 struct IssuerWrapper {
@@ -28,7 +28,6 @@ impl IssuerWrapper {
 
 pub struct ServiceCredentialsIssuer {
     wallet_handle: WalletHandle,
-    config_agency_client: AgencyClientConfig,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
@@ -36,12 +35,10 @@ pub struct ServiceCredentialsIssuer {
 impl ServiceCredentialsIssuer {
     pub fn new(
         wallet_handle: WalletHandle,
-        config_agency_client: AgencyClientConfig,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
             wallet_handle,
-            config_agency_client,
             service_connections,
             creds_issuer: ObjectCache::new("creds-issuer"),
         }
@@ -57,27 +54,12 @@ impl ServiceCredentialsIssuer {
         Ok(connection_id)
     }
 
-    fn agency_client(&self) -> AgentResult<AgencyClient> {
-        AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
-            .map_err(|err| {
-                AgentError::from_msg(
-                    AgentErrorKind::GenericAriesVcxError,
-                    &format!("Failed to configure agency client: {}", err),
-                )
-            })
-    }
-
     pub async fn accept_proposal(
         &self,
         connection_id: &str,
         proposal: &CredentialProposal,
     ) -> AgentResult<String> {
-        let connection = self.service_connections.get_by_id(connection_id)?;
-        let mut issuer = Issuer::create_from_proposal("", proposal)?;
-        issuer
-            .update_state(self.wallet_handle, &self.agency_client()?, &connection)
-            .await?;
+        let issuer = Issuer::create_from_proposal("", proposal)?;
         self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, connection_id),
@@ -101,12 +83,38 @@ impl ServiceCredentialsIssuer {
             .build_credential_offer_msg(self.wallet_handle, offer_info, None)
             .await?;
         issuer
-            .send_credential_offer(connection.send_message_closure(self.wallet_handle).await?)
+            .send_credential_offer(connection.send_message_closure(self.wallet_handle, None).await?)
             .await?;
         self.creds_issuer.set(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )
+    }
+
+    pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_request(request)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
+    }
+
+    pub fn process_credential_ack(&self, thread_id: &str, ack: CredentialAck) -> AgentResult<()> {
+        let IssuerWrapper {
+            mut issuer,
+            connection_id,
+        } = self.creds_issuer.get(thread_id)?;
+        issuer.process_credential_ack(ack)?;
+        self.creds_issuer.set(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id),
+        )?;
+        Ok(())
     }
 
     pub async fn send_credential(&self, thread_id: &str) -> AgentResult<()> {
@@ -118,7 +126,7 @@ impl ServiceCredentialsIssuer {
         issuer
             .send_credential(
                 self.wallet_handle,
-                connection.send_message_closure(self.wallet_handle).await?,
+                connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
         self.creds_issuer.set(
@@ -132,22 +140,6 @@ impl ServiceCredentialsIssuer {
         Ok(self.get_issuer(thread_id)?.get_state())
     }
 
-    pub async fn update_state(&self, thread_id: &str) -> AgentResult<IssuerState> {
-        let IssuerWrapper {
-            mut issuer,
-            connection_id,
-        } = self.creds_issuer.get(thread_id)?;
-        let connection = self.service_connections.get_by_id(&connection_id)?;
-        let state = issuer
-            .update_state(self.wallet_handle, &self.agency_client()?, &connection)
-            .await?;
-        self.creds_issuer.set(
-            thread_id,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
-        Ok(state)
-    }
-
     pub fn get_rev_reg_id(&self, thread_id: &str) -> AgentResult<String> {
         let issuer = self.get_issuer(thread_id)?;
         issuer.get_rev_reg_id().map_err(|err| err.into())
@@ -158,7 +150,13 @@ impl ServiceCredentialsIssuer {
         issuer.get_rev_id().map_err(|err| err.into())
     }
 
+    pub fn get_proposal(&self, thread_id: &str) -> AgentResult<CredentialProposal> {
+        let issuer = self.get_issuer(thread_id)?;
+        issuer.get_proposal().map_err(|err| err.into())
+    }
+
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.creds_issuer.has_id(thread_id)
     }
 }
+

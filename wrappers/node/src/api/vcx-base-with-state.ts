@@ -1,7 +1,7 @@
 import * as ffi from 'ffi-napi';
 import { VCXInternalError } from '../errors';
 import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBase } from './vcx-base';
 
 export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBase<SerializedData> {
@@ -36,7 +36,7 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -73,7 +73,7 @@ export abstract class VCXBaseWithState<SerializedData, StateType> extends VCXBas
           ),
       );
       return stateRes;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

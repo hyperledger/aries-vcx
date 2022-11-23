@@ -3,7 +3,23 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
-use libc::c_char;
+use libc::{c_char, c_void};
+
+pub type CVoid = c_void;
+
+pub type EnabledCB = extern "C" fn(context: *const CVoid, level: u32, target: *const c_char) -> bool;
+
+pub type LogCB = extern "C" fn(
+    context: *const CVoid,
+    level: u32,
+    target: *const c_char,
+    message: *const c_char,
+    module_path: *const c_char,
+    file: *const c_char,
+    line: u32,
+);
+
+pub type FlushCB = extern "C" fn(context: *const CVoid);
 
 use chrono::{
     Local,
@@ -17,13 +33,7 @@ use env_logger::{
     fmt::Formatter,
 };
 
-pub use aries_vcx::{
-    error::{VcxError, VcxErrorKind, VcxResult},
-    vdrtools_sys::{
-        logger::{EnabledCB, FlushCB, LogCB},
-        CVoid,
-    },
-};
+pub use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 
 use crate::api_lib::utils::cstring::CStringUtils;
 

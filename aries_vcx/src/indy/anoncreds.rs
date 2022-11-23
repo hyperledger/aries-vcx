@@ -1,32 +1,52 @@
-use vdrtools::{anoncreds, blob_storage};
+use vdrtools::{Locator, SearchHandle, AnoncredsHelpers};
 
 use crate::error::prelude::*;
 
 pub(super) async fn blob_storage_open_reader(base_dir: &str) -> VcxResult<i32> {
-    let tails_config = json!({"base_dir": base_dir,"uri_pattern": ""}).to_string();
-    blob_storage::open_reader("default", &tails_config)
-        .await
-        .map_err(VcxError::from)
+    let tails_config = json!(
+        {
+            "base_dir":    base_dir,
+            "uri_pattern": ""         // TODO remove, unused
+        }
+    ).to_string();
+
+    let res = Locator::instance()
+        .blob_storage_controller
+        .open_reader(
+            "default".into(),
+            tails_config,
+        )
+        .await?;
+
+    Ok(res)
 }
 
-pub(super) async fn close_search_handle(search_handle: i32) -> VcxResult<()> {
-    anoncreds::prover_close_credentials_search_for_proof_req(search_handle)
-        .await
-        .map_err(VcxError::from)
+pub(super) async fn close_search_handle(search_handle: SearchHandle) -> VcxResult<()> {
+    Locator::instance()
+        .prover_controller
+        .close_credentials_search_for_proof_req(search_handle)
+        .await?;
+
+    Ok(())
 }
 
-pub async fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
-    anoncreds::to_unqualified(entity).await.map_err(VcxError::from)
+pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
+    Ok(AnoncredsHelpers::to_unqualified(entity)?)
 }
 
 pub async fn generate_nonce() -> VcxResult<String> {
-    anoncreds::generate_nonce().await.map_err(VcxError::from)
+    let res = Locator::instance()
+        .verifier_controller
+        .generate_nonce()?;
+
+    Ok(res)
 }
+
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use vdrtools_sys::WalletHandle;
+    use vdrtools::WalletHandle;
 
     use crate::indy::ledger::transactions::get_schema_json;
     use crate::utils::constants::{SCHEMA_ID, SCHEMA_JSON};
@@ -41,8 +61,8 @@ mod unit_tests {
     }
 }
 
-#[cfg(test)]
 #[cfg(feature = "pool_tests")]
+#[cfg(test)]
 pub mod integration_tests {
     use crate::indy::test_utils::create_and_store_credential;
     use crate::indy::ledger::transactions::get_rev_reg_delta_json;
@@ -58,45 +78,49 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn tests_libindy_returns_error_if_proof_request_is_malformed() {
-        let setup = SetupLibraryWallet::init().await;
-
-        let proof_req = "{";
-        let result = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, &proof_req).await;
-        assert_eq!(result.unwrap_err().kind(), VcxErrorKind::InvalidProofRequest);
+        SetupLibraryWallet::run(|setup| async move {
+            let proof_req = "{";
+            let result =
+                libindy_prover_get_credentials_for_proof_req(
+                    setup.wallet_handle,
+                    &proof_req,
+                ).await;
+            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::InvalidProofRequest);
+        }).await;
     }
 
     #[tokio::test]
     async fn tests_libindy_prover_get_credentials() {
-        let setup = SetupLibraryWallet::init().await;
+        SetupLibraryWallet::run(|setup| async move {
+            let proof_req = json!({
+                "nonce":"123432421212",
+                "name":"proof_req_1",
+                "version":"0.1",
+                "requested_attributes": json!({
+                    "address1_1": json!({
+                        "name":"address1",
+                    }),
+                    "zip_2": json!({
+                        "name":"zip",
+                    }),
+                }),
+                "requested_predicates": json!({}),
+            })
+                .to_string();
+            let _result = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, &proof_req)
+                .await
+                .unwrap();
 
-        let proof_req = json!({
-           "nonce":"123432421212",
-           "name":"proof_req_1",
-           "version":"0.1",
-           "requested_attributes": json!({
-               "address1_1": json!({
-                   "name":"address1",
-               }),
-               "zip_2": json!({
-                   "name":"zip",
-               }),
-           }),
-           "requested_predicates": json!({}),
-        })
-            .to_string();
-        let _result = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, &proof_req)
-            .await
-            .unwrap();
-
-        let result_malformed_json = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, "{}")
-            .await
-            .unwrap_err();
-        assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
+            let result_malformed_json = libindy_prover_get_credentials_for_proof_req(setup.wallet_handle, "{}")
+                .await
+                .unwrap_err();
+            assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_issuer_revoke_credential() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let rc = libindy_issuer_revoke_credential(
             setup.wallet_handle,
@@ -124,11 +148,12 @@ pub mod integration_tests {
             .await;
 
         assert!(rc.is_ok());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_revoke_credential() {
-        let setup = SetupWalletPool::init().await;
+        SetupWalletPool::run(|setup| async move {
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) =
             create_and_store_credential(
@@ -167,5 +192,6 @@ pub mod integration_tests {
             .unwrap();
 
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
+        }).await;
     }
 }

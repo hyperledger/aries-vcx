@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use messages::ack::please_ack::AckOn;
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use messages::issuance::credential_ack::CredentialAck;
+use messages::issuance::credential_request::CredentialRequest;
+use vdrtools::{WalletHandle, PoolHandle};
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use crate::indy::credentials::issuer::libindy_issuer_create_credential_offer;
@@ -149,6 +151,16 @@ impl Issuer {
         Ok(())
     }
 
+    pub fn process_credential_request(&mut self, request: CredentialRequest) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_request(request)?;
+        Ok(())
+    }
+
+    pub fn process_credential_ack(&mut self, ack: CredentialAck) -> VcxResult<()> {
+        self.issuer_sm = self.issuer_sm.clone().receive_ack(ack)?;
+        Ok(())
+    }
+
     pub async fn send_credential(&mut self, wallet_handle: WalletHandle, send_message: SendClosure) -> VcxResult<()> {
         self.issuer_sm = self.issuer_sm.clone().send_credential(wallet_handle, send_message).await?;
         Ok(())
@@ -257,7 +269,7 @@ impl Issuer {
         &mut self,
         wallet_handle: WalletHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<IssuerState> {
         trace!("Issuer::update_state >>>");
         if self.is_terminal_state() {
@@ -278,13 +290,13 @@ pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
     use messages::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<String> {
         let credential_proposals: Vec<CredentialProposal> = connection
             .get_messages(agency_client)

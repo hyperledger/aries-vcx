@@ -175,4 +175,28 @@ public class UtilsApi extends VcxJava.API {
         checkResult(result);
         return future;
     }
+
+    private static Callback vcxGetVerkeyFromLedgerCB = new Callback() {
+        @SuppressWarnings({"unused", "unchecked"})
+        public void callback(int commandHandle, int err, String verkey) {
+            logger.debug("callback() called with: commandHandle = [" + commandHandle + "], err = [" + err + "], verkey = [" + verkey + "]");
+            CompletableFuture<String> future = (CompletableFuture<String>) removeFuture(commandHandle);
+            if (!checkCallback(future, err)) return;
+            String result = verkey;
+            future.complete(result);
+        }
+    };
+
+    public static CompletableFuture<String> vcxGetVerkeyFromLedger(String did) throws VcxException {
+        ParamGuard.notNull(did, "did");
+        CompletableFuture<String> future = new CompletableFuture<String>();
+        logger.debug("vcxGetVerkeyFromLedger() called with: did = ["+did+"]");
+        int commandHandle = addFuture(future);
+
+        int result = LibVcx.api.vcx_get_verkey_from_ledger(
+                commandHandle, did,
+                vcxGetVerkeyFromLedgerCB);
+        checkResult(result);
+        return future;
+    }
 }

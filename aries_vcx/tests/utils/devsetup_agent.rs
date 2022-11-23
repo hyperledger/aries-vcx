@@ -8,7 +8,7 @@ pub mod test_utils {
     use messages::revocation_notification::revocation_ack::RevocationAck;
     use messages::revocation_notification::revocation_notification::RevocationNotification;
     use messages::status::Status;
-    use vdrtools_sys::{PoolHandle, WalletHandle};
+    use vdrtools::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -18,7 +18,7 @@ pub mod test_utils {
 
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
+    use aries_vcx::handlers::connection::mediated_connection::{MediatedConnection, ConnectionState};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -116,7 +116,7 @@ pub mod test_utils {
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
         pub rev_not_sender: RevocationNotificationSender,
-        pub connection: Connection,
+        pub connection: MediatedConnection,
         pub schema: Schema,
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
@@ -155,7 +155,7 @@ pub mod test_utils {
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
                 .unwrap();
-            let connection = Connection::create("faber", agency_client.get_wallet_handle(), &agency_client, true)
+            let connection = MediatedConnection::create("faber", agency_client.get_wallet_handle(), &agency_client, true)
                 .await
                 .unwrap();
             let agent = PublicAgent::create(
@@ -423,7 +423,7 @@ pub mod test_utils {
         pub is_active: bool,
         pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
-        pub connection: Connection,
+        pub connection: MediatedConnection,
         pub credential: Holder,
         pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
@@ -457,7 +457,7 @@ pub mod test_utils {
             let config_agency = provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
                 .await
                 .unwrap();
-            let connection = Connection::create("tmp_empoty", agency_client.get_wallet_handle(), &agency_client, true)
+            let connection = MediatedConnection::create("tmp_empoty", agency_client.get_wallet_handle(), &agency_client, true)
                 .await
                 .unwrap();
             let alice = Alice {
@@ -479,7 +479,7 @@ pub mod test_utils {
             let invite: Invitation = serde_json::from_str(invite).unwrap();
             let ddo = into_did_doc(self.pool_handle, &invite).await.unwrap();
             self.connection =
-                Connection::create_with_invite("faber", self.wallet_handle, &self.agency_client, invite, ddo, true)
+                MediatedConnection::create_with_invite("faber", self.wallet_handle, &self.agency_client, invite, ddo, true)
                     .await
                     .unwrap();
             self.connection

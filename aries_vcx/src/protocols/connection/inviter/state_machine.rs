@@ -1,12 +1,12 @@
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::future::Future;
 
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use messages::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
+use crate::protocols::SendClosureConnection;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::connection::invite::{Invitation, PairwiseInvitation};
@@ -184,25 +184,6 @@ impl SmConnectionInviter {
         }
     }
 
-    async fn _send_response<F, T>(
-        wallet_handle: WalletHandle,
-        state: &RequestedState,
-        new_pw_vk: String,
-        send_message: F,
-    ) -> VcxResult<()>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
-        send_message(
-            wallet_handle,
-            new_pw_vk,
-            state.did_doc.clone(),
-            state.signed_response.to_a2a_message(),
-        )
-        .await
-    }
-
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Initial(state) => {
@@ -220,19 +201,15 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_connection_request<F, T>(
+    pub async fn handle_connection_request(
         self,
         wallet_handle: WalletHandle,
         request: Request,
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: String,
-        send_message: F,
-    ) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
-    {
+        send_message: SendClosureConnection
+    ) -> VcxResult<Self> {
         let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
             verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
@@ -246,15 +223,9 @@ impl SmConnectionInviter {
                             .set_explain(err.to_string())
                             .set_thread_id(&thread_id)
                             .set_out_time();
-
-                        send_message(
-                            wallet_handle,
-                            self.pairwise_info.pw_vk.clone(),
-                            request.connection.did_doc,
-                            problem_report.to_a2a_message(),
-                        )
-                        .await
-                        .ok();
+                        let sender_vk = self.pairwise_info().pw_vk.clone();
+                        let did_doc = request.connection.did_doc.clone();
+                        send_message(problem_report.to_a2a_message(), sender_vk, did_doc).await.ok();
                         return Ok(Self {
                             state: InviterFullState::Initial((problem_report).into()),
                             ..self
@@ -292,36 +263,12 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_send_response<F, T>(self, wallet_handle: WalletHandle, send_message: &F) -> VcxResult<Self>
-    where
-        F: Fn(WalletHandle, String, DidDoc, A2AMessage) -> T,
-        T: Future<Output = VcxResult<()>>,
+    pub async fn handle_send_response(self, send_message: SendClosureConnection) -> VcxResult<Self>
     {
         let state = match self.state {
             InviterFullState::Requested(state) => {
-                match Self::_send_response(wallet_handle, &state, self.pairwise_info.pw_vk.clone(), send_message).await
-                {
-                    Ok(_) => InviterFullState::Responded(state.into()),
-                    Err(err) => {
-                        // todo: we should distinguish errors - probably should not send problem report
-                        //       if we just lost internet connectivity
-                        let problem_report = ProblemReport::create()
-                            .set_problem_code(ProblemCode::RequestProcessingError)
-                            .set_explain(err.to_string())
-                            .set_thread_id(&self.thread_id)
-                            .set_out_time();
-
-                        send_message(
-                            wallet_handle,
-                            self.pairwise_info.pw_vk.clone(),
-                            state.did_doc.clone(),
-                            problem_report.to_a2a_message(),
-                        )
-                        .await
-                        .ok();
-                        InviterFullState::Initial((state, problem_report).into())
-                    }
-                }
+                send_message(state.signed_response.to_a2a_message(), self.pairwise_info.pw_vk.clone(), state.did_doc.clone()).await?;
+                InviterFullState::Responded(state.into())
             }
             _ => self.state,
         };
@@ -385,7 +332,7 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::{_ack};
+    use messages::ack::test_utils::_ack;
     use messages::connection::problem_report::unit_tests::_problem_report;
     use messages::connection::request::unit_tests::_request;
     use messages::connection::response::test_utils::_signed_response;
@@ -403,17 +350,10 @@ pub mod unit_tests {
     }
 
     pub mod inviter {
-
-
         use super::*;
 
-        async fn _send_message(
-            _wallet_handle: WalletHandle,
-            _pv_wk: String,
-            _did_doc: DidDoc,
-            _a2a_message: A2AMessage,
-        ) -> VcxResult<()> {
-            VcxResult::Ok(())
+        fn _send_message() -> SendClosureConnection {
+            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
         }
 
         pub async fn inviter_sm() -> SmConnectionInviter {
@@ -441,12 +381,12 @@ pub mod unit_tests {
                         &new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
-                        _send_message,
+                        _send_message(),
                     )
                     .await
                     .unwrap();
                 self = self
-                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_response(_send_message())
                     .await
                     .unwrap();
                 self
@@ -455,7 +395,7 @@ pub mod unit_tests {
             async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
                 self = self.to_inviter_requested_state().await;
                 self = self
-                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_response(_send_message())
                     .await
                     .unwrap();
                 self
@@ -473,8 +413,6 @@ pub mod unit_tests {
         }
 
         mod build_messages {
-
-
             use messages::a2a::MessageId;
 
             use crate::utils::devsetup::was_in_past;
@@ -549,7 +487,6 @@ pub mod unit_tests {
         }
 
         mod step {
-
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;
@@ -616,12 +553,12 @@ pub mod unit_tests {
                         &new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
-                        _send_message,
+                        _send_message(),
                     )
                     .await
                     .unwrap();
                 did_exchange_sm = did_exchange_sm
-                    .handle_send_response(_dummy_wallet_handle(), &_send_message)
+                    .handle_send_response(_send_message())
                     .await
                     .unwrap();
                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
@@ -650,7 +587,7 @@ pub mod unit_tests {
                         &new_pairwise_info,
                         new_routing_keys,
                         new_service_endpoint,
-                        _send_message,
+                        _send_message(),
                     )
                     .await
                     .unwrap();

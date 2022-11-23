@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, IssuerStateType } from './common';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { CredentialDef } from './credential-def';
 import { RevocationRegistry } from './revocation-registry';
 import { VCXBaseWithState } from './vcx-base-with-state';
@@ -137,7 +137,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         rustAPI().vcx_issuer_create_credential(commandHandle, sourceId, cb),
       );
       return credential;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -174,7 +174,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
         credentialData,
         params,
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -218,7 +218,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -264,7 +264,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -295,7 +295,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -326,7 +326,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
                         resolve();
                     }),
             );
-        } catch (err) {
+        } catch (err: any) {
             throw new VCXInternalError(err);
         }
     }
@@ -367,7 +367,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -395,7 +395,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return threadId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -425,7 +425,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           }),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -461,7 +461,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -484,7 +484,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -511,7 +511,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -539,7 +539,7 @@ export class IssuerCredential extends VCXBaseWithState<IIssuerCredentialData, Is
           ),
       );
       return revRegId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

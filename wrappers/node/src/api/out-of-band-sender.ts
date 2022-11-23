@@ -21,6 +21,7 @@ export interface IOOBCreateData {
   label?: string;
   goalCode?: GoalCode;
   goal?: string;
+  handshake_protocols?: HandshakeProtocol[];
 }
 
 export enum GoalCode {
@@ -31,8 +32,8 @@ export enum GoalCode {
 }
 
 export enum HandshakeProtocol {
-  ConnectionV1 = 0,
-  DidExchangeV1 = 1,
+  ConnectionV1 = "ConnectionV1",
+  DidExchangeV1 = "DidExchangeV1",
 }
 
 export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
@@ -44,7 +45,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
         rustAPI().vcx_out_of_band_sender_create(commandHandle, JSON.stringify(config), cb),
       );
       return oob;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -84,7 +85,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -117,7 +118,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
                       },
                   ),
           );
-      } catch (err) {
+      } catch (err: any) {
           throw new VCXInternalError(err);
       }
   }
@@ -150,7 +151,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -183,7 +184,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
           ),
       );
       return msg
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -216,7 +217,7 @@ export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
           ),
       );
       return thid;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

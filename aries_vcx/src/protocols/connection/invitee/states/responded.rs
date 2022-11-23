@@ -1,12 +1,12 @@
 use messages::did_doc::DidDoc;
 use messages::connection::problem_report::ProblemReport;
 use messages::connection::request::Request;
-use messages::connection::response::SignedResponse;
+use messages::connection::response::Response;
 use crate::protocols::connection::invitee::states::initial::InitialState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
-    pub response: SignedResponse,
+    pub response: Response,
     pub request: Request,
     pub did_doc: DidDoc,
 }

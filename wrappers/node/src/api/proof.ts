@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, VerifierStateType } from './common';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
 /**
@@ -224,7 +224,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
         ),
       );
       return proof;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -265,7 +265,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
         }
       })();
       return await super._deserialize<Proof, IProofConstructorData>(Proof, proofData, params);
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -325,7 +325,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
           ),
       );
       return state;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -364,7 +364,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -410,7 +410,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -441,7 +441,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
                 resolve();
               }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -469,7 +469,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
           ),
       );
       return threadId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -519,7 +519,7 @@ export class Proof extends VCXBaseWithState<IProofData, VerifierStateType> {
       );
       this._proofState = proofRes.proofState;
       return { proof: proofRes.proofData, proofState: proofRes.proofState };
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

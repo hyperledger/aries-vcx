@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use messages::proof_presentation::presentation_ack::PresentationAck;
+use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 
 use crate::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
+use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
@@ -95,6 +96,12 @@ impl Prover {
     pub async fn send_presentation(&mut self, send_message: SendClosure) -> VcxResult<()> {
         trace!("Prover::send_presentation >>>");
         self.prover_sm = self.prover_sm.clone().send_presentation(send_message).await?;
+        Ok(())
+    }
+
+    pub fn process_presentation_ack(&mut self, ack: PresentationAck) -> VcxResult<()> {
+        trace!("Prover::process_presentation_ack >>>");
+        self.prover_sm = self.prover_sm.clone().receive_presentation_ack(ack)?;
         Ok(())
     }
 
@@ -202,7 +209,7 @@ impl Prover {
         wallet_handle: WalletHandle,
         pool_handle: PoolHandle,
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<ProverState> {
         trace!("Prover::update_state >>> ");
         if !self.progressable_by_message() {
@@ -224,12 +231,12 @@ pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
     use crate::error::prelude::*;
-    use crate::handlers::connection::connection::Connection;
+    use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
     pub async fn get_proof_request_messages(
         agency_client: &AgencyClient,
-        connection: &Connection,
+        connection: &MediatedConnection,
     ) -> VcxResult<String> {
         let presentation_requests: Vec<A2AMessage> = connection
             .get_messages(agency_client)
@@ -245,8 +252,8 @@ pub mod test_utils {
     }
 }
 
-#[cfg(test)]
 #[cfg(feature = "general_test")]
+#[cfg(test)]
 mod tests {
     use messages::proof_presentation::presentation_request::PresentationRequest;
     use crate::utils::devsetup::*;
@@ -255,17 +262,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        let setup = SetupLibraryWallet::init().await;
-
-        let proof_req = PresentationRequest::create();
-        let proof = Prover::create_from_request("1", proof_req).unwrap();
-        assert_eq!(
-            proof
-                .retrieve_credentials(setup.wallet_handle)
-                .await
-                .unwrap_err()
-                .kind(),
-            VcxErrorKind::InvalidJson
-        );
+        SetupLibraryWallet::run(|setup| async move {
+            let proof_req = PresentationRequest::create();
+            let proof = Prover::create_from_request("1", proof_req).unwrap();
+            assert_eq!(
+                proof
+                    .retrieve_credentials(setup.wallet_handle)
+                    .await
+                    .unwrap_err()
+                    .kind(),
+                VcxErrorKind::InvalidJson
+            );
+        }).await;
     }
 }

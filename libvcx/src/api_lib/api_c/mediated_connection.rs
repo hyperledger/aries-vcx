@@ -5,12 +5,12 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools_sys::CommandHandle;
+use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::indy;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
-use crate::api_lib::api_handle::connection::*;
+use crate::api_lib::api_handle::mediated_connection;
+use crate::api_lib::api_handle::mediated_connection::*;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -124,7 +124,7 @@ pub extern "C" fn vcx_generate_public_invite(
     );
 
     execute(move || {
-        match connection::generate_public_invitation(&public_did, &label) {
+        match mediated_connection::generate_public_invitation(&public_did, &label) {
             Ok(public_invite) => {
                 trace!(
                     "vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
@@ -1129,7 +1129,7 @@ pub extern "C" fn vcx_connection_sign_data(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match connection::get_pw_verkey(connection_handle) {
+        let vk = match mediated_connection::get_pw_verkey(connection_handle) {
             Ok(err) => err,
             Err(err) => {
                 error!(
@@ -1226,7 +1226,7 @@ pub extern "C" fn vcx_connection_verify_signature(
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match connection::get_their_pw_verkey(connection_handle).await {
+        let vk = match mediated_connection::get_their_pw_verkey(connection_handle) {
             Ok(err) => err,
             Err(err) => {
                 error!(
@@ -1530,8 +1530,8 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
         source_id
     );
 
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_their_pw_did(connection_handle).await {
+    execute(move || {
+        match get_their_pw_did(connection_handle) {
             Ok(json) => {
                 trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}", command_handle, connection_handle, error::SUCCESS.message, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
@@ -1545,7 +1545,7 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
         };
 
         Ok(())
-    }));
+    });
 
     error::SUCCESS.code_num
 }
@@ -1595,7 +1595,7 @@ pub extern "C" fn vcx_connection_messages_download(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match connection::download_messages(connection_handles, message_statuses, uids).await {
+        match mediated_connection::download_messages(connection_handles, message_statuses, uids).await {
             Ok(err) => {
                 match serde_json::to_string(&err) {
                     Ok(err) => {
@@ -1656,7 +1656,7 @@ mod tests {
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION,
     };
 
-    use crate::api_lib::api_handle::connection::tests::{
+    use crate::api_lib::api_handle::mediated_connection::tests::{
         build_test_connection_inviter_invited, build_test_connection_inviter_null,
         build_test_connection_inviter_requested,
     };
@@ -1915,7 +1915,7 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         assert_eq!(
-            connection::get_source_id(connection_handle).unwrap_err().kind(),
+            mediated_connection::get_source_id(connection_handle).unwrap_err().kind(),
             VcxErrorKind::InvalidHandle
         );
     }
@@ -1951,7 +1951,7 @@ mod tests {
     async fn test_sign() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_invited().await;
+        let connection_handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();
@@ -1976,7 +1976,7 @@ mod tests {
     async fn test_verify_signature() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();

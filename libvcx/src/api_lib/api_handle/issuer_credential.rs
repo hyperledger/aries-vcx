@@ -6,7 +6,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::connection;
+use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
@@ -33,7 +33,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
     }
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
@@ -46,12 +46,12 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             .step(get_main_wallet_handle(), message.into(), Some(send_message))
             .await?;
     } else {
-        let messages = connection::get_messages(connection_handle).await?;
+        let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
                 .step(get_main_wallet_handle(), msg.into(), Some(send_message))
                 .await?;
-            connection::update_message_status(connection_handle, &uid).await?;
+            mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
     let res: u32 = credential.get_state().into();
@@ -161,7 +161,7 @@ pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
 
 pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
-    let send_message = connection::send_message_closure(connection_handle).await?;
+    let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
     Ok(error::SUCCESS.code_num)
@@ -180,7 +180,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     credential
         .send_credential(
             get_main_wallet_handle(),
-            connection::send_message_closure(connection_handle).await?,
+            mediated_connection::send_message_closure(connection_handle).await?,
         )
         .await?;
     let state: u32 = credential.get_state().into();
@@ -240,7 +240,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
-    use crate::api_lib::api_handle::connection::tests::build_test_connection_inviter_requested;
+    use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;

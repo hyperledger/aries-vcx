@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
+use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
-use aries_vcx::messages::out_of_band::GoalCode;
+use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::did::Did;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
-use aries_vcx::indy::ledger::transactions::into_did_doc;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use aries_vcx::messages::out_of_band::{GoalCode, HandshakeProtocol};
 
-use crate::api_lib::api_handle::connection::CONNECTION_MAP;
+use crate::api_lib::api_handle::mediated_connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
 
@@ -22,11 +22,13 @@ lazy_static! {
         ObjectCache::<OutOfBandReceiver>::new("out-of-band-receiver-cache");
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct OOBConfig {
     pub label: Option<String>,
     pub goal_code: Option<GoalCode>,
     pub goal: Option<String>,
+    #[serde(default)]
+    pub handshake_protocols: Vec<HandshakeProtocol>,
 }
 
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
@@ -59,6 +61,9 @@ pub async fn create_out_of_band(config: &str) -> VcxResult<u32> {
     if let Some(goal_code) = &config.goal_code {
         oob = oob.set_goal_code(&goal_code);
     };
+    for protocol in config.handshake_protocols {
+        oob = oob.append_handshake_protocol(&protocol)?;
+    }
     store_out_of_band_sender(oob)
 }
 
@@ -218,18 +223,14 @@ pub fn release_receiver(handle: u32) -> VcxResult<()> {
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::messages::did_doc::service_aries::AriesService;
-    use aries_vcx::utils::devsetup::SetupMocks;
 
     use super::*;
 
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_build_oob_sender_append_services() {
-        let _setup = SetupMocks::init();
-        let config = json!(OOBConfig {
-            label: Some("foo".into()),
-            goal_code: Some(GoalCode::IssueVC),
-            goal: Some("foobar".into())
+    async fn build_and_append_service(did: &str) {
+        let config = json!({
+            "label": "foo",
+            "goal_code": GoalCode::IssueVC,
+            "goal": "foobar"
         })
         .to_string();
         let oob_handle = create_out_of_band(&config).await.unwrap();
@@ -241,13 +242,40 @@ pub mod tests {
                 .set_recipient_keys(vec!["abcde".into()]),
         );
         append_service(oob_handle, &json!(service).to_string()).unwrap();
-        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f").unwrap();
-        let resolved_service = get_services(oob_handle).unwrap();
-        assert_eq!(resolved_service.len(), 2);
-        assert_eq!(service, resolved_service[0]);
+        append_service_did(oob_handle, did).unwrap();
+        let resolved_services = get_services(oob_handle).unwrap();
+        assert_eq!(resolved_services.len(), 2);
+        assert_eq!(service, resolved_services[0]);
         assert_eq!(
-            ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap()),
-            resolved_service[1]
+            ServiceResolvable::Did(Did::new(did).unwrap()),
+            resolved_services[1]
         );
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_build_oob_sender_append_services() {
+        build_and_append_service("V4SGRU86Z58d6TV7PBUe6f").await
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_build_oob_sender_append_services_prefix_did_sov() {
+        build_and_append_service("did:sov:V4SGRU86Z58d6TV7PBUe6f").await
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serde_oob_config_handshake_protocols() {
+        let config_str = json!({ "handshake_protocols": vec!["ConnectionV1", "DidExchangeV1"] }).to_string();
+        let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
+        assert_eq!(
+            config_actual.handshake_protocols,
+            vec![HandshakeProtocol::ConnectionV1, HandshakeProtocol::DidExchangeV1]
+        );
+
+        let config_str = json!({}).to_string();
+        let config_actual: OOBConfig = serde_json::from_str(&config_str).unwrap();
+        assert_eq!(config_actual.handshake_protocols, vec![]);
     }
 }

@@ -7,7 +7,7 @@ use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::handlers::connection::connection::Connection;
+use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
 use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
@@ -22,7 +22,7 @@ use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
-    pub static ref CONNECTION_MAP: ObjectCache<Connection> = ObjectCache::<Connection>::new("connections-cache");
+    pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
 }
 
 pub fn generate_public_invitation(public_did: &str, label: &str) -> VcxResult<String> {
@@ -74,14 +74,14 @@ pub fn get_pw_verkey(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.pairwise_info().pw_vk.clone()))
 }
 
-pub async fn get_their_pw_did(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_did(handle: u32) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.remote_did().await.map_err(|err| err.into())
+    connection.remote_did().map_err(|err| err.into())
 }
 
-pub async fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
+pub fn get_their_pw_verkey(handle: u32) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.remote_vk().await.map_err(|err| err.into())
+    connection.remote_vk().map_err(|err| err.into())
 }
 
 pub fn get_thread_id(handle: u32) -> VcxResult<String> {
@@ -99,7 +99,7 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_source_id()))
 }
 
-pub fn store_connection(connection: Connection) -> VcxResult<u32> {
+pub fn store_connection(connection: MediatedConnection) -> VcxResult<u32> {
     CONNECTION_MAP
         .add(connection)
         .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
@@ -107,7 +107,7 @@ pub fn store_connection(connection: Connection) -> VcxResult<u32> {
 
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
-    let connection = Connection::create(
+    let connection = MediatedConnection::create(
         source_id,
         get_main_wallet_handle(),
         &get_main_agency_client().unwrap(),
@@ -121,7 +121,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Vc
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
         let ddo = into_did_doc(get_main_pool_handle()?, &invitation).await?;
-        let connection = Connection::create_with_invite(
+        let connection = MediatedConnection::create_with_invite(
             source_id,
             get_main_wallet_handle(),
             &get_main_agency_client().unwrap(),
@@ -148,7 +148,7 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let connection = Connection::create_with_request(
+    let connection = MediatedConnection::create_with_request(
         get_main_wallet_handle(),
         request,
         agent.pairwise_info(),
@@ -165,7 +165,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Vcx
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
-    let connection = Connection::create_with_request(
+    let connection = MediatedConnection::create_with_request(
         get_main_wallet_handle(),
         request,
         pw_info,
@@ -286,7 +286,7 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 }
 
 pub fn from_string(connection_data: &str) -> VcxResult<u32> {
-    let connection = Connection::from_string(connection_data)?;
+    let connection = MediatedConnection::from_string(connection_data)?;
     CONNECTION_MAP.add(connection)
 }
 
@@ -469,7 +469,7 @@ pub mod tests {
     };
 
     use crate::api_lib::api_handle::agent::create_public_agent;
-    use crate::api_lib::api_handle::connection;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::VcxStateType;
 
     use super::*;
@@ -490,31 +490,31 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(0, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_pairwise_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_pairwise_invitation_json())
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(1, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_create_connection_with_public_invite() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
+        let connection_handle = mediated_connection::create_connection_with_invite(_source_id(), &_public_invitation_json())
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(1, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(1, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -523,19 +523,19 @@ pub mod tests {
         let _setup = SetupMocks::init();
         let institution_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
         let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
-        let connection_handle = connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
+        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
             .await
             .unwrap();
-        assert!(connection::is_valid_handle(connection_handle));
-        assert_eq!(2, connection::get_state(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
+        assert_eq!(2, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_get_connection_state_works() {
         let _setup = SetupMocks::init();
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
-        assert_eq!(0, connection::get_state(connection_handle));
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        assert_eq!(0, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -543,12 +543,12 @@ pub mod tests {
     async fn test_connection_delete() {
         let _setup = SetupMocks::init();
         warn!(">> test_connection_delete going to create connection");
-        let connection_handle = connection::create_connection(_source_id()).await.unwrap();
+        let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
         warn!(">> test_connection_delete checking is valid handle");
-        assert!(connection::is_valid_handle(connection_handle));
+        assert!(mediated_connection::is_valid_handle(connection_handle));
 
-        connection::release(connection_handle).unwrap();
-        assert!(!connection::is_valid_handle(connection_handle));
+        mediated_connection::release(connection_handle).unwrap();
+        assert!(!mediated_connection::is_valid_handle(connection_handle));
     }
 
     pub async fn build_test_connection_inviter_null() -> u32 {
@@ -745,7 +745,7 @@ pub mod tests {
     async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = connection::tests::build_test_connection_inviter_invited().await;
+        let handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
 
         let err = send_generic_message(handle, "this is the message").await.unwrap_err();
         assert_eq!(err.kind(), VcxErrorKind::NotReady);

@@ -35,12 +35,12 @@ impl From<(RequestedState, Response)> for CompleteState {
     }
 }
 
-impl From<(RespondedState, Response)> for CompleteState {
-    fn from((state, response): (RespondedState, Response)) -> CompleteState {
+impl From<RespondedState> for CompleteState {
+    fn from(state: RespondedState) -> CompleteState {
         trace!("ConnectionInvitee: transit state from RespondedState to CompleteState");
         CompleteState {
             bootstrap_did_doc: state.did_doc,
-            did_doc: response.connection.did_doc,
+            did_doc: state.response.connection.did_doc,
             protocols: None,
         }
     }

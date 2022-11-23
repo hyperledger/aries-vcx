@@ -63,6 +63,7 @@ impl CreateKeyBuilder {
     }
 }
 
+#[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
     use crate::agency_client::AgencyClient;

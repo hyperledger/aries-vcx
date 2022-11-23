@@ -1,86 +1,93 @@
-use vdrtools::{pool, ErrorCode};
-use vdrtools_sys::PoolHandle;
+use vdrtools::Locator;
+
+use vdrtools::PoolHandle;
+use vdrtools::types::errors::IndyErrorKind;
 
 use crate::error::prelude::*;
 use crate::global::settings;
 
+// TODO: remove async
 pub async fn set_protocol_version() -> VcxResult<()> {
-    pool::set_protocol_version(settings::get_protocol_version()).await?;
+    Locator::instance()
+        .pool_controller
+        .set_protocol_version(settings::get_protocol_version())?;
 
     Ok(())
 }
 
+// TODO: remove async
 pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
-    let pool_config = json!({ "genesis_txn": path }).to_string();
+    let res = Locator::instance()
+        .pool_controller
+        .create(
+            pool_name.into(),
+            Some(vdrtools::PoolConfig{
+                genesis_txn: path.into(),
+            }),
+        );
 
-    match pool::create_pool_ledger_config(pool_name, Some(&pool_config)).await {
-        Ok(()) => Ok(()),
-        Err(err) => match err.error_code {
-            ErrorCode::PoolLedgerConfigAlreadyExistsError => Ok(()),
-            ErrorCode::CommonIOError => Err(err.to_vcx(
-                VcxErrorKind::InvalidGenesisTxnPath,
-                "Pool genesis file is invalid or does not exist",
-            )),
-            _ => Err(err.to_vcx(VcxErrorKind::CreatePoolConfig, "Indy error occurred")),
-        },
+    match res {
+        Ok(_) => Ok(()),
+        Err(indy) if indy.kind() == IndyErrorKind::PoolConfigAlreadyExists => Ok(()),
+
+        Err(indy) if indy.kind() == IndyErrorKind::IOError =>
+            Err(VcxErrorKind::InvalidGenesisTxnPath.into()),
+
+        Err(_) => Err(VcxErrorKind::CreatePoolConfig.into()),
     }
 }
 
 pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> VcxResult<i32> {
     set_protocol_version().await?;
 
-    let config = if let Some(config) = config {
-        Some(serde_json::to_string(&config)
-                .map_err(|err|
-                    VcxError::from_msg(
-                        VcxErrorKind::SerializationError,
-                        format!("Failed to serialize pool config {:?}, err: {:?}", config, err),
-                    )
-                )?
-        )
-    } else {
-        None
-    };
+    let handle = Locator::instance()
+        .pool_controller
+        .open(
+            pool_name.into(),
+            config
+                .and_then(|c| c.pool_config)
+                .as_deref()
+                .map(serde_json::from_str)
+                .transpose()?,
+        ).await;
 
-    let handle = pool::open_pool_ledger(pool_name, config.as_deref())
-        .await
-        .map_err(|err| match err.error_code {
-            ErrorCode::PoolLedgerNotCreatedError => err.to_vcx(
-                VcxErrorKind::PoolLedgerConnect,
-                format!("Pool \"{}\" does not exist.", pool_name),
-            ),
-            ErrorCode::PoolLedgerTimeout => err.to_vcx(
-                VcxErrorKind::PoolLedgerConnect,
-                format!("Can not connect to Pool \"{}\".", pool_name),
-            ),
-            ErrorCode::PoolIncompatibleProtocolVersion => {
-                let protocol_version = settings::get_protocol_version();
-                err.to_vcx(
-                    VcxErrorKind::PoolLedgerConnect,
-                    format!(
-                        "Pool \"{}\" is not compatible with Protocol Version \"{}\".",
-                        pool_name, protocol_version
-                    ),
-                )
-            }
-            ErrorCode::CommonInvalidState => err.to_vcx(
-                VcxErrorKind::PoolLedgerConnect,
-                "Geneses transactions are invalid.".to_string(),
-            ),
-            error_code => err.to_vcx(VcxErrorKind::LibndyError(error_code as u32), "Indy error occurred"),
-        })?;
-    Ok(handle)
+    match handle {
+        Ok(handle) => Ok(handle),
+
+        Err(indy) if indy.kind() == IndyErrorKind::PoolNotCreated =>
+            Err(VcxErrorKind::PoolLedgerConnect.into()),
+
+        Err(indy) if indy.kind() == IndyErrorKind::PoolTimeout =>
+            Err(VcxErrorKind::PoolLedgerConnect.into()),
+
+        Err(indy) if indy.kind() == IndyErrorKind::PoolIncompatibleProtocolVersion =>
+            Err(VcxErrorKind::PoolLedgerConnect.into()),
+
+        Err(indy) if indy.kind() == IndyErrorKind::InvalidState =>
+            Err(VcxErrorKind::PoolLedgerConnect.into()),
+
+        Err(err) => Err(err.into()),
+    }
 }
 
 pub async fn close(handle: PoolHandle) -> VcxResult<()> {
-    //TODO there was timeout here (before future-based Rust wrapper)
-    pool::close_pool_ledger(handle).await?;
+    // TODO there was timeout here (before future-based Rust wrapper)
+
+    Locator::instance()
+        .pool_controller
+        .close(handle)
+        .await?;
+
     Ok(())
 }
 
 pub async fn delete(pool_name: &str) -> VcxResult<()> {
     trace!("delete >>> pool_name: {}", pool_name);
-    pool::delete_pool_ledger(pool_name).await?;
+
+    Locator::instance()
+        .pool_controller
+        .delete(pool_name.into()).await?;
+
     Ok(())
 }
 

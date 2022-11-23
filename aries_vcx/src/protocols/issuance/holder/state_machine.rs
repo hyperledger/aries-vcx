@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use messages::problem_report::ProblemReport;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::error::prelude::*;
 use crate::indy::credentials::{is_cred_revoked, get_cred_rev_id};
@@ -604,8 +604,8 @@ async fn _make_credential_request(
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
-#[cfg(test)]
 #[cfg(feature = "general_test")]
+#[cfg(test)]
 mod test {
     use messages::issuance::credential::test_utils::_credential;
     use messages::issuance::credential_offer::test_utils::_credential_offer;
@@ -728,9 +728,9 @@ mod test {
     mod step {
         use super::*;
 
-        #[tokio::test]
+        #[test]
         #[cfg(feature = "general_test")]
-        async fn test_holder_init() {
+        fn test_holder_init() {
             let _setup = SetupMocks::init();
 
             let holder_sm = _holder_sm();

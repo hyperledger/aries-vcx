@@ -4,7 +4,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, HolderStateType } from './common';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBaseWithState } from './vcx-base-with-state';
 
 /**
@@ -138,7 +138,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
         rustAPI().vcx_credential_create_with_offer(0, sourceId, offer, cb),
       );
       return credential;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -189,7 +189,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -241,7 +241,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
       );
       const offers: ICredentialOffer[] = JSON.parse(offersStr);
       return offers;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -289,7 +289,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -340,7 +340,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             },
           ),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -368,7 +368,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return attrs;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -396,7 +396,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return attach;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -424,7 +424,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return location;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -452,7 +452,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return hash;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -480,7 +480,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return revRegId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -508,7 +508,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
           ),
       );
       return threadId;
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
@@ -537,7 +537,7 @@ export class Credential extends VCXBaseWithState<ICredentialStructData, HolderSt
             resolve();
           }),
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }

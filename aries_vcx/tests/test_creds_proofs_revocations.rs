@@ -29,7 +29,7 @@ mod integration_tests {
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_basic_revocation() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -93,12 +93,13 @@ mod integration_tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofInvalid
         );
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revocation_notification() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -139,13 +140,13 @@ mod integration_tests {
         // consumer.receive_revocation_notification(rev_not).await;
         // let ack = aries_vcx::handlers::revocation_notification::test_utils::get_revocation_notification_ack_messages(&institution.agency_client, &institution_to_consumer).await.unwrap().pop().unwrap();
         // institution.handle_revocation_notification_ack(ack).await;
-
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_local_revocation() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -215,12 +216,13 @@ mod integration_tests {
         );
 
         assert!(issuer_credential.is_revoked(institution.pool_handle).await.unwrap());
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_batch_revocation() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
         let mut consumer2 = Alice::setup(setup.pool_handle).await;
@@ -433,12 +435,13 @@ mod integration_tests {
             ProofStateType::from(verifier3.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_revoked_credential_might_still_work() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -526,12 +529,13 @@ mod integration_tests {
             ProofStateType::from(verifier.get_presentation_status()),
             ProofStateType::ProofValidated
         );
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_first() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -628,12 +632,13 @@ mod integration_tests {
 
         assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
         assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_one_rev_reg_revoke_second() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -730,12 +735,13 @@ mod integration_tests {
 
         assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
         assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -827,12 +833,13 @@ mod integration_tests {
 
         assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
         assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_first() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -929,12 +936,13 @@ mod integration_tests {
 
         assert!(issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
         assert!(!issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_two_creds_two_rev_reg_id_revoke_second() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut issuer = Faber::setup(setup.pool_handle).await;
         let mut verifier = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
@@ -1031,5 +1039,6 @@ mod integration_tests {
 
         assert!(!issuer_credential1.is_revoked(issuer.pool_handle).await.unwrap());
         assert!(issuer_credential2.is_revoked(issuer.pool_handle).await.unwrap());
+        }).await;
     }
 }

@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate log;
+
 #[macro_use]
 extern crate serde_json;
-
-extern crate vdrtoolsrs as vdrtools;
 
 pub mod utils;
 
@@ -13,7 +12,7 @@ mod integration_tests {
     use std::thread;
     use std::time::Duration;
 
-    use vdrtools::wallet::close_wallet;
+    use aries_vcx::indy::wallet::close_wallet;
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;
@@ -32,7 +31,7 @@ mod integration_tests {
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_send_and_download_messages() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer = Alice::setup(setup.pool_handle).await;
 
@@ -111,12 +110,13 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(msgs.len(), 0);
+        }).await;
     }
 
     #[tokio::test]
     #[cfg(feature = "agency_pool_tests")]
     async fn test_connection_send_works() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut faber = Faber::setup(setup.pool_handle).await;
         let mut alice = Alice::setup(setup.pool_handle).await;
 
@@ -226,12 +226,13 @@ mod integration_tests {
                 .await
                 .unwrap();
         }
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_download_messages() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
         let mut consumer2 = Alice::setup(setup.pool_handle).await;
@@ -280,12 +281,13 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(consumer1_reviewed_msgs.len(), 1);
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agency_messages() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut faber = Faber::setup(setup.pool_handle).await;
         let mut alice = Alice::setup(setup.pool_handle).await;
         let (alice_to_faber, faber_to_alice) = create_connected_connections(&mut alice, &mut faber).await;
@@ -353,12 +355,13 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(specific_review[0].uid, uid);
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_download_messages_from_multiple_connections() {
-        let setup = SetupPool::init().await;
+        SetupPool::run(|setup| async move {
         let mut institution = Faber::setup(setup.pool_handle).await;
         let mut consumer1 = Alice::setup(setup.pool_handle).await;
         let mut consumer2 = Alice::setup(setup.pool_handle).await;
@@ -387,12 +390,13 @@ mod integration_tests {
             .await
             .unwrap();
         assert_eq!(consumer2_msgs.len(), 2);
+        }).await;
     }
 
     #[cfg(feature = "agency_pool_tests")]
     #[tokio::test]
     async fn test_update_agent_webhook() {
-        let _setup = SetupPool::init().await;
+        SetupPool::run(|_setup| async move {
         let wallet_config = WalletConfig {
             wallet_name: format!("wallet_{}", uuid::Uuid::new_v4().to_string()),
             wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -419,5 +423,6 @@ mod integration_tests {
         let client = client.configure(wallet_handle, &config).unwrap();
         client.update_agent_webhook("https://example.org").await.unwrap();
         close_wallet(wallet_handle).await.unwrap();
+        }).await;
     }
 }

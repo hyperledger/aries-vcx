@@ -1,4 +1,13 @@
-use vdrtools_sys::WalletHandle;
+use vdrtools::{
+    Locator,
+    CredentialOffer,
+    CredentialRequest,
+    CredentialValues,
+    RevocationRegistryId,
+};
+
+use vdrtools::WalletHandle;
+
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
@@ -17,9 +26,16 @@ pub async fn libindy_issuer_create_credential_offer(
         };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }
-    vdrtools::anoncreds::issuer_create_credential_offer(wallet_handle, cred_def_id)
-        .await
-        .map_err(VcxError::from)
+
+    let res = Locator::instance()
+        .issuer_controller
+        .create_credential_offer(
+            wallet_handle,
+            vdrtools::CredentialDefinitionId(cred_def_id.into()),
+        )
+        .await?;
+
+    Ok(res)
 }
 
 pub async fn libindy_issuer_create_credential(
@@ -34,20 +50,21 @@ pub async fn libindy_issuer_create_credential(
         return Ok((utils::constants::CREDENTIAL_JSON.to_owned(), None, None));
     }
 
-    let revocation = rev_reg_id.as_deref();
-
     let blob_handle = match tails_file {
-        Some(x) => anoncreds::blob_storage_open_reader(&x).await?,
-        None => -1,
+        Some(x) => Some(anoncreds::blob_storage_open_reader(&x).await?),
+        None => None,
     };
-    vdrtools::anoncreds::issuer_create_credential(
-        wallet_handle,
-        cred_offer_json,
-        cred_req_json,
-        cred_values_json,
-        revocation,
-        blob_handle,
-    )
-        .await
-        .map_err(VcxError::from)
+
+    let res = Locator::instance()
+        .issuer_controller
+        .new_credential(
+            wallet_handle,
+            serde_json::from_str::<CredentialOffer>(cred_offer_json)?,
+            serde_json::from_str::<CredentialRequest>(cred_req_json)?,
+            serde_json::from_str::<CredentialValues>(cred_values_json)?,
+            rev_reg_id.map(RevocationRegistryId),
+            blob_handle,
+        ).await?;
+
+    Ok(res)
 }
