@@ -81,7 +81,7 @@ describe('Connection:', () => {
   describe('serialize:', () => {
     it('success', async () => {
       const connection = await connectionCreateInviterNull();
-      const serialized = await connection.serialize();
+      const serialized = connection.serialize();
       assert.ok(serialized);
       assert.property(serialized, 'version');
       assert.property(serialized, 'data');
@@ -118,10 +118,10 @@ describe('Connection:', () => {
   describe('deserialize:', () => {
     it('success', async () => {
       const connection1 = await connectionCreateInviterNull();
-      const data1 = await connection1.serialize();
+      const data1 = connection1.serialize();
       const connection2 = await Connection.deserialize(data1);
       assert.equal(connection2.sourceId, connection1.sourceId);
-      const data2 = await connection2.serialize();
+      const data2 = connection2.serialize();
       assert.deepEqual(data1, data2);
     });
 

@@ -3,9 +3,9 @@ import * as ffiNapi from 'node-napi-rs';
 import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise, ICbRef } from '../utils/ffi-helpers';
+import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
-import { VCXBaseWithState } from './vcx-base-with-state';
+import { VCXBaseWithState1 } from './vcx-base-with-state-1';
 import { PublicAgent } from './public-agent';
 import { IPwInfo } from './utils';
 
@@ -263,7 +263,7 @@ export function generatePublicInvite(public_did: string, label: string): string 
 /**
  * @class Class representing a Connection
  */
-export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStateType> {
+export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionStateType> {
   /**
  * Create a connection object, represents a single endpoint and can be used for sending and receiving
  * credentials and proofs
@@ -357,16 +357,14 @@ export class Connection extends VCXBaseWithState<IConnectionData, ConnectionStat
   protected _releaseFn = rustAPI().vcx_connection_release;
   protected _updateStFn = rustAPI().vcx_connection_update_state;
   protected _updateStFnV2 = (
-    _commandHandle: number,
     _handle: number,
     _connHandle: number,
-    _cb: ICbRef,
   ): number => {
     throw new Error('_updateStFnV2 cannot be called for a Connection object');
   };
-  protected _getStFn = rustAPI().vcx_connection_get_state;
-  protected _serializeFn = rustAPI().vcx_connection_serialize;
-  protected _deserializeFn = rustAPI().vcx_connection_deserialize;
+  protected _getStFn = ffiNapi.getState;
+  protected _serializeFn = ffiNapi.toString;
+  protected _deserializeFn = ffiNapi.fromString;
   protected _inviteDetailFn = rustAPI().vcx_connection_invite_details;
   protected _infoFn = rustAPI().vcx_connection_info;
 
