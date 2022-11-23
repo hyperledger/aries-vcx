@@ -1,9 +1,10 @@
-use aries_vcx::error::VcxResult;
+use aries_vcx::error::{VcxResult, VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
 use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
 use aries_vcx::indy;
 use aries_vcx::indy::wallet::WalletConfig;
 use aries_vcx::indy::credentials::holder;
+use napi_derive::napi;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -45,8 +46,12 @@ pub async fn close_main_wallet() -> VcxResult<()> {
     Ok(())
 }
 
-pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
-    let wallet_handle = create_and_open_as_main_wallet(&config).await?;
+#[napi]
+pub async fn create_main_wallet(wallet_config: String) -> ::napi::Result<()> {
+    let wallet_config = serde_json::from_str::<WalletConfig>(&wallet_config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Serialization error: {:?}", err)))?;
+    let wallet_handle = create_and_open_as_main_wallet(&wallet_config).await
+        .map_err(|err| Into::<::napi::Error>::into(err))?;
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue

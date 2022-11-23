@@ -1,3 +1,4 @@
+import * as ffiNapi from 'node-napi-rs';
 import { Callback } from 'ffi-napi';
 import * as ref from 'ref-napi';
 
@@ -54,24 +55,7 @@ export interface ISearchNextRecordsOptions {
 
 export async function createWallet (config: object): Promise<void> {
   try {
-    await createFFICallbackPromise<void>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_create_wallet(0, JSON.stringify(config), cb)
-        if (rc) {
-          reject(rc)
-        }
-      },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve()
-        })
-    )
+    return await ffiNapi.createMainWallet(JSON.stringify(config))
   } catch (err: any) {
     throw new VCXInternalError(err)
   }

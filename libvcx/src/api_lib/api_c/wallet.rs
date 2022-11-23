@@ -54,18 +54,10 @@ pub extern "C" fn vcx_create_wallet(
         wallet_config
     );
 
-    let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
-        Ok(wallet_config) => wallet_config,
-        Err(err) => {
-            set_current_error(&err);
-            error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num;
-        }
-    };
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match api_lib::global::wallet::create_main_wallet(&wallet_config).await {
+        match api_lib::global::wallet::create_main_wallet(wallet_config).await {
             Err(err) => {
+                let err: VcxError = err.into();
                 error!("vcx_create_wallet_cb(command_handle: {}, rc: {}", command_handle, err);
                 cb(command_handle, err.into());
             }
