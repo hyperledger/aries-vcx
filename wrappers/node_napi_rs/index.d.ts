@@ -55,4 +55,5 @@ export function fromStringReceiver(oobData: string): number
 export function releaseSender(handle: number): void
 export function releaseReceiver(handle: number): void
 export function openAsMainWallet(walletConfig: string): Promise<number>
+export function closeMainWallet(): Promise<void>
 export function createMainWallet(walletConfig: string): Promise<void>

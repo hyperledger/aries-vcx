@@ -44,8 +44,10 @@ pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> Vcx
     Ok(handle)
 }
 
-pub async fn close_main_wallet() -> VcxResult<()> {
-    indy::wallet::close_wallet(get_main_wallet_handle()).await?;
+#[napi]
+pub async fn close_main_wallet() -> ::napi::Result<()> {
+    indy::wallet::close_wallet(get_main_wallet_handle()).await
+        .map_err(|err| Into::<::napi::Error>::into(err))?;
     reset_main_wallet_handle();
     Ok(())
 }

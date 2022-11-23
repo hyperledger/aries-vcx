@@ -97,24 +97,7 @@ export async function openMainWallet (config: object): Promise<void> {
 
 export async function closeMainWallet (): Promise<void> {
   try {
-    await createFFICallbackPromise<void>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_close_main_wallet(0, cb)
-        if (rc) {
-          reject(rc)
-        }
-      },
-      (resolve, reject) => Callback(
-        'void',
-        ['uint32','uint32'],
-        (xhandle: number, err: number) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          resolve()
-        })
-    )
+    await ffiNapi.closeMainWallet()
   } catch (err: any) {
     throw new VCXInternalError(err)
   }

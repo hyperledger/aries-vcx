@@ -208,6 +208,7 @@ pub extern "C" fn vcx_close_main_wallet(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match api_lib::global::wallet::close_main_wallet().await {
             Err(err) => {
+                let err: VcxError = err.into();
                 error!(
                     "vcx_close_main_wallet_cb(command_handle: {}, rc: {}",
                     command_handle, err
