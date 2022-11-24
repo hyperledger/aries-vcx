@@ -1,4 +1,4 @@
-import { VCXInternalError } from '../errors';
+import { VCXInternalError1 } from '../errors-1';
 import { ISerializedData } from './common';
 
 export abstract class VCXBase1<SerializedData> {
@@ -15,7 +15,7 @@ export abstract class VCXBase1<SerializedData> {
       obj._initFromData(objData);
       return obj;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -31,7 +31,7 @@ export abstract class VCXBase1<SerializedData> {
     try {
       return JSON.parse(this._serializeFn(this.handle));
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 

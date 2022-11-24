@@ -1,9 +1,8 @@
-import { VCXCode } from './api/common';
 import { errorMessage } from './utils/error-message';
 
 export class ConnectionTimeoutError extends Error {}
 
-export class VCXInternalError extends Error {
+export class VCXInternalError1 extends Error {
   public readonly vcxCode: number;
   public readonly inheritedStackTraces: string[] = [];
 
@@ -13,12 +12,13 @@ export class VCXInternalError extends Error {
       if (code.stack) {
         this.inheritedStackTraces.push(code.stack);
       }
-      if (code instanceof VCXInternalError) {
+      if (code instanceof VCXInternalError1) {
         this.vcxCode = code.vcxCode;
         this.inheritedStackTraces.unshift(...code.inheritedStackTraces);
         return this;
       }
-      this.vcxCode = VCXCode.UNKNOWN_ERROR;
+      // Here we assume that Error was thrown by VCX through NAPI
+      this.vcxCode = parseInt(code.message)
       return this;
     }
     this.vcxCode = code;

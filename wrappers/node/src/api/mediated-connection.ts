@@ -1,6 +1,6 @@
 import * as ffiNapi from 'node-napi-rs';
 import * as ref from 'ref-napi';
-import { VCXInternalError } from '../errors';
+import { VCXInternalError1 } from '../errors-1';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState1 } from './vcx-base-with-state-1';
 import { PublicAgent } from './public-agent';
@@ -245,7 +245,7 @@ export interface IConnectionDownloadAllMessages extends IConnectionDownloadMessa
 //         ),
 //     );
 //   } catch (err: any) {
-//     throw new VCXInternalError(err);
+//     throw new VCXInternalError1(err);
 //   }
 // }
 
@@ -253,7 +253,7 @@ export function generatePublicInvite(public_did: string, label: string): string 
   try {
     return ffiNapi.generatePublicInvitation(public_did, label)
   } catch (err: any) {
-    throw new VCXInternalError(err);
+    throw new VCXInternalError1(err);
   }
 }
 
@@ -294,7 +294,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
       connection._setHandle(await ffiNapi.createConnectionWithInvite(id, invite))
       return connection;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -302,7 +302,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return ffiNapi.getThreadId(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -316,7 +316,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
       connection._setHandle(await ffiNapi.createWithRequest(request, agent.handle))
       return connection;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -330,7 +330,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
       connection._setHandle(await ffiNapi.createWithRequestV2(request, JSON.stringify(pwInfo)))
       return connection;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -375,7 +375,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.updateStateWithMessage(this.handle, message)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -393,7 +393,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.handleMessage(this.handle, message)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -412,7 +412,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.updateState(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -445,7 +445,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return (await ffiNapi.connect(this.handle) || "{}")
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -468,7 +468,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.sendGenericMessage(this.handle, JSON.stringify(sendMsgOptions))
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -476,7 +476,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.sendHandshakeReuse(this.handle, oobMsg)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -493,7 +493,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.signData(this.handle, data)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -510,7 +510,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.verifySignature(this.handle, signatureData.data, signatureData.data)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -529,7 +529,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return ffiNapi.getInviteDetails(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -543,7 +543,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.sendPing(this.handle, comment)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -560,7 +560,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.sendDiscoveryFeatures(this.handle, query, comment)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -571,7 +571,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return ffiNapi.getPwDid(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -582,7 +582,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return ffiNapi.getTheirPwDid(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -597,7 +597,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.getConnectionInfo(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -605,7 +605,7 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     try {
       return await ffiNapi.downloadMessages([this.handle], status, uids)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 }

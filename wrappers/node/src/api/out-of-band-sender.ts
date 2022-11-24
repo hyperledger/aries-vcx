@@ -1,5 +1,5 @@
 import * as ffi from 'node-napi-rs';
-import { VCXInternalError } from '../errors';
+import { VCXInternalError1 } from '../errors-1';
 import { VCXBase1 } from './vcx-base-1';
 import { ISerializedData } from './common';
 
@@ -41,7 +41,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
       oob._setHandle(ffi.createOutOfBand(JSON.stringify(config)));
       return oob;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -56,7 +56,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
     try {
       ffi.appendMessage(this.handle, message);
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -64,7 +64,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
       try {
         ffi.appendServiceDid(this.handle, did);
       } catch (err: any) {
-        throw new VCXInternalError(err);
+        throw new VCXInternalError1(err);
       }
   }
 
@@ -72,7 +72,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
     try {
         ffi.appendService(this.handle, service);
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -80,7 +80,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
     try {
       return ffi.toA2AMessage(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -88,7 +88,7 @@ export class OutOfBandSender extends VCXBase1<IOOBSerializedData> {
     try {
       return ffi.getThreadIdSender(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 

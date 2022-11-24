@@ -1,5 +1,5 @@
 import * as ffi from 'node-napi-rs';
-import { VCXInternalError } from '../errors';
+import { VCXInternalError1 } from '../errors-1';
 import { IOOBSerializedData } from './out-of-band-sender';
 import { Connection } from './mediated-connection';
 import { VCXBase1 } from './vcx-base-1';
@@ -12,7 +12,7 @@ export class OutOfBandReceiver extends VCXBase1<IOOBSerializedData> {
       oob._setHandle(ffi.createOutOfBandMsgFromMsg(msg))
       return oob;
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -27,7 +27,7 @@ export class OutOfBandReceiver extends VCXBase1<IOOBSerializedData> {
     try {
       return ffi.extractA2AMessage(this.handle);
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -37,16 +37,16 @@ export class OutOfBandReceiver extends VCXBase1<IOOBSerializedData> {
       const connHandle = await ffi.connectionExists(this.handle, connHandles);
       return connections.find((conn) => conn.handle === connHandle);
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
   public async buildConnection(): Promise<Connection> {
     try {
       const connection = await ffi.buildConnection(this.handle);
-      return await Connection.deserialize(JSON.parse(connection));
+      return Connection.deserialize(JSON.parse(connection));
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
@@ -54,7 +54,7 @@ export class OutOfBandReceiver extends VCXBase1<IOOBSerializedData> {
     try {
       return ffi.getThreadIdReceiver(this.handle)
     } catch (err: any) {
-      throw new VCXInternalError(err);
+      throw new VCXInternalError1(err);
     }
   }
 
