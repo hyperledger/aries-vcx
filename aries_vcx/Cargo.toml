@@ -47,7 +47,7 @@ derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
 messages = { path  = "../messages" }
 zmq = { version = "0.9.2" }
-napi = "2.10.1"
+napi = "=2.9.1"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
