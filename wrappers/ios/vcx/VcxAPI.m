@@ -1241,10 +1241,10 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
-    uint8_t * data_raw = (uint8_t * )
+    uint8_t *data_raw = (uint8_t * )
     [dataRaw bytes];
     uint32_t
-    data_length = (uint32_t)
+            data_length = (uint32_t)
     [dataRaw length];
 
     vcx_error_t ret = vcx_connection_sign_data(
@@ -1266,16 +1266,16 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
                    withCompletion:(void (^)(NSError *, vcx_bool_t))completion {
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
-    uint8_t * data_raw = (uint8_t * )
+    uint8_t *data_raw = (uint8_t * )
     [dataRaw bytes];
     uint32_t
-    data_length = (uint32_t)
+            data_length = (uint32_t)
     [dataRaw length];
 
-    uint8_t * signature_raw = (uint8_t * )
+    uint8_t *signature_raw = (uint8_t * )
     [signatureRaw bytes];
     uint32_t
-    signature_length = (uint32_t)
+            signature_length = (uint32_t)
     [signatureRaw length];
 
     vcx_error_t ret = vcx_connection_verify_signature(handle,
