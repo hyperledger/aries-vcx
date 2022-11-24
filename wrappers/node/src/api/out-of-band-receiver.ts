@@ -3,7 +3,7 @@ import { VCXInternalError } from '../errors';
 import { rustAPI } from '../rustlib';
 import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { IOOBSerializedData } from './out-of-band-sender';
-import { Connection } from './connection';
+import { Connection } from './mediated-connection';
 import { VCXBase } from './vcx-base';
 import { ISerializedData } from './common';
 

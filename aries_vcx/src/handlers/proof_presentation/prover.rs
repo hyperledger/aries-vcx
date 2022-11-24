@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use messages::proof_presentation::presentation_ack::PresentationAck;
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 
@@ -252,8 +252,8 @@ pub mod test_utils {
     }
 }
 
-#[cfg(test)]
 #[cfg(feature = "general_test")]
+#[cfg(test)]
 mod tests {
     use messages::proof_presentation::presentation_request::PresentationRequest;
     use crate::utils::devsetup::*;
@@ -262,17 +262,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        let setup = SetupLibraryWallet::init().await;
-
-        let proof_req = PresentationRequest::create();
-        let proof = Prover::create_from_request("1", proof_req).unwrap();
-        assert_eq!(
-            proof
-                .retrieve_credentials(setup.wallet_handle)
-                .await
-                .unwrap_err()
-                .kind(),
-            VcxErrorKind::InvalidJson
-        );
+        SetupLibraryWallet::run(|setup| async move {
+            let proof_req = PresentationRequest::create();
+            let proof = Prover::create_from_request("1", proof_req).unwrap();
+            assert_eq!(
+                proof
+                    .retrieve_credentials(setup.wallet_handle)
+                    .await
+                    .unwrap_err()
+                    .kind(),
+                VcxErrorKind::InvalidJson
+            );
+        }).await;
     }
 }

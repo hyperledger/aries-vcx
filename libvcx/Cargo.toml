@@ -17,6 +17,7 @@ pool_tests = [ "test_utils" ]
 general_test = [ "test_utils" ]
 # to_restore = []
 fatal_warnings = []
+ios-wrapper = ["aries-vcx/ios-wrapper"]
 
 [dependencies]
 once_cell = { version = "1.15" }
@@ -32,10 +33,10 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 base64 = "0.10"
-futures = "0.3.15"
+futures = { version = "0.3", default-features = false }
 tokio = { version = "1.15.0", features = ["rt-multi-thread"] }
 uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
-failure = "0.1.6"
+failure = "0.1.8"
 aries-vcx = { path = "../aries_vcx" }
 
 [target.'cfg(target_os = "android")'.dependencies]

@@ -9,7 +9,7 @@ use aries_vcx::messages::ack::Ack;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::connection::response::SignedResponse;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 pub type ServiceEndpoint = String;
 

@@ -66,6 +66,14 @@ impl std::string::ToString for MessageType {
                 self.version,
                 self.msg_type
             )
+        // TODO: Remove once handshake protocol is implemented
+        } else if self.msg_type.is_empty() {
+            format!(
+                "{}/{}/{}",
+                self.prefix,
+                self.family.to_string(),
+                self.version,
+            )
         } else {
             format!(
                 "{}/{}/{}/{}",

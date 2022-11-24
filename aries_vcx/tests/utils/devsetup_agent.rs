@@ -8,7 +8,7 @@ pub mod test_utils {
     use messages::revocation_notification::revocation_ack::RevocationAck;
     use messages::revocation_notification::revocation_notification::RevocationNotification;
     use messages::status::Status;
-    use vdrtools_sys::{PoolHandle, WalletHandle};
+    use vdrtools::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;
     use agency_client::api::downloaded_message::DownloadedMessage;

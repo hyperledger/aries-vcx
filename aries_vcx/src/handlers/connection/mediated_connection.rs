@@ -7,7 +7,7 @@ use futures::stream::StreamExt;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
-use vdrtools_sys::WalletHandle;
+use vdrtools::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
@@ -1067,7 +1067,7 @@ impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, Stri
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use vdrtools_sys::WalletHandle;
+    use vdrtools::WalletHandle;
 
     use agency_client::testing::mocking::enable_agency_mocks;
 

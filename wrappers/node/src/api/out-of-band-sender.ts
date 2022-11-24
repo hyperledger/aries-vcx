@@ -21,6 +21,7 @@ export interface IOOBCreateData {
   label?: string;
   goalCode?: GoalCode;
   goal?: string;
+  handshake_protocols?: HandshakeProtocol[];
 }
 
 export enum GoalCode {
@@ -31,8 +32,8 @@ export enum GoalCode {
 }
 
 export enum HandshakeProtocol {
-  ConnectionV1 = 0,
-  DidExchangeV1 = 1,
+  ConnectionV1 = "ConnectionV1",
+  DidExchangeV1 = "DidExchangeV1",
 }
 
 export class OutOfBandSender extends VCXBase<IOOBSerializedData> {

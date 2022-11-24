@@ -9,7 +9,7 @@ use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::vdrtools_sys::WalletHandle;
+use aries_vcx::vdrtools::WalletHandle;
 
 #[derive(Clone)]
 struct IssuerWrapper {

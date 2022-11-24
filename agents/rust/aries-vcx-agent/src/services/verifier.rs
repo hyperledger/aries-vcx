@@ -8,7 +8,7 @@ use aries_vcx::messages::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use super::connection::ServiceConnections;
 

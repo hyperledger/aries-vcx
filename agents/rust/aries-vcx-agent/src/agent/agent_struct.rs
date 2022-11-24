@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
-use aries_vcx::vdrtools_sys::{PoolHandle, WalletHandle};
+use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::agent::agent_config::AgentConfig;
 

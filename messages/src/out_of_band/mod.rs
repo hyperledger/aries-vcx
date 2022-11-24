@@ -14,6 +14,7 @@ pub enum GoalCode {
     P2PMessaging,
 }
 
+#[derive(Deserialize, Debug, PartialEq)]
 pub enum HandshakeProtocol {
     ConnectionV1,
     DidExchangeV1,
