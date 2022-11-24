@@ -12,9 +12,9 @@ crate-type = ["staticlib", "cdylib"]
 doctest = false
 
 [features]
-test_utils = [ "aries-vcx/test_utils" ]
-pool_tests = [ "test_utils" ]
-general_test = [ "test_utils" ]
+test_utils = [ "aries-vcx/test_utils", "napi-derive/noop" ]
+pool_tests = [ "test_utils", "napi-derive/noop" ]
+general_test = [ "test_utils", "napi-derive/noop"]
 # to_restore = []
 fatal_warnings = []
 ios-wrapper = ["aries-vcx/ios-wrapper"]
