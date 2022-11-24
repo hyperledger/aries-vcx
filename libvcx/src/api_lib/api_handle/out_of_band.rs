@@ -283,7 +283,7 @@ pub mod tests {
                 .set_recipient_keys(vec!["abcde".into()]),
         );
         append_service(oob_handle, json!(service).to_string()).unwrap();
-        append_service_did(oob_handle, "V4SGRU86Z58d6TV7PBUe6f".to_string()).unwrap();
+        append_service_did(oob_handle, did.to_string()).unwrap();
         let resolved_services = get_services(oob_handle).unwrap();
         assert_eq!(resolved_services.len(), 2);
         assert_eq!(service, resolved_services[0]);

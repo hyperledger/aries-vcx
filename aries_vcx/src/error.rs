@@ -346,7 +346,12 @@ impl From<napi::Error> for VcxError {
     fn from(err: napi::Error) -> Self {
         let reason = err.to_string();
         error!("{}", reason);
-        VcxError::from_msg(VcxErrorKind::UnknownError, reason)
+        // TODO: This is hacky, there are other options
+        match err.reason.parse::<u32>() {
+            Ok(r) => VcxError::from(VcxErrorKind::from(r)),
+            Err(_) => VcxError::from_msg(VcxErrorKind::UnknownError, reason)
+
+        }
     }
 }
 
