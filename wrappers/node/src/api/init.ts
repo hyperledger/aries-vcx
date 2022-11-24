@@ -12,7 +12,7 @@ export function initThreadpool (config: object) {
   }
 }
 
-export async function createAgencyClientForMainWallet (config: object): Promise<void> {
+export function createAgencyClientForMainWallet (config: object): void {
   try {
     ffiNapi.createAgencyClientForMainWallet(JSON.stringify(config))
   } catch (err: any) {

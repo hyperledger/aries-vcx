@@ -539,7 +539,7 @@ pub async fn download_messages(
 
 #[napi]
 pub async fn sign_data(handle: u32, data: Buffer) -> ::napi::Result<Buffer> {
-    let vk = get_their_pw_verkey(handle)?;
+    let vk = get_pw_verkey(handle)?;
     Ok(Buffer::from(indy::signing::sign(get_main_wallet_handle(), &vk, &data.to_vec())
         .await
         .map_err(|err|

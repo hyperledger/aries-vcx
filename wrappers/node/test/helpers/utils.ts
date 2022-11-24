@@ -70,7 +70,7 @@ export async function initVcxTestMode(): Promise<void> {
   //   institution_did,
   // }
   // await vcx.initIssuerConfig(issuerConfig)
-  await vcx.createAgencyClientForMainWallet(configAgency)
+  vcx.createAgencyClientForMainWallet(configAgency)
   vcx.enableMocks()
 }
 
