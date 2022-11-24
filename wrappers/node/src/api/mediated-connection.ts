@@ -340,10 +340,10 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
    * data = await connection1.serialize()
    * connection2 = await Connection.deserialize(data)
    */
-  public static async deserialize(
+  public static deserialize(
     connectionData: ISerializedData<IConnectionData>,
-  ): Promise<Connection> {
-    const connection = await super._deserialize(Connection, connectionData);
+  ): Connection {
+    const connection = super._deserialize(Connection, connectionData);
     return connection;
   }
 

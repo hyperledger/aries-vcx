@@ -337,7 +337,8 @@ impl From<VcxError> for napi::Error {
     fn from(err: VcxError) -> Self {
         let reason = err.to_string();
         error!("{}", reason);
-        napi::Error::new(napi::Status::Unknown, reason)
+        // Use message field to propagate information about error type
+        napi::Error::new(napi::Status::Unknown, format!("{:?}", Into::<u32>::into(err.kind())))
     }
 }
 

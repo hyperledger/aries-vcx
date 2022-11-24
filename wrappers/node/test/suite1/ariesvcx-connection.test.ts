@@ -42,7 +42,8 @@ describe('Connection:', () => {
     it('throws: not initialized', async () => {
       const connection = new (Connection as any)();
       const err = await shouldThrow(async () => connection.connect({ data: '{}' }));
-      assert.equal(err.vcxCode, VCXCode.INVALID_OBJ_HANDLE);
+      // NAPI throws error - connection handle is undefined instead of a number
+      assert.equal(err.message, `Failed to convert napi value Undefined into rust type \`u32\``);
     });
   });
 
@@ -119,14 +120,14 @@ describe('Connection:', () => {
     it('success', async () => {
       const connection1 = await connectionCreateInviterNull();
       const data1 = connection1.serialize();
-      const connection2 = await Connection.deserialize(data1);
+      const connection2 = Connection.deserialize(data1);
       assert.equal(connection2.sourceId, connection1.sourceId);
       const data2 = connection2.serialize();
       assert.deepEqual(data1, data2);
     });
 
     it('throws: incorrect data', async () => {
-      const error = await shouldThrow(async () =>
+      const error = await shouldThrow(() =>
         Connection.deserialize({ data: { source_id: 'Invalid' } } as any),
       );
       assert.equal(error.vcxCode, VCXCode.INVALID_JSON);
@@ -156,7 +157,7 @@ describe('Connection:', () => {
       assert.equal(await connection.getState(), ConnectionStateType.Finished);
     });
 
-    it('should not fail on attempt to handle unknown message type',async () => {
+    it('should not fail on attempt to handle unknown message type', async () => {
       const connection = await createConnectionInviterFinished();
       await connection.handleMessage(JSON.stringify(ARIES_UNKNOWN_TYPE));
     });

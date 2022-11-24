@@ -1,4 +1,3 @@
-import { VCXCode } from './api/common';
 import { errorMessage } from './utils/error-message';
 
 export class ConnectionTimeoutError extends Error {}
@@ -18,7 +17,8 @@ export class VCXInternalError extends Error {
         this.inheritedStackTraces.unshift(...code.inheritedStackTraces);
         return this;
       }
-      this.vcxCode = VCXCode.UNKNOWN_ERROR;
+      // Here we assume that Error was thrown by VCX through NAPI
+      this.vcxCode = parseInt(code.message)
       return this;
     }
     this.vcxCode = code;
