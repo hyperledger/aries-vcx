@@ -272,9 +272,13 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
  * ```
  */
   public static async create({ id }: IConnectionCreateData): Promise<Connection> {
-    const connection = new Connection(id);
-    connection._setHandle(await ffiNapi.createConnection(id))
-    return connection;
+    try {
+      const connection = new Connection(id);
+      connection._setHandle(await ffiNapi.createConnection(id))
+      return connection;
+    } catch (err: any) {
+      throw new VCXInternalError1(err);
+    }
   }
 
   /**
@@ -343,8 +347,11 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
   public static deserialize(
     connectionData: ISerializedData<IConnectionData>,
   ): Connection {
-    const connection = super._deserialize(Connection, connectionData);
-    return connection;
+    try {
+      return super._deserialize(Connection, connectionData);
+    } catch (err: any) {
+      throw new VCXInternalError1(err);
+    }
   }
 
   protected _releaseFn = ffiNapi.release;
@@ -427,7 +434,11 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
    * ```
    */
   public delete(): void {
-    ffiNapi.deleteConnection(this.handle)
+    try {
+      ffiNapi.deleteConnection(this.handle)
+    } catch (err: any) {
+      throw new VCXInternalError1(err);
+    }
   }
 
   /**
