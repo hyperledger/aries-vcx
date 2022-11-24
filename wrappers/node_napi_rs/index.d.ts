@@ -54,6 +54,9 @@ export function fromStringSender(oobData: string): number
 export function fromStringReceiver(oobData: string): number
 export function releaseSender(handle: number): void
 export function releaseReceiver(handle: number): void
+export function initDefaultLogger(pattern?: string | undefined | null): void
+export function createAgencyClientForMainWallet(config: string): void
 export function openAsMainWallet(walletConfig: string): Promise<number>
 export function closeMainWallet(): Promise<void>
 export function createMainWallet(walletConfig: string): Promise<void>
+export function enableMocks(): void

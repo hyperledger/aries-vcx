@@ -1,3 +1,4 @@
+import * as ffiNapi from 'node-napi-rs';
 import { Callback } from 'ffi-napi';
 
 import { VCXInternalError } from '../errors';
@@ -13,24 +14,7 @@ export function initThreadpool (config: object) {
 
 export async function createAgencyClientForMainWallet (config: object): Promise<void> {
   try {
-    return await createFFICallbackPromise<void>(
-            (resolve, reject, cb) => {
-              const rc = rustAPI().vcx_create_agency_client_for_main_wallet(0, JSON.stringify(config), cb)
-              if (rc) {
-                reject(rc)
-              }
-            },
-            (resolve, reject) => Callback(
-                'void',
-                ['uint32', 'uint32'],
-                (xhandle: number, err: number) => {
-                  if (err) {
-                    reject(err)
-                    return
-                  }
-                  resolve()
-                })
-        )
+    ffiNapi.createAgencyClientForMainWallet(JSON.stringify(config))
   } catch (err: any) {
     throw new VCXInternalError(err)
   }
@@ -87,5 +71,5 @@ export async function openMainPool (config: object): Promise<void> {
 }
 
 export function enableMocks(): void {
-    return rustAPI().vcx_enable_mocks();
+    return ffiNapi.enableMocks()
 }

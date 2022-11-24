@@ -3,7 +3,9 @@ use std::sync::{RwLock, RwLockWriteGuard};
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::error::VcxResult;
+use aries_vcx::error::{VcxResult, VcxError, VcxErrorKind};
+
+use napi_derive::napi;
 
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 
@@ -21,8 +23,12 @@ pub fn get_main_agency_client() -> VcxResult<AgencyClient> {
     Ok(agency_client)
 }
 
-pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> VcxResult<()> {
-    let client = get_main_agency_client()?.configure(get_main_wallet_handle(), config)?;
+#[napi]
+pub fn create_agency_client_for_main_wallet(config: String) -> ::napi::Result<()> {
+    let config = serde_json::from_str::<AgencyClientConfig>(&config)
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Serialization error: {:?}", err)))?;
+    let client = get_main_agency_client()?.configure(get_main_wallet_handle(), &config)
+        .map_err(|err| Into::<VcxError>::into(err))?;
     set_main_agency_client(client);
     Ok(())
 }

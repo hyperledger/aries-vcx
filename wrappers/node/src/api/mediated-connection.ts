@@ -1,9 +1,6 @@
-import * as ffi from 'ffi-napi';
 import * as ffiNapi from 'node-napi-rs';
 import * as ref from 'ref-napi';
 import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VCXBaseWithState1 } from './vcx-base-with-state-1';
 import { PublicAgent } from './public-agent';
@@ -220,37 +217,37 @@ export interface IConnectionDownloadAllMessages extends IConnectionDownloadMessa
   pwdids: string;
 }
 
-export async function downloadMessagesV2({
-  connections,
-  status,
-  uids,
-}: IDownloadMessagesConfigsV2): Promise<string> {
-  try {
-    const handles = connections.map((connection) => connection.handle).join(',');
-    return await createFFICallbackPromise<string>(
-      (resolve, reject, cb) => {
-        const rc = rustAPI().vcx_v2_messages_download(0, handles, status, uids, cb);
-        if (rc) {
-          reject(rc);
-        }
-      },
-      (resolve, reject) =>
-        ffi.Callback(
-          'void',
-          ['uint32', 'uint32', 'string'],
-          (xhandle: number, err: number, messages: string) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(messages);
-          },
-        ),
-    );
-  } catch (err: any) {
-    throw new VCXInternalError(err);
-  }
-}
+// export async function downloadMessagesV2({
+//   connections,
+//   status,
+//   uids,
+// }: IDownloadMessagesConfigsV2): Promise<string> {
+//   try {
+//     const handles = connections.map((connection) => connection.handle).join(',');
+//     return await createFFICallbackPromise<string>(
+//       (resolve, reject, cb) => {
+//         const rc = rustAPI().vcx_v2_messages_download(0, handles, status, uids, cb);
+//         if (rc) {
+//           reject(rc);
+//         }
+//       },
+//       (resolve, reject) =>
+//         ffi.Callback(
+//           'void',
+//           ['uint32', 'uint32', 'string'],
+//           (xhandle: number, err: number, messages: string) => {
+//             if (err) {
+//               reject(err);
+//               return;
+//             }
+//             resolve(messages);
+//           },
+//         ),
+//     );
+//   } catch (err: any) {
+//     throw new VCXInternalError(err);
+//   }
+// }
 
 export function generatePublicInvite(public_did: string, label: string): string {
   try {
@@ -275,13 +272,9 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
  * ```
  */
   public static async create({ id }: IConnectionCreateData): Promise<Connection> {
-    try {
-      const connection = new Connection(id);
-      connection._setHandle(await ffiNapi.createConnection(id))
-      return connection;
-    } catch (err: any) {
-      throw new VCXInternalError(err);
-    }
+    const connection = new Connection(id);
+    connection._setHandle(await ffiNapi.createConnection(id))
+    return connection;
   }
 
   /**
@@ -354,8 +347,8 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
     return connection;
   }
 
-  protected _releaseFn = rustAPI().vcx_connection_release;
-  protected _updateStFn = rustAPI().vcx_connection_update_state;
+  protected _releaseFn = ffiNapi.release;
+  protected _updateStFn = ffiNapi.updateState;
   protected _updateStFnV2 = (
     _handle: number,
     _connHandle: number,
@@ -365,8 +358,8 @@ export class Connection extends VCXBaseWithState1<IConnectionData, ConnectionSta
   protected _getStFn = ffiNapi.getState;
   protected _serializeFn = ffiNapi.toString;
   protected _deserializeFn = ffiNapi.fromString;
-  protected _inviteDetailFn = rustAPI().vcx_connection_invite_details;
-  protected _infoFn = rustAPI().vcx_connection_info;
+  protected _inviteDetailFn = ffiNapi.getInviteDetails;
+  protected _infoFn = ffiNapi.getConnectionInfo;
 
   /**
    *

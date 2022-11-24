@@ -1,9 +1,9 @@
+import * as ffiNapi from 'node-napi-rs';
 import * as ffi from 'ffi-napi';
 import * as ref from 'ref-napi';
 import * as buildStructType from 'ref-struct-di';
 
 import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
 import { PtrBuffer } from './utils';
 
 export type LogFunction = (
@@ -49,7 +49,7 @@ const Ilogger = {
 
 export function defaultLogger(level: string): void {
   try {
-    rustAPI().vcx_set_default_logger(level);
+    ffiNapi.initDefaultLogger(level)
   } catch (err: any) {
     throw new VCXInternalError(err);
   }

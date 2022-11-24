@@ -3,7 +3,6 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use crate::api_lib::global::pool::{close_main_pool, get_main_pool_handle, is_main_pool_open, open_main_pool};
@@ -105,20 +104,8 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
-    let agency_config = match serde_json::from_str::<AgencyClientConfig>(&config) {
-        Ok(agency_config) => agency_config,
-        Err(err) => {
-            set_current_error(&err);
-            error!(
-                "vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}",
-                err
-            );
-            return error::INVALID_CONFIGURATION.code_num;
-        }
-    };
-
     execute(move || {
-        match create_agency_client_for_main_wallet(&agency_config) {
+        match create_agency_client_for_main_wallet(config) {
             Ok(()) => {
                 info!(
                     "vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}",
@@ -128,6 +115,7 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
                 cb(command_handle, error::SUCCESS.code_num)
             }
             Err(err) => {
+                let err: VcxError = err.into();
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, error {}",

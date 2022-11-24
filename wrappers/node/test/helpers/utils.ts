@@ -55,21 +55,21 @@ function generateWalletConfig() {
 }
 
 export async function initVcxTestMode(): Promise<void> {
-  scheduleGarbageCollectionBeforeExit();
-  if (!isRustApiInitialized()) {
-    initRustAPI();
-  }
+  // scheduleGarbageCollectionBeforeExit();
+  // if (!isRustApiInitialized()) {
+  //   initRustAPI();
+  // }
   const rustLogPattern = process.env.RUST_LOG || 'vcx=error';
-  vcx.defaultLogger(rustLogPattern);
-  vcx.initThreadpool(configThreadpool)
+  // vcx.defaultLogger(rustLogPattern);
+  // vcx.initThreadpool(configThreadpool)
   const configWallet = generateWalletConfig();
   await vcx.createWallet(configWallet)
   await vcx.openMainWallet(configWallet)
-  const { institution_did, institution_verkey }  = JSON.parse(await vcx.configureIssuerWallet(issuerSeed))
-  const issuerConfig = {
-    institution_did,
-  }
-  await vcx.initIssuerConfig(issuerConfig)
+  // const { institution_did, institution_verkey }  = JSON.parse(await vcx.configureIssuerWallet(issuerSeed))
+  // const issuerConfig = {
+  //   institution_did,
+  // }
+  // await vcx.initIssuerConfig(issuerConfig)
   await vcx.createAgencyClientForMainWallet(configAgency)
   vcx.enableMocks()
 }
