@@ -289,7 +289,7 @@ build_libvcx(){
     pushd ${LIBVCX_DIR}
         rm -rf target/${TRIPLET}
         cargo clean
-        cargo build --release --target=${TRIPLET}
+        cargo build -p libvcx --release --target=${TRIPLET}
         rm -rf target/${TRIPLET}/release/deps
         rm -rf target/${TRIPLET}/release/build
         rm -rf target/release/deps
@@ -306,5 +306,5 @@ copy_libraries_to_jni(){
     echo "Copying dependencies to ${BOLD}${YELLOW}${LIB_PATH}${RESET}"
     mkdir -p $LIB_PATH
     cp ${LIBVCX_DIR}/target/${TRIPLET}/release/libvcx.so ${LIB_PATH}
-    cp ${LIBZMQ_LIB_DIR}/libzmq.so    ${LIB_PATH}
+    cp ${LIBZMQ_LIB_DIR}/libzmq.so ${LIB_PATH}
 }

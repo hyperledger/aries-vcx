@@ -10,7 +10,6 @@ const { createServiceOutOfBand } = require('./services/service-out-of-band')
 const { createServiceLedgerRevocationRegistry } = require('./services/service-revocation-registry')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
-  initThreadpool,
   createAgencyClientForMainWallet,
   initIssuerConfig,
   openMainWallet,
@@ -38,8 +37,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
   async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    logger.silly('Initializing threadpool')
-    await initThreadpool({})
     logger.silly('Initializing issuer config')
     await initIssuerConfig(agentProvision.issuerConfig)
     logger.silly('Opening main wallet')

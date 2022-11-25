@@ -5,6 +5,7 @@ const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicI
 } = require('@hyperledger/node-vcx-wrapper')
 const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
 const sleep = require('sleep-promise')
+const assert = require('assert')
 
 module.exports.createFaber = async function createFaber () {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
@@ -83,11 +84,13 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function unpackMsg (encryptedMsg) {
-    logger.info('Faber is going to unpack message')
+    assert(encryptedMsg)
+    logger.info(`Faber is going to unpack message of length ${encryptedMsg.length}`)
     await vcxAgent.agentInitVcx()
 
-    const { message, sender_verkey: senderVerkey } = await unpack(encryptedMsg);
+    const { message, sender_verkey: senderVerkey } = await unpack(encryptedMsg)
 
+    logger.info(`Decrypted msg has length ${message.length}, sender verkey: ${senderVerkey}`)
     await vcxAgent.agentShutdownVcx()
 
     return { message, senderVerkey }
@@ -250,7 +253,7 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function verifySignature (dataBase64, signatureBase64) {
-    logger.debug(`Faber is going to verift signed data. Data=${dataBase64} signature=${signatureBase64}`)
+    logger.debug(`Faber is going to verify signed data. Data=${dataBase64} signature=${signatureBase64}`)
     await vcxAgent.agentInitVcx()
 
     const isValid = await vcxAgent.serviceConnections.verifySignature(connectionId, dataBase64, signatureBase64)
@@ -278,9 +281,9 @@ module.exports.createFaber = async function createFaber () {
   }
 
   async function createConnectionFromReceivedRequestV2 (pwInfo, request) {
-    logger.info('Faber is going to create a connection from a request')
-    await vcxAgent.agentInitVcx()
+    logger.info(`Faber is going to create a connection from a request: ${request}, using pwInfo: ${JSON.stringify(pwInfo)}`)
 
+    await vcxAgent.agentInitVcx()
     await vcxAgent.serviceConnections.inviterConnectionCreateFromRequestV2(connectionId, pwInfo, request)
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 

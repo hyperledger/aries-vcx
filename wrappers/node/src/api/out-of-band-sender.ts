@@ -1,8 +1,6 @@
-import * as ffi from 'ffi-napi';
+import * as ffi from '@hyperledger/vcx-napi-rs';
 import { VCXInternalError } from '../errors';
-import { rustAPI } from '../rustlib';
-import { createFFICallbackPromise } from '../utils/ffi-helpers';
-import { VCXBase } from './vcx-base';
+import { VcxBase } from './vcx-base';
 import { ISerializedData } from './common';
 
 export interface IOOBSerializedData {
@@ -32,197 +30,67 @@ export enum GoalCode {
 }
 
 export enum HandshakeProtocol {
-  ConnectionV1 = "ConnectionV1",
-  DidExchangeV1 = "DidExchangeV1",
+  ConnectionV1 = 'ConnectionV1',
+  DidExchangeV1 = 'DidExchangeV1',
 }
 
-export class OutOfBandSender extends VCXBase<IOOBSerializedData> {
-  public static async create(config: IOOBCreateData): Promise<OutOfBandSender> {
+export class OutOfBandSender extends VcxBase<IOOBSerializedData> {
+  public static create(config: IOOBCreateData): OutOfBandSender {
     const oob = new OutOfBandSender(config.source_id);
-    const commandHandle = 0;
     try {
-      await oob._create((cb) =>
-        rustAPI().vcx_out_of_band_sender_create(commandHandle, JSON.stringify(config), cb),
-      );
+      oob._setHandle(ffi.outOfBandSenderCreate(JSON.stringify(config)));
       return oob;
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  public static async deserialize(
-    data: ISerializedData<IOOBSerializedData>,
-  ): Promise<OutOfBandSender> {
+  public static deserialize(data: ISerializedData<IOOBSerializedData>): OutOfBandSender {
     const newObj = { ...data, source_id: 'foo' };
     return super._deserialize(OutOfBandSender, newObj);
   }
 
-  public async appendMessage(message: string): Promise<void> {
+  public appendMessage(message: string): void {
     try {
-      await createFFICallbackPromise<void>(
-        (resolve, reject, cb) => {
-          const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_sender_append_message(
-            commandHandle,
-            this.handle,
-            message,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (handle: number, err: number) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve();
-            },
-          ),
-      );
+      ffi.outOfBandSenderAppendMessage(this.handle, message);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  public async appendServiceDid(did: string): Promise<void> {
-      try {
-          await createFFICallbackPromise<void>(
-              (resolve, reject, cb) => {
-                  const commandHandle = 0;
-                  const rc = rustAPI().vcx_out_of_band_sender_append_service_did(
-                      commandHandle,
-                      this.handle,
-                      did,
-                      cb,
-                  );
-                  if (rc) {
-                      reject(rc);
-                  }
-              },
-              (resolve, reject) =>
-                  ffi.Callback(
-                      'void',
-                      ['uint32', 'uint32'],
-                      (handle: number, err: number) => {
-                          if (err) {
-                              reject(err);
-                              return;
-                          }
-                          resolve();
-                      },
-                  ),
-          );
-      } catch (err: any) {
-          throw new VCXInternalError(err);
-      }
-  }
-
-  public async appendService(service: string): Promise<void> {
+  public appendServiceDid(did: string): void {
     try {
-      await createFFICallbackPromise<void>(
-        (resolve, reject, cb) => {
-          const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_sender_append_service(
-            commandHandle,
-            this.handle,
-            service,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32'],
-            (handle: number, err: number) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve();
-            },
-          ),
-      );
+      ffi.outOfBandSenderAppendServiceDid(this.handle, did);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  public async toMessage(): Promise<string> {
+  public appendService(service: string): void {
     try {
-      const msg = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_to_message(
-            commandHandle,
-            this.handle,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: number, err: number, msg: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(msg);
-            },
-          ),
-      );
-      return msg
+      ffi.outOfBandSenderAppendService(this.handle, service);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  public async getThreadId(): Promise<string> {
+  public toMessage(): string {
     try {
-      const thid = await createFFICallbackPromise<string>(
-        (resolve, reject, cb) => {
-          const commandHandle = 0;
-          const rc = rustAPI().vcx_out_of_band_sender_get_thread_id(
-            commandHandle,
-            this.handle,
-            cb,
-          );
-          if (rc) {
-            reject(rc);
-          }
-        },
-        (resolve, reject) =>
-          ffi.Callback(
-            'void',
-            ['uint32', 'uint32', 'string'],
-            (handle: number, err: number, thid: string) => {
-              if (err) {
-                reject(err);
-                return;
-              }
-              resolve(thid);
-            },
-          ),
-      );
-      return thid;
+      return ffi.outOfBandSenderToMessage(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
   }
 
-  protected _serializeFn = rustAPI().vcx_out_of_band_sender_serialize;
-  protected _deserializeFn = rustAPI().vcx_out_of_band_sender_deserialize;
-  protected _releaseFn = rustAPI().vcx_out_of_band_sender_release;
+  public getThreadId(): string {
+    try {
+      return ffi.outOfBandSenderGetThreadId(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  protected _serializeFn = ffi.outOfBandSenderSerialize;
+  protected _deserializeFn = ffi.outOfBandSenderDeserialize;
+  protected _releaseFn = ffi.outOfBandSenderRelease;
 }

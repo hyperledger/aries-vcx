@@ -5,6 +5,7 @@ use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 
+use crate::api_vcx::utils::version_constants;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::IssuerConfig;
 
@@ -24,8 +25,6 @@ use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{get_current_error_c_json, set_current_error, set_current_error_vcx};
 use crate::api_c::cutils::runtime::{execute, execute_async, init_threadpool};
 use crate::api_vcx::api_global::VERSION_STRING;
-
-use crate::api_vcx::utils::version_constants;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -483,6 +482,7 @@ pub extern "C" fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 pub mod test_utils {
     use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
     use aries_vcx::global::settings::{DEFAULT_WALLET_KEY, WALLET_KDF_RAW};
+    use uuid;
 
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;

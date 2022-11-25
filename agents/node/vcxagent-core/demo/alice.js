@@ -1,6 +1,5 @@
 const readlineSync = require('readline-sync')
 const sleepPromise = require('sleep-promise')
-const { initRustapi } = require('../src/index')
 const { createVcxAgent } = require('../src/index')
 const { testTailsUrl } = require('../src/common')
 const logger = require('./logger')('Alice')
@@ -12,6 +11,7 @@ const url = require('url')
 const { extractProofRequestAttachement } = require('../src/utils/proofs')
 const assert = require('assert')
 const { getStorageInfoMysql } = require('./wallet-common')
+const { initRustLogger } = require('../src')
 
 const mapRevRegIdToTailsFile = (_revRegId) => '/tmp/tails'
 
@@ -43,7 +43,7 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_client=error')
+    initRustLogger(process.env.RUST_LOG || 'vcx=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
