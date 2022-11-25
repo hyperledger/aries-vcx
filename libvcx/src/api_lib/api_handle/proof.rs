@@ -1,15 +1,14 @@
 use serde_json;
 
-use crate::api_lib::global::pool::get_main_pool_handle;
+use crate::api_lib::global::profile::get_main_profile;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+use aries_vcx::xyz::proofs::proof_request::PresentationRequestData;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -29,7 +28,8 @@ pub async fn create_proof(
     revocation_details: String,
     name: String,
 ) -> VcxResult<u32> {
-    let presentation_request = PresentationRequestData::create(&name)
+    let profile = get_main_profile()?;
+    let presentation_request = PresentationRequestData::create(&profile, &name)
         .await?
         .set_requested_attributes_as_string(requested_attrs)?
         .set_requested_predicates_as_string(requested_predicates)?
@@ -56,6 +56,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+    let profile = get_main_profile()?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
@@ -70,8 +71,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
             .handle_message(
-                get_main_wallet_handle(),
-                get_main_pool_handle()?,
+                &profile,
                 message.into(),
                 Some(send_message),
             )
@@ -82,8 +82,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
                 .handle_message(
-                    get_main_wallet_handle(),
-                    get_main_pool_handle()?,
+                    &profile,
                     message.into(),
                     Some(send_message),
                 )

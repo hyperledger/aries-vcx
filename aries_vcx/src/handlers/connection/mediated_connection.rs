@@ -1,18 +1,19 @@
 use core::fmt;
 use std::clone::Clone;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use futures::future::BoxFuture;
 use futures::stream::StreamExt;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
-use vdrtools::WalletHandle;
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
@@ -85,12 +86,12 @@ pub enum Actor {
 impl MediatedConnection {
     pub async fn create(
         source_id: &str,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         autohop_enabled: bool,
     ) -> VcxResult<Self> {
         trace!("MediatedConnection::create >>> source_id: {}", source_id);
-        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+        let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         Ok(Self {
             cloud_agent_info,
@@ -101,7 +102,7 @@ impl MediatedConnection {
 
     pub async fn create_with_invite(
         source_id: &str,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         invitation: Invitation,
         did_doc: DidDoc,
@@ -112,7 +113,7 @@ impl MediatedConnection {
             source_id,
             invitation
         );
-        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+        let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
         let cloud_agent_info = Some(CloudAgentInfo::create(agency_client, &pairwise_info).await?);
         let mut connection = Self {
             cloud_agent_info,
@@ -124,7 +125,7 @@ impl MediatedConnection {
     }
 
     pub async fn create_with_request(
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         request: Request,
         pairwise_info: PairwiseInfo,
         agency_client: &AgencyClient,
@@ -140,7 +141,7 @@ impl MediatedConnection {
             autohop_enabled: true,
         };
         connection
-            .process_request(wallet_handle, agency_client, request)
+            .process_request(profile, agency_client, request)
             .await?;
         Ok(connection)
     }
@@ -296,15 +297,15 @@ impl MediatedConnection {
 
     pub async fn process_request(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         request: Request,
     ) -> VcxResult<()> {
         trace!("MediatedConnection::process_request >>> request: {:?}", request);
         let (connection_sm, new_cloud_agent_info) = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let send_message = self.send_message_closure_connection(wallet_handle);
-                let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                let send_message = self.send_message_closure_connection(profile);
+                let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                 let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                 let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
                 let new_service_endpoint = agency_client.get_agency_url_full();
@@ -313,7 +314,7 @@ impl MediatedConnection {
                         sm_inviter
                             .clone()
                             .handle_connection_request(
-                                wallet_handle,
+                                profile.inject_wallet(),
                                 request,
                                 &new_pairwise_info,
                                 new_routing_keys,
@@ -334,12 +335,12 @@ impl MediatedConnection {
         Ok(())
     }
 
-    pub async fn send_response(&mut self, wallet_handle: WalletHandle) -> VcxResult<()> {
+    pub async fn send_response(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         trace!("MediatedConnection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                    let send_message = self.send_message_closure_connection(wallet_handle);
+                    let send_message = self.send_message_closure_connection(profile);
                     sm_inviter.handle_send_response(send_message).await?
                 } else {
                     return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -370,18 +371,19 @@ impl MediatedConnection {
 
     pub fn update_state_with_message(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: AgencyClient,
         message: Option<A2AMessage>,
     ) -> BoxFuture<'_, VcxResult<()>> {
+        let profile = Arc::clone(profile);
         Box::pin(async move {
             let (new_connection_sm, can_autohop) = match &self.connection_sm {
-                SmConnection::Inviter(_) => self.step_inviter(wallet_handle, message, &agency_client).await?,
-                SmConnection::Invitee(_) => self.step_invitee(wallet_handle, message).await?,
+                SmConnection::Inviter(_) => self.step_inviter(&profile, message, &agency_client).await?,
+                SmConnection::Invitee(_) => self.step_invitee(&profile, message).await?,
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                let res = self.update_state_with_message(wallet_handle, agency_client, None).await;
+                let res = self.update_state_with_message(&profile, agency_client, None).await;
                 res
             } else {
                 Ok(())
@@ -391,7 +393,7 @@ impl MediatedConnection {
 
     pub async fn find_and_handle_message(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if !self.is_in_final_state() {
@@ -401,7 +403,7 @@ impl MediatedConnection {
         let messages = self.get_messages_noauth(agency_client).await?;
         match self.find_message_to_handle(messages) {
             Some((uid, message)) => {
-                self.handle_message(message, wallet_handle).await?;
+                self.handle_message(message, profile).await?;
                 self.update_message_status(&uid, agency_client).await?;
             }
             None => {}
@@ -424,7 +426,7 @@ impl MediatedConnection {
         None
     }
 
-    pub async fn handle_message(&mut self, message: A2AMessage, wallet_handle: WalletHandle) -> VcxResult<()> {
+    pub async fn handle_message(&mut self, message: A2AMessage, profile: &Arc<dyn Profile>) -> VcxResult<()> {
         let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             format!(
@@ -438,7 +440,7 @@ impl MediatedConnection {
                 info!("Answering ping, thread: {}", ping.get_thread_id());
                 if ping.response_requested {
                     send_message(
-                        wallet_handle,
+                        profile.inject_wallet(),
                         pw_vk.to_string(),
                         did_doc.clone(),
                         build_ping_response(&ping).to_a2a_message(),
@@ -452,7 +454,7 @@ impl MediatedConnection {
                     handshake_reuse.get_thread_id()
                 );
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(wallet_handle, pw_vk.to_string(), did_doc.clone(), msg.to_a2a_message()).await?;
+                send_message(profile.inject_wallet(), pw_vk.to_string(), did_doc.clone(), msg.to_a2a_message()).await?;
             }
             A2AMessage::Query(query) => {
                 let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
@@ -460,7 +462,7 @@ impl MediatedConnection {
                     "Answering discovery protocol query, @id: {}, with supported protocols: {:?}",
                     query.id.0, &supported_protocols
                 );
-                respond_discovery_query(wallet_handle, query, &did_doc, pw_vk, supported_protocols).await?;
+                respond_discovery_query(&profile.inject_wallet(), query, &did_doc, pw_vk, supported_protocols).await?;
             }
             A2AMessage::Disclose(disclose) => {
                 info!("Handling disclose message, thread: {}", disclose.get_thread_id());
@@ -477,7 +479,7 @@ impl MediatedConnection {
 
     pub async fn find_message_and_update_state(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
     ) -> VcxResult<()> {
         if self.is_in_null_state() {
@@ -499,7 +501,7 @@ impl MediatedConnection {
         match self.find_message_to_update_state(messages) {
             Some((uid, message)) => {
                 trace!("MediatedConnection::update_state >>> handling message uid: {:?}", uid);
-                self.update_state_with_message(wallet_handle, agency_client.clone(), Some(message))
+                self.update_state_with_message(profile, agency_client.clone(), Some(message))
                     .await?;
                 self.cloud_agent_info()
                     .ok_or(VcxError::from_msg(
@@ -511,7 +513,7 @@ impl MediatedConnection {
             }
             None => {
                 trace!("MediatedConnection::update_state >>> trying to update state without message");
-                self.update_state_with_message(wallet_handle, agency_client.clone(), None)
+                self.update_state_with_message(profile, agency_client.clone(), None)
                     .await?;
             }
         }
@@ -522,7 +524,7 @@ impl MediatedConnection {
 
     async fn step_inviter(
         &self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         message: Option<A2AMessage>,
         agency_client: &AgencyClient,
     ) -> VcxResult<(Self, bool)> {
@@ -531,14 +533,14 @@ impl MediatedConnection {
                 let (sm_inviter, new_cloud_agent_info, can_autohop) = match message {
                     Some(message) => match message {
                         A2AMessage::ConnectionRequest(request) => {
-                            let send_message = self.send_message_closure_connection(wallet_handle);
-                            let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                            let send_message = self.send_message_closure_connection(profile);
+                            let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                             let new_cloud_agent = CloudAgentInfo::create(agency_client, &new_pairwise_info).await?;
                             let new_routing_keys = new_cloud_agent.routing_keys(agency_client)?;
                             let new_service_endpoint = new_cloud_agent.service_endpoint(agency_client)?;
                             let sm_connection = sm_inviter
                                 .handle_connection_request(
-                                    wallet_handle,
+                                    profile.inject_wallet(),
                                     request,
                                     &new_pairwise_info,
                                     new_routing_keys,
@@ -558,7 +560,7 @@ impl MediatedConnection {
                     },
                     None => {
                         if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                            let send_message = self.send_message_closure_connection(wallet_handle);
+                            let send_message = self.send_message_closure_connection(profile);
                             (
                                 sm_inviter.handle_send_response(send_message).await?,
                                 None,
@@ -586,7 +588,7 @@ impl MediatedConnection {
         }
     }
 
-    async fn step_invitee(&self, wallet_handle: WalletHandle, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
+    async fn step_invitee(&self, profile: &Arc<dyn Profile>, message: Option<A2AMessage>) -> VcxResult<(Self, bool)> {
         match self.connection_sm.clone() {
             SmConnection::Invitee(sm_invitee) => {
                 let (sm_invitee, can_autohop) = match message {
@@ -598,8 +600,8 @@ impl MediatedConnection {
                             (sm_invitee.handle_invitation(Invitation::Pairwise(invitation))?, false)
                         }
                         A2AMessage::ConnectionResponse(response) => {
-                            let send_message = self.send_message_closure_connection(wallet_handle);
-                            (sm_invitee.handle_connection_response(response, send_message).await?, true)
+                            let send_message = self.send_message_closure_connection(profile);
+                            (sm_invitee.handle_connection_response(&profile.inject_wallet(), response, send_message).await?, true)
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
@@ -607,7 +609,7 @@ impl MediatedConnection {
                         _ => (sm_invitee, false),
                     },
                     None => {
-                        let send_message = self.send_message_closure_connection(wallet_handle);
+                        let send_message = self.send_message_closure_connection(profile);
                         (sm_invitee.handle_send_ack(send_message).await?, false)
                     }
                 };
@@ -637,7 +639,7 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn connect(&mut self, wallet_handle: WalletHandle, agency_client: &AgencyClient) -> VcxResult<()> {
+    pub async fn connect(&mut self, profile: &Arc<dyn Profile>, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
         let cloud_agent_info = self.cloud_agent_info.clone().ok_or(VcxError::from_msg(
             VcxErrorKind::NoAgentInformation,
@@ -655,7 +657,7 @@ impl MediatedConnection {
                         .send_connection_request(
                             cloud_agent_info.routing_keys(agency_client)?,
                             cloud_agent_info.service_endpoint(agency_client)?,
-                            self.send_message_closure_connection(wallet_handle)
+                            self.send_message_closure_connection(profile)
                         )
                         .await?
                 )
@@ -746,22 +748,24 @@ impl MediatedConnection {
             .await
     }
 
-    pub async fn send_message_closure(&self, wallet_handle: WalletHandle) -> VcxResult<SendClosure> {
+    pub async fn send_message_closure(&self, profile: &Arc<dyn Profile>) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
         let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
             VcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
+        let wallet = profile.inject_wallet();
         Ok(Box::new(move |message: A2AMessage| {
-            Box::pin(send_message(wallet_handle, sender_vk.clone(), did_doc.clone(), message))
+            Box::pin(send_message(wallet, sender_vk.clone(), did_doc.clone(), message))
         }))
     }
 
-    fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
+    fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
+        let wallet = profile.inject_wallet();
         Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
-            Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
+            Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
 
@@ -776,32 +780,32 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str) -> VcxResult<String> {
+    pub async fn send_generic_message(&self, profile: &Arc<dyn Profile>, message: &str) -> VcxResult<String> {
         trace!("MediatedConnection::send_generic_message >>> message: {:?}", message);
         let message = Self::build_basic_message(message);
-        let send_message = self.send_message_closure(wallet_handle).await?;
+        let send_message = self.send_message_closure(profile).await?;
         send_message(message).await.map(|_| String::new())
     }
 
-    pub async fn send_a2a_message(&self, wallet_handle: WalletHandle, message: &A2AMessage) -> VcxResult<String> {
+    pub async fn send_a2a_message(&self, profile: &Arc<dyn Profile>, message: &A2AMessage) -> VcxResult<String> {
         trace!("MediatedConnection::send_a2a_message >>> message: {:?}", message);
-        let send_message = self.send_message_closure(wallet_handle).await?;
+        let send_message = self.send_message_closure(profile).await?;
         send_message(message.clone()).await.map(|_| String::new())
     }
 
     pub async fn send_ping(
         &mut self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
         trust_ping
-            .send_ping(self.send_message_closure(wallet_handle).await?)
+            .send_ping(self.send_message_closure(profile).await?)
             .await?;
         Ok(trust_ping)
     }
 
-    pub async fn send_handshake_reuse(&self, wallet_handle: WalletHandle, oob_msg: &str) -> VcxResult<()> {
+    pub async fn send_handshake_reuse(&self, profile: &Arc<dyn Profile>, oob_msg: &str) -> VcxResult<()> {
         trace!("MediatedConnection::send_handshake_reuse >>>");
         // todo: oob_msg argument should be typed OutOfBandInvitation, not string
         let oob = match serde_json::from_str::<A2AMessage>(oob_msg) {
@@ -821,7 +825,7 @@ impl MediatedConnection {
                 ));
             }
         };
-        let send_message = self.send_message_closure(wallet_handle).await?;
+        let send_message = self.send_message_closure(profile).await?;
         send_message(build_handshake_reuse_msg(&oob).to_a2a_message()).await
     }
 
@@ -838,7 +842,7 @@ impl MediatedConnection {
 
     pub async fn send_discovery_query(
         &self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         query: Option<String>,
         comment: Option<String>,
     ) -> VcxResult<()> {
@@ -851,7 +855,7 @@ impl MediatedConnection {
             VcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
-        send_discovery_query(wallet_handle, query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
+        send_discovery_query(&profile.inject_wallet(), query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
         Ok(())
     }
 
@@ -918,7 +922,7 @@ impl MediatedConnection {
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                         .await?,
                 )
-                .then(|msg| msg.decrypt_noauth(agency_client.get_wallet_handle()))
+                .then(|msg| msg.decrypt_noauth(agency_client.get_wallet()))
                 .filter_map(|res| async { res.ok() })
                 .collect::<Vec<DownloadedMessage>>()
                 .await;
@@ -935,7 +939,7 @@ impl MediatedConnection {
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
                         .await?,
                 )
-                .then(|msg| msg.decrypt_auth(agency_client.get_wallet_handle(), &expected_sender_vk))
+                .then(|msg| msg.decrypt_auth(agency_client.get_wallet(), &expected_sender_vk))
                 .filter_map(|res| async { res.ok() })
                 .collect::<Vec<DownloadedMessage>>()
                 .await;

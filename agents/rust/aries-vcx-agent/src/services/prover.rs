@@ -3,12 +3,13 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 use serde_json::Value;
 
 use super::connection::ServiceConnections;
@@ -29,21 +30,18 @@ impl ProverWrapper {
 }
 
 pub struct ServiceProver {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     provers: ObjectCache<ProverWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceProver {
     pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: Arc<dyn Profile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             service_connections,
             provers: ObjectCache::new("provers"),
         }
@@ -60,7 +58,7 @@ impl ServiceProver {
     }
 
     async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
-        let credentials = prover.retrieve_credentials(self.wallet_handle).await?;
+        let credentials = prover.retrieve_credentials(&self.profile).await?;
         let credentials: HashMap<String, Value> =
             serde_json::from_str(&credentials).unwrap();
 
@@ -102,7 +100,7 @@ impl ServiceProver {
         prover
             .send_proposal(
                 proposal,
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
         self.provers.set(
@@ -127,15 +125,14 @@ impl ServiceProver {
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
             .generate_presentation(
-                self.wallet_handle,
-                self.pool_handle,
+                &self.profile,
                 credentials,
                 "{}".to_string(),
             )
             .await?;
         prover
             .send_presentation(
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
         self.provers.set(

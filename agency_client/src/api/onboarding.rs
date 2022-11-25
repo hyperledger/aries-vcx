@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::agency_client::AgencyClient;
 use crate::configuration::AgencyClientConfig;
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
@@ -7,7 +9,7 @@ use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
 use crate::messages::sign_up::{SignUp, SignUpResponse};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::testing::test_constants;
-use vdrtools::WalletHandle;
+use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 impl AgencyClient {
     async fn _connect(
@@ -90,7 +92,7 @@ impl AgencyClient {
 
     pub async fn provision_cloud_agent(
         &mut self,
-        wallet_handle: WalletHandle,
+        wallet: Arc<dyn BaseAgencyClientWallet>,
         my_did: &str,
         my_vk: &str,
         agency_did: &str,
@@ -101,7 +103,7 @@ impl AgencyClient {
             "provision_cloud_agent >>> my_did: {}, my_vk: {}, agency_did: {}, agency_vk: {}, agency_url: {}",
             my_did, my_vk, agency_did, agency_vk, agency_url
         );
-        self.set_wallet_handle(wallet_handle);
+        self.set_wallet(wallet);
         self.set_agency_url(agency_url);
         self.set_agency_vk(agency_vk);
         self.set_agency_did(agency_did);

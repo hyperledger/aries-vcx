@@ -1,11 +1,9 @@
 use aries_vcx::error::prelude::*;
-use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::indy::primitives::revocation_registry;
-use aries_vcx::indy::primitives::revocation_registry::RevocationRegistryDefinition;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use aries_vcx::xyz::primitives::revocation_registry::RevocationRegistry;
+use aries_vcx::xyz::primitives::revocation_registry::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::profile::{get_main_profile_optional_pool, get_main_profile};
 
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> =
@@ -29,8 +27,9 @@ pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
         max_creds,
         tag,
     } = config;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let rev_reg = RevocationRegistry::create(
-        get_main_wallet_handle(),
+        &profile,
         &issuer_did,
         &cred_def_id,
         &tails_dir,
@@ -44,8 +43,9 @@ pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
 
 pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
+    let profile = get_main_profile()?;
     rev_reg
-        .publish_revocation_primitives(get_main_wallet_handle(), get_main_pool_handle()?, tails_url)
+        .publish_revocation_primitives(&profile, tails_url)
         .await?;
     REV_REG_MAP.insert(handle, rev_reg)?;
     Ok(handle)
@@ -55,7 +55,9 @@ pub async fn publish_revocations(handle: u32, submitter_did: &str) -> VcxResult<
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
     let rev_reg_id = rev_reg.get_rev_reg_id();
     // TODO: Check result
-    revocation_registry::publish_local_revocations(get_main_wallet_handle(), get_main_pool_handle()?, submitter_did, &rev_reg_id).await?;
+    let profile = get_main_profile()?;
+    let anoncreds = profile.inject_anoncreds();
+    anoncreds.publish_local_revocations(submitter_did, &rev_reg_id).await?;
     Ok(())
 }
 

@@ -2,36 +2,31 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use aries_vcx::xyz::ledger::transactions::into_did_doc;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
-    handlers::connection::mediated_connection::{MediatedConnection, ConnectionState},
-    indy::ledger::transactions::into_did_doc,
+    handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
     messages::a2a::A2AMessage,
-    vdrtools::{PoolHandle, WalletHandle},
 };
 
 pub struct ServiceMediatedConnections {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     config_agency_client: AgencyClientConfig,
     mediated_connections: Arc<ObjectCache<MediatedConnection>>,
 }
 
 impl ServiceMediatedConnections {
-    pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
-        config_agency_client: AgencyClientConfig,
-    ) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, config_agency_client: AgencyClientConfig) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             config_agency_client,
             mediated_connections: Arc::new(ObjectCache::new("mediated-connections")),
         }
@@ -39,7 +34,10 @@ impl ServiceMediatedConnections {
 
     fn agency_client(&self) -> AgentResult<AgencyClient> {
         AgencyClient::new()
-            .configure(self.wallet_handle, &self.config_agency_client)
+            .configure(
+                self.profile.inject_wallet().to_base_agency_client_wallet(),
+                &self.config_agency_client,
+            )
             .map_err(|err| {
                 AgentError::from_msg(
                     AgentErrorKind::GenericAriesVcxError,
@@ -49,42 +47,29 @@ impl ServiceMediatedConnections {
     }
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let mut connection =
-            MediatedConnection::create("", self.wallet_handle, &self.agency_client()?, true).await?;
-        connection
-            .connect(self.wallet_handle, &self.agency_client()?)
-            .await?;
+        let mut connection = MediatedConnection::create("", &self.profile, &self.agency_client()?, true).await?;
+        connection.connect(&self.profile, &self.agency_client()?).await?;
         let invite = connection
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
-        self.mediated_connections
-            .set(&connection.get_thread_id(), connection)?;
+        self.mediated_connections.set(&connection.get_thread_id(), connection)?;
         Ok(invite)
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
-        let ddo = into_did_doc(self.pool_handle, &invite).await?;
-        let connection = MediatedConnection::create_with_invite(
-            "",
-            self.wallet_handle,
-            &self.agency_client()?,
-            invite,
-            ddo,
-            true,
-        )
-        .await?;
-        self.mediated_connections
-            .set(&connection.get_thread_id(), connection)
+        let ddo = into_did_doc(&self.profile, &invite).await?;
+        let connection =
+            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
+                .await?;
+        self.mediated_connections.set(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
+        connection.connect(&self.profile, &self.agency_client()?).await?;
         connection
-            .connect(self.wallet_handle, &self.agency_client()?)
-            .await?;
-        connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
+            .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
         self.mediated_connections.set(thread_id, connection)?;
         Ok(())
@@ -93,16 +78,16 @@ impl ServiceMediatedConnections {
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection
-            .process_request(self.wallet_handle, &self.agency_client()?, request)
+            .process_request(&self.profile, &self.agency_client()?, request)
             .await?;
-        connection.send_response(self.wallet_handle).await?;
+        connection.send_response(&self.profile).await?;
         self.mediated_connections.set(thread_id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
-        connection.send_ping(self.wallet_handle, None).await?;
+        connection.send_ping(&self.profile, None).await?;
         self.mediated_connections.set(thread_id, connection)?;
         Ok(())
     }
@@ -114,7 +99,7 @@ impl ServiceMediatedConnections {
     pub async fn update_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection
-            .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
+            .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
         self.mediated_connections.set(thread_id, connection)?;
         Ok(self.mediated_connections.get(thread_id)?.get_state())
@@ -130,10 +115,7 @@ impl ServiceMediatedConnections {
         for connection in self.mediated_connections.get_all()? {
             for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
                 if let A2AMessage::PresentationRequest(request) = message {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
+                    connection.update_message_status(&uid, &agency_client).await.ok();
                     requests.push((request, connection.get_thread_id()));
                 }
             }

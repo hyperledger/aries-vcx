@@ -2,36 +2,34 @@ use std::sync::{Arc, Mutex};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
-use aries_vcx::indy::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::ack::Ack;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::connection::response::SignedResponse;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::xyz::ledger::transactions::into_did_doc;
 
 pub type ServiceEndpoint = String;
 
 pub struct ServiceConnections {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     service_endpoint: ServiceEndpoint,
     connections: Arc<ObjectCache<Connection>>,
 }
 
 impl ServiceConnections {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, service_endpoint: ServiceEndpoint) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, service_endpoint: ServiceEndpoint) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             service_endpoint,
             connections: Arc::new(ObjectCache::new("connections")),
         }
     }
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let inviter = Connection::create_inviter(self.wallet_handle)
+        let inviter = Connection::create_inviter(&self.profile)
             .await?
             .create_invite(self.service_endpoint.clone(), vec![])
             .await?;
@@ -44,8 +42,8 @@ impl ServiceConnections {
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
-        let did_doc = into_did_doc(self.pool_handle, &invite).await?;
-        let invitee = Connection::create_invitee(self.wallet_handle, did_doc)
+        let did_doc = into_did_doc(&self.profile, &invite).await?;
+        let invitee = Connection::create_invitee(&self.profile, did_doc)
             .await?
             .process_invite(invite)?;
         self.connections.set(&invitee.get_thread_id(), invitee)
@@ -55,7 +53,7 @@ impl ServiceConnections {
         let invitee = self
             .connections
             .get(thread_id)?
-            .send_request(self.wallet_handle, self.service_endpoint.clone(), vec![], None)
+            .send_request(&self.profile, self.service_endpoint.clone(), vec![], None)
             .await?;
         self.connections.set(thread_id, invitee)?;
         Ok(())
@@ -65,7 +63,7 @@ impl ServiceConnections {
         let inviter = self
             .connections
             .get(thread_id)?
-            .process_request(self.wallet_handle, request, self.service_endpoint.clone(), vec![], None)
+            .process_request(&self.profile, request, self.service_endpoint.clone(), vec![], None)
             .await?;
         self.connections.set(thread_id, inviter)?;
         Ok(())
@@ -75,7 +73,7 @@ impl ServiceConnections {
         let inviter = self
             .connections
             .get(thread_id)?
-            .send_response(self.wallet_handle, None)
+            .send_response(&self.profile, None)
             .await?;
         self.connections.set(thread_id, inviter)?;
         Ok(())
@@ -85,7 +83,7 @@ impl ServiceConnections {
         let invitee = self
             .connections
             .get(thread_id)?
-            .process_response(self.wallet_handle, response, None)
+            .process_response(&self.profile, response, None)
             .await?;
         self.connections.set(thread_id, invitee)?;
         Ok(())
@@ -95,7 +93,7 @@ impl ServiceConnections {
         let invitee = self
             .connections
             .get(thread_id)?
-            .send_ack(self.wallet_handle, None)
+            .send_ack(&self.profile, None)
             .await?;
         self.connections.set(thread_id, invitee)?;
         Ok(())

@@ -1,16 +1,16 @@
-use vdrtools::WalletHandle;
+use std::sync::Arc;
 use url::Url;
 
 use crate::configuration::AgencyClientConfig;
 use crate::error::AgencyClientResult;
+use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
 use crate::{validation, AgencyClientError, AgencyClientErrorKind};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AgencyClient {
-    wallet_handle: WalletHandle,
+    wallet: Arc<dyn BaseAgencyClientWallet>,
     pub agency_url: String,
     pub agency_did: String,
-    pub agency_pwdid: String,
     pub agency_vk: String,
     pub agent_pwdid: String,
     pub agent_vk: String,
@@ -31,9 +31,11 @@ where
 }
 
 impl AgencyClient {
-    pub fn get_wallet_handle(&self) -> WalletHandle {
-        self.wallet_handle
+
+    pub fn get_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
+        Arc::clone(&self.wallet)
     }
+    
     pub fn get_agency_url_full(&self) -> String {
         format!("{}/agency/msg", self.agency_url.clone())
     }
@@ -59,8 +61,8 @@ impl AgencyClient {
         self.my_vk.clone()
     }
 
-    pub fn set_wallet_handle(&mut self, wallet_handle: WalletHandle) {
-        self.wallet_handle = wallet_handle;
+    pub fn set_wallet(&mut self, wallet: Arc<dyn BaseAgencyClientWallet>) {
+        self.wallet = wallet
     }
 
     pub(crate) fn set_agency_url(&mut self, url: &str) {
@@ -85,7 +87,7 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(mut self, wallet_handle: WalletHandle, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
+    pub fn configure(mut self, wallet: Arc<dyn BaseAgencyClientWallet>, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
         validate_mandotory_config_val(
@@ -127,7 +129,7 @@ impl AgencyClient {
         self.set_agent_vk(&config.remote_to_sdk_verkey);
         self.set_my_pwdid(&config.sdk_to_remote_did);
         self.set_my_vk(&config.sdk_to_remote_verkey);
-        self.set_wallet_handle(wallet_handle);
+        self.set_wallet(wallet);
 
         Ok(self)
     }
@@ -150,10 +152,9 @@ impl AgencyClient {
 
     pub fn new() -> Self {
         AgencyClient {
-            wallet_handle: WalletHandle(0),
+            wallet: Arc::new(StubAgencyClientWallet {}),
             agency_url: "".to_string(),
             agency_did: "".to_string(),
-            agency_pwdid: "".to_string(),
             agency_vk: "".to_string(),
             agent_pwdid: "".to_string(),
             agent_vk: "".to_string(),

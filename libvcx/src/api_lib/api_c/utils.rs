@@ -1,6 +1,6 @@
 use std::ptr;
 
-use aries_vcx::indy::signing::unpack_message_to_string;
+use aries_vcx::xyz::signing::unpack_message_to_string;
 use aries_vcx::messages::connection::did::Did;
 use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
@@ -17,14 +17,12 @@ use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service, get_service};
-use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::api_handle::utils::agency_update_messages;
 use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::profile::{get_main_wallet, get_main_profile};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
@@ -89,9 +87,10 @@ pub extern "C" fn vcx_provision_cloud_agent(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
+            let wallet = get_main_wallet();
             match aries_vcx::utils::provision::provision_cloud_agent(
                 &mut get_main_agency_client().unwrap(),
-                get_main_wallet_handle(),
+                wallet,
                 &agency_config,
             )
             .await
@@ -412,8 +411,8 @@ pub extern "C" fn vcx_endorse_transaction(
 
     check_useful_c_str!(transaction, VcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
     let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
@@ -421,15 +420,16 @@ pub extern "C" fn vcx_endorse_transaction(
         Err(err) => return err.into(),
     };
     trace!(
-        "vcx_endorse_transaction(command_handle: {}, pool_handle: {:?}, issuer_did: {}, transaction: {})",
+        "vcx_endorse_transaction(command_handle: {}, profile: {:?}, issuer_did: {}, transaction: {})",
         command_handle,
-        pool_handle,
+        profile,
         issuer_did,
         transaction
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::ledger::transactions::endorse_transaction(get_main_wallet_handle(), pool_handle, &issuer_did, &transaction).await {
+        let ledger = profile.inject_ledger();
+        match ledger.endorse_transaction(&issuer_did, &transaction).await {
             Ok(()) => {
                 trace!(
                     "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
@@ -468,13 +468,13 @@ pub extern "C" fn vcx_rotate_verkey(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
     trace!("vcx_rotate_verkey(command_handle: {}, did: {})", command_handle, did);
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::keys::rotate_verkey(get_main_wallet_handle(), pool_handle, &did).await {
+        match aries_vcx::xyz::keys::rotate_verkey(&profile, &did).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
@@ -513,7 +513,8 @@ pub extern "C" fn vcx_rotate_verkey_start(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::keys::libindy_replace_keys_start(get_main_wallet_handle(), &did).await {
+        let wallet = get_main_wallet();
+        match wallet.replace_did_keys_start(&did).await {
             Ok(temp_vk) => {
                 trace!(
                     "vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
@@ -559,13 +560,13 @@ pub extern "C" fn vcx_rotate_verkey_apply(
         temp_vk
     );
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::keys::rotate_verkey_apply(get_main_wallet_handle(), pool_handle, &did, &temp_vk).await {
+        match aries_vcx::xyz::keys::rotate_verkey_apply(&profile, &did, &temp_vk).await {
             Ok(()) => {
                 trace!(
                     "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
@@ -607,7 +608,8 @@ pub extern "C" fn vcx_get_verkey_from_wallet(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::keys::get_verkey_from_wallet(get_main_wallet_handle(), &did).await {
+        let wallet = get_main_wallet();
+        match wallet.key_for_local_did(&did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
@@ -650,13 +652,13 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
         did
     );
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match aries_vcx::indy::keys::get_verkey_from_ledger(pool_handle, &did).await {
+        match aries_vcx::xyz::keys::get_verkey_from_ledger(&profile, &did).await {
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
@@ -700,17 +702,16 @@ pub extern "C" fn vcx_get_ledger_txn(
         submitter_did
     );
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match get_ledger_txn(
-            get_main_wallet_handle(),
-            pool_handle,
-            submitter_did.as_deref(),
+        let ledger = profile.inject_ledger();
+        match ledger.get_ledger_txn(
             seq_no,
+            submitter_did.as_deref(),
         )
         .await
         {
@@ -756,7 +757,8 @@ pub extern "C" fn vcx_unpack(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match unpack_message_to_string(get_main_wallet_handle(), payload.as_slice()).await {
+            let wallet = get_main_wallet();
+            match unpack_message_to_string(&wallet, payload.as_slice()).await {
                 Ok(msg) => {
                     trace!(
                         "vcx_unpack(command_handle: {}, rc: {})",
@@ -800,7 +802,8 @@ pub extern "C" fn vcx_create_pairwise_info(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match PairwiseInfo::create(get_main_wallet_handle()).await {
+            let wallet = get_main_wallet();
+            match PairwiseInfo::create(&wallet).await {
                 Ok(pw_info) => {
                     trace!(
                         "vcx_create_pairwise_info(command_handle: {}, rc: {})",
@@ -874,8 +877,8 @@ pub extern "C" fn vcx_create_service(
         }
     };
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
@@ -886,7 +889,8 @@ pub extern "C" fn vcx_create_service(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match add_service(get_main_wallet_handle(), pool_handle, &institution_did, &service).await {
+            let ledger = profile.inject_ledger();
+            match ledger.add_service(&institution_did, &service).await {
                 Ok(_res) => {
                     trace!(
                         "vcx_create_service(command_handle: {}, rc: {})",
@@ -930,8 +934,8 @@ pub extern "C" fn vcx_get_service_from_ledger(
         command_handle,
     );
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
@@ -942,7 +946,8 @@ pub extern "C" fn vcx_get_service_from_ledger(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match get_service(pool_handle, &institution_did).await {
+            let ledger = profile.inject_ledger();
+            match ledger.get_service(&institution_did).await {
                 Ok(service) => {
                     trace!(
                         "vcx_get_service_from_ledger_cb(command_handle: {}, rc: {})",

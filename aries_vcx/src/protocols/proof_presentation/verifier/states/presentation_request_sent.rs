@@ -1,8 +1,9 @@
-use vdrtools::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
+use crate::core::profile::profile::Profile;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::proofs::verifier::verifier::validate_indy_proof;
+use crate::xyz::proofs::verifier::verifier::validate_indy_proof;
 use messages::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
@@ -18,8 +19,7 @@ pub struct PresentationRequestSentState {
 impl PresentationRequestSentState {
     pub async fn verify_presentation(
         &self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         presentation: &Presentation,
         thread_id: &str,
     ) -> VcxResult<()> {
@@ -34,8 +34,7 @@ impl PresentationRequestSentState {
         };
 
         let valid = validate_indy_proof(
-            wallet_handle,
-            pool_handle,
+            profile,
             &presentation.presentations_attach.content()?,
             &self.presentation_request.request_presentations_attach.content()?,
         )

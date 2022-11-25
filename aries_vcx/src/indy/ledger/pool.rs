@@ -105,7 +105,9 @@ pub mod test_utils {
 
     pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
-        create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap())
+        delete(POOL).await.ok();
+        let path = get_temp_dir_path(GENESIS_PATH);
+        create_pool_ledger_config(POOL, path.to_str().unwrap())
             .await
             .unwrap();
     }

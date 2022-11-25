@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use serde_json;
 
-use crate::api_lib::global::pool::get_main_pool_handle;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
-use aries_vcx::indy::ledger::transactions::into_did_doc;
+use aries_vcx::xyz::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::connection::invite::PublicInvitation;
@@ -19,7 +19,6 @@ use aries_vcx::utils::error;
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
@@ -109,7 +108,7 @@ pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
     trace!("create_connection >>> source_id: {}", source_id);
     let connection = MediatedConnection::create(
         source_id,
-        get_main_wallet_handle(),
+        &get_main_profile_optional_pool(), // do not throw if pool is not open
         &get_main_agency_client().unwrap(),
         true,
     )
@@ -120,10 +119,11 @@ pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> VcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
     if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
-        let ddo = into_did_doc(get_main_pool_handle()?, &invitation).await?;
+        let profile = get_main_profile()?;
+        let ddo = into_did_doc(&profile, &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
             source_id,
-            get_main_wallet_handle(),
+            &profile,
             &get_main_agency_client().unwrap(),
             invitation,
             ddo,
@@ -148,8 +148,9 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> VcxResult<
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let connection = MediatedConnection::create_with_request(
-        get_main_wallet_handle(),
+        &profile,
         request,
         agent.pairwise_info(),
         &get_main_agency_client().unwrap(),
@@ -165,8 +166,9 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Vcx
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let connection = MediatedConnection::create_with_request(
-        get_main_wallet_handle(),
+        &profile,
         request,
         pw_info,
         &get_main_agency_client().unwrap(),
@@ -177,16 +179,18 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Vcx
 
 pub async fn send_generic_message(handle: u32, msg: &str) -> VcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_generic_message(get_main_wallet_handle(), msg)
+        .send_generic_message(&profile, msg)
         .await
         .map_err(|err| err.into())
 }
 
 pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> VcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_handshake_reuse(get_main_wallet_handle(), oob_msg)
+        .send_handshake_reuse(&profile, oob_msg)
         .await
         .map_err(|err| err.into())
 }
@@ -202,9 +206,10 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> VcxResult<
             ),
         )
     })?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
         .update_state_with_message(
-            get_main_wallet_handle(),
+            &profile,
             get_main_agency_client().unwrap(),
             Some(message),
         )
@@ -224,7 +229,8 @@ pub async fn handle_message(handle: u32, message: &str) -> VcxResult<u32> {
             ),
         )
     })?;
-    connection.handle_message(message, get_main_wallet_handle()).await?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+    connection.handle_message(message, &profile).await?;
     CONNECTION_MAP.insert(handle, connection)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -236,8 +242,9 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
             "connection::update_state >> connection {} is in final state, trying to respond to messages",
             handle
         );
+        let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         match connection
-            .find_and_handle_message(get_main_wallet_handle(), &get_main_agency_client().unwrap())
+            .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
             .await
         {
             Ok(_) => Ok(error::SUCCESS.code_num),
@@ -248,8 +255,9 @@ pub async fn update_state(handle: u32) -> VcxResult<u32> {
             "connection::update_state >> connection {} is not in final state, trying to update state",
             handle
         );
+        let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         match connection
-            .find_message_and_update_state(get_main_wallet_handle(), &get_main_agency_client().unwrap())
+            .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
             .await
         {
             Ok(_) => Ok(error::SUCCESS.code_num),
@@ -269,8 +277,9 @@ pub async fn delete_connection(handle: u32) -> VcxResult<u32> {
 
 pub async fn connect(handle: u32) -> VcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .connect(get_main_wallet_handle(), &get_main_agency_client().unwrap())
+        .connect(&profile, &get_main_agency_client().unwrap())
         .await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -347,25 +356,28 @@ pub async fn send_message(handle: u32, message: A2AMessage) -> VcxResult<()> {
 
 pub async fn send_message_closure(handle: u32) -> VcxResult<SendClosure> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_message_closure(get_main_wallet_handle())
+        .send_message_closure(&profile)
         .await
         .map_err(|err| err.into())
 }
 
 pub async fn send_ping(handle: u32, comment: Option<&str>) -> VcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .send_ping(get_main_wallet_handle(), comment.map(String::from))
+        .send_ping(&profile, comment.map(String::from))
         .await?;
     CONNECTION_MAP.insert(handle, connection)
 }
 
 pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: Option<&str>) -> VcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
         .send_discovery_query(
-            get_main_wallet_handle(),
+            &profile,
             query.map(String::from),
             comment.map(String::from),
         )

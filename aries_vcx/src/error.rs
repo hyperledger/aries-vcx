@@ -47,6 +47,10 @@ pub enum VcxErrorKind {
     AlreadyInitialized,
     #[fail(display = "Action is not supported")]
     ActionNotSupported,
+    #[fail(display = "Invalid input parameter")]
+    InvalidInput,
+    #[fail(display = "Unimplemented feature")]
+    UnimplementedFeature,
 
     // Connection
     #[fail(display = "Could not create connection")]
@@ -213,6 +217,8 @@ pub enum VcxErrorKind {
     SerializationError,
     #[fail(display = "Value needs to be base58")]
     NotBase58,
+    #[fail(display = "Could not parse a value")]
+    ParsingError,
 
     // A2A
     #[fail(display = "Invalid HTTP response.")]
@@ -421,6 +427,16 @@ impl<T> From<sync::PoisonError<T>> for VcxError {
     }
 }
 
+// Back up serialization error conversion
+impl From<serde_json::Error> for VcxError {
+    fn from(err: serde_json::Error) -> Self {
+        VcxError::from_msg(
+            VcxErrorKind::SerializationError,
+            format!("A serialization error occurred: {:?}", err),
+        )
+    }
+}
+
 impl From<Context<VcxErrorKind>> for VcxError {
     fn from(inner: Context<VcxErrorKind>) -> VcxError {
         VcxError { inner }
@@ -571,6 +587,9 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
             VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num,
             VcxErrorKind::CreateAgent => error::CREATE_AGENT.code_num,
+            VcxErrorKind::InvalidInput => error::INDY_VDR_INPUT_INPUT.code_num,
+            VcxErrorKind::ParsingError => error::PARSING.code_num,
+            VcxErrorKind::UnimplementedFeature => error::UNIMPLEMENTED_FEATURE.code_num,
         }
     }
 }

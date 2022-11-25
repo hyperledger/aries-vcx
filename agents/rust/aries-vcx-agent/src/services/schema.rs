@@ -1,51 +1,40 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::indy::ledger::transactions::get_schema_json;
-use aries_vcx::indy::primitives::credential_schema::Schema;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::xyz::primitives::credential_schema::Schema;
 
 pub struct ServiceSchemas {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     issuer_did: String,
     schemas: ObjectCache<Schema>,
 }
 
 impl ServiceSchemas {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, issuer_did: String) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             issuer_did,
             schemas: ObjectCache::new("schemas"),
         }
     }
 
-    pub async fn create_schema(
-        &self,
-        name: &str,
-        version: &str,
-        attributes: &Vec<String>,
-    ) -> AgentResult<String> {
-        let schema = Schema::create("", &self.issuer_did, name, version, attributes).await?;
+    pub async fn create_schema(&self, name: &str, version: &str, attributes: &Vec<String>) -> AgentResult<String> {
+        let schema = Schema::create(&self.profile, "", &self.issuer_did, name, version, attributes).await?;
         self.schemas.set(&schema.get_schema_id(), schema)
     }
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema
-            .publish(self.wallet_handle, self.pool_handle, None)
-            .await?;
+        let schema = schema.publish(&self.profile, None).await?;
         self.schemas.set(thread_id, schema)?;
         Ok(())
     }
 
     pub async fn schema_json(&self, thread_id: &str) -> AgentResult<String> {
-        Ok(get_schema_json(self.wallet_handle, self.pool_handle, thread_id)
-            .await?
-            .1)
+        let ledger = Arc::clone(&self.profile).inject_ledger();
+        Ok(ledger.get_schema(thread_id, None).await?)
     }
 
     pub fn find_by_name_and_version(&self, name: &str, version: &str) -> AgentResult<Vec<String>> {

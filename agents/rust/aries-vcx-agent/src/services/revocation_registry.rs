@@ -1,23 +1,21 @@
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::indy::primitives::revocation_registry::RevocationRegistry;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::core::profile::profile::Profile;
+use aries_vcx::xyz::primitives::revocation_registry::RevocationRegistry;
 
 pub struct ServiceRevocationRegistries {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     issuer_did: String,
     rev_regs: ObjectCache<RevocationRegistry>,
 }
 
 impl ServiceRevocationRegistries {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle, issuer_did: String) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, issuer_did: String) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             issuer_did,
             rev_regs: ObjectCache::new("rev-regs"),
         }
@@ -35,7 +33,7 @@ impl ServiceRevocationRegistries {
 
     pub async fn create_rev_reg(&self, cred_def_id: &str, max_creds: u32) -> AgentResult<String> {
         let rev_reg = RevocationRegistry::create(
-            self.wallet_handle,
+            &self.profile,
             &self.issuer_did,
             cred_def_id,
             "/tmp",
@@ -62,7 +60,7 @@ impl ServiceRevocationRegistries {
     pub async fn publish_rev_reg(&self, thread_id: &str, tails_url: &str) -> AgentResult<()> {
         let mut rev_reg = self.rev_regs.get(thread_id)?;
         rev_reg
-            .publish_revocation_primitives(self.wallet_handle, self.pool_handle, tails_url)
+            .publish_revocation_primitives(&self.profile, tails_url)
             .await?;
         self.rev_regs.set(thread_id, rev_reg)?;
         Ok(())
@@ -71,7 +69,7 @@ impl ServiceRevocationRegistries {
     pub async fn revoke_credential_locally(&self, id: &str, cred_rev_id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
-            .revoke_credential_local(self.wallet_handle, cred_rev_id)
+            .revoke_credential_local(&self.profile, cred_rev_id)
             .await?;
         Ok(())
     }
@@ -79,7 +77,7 @@ impl ServiceRevocationRegistries {
     pub async fn publish_local_revocations(&self, id: &str) -> AgentResult<()> {
         let rev_reg = self.rev_regs.get(id)?;
         rev_reg
-            .publish_local_revocations(self.wallet_handle, self.pool_handle, &self.issuer_did)
+            .publish_local_revocations(&self.profile, &self.issuer_did)
             .await?;
         Ok(())
     }

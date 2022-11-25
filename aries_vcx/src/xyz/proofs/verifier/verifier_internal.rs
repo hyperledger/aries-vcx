@@ -1,12 +1,11 @@
-use vdrtools::{WalletHandle, PoolHandle};
+use std::sync::Arc;
+
 use serde_json;
 use serde_json::Value;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::indy::ledger::transactions::{
-    get_cred_def_json, get_rev_reg, get_rev_reg_def_json,
-    get_schema_json};
 use crate::utils::openssl::encode;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -97,16 +96,17 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
 }
 
 pub async fn build_cred_defs_json_verifier(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: &Arc<dyn Profile>,
     credential_data: &Vec<CredInfoVerifier>,
 ) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut credential_json = json!({});
 
     for cred_info in credential_data.iter() {
         if credential_json.get(&cred_info.cred_def_id).is_none() {
-            let (id, credential_def) = get_cred_def_json(wallet_handle, pool_handle, &cred_info.cred_def_id).await?;
+            let cred_def_id = &cred_info.cred_def_id;
+            let credential_def = ledger.get_cred_def(cred_def_id, None).await?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
                 VcxError::from_msg(
@@ -115,7 +115,7 @@ pub async fn build_cred_defs_json_verifier(
                 )
             })?;
 
-            credential_json[id] = credential_def;
+            credential_json[cred_def_id] = credential_def;
         }
     }
 
@@ -123,17 +123,18 @@ pub async fn build_cred_defs_json_verifier(
 }
 
 pub async fn build_schemas_json_verifier(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: &Arc<dyn Profile>,
     credential_data: &Vec<CredInfoVerifier>,
 ) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut schemas_json = json!({});
 
     for cred_info in credential_data.iter() {
         if schemas_json.get(&cred_info.schema_id).is_none() {
-            let (id, schema_json) = get_schema_json(wallet_handle, pool_handle, &cred_info.schema_id)
+            let schema_id = &cred_info.schema_id;
+            let schema_json = ledger.get_schema(schema_id, None)
                 .await
                 .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -144,16 +145,17 @@ pub async fn build_schemas_json_verifier(
                 )
             })?;
 
-            schemas_json[id] = schema_val;
+            schemas_json[schema_id] = schema_val;
         }
     }
 
     Ok(schemas_json.to_string())
 }
 
-pub async fn build_rev_reg_defs_json(pool_handle: PoolHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_rev_reg_defs_json(profile: &Arc<dyn Profile>, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut rev_reg_defs_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -163,22 +165,23 @@ pub async fn build_rev_reg_defs_json(pool_handle: PoolHandle, credential_data: &
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationDetails))?;
 
         if rev_reg_defs_json.get(rev_reg_id).is_none() {
-            let (id, json) = get_rev_reg_def_json(pool_handle, rev_reg_id)
+            let json = ledger.get_rev_reg_def_json(rev_reg_id)
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
             let rev_reg_def_json = serde_json::from_str(&json).or(Err(VcxError::from(VcxErrorKind::InvalidSchema)))?;
 
-            rev_reg_defs_json[id] = rev_reg_def_json;
+            rev_reg_defs_json[rev_reg_id] = rev_reg_def_json;
         }
     }
 
     Ok(rev_reg_defs_json.to_string())
 }
 
-pub async fn build_rev_reg_json(pool_handle: PoolHandle, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
+pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &Vec<CredInfoVerifier>) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
+    let ledger = Arc::clone(profile).inject_ledger();
     let mut rev_regs_json = json!({});
 
     for cred_info in credential_data.iter() {
@@ -193,7 +196,7 @@ pub async fn build_rev_reg_json(pool_handle: PoolHandle, credential_data: &Vec<C
             .ok_or(VcxError::from(VcxErrorKind::InvalidRevocationTimestamp))?;
 
         if rev_regs_json.get(rev_reg_id).is_none() {
-            let (id, json, timestamp) = get_rev_reg(pool_handle, rev_reg_id, timestamp.to_owned())
+            let (id, json, timestamp) = ledger.get_rev_reg(rev_reg_id, timestamp.to_owned())
                 .await
                 .or(Err(VcxError::from(VcxErrorKind::InvalidRevocationDetails)))?;
 
@@ -212,6 +215,7 @@ pub async fn build_rev_reg_json(pool_handle: PoolHandle, credential_data: &Vec<C
 pub mod unit_tests {
     use crate::utils::constants::*;
     use crate::utils::devsetup::*;
+    use crate::xyz::test_utils::dummy_profile;
 
     use super::*;
 
@@ -232,7 +236,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let credential_json = build_cred_defs_json_verifier(WalletHandle(0), 0, &credentials)
+        let credential_json = build_cred_defs_json_verifier(&dummy_profile(), &credentials)
             .await
             .unwrap();
 
@@ -258,7 +262,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let schema_json = build_schemas_json_verifier(WalletHandle(0), 0, &credentials)
+        let schema_json = build_schemas_json_verifier(&dummy_profile(), &credentials)
             .await
             .unwrap();
 
@@ -284,7 +288,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_defs_json = build_rev_reg_defs_json(0, &credentials).await.unwrap();
+        let rev_reg_defs_json = build_rev_reg_defs_json(&dummy_profile(), &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(&rev_def_json()).unwrap();
         let expected = json!({ REV_REG_ID: json }).to_string();
@@ -308,7 +312,7 @@ pub mod unit_tests {
             timestamp: Some(2),
         };
         let credentials = vec![cred1, cred2];
-        let rev_reg_json = build_rev_reg_json(0, &credentials).await.unwrap();
+        let rev_reg_json = build_rev_reg_json(&dummy_profile(), &credentials).await.unwrap();
 
         let json: Value = serde_json::from_str(REV_REG_JSON).unwrap();
         let expected = json!({REV_REG_ID:{"1":json}}).to_string();

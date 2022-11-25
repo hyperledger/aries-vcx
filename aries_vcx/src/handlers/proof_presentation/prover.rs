@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 
-use messages::proof_presentation::presentation_ack::PresentationAck;
-use vdrtools::{PoolHandle, WalletHandle};
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_ack::PresentationAck;
 use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use messages::proof_presentation::presentation_request::PresentationRequest;
-use crate::indy::proofs::prover;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
@@ -49,16 +49,16 @@ impl Prover {
         self.prover_sm.presentation_status()
     }
 
-    pub async fn retrieve_credentials(&self, wallet_handle: WalletHandle) -> VcxResult<String> {
+    pub async fn retrieve_credentials(&self, profile: &Arc<dyn Profile>) -> VcxResult<String> {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
-        prover::prover::libindy_prover_get_credentials_for_proof_req(wallet_handle, &presentation_request).await
+        let anoncreds = Arc::clone(profile).inject_anoncreds();
+        anoncreds.prover_get_credentials_for_proof_req(&presentation_request).await
     }
 
     pub async fn generate_presentation(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         credentials: String,
         self_attested_attrs: String,
     ) -> VcxResult<()> {
@@ -67,7 +67,7 @@ impl Prover {
             credentials,
             self_attested_attrs
         );
-        self.prover_sm = self.prover_sm.clone().generate_presentation(wallet_handle, pool_handle, credentials, self_attested_attrs).await?;
+        self.prover_sm = self.prover_sm.clone().generate_presentation(profile, credentials, self_attested_attrs).await?;
         Ok(())
     }
 
@@ -115,13 +115,12 @@ impl Prover {
 
     pub async fn handle_message(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Prover::handle_message >>> message: {:?}", message);
-        self.step(wallet_handle, pool_handle, message, send_message).await
+        self.step(profile, message, send_message).await
     }
 
     pub fn presentation_request_data(&self) -> VcxResult<String> {
@@ -157,15 +156,14 @@ impl Prover {
 
     pub async fn step(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.prover_sm = self
             .prover_sm
             .clone()
-            .step(wallet_handle, pool_handle, message, send_message)
+            .step(profile, message, send_message)
             .await?;
         Ok(())
     }
@@ -206,8 +204,7 @@ impl Prover {
 
     pub async fn update_state(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<ProverState> {
@@ -215,11 +212,11 @@ impl Prover {
         if !self.progressable_by_message() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle).await?;
+        let send_message = connection.send_message_closure(profile).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            self.step(profile, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -262,17 +259,18 @@ mod tests {
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        SetupLibraryWallet::run(|setup| async move {
-            let proof_req = PresentationRequest::create();
-            let proof = Prover::create_from_request("1", proof_req).unwrap();
-            assert_eq!(
-                proof
-                    .retrieve_credentials(setup.wallet_handle)
-                    .await
-                    .unwrap_err()
-                    .kind(),
-                VcxErrorKind::InvalidJson
-            );
-        }).await;
+        SetupProfile::run(|setup| async move {
+
+        let proof_req = PresentationRequest::create();
+        let proof = Prover::create_from_request("1", proof_req).unwrap();
+        assert_eq!(
+            proof
+                .retrieve_credentials(&setup.profile)
+                .await
+                .unwrap_err()
+                .kind(),
+            VcxErrorKind::InvalidJson
+        );
+        });
     }
 }

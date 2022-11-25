@@ -117,6 +117,7 @@ pub async fn libindy_prover_create_credential_req(
     prover_did: &str,
     credential_offer_json: &str,
     credential_def_json: &str,
+    master_secret_name: &str
 ) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new()));

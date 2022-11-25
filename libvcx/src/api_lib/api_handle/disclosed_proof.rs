@@ -3,7 +3,7 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
@@ -15,7 +15,6 @@ use aries_vcx::{
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
@@ -81,6 +80,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(proof.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+    let profile = get_main_profile()?;
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
@@ -94,14 +94,14 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("disclosed_proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+            .handle_message(&profile, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("disclosed_proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(get_main_wallet_handle(), get_main_pool_handle()?, message.into(), Some(send_message))
+                .handle_message(&profile, message.into(), Some(send_message))
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -180,10 +180,10 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32>
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> VcxResult<u32> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
+    let profile = get_main_profile()?;
     proof
         .generate_presentation(
-            get_main_wallet_handle(),
-            get_main_pool_handle()?,
+            &profile,
             credentials.to_string(),
             self_attested_attrs.to_string(),
         )
@@ -213,8 +213,9 @@ pub async fn decline_presentation_request(
 
 pub async fn retrieve_credentials(handle: u32) -> VcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool not open
     proof
-        .retrieve_credentials(get_main_wallet_handle())
+        .retrieve_credentials(&profile)
         .await
         .map_err(|err| err.into())
 }
@@ -311,7 +312,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof;
     use aries_vcx::utils::mockdata::mockdata_proof::{ARIES_PROOF_PRESENTATION_ACK, ARIES_PROOF_REQUEST_PRESENTATION};
 
-    use crate::aries_vcx::indy::proofs::proof_request::PresentationRequestData;
+    use crate::aries_vcx::xyz::proofs::proof_request::PresentationRequestData;
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 
     use super::*;

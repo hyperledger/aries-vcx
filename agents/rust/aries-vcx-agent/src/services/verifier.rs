@@ -2,13 +2,14 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-use aries_vcx::indy::proofs::proof_request::PresentationRequestData;
 use aries_vcx::messages::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
+use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::xyz::proofs::proof_request::PresentationRequestData;
 
 use super::connection::ServiceConnections;
 
@@ -28,21 +29,18 @@ impl VerifierWrapper {
 }
 
 pub struct ServiceVerifier {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     verifiers: ObjectCache<VerifierWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceVerifier {
     pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: Arc<dyn Profile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             service_connections,
             verifiers: ObjectCache::new("verifiers"),
         }
@@ -61,7 +59,7 @@ impl ServiceVerifier {
             Verifier::create_from_request("".to_string(), &request)?
         };
         verifier
-            .send_presentation_request(connection.send_message_closure(self.wallet_handle, None).await?)
+            .send_presentation_request(connection.send_message_closure(&self.profile, None).await?)
             .await?;
         self.verifiers.set(
             &verifier.get_thread_id()?,
@@ -77,7 +75,7 @@ impl ServiceVerifier {
     pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {
         let VerifierWrapper { mut verifier, connection_id } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        verifier.verify_presentation(self.wallet_handle, self.pool_handle, presentation, connection.send_message_closure(self.wallet_handle, None).await?).await?;
+        verifier.verify_presentation(&self.profile, presentation, connection.send_message_closure(&self.profile, None).await?).await?;
         self.verifiers.set(
             thread_id,
             VerifierWrapper::new(verifier, &connection_id),

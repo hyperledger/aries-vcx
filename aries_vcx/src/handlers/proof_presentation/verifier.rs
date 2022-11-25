@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use messages::status::Status;
 use messages::proof_presentation::presentation::Presentation;
-use vdrtools::{WalletHandle, PoolHandle};
+use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::indy::proofs::proof_request::PresentationRequestData;
+use crate::xyz::proofs::proof_request::PresentationRequestData;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
@@ -61,13 +62,12 @@ impl Verifier {
 
     pub async fn handle_message(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         trace!("Verifier::handle_message >>> message: {:?}", message);
-        self.step(wallet_handle, pool_handle, message, send_message).await
+        self.step(profile, message, send_message).await
     }
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
@@ -85,9 +85,9 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn verify_presentation(&mut self, wallet_handle: WalletHandle, pool_handle: PoolHandle, presentation: Presentation, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn verify_presentation(&mut self, profile: &Arc<dyn Profile>, presentation: Presentation, send_message: SendClosure) -> VcxResult<()> {
         trace!("Verifier::verify_presentation >>>");
-        self.verifier_sm = self.verifier_sm.clone().verify_presentation(wallet_handle, pool_handle, presentation, send_message).await?;
+        self.verifier_sm = self.verifier_sm.clone().verify_presentation(profile, presentation, send_message).await?;
         Ok(())
     }
 
@@ -153,15 +153,14 @@ impl Verifier {
 
     pub async fn step(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
         self.verifier_sm = self
             .verifier_sm
             .clone()
-            .step(wallet_handle, pool_handle, message, send_message)
+            .step(profile, message, send_message)
             .await?;
         Ok(())
     }
@@ -186,8 +185,7 @@ impl Verifier {
 
     pub async fn update_state(
         &mut self,
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         connection: &MediatedConnection,
     ) -> VcxResult<VerifierState> {
@@ -195,12 +193,11 @@ impl Verifier {
         if !self.progressable_by_message() {
             return Ok(self.get_state());
         }
-        let send_message = connection.send_message_closure(wallet_handle).await?;
+        let send_message = connection.send_message_closure(profile).await?;
 
         let messages = connection.get_messages(agency_client).await?;
         if let Some((uid, msg)) = self.find_message_to_handle(messages) {
-            self.step(wallet_handle, pool_handle, msg.into(), Some(send_message))
-                .await?;
+            self.step(profile, msg.into(), Some(send_message)).await?;
             connection.update_message_status(&uid, agency_client).await?;
         }
         Ok(self.get_state())
@@ -210,24 +207,22 @@ impl Verifier {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
+    use crate::core::profile::indy_profile::IndySdkProfile;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use messages::a2a::A2AMessage;
     use messages::proof_presentation::presentation::test_utils::_presentation;
+    use vdrtools_sys::WalletHandle;
 
     use super::*;
 
-    fn _dummy_wallet_handle() -> WalletHandle {
-        WalletHandle(0)
-    }
-
-    fn _dummy_pool_handle() -> PoolHandle {
-        0
+    fn _dummy_profile() -> Arc<dyn Profile> {
+        Arc::new(IndySdkProfile::new(WalletHandle(0), 0))
     }
 
     async fn _verifier() -> Verifier {
-        let presentation_request_data = PresentationRequestData::create("1")
+        let presentation_request_data = PresentationRequestData::create(&_dummy_profile(), "1")
             .await
             .unwrap()
             .set_requested_attributes_as_string(REQUESTED_ATTRS.to_owned())
@@ -251,8 +246,7 @@ mod unit_tests {
         async fn to_finished_state(&mut self) {
             self.to_presentation_request_sent_state().await;
             self.step(
-                _dummy_wallet_handle(),
-                _dummy_pool_handle(),
+                &_dummy_profile(),
                 VerifierMessages::VerifyPresentation(_presentation()),
                 _send_message(),
             )

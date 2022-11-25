@@ -112,8 +112,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod unit_tests {
     use serde_json::Value;
 
-    use crate::utils::devsetup::*;
-    use crate::indy::credentials::encoding::encode_attributes;
+    use crate::{utils::devsetup::*, xyz::credentials::encoding::encode_attributes};
 
     #[test]
     fn test_encode_with_several_attributes_success() {

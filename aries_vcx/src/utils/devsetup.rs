@@ -1,5 +1,5 @@
 use std::fs;
-use std::sync::Once;
+use std::sync::{Once, Arc};
 use std::future::Future;
 
 use chrono::{DateTime, Duration, Utc};
@@ -8,24 +8,29 @@ use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::AgentProvisionConfig;
-use agency_client::testing::mocking::{AgencyMockDecrypted, disable_agency_mocks, enable_agency_mocks};
+use agency_client::testing::mocking::{disable_agency_mocks, enable_agency_mocks, AgencyMockDecrypted};
 
+use crate::core::profile::indy_profile::IndySdkProfile;
+use crate::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
+use crate::core::profile::profile::Profile;
 use crate::global::settings;
 use crate::global::settings::init_issuer_config;
 use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_configs};
+use crate::indy::ledger::pool::test_utils::{
+    create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
+};
+use crate::indy::ledger::pool::{PoolConfig};
 use crate::indy::utils::mocks::did_mocks::DidMocks;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::ledger::pool::test_utils::{
-    create_test_ledger_config, delete_test_pool, open_test_pool,
-};
-use crate::indy::ledger::pool::PoolConfig;
+use crate::indy::wallet::open_wallet;
 use crate::indy::wallet::{
-    close_wallet, create_and_open_wallet, create_indy_wallet,
-    create_wallet_with_master_secret, delete_wallet,
+    close_wallet, create_and_open_wallet, create_indy_wallet, create_wallet_with_master_secret, delete_wallet,
     wallet_configure_issuer, WalletConfig,
 };
-use crate::indy::wallet::open_wallet;
+use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
+use crate::utils::constants::{GENESIS_PATH};
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
@@ -36,7 +41,7 @@ pub struct SetupEmpty;
 pub struct SetupDefaults;
 
 pub struct SetupMocks {
-    pub institution_did: String
+    pub institution_did: String,
 }
 
 pub struct SetupIndyMocks;
@@ -59,13 +64,19 @@ pub struct SetupWalletPoolAgency {
     pub agency_client: AgencyClient,
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
-    pub pool_handle: PoolHandle
+    pub pool_handle: PoolHandle,
 }
 
-pub struct SetupWalletPool {
+pub struct SetupIndyWalletPool {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
-    pub pool_handle: PoolHandle
+    pub pool_handle: PoolHandle,
+}
+
+pub struct SetupProfile {
+    pub institution_did: String,
+    pub profile: Arc<dyn Profile>,
+    teardown: Box<dyn Fn() -> BoxFuture<'static, ()>>,
 }
 
 pub struct SetupInstitutionWallet {
@@ -73,8 +84,9 @@ pub struct SetupInstitutionWallet {
     pub wallet_handle: WalletHandle,
 }
 
-pub struct SetupPool {
-    pub pool_handle: PoolHandle
+pub struct SetupIndyPool {
+    pub pool_handle: PoolHandle,
+    pub genesis_file_path: String,
 }
 
 fn reset_global_state() {
@@ -248,9 +260,7 @@ impl SetupPoolConfig {
             pool_config: None,
         };
 
-        SetupPoolConfig {
-            pool_config,
-        }
+        SetupPoolConfig { pool_config }
     }
 }
 
@@ -292,7 +302,7 @@ impl SetupWalletPoolAgency {
             agency_client,
             institution_did,
             wallet_handle,
-            pool_handle
+            pool_handle,
         }
     }
 
@@ -326,10 +336,10 @@ impl SetupWalletPool {
         )
         .unwrap();
         let pool_handle = open_test_pool().await;
-        SetupWalletPool {
+        SetupIndyWalletPool {
             institution_did,
             wallet_handle,
-            pool_handle
+            pool_handle,
         }
     }
 
@@ -346,6 +356,79 @@ impl SetupWalletPool {
         delete_test_pool(pool_handle)
             .await;
 
+        reset_global_state();
+    }
+}
+
+impl SetupProfile {
+    pub async fn init() -> SetupProfile {
+        if cfg!(feature = "modular_deps") {
+            println!("using modular profile");
+            SetupProfile::init_modular().await
+        } else {
+            println!("using indy profile");
+        SetupProfile::init_indy().await
+        }
+    }
+
+    // FUTURE - ideally no tests should be using this method, they should be using the generic init
+    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
+    pub async fn init_indy() -> SetupProfile {
+        init_test_logging();
+        set_test_configs();
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        settings::set_config_value(
+            settings::CONFIG_GENESIS_PATH,
+            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
+                .to_str()
+                .unwrap(),
+        )
+        .unwrap();
+        let pool_handle = open_test_pool().await;
+
+        let profile: Arc<dyn Profile> = Arc::new(IndySdkProfile::new(wallet_handle, pool_handle.clone()));
+
+        async fn indy_teardown(pool_handle: i32) {
+            delete_test_pool(pool_handle.clone()).await;
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Box::new(move || Box::pin(indy_teardown(pool_handle))),
+        }
+    }
+
+    pub async fn init_modular() -> SetupProfile {
+        init_test_logging();
+        set_test_configs();
+        let (institution_did, wallet_handle) = setup_issuer_wallet().await;
+
+        let genesis_file_path = create_tmp_genesis_txn_file();
+
+        let wallet = IndySdkWallet::new(wallet_handle);
+
+        let profile: Arc<dyn Profile> =
+            Arc::new(ModularWalletProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
+
+        Arc::clone(&profile).inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+
+        async fn modular_teardown() {
+            // nothing to do
+        }
+
+        SetupProfile {
+            institution_did,
+            profile,
+            teardown: Box::new(move || Box::pin(modular_teardown())),
+        }
+    }
+}
+
+impl Drop for SetupProfile {
+    fn drop(&mut self) {
+        futures::executor::block_on((self.teardown)());
         reset_global_state();
     }
 }
@@ -373,18 +456,15 @@ impl SetupPool {
         debug!("SetupPool init >> going to setup agency environment");
         init_test_logging();
 
-        settings::set_config_value(
-            settings::CONFIG_GENESIS_PATH,
-            utils::get_temp_dir_path(settings::DEFAULT_GENESIS_PATH)
-                .to_str()
-                .unwrap(),
-        )
-        .unwrap();
+        let genesis_file_path = utils::get_temp_dir_path(GENESIS_PATH).to_str().unwrap().to_string();
+        settings::set_config_value(settings::CONFIG_GENESIS_PATH, &genesis_file_path).unwrap();
+
         let pool_handle = open_test_pool().await;
 
         debug!("SetupPool init >> completed");
-        SetupPool {
-            pool_handle
+        SetupIndyPool {
+            pool_handle,
+            genesis_file_path,
         }
     }
 
@@ -458,7 +538,10 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
     init_issuer_config(&config_issuer).unwrap();
     let mut agency_client = AgencyClient::new();
-    provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
+
+    let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
+
+    provision_cloud_agent(&mut agency_client, wallet, &config_provision_agent)
         .await
         .unwrap();
 

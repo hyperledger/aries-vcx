@@ -1,10 +1,11 @@
 use std::clone::Clone;
+use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
 use messages::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
-use vdrtools::WalletHandle;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
@@ -40,20 +41,20 @@ pub enum ConnectionState {
 
 impl Connection {
     // ----------------------------- CONSTRUCTORS ------------------------------------
-    pub async fn create_inviter(wallet_handle: WalletHandle) -> VcxResult<Self> {
+    pub async fn create_inviter(profile: &Arc<dyn Profile>) -> VcxResult<Self> {
         trace!("Connection::create >>>");
-        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+        let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
         Ok(Self {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new("", pairwise_info)),
         })
     }
 
-    pub async fn create_invitee(wallet_handle: WalletHandle, did_doc: DidDoc) -> VcxResult<Self> {
+    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: DidDoc) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>>");
         Ok(Self {
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
                 "",
-                PairwiseInfo::create(wallet_handle).await?,
+                PairwiseInfo::create(&profile.inject_wallet()).await?,
                 did_doc,
             )),
         })
@@ -133,7 +134,7 @@ impl Connection {
 
     pub async fn process_request(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         request: Request,
         service_endpoint: String,
         routing_keys: Vec<String>,
@@ -147,13 +148,13 @@ impl Connection {
         );
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
-                let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
+                let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                 SmConnection::Inviter(
                     sm_inviter
                         .clone()
                         .handle_connection_request(
-                            wallet_handle,
+                            profile.inject_wallet(),
                             request,
                             &new_pairwise_info,
                             routing_keys,
@@ -172,7 +173,7 @@ impl Connection {
 
     pub async fn process_response(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         response: SignedResponse,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
@@ -181,11 +182,11 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
-                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                 SmConnection::Invitee(
                     sm_invitee
                         .clone()
-                        .handle_connection_response(response, send_message)
+                        .handle_connection_response(&profile.inject_wallet(), response, send_message)
                         .await?,
                 )
             }
@@ -209,14 +210,14 @@ impl Connection {
     // ----------------------------- MSG SENDING ------------------------------------
     pub async fn send_response(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                    let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+                    let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                     SmConnection::Inviter(sm_inviter.handle_send_response(send_message).await?)
                 } else {
                     return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -231,7 +232,7 @@ impl Connection {
 
     pub async fn send_request(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         service_endpoint: String,
         routing_keys: Vec<String>,
         send_message: Option<SendClosureConnection>,
@@ -250,7 +251,7 @@ impl Connection {
                     .send_connection_request(
                         routing_keys,
                         service_endpoint,
-                        send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)),
+                        send_message.unwrap_or(self.send_message_closure_connection(profile)),
                     )
                     .await?,
             ),
@@ -260,7 +261,7 @@ impl Connection {
 
     pub async fn send_ack(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!("Connection::send_request");
@@ -271,7 +272,7 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
                     .clone()
-                    .handle_send_ack(send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)))
+                    .handle_send_ack(send_message.unwrap_or(self.send_message_closure_connection(profile)))
                     .await?,
             ),
         };
@@ -296,7 +297,7 @@ impl Connection {
 
     pub async fn send_message_closure(
         &self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
@@ -305,16 +306,17 @@ impl Connection {
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
-        let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+        let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
         Ok(Box::new(move |message: A2AMessage| {
             Box::pin(send_message(message, sender_vk.clone(), did_doc.clone()))
         }))
     }
 
-    fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
+    fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
+        let wallet = profile.inject_wallet();
         Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
-            Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
+            Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
 }
@@ -326,11 +328,6 @@ pub mod test_utils {
     use vdrtools::PoolHandle;
 
     use super::*;
-
-    // TODO: Deduplicate test helpers to reduce build times
-    pub(super) fn _wallet_handle() -> WalletHandle {
-        WalletHandle(0)
-    }
 
     pub(super) fn _pool_handle() -> PoolHandle {
         0
@@ -360,7 +357,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::indy::ledger::transactions::into_did_doc;
+    use crate::xyz::ledger::transactions::into_did_doc;
     use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
 
     use async_channel::bounded;

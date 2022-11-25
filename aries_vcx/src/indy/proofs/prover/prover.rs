@@ -5,78 +5,10 @@ use serde_json::{Map, Value};
 
 use crate::error::prelude::*;
 use crate::global::settings;
-use crate::indy::proofs::proof_request::ProofRequestData;
-use crate::indy::proofs::prover::prover_internal::{
-    build_cred_defs_json_prover, build_requested_credentials_json,
-    build_rev_states_json, build_schemas_json_prover,
-    credential_def_identifiers,
-};
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
-use crate::utils::mockdata::mock_settings::{
-    get_mock_creds_retrieved_for_proof_request,
-    get_mock_generate_indy_proof,
-};
-
-pub async fn generate_indy_proof(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    credentials: &str,
-    self_attested_attrs: &str,
-    proof_req_data_json: &str,
-) -> VcxResult<String> {
-    trace!(
-        "generate_indy_proof >>> credentials: {}, self_attested_attrs: {}",
-        secret!(&credentials),
-        secret!(&self_attested_attrs)
-    );
-
-    match get_mock_generate_indy_proof() {
-        None => {}
-        Some(mocked_indy_proof) => {
-            warn!("generate_indy_proof :: returning mocked response");
-            return Ok(mocked_indy_proof);
-        }
-    }
-
-    let proof_request: ProofRequestData = serde_json::from_str(proof_req_data_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
-            format!("Cannot deserialize proof request: {}", err),
-        )
-    })?;
-
-    let mut credentials_identifiers =
-        credential_def_identifiers(credentials, &proof_request)?;
-
-    let revoc_states_json =
-        build_rev_states_json(pool_handle, &mut credentials_identifiers)
-        .await?;
-
-    let requested_credentials =
-        build_requested_credentials_json(&credentials_identifiers, self_attested_attrs, &proof_request)?;
-
-    let schemas_json =
-        build_schemas_json_prover(wallet_handle, pool_handle, &credentials_identifiers)
-        .await?;
-
-    let credential_defs_json =
-        build_cred_defs_json_prover(wallet_handle, pool_handle, &credentials_identifiers)
-        .await?;
-
-    let proof = libindy_prover_create_proof(
-        wallet_handle,
-        proof_req_data_json,
-        &requested_credentials,
-        settings::DEFAULT_LINK_SECRET_ALIAS,
-        &schemas_json,
-        &credential_defs_json,
-        Some(&revoc_states_json),
-    ).await?;
-
-    Ok(proof)
-}
+use crate::utils::mockdata::mock_settings::{get_mock_creds_retrieved_for_proof_request};
 
 pub async fn libindy_prover_create_proof(
     wallet_handle: WalletHandle,
@@ -147,6 +79,20 @@ async fn fetch_credentials(search_handle: SearchHandle, requested_attributes: Ma
     Ok(v.to_string())
 }
 
+pub async fn libindy_prover_get_credentials(
+    wallet_handle: WalletHandle,
+    filter_json: Option<&str>,
+) -> VcxResult<String> {
+
+    let res = Locator::instance()
+        .prover_controller
+        .get_credentials(wallet_handle, filter_json.map(String::from))
+        .await.map_err(|ec| {
+            error!("Getting prover credentials failed.");
+            ec
+        })?;
+    Ok(res)
+}
 
 pub async fn libindy_prover_get_credentials_for_proof_req(
     wallet_handle: WalletHandle,

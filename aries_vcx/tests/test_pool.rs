@@ -6,19 +6,17 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "pool_tests")]
+#[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use aries_vcx::messages::did_doc::service_aries::AriesService;
-    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
-    use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
-    use aries_vcx::indy::ledger::transactions::{
-        add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
-    };
-    use aries_vcx::indy::keys::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
+    use crate::utils::force_debug_stack;
     use aries_vcx::messages::connection::did::Did;
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
-    use aries_vcx::utils::devsetup::SetupWalletPool;
-    use aries_vcx::indy::ledger::transactions::append_request_endorser;
+    use aries_vcx::messages::did_doc::service_aries::AriesService;
+    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use aries_vcx::utils::devsetup::{SetupWalletPool, SetupProfile};
+    use aries_vcx::xyz::keys::{get_verkey_from_ledger, rotate_verkey};
+    use aries_vcx::xyz::ledger::transactions::add_new_did;
+    use aries_vcx::xyz::test_utils::create_and_store_nonrevocable_credential_def;
+    use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
 
@@ -31,13 +29,16 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_get_credential_def() {
-        SetupWalletPool::run(|setup| async move {
+        // todo - use SetupProfile::run after modular impls
+        SetupProfile::run_indy(|setup| async move {
         let (_, _, cred_def_id, cred_def_json, _) =
-            create_and_store_nonrevocable_credential_def(setup.wallet_handle, setup.pool_handle, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+            create_and_store_nonrevocable_credential_def(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS)
+                .await;
 
-        let (id, r_cred_def_json) = get_cred_def_json(setup.wallet_handle, setup.pool_handle, &cred_def_id).await.unwrap();
+        let ledger = Arc::clone(&setup.profile).inject_ledger();
 
-        assert_eq!(id, cred_def_id);
+        let r_cred_def_json = ledger.get_cred_def(&cred_def_id, None).await.unwrap();
+
         let def1: serde_json::Value = serde_json::from_str(&cred_def_json).unwrap();
         let def2: serde_json::Value = serde_json::from_str(&r_cred_def_json).unwrap();
         assert_eq!(def1, def2);
@@ -46,43 +47,36 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_rotate_verkey() {
-        SetupWalletPool::run(|setup| async move {
-        let (did, verkey) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, None).await;
-        rotate_verkey(setup.wallet_handle, setup.pool_handle, &did).await.unwrap();
+        SetupProfile::run(|setup| async move {
+        let (did, verkey) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
+        rotate_verkey(&setup.profile, &did).await.unwrap();
         thread::sleep(Duration::from_millis(100));
-        let local_verkey = get_verkey_from_wallet(setup.wallet_handle, &did).await.unwrap();
-        let ledger_verkey = get_verkey_from_ledger(setup.pool_handle, &did).await.unwrap();
+        let local_verkey = setup.profile.inject_wallet().key_for_local_did(&did).await.unwrap();
+
+        let ledger_verkey = get_verkey_from_ledger(&setup.profile, &did).await.unwrap();
         assert_ne!(verkey, ledger_verkey);
         assert_eq!(local_verkey, ledger_verkey);
         }).await;
     }
 
-    #[tokio::test]
-    async fn test_endorse_transaction() {
-        SetupWalletPool::run(|setup| async move {
-
-        let (author_did, _) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, None).await;
-        let (endorser_did, _) = add_new_did(setup.wallet_handle, setup.pool_handle, &setup.institution_did, Some("ENDORSER")).await;
-
-        let schema_request = libindy_build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
-        let schema_request = append_request_endorser(&schema_request, &endorser_did).await.unwrap();
-        let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request)
-            .await
-            .unwrap();
-
-        endorse_transaction(setup.wallet_handle, setup.pool_handle, &endorser_did, &schema_request).await.unwrap();
-        }).await;
-    }
-
+    // TODO - bring back after endorser methods added to baseledger
+    // #[tokio::test]
+    // async fn test_endorse_transaction() {
+    //     SetupWalletPool::run(|setup| async move {
+    //         endorse_transaction(setup.wallet_handle, setup.pool_handle, &endorser_did, &schema_request).await.unwrap();
+    //     }).await;
+    // }
+    
     #[tokio::test]
     async fn test_add_get_service() {
-        SetupWalletPool::run(|setup| async move {
-
+        SetupProfile::run(|setup| async move {
+        let ledger = Arc::clone(&setup.profile).inject_ledger();
         let did = setup.institution_did.clone();
         let expect_service = AriesService::default();
-        add_service(setup.wallet_handle, setup.pool_handle, &did, &expect_service).await.unwrap();
+
+        ledger.add_service(&did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
-        let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
+        let service = ledger.get_service(&Did::new(&did).unwrap()).await.unwrap();
 
         assert_eq!(expect_service, service)
         }).await;

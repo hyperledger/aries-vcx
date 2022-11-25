@@ -1,29 +1,25 @@
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 
 use crate::error::*;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::indy::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+use aries_vcx::{xyz::primitives::credential_definition::{CredentialDef, CredentialDefConfig}, core::profile::profile::Profile};
 
 pub struct ServiceCredentialDefinitions {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     cred_defs: ObjectCache<CredentialDef>,
 }
 
 impl ServiceCredentialDefinitions {
-    pub fn new(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Self {
+    pub fn new(profile: Arc<dyn Profile>) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             cred_defs: ObjectCache::new("cred-defs"),
         }
     }
 
     pub async fn create_cred_def(&self, config: CredentialDefConfig) -> AgentResult<String> {
         let cd = CredentialDef::create(
-            self.wallet_handle,
-            self.pool_handle,
+            &self.profile,
             "".to_string(),
             config,
             true,
@@ -35,7 +31,7 @@ impl ServiceCredentialDefinitions {
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
         let cred_def = self.cred_defs.get(thread_id)?;
         let cred_def = cred_def
-            .publish_cred_def(self.wallet_handle, self.pool_handle)
+            .publish_cred_def(&self.profile)
             .await?;
         self.cred_defs.set(thread_id, cred_def)?;
         Ok(())

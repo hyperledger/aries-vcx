@@ -1,10 +1,9 @@
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
-use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::profile::get_main_profile;
 
 lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
@@ -26,9 +25,9 @@ pub async fn create_public_agent(source_id: &str, institution_did: &str) -> VcxR
         source_id,
         institution_did
     );
+    let profile = get_main_profile()?;
     let agent = PublicAgent::create(
-        get_main_wallet_handle(),
-        get_main_pool_handle()?,
+        &profile,
         &get_main_agency_client().unwrap(),
         source_id,
         institution_did,

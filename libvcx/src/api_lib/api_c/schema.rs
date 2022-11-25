@@ -572,7 +572,7 @@ pub extern "C" fn vcx_schema_get_state(
 mod tests {
     use std::ffi::CString;
 
-    use aries_vcx::indy::primitives::credential_definition::PublicEntityStateType;
+    use aries_vcx::xyz::primitives::credential_definition::PublicEntityStateType;
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{
         DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION,

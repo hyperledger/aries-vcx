@@ -3,7 +3,7 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::pool::get_main_pool_handle;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
@@ -14,7 +14,6 @@ use aries_vcx::{
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -124,8 +123,8 @@ pub async fn credential_create_with_msgid(
 
 pub async fn update_state(credential_handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = HANDLE_MAP.get_cloned(credential_handle)?;
-    let wallet_handle = get_main_wallet_handle();
-    let pool_handle = get_main_pool_handle()?;
+    let profile = get_main_profile()?;
+
     trace!("credential::update_state >>> ");
     if credential.is_terminal_state() {
         return Ok(credential.get_state().into());
@@ -140,12 +139,12 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
             )
         })?;
         credential
-            .step(wallet_handle, pool_handle, message.into(), Some(send_message))
+            .step(&profile, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential.step(wallet_handle, pool_handle, msg.into(), Some(send_message)).await?;
+            credential.step(&profile, msg.into(), Some(send_message)).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -192,8 +191,9 @@ pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
 
 pub async fn is_revokable(handle: u32) -> VcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
+    let profile = get_main_profile()?;
     credential
-        .is_revokable(get_main_wallet_handle(), get_main_pool_handle()?)
+        .is_revokable(&profile)
         .await
         .map_err(|err| err.into())
 }
@@ -201,7 +201,9 @@ pub async fn is_revokable(handle: u32) -> VcxResult<bool> {
 pub async fn delete_credential(handle: u32) -> VcxResult<u32> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle);
     let credential = HANDLE_MAP.get_cloned(handle)?;
-    credential.delete_credential(get_main_wallet_handle()).await?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+
+    credential.delete_credential(&profile).await?;
     HANDLE_MAP.release(handle)?;
     Ok(error::SUCCESS.code_num)
 }
@@ -231,8 +233,9 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+    let profile = get_main_profile()?;
     credential
-        .send_request(get_main_wallet_handle(), get_main_pool_handle()?, my_pw_did, send_message)
+        .send_request(&profile, my_pw_did, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS.code_num)
