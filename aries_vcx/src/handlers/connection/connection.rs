@@ -358,7 +358,8 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::xyz::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
+    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks, SetupProfile};
+    use crate::xyz::test_utils::dummy_profile;
 
     use async_channel::bounded;
     use messages::basic_message::message::BasicMessage;
@@ -375,7 +376,7 @@ mod unit_tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -387,7 +388,7 @@ mod unit_tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Public(_public_invitation());
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -400,12 +401,12 @@ mod unit_tests {
         let _setup = SetupMocks::init();
 
         let invite = _public_invitation_random_id();
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
+            .send_request(&dummy_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -415,12 +416,12 @@ mod unit_tests {
         assert_ne!(connection.get_thread_id(), invite.id.0);
 
         let invite = _pairwise_invitation_random_id();
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
+            .send_request(&dummy_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -434,10 +435,10 @@ mod unit_tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create_inviter(_wallet_handle())
+        let connection = Connection::create_inviter(&dummy_profile())
             .await
             .unwrap()
-            .process_request(_wallet_handle(), _request(), _service_endpoint(), _routing_keys(), None)
+            .process_request(&dummy_profile(), _request(), _service_endpoint(), _routing_keys(), None)
             .await
             .unwrap();
 
@@ -447,14 +448,15 @@ mod unit_tests {
         );
     }
 
+    // TODO - consider moving test, as this isn't really a unit test
     #[tokio::test]
     async fn test_connection_e2e() {
-        let setup = SetupInstitutionWallet::init().await;
+        SetupProfile::run(|setup| async move {
 
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(setup.wallet_handle)
+        let inviter = Connection::create_inviter(&setup.profile)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())
@@ -467,10 +469,10 @@ mod unit_tests {
         };
 
         // Invitee receives an invite and sends request
-        let did_doc = into_did_doc(_pool_handle(), &Invitation::Pairwise(invite.clone()))
+        let did_doc = into_did_doc(&dummy_profile(), &Invitation::Pairwise(invite.clone()))
             .await
             .unwrap();
-        let invitee = Connection::create_invitee(setup.wallet_handle, did_doc)
+        let invitee = Connection::create_invitee(&setup.profile, did_doc)
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite))
@@ -478,7 +480,7 @@ mod unit_tests {
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
         let invitee = invitee
             .send_request(
-                setup.wallet_handle,
+                &setup.profile,
                 _service_endpoint(),
                 _routing_keys(),
                 _send_message(sender.clone()),
@@ -496,7 +498,7 @@ mod unit_tests {
 
         let inviter = inviter
             .process_request(
-                setup.wallet_handle,
+                &setup.profile,
                 request,
                 _service_endpoint(),
                 _routing_keys(),
@@ -506,7 +508,7 @@ mod unit_tests {
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
         let inviter = inviter
-            .send_response(setup.wallet_handle, _send_message(sender.clone()))
+            .send_response(&setup.profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
@@ -519,12 +521,12 @@ mod unit_tests {
         };
 
         let invitee = invitee
-            .process_response(setup.wallet_handle, response, _send_message(sender.clone()))
+            .process_response(&setup.profile, response, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
         let invitee = invitee
-            .send_ack(setup.wallet_handle, _send_message(sender.clone()))
+            .send_ack(&setup.profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
@@ -538,7 +540,7 @@ mod unit_tests {
         let content = "Hello";
         let basic_message = BasicMessage::create().set_content(content.to_string()).to_a2a_message();
         invitee
-            .send_message_closure(setup.wallet_handle, _send_message(sender.clone()))
+            .send_message_closure(&setup.profile, _send_message(sender.clone()))
             .await
             .unwrap()(basic_message)
         .await
@@ -551,5 +553,6 @@ mod unit_tests {
             panic!("Received invalid message type")
         };
         assert_eq!(message.content, content.to_string());
+        }).await;
     }
 }

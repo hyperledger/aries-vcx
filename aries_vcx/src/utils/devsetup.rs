@@ -4,6 +4,7 @@ use std::future::Future;
 
 use chrono::{DateTime, Duration, Utc};
 
+use futures::future::BoxFuture;
 use vdrtools::{PoolHandle, WalletHandle};
 
 use agency_client::agency_client::AgencyClient;
@@ -67,7 +68,7 @@ pub struct SetupWalletPoolAgency {
     pub pool_handle: PoolHandle,
 }
 
-pub struct SetupIndyWalletPool {
+pub struct SetupWalletPool {
     pub institution_did: String,
     pub wallet_handle: WalletHandle,
     pub pool_handle: PoolHandle,
@@ -76,7 +77,7 @@ pub struct SetupIndyWalletPool {
 pub struct SetupProfile {
     pub institution_did: String,
     pub profile: Arc<dyn Profile>,
-    teardown: Box<dyn Fn() -> BoxFuture<'static, ()>>,
+    pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
 }
 
 pub struct SetupInstitutionWallet {
@@ -84,7 +85,7 @@ pub struct SetupInstitutionWallet {
     pub wallet_handle: WalletHandle,
 }
 
-pub struct SetupIndyPool {
+pub struct SetupPool {
     pub pool_handle: PoolHandle,
     pub genesis_file_path: String,
 }
@@ -336,7 +337,7 @@ impl SetupWalletPool {
         )
         .unwrap();
         let pool_handle = open_test_pool().await;
-        SetupIndyWalletPool {
+        SetupWalletPool {
             institution_did,
             wallet_handle,
             pool_handle,
@@ -361,7 +362,7 @@ impl SetupWalletPool {
 }
 
 impl SetupProfile {
-    pub async fn init() -> SetupProfile {
+    async fn init() -> SetupProfile {
         if cfg!(feature = "modular_deps") {
             println!("using modular profile");
             SetupProfile::init_modular().await
@@ -373,7 +374,7 @@ impl SetupProfile {
 
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
-    pub async fn init_indy() -> SetupProfile {
+    async fn init_indy() -> SetupProfile {
         init_test_logging();
         set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
@@ -396,11 +397,11 @@ impl SetupProfile {
         SetupProfile {
             institution_did,
             profile,
-            teardown: Box::new(move || Box::pin(indy_teardown(pool_handle))),
+            teardown: Arc::new(move || Box::pin(indy_teardown(pool_handle))),
         }
     }
 
-    pub async fn init_modular() -> SetupProfile {
+    async fn init_modular() -> SetupProfile {
         init_test_logging();
         set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
@@ -421,17 +422,49 @@ impl SetupProfile {
         SetupProfile {
             institution_did,
             profile,
-            teardown: Box::new(move || Box::pin(modular_teardown())),
+            teardown: Arc::new(move || Box::pin(modular_teardown())),
         }
     }
-}
 
-impl Drop for SetupProfile {
-    fn drop(&mut self) {
-        futures::executor::block_on((self.teardown)());
+    pub async fn run<F>(f: impl FnOnce(Self) -> F)
+    where
+        F: Future<Output=()>,
+    {
+        let init = Self::init().await;
+
+        let teardown = Arc::clone(&init.teardown);
+
+        f(init).await;
+
+        (teardown)().await;
+
+        reset_global_state();
+    }
+
+  // FUTURE - ideally no tests should be using this method, they should be using the generic run
+    // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
+    pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
+    where
+        F: Future<Output=()>,
+    {
+        let init = Self::init_indy().await;
+
+        let teardown = Arc::clone(&init.teardown);
+
+        f(init).await;
+
+        (teardown)().await;
+
         reset_global_state();
     }
 }
+
+// impl Drop for SetupProfile {
+//     fn drop(&mut self) {
+//         futures::executor::block_on((self.teardown)());
+//         reset_global_state();
+//     }
+// }
 
 impl SetupInstitutionWallet {
     pub async fn init() -> SetupInstitutionWallet {
@@ -462,7 +495,7 @@ impl SetupPool {
         let pool_handle = open_test_pool().await;
 
         debug!("SetupPool init >> completed");
-        SetupIndyPool {
+        SetupPool {
             pool_handle,
             genesis_file_path,
         }

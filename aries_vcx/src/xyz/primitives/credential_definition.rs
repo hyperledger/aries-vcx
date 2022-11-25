@@ -280,7 +280,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_create_cred_def_real() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -303,11 +303,12 @@ pub mod integration_tests {
             .publish_cred_def(&cred_def_json, &setup.institution_did)
             .await
             .unwrap();
+        }).await;
     }
 
     #[tokio::test]
     async fn test_create_rev_reg_def() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schema_id, _) =
             create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -347,5 +348,6 @@ pub mod integration_tests {
             .publish_rev_reg_delta(&rev_reg_def_id, &rev_reg_entry_json, &setup.institution_did)
             .await
             .unwrap();
+        }).await;
     }
 }

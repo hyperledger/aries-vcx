@@ -213,7 +213,7 @@ mod unit_tests {
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use messages::a2a::A2AMessage;
     use messages::proof_presentation::presentation::test_utils::_presentation;
-    use vdrtools_sys::WalletHandle;
+    use vdrtools::WalletHandle;
 
     use super::*;
 

@@ -27,7 +27,7 @@ mod integration_tests {
     use std::collections::HashMap;
     use std::time::{SystemTime, UNIX_EPOCH};
     use std::{sync::Arc, thread, time::Duration};
-    use vdrtools_sys::{PoolHandle, WalletHandle};
+    use vdrtools::{PoolHandle, WalletHandle};
 
     use agency_client::agency_client::AgencyClient;
     use aries_vcx::messages::a2a::A2AMessage;
@@ -362,7 +362,7 @@ mod integration_tests {
             plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet,
             utils::devsetup::{AGENCY_DID, AGENCY_VERKEY},
         };
-        use vdrtools_sys::WalletHandle;
+        use vdrtools::WalletHandle;
 
         use crate::integration_tests::{INDICIO_TEST_GENESIS_PATH, INDICIO_TEST_POOL_NAME};
 

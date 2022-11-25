@@ -4,7 +4,7 @@ use aries_vcx::{
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
     error::VcxResult,
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
-    vdrtools_sys::{PoolHandle, WalletHandle},
+    vdrtools::{PoolHandle, WalletHandle},
 };
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};

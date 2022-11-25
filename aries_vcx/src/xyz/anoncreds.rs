@@ -11,17 +11,17 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn tests_returns_error_if_proof_request_is_malformed() {
-        let setup = SetupProfile::init().await;
-
+        SetupProfile::run(|setup| async move {
         let proof_req = "{";
         let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
         let result = anoncreds.prover_get_credentials_for_proof_req(&proof_req).await;
         assert_eq!(result.unwrap_err().kind(), VcxErrorKind::InvalidProofRequest);
+        }).await;
     }
 
     #[tokio::test]
     async fn tests_prover_get_credentials() {
-        let setup = SetupProfile::init().await;
+        SetupProfile::run(|setup| async move {
 
         let proof_req = json!({
            "nonce":"123432421212",
@@ -46,11 +46,12 @@ pub mod integration_tests {
             .await
             .unwrap_err();
         assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_revoke_credential() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run(|setup| async move {
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) = create_and_store_credential(
             &setup.profile,
@@ -98,5 +99,6 @@ pub mod integration_tests {
                 .unwrap();
 
         assert_ne!(first_rev_reg_delta, second_rev_reg_delta);
+    }).await;
     }
 }

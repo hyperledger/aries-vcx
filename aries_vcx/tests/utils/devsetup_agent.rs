@@ -55,7 +55,7 @@ pub mod test_utils {
     use aries_vcx::xyz::primitives::credential_definition::CredentialDefConfigBuilder;
     use aries_vcx::xyz::primitives::credential_schema::Schema;
     use aries_vcx::xyz::proofs::proof_request::PresentationRequestData;
-    use vdrtools_sys::{PoolHandle, WalletHandle};
+    use vdrtools::{PoolHandle, WalletHandle};
 
     #[derive(Debug)]
     pub struct VcxAgencyMessage {
@@ -430,7 +430,7 @@ pub mod test_utils {
         pub agency_client: AgencyClient,
     }
 
-    pub async fn create_test_alice_instance(setup: &SetupIndyPool) -> Alice {
+    pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
         let (alice_profile, alice_wallet_config) = if cfg!(feature = "modular_deps") {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };

@@ -19,7 +19,7 @@ mod integration_tests {
     use std::sync::Arc;
     use std::thread;
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
-    use vdrtools_sys::WalletHandle;
+    use vdrtools::WalletHandle;
 
     use agency_client::agency_client::AgencyClient;
     use aries_vcx::{ 

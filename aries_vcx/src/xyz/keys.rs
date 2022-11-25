@@ -83,7 +83,7 @@ mod test {
 
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
         enable_pool_mocks();
 
         PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
@@ -96,5 +96,6 @@ mod test {
         );
         let local_verkey_2 =  setup.profile.inject_wallet().key_for_local_did(&setup.institution_did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);
+        }).await;
     }
 }

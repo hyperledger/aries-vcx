@@ -20,7 +20,7 @@ pub mod integration_tests {
     #[tokio::test]
     async fn test_rev_reg_def_fails_for_cred_def_created_without_revocation() {
         // todo: does not need agency setup
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         // Cred def is created with support_revocation=false,
         // revoc_reg_def will fail in libindy because cred_Def doesn't have revocation keys
@@ -39,11 +39,12 @@ pub mod integration_tests {
         .await;
 
         assert_eq!(rc.unwrap_err().kind(), VcxErrorKind::LibindyInvalidStructure);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_rev_reg_def_json() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) =
@@ -51,11 +52,12 @@ pub mod integration_tests {
 
         let ledger = Arc::clone(&setup.profile).inject_ledger();
         let _json = ledger.get_rev_reg_def_json(&rev_reg_id).await.unwrap();
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_rev_reg_delta_json() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) =
@@ -65,11 +67,12 @@ pub mod integration_tests {
         let (id, _delta, _timestamp) = ledger.get_rev_reg_delta_json(&rev_reg_id, None, None).await.unwrap();
 
         assert_eq!(id, rev_reg_id);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_rev_reg() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, _, _, rev_reg_id, _, _) =
@@ -82,11 +85,12 @@ pub mod integration_tests {
             .unwrap();
 
         assert_eq!(id, rev_reg_id);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_cred_def() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let attrs = r#"["address1","address2","city","state","zip"]"#;
         let (_, _, cred_def_id, cred_def_json, _) =
@@ -99,11 +103,12 @@ pub mod integration_tests {
             serde_json::from_str::<serde_json::Value>(&cred_def).unwrap(),
             serde_json::from_str::<serde_json::Value>(&cred_def_json).unwrap()
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn from_pool_ledger_with_id() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schema_id, _schema_json) =
             create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
@@ -113,5 +118,6 @@ pub mod integration_tests {
 
         let retrieved_schema = rc.unwrap();
         assert!(retrieved_schema.contains(&schema_id));
+        }).await;
     }
 }

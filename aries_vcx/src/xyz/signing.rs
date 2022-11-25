@@ -109,7 +109,7 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
     use messages::connection::response::test_utils::{_did, _response, _thread_id};
-    use crate::indy::utils::test_setup::setup_wallet;
+    use crate::indy::utils::test_setup::with_wallet;
     use crate::utils::devsetup::SetupEmpty;
     use crate::xyz::test_utils::{create_trustee_key, indy_handles_to_profile};
 
@@ -130,21 +130,23 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_response_encode_works() {
         SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+        with_wallet(|wallet_handle| async move {
+        let profile = indy_handles_to_profile(wallet_handle, 0);
         let trustee_key = create_trustee_key(&profile).await;
         let signed_response: SignedResponse = sign_connection_response(&profile.inject_wallet(), &trustee_key, _response()).await.unwrap();
         assert_eq!(_response(), decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key).await.unwrap());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_decode_returns_error_if_signer_differs() {
         SetupEmpty::init();
-        let setup = setup_wallet().await;
-        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+        with_wallet(|wallet_handle| async move {
+        let profile = indy_handles_to_profile(wallet_handle, 0);
         let trustee_key = create_trustee_key(&profile).await;
         let mut signed_response: SignedResponse = sign_connection_response(&profile.inject_wallet(), &trustee_key, _response()).await.unwrap();
         signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
         decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key).await.unwrap_err();
+        }).await;
     }
 }

@@ -65,7 +65,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_proof_self_attested_proof_validation() {
-        let setup = SetupProfile::init().await;
+        SetupProfile::run(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -121,11 +121,12 @@ pub mod unit_tests {
                 .unwrap(),
             true
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_proof_restrictions() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -205,11 +206,12 @@ pub mod unit_tests {
                 .unwrap(),
             true
         );
+        }).await;
     }
 
     #[tokio::test]
     async fn test_proof_validate_attribute() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -307,6 +309,7 @@ pub mod unit_tests {
                 VcxErrorKind::InvalidProof
             );
         }
+        }).await;
     }
 }
 
@@ -320,7 +323,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_prover_verify_proof() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) = create_indy_proof(&setup.profile, &setup.institution_did).await;
 
@@ -331,11 +334,12 @@ pub mod integration_tests {
             .unwrap();
 
         assert!(proof_validation);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_success_case() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) =
             create_proof_with_predicate(&setup.profile, &setup.institution_did, true).await;
@@ -347,11 +351,12 @@ pub mod integration_tests {
             .unwrap();
 
         assert!(proof_validation);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_prover_verify_proof_with_predicate_fail_case() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let (schemas, cred_defs, proof_req, proof) =
             create_proof_with_predicate(&setup.profile, &setup.institution_did, false).await;
@@ -361,5 +366,6 @@ pub mod integration_tests {
             .verifier_verify_proof(&proof_req, &proof, &schemas, &cred_defs, "{}", "{}")
             .await
             .unwrap_err();
+        }).await;
     }
 }

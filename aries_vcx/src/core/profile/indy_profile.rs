@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use vdrtools_sys::{WalletHandle, PoolHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::plugins::{
     anoncreds::{base_anoncreds::BaseAnonCreds, indy_anoncreds::IndySdkAnonCreds},

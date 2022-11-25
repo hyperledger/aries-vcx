@@ -2,13 +2,12 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use vdrtools_sys::{PoolHandle, WalletHandle};
+use vdrtools::{WalletHandle, PoolHandle};
 
 use crate::core::profile::indy_profile::IndySdkProfile;
 use crate::core::profile::profile::Profile;
 use crate::global::settings;
-use crate::indy::utils::test_setup::TRUSTEE_SEED;
-use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL};
+use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
 use crate::utils::get_temp_dir_path;
 use crate::xyz::credentials::encoding::encode_attributes;
 use crate::xyz::primitives::credential_definition::CredentialDef;

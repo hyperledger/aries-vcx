@@ -54,8 +54,8 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_prover_get_credential() {
-        let setup = SetupProfile::init_indy().await;
-
+        SetupProfile::run_indy(|setup| async move {
+        
         let res = create_and_store_credential(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let schema_id = res.0;
         let cred_def_id = res.2;
@@ -72,11 +72,12 @@ mod integration_tests {
         assert_eq!(prover_cred.cred_def_id, cred_def_id);
         assert_eq!(prover_cred.cred_rev_id.unwrap().to_string(), cred_rev_id);
         assert_eq!(prover_cred.rev_reg_id.unwrap(), rev_reg_id);
+        }).await;
     }
 
     #[tokio::test]
     async fn test_get_cred_rev_id() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let res = create_and_store_credential(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let cred_id = res.7;
@@ -85,11 +86,12 @@ mod integration_tests {
         let cred_rev_id_ = get_cred_rev_id(&setup.profile, &cred_id).await.unwrap();
 
         assert_eq!(cred_rev_id, cred_rev_id_.to_string());
+        }).await;
     }
 
     #[tokio::test]
     async fn test_is_cred_revoked() {
-        let setup = SetupProfile::init_indy().await;
+        SetupProfile::run_indy(|setup| async move {
 
         let res = create_and_store_credential(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let rev_reg_id = res.8;
@@ -116,5 +118,6 @@ mod integration_tests {
         assert!(is_cred_revoked(&setup.profile, &rev_reg_id, &cred_rev_id)
             .await
             .unwrap());
+        }).await;
     }
 }

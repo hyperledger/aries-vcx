@@ -3,7 +3,7 @@ use std::thread;
 use async_trait::async_trait;
 use futures::executor::block_on;
 use serde_json::Value;
-use vdrtools_sys::{SearchHandle, WalletHandle};
+use vdrtools::{SearchHandle, WalletHandle};
 
 use crate::{
     error::{VcxError, VcxResult},
