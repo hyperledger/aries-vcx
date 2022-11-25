@@ -49,9 +49,3 @@ tokio = { version = "1.15", features = [ "rt", "macros" ] }
 
 [build-dependencies]
 napi-build = "2.0.1"
-
-[target.x86_64-apple-ios]
-rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
-
-[target.aarch64-apple-ios]
-rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
