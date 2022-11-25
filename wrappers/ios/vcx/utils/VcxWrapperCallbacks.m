@@ -34,7 +34,7 @@ void VcxWrapperCbNoResponse(
 void VcxWrapperCbResponseHandle(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle
+        VcxHandle handle
 ) {
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
@@ -42,7 +42,7 @@ void VcxWrapperCbResponseHandle(
     void (^completion)(NSError *, VcxHandle) = (void (^)(NSError *, VcxHandle)) block;
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], (VcxHandle) handle);
+        completion([NSError errorFromVcxError:err], handle);
     });
 }
 
@@ -54,10 +54,10 @@ void VcxWrapperCbResponseSignedHandle(
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, VcxHandle) = (void (^)(NSError *, VcxHandle)) block;
+    void (^completion)(NSError *, vcx_i32_t) = (void (^)(NSError *, vcx_i32_t)) block;
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], (VcxHandle) signed_handle);
+        completion([NSError errorFromVcxError:err], signed_handle);
     });
 }
 
@@ -132,13 +132,13 @@ void VcxWrapperCbResponseData(
 void VcxWrapperCbResponseHandleAndString(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle,
+        VcxHandle handle,
         const char *const string
 ) {
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, vcx_command_handle_t, NSString *) = (void (^)(NSError *, vcx_command_handle_t, NSString *)) block;
+    void (^completion)(NSError *, VcxHandle , NSString *) = (void (^)(NSError *, VcxHandle, NSString *)) block;
 
     NSString *response = nil;
     if (string) {
@@ -153,13 +153,13 @@ void VcxWrapperCbResponseHandleAndString(
 void VcxWrapperCbResponseHandleAndBool(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle,
+        VcxHandle handle,
         vcx_bool_t bhool
 ) {
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, vcx_command_handle_t, Boolean) = (void (^)(NSError *, vcx_command_handle_t, Boolean)) block;
+    void (^completion)(NSError *, VcxHandle, Boolean) = (void (^)(NSError *, VcxHandle, Boolean)) block;
 
     completeCallback(^{
         completion([NSError errorFromVcxError:err], handle, bhool);

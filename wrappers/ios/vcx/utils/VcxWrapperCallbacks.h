@@ -17,7 +17,7 @@ extern void VcxWrapperCbNoResponse(
 extern void VcxWrapperCbResponseHandle(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle
+        VcxHandle handle
 );
 
 extern void VcxWrapperCbResponseSignedHandle(
@@ -54,14 +54,14 @@ extern void VcxWrapperCbResponseData(
 extern void VcxWrapperCbResponseHandleAndString(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle,
+        VcxHandle handle,
         const char *const string
 );
 
 extern void VcxWrapperCbResponseHandleAndBool(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
-        vcx_command_handle_t handle,
+        VcxHandle handle,
         vcx_bool_t bhool
 );
 
