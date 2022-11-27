@@ -149,6 +149,7 @@ impl SetupLibraryWallet {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
 
         let wallet_handle = create_and_open_wallet(&wallet_config).await.unwrap();
@@ -196,6 +197,7 @@ impl TestSetupCreateWallet {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
         create_indy_wallet(&wallet_config).await.unwrap();
 
@@ -446,6 +448,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
         storage_credentials: None,
         rekey: None,
         rekey_derivation_method: None,
+        master_secret: None,
     };
     let config_provision_agent = AgentProvisionConfig {
         agency_did: AGENCY_DID.to_string(),
@@ -476,6 +479,7 @@ pub async fn setup_issuer_wallet() -> (String, WalletHandle) {
         storage_credentials: None,
         rekey: None,
         rekey_derivation_method: None,
+        master_secret: None,
     };
     create_wallet_with_master_secret(&config_wallet).await.unwrap();
     let wallet_handle = open_wallet(&config_wallet).await.unwrap();

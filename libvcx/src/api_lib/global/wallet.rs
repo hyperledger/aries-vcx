@@ -91,6 +91,7 @@ pub mod test_utils {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
         let wallet_handle = create_and_open_as_main_wallet(&wallet_config).await.unwrap();
         create_and_store_my_did(wallet_handle, None, None).await.unwrap();

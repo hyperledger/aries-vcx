@@ -406,6 +406,7 @@ mod integration_tests {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
 
         create_indy_wallet(&wallet_config).await.unwrap();

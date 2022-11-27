@@ -62,6 +62,7 @@ impl Agent {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
 
         create_wallet_with_master_secret(&config_wallet).await.unwrap();

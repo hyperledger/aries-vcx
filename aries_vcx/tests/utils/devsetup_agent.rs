@@ -140,6 +140,7 @@ pub mod test_utils {
                 storage_credentials: None,
                 rekey: None,
                 rekey_derivation_method: None,
+                master_secret: None,
             };
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
@@ -444,6 +445,7 @@ pub mod test_utils {
                 storage_credentials: None,
                 rekey: None,
                 rekey_derivation_method: None,
+                master_secret: None,
             };
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
