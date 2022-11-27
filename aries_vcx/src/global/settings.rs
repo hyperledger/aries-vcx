@@ -85,18 +85,22 @@ pub fn add_master_secret(wallet_handle: WalletHandle, value: &String) -> VcxResu
 pub fn get_master_secret(wallet_handle: &WalletHandle) -> VcxResult<String> {
     trace!("get_config_value >>> ");
 
-    MASTER_SECRETS
+
+    let ms = MASTER_SECRETS
         .read()
         .or(Err(VcxError::from_msg(
             VcxErrorKind::InvalidConfiguration,
             "Cannot read settings",
         )))?
         .get(wallet_handle)
-        .map(|v| v.to_string())
-        .ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidConfiguration,
-            format!("Cannot read wallet_handle from settings"),
-        ))
+        .map(|v| v.to_string());
+    match ms {
+        Some(value) => {
+            trace!("get_config_value <<< value: {}", value);
+            Ok(value)
+        }
+        None => Ok(DEFAULT_LINK_SECRET_ALIAS.to_string()),
+    }    
 }
 
 pub fn get_config_value(key: &str) -> VcxResult<String> {
