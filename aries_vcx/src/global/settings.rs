@@ -70,7 +70,6 @@ pub fn indy_mocks_enabled() -> bool {
 }
 
 pub fn add_master_secret(wallet_handle: WalletHandle, value: &String) -> VcxResult<()> {
-
     trace!("add_master_secret >>> value: {}", value);
     MASTER_SECRETS
         .write()
@@ -83,24 +82,23 @@ pub fn add_master_secret(wallet_handle: WalletHandle, value: &String) -> VcxResu
 }
 
 pub fn get_master_secret(wallet_handle: &WalletHandle) -> VcxResult<String> {
-    trace!("get_config_value >>> ");
-
+    trace!("get_master_secret >>> ");
 
     let ms = MASTER_SECRETS
         .read()
         .or(Err(VcxError::from_msg(
             VcxErrorKind::InvalidConfiguration,
-            "Cannot read settings",
+            "Cannot read master_secret",
         )))?
         .get(wallet_handle)
         .map(|v| v.to_string());
     match ms {
         Some(value) => {
-            trace!("get_config_value <<< value: {}", value);
+            trace!("get_master_secret <<< value: {}", value);
             Ok(value)
         }
         None => Ok(DEFAULT_LINK_SECRET_ALIAS.to_string()),
-    }    
+    }
 }
 
 pub fn get_config_value(key: &str) -> VcxResult<String> {
