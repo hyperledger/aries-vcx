@@ -340,6 +340,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
 
         match futures::executor::block_on(indy::wallet::delete_wallet(&wallet_config)) {
@@ -943,6 +944,7 @@ mod tests {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
 
         let import_config = RestoreWalletConfigs {

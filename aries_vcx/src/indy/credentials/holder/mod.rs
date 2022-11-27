@@ -126,7 +126,7 @@ pub async fn libindy_prover_create_credential_req(
 
     let cred_def = serde_json::from_str::<CredentialDefinition>(credential_def_json)?;
 
-    let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
+    let master_secret = settings::get_master_secret(&wallet_handle)?;
 
     let res = Locator::instance()
         .prover_controller
@@ -135,7 +135,7 @@ pub async fn libindy_prover_create_credential_req(
             DidValue(prover_did.into()),
             cred_offer,
             cred_def,
-            master_secret_name.into(),
+            master_secret,
         ).await?;
 
     Ok(res)

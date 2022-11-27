@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
+use vdrtools::WalletHandle;
 
 use crate::error::prelude::*;
 use crate::indy::wallet::IssuerConfig;
@@ -43,6 +44,7 @@ pub static WALLET_KDF_DEFAULT: &str = WALLET_KDF_ARGON2I_MOD;
 
 lazy_static! {
     static ref SETTINGS: RwLock<HashMap<String, String>> = RwLock::new(HashMap::new());
+    static ref MASTER_SECRETS: RwLock<HashMap<WalletHandle, String>> = RwLock::new(HashMap::new());
 }
 
 pub fn enable_indy_mocks() -> VcxResult<()> {
@@ -65,6 +67,36 @@ pub fn indy_mocks_enabled() -> bool {
             value == "true" || value == "indy"
         }
     }
+}
+
+pub fn add_master_secret(wallet_handle: WalletHandle, value: &String) -> VcxResult<()> {
+
+    trace!("add_master_secret >>> value: {}", value);
+    MASTER_SECRETS
+        .write()
+        .or(Err(VcxError::from_msg(
+            VcxErrorKind::UnknownError,
+            "Cannot write settings",
+        )))?
+        .insert(wallet_handle, value.to_string());
+    Ok(())
+}
+
+pub fn get_master_secret(wallet_handle: &WalletHandle) -> VcxResult<String> {
+    trace!("get_config_value >>> ");
+
+    MASTER_SECRETS
+        .read()
+        .or(Err(VcxError::from_msg(
+            VcxErrorKind::InvalidConfiguration,
+            "Cannot read settings",
+        )))?
+        .get(wallet_handle)
+        .map(|v| v.to_string())
+        .ok_or(VcxError::from_msg(
+            VcxErrorKind::InvalidConfiguration,
+            format!("Cannot read wallet_handle from settings"),
+        ))
 }
 
 pub fn get_config_value(key: &str) -> VcxResult<String> {

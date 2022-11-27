@@ -1363,6 +1363,7 @@ pub mod tests {
             storage_credentials: None,
             rekey: None,
             rekey_derivation_method: None,
+            master_secret: None,
         };
         create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 

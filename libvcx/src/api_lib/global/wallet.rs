@@ -29,12 +29,14 @@ pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
 
 pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     let handle = indy::wallet::open_wallet(wallet_config).await?;
+    settings::add_master_secret(handle, &wallet_config.master_secret.clone().unwrap_or(settings::DEFAULT_LINK_SECRET_ALIAS.to_string()));
     set_main_wallet_handle(handle);
     Ok(handle)
 }
 
 pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     let handle = indy::wallet::create_and_open_wallet(wallet_config).await?;
+    settings::add_master_secret(handle, &wallet_config.master_secret.clone().unwrap_or(settings::DEFAULT_LINK_SECRET_ALIAS.to_string()));
     set_main_wallet_handle(handle);
     Ok(handle)
 }
@@ -50,7 +52,7 @@ pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
-    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
+    holder::libindy_prover_create_master_secret(wallet_handle,  &config.master_secret.clone().unwrap_or(settings::DEFAULT_LINK_SECRET_ALIAS.to_string()))
         .await
         .ok();
 

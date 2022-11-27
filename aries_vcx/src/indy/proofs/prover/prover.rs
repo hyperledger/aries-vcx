@@ -65,11 +65,13 @@ pub async fn generate_indy_proof(
         build_cred_defs_json_prover(wallet_handle, pool_handle, &credentials_identifiers)
         .await?;
 
+    let master_secret = settings::get_master_secret(&wallet_handle)?;
+
     let proof = libindy_prover_create_proof(
         wallet_handle,
         proof_req_data_json,
         &requested_credentials,
-        settings::DEFAULT_LINK_SECRET_ALIAS,
+        &master_secret,
         &schemas_json,
         &credential_defs_json,
         Some(&revoc_states_json),

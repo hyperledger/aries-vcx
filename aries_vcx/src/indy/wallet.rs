@@ -33,6 +33,8 @@ pub struct WalletConfig {
     pub rekey: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rekey_derivation_method: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub master_secret: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
@@ -565,7 +567,7 @@ pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResul
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     // If MS is already in wallet then just continue
-    holder::libindy_prover_create_master_secret(wallet_handle, settings::DEFAULT_LINK_SECRET_ALIAS)
+    holder::libindy_prover_create_master_secret(wallet_handle, &config.master_secret.clone().unwrap_or(settings::DEFAULT_LINK_SECRET_ALIAS.to_string()))
         .await
         .ok();
 
