@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+
 use vdrtools::{
     Locator,
     DidValue,
@@ -11,7 +12,7 @@ use messages::did_doc::service_aries::AriesService;
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::keys::create_and_store_my_did;
+use crate::indy::keys::{create_and_store_my_did, get_verkey_from_ledger};
 use messages::connection::did::Did;
 use messages::connection::invite::Invitation;
 use crate::utils;
@@ -23,6 +24,7 @@ use crate::utils::constants::{
 use crate::utils::random::generate_random_did;
 use messages::did_doc::service_resolvable::ServiceResolvable;
 use messages::did_doc::DidDoc;
+use messages::did_doc::service_aries_public::EndpointService;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     let res = Locator::instance()
@@ -140,7 +142,7 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
 
     let get_author_agreement_response =
         libindy_submit_request(pool_handle, &get_author_agreement_request)
-        .await?;
+            .await?;
 
     let get_author_agreement_response =
         serde_json::from_str::<serde_json::Value>(
@@ -497,29 +499,50 @@ pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> Vc
     libindy_submit_request(pool_handle, &get_attrib_req).await
 }
 
+
+
 pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesService> {
     let did_raw = did.to_string();
-    let  did_raw = match  did_raw.rsplit_once(':'){
-        None => {did_raw}
-        Some((_,value)) => {value.to_string()}
+    let did_raw = match did_raw.rsplit_once(':') {
+        None => { did_raw }
+        Some((_, value)) => { value.to_string() }
     };
-    let attr_resp = get_attr(pool_handle, &did_raw, "service").await?;
+    let attr_resp = get_attr(pool_handle, &did_raw, "endpoint").await?;
     let data = get_data_from_response(&attr_resp)?;
-    let ser_service = match data["service"].as_str() {
-        Some(ser_service) => ser_service.to_string(),
-        None => {
-            warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
-            data["service"].to_string()
-        }
-    };
-    serde_json::from_str(&ser_service).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
-            format!("Failed to deserialize service read from the ledger: {:?}", err),
-        )
-    })
+    if !data["endpoint"].is_null() {
+
+        let endpoint_json = data["endpoint"].to_string();
+        let endpoint: EndpointService = serde_json::from_str(&endpoint_json)?;
+        let _recipient = if endpoint.recipient_keys.is_none() {
+            let verkey = get_verkey_from_ledger(pool_handle, &did_raw).await.unwrap();
+            vec![verkey]
+        } else {
+            endpoint.recipient_keys.unwrap()
+        };
+        return Ok(AriesService::create()
+            .set_recipient_keys(_recipient)
+            .set_service_endpoint(endpoint.endpoint)
+            .set_routing_keys(endpoint.routing_keys.unwrap()))
+    }else {
+        let attr_resp = get_attr(pool_handle, &did_raw, "service").await?;
+        let data = get_data_from_response(&attr_resp)?;
+        let ser_service = match data["service"].as_str() {
+            Some(ser_service) => ser_service.to_string(),
+            None => {
+                warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
+                data["service"].to_string()
+            }
+        };
+        serde_json::from_str(&ser_service).map_err(|err| {
+            VcxError::from_msg(
+                VcxErrorKind::SerializationError,
+                format!("Failed to deserialize service read from the ledger: {:?}", err),
+            )
+        })
+    }
 }
 
+//
 pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvable) -> VcxResult<AriesService> {
     match service {
         ServiceResolvable::AriesService(service) => Ok(service.clone()),
@@ -563,6 +586,13 @@ pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> V
 
 pub async fn add_service(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
     let attrib_json = json!({ "service": service }).to_string();
+    let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
+    check_response(&res)?;
+    Ok(res)
+}
+
+pub async fn add_service_public(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &EndpointService) -> VcxResult<String> {
+    let attrib_json = json!({ "endpoint": service }).to_string();
     let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
     check_response(&res)?;
     Ok(res)

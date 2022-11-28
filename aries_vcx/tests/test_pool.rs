@@ -9,7 +9,7 @@ pub mod utils;
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
     use aries_vcx::messages::did_doc::service_aries::AriesService;
-    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::indy::ledger::transactions::{add_service_public, get_cred_def_json};
     use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::indy::ledger::transactions::{
         add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
@@ -21,6 +21,7 @@ mod integration_tests {
     use aries_vcx::indy::ledger::transactions::append_request_endorser;
     use std::thread;
     use std::time::Duration;
+    use messages::did_doc::service_aries_public::EndpointService;
 
     #[tokio::test]
     async fn test_open_close_pool() {
@@ -78,13 +79,28 @@ mod integration_tests {
     async fn test_add_get_service() {
         SetupWalletPool::run(|setup| async move {
 
-        let did = setup.institution_did.clone();
+        let did =setup.institution_did.clone(); //"7FfoFcg3MisAPRrxjHFr5P".to_string(); //
         let expect_service = AriesService::default();
         add_service(setup.wallet_handle, setup.pool_handle, &did, &expect_service).await.unwrap();
         thread::sleep(Duration::from_millis(50));
         let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
 
         assert_eq!(expect_service, service)
+        }).await;
+    }
+
+    #[tokio::test]
+    async fn test_add_get_service_public() {
+        SetupWalletPool::run(|setup| async move {
+
+            let did =setup.institution_did.clone(); //"7FfoFcg3MisAPRrxjHFr5P".to_string(); //
+            let create_service = EndpointService::default();
+            let expect_service = AriesService::default();
+            add_service_public(setup.wallet_handle, setup.pool_handle, &did, &create_service).await.unwrap();
+            thread::sleep(Duration::from_millis(50));
+            let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
+
+            assert_eq!(expect_service, service)
         }).await;
     }
 }
