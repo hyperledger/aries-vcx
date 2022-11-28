@@ -21,6 +21,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		4D5F206FBB9ED1724E29C275 /* VcxWrapperCallbacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D5F2F217F1D8DB99D136E82 /* VcxWrapperCallbacks.m */; };
+		4D5F2B86DA730337C103A885 /* VcxWrapperCallbacks.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D5F27439E44B92B6769389B /* VcxWrapperCallbacks.h */; };
 		8E1E709F221B653B00EF3CBB /* IndySdk.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E1E709E221B653B00EF3CBB /* IndySdk.m */; };
 		8E1E70A7221B7B8C00EF3CBB /* IndyCallbacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E1E70A6221B7B8C00EF3CBB /* IndyCallbacks.m */; };
 		8EFD49F922133FBF002E58D5 /* VcxLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = 8EFD49F722133FBF002E58D5 /* VcxLogger.h */; };
@@ -44,8 +46,8 @@
 		DD25673D2097138F002EBEBA /* vcx_demoUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = DD25673C2097138F002EBEBA /* vcx_demoUITests.m */; };
 		DD25674A2097173B002EBEBA /* vcx.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DD2566EE209705E3002EBEBA /* vcx.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DD390C712099CD0A00B4EA94 /* vcx.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD390C702099CD0A00B4EA94 /* vcx.framework */; };
-		DD858C9E20A45C11004B3CB5 /* ConnectMeVcx.m in Sources */ = {isa = PBXBuildFile; fileRef = DD858C9C20A45C11004B3CB5 /* ConnectMeVcx.m */; };
-		DD858C9F20A45C11004B3CB5 /* ConnectMeVcx.h in Headers */ = {isa = PBXBuildFile; fileRef = DD858C9D20A45C11004B3CB5 /* ConnectMeVcx.h */; };
+		DD858C9E20A45C11004B3CB5 /* VcxAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = DD858C9C20A45C11004B3CB5 /* VcxAPI.m */; };
+		DD858C9F20A45C11004B3CB5 /* VcxAPI.h in Headers */ = {isa = PBXBuildFile; fileRef = DD858C9D20A45C11004B3CB5 /* VcxAPI.h */; };
 		DD858CBC20A4AF7C004B3CB5 /* VcxCallbacks.h in Headers */ = {isa = PBXBuildFile; fileRef = DD858CB620A4AF7B004B3CB5 /* VcxCallbacks.h */; };
 		DD858CBD20A4AF7C004B3CB5 /* VcxErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = DD858CB720A4AF7B004B3CB5 /* VcxErrors.h */; };
 		DD858CBE20A4AF7C004B3CB5 /* VcxCallbacks.mm in Sources */ = {isa = PBXBuildFile; fileRef = DD858CB820A4AF7B004B3CB5 /* VcxCallbacks.mm */; };
@@ -107,6 +109,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4D5F27439E44B92B6769389B /* VcxWrapperCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VcxWrapperCallbacks.h; sourceTree = "<group>"; };
+		4D5F2F217F1D8DB99D136E82 /* VcxWrapperCallbacks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VcxWrapperCallbacks.m; sourceTree = "<group>"; };
 		8E1E709E221B653B00EF3CBB /* IndySdk.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IndySdk.m; sourceTree = "<group>"; };
 		8E1E70A0221B659E00EF3CBB /* IndySdk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IndySdk.h; sourceTree = "<group>"; };
 		8E1E70A5221B77D100EF3CBB /* IndyTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IndyTypes.h; sourceTree = "<group>"; };
@@ -142,8 +146,8 @@
 		DD25673C2097138F002EBEBA /* vcx_demoUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = vcx_demoUITests.m; sourceTree = "<group>"; };
 		DD25673E2097138F002EBEBA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DD390C702099CD0A00B4EA94 /* vcx.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = vcx.framework; sourceTree = "<group>"; };
-		DD858C9C20A45C11004B3CB5 /* ConnectMeVcx.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectMeVcx.m; sourceTree = "<group>"; };
-		DD858C9D20A45C11004B3CB5 /* ConnectMeVcx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConnectMeVcx.h; sourceTree = "<group>"; };
+		DD858C9C20A45C11004B3CB5 /* VcxAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VcxAPI.m; sourceTree = "<group>"; };
+		DD858C9D20A45C11004B3CB5 /* VcxAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VcxAPI.h; sourceTree = "<group>"; };
 		DD858CB620A4AF7B004B3CB5 /* VcxCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VcxCallbacks.h; sourceTree = "<group>"; };
 		DD858CB720A4AF7B004B3CB5 /* VcxErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VcxErrors.h; sourceTree = "<group>"; };
 		DD858CB820A4AF7B004B3CB5 /* VcxCallbacks.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VcxCallbacks.mm; sourceTree = "<group>"; };
@@ -203,8 +207,8 @@
 			isa = PBXGroup;
 			children = (
 				DD858CB520A4AF0A004B3CB5 /* utils */,
-				DD858C9D20A45C11004B3CB5 /* ConnectMeVcx.h */,
-				DD858C9C20A45C11004B3CB5 /* ConnectMeVcx.m */,
+				DD858C9D20A45C11004B3CB5 /* VcxAPI.h */,
+				DD858C9C20A45C11004B3CB5 /* VcxAPI.m */,
 				DD2566F0209705E3002EBEBA /* vcx */,
 				DD2566FB209705E3002EBEBA /* vcxTests */,
 				DD2567172097138F002EBEBA /* vcx-demo */,
@@ -311,6 +315,8 @@
 				8E1E70A5221B77D100EF3CBB /* IndyTypes.h */,
 				8E1E70A6221B7B8C00EF3CBB /* IndyCallbacks.m */,
 				8E1E70A8221B7BC100EF3CBB /* IndyCallbacks.h */,
+				4D5F2F217F1D8DB99D136E82 /* VcxWrapperCallbacks.m */,
+				4D5F27439E44B92B6769389B /* VcxWrapperCallbacks.h */,
 			);
 			path = utils;
 			sourceTree = "<group>";
@@ -324,11 +330,12 @@
 			files = (
 				DD858CBC20A4AF7C004B3CB5 /* VcxCallbacks.h in Headers */,
 				DD858CC020A4AF7C004B3CB5 /* NSError+VcxError.h in Headers */,
-				DD858C9F20A45C11004B3CB5 /* ConnectMeVcx.h in Headers */,
+				DD858C9F20A45C11004B3CB5 /* VcxAPI.h in Headers */,
 				DD2566FF209705E3002EBEBA /* vcx.h in Headers */,
 				DD858CBD20A4AF7C004B3CB5 /* VcxErrors.h in Headers */,
 				8EFD49F922133FBF002E58D5 /* VcxLogger.h in Headers */,
 				DD858CBF20A4AF7C004B3CB5 /* VcxTypes.h in Headers */,
+				4D5F2B86DA730337C103A885 /* VcxWrapperCallbacks.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -550,11 +557,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD858CBE20A4AF7C004B3CB5 /* VcxCallbacks.mm in Sources */,
-				DD858C9E20A45C11004B3CB5 /* ConnectMeVcx.m in Sources */,
+				DD858C9E20A45C11004B3CB5 /* VcxAPI.m in Sources */,
 				8E1E709F221B653B00EF3CBB /* IndySdk.m in Sources */,
 				DD858CC120A4AF7C004B3CB5 /* NSError+VcxError.m in Sources */,
 				8E1E70A7221B7B8C00EF3CBB /* IndyCallbacks.m in Sources */,
 				8EFD49FA22133FBF002E58D5 /* VcxLogger.m in Sources */,
+				4D5F206FBB9ED1724E29C275 /* VcxWrapperCallbacks.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -791,6 +799,7 @@
 				SKIP_INSTALL = NO;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "\"${PROJECT_DIR}/\"/**";
 				VALID_ARCHS = "arm64 armv7 armv7s x86_64 i386";
 			};
 			name = Debug;
@@ -832,6 +841,7 @@
 				SKIP_INSTALL = NO;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = "\"${PROJECT_DIR}/\"/**";
 				VALID_ARCHS = "arm64 armv7 armv7s x86_64 i386";
 			};
 			name = Release;

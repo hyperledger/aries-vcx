@@ -43,8 +43,8 @@
     // TODO call vcx_connection_serialize and pass connectionHandle
     // it would return a string
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] connectionSerialize:connectionHandle
-      completion:^(NSError *error, NSString *state) {
+    [[[VcxAPI alloc] init] connectionSerialize:connectionHandle
+                                    completion:^(NSError *error, NSString *state) {
           if (error != nil && error.code != 0)
           {
               NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while serializing connection handle: %@ :: %ld", error.domain, (long)error.code];
@@ -72,7 +72,7 @@
     // TODO call vcx_connection_deserialize and pass serializedConnection
     // it would return an error code and an integer connection handle in callback
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] connectionDeserialize:serializedConnection completion:^(NSError *error, NSInteger connectionHandle) {
+    [[[VcxAPI alloc] init] connectionDeserialize:serializedConnection completion:^(NSError *error, NSInteger connectionHandle) {
         if (error != nil && error.code != 0)
         {
             NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while deserializing claim offer: %@ :: %ld", error.domain, (long)error.code];
@@ -96,8 +96,8 @@
               completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] importWallet: config
-       completion:^(NSError *error) {
+    [[[VcxAPI alloc] init] importWallet: config
+                             completion:^(NSError *error) {
            if(error != nil && error.code != 0){
                NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while importing wallet: %@ :: %ld", error.domain, (long)error.code];
                //reject(indyErrorCode, [NSString stringWithFormat:@"Error occurred while importing wallet: %@ :: %ld",error.domain, (long)error.code], error);
@@ -119,9 +119,9 @@
 
 -(void)shutdownVcx: (BOOL *) deletePool
 {
-    //resolve([NSNumber numberWithInt:[[[ConnectMeVcx alloc] init] vcxShutdown: deletePool]]);
-    //[NSNumber numberWithInt:[[[ConnectMeVcx alloc] init] vcxShutdown: deletePool]];
-    [self setLastShutdownVcx:[[[ConnectMeVcx alloc] init] vcxShutdown: deletePool]];
+    //resolve([NSNumber numberWithInt:[[[VcxAPI alloc] init] vcxShutdown: deletePool]]);
+    //[NSNumber numberWithInt:[[[VcxAPI alloc] init] vcxShutdown: deletePool]];
+    [self setLastShutdownVcx:[[[VcxAPI alloc] init] vcxShutdown: deletePool]];
 }
 
 -(void)credentialCreateWithMsgId: (NSString *) sourceId
@@ -130,10 +130,10 @@
                       completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialCreateWithMsgid:sourceId
-      connectionHandle:connectionHandle
-                 msgId:messageId
-            completion:^(NSError *error, NSInteger credentialHandle, NSString* credentialOffer) {
+    [[[VcxAPI alloc] init] credentialCreateWithMsgid:sourceId
+                                    connectionHandle:connectionHandle
+                                               msgId:messageId
+                                          completion:^(NSError *error, NSInteger credentialHandle, NSString* credentialOffer) {
                 if (error != nil && error.code != 0)
                 {
                     NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while creating credential handle: %@ :: %ld", error.domain, (long)error.code];
@@ -164,7 +164,7 @@
 {
     // it would return error code, json string of credential inside callback
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialSerialize:credentialHandle completion:^(NSError *error, NSString *claimOffer) {
+    [[[VcxAPI alloc] init] credentialSerialize:credentialHandle completion:^(NSError *error, NSString *claimOffer) {
         if (error != nil && error.code != 0)
         {
             NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while serializing claim offer: %@ :: %ld", error.domain, (long)error.code];
@@ -191,8 +191,8 @@
 {
     // it would return an error code and an integer credential handle in callback
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialDeserialize:serializedCredential
-        completion:^(NSError *error, NSInteger credentailHandle) {
+    [[[VcxAPI alloc] init] credentialDeserialize:serializedCredential
+                                      completion:^(NSError *error, NSInteger credentailHandle) {
             if (error != nil && error.code != 0) {
                 NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while deserializing claim offer: %@ :: %ld", error.domain, (long)error.code];
                 //reject(indyErrorCode, @"Error occurred while deserializing claim offer", error);
@@ -220,10 +220,10 @@
              completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialSendRequest:credentialHandle
-      connectionHandle:connectionHandle
-         paymentHandle:paymentHandle
-            completion:^(NSError *error) {
+    [[[VcxAPI alloc] init] credentialSendRequest:credentialHandle
+                                connectionHandle:connectionHandle
+                                   paymentHandle:paymentHandle
+                                      completion:^(NSError *error) {
                 if (error != nil && error.code != 0)
                 {
                     NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while sending claim request: %@ :: %ld", error.domain, (long)error.code];
@@ -244,7 +244,7 @@
     });
 }
 
-//[[[ConnectMeVcx alloc] init] agentProvisionAsync:config completion:^(NSError *error, NSString *oneTimeInfo) {
+//[[[VcxAPI alloc] init] agentProvisionAsync:config completion:^(NSError *error, NSString *oneTimeInfo) {
 //    NSLog(@"applicationDidBecomeActive callback:%@",oneTimeInfo);
 //    if (error != nil && error.code != 0)
 //    {
@@ -262,7 +262,7 @@
     // callback would get an error code and a json string back in case of success
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-        [[[ConnectMeVcx alloc] init] agentProvisionAsync:config completion:^(NSError *error, NSString *oneTimeInfo) {
+        [[[VcxAPI alloc] init] agentProvisionAsync:config completion:^(NSError *error, NSString *oneTimeInfo) {
             NSLog(@"applicationDidBecomeActive callback:%@",oneTimeInfo);
             if (error != nil && error.code != 0)
             {
@@ -291,9 +291,9 @@
                        completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] connectionCreateWithInvite:invitationId
-      inviteDetails:inviteDetails
-         completion:^(NSError *error, NSInteger connectionHandle) {
+    [[[VcxAPI alloc] init] connectionCreateWithInvite:invitationId
+                                        inviteDetails:inviteDetails
+                                           completion:^(NSError *error, NSInteger connectionHandle) {
              if (error != nil && error.code != 0)
              {
                  NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while creating connection: %@ :: %ld", error.domain, (long)error.code];
@@ -319,9 +319,9 @@
                 completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] connectionConnect:connectionHandle
-        connectionType:connectionType
-            completion:^(NSError *error, NSString *inviteDetails) {
+    [[[VcxAPI alloc] init] connectionConnect:connectionHandle
+                              connectionType:connectionType
+                                  completion:^(NSError *error, NSString *inviteDetails) {
 
                 if (error != nil && error.code != 0)
                 {
@@ -350,7 +350,7 @@
     // pass a config as json string
     // callback would get an error code
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-        [[[ConnectMeVcx alloc] init] agentUpdateInfo:config completion:^(NSError *error) {
+        [[[VcxAPI alloc] init] agentUpdateInfo:config completion:^(NSError *error) {
             if (error != nil && error.code != 0)
             {
                 NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while updating push token: %@ :: %ld", error.domain, (long)error.code];
@@ -395,8 +395,8 @@
                   completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialUpdateState:credentialHandle
-        completion:^(NSError *error, NSInteger state)
+    [[[VcxAPI alloc] init] credentialUpdateState:credentialHandle
+                                      completion:^(NSError *error, NSInteger state)
      {
          if (error != nil && error.code != 0) {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while updating claim offer state: %@ :: %ld", error.domain, (long)error.code];
@@ -423,7 +423,7 @@
     // TODO: Add vcx wrapper method for vcx_credential_get_state
     // call vcx_credential_get_state and pass credentialHandle
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] credentialGetState:credentialHandle completion:^(NSError *error, NSInteger state) {
+    [[[VcxAPI alloc] init] credentialGetState:credentialHandle completion:^(NSError *error, NSInteger state) {
         if (error != nil && error.code != 0) {
             NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while getting claim offer state: %@ :: %ld", error.domain, (long)error.code];
             //reject(indyErrorCode, @"Error occurred while getting claim offer state", error);
@@ -447,7 +447,7 @@
         completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] getCredential:credentialHandle completion:^(NSError *error, NSString *credential) {
+    [[[VcxAPI alloc] init] getCredential:credentialHandle completion:^(NSError *error, NSString *credential) {
         if (error != nil && error.code != 0) {
             NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while getting claim: %@ :: %ld", error.domain, (long)error.code];
             //reject(indyErrorCode, @"Error occurred while getting claim", error);
@@ -472,9 +472,9 @@
          completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] exportWallet:exportPath
-      encryptWith:encryptionKey
-       completion:^(NSError *error, NSInteger exportHandle) {
+    [[[VcxAPI alloc] init] exportWallet:exportPath
+                            encryptWith:encryptionKey
+                             completion:^(NSError *error, NSInteger exportHandle) {
            if (error != nil && error.code != 0)
            {
                NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while exporting wallet: %@ :: %ld", error.domain, (long)error.code];
@@ -500,10 +500,10 @@
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
         NSString *recordType = @"record_type";
-        [[[ConnectMeVcx alloc] init] addRecordWallet:recordType
-            recordId:key
-         recordValue:value
-          completion:^(NSError *error) {
+        [[[VcxAPI alloc] init] addRecordWallet:recordType
+                                      recordId:key
+                                   recordValue:value
+                                    completion:^(NSError *error) {
               if (error != nil && error.code != 0)
               {
                   if ([error.domain isEqualToString:@"VcxErrorDomain"] && error.code == 213 )
@@ -537,9 +537,9 @@
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
         NSString *recordType = @"record_type";
-        [[[ConnectMeVcx alloc] init] getRecordWallet:recordType
-                                            recordId:key
-                                          completion:^(NSError *error, NSString *result)
+        [[[VcxAPI alloc] init] getRecordWallet:recordType
+                                      recordId:key
+                                    completion:^(NSError *error, NSString *result)
          {
              if (error != nil && error.code != 0)
              {
@@ -575,9 +575,9 @@
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
         NSString *recordType = @"record_type";
-        [[[ConnectMeVcx alloc] init] deleteRecordWallet:recordType
-           recordId:key
-         completion:^(NSError *error) {
+        [[[VcxAPI alloc] init] deleteRecordWallet:recordType
+                                         recordId:key
+                                       completion:^(NSError *error) {
              if (error != nil && error.code != 0)
              {
                  NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while deleting wallet item: %@ :: %ld", error.domain, (long)error.code];
@@ -607,10 +607,10 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
     NSString *recordType = @"record_type";
 
-    [[[ConnectMeVcx alloc] init] updateRecordWallet:recordType
-       withRecordId:key
-    withRecordValue:value
-     withCompletion:^(NSError *error) {
+    [[[VcxAPI alloc] init] updateRecordWallet:recordType
+                                 withRecordId:key
+                              withRecordValue:value
+                               withCompletion:^(NSError *error) {
          if (error != nil && error.code != 0)
          {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while updating wallet item: %@ :: %ld", error.domain, (long)error.code];
@@ -636,10 +636,10 @@
                  completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] proofCreateWithMsgId:sourceId
-                                 withConnectionHandle:connectionHandle
-                                            withMsgId:msgId
-                                       withCompletion:^(NSError *error, vcx_proof_handle_t proofHandle, NSString *proofRequest)
+    [[[VcxAPI alloc] init] proofCreateWithMsgId:sourceId
+                           withConnectionHandle:connectionHandle
+                                      withMsgId:msgId
+                                 withCompletion:^(NSError *error, vcx_proof_handle_t proofHandle, NSString *proofRequest)
      {
          if (error != nil && error.code != 0) {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while downloading proof request: %@ :: %ld", error.domain, (long)error.code];
@@ -667,8 +667,8 @@
                      completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] proofRetrieveCredentials:proofHandle
-                                           withCompletion:^(NSError *error, NSString *matchingCredentials)
+    [[[VcxAPI alloc] init] proofRetrieveCredentials:proofHandle
+                                     withCompletion:^(NSError *error, NSString *matchingCredentials)
      {
          if (error != nil && error.code != 0) {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while retrieving matching credentials: %@ :: %ld", error.domain, (long)error.code];
@@ -695,10 +695,10 @@
           completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] proofGenerate:proofHandle
-                       withSelectedCredentials:selectedCredentials
-                         withSelfAttestedAttrs:selfAttestedAttributes
-                                withCompletion:^(NSError *error)
+    [[[VcxAPI alloc] init] proofGenerate:proofHandle
+                 withSelectedCredentials:selectedCredentials
+                   withSelfAttestedAttrs:selfAttestedAttributes
+                          withCompletion:^(NSError *error)
      {
          if (error != nil && error.code != 0) {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while generating proof: %@ :: %ld", error.domain, (long)error.code];
@@ -724,9 +724,9 @@
       completion:(void (^)(BOOL success))successful
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, kNilOptions), ^{
-    [[[ConnectMeVcx alloc] init] proofSend:proof_handle
-                      withConnectionHandle:connection_handle
-                            withCompletion:^(NSError *error)
+    [[[VcxAPI alloc] init] proofSend:proof_handle
+                withConnectionHandle:connection_handle
+                      withCompletion:^(NSError *error)
      {
          if (error != nil && error.code != 0) {
              NSString *indyErrorCode = [NSString stringWithFormat:@"Error occurred while sending proof: %@ :: %ld", error.domain, (long)error.code];
