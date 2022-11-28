@@ -41,8 +41,6 @@ typedef unsigned int vcx_u32_t;
 typedef int vcx_i32_t;
 typedef unsigned long long vcx_u64_t;
 
-typedef const uint8_t vcx_data_t;
-
 typedef struct {
 
     union {
@@ -58,7 +56,7 @@ typedef struct {
 
 } vcx_status_t;
 
-#define ERROR_RESPONSE_NUMBER -1
+#define ERROR_RESPONSE_NUMBER [NSNumber numberWithInt:-1]
 #define ERROR_RESPONSE_STRING nil
 #define ERROR_RESPONSE_DATA nil
 #define ERROR_RESPONSE_BOOL false

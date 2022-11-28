@@ -31,22 +31,7 @@ void VcxWrapperCbNoResponse(
     });
 }
 
-void VcxWrapperCbResponseHandle(
-        vcx_command_handle_t xcommand_handle,
-        vcx_error_t err,
-        VcxHandle handle
-) {
-    id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
-    [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
-
-    void (^completion)(NSError *, VcxHandle) = (void (^)(NSError *, VcxHandle)) block;
-
-    completeCallback(^{
-        completion([NSError errorFromVcxError:err], handle);
-    });
-}
-
-void VcxWrapperCbResponseSignedHandle(
+void VcxWrapperCbResponseSignedInt(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         vcx_i32_t signed_handle
@@ -54,10 +39,10 @@ void VcxWrapperCbResponseSignedHandle(
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, vcx_i32_t) = (void (^)(NSError *, vcx_i32_t)) block;
+    void (^completion)(NSError *, NSNumber *) = (void (^)(NSError *, NSNumber *)) block;
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], signed_handle);
+        completion([NSError errorFromVcxError:err], [NSNumber numberWithInt:signed_handle]);
     });
 }
 
@@ -69,10 +54,10 @@ void VcxWrapperCbResponseUnsignedInt(
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, vcx_command_handle_t) = (void (^)(NSError *, vcx_command_handle_t)) block;
+    void (^completion)(NSError *, NSNumber *) = (void (^)(NSError *, NSNumber *)) block;
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], unsigned_int);
+        completion([NSError errorFromVcxError:err], [NSNumber numberWithUnsignedInt:unsigned_int]);
     });
 }
 
@@ -129,7 +114,7 @@ void VcxWrapperCbResponseData(
     });
 }
 
-void VcxWrapperCbResponseHandleAndString(
+void VcxWrapperCbResponseUnsignedIntAndString(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         VcxHandle handle,
@@ -138,7 +123,7 @@ void VcxWrapperCbResponseHandleAndString(
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, VcxHandle , NSString *) = (void (^)(NSError *, VcxHandle, NSString *)) block;
+    void (^completion)(NSError *, NSNumber * , NSString *) = (void (^)(NSError *, NSNumber *, NSString *)) block;
 
     NSString *response = nil;
     if (string) {
@@ -146,11 +131,11 @@ void VcxWrapperCbResponseHandleAndString(
     }
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], handle, response);
+        completion([NSError errorFromVcxError:err], [NSNumber numberWithUnsignedInt:handle], response);
     });
 }
 
-void VcxWrapperCbResponseHandleAndBool(
+void VcxWrapperCbResponseUnsignedIntAndBool(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         VcxHandle handle,
@@ -159,9 +144,9 @@ void VcxWrapperCbResponseHandleAndBool(
     id block = [[VcxCallbacks sharedInstance] commandCompletionFor:xcommand_handle];
     [[VcxCallbacks sharedInstance] deleteCommandHandleFor:xcommand_handle];
 
-    void (^completion)(NSError *, VcxHandle, Boolean) = (void (^)(NSError *, VcxHandle, Boolean)) block;
+    void (^completion)(NSError *, NSNumber *, Boolean) = (void (^)(NSError *, NSNumber *, Boolean)) block;
 
     completeCallback(^{
-        completion([NSError errorFromVcxError:err], handle, bhool);
+        completion([NSError errorFromVcxError:err], [NSNumber numberWithUnsignedInt:handle], bhool);
     });
 }

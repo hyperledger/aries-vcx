@@ -14,13 +14,7 @@ extern void VcxWrapperCbNoResponse(
         vcx_error_t err
 );
 
-extern void VcxWrapperCbResponseHandle(
-        vcx_command_handle_t xcommand_handle,
-        vcx_error_t err,
-        VcxHandle handle
-);
-
-extern void VcxWrapperCbResponseSignedHandle(
+extern void VcxWrapperCbResponseSignedInt(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         vcx_i32_t signed_handle
@@ -51,14 +45,14 @@ extern void VcxWrapperCbResponseData(
         uint32_t dataLen
 );
 
-extern void VcxWrapperCbResponseHandleAndString(
+extern void VcxWrapperCbResponseUnsignedIntAndString(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         VcxHandle handle,
         const char *const string
 );
 
-extern void VcxWrapperCbResponseHandleAndBool(
+extern void VcxWrapperCbResponseUnsignedIntAndBool(
         vcx_command_handle_t xcommand_handle,
         vcx_error_t err,
         VcxHandle handle,

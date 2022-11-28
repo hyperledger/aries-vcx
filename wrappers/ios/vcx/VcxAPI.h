@@ -17,7 +17,7 @@
 - (void)vcxInitIssuerConfig:(NSString *)config
                  completion:(void (^)(NSError *error))completion;
 
-- (vcx_error_t)vcxPoolSetHandle:(NSUInteger)handle
+- (vcx_error_t)vcxPoolSetHandle:(NSNumber *)handle
                      completion:(void (^)(NSError *error))completion;
 
 - (void)vcxEndorseTransaction:(NSString *)transaction
@@ -40,7 +40,7 @@
                     completion:(void (^)(NSError *error, NSString *verKey))completion;
 
 - (void)vcxGetLedgerTxn:(NSString *)submitterDid
-                  seqNo:(NSUInteger)seqNo
+                  seqNo:(NSNumber *)seqNo
              completion:(void (^)(NSError *error, NSString *verKey))completion;
 
 - (vcx_error_t)vcxInitThreadPool:(NSString *)config;
@@ -52,7 +52,7 @@
                       completion:(void (^)(NSError *error, NSString *conf))completion;
 
 - (void)openMainWallet:(NSString *)config
-            completion:(void (^)(NSError *error, NSUInteger handle))completion;
+            completion:(void (^)(NSError *error, NSNumber * handle))completion;
 
 - (void)closeMainWallet:(void (^)(NSError *error))completion;
 
@@ -69,26 +69,26 @@
 - (void)vcxCreateAgencyClientForMainWallet:(NSString *)config
                                 completion:(void (^)(NSError *error))completion;
 
-- (NSString *)errorCMessage:(NSUInteger)errorCode;
+- (NSString *)errorCMessage:(NSNumber *)errorCode;
 
 - (NSString *)vcxVersion;
 
-- (void)vcxSchemaSerialize:(NSUInteger)schemaHandle
+- (void)vcxSchemaSerialize:(NSNumber *)schemaHandle
                 completion:(void (^)(NSError *error, NSString *serializedSchema))completion;
 
 - (void)vcxSchemaDeserialize:(NSString *)serializedSchema
-                  completion:(void (^)(NSError *error, NSUInteger schemaHandle))completion;
+                  completion:(void (^)(NSError *error, NSNumber * schemaHandle))completion;
 
 - (void)vcxSchemaGetAttributes:(NSString *)sourceId
-                    sequenceNo:(NSUInteger)sequenceNo
-                    completion:(void (^)(NSError *error, NSString *schemaAttributes))completion;
+                    schemaId:(NSString *)schemaId
+                    completion:(void (^)(NSError *error, NSNumber * schemaHandle, NSString *schemaAttributes))completion;
 
 - (void)vcxSchemaCreate:(NSString *)sourceId
              schemaName:(NSString *)schemaName
           schemaVersion:(NSString *)schemaVersion
              schemaData:(NSString *)schemaData
-          paymentHandle:(NSUInteger)paymentHandle
-             completion:(void (^)(NSError *error, NSUInteger credDefHandle))completion;
+          paymentHandle:(NSNumber *)paymentHandle
+             completion:(void (^)(NSError *error, NSNumber * credDefHandle))completion;
 
 - (void)vcxSchemaPrepareForEndorser:(NSString *)sourceId
                          schemaName:(NSString *)schemaName
@@ -97,25 +97,25 @@
                            endorser:(NSString *)endorser
                          completion:(void (^)(
                                  NSError *error,
-                                 NSUInteger schemaHandle,
+                                 NSNumber * schemaHandle,
                                  NSString *schemaTransaction
                          ))completion;
 
 - (void)vcxSchemaGetSchemaId:(NSString *)sourceId
-                schemaHandle:(NSUInteger)schemaHandle
+                schemaHandle:(NSNumber *)schemaHandle
                   completion:(void (^)(NSError *error, NSString *schemaId))completion;
 
 - (void)vcxSchemaUpdateState:(NSString *)sourceId
-                schemaHandle:(NSUInteger)schemaHandle
-                  completion:(void (^)(NSError *error, NSUInteger state))completion;
+                schemaHandle:(NSNumber *)schemaHandle
+                  completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (int)vcxSchemaRelease:(NSUInteger)schemaHandle;
+- (int)vcxSchemaRelease:(NSNumber *)schemaHandle;
 
 - (void)vcxPublicAgentCreate:(NSString *)sourceId
               institutionDid:(NSString *)institutionDid
                   completion:(void (^)(
                           NSError *error,
-                          NSUInteger agentHandle
+                          NSNumber * agentHandle
                   ))completion;
 
 - (void)vcxGeneratePublicInvite:(NSString *)publicDid
@@ -125,80 +125,80 @@
                              NSString *publicInvite
                      ))completion;
 
-- (void)vcxPublicAgentDownloadConnectionRequests:(NSUInteger)agentHandle
+- (void)vcxPublicAgentDownloadConnectionRequests:(NSNumber *)agentHandle
                                             uids:(NSString *)ids
                                       completion:(void (^)(
                                               NSError *error,
                                               NSString *requests
                                       ))completion;
 
-- (void)vcxPublicAgentDownloadMessage:(NSUInteger)agentHandle
+- (void)vcxPublicAgentDownloadMessage:(NSNumber *)agentHandle
                                   uid:(NSString *)id
                            completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)vcxPublicAgentGetService:(NSUInteger)agentHandle
+- (void)vcxPublicAgentGetService:(NSNumber *)agentHandle
                       completion:(void (^)(NSError *error, NSString *service))completion;
 
-- (void)vcxPublicAgentSerialize:(NSUInteger)agentHandle
+- (void)vcxPublicAgentSerialize:(NSNumber *)agentHandle
                      completion:(void (^)(NSError *error, NSString *serializedAgent))completion;
 
-- (int)vcxPublicAgentRelease:(NSUInteger)agentHandle;
+- (int)vcxPublicAgentRelease:(NSNumber *)agentHandle;
 
 - (void)vcxOutOfBandSenderCreate:(NSString *)config
-                      completion:(void (^)(NSError *error, NSUInteger oobHandle))completion;
+                      completion:(void (^)(NSError *error, NSNumber * oobHandle))completion;
 
 - (void)vcxOutOfBandReceiverCreate:(NSString *)message
-                        completion:(void (^)(NSError *error, NSUInteger oobHandle))completion;
+                        completion:(void (^)(NSError *error, NSNumber * oobHandle))completion;
 
-- (void)vcxOutOfBandSenderAppendMessage:(NSUInteger)oobHandle
+- (void)vcxOutOfBandSenderAppendMessage:(NSNumber *)oobHandle
                                 message:(NSString *)message
                              completion:(void (^)(NSError *error))completion;
 
-- (void)vcxOutOfBandSenderAppendService:(NSUInteger)oobHandle
+- (void)vcxOutOfBandSenderAppendService:(NSNumber *)oobHandle
                                 service:(NSString *)service
                              completion:(void (^)(NSError *error))completion;
 
-- (void)vcxOutOfBandSenderAppendServiceDid:(NSUInteger)oobHandle
+- (void)vcxOutOfBandSenderAppendServiceDid:(NSNumber *)oobHandle
                                        did:(NSString *)did
                                 completion:(void (^)(NSError *error))completion;
 
-- (void)vcxOutOfBandSenderGetThreadId:(NSUInteger)oobHandle
+- (void)vcxOutOfBandSenderGetThreadId:(NSNumber *)oobHandle
                            completion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (void)vcxOutOfBandReceiverGetThreadId:(NSUInteger)oobHandle
+- (void)vcxOutOfBandReceiverGetThreadId:(NSNumber *)oobHandle
                              completion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (void)vcxOutOfBandReceiverExtractMessage:(NSUInteger)oobHandle
+- (void)vcxOutOfBandReceiverExtractMessage:(NSNumber *)oobHandle
                                 completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)vcxOutOfBandToMessage:(NSUInteger)oobHandle
+- (void)vcxOutOfBandToMessage:(NSNumber *)oobHandle
                    completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)vcxOutOfBandSenderSerialize:(NSUInteger)oobHandle
+- (void)vcxOutOfBandSenderSerialize:(NSNumber *)oobHandle
                          completion:(void (^)(NSError *error, NSString *oobMessage))completion;
 
-- (void)vcxOutOfBandReceiverSerialize:(NSUInteger)oobHandle
+- (void)vcxOutOfBandReceiverSerialize:(NSNumber *)oobHandle
                            completion:(void (^)(NSError *error, NSString *oobMessage))completion;
 
 - (void)vcxOutOfBandSenderDeserialize:(NSString *)oobMessage
-                           completion:(void (^)(NSError *error, NSUInteger oobHandle))completion;
+                           completion:(void (^)(NSError *error, NSNumber * oobHandle))completion;
 
 - (void)vcxOutOfBandReceiverDeserialize:(NSString *)oobMessage
-                             completion:(void (^)(NSError *error, NSUInteger oobHandle))completion;
+                             completion:(void (^)(NSError *error, NSNumber * oobHandle))completion;
 
-- (int)vcxOutOfBandSenderRelease:(NSUInteger)agentHandle;
+- (int)vcxOutOfBandSenderRelease:(NSNumber *)agentHandle;
 
-- (int)vcxOutOfBandReceiverRelease:(NSUInteger)agentHandle;
+- (int)vcxOutOfBandReceiverRelease:(NSNumber *)agentHandle;
 
-- (void)vcxOutOfBandReceiverConnectionExists:(NSUInteger)oobHandle
+- (void)vcxOutOfBandReceiverConnectionExists:(NSNumber *)oobHandle
                            connectionHandles:(NSString *)connectionHandles
                                   completion:(void (^)(
                                           NSError *error,
-                                          NSUInteger connectionHandle,
+                                          NSNumber * connectionHandle,
                                           Boolean foundOne)
                                   )completion;
 
-- (void)vcxOutOfBandReceiverBuildConnection:(NSUInteger)oobHandle
+- (void)vcxOutOfBandReceiverBuildConnection:(NSNumber *)oobHandle
                                  completion:(void (^)(
                                          NSError *error,
                                          NSString *connection)
@@ -207,28 +207,28 @@
 - (void)vcxRevocationRegistryCreate:(NSString *)revRegConfig
                          completion:(void (^)(
                                  NSError *error,
-                                 NSUInteger revRegHandle)
+                                 NSNumber * revRegHandle)
                          )completion;
 
-- (void)vcxRevocationRegistryPublish:(NSUInteger)revRegHandle
+- (void)vcxRevocationRegistryPublish:(NSNumber *)revRegHandle
                             tailsUrl:(NSString *)tailsUrl
                           completion:(void (^)(
                                   NSError *error,
-                                  NSUInteger handle)
+                                  NSNumber * handle)
                           )completion;
 
-- (void)vcxRevocationRegistryPublishRevocations:(NSUInteger)revRegHandle
+- (void)vcxRevocationRegistryPublishRevocations:(NSNumber *)revRegHandle
                                      completion:(void (^)(
                                              NSError *error)
                                      )completion;
 
-- (void)vcxRevocationRegistryGetRevRegId:(NSUInteger)revRegHandle
+- (void)vcxRevocationRegistryGetRevRegId:(NSNumber *)revRegHandle
                               completion:(void (^)(
                                       NSError *error,
                                       NSString *revRegId)
                               )completion;
 
-- (void)vcxRevocationRegistryGetTailsHash:(NSUInteger)revRegHandle
+- (void)vcxRevocationRegistryGetTailsHash:(NSNumber *)revRegHandle
                                completion:(void (^)(
                                        NSError *error,
                                        NSString *tailsHash)
@@ -237,16 +237,16 @@
 - (void)vcxRevocationRegistryDeserialize:(NSString *)serializedRevReg
                               completion:(void (^)(
                                       NSError *error,
-                                      NSUInteger revRegHandle)
+                                      NSNumber * revRegHandle)
                               )completion;
 
-- (void)vcxRevocationRegistrySerialize:(NSUInteger)revRegHandle
+- (void)vcxRevocationRegistrySerialize:(NSNumber *)revRegHandle
                             completion:(void (^)(
                                     NSError *error,
                                     NSString *serializedRevReg)
                             )completion;
 
-- (int)vcxRevocationRegistryRelease:(NSUInteger)revRegHandle;
+- (int)vcxRevocationRegistryRelease:(NSNumber *)revRegHandle;
 
 - (void)vcxCredentialDefinitionCreateV2:(NSString *)sourceId
                                schemaId:(NSString *)schemaId
@@ -255,255 +255,255 @@
                       supportRevocation:(Boolean)supportRevocation
                              completion:(void (^)(
                                      NSError *error,
-                                     NSUInteger credDefHandle)
+                                     NSNumber * credDefHandle)
                              )completion;
 
-- (void)vcxCredentialDefinitionPublish:(NSUInteger)credDefHandle
+- (void)vcxCredentialDefinitionPublish:(NSNumber *)credDefHandle
                               tailsUrl:(NSString *)tailsUrl
                             completion:(void (^)(NSError *error))completion;
 
 - (void)vcxCredentialDefinitionDeserialize:(NSString *)serializedCredDef
-                                completion:(void (^)(NSError *error, NSUInteger credDefHandle))completion;
+                                completion:(void (^)(NSError *error, NSNumber * credDefHandle))completion;
 
-- (void)vcxCredentialDefinitionSerialize:(NSUInteger)credDefHandle
+- (void)vcxCredentialDefinitionSerialize:(NSNumber *)credDefHandle
                               completion:(void (^)(NSError *error, NSString *serializedCredDef))completion;
 
-- (int)vcxCredentialDefinitionRelease:(NSUInteger)credDefHandle;
+- (int)vcxCredentialDefinitionRelease:(NSNumber *)credDefHandle;
 
-- (void)vcxCredentialDefinitionGetCredDefId:(NSUInteger)credDefHandle
+- (void)vcxCredentialDefinitionGetCredDefId:(NSNumber *)credDefHandle
                                  completion:(void (^)(NSError *error, NSString *credDefId))completion;
 
-- (void)vcxCredentialDefinitionUpdateState:(NSUInteger)credDefHandle
-                                completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)vcxCredentialDefinitionUpdateState:(NSNumber *)credDefHandle
+                                completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)vcxCredentialDefinitionGetState:(NSUInteger)credDefHandle
-                             completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)vcxCredentialDefinitionGetState:(NSNumber *)credDefHandle
+                             completion:(void (^)(NSError *error, NSNumber * state))completion;
 
 
 - (void)connectionCreate:(NSString *)sourceId
-              completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
+              completion:(void (^)(NSError *error, NSNumber * connectionHandle))completion;
 
 - (void)connectionCreateWithInvite:(NSString *)sourceId
                      inviteDetails:(NSString *)inviteDetails
-                        completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
+                        completion:(void (^)(NSError *error, NSNumber * connectionHandle))completion;
 
 - (void)connectionCreateWithConnectionRequestV2:(NSString *)sourceId
-                                    agentHandle:(NSUInteger)agentHandle
+                                    agentHandle:(NSNumber *)agentHandle
                                         request:(NSString *)request
-                                     completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
+                                     completion:(void (^)(NSError *error, NSNumber * connectionHandle))completion;
 
-- (void)connectionConnect:(NSUInteger)connectionHandle
+- (void)connectionConnect:(NSNumber *)connectionHandle
            connectionType:(NSString *)connectionType
                completion:(void (^)(NSError *error, NSString *inviteDetails))completion;
 
-- (void)connectionGetState:(NSUInteger)connectionHandle
-                completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)connectionGetState:(NSNumber *)connectionHandle
+                completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)connectionUpdateState:(NSUInteger)connectionHandle
-                   completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)connectionUpdateState:(NSNumber *)connectionHandle
+                   completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)connectionUpdateStateWithMessage:(NSUInteger)connectionHandle
+- (void)connectionUpdateStateWithMessage:(NSNumber *)connectionHandle
                                  message:(NSString *)message
-                              completion:(void (^)(NSError *error, NSUInteger state))completion;
+                              completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)connectionHandleMessage:(NSUInteger)connectionHandle
+- (void)connectionHandleMessage:(NSNumber *)connectionHandle
                         message:(NSString *)message
                      completion:(void (^)(NSError *error))completion;
 
-- (void)connectionSerialize:(NSUInteger)connectionHandle
+- (void)connectionSerialize:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *error, NSString *serializedConnection))completion;
 
 - (void)connectionDeserialize:(NSString *)serializedConnection
-                   completion:(void (^)(NSError *error, NSUInteger connectionHandle))completion;
+                   completion:(void (^)(NSError *error, NSNumber * connectionHandle))completion;
 
-- (int)connectionRelease:(NSUInteger)connectionHandle;
+- (int)connectionRelease:(NSNumber *)connectionHandle;
 
-- (void)connectionInviteDetails:(NSUInteger)connectionHandle
+- (void)connectionInviteDetails:(NSNumber *)connectionHandle
                      completion:(void (^)(NSError *error, NSString *inviteDetails))completion;
 
-- (void)deleteConnection:(NSUInteger)connectionHandle
+- (void)deleteConnection:(NSNumber *)connectionHandle
           withCompletion:(void (^)(NSError *error))completion;
 
-- (void)connectionGetPwDid:(NSUInteger)connectionHandle
+- (void)connectionGetPwDid:(NSNumber *)connectionHandle
                 completion:(void (^)(NSError *error, NSString *pwDid))completion;
 
-- (void)connectionGetTheirPwDid:(NSUInteger)connectionHandle
+- (void)connectionGetTheirPwDid:(NSNumber *)connectionHandle
                      completion:(void (^)(NSError *error, NSString *theirPwDid))completion;
 
-- (void)connectionInfo:(NSUInteger)connectionHandle
+- (void)connectionInfo:(NSNumber *)connectionHandle
             completion:(void (^)(NSError *error, NSString *info))completion;
 
-- (void)connectionGetThreadId:(NSUInteger)connectionHandle
+- (void)connectionGetThreadId:(NSNumber *)connectionHandle
                    completion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (void)connectionSendMessage:(NSUInteger)connectionHandle
+- (void)connectionSendMessage:(NSNumber *)connectionHandle
                   withMessage:(NSString *)message
        withSendMessageOptions:(NSString *)sendMessageOptions
                withCompletion:(void (^)(NSError *error, NSString *msg_id))completion;
 
-- (void)connectionSignData:(NSUInteger)connectionHandle
+- (void)connectionSignData:(NSNumber *)connectionHandle
                   withData:(NSData *)dataRaw
             withCompletion:(void (^)(NSError *error, NSData *signature_raw, vcx_u32_t signature_len))completion;
 
-- (void)connectionVerifySignature:(NSUInteger)connectionHandle
+- (void)connectionVerifySignature:(NSNumber *)connectionHandle
                          withData:(NSData *)dataRaw
                 withSignatureData:(NSData *)signatureRaw
                    withCompletion:(void (^)(NSError *error, vcx_bool_t valid))completion;
 
-- (void)connectionSendPing:(NSUInteger)connectionHandle
+- (void)connectionSendPing:(NSNumber *)connectionHandle
                    comment:(NSString *)comment
                 completion:(void (^)(NSError *error))completion;
 
-- (void)connectionSendDiscoveryFeatures:(NSUInteger)connectionHandle
+- (void)connectionSendDiscoveryFeatures:(NSNumber *)connectionHandle
                                   query:(NSString *)query
                                 comment:(NSString *)comment
                              completion:(void (^)(NSError *error))completion;
 
-- (void)connectionDownloadMessages:(NSUInteger)connectionHandle
+- (void)connectionDownloadMessages:(NSNumber *)connectionHandle
                      messageStatus:(NSString *)messageStatus
                              uid_s:(NSString *)uid_s
                         completion:(void (^)(NSError *error, NSString *messages))completion;
 
-- (void)connectionSendHandshakeReuse:(NSUInteger)connectionHandle
+- (void)connectionSendHandshakeReuse:(NSNumber *)connectionHandle
                               oobMsg:(NSString *)oobMsg
                           completion:(void (^)(NSError *error))completion;
 
 - (void)issuerCreateCredential:(NSString *)sourceId
-                    completion:(void (^)(NSError *error, NSUInteger credentialHandle))completion;
+                    completion:(void (^)(NSError *error, NSNumber * credentialHandle))completion;
 
-- (void)issuerRevokeCredentialLocal:(NSUInteger)credentialHandle
+- (void)issuerRevokeCredentialLocal:(NSNumber *)credentialHandle
                          completion:(void (^)(NSError *error))completion;
 
-- (void)issuerCredentialIsRevokable:(NSUInteger)credentialHandle
+- (void)issuerCredentialIsRevokable:(NSNumber *)credentialHandle
                          completion:(void (^)(NSError *error, Boolean isRevokable))completion;
 
-- (void)issuerSendCredentialOfferV2:(NSUInteger)credentialHandle
-                   connectionHandle:(NSUInteger)connectionHandle
+- (void)issuerSendCredentialOfferV2:(NSNumber *)credentialHandle
+                   connectionHandle:(NSNumber *)connectionHandle
                          completion:(void (^)(NSError *error))completion;
 
-- (void)markCredentialOfferSent:(NSUInteger)credentialHandle
+- (void)markCredentialOfferSent:(NSNumber *)credentialHandle
                      completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)issuerBuildCredentialOfferMessageV2:(NSUInteger)credDefHandle
-                               revRegHandle:(NSUInteger)revRegHandle
+- (void)issuerBuildCredentialOfferMessageV2:(NSNumber *)credDefHandle
+                               revRegHandle:(NSNumber *)revRegHandle
                              credentialData:(NSString *)credData
                                     comment:(NSString *)comment
                                  completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)issuerGetCredentialOfferMessage:(NSUInteger)credentialHandle
+- (void)issuerGetCredentialOfferMessage:(NSNumber *)credentialHandle
                              completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)issuerGetCredentialMessage:(NSUInteger)credentialHandle
+- (void)issuerGetCredentialMessage:(NSNumber *)credentialHandle
                      myPairwiseDid:(NSString *)myPwDid
                         completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)issuerCredentialGetState:(NSUInteger)credentialHandle
-                      completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)issuerCredentialGetState:(NSNumber *)credentialHandle
+                      completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)issuerCredentialGetRevRegId:(NSUInteger)credentialHandle
+- (void)issuerCredentialGetRevRegId:(NSNumber *)credentialHandle
                          completion:(void (^)(NSError *error, NSString *revRegId))completion;
 
-- (void)issuerSendCredential:(NSUInteger)credentialHandle
-            connectionHandle:(NSUInteger)connectionHandle
-                  completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)issuerSendCredential:(NSNumber *)credentialHandle
+            connectionHandle:(NSNumber *)connectionHandle
+                  completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)issuerCredentialSerialize:(NSUInteger)credentialHandle
+- (void)issuerCredentialSerialize:(NSNumber *)credentialHandle
                        completion:(void (^)(NSError *error, NSString *serializedCredential))completion;
 
 - (void)issuerCredentialDeserialize:(NSString *)serializedCredential
-                         completion:(void (^)(NSError *error, NSUInteger credentialHandle))completion;
+                         completion:(void (^)(NSError *error, NSNumber * credentialHandle))completion;
 
-- (void)issuerCredentialUpdateStateV2:(NSUInteger)credentialHandle
-                     connectionHandle:(NSUInteger)connectionHandle
-                           completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)issuerCredentialUpdateStateV2:(NSNumber *)credentialHandle
+                     connectionHandle:(NSNumber *)connectionHandle
+                           completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)issuerCredentialUpdateStateWithMessageV2:(NSUInteger)credentialHandle
-                                connectionHandle:(NSUInteger)connectionHandle
+- (void)issuerCredentialUpdateStateWithMessageV2:(NSNumber *)credentialHandle
+                                connectionHandle:(NSNumber *)connectionHandle
                                          message:(NSString *)message
-                                      completion:(void (^)(NSError *error, NSUInteger state))completion;
+                                      completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)issuerCredentialGetThreadId:(NSUInteger)credentialHandle
+- (void)issuerCredentialGetThreadId:(NSNumber *)credentialHandle
                          completion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (int)issuerCredentialRelease:(NSUInteger)credentialHandle;
+- (int)issuerCredentialRelease:(NSNumber *)credentialHandle;
 
-- (void)getCredential:(NSUInteger)credentialHandle
+- (void)getCredential:(NSNumber *)credentialHandle
            completion:(void (^)(NSError *error, NSString *credential))completion;
 
 - (void)credentialCreateWithOffer:(NSString *)sourceId
                             offer:(NSString *)credentialOffer
-                       completion:(void (^)(NSError *error, NSUInteger credentialHandle))completion;
+                       completion:(void (^)(NSError *error, NSNumber * credentialHandle))completion;
 
 - (void)credentialCreateWithMsgid:(NSString *)sourceId
-                 connectionHandle:(NSUInteger)connectionHandle
+                 connectionHandle:(NSNumber *)connectionHandle
                             msgId:(NSString *)msgId
-                       completion:(void (^)(NSError *error, NSUInteger credentialHandle, NSString *credentialOffer))completion;
+                       completion:(void (^)(NSError *error, NSNumber * credentialHandle, NSString *credentialOffer))completion;
 
-- (void)credentialSendRequest:(NSUInteger)credentialHandle
-             connectionHandle:(NSUInteger)connectionHandle
-                paymentHandle:(NSUInteger)paymentHandle
+- (void)credentialSendRequest:(NSNumber *)credentialHandle
+             connectionHandle:(NSNumber *)connectionHandle
+                paymentHandle:(NSNumber *)paymentHandle
                    completion:(void (^)(NSError *error))completion;
 
-- (void)credentialGetRequestMessage:(NSUInteger)credentialHandle
+- (void)credentialGetRequestMessage:(NSNumber *)credentialHandle
                       myPairwiseDid:(NSString *)myPwDid
                   theirdPairwiseDid:(NSString *)theirPwDid
-                      paymentHandle:(NSUInteger)paymentHandle
+                      paymentHandle:(NSNumber *)paymentHandle
                          completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)credentialDeclineOffer:(NSUInteger)credentialHandle
-              connectionHandle:(NSUInteger)connectionHandle
+- (void)credentialDeclineOffer:(NSNumber *)credentialHandle
+              connectionHandle:(NSNumber *)connectionHandle
                        comment:(NSString *)comment
                     completion:(void (^)(NSError *error))completion;
 
-- (void)credentialGetState:(NSUInteger)credentialHandle
-                completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)credentialGetState:(NSNumber *)credentialHandle
+                completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)credentialUpdateStateV2:(NSUInteger)credentailHandle
-               connectionHandle:(NSUInteger)connectionHandle
-                     completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)credentialUpdateStateV2:(NSNumber *)credentailHandle
+               connectionHandle:(NSNumber *)connectionHandle
+                     completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)credentialUpdateStateWithMessageV2:(NSUInteger)credentialHandle
-                          connectionHandle:(NSUInteger)connectionHandle
+- (void)credentialUpdateStateWithMessageV2:(NSNumber *)credentialHandle
+                          connectionHandle:(NSNumber *)connectionHandle
                                    message:(NSString *)message
-                                completion:(void (^)(NSError *error, NSUInteger state))completion;
+                                completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)credentialGetOffers:(NSUInteger)connectionHandle
+- (void)credentialGetOffers:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *error, NSString *offers))completion;
 
-- (void)credentialGetAttributes:(NSUInteger)credentialHandle
+- (void)credentialGetAttributes:(NSNumber *)credentialHandle
                      completion:(void (^)(NSError *error, NSString *attributes))completion;
 
-- (void)credentialGetAttachment:(NSUInteger)credentialHandle
+- (void)credentialGetAttachment:(NSNumber *)credentialHandle
                      completion:(void (^)(NSError *error, NSString *attach))completion;
 
-- (void)credentialGetTailsLocation:(NSUInteger)credentialHandle
+- (void)credentialGetTailsLocation:(NSNumber *)credentialHandle
                         completion:(void (^)(NSError *error, NSString *tailsLocation))completion;
 
-- (void)credentialGetTailsHash:(NSUInteger)credentialHandle
+- (void)credentialGetTailsHash:(NSNumber *)credentialHandle
                     completion:(void (^)(NSError *error, NSString *tailsHash))completion;
 
-- (void)credentialGetRevRegId:(NSUInteger)credentialHandle
+- (void)credentialGetRevRegId:(NSNumber *)credentialHandle
                    completion:(void (^)(NSError *error, NSString *revRegId))completion;
 
-- (void)credentialIsRevokable:(NSUInteger)credentialHandle
+- (void)credentialIsRevokable:(NSNumber *)credentialHandle
                    completion:(void (^)(NSError *error, vcx_bool_t revokable))completion;
 
-- (void)credentialSerialize:(NSUInteger)credentialHandle
+- (void)credentialSerialize:(NSNumber *)credentialHandle
                  completion:(void (^)(NSError *error, NSString *state))completion;
 
 - (void)credentialDeserialize:(NSString *)serializedCredential
-                   completion:(void (^)(NSError *error, NSUInteger credentialHandle))completion;
+                   completion:(void (^)(NSError *error, NSNumber * credentialHandle))completion;
 
-- (int)credentialRelease:(NSUInteger)credentialHandle;
+- (int)credentialRelease:(NSNumber *)credentialHandle;
 
-- (void)deleteCredential:(NSUInteger)credentialHandle
+- (void)deleteCredential:(NSNumber *)credentialHandle
               completion:(void (^)(NSError *error))completion;
 
-- (int)walletSetHandle:(NSUInteger)handle;
+- (int)walletSetHandle:(NSNumber *)handle;
 
 - (void)exportWallet:(NSString *)exportPath
          encryptWith:(NSString *)encryptionKey
-          completion:(void (^)(NSError *error, NSUInteger exportHandle))completion;
+          completion:(void (^)(NSError *error, NSNumber * exportHandle))completion;
 
 - (void)importWallet:(NSString *)config
           completion:(void (^)(NSError *error))completion;
@@ -546,13 +546,13 @@
 - (void)openSearchWallet:(NSString *)recordType
                queryJson:(NSString *)queryJson
              optionsJson:(NSString *)optionsJson
-              completion:(void (^)(NSError *error, NSUInteger searchHandle))completion;
+              completion:(void (^)(NSError *error, NSNumber * searchHandle))completion;
 
-- (void)searchNextRecordsWallet:(NSUInteger)searchHandle
+- (void)searchNextRecordsWallet:(NSNumber *)searchHandle
                           count:(int)count
                      completion:(void (^)(NSError *error, NSString *records))completion;
 
-- (void)closeSearchWallet:(NSUInteger)searchHandle
+- (void)closeSearchWallet:(NSNumber *)searchHandle
                completion:(void (^)(NSError *error))completion;
 
 - (void)verifierProofCreate:(NSString *)proofRequestId
@@ -560,109 +560,109 @@
         requestedPredicates:(NSString *)requestedPredicates
          revocationInterval:(NSString *)revocationInterval
                   proofName:(NSString *)proofName
-                 completion:(void (^)(NSError *error, NSUInteger proofHandle))completion;
+                 completion:(void (^)(NSError *error, NSNumber * proofHandle))completion;
 
-- (void)verifierProofSendRequest:(NSUInteger)proofHandle
-                connectionHandle:(NSUInteger)connectionHandle
+- (void)verifierProofSendRequest:(NSNumber *)proofHandle
+                connectionHandle:(NSNumber *)connectionHandle
                       completion:(void (^)(NSError *error))completion;
 
-- (void)verifierGetProofMessage:(NSUInteger)proofHandle
-                     completion:(void (^)(NSError *error, NSUInteger state, NSString *responseData))completion;
+- (void)verifierGetProofMessage:(NSNumber *)proofHandle
+                     completion:(void (^)(NSError *error, NSNumber * state, NSString *responseData))completion;
 
-- (void)verifierProofGetRequestMessage:(NSUInteger)proofHandle
+- (void)verifierProofGetRequestMessage:(NSNumber *)proofHandle
                             completion:(void (^)(NSError *error, NSString *message))completion;
 
-- (void)verifierProofUpdateStateV2:(NSUInteger)proofHandle
-                  connectionHandle:(NSUInteger)connectionHandle
-                        completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)verifierProofUpdateStateV2:(NSNumber *)proofHandle
+                  connectionHandle:(NSNumber *)connectionHandle
+                        completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)verifierProofUpdateStateWithMessageV2:(NSUInteger)proofHandle
-                             connectionHandle:(NSUInteger)connectionHandle
+- (void)verifierProofUpdateStateWithMessageV2:(NSNumber *)proofHandle
+                             connectionHandle:(NSNumber *)connectionHandle
                                       message:(NSString *)message
-                                   completion:(void (^)(NSError *error, NSUInteger state))completion;
+                                   completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)verifierProofGetState:(NSUInteger)proofHandle
-                   completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)verifierProofGetState:(NSNumber *)proofHandle
+                   completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)verifierProofGetThreadId:(NSUInteger)proofHandle
+- (void)verifierProofGetThreadId:(NSNumber *)proofHandle
                       completion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (void)verifierMarkPresentationRequestMessageSent:(NSUInteger)proofHandle
-                                        completion:(void (^)(NSError *error, NSUInteger state, NSString *message))completion;
+- (void)verifierMarkPresentationRequestMessageSent:(NSNumber *)proofHandle
+                                        completion:(void (^)(NSError *error, NSNumber * state, NSString *message))completion;
 
-- (void)verifierProofSerialize:(NSUInteger)proofHandle
+- (void)verifierProofSerialize:(NSNumber *)proofHandle
                     completion:(void (^)(NSError *error, NSString *serializedProof))completion;
 
 - (void)verifierProofDeserialize:(NSString *)serializedProof
-                      completion:(void (^)(NSError *error, NSUInteger proofHandle))completion;
+                      completion:(void (^)(NSError *error, NSNumber * proofHandle))completion;
 
-- (int)verifierProofRelease:(NSUInteger)proofHandle;
+- (int)verifierProofRelease:(NSNumber *)proofHandle;
 
-- (void)proofGetRequests:(NSUInteger)connectionHandle
+- (void)proofGetRequests:(NSNumber *)connectionHandle
               completion:(void (^)(NSError *error, NSString *requests))completion;
 
-- (void)proofGetProofRequestAttachment:(NSUInteger)proofHandle
+- (void)proofGetProofRequestAttachment:(NSNumber *)proofHandle
                             completion:(void (^)(NSError *error, NSString *attach))completion;
 
-- (void)proofRetrieveCredentials:(NSUInteger)proofHandle
+- (void)proofRetrieveCredentials:(NSNumber *)proofHandle
                   withCompletion:(void (^)(NSError *error, NSString *matchingCredentials))completion;
 
-- (void)  proofGenerate:(NSUInteger)proofHandle
+- (void)  proofGenerate:(NSNumber *)proofHandle
 withSelectedCredentials:(NSString *)selectedCredentials
   withSelfAttestedAttrs:(NSString *)selfAttestedAttributes
          withCompletion:(void (^)(NSError *error))completion;
 
 - (void)proofCreateWithMsgId:(NSString *)source_id
-        withConnectionHandle:(NSUInteger)connectionHandle
+        withConnectionHandle:(NSNumber *)connectionHandle
                    withMsgId:(NSString *)msgId
-              withCompletion:(void (^)(NSError *, NSUInteger, NSString *))completion;
+              withCompletion:(void (^)(NSError *, NSNumber *, NSString *))completion;
 
-- (void)   proofSend:(NSUInteger)proof_handle
-withConnectionHandle:(NSUInteger)connection_handle
+- (void)   proofSend:(NSNumber *)proof_handle
+withConnectionHandle:(NSNumber *)connection_handle
       withCompletion:(void (^)(NSError *error))completion;
 
-- (void)proofGetState:(NSUInteger)proofHandle
-           completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)proofGetState:(NSNumber *)proofHandle
+           completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)proofUpdateStateV2:(NSUInteger)proofHandle
-          connectionHandle:(NSUInteger)connectionHandle
-                completion:(void (^)(NSError *error, NSUInteger state))completion;
+- (void)proofUpdateStateV2:(NSNumber *)proofHandle
+          connectionHandle:(NSNumber *)connectionHandle
+                completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void)proofUpdateStateWithMessageV2:(NSUInteger)proofHandle
-                     connectionHandle:(NSUInteger)connectionHandle
+- (void)proofUpdateStateWithMessageV2:(NSNumber *)proofHandle
+                     connectionHandle:(NSNumber *)connectionHandle
                               message:(NSString *)message
-                           completion:(void (^)(NSError *error, NSUInteger state))completion;
+                           completion:(void (^)(NSError *error, NSNumber * state))completion;
 
-- (void) proofReject:(NSUInteger)proof_handle
-withConnectionHandle:(NSUInteger)connection_handle
+- (void) proofReject:(NSNumber *)proof_handle
+withConnectionHandle:(NSNumber *)connection_handle
       withCompletion:(void (^)(NSError *error))completion;
 
-- (void)proofDeclinePresentationRequest:(NSUInteger)proof_handle
-                       connectionHandle:(NSUInteger)connection_handle
+- (void)proofDeclinePresentationRequest:(NSNumber *)proof_handle
+                       connectionHandle:(NSNumber *)connection_handle
                                  reason:(NSString *)reason
                                proposal:(NSString *)proposal
                              completion:(void (^)(NSError *error))completion;
 
-- (void)proofGetThreadId:(NSUInteger)proofHandle
+- (void)proofGetThreadId:(NSNumber *)proofHandle
           withCompletion:(void (^)(NSError *error, NSString *threadId))completion;
 
-- (void)getProofMsg:(NSUInteger)proofHandle
+- (void)getProofMsg:(NSNumber *)proofHandle
      withCompletion:(void (^)(NSError *error, NSString *proofMsg))completion;
 
-- (void)getRejectMsg:(NSUInteger)proofHandle
+- (void)getRejectMsg:(NSNumber *)proofHandle
       withCompletion:(void (^)(NSError *error, NSString *rejectMsg))completion;
 
 - (void)proofCreateWithRequest:(NSString *)source_id
               withProofRequest:(NSString *)proofRequest
-                withCompletion:(void (^)(NSError *, NSUInteger))completion;
+                withCompletion:(void (^)(NSError *, NSNumber *))completion;
 
-- (void)proofSerialize:(NSUInteger)proofHandle
+- (void)proofSerialize:(NSNumber *)proofHandle
         withCompletion:(void (^)(NSError *error, NSString *proof_request))completion;
 
 - (void)proofDeserialize:(NSString *)serializedProof
-          withCompletion:(void (^)(NSError *, NSUInteger))completion;
+          withCompletion:(void (^)(NSError *, NSNumber *))completion;
 
-- (int)proofRelease:(NSUInteger)proofHandle;
+- (int)proofRelease:(NSNumber *)proofHandle;
 
 - (int)vcxShutdown:(Boolean)deleteWallet;
 
