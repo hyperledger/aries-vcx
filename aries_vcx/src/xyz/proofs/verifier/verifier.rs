@@ -65,7 +65,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_proof_self_attested_proof_validation() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
 
         let requested_attrs = json!([
             json!({

@@ -51,7 +51,7 @@ pub mod integration_tests {
 
     #[tokio::test]
     async fn test_revoke_credential() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
 
         let (_, _, _, _, _, _, _, _, rev_reg_id, cred_rev_id, _) = create_and_store_credential(
             &setup.profile,
