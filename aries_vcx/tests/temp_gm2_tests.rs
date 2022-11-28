@@ -8,7 +8,6 @@ mod integration_tests {
     use aries_vcx::plugins::anoncreds;
     use aries_vcx::plugins::anoncreds::base_anoncreds::BaseAnonCreds;
     use aries_vcx::plugins::anoncreds::credx_anoncreds::IndyCredxAnonCreds;
-    use aries_vcx::plugins::ledger::base_ledger::BaseLedger;
     use aries_vcx::plugins::ledger::indy_ledger;
     use aries_vcx::plugins::ledger::indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool};
     use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;

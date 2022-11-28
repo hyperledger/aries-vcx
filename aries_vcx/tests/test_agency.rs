@@ -27,7 +27,7 @@ mod integration_tests {
     };
     use aries_vcx::utils::devsetup::SetupPool;
 
-    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Alice, Faber};
+    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::create_connected_connections;
 
     #[tokio::test]

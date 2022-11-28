@@ -2,8 +2,6 @@
 #[cfg(feature = "modular_deps")]
 mod integration_tests {
     use agency_client::configuration::AgentProvisionConfig;
-    use aries_vcx::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
-    use aries_vcx::error::{VcxError, VcxResult};
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::indy::ledger::pool::test_utils::open_test_pool;

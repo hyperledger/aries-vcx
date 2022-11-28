@@ -8,7 +8,6 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
-    use crate::utils::force_debug_stack;
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::messages::did_doc::service_aries::AriesService;
     use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;

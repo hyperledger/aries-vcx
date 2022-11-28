@@ -324,7 +324,6 @@ mod integration_tests {
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
     use aries_vcx::indy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
-    use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::xyz::test_utils::create_and_store_nonrevocable_credential_def;
     use serde_json::Value;
 
@@ -336,7 +335,7 @@ mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
-    use aries_vcx::utils::{devsetup::*, get_temp_dir_path};
+    use aries_vcx::utils::{devsetup::*};
     use vdrtools::PoolHandle;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
@@ -1157,16 +1156,13 @@ mod tests {
 
     pub struct Pool {
         handle: PoolHandle,
-        genesis_file_path: String,
     }
 
     impl Pool {
         pub async fn open() -> Pool {
             let handle = open_test_pool().await;
-            let genesis_file_path = get_temp_dir_path(GENESIS_PATH).to_str().unwrap().to_string();
             Pool {
                 handle,
-                genesis_file_path,
             }
         }
     }
