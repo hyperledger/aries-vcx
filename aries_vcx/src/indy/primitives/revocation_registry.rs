@@ -14,6 +14,7 @@ use crate::indy::ledger::transactions::{
 };
 use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, set_rev_reg_delta};
 use crate::utils::constants::REV_REG_ID;
+use crate::utils::parse_and_validate;
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
 pub const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
@@ -288,8 +289,8 @@ pub async fn libindy_issuer_merge_revocation_registry_deltas(
     let res = Locator::instance()
         .issuer_controller
         .merge_revocation_registry_deltas(
-            serde_json::from_str(old_delta)?,
-            serde_json::from_str(new_delta)?,
+            parse_and_validate(old_delta)?,
+            parse_and_validate(new_delta)?,
         )?;
 
     Ok(res)
