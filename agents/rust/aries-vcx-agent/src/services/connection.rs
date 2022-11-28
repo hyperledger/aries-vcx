@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
 use aries_vcx::indy::ledger::transactions::into_did_doc;

@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};

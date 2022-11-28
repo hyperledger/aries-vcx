@@ -4,6 +4,8 @@ use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::error::*;
 
+use super::Storage;
+
 pub struct ObjectCache<T>
 where
     T: Clone,
@@ -16,8 +18,8 @@ impl<T> ObjectCache<T>
 where
     T: Clone,
 {
-    pub fn new(cache_name: &str) -> ObjectCache<T> {
-        ObjectCache {
+    pub fn new(cache_name: &str) -> Self {
+        Self {
             store: Default::default(),
             cache_name: cache_name.to_string(),
         }
@@ -54,16 +56,14 @@ where
             }
         }
     }
+}
 
-    pub fn contains_key(&self, id: &str) -> bool {
-        let store = match self._lock_store_read() {
-            Ok(g) => g,
-            Err(_) => return false,
-        };
-        store.contains_key(id)
-    }
 
-    pub fn get(&self, id: &str) -> AgentResult<T> {
+impl<T> Storage<T> for ObjectCache<T>
+where T: Clone {
+    type Value = Mutex<T>;
+
+    fn get(&self, id: &str) -> AgentResult<T> {
         let store = self._lock_store_read()?;
         match store.get(id) {
             Some(m) => match m.lock() {
@@ -86,7 +86,7 @@ where
         }
     }
 
-    pub fn insert(&self, id: &str, obj: T) -> AgentResult<String> {
+    fn insert(&self, id: &str, obj: T) -> AgentResult<String> {
         let mut store = self._lock_store_write()?;
 
         match store.insert(id.to_string(), Mutex::new(obj)) {
@@ -95,20 +95,19 @@ where
         }
     }
 
-    pub fn find_by<F>(&self, closure: F) -> AgentResult<Vec<String>>
+    fn contains_key(&self, id: &str) -> bool {
+        let store = match self._lock_store_read() {
+            Ok(g) => g,
+            Err(_) => return false,
+        };
+        store.contains_key(id)
+    }
+
+    fn find_by<F>(&self, closure: F) -> AgentResult<Vec<String>>
     where
-        F: FnMut((&String, &Mutex<T>)) -> Option<String>,
+        F: FnMut((&String, &Self::Value)) -> Option<String>,
     {
         let store = self._lock_store_read()?;
         Ok(store.iter().filter_map(closure).collect())
-    }
-
-    pub fn get_all(&self) -> AgentResult<Vec<T>> {
-        let store = self._lock_store_read()?;
-        Ok(store
-            .iter()
-            .map(|(_, v)| v.lock().unwrap().deref().clone())
-            .into_iter()
-            .collect())
     }
 }

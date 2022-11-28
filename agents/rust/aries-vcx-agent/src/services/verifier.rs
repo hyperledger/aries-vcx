@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::indy::proofs::proof_request::PresentationRequestData;

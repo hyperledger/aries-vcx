@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;

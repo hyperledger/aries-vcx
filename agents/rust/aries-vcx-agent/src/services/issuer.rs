@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::issuance::credential_ack::CredentialAck;

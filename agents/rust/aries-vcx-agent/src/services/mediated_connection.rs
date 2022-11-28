@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{MediatedConnection, ConnectionState},
@@ -122,23 +122,6 @@ impl ServiceMediatedConnections {
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.mediated_connections.contains_key(thread_id)
-    }
-
-    pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {
-        let agency_client = self.agency_client()?;
-        let mut requests = Vec::<(PresentationRequest, String)>::new();
-        for connection in self.mediated_connections.get_all()? {
-            for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-                if let A2AMessage::PresentationRequest(request) = message {
-                    connection
-                        .update_message_status(&uid, &agency_client)
-                        .await
-                        .ok();
-                    requests.push((request, connection.get_thread_id()));
-                }
-            }
-        }
-        Ok(requests)
     }
 }
 

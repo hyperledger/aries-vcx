@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::issuance::holder::Holder;
