@@ -237,8 +237,8 @@ jobs:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
 
-    #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
-      code-coverage-aries-vcx-modular-dependencies-integration-tests:
+  #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
+  code-coverage-aries-vcx-modular-dependencies-integration-tests:
     needs: workflow-setup
     runs-on: ubuntu-20.04
     steps:
