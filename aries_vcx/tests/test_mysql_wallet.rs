@@ -35,10 +35,14 @@ mod test_utils {
 #[cfg(feature = "mysql_test")]
 #[cfg(test)]
 mod dbtests {
+    use std::sync::Arc;
+
     use agency_client::agency_client::AgencyClient;
     use agency_client::configuration::AgentProvisionConfig;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
+    use aries_vcx::indy::wallet::{WalletConfig, WalletConfigBuilder, create_wallet_with_master_secret, open_wallet, wallet_configure_issuer, close_wallet};
+    use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx::utils::devsetup::{AGENCY_DID, AGENCY_ENDPOINT, AGENCY_VERKEY};
     use aries_vcx::utils::provision::provision_cloud_agent;
     use aries_vcx::utils::test_logger::LibvcxDefaultLogger;
@@ -81,10 +85,11 @@ mod dbtests {
         // create_main_wallet(&config_wallet).await.unwrap();
         create_wallet_with_master_secret(&config_wallet).await.unwrap();
         let wallet_handle = open_wallet(&config_wallet).await.unwrap();
+        let profile = Arc::new(IndySdkWallet::new(wallet_handle));
         let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
         init_issuer_config(&config_issuer).unwrap();
         let mut agency_client = AgencyClient::new();
-        provision_cloud_agent(&mut agency_client, wallet_handle, &config_provision_agent)
+        provision_cloud_agent(&mut agency_client, profile, &config_provision_agent)
             .await
             .unwrap();
         close_wallet(wallet_handle).await.unwrap();

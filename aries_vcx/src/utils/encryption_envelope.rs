@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use futures::TryFutureExt;
-use vdrtools::WalletHandle;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 

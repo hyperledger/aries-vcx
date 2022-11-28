@@ -311,7 +311,7 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::xyz::test_utils::{dummy_profile, indy_handles_to_profile};
+    use crate::xyz::test_utils::{dummy_profile};
 
     use super::*;
 

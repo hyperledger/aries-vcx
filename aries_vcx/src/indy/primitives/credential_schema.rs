@@ -1,7 +1,7 @@
 use vdrtools::{PoolHandle, WalletHandle};
 
 use vdrtools::{Locator, DidValue, AttributeNames};
-use crate::error::{VcxError, VcxResult, VcxErrorKind};
+use crate::error::VcxResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, sign_and_submit_to_ledger, set_endorser};
 

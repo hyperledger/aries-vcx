@@ -1,10 +1,7 @@
 use vdrtools::{Locator, DidValue};
 
 use vdrtools::{PoolHandle, WalletHandle};
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
-use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
-use crate::utils::serialization::ObjectWithVersion;
-
+use crate::error::VcxResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{
     build_cred_def_request, check_response,sign_and_submit_to_ledger

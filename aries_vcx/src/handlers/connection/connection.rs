@@ -358,7 +358,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::xyz::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks, SetupProfile};
+    use crate::utils::devsetup::{SetupMocks, SetupProfile};
     use crate::xyz::test_utils::dummy_profile;
 
     use async_channel::bounded;

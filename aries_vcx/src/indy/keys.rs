@@ -1,6 +1,4 @@
-use serde_json::Value;
-
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::{ WalletHandle};
 
 use vdrtools::{
     Locator,

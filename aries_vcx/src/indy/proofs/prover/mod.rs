@@ -28,13 +28,14 @@ pub async fn libindy_prover_create_revocation_state(
             blob_handle,
             serde_json::from_str(rev_reg_def_json)?,
             serde_json::from_str(rev_reg_delta_json)?,
-            100,
+            timestamp,
             cred_rev_id.into(),
         ).await?;
 
     Ok(res)
 }
 
+#[allow(unused)]
 pub async fn libindy_prover_update_revocation_state(
     rev_reg_def_json: &str,
     rev_state_json: &str,

@@ -271,6 +271,6 @@ mod tests {
                 .kind(),
             VcxErrorKind::InvalidJson
         );
-        });
+        }).await;
     }
 }

@@ -1,6 +1,6 @@
 use vdrtools::{Locator, SearchHandle};
 use vdrtools::types::validation::Validatable;
-use vdrtools::{PoolHandle, WalletHandle};
+use vdrtools::{WalletHandle};
 use serde_json::{Map, Value};
 
 use crate::error::prelude::*;

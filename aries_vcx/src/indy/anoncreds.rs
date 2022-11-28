@@ -30,6 +30,7 @@ pub(super) async fn close_search_handle(search_handle: SearchHandle) -> VcxResul
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
     Ok(AnoncredsHelpers::to_unqualified(entity)?)
 }
@@ -64,10 +65,7 @@ mod unit_tests {
 #[cfg(feature = "pool_tests")]
 #[cfg(test)]
 pub mod integration_tests {
-    use std::sync::Arc;
 
-    use crate::core::profile::indy_profile::IndySdkProfile;
-    use crate::core::profile::profile::Profile;
     use crate::indy::primitives::revocation_registry::libindy_issuer_revoke_credential;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::SetupWalletPool;

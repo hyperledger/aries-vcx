@@ -32,6 +32,7 @@ pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: 
     Ok(res)
 }
 
+#[allow(dead_code)]
 pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     let res = Locator::instance()
         .ledger_controller
@@ -197,6 +198,7 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxResult<String> {
     let res = Locator::instance()
         .ledger_controller
@@ -229,6 +231,7 @@ pub async fn libindy_build_attrib_request(
     Ok(res)
 }
 
+#[allow(dead_code)]
 pub async fn libindy_build_get_auth_rule_request(
     submitter_did: Option<&str>,
     txn_type: Option<&str>,
@@ -326,6 +329,7 @@ pub async fn libindy_get_schema(
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 pub async fn libindy_build_get_cred_def_request(
     submitter_did: Option<&str>,
     cred_def_id: &str,
@@ -365,7 +369,7 @@ pub async fn libindy_get_cred_def(
 
     Ok(res)
 }
-
+#[allow(dead_code)]
 pub async fn append_request_endorser(request: &str, endorser: &str) -> VcxResult<String> {
     let request = Locator::instance()
         .ledger_controller
@@ -695,6 +699,7 @@ async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxRes
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 async fn libindy_parse_get_cred_def_response(get_rev_reg_resp: &str) -> VcxResult<(String, String)> {
     let res = Locator::instance()
         .ledger_controller
@@ -832,6 +837,7 @@ pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u
     libindy_parse_get_revoc_reg_response(&res).await
 }
 
+#[allow(dead_code)]
 pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
@@ -844,6 +850,7 @@ pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cre
     libindy_parse_get_cred_def_response(&res).await
 }
 
+#[allow(dead_code)]
 pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
     match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
         Ok(_) => Ok(true),
@@ -955,6 +962,7 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
     Ok(cred_def_req)
 }
 
+#[allow(dead_code)]
 pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_cred_def_json >>> returning mocked value");

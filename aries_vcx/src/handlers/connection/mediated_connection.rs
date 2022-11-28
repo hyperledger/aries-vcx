@@ -1071,7 +1071,6 @@ impl From<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, Stri
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod tests {
-    use vdrtools::WalletHandle;
 
     use agency_client::testing::mocking::enable_agency_mocks;
 

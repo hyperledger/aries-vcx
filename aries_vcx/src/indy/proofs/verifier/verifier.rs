@@ -1,4 +1,4 @@
-use vdrtools::{PoolHandle, WalletHandle, Locator};
+use vdrtools::{Locator};
 
 use crate::error::VcxResult;
 

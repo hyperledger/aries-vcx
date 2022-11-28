@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::api_lib::global::pool::get_main_pool_handle;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;

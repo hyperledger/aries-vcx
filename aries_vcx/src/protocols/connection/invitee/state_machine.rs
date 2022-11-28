@@ -385,7 +385,6 @@ pub mod unit_tests {
     use messages::discovery::disclose::test_utils::_disclose;
 
     use messages::trust_ping::ping::unit_tests::_ping;
-    use vdrtools::WalletHandle;
 
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;

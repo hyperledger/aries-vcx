@@ -1,12 +1,12 @@
 {
-    // "rust-analyzer.cargo.features": "all"
-    "rust-analyzer.cargo.features": [
-        "agency_pool_tests", 
-        "test_utils", 
-        "pool_tests", 
-        // "general_test",
-        "modular_deps"
-    ],
+    "rust-analyzer.cargo.features": "all",
+    // "rust-analyzer.cargo.features": [
+    //     "agency_pool_tests", 
+    //     "test_utils", 
+    //     "pool_tests", 
+    //     "general_test",
+    //     "modular_deps"
+    // ],
     "rust-analyzer.runnableEnv": {
         "TEST_POOL_IP": "13.211.141.121", // TODO - remove
         "RUST_BACKTRACE": "full"

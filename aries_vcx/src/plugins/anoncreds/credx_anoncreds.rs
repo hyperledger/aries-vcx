@@ -227,7 +227,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
 
         let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let self_attested_attributes = (&requested_credentials).try_get("self_attested_attributes")?;
+        let _self_attested_attributes = (&requested_credentials).try_get("self_attested_attributes")?;
 
         let rev_states: Option<Value> = if let Some(revoc_states_json) = revoc_states_json {
             Some(serde_json::from_str(revoc_states_json)?)
@@ -351,8 +351,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String> {
-        // TODO - convert filter_json to wql query;
-        let query = "{}";
+        // TODO - properly convert filter_json to wql query to pass into get_creds;
+        let _query = filter_json;
 
         let creds = self._get_credentials("{}").await?;
 

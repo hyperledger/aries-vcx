@@ -1,6 +1,3 @@
-use time;
-use base64;
-
 use vdrtools::{Locator, KeyInfo};
 
 use vdrtools::WalletHandle;
