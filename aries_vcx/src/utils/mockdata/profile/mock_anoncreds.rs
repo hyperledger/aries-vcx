@@ -23,8 +23,7 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_defs_json: &str,
         _rev_regs_json: &str,
     ) -> VcxResult<bool> {
-        // not needed yet
-        todo!()
+        Err(VcxError::from_msg(VcxErrorKind::UnimplementedFeature, "unimplemented mock method"))
     }
 
     async fn issuer_create_and_store_revoc_reg(

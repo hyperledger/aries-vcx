@@ -253,19 +253,19 @@ pub mod test_utils {
 #[cfg(test)]
 mod tests {
     use messages::proof_presentation::presentation_request::PresentationRequest;
-    use crate::utils::devsetup::*;
+    use crate::{utils::devsetup::*, xyz::test_utils::indy_handles_to_profile};
 
     use super::*;
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
-        SetupProfile::run(|setup| async move {
-
+        SetupLibraryWallet::run(|setup| async move {
+        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
         let proof_req = PresentationRequest::create();
         let proof = Prover::create_from_request("1", proof_req).unwrap();
         assert_eq!(
             proof
-                .retrieve_credentials(&setup.profile)
+                .retrieve_credentials(&profile)
                 .await
                 .unwrap_err()
                 .kind(),

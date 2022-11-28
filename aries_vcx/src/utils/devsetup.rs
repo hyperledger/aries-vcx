@@ -441,7 +441,7 @@ impl SetupProfile {
         reset_global_state();
     }
 
-  // FUTURE - ideally no tests should be using this method, they should be using the generic run
+    // FUTURE - ideally no tests should be using this method, they should be using the generic run
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where

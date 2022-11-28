@@ -358,8 +358,8 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::xyz::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupMocks, SetupProfile};
-    use crate::xyz::test_utils::mock_profile;
+    use crate::utils::devsetup::{SetupMocks, SetupInstitutionWallet};
+    use crate::xyz::test_utils::{mock_profile, indy_handles_to_profile};
 
     use async_channel::bounded;
     use messages::basic_message::message::BasicMessage;
@@ -451,12 +451,13 @@ mod unit_tests {
     // TODO - consider moving test, as this isn't really a unit test
     #[tokio::test]
     async fn test_connection_e2e() {
-        SetupProfile::run(|setup| async move {
+        let setup = SetupInstitutionWallet::init().await;
+        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
 
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(&setup.profile)
+        let inviter = Connection::create_inviter(&profile)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())
@@ -472,7 +473,7 @@ mod unit_tests {
         let did_doc = into_did_doc(&mock_profile(), &Invitation::Pairwise(invite.clone()))
             .await
             .unwrap();
-        let invitee = Connection::create_invitee(&setup.profile, did_doc)
+        let invitee = Connection::create_invitee(&profile, did_doc)
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite))
@@ -480,7 +481,7 @@ mod unit_tests {
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
         let invitee = invitee
             .send_request(
-                &setup.profile,
+                &profile,
                 _service_endpoint(),
                 _routing_keys(),
                 _send_message(sender.clone()),
@@ -498,7 +499,7 @@ mod unit_tests {
 
         let inviter = inviter
             .process_request(
-                &setup.profile,
+                &profile,
                 request,
                 _service_endpoint(),
                 _routing_keys(),
@@ -508,7 +509,7 @@ mod unit_tests {
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
         let inviter = inviter
-            .send_response(&setup.profile, _send_message(sender.clone()))
+            .send_response(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
@@ -521,12 +522,12 @@ mod unit_tests {
         };
 
         let invitee = invitee
-            .process_response(&setup.profile, response, _send_message(sender.clone()))
+            .process_response(&profile, response, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
         let invitee = invitee
-            .send_ack(&setup.profile, _send_message(sender.clone()))
+            .send_ack(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
@@ -540,7 +541,7 @@ mod unit_tests {
         let content = "Hello";
         let basic_message = BasicMessage::create().set_content(content.to_string()).to_a2a_message();
         invitee
-            .send_message_closure(&setup.profile, _send_message(sender.clone()))
+            .send_message_closure(&profile, _send_message(sender.clone()))
             .await
             .unwrap()(basic_message)
         .await
@@ -553,6 +554,5 @@ mod unit_tests {
             panic!("Received invalid message type")
         };
         assert_eq!(message.content, content.to_string());
-        }).await;
     }
 }

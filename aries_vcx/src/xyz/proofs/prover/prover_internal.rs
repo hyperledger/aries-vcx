@@ -311,7 +311,7 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::xyz::test_utils::{mock_profile};
+    use crate::xyz::test_utils::{mock_profile, indy_handles_to_profile};
 
     use super::*;
 
@@ -368,7 +368,8 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_find_credential_def_fails() {
-        SetupProfile::run(|setup| async move {
+        SetupLibraryWallet::run(|setup| async move {
+        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
@@ -380,7 +381,7 @@ pub mod unit_tests {
             tails_file: None,
             timestamp: None,
         }];
-        let err_kind = build_cred_defs_json_prover(&setup.profile, &credential_ids)
+        let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
             .await
             .unwrap_err()
             .kind();
@@ -390,8 +391,8 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_find_schemas_fails() {
-        SetupProfile::run(|setup| async move {
-
+        SetupLibraryWallet::run(|setup| async move {
+        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
         let credential_ids = vec![CredInfoProver {
             requested_attr: "1".to_string(),
             referent: "2".to_string(),
@@ -405,7 +406,7 @@ pub mod unit_tests {
         }];
         
         assert_eq!(
-            build_schemas_json_prover(&setup.profile, &credential_ids)
+            build_schemas_json_prover(&profile, &credential_ids)
                 .await
                 .unwrap_err()
                 .kind(),
