@@ -21,7 +21,6 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		8E1E709F221B653B00EF3CBB /* IndySdk.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E1E709E221B653B00EF3CBB /* IndySdk.m */; };
 		8E1E70A7221B7B8C00EF3CBB /* IndyCallbacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E1E70A6221B7B8C00EF3CBB /* IndyCallbacks.m */; };
 		8EFD49F922133FBF002E58D5 /* VcxLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = 8EFD49F722133FBF002E58D5 /* VcxLogger.h */; };
 		8EFD49FA22133FBF002E58D5 /* VcxLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EFD49F822133FBF002E58D5 /* VcxLogger.m */; };
@@ -107,8 +106,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8E1E709E221B653B00EF3CBB /* IndySdk.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IndySdk.m; sourceTree = "<group>"; };
-		8E1E70A0221B659E00EF3CBB /* IndySdk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IndySdk.h; sourceTree = "<group>"; };
 		8E1E70A5221B77D100EF3CBB /* IndyTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IndyTypes.h; sourceTree = "<group>"; };
 		8E1E70A6221B7B8C00EF3CBB /* IndyCallbacks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IndyCallbacks.m; sourceTree = "<group>"; };
 		8E1E70A8221B7BC100EF3CBB /* IndyCallbacks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IndyCallbacks.h; sourceTree = "<group>"; };
@@ -306,8 +303,6 @@
 				DD858CB820A4AF7B004B3CB5 /* VcxCallbacks.mm */,
 				DD858CB720A4AF7B004B3CB5 /* VcxErrors.h */,
 				DD858CB920A4AF7B004B3CB5 /* VcxTypes.h */,
-				8E1E709E221B653B00EF3CBB /* IndySdk.m */,
-				8E1E70A0221B659E00EF3CBB /* IndySdk.h */,
 				8E1E70A5221B77D100EF3CBB /* IndyTypes.h */,
 				8E1E70A6221B7B8C00EF3CBB /* IndyCallbacks.m */,
 				8E1E70A8221B7BC100EF3CBB /* IndyCallbacks.h */,
@@ -551,7 +546,6 @@
 			files = (
 				DD858CBE20A4AF7C004B3CB5 /* VcxCallbacks.mm in Sources */,
 				DD858C9E20A45C11004B3CB5 /* ConnectMeVcx.m in Sources */,
-				8E1E709F221B653B00EF3CBB /* IndySdk.m in Sources */,
 				DD858CC120A4AF7C004B3CB5 /* NSError+VcxError.m in Sources */,
 				8E1E70A7221B7B8C00EF3CBB /* IndyCallbacks.m in Sources */,
 				8EFD49FA22133FBF002E58D5 /* VcxLogger.m in Sources */,
