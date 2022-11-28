@@ -246,7 +246,7 @@ pub mod unit_tests {
     use messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
     use messages::issuance::credential_request::test_utils::_my_pw_did;
     use crate::utils::devsetup::SetupMocks;
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -265,28 +265,28 @@ pub mod unit_tests {
     impl Holder {
         async fn to_finished_state(mut self) -> Holder {
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialProposalSend(_credential_proposal_data()),
                 _send_message(),
             )
             .await
             .unwrap();
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                 _send_message(),
             )
             .await
             .unwrap();
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                 _send_message(),
             )
             .await
             .unwrap();
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::Credential(_credential()),
                 _send_message(),
             )
@@ -323,7 +323,7 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
@@ -342,13 +342,13 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::OfferReceived, holder.get_state());
 
         holder
-            .send_request(&dummy_profile(), _my_pw_did(), _send_message().unwrap())
+            .send_request(&mock_profile(), _my_pw_did(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::RequestSent, holder.get_state());
@@ -358,7 +358,7 @@ pub mod unit_tests {
         );
         let (_, msg) = holder.find_message_to_handle(messages).unwrap();
         holder
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(HolderState::Finished, holder.get_state());

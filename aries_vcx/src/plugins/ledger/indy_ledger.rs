@@ -98,12 +98,12 @@ impl BaseLedger for IndySdkLedger {
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, _submitter_did: Option<&str>) -> VcxResult<String> {
-        indy::ledger::transactions::libindy_get_cred_def(
+        indy::ledger::transactions::get_cred_def_json(
             self.profile.indy_wallet_handle,
             self.profile.indy_pool_handle,
             cred_def_id,
         )
-        .await
+        .await.map(|(_id, json)| json)
     }
 
     async fn get_service(&self, did: &Did) -> VcxResult<AriesService> {

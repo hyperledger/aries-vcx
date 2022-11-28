@@ -359,7 +359,7 @@ pub mod test_utils {
 mod unit_tests {
     use crate::xyz::ledger::transactions::into_did_doc;
     use crate::utils::devsetup::{SetupMocks, SetupProfile};
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use async_channel::bounded;
     use messages::basic_message::message::BasicMessage;
@@ -376,7 +376,7 @@ mod unit_tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
-        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -388,7 +388,7 @@ mod unit_tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Public(_public_invitation());
-        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -401,12 +401,12 @@ mod unit_tests {
         let _setup = SetupMocks::init();
 
         let invite = _public_invitation_random_id();
-        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
             .unwrap()
-            .send_request(&dummy_profile(), _service_endpoint(), vec![], None)
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -416,12 +416,12 @@ mod unit_tests {
         assert_ne!(connection.get_thread_id(), invite.id.0);
 
         let invite = _pairwise_invitation_random_id();
-        let connection = Connection::create_invitee(&dummy_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))
             .unwrap()
-            .send_request(&dummy_profile(), _service_endpoint(), vec![], None)
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -435,10 +435,10 @@ mod unit_tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create_inviter(&dummy_profile())
+        let connection = Connection::create_inviter(&mock_profile())
             .await
             .unwrap()
-            .process_request(&dummy_profile(), _request(), _service_endpoint(), _routing_keys(), None)
+            .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
             .await
             .unwrap();
 
@@ -469,7 +469,7 @@ mod unit_tests {
         };
 
         // Invitee receives an invite and sends request
-        let did_doc = into_did_doc(&dummy_profile(), &Invitation::Pairwise(invite.clone()))
+        let did_doc = into_did_doc(&mock_profile(), &Invitation::Pairwise(invite.clone()))
             .await
             .unwrap();
         let invitee = Connection::create_invitee(&setup.profile, did_doc)

@@ -522,7 +522,7 @@ pub mod unit_tests {
     use messages::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -542,7 +542,7 @@ pub mod unit_tests {
         async fn to_presentation_proposal_sent_state(mut self) -> ProverSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationProposalSend(_presentation_proposal_data()),
                     _send_message(),
                 )
@@ -554,7 +554,7 @@ pub mod unit_tests {
         async fn to_presentation_prepared_state(mut self) -> ProverSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     None,
                 )
@@ -566,7 +566,7 @@ pub mod unit_tests {
         async fn to_presentation_sent_state(mut self) -> ProverSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -574,7 +574,7 @@ pub mod unit_tests {
                 .unwrap();
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -586,7 +586,7 @@ pub mod unit_tests {
         async fn to_finished_state(mut self) -> ProverSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     None,
                 )
@@ -594,7 +594,7 @@ pub mod unit_tests {
                 .unwrap();
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -602,7 +602,7 @@ pub mod unit_tests {
                 .unwrap();
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -724,7 +724,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationProposalSend(_presentation_proposal_data()),
                     _send_message(),
                 )
@@ -742,7 +742,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state().await;
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRequestReceived(_presentation_request()),
                     _send_message(),
                 )
@@ -760,7 +760,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request().to_presentation_proposal_sent_state().await;
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -782,7 +782,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationProposalSend(_presentation_proposal_data()),
                     _send_message(),
                 )
@@ -800,7 +800,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SetPresentation(_presentation()),
                     _send_message(),
                 )
@@ -820,7 +820,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())),
                     _send_message(),
                 )
@@ -838,7 +838,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::RejectPresentationRequest(String::from("reject request")),
                     _send_message(),
                 )
@@ -856,7 +856,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::ProposePresentation(_presentation_preview()),
                     _send_message(),
                 )
@@ -875,7 +875,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -885,7 +885,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -903,7 +903,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -911,7 +911,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -930,7 +930,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -940,7 +940,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -958,7 +958,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::RejectPresentationRequest(String::from("reject request")),
                     _send_message(),
                 )
@@ -976,7 +976,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request().to_presentation_prepared_state().await;
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::ProposePresentation(_presentation_preview()),
                     _send_message(),
                 )
@@ -995,7 +995,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())),
                     _send_message(),
                 )
@@ -1005,7 +1005,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1027,7 +1027,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation(("invalid".to_string(), _self_attested())),
                     _send_message(),
                 )
@@ -1036,7 +1036,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -1046,7 +1046,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -1063,7 +1063,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -1071,7 +1071,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1079,7 +1079,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -1098,7 +1098,7 @@ pub mod unit_tests {
             let prover_sm = _prover_sm_from_request().to_presentation_sent_state().await;
             let err = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::RejectPresentationRequest(String::from("reject")),
                     _send_message(),
                 )
@@ -1115,7 +1115,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -1123,7 +1123,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1131,7 +1131,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -1153,7 +1153,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -1161,7 +1161,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1170,7 +1170,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -1180,7 +1180,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1197,7 +1197,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PreparePresentation((_credentials(), _self_attested())),
                     _send_message(),
                 )
@@ -1205,7 +1205,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::SendPresentation,
                     _send_message(),
                 )
@@ -1213,7 +1213,7 @@ pub mod unit_tests {
                 .unwrap();
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -1222,7 +1222,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationAckReceived(_ack()),
                     _send_message(),
                 )
@@ -1232,7 +1232,7 @@ pub mod unit_tests {
 
             prover_sm = prover_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     ProverMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )

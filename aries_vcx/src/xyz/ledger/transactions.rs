@@ -65,7 +65,7 @@ mod test {
     use messages::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
     use messages::connection::invite::test_utils::_pairwise_invitation;
 
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -76,6 +76,6 @@ mod test {
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(_routing_keys());
-        assert_eq!(did_doc, into_did_doc(&dummy_profile(), &Invitation::Pairwise(_pairwise_invitation())).await.unwrap());
+        assert_eq!(did_doc, into_did_doc(&mock_profile(), &Invitation::Pairwise(_pairwise_invitation())).await.unwrap());
     }
 }

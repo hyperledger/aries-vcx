@@ -91,8 +91,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_rev_id: &str,
     ) -> VcxResult<String>;
 
-    // SKIP (unused): libindy_prover_update_revocation_state
-
     async fn prover_store_credential(
         &self,
         cred_id: Option<&str>,
@@ -106,18 +104,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
     async fn prover_create_link_secret(&self, link_secret_id: &str) -> VcxResult<String>;
 
-    // SKIP (internal): libindy_issuer_revoke_credential
-    // SKIP (internal): libindy_issuer_merge_revocation_registry_deltas
-    // SKIPO (internal): libindy_build_revoc_reg_def_request
-    // SIKIP (internal): libindy_build_revoc_reg_entry_request
-    // SKIP (internal): libindy_build_get_revoc_reg_def_request
-    // SKIP (internal): libindy_parse_get_revoc_reg_def_response
-    // SKIP (internal): libindy_build_get_revoc_reg_delta_request
-    // SKLIP (internal): libindy_build_get_revoc_reg_request
-    // SKIP (internal;): libindy_parse_get_revoc_reg_response
-    // SKIP (internal): libindy_parse_get_cred_def_response
-    // SKIP (internla ): libindy_parse_get_revoc_reg_delta_response
-
     async fn issuer_create_schema(
         &self,
         issuer_did: &str,
@@ -125,23 +111,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         version: &str,
         attrs: &str,
     ) -> VcxResult<(String, String)>;
-
-    // SKIP (scope): generate_cred_def // uses libindy_create_and_store_credential_def
-    // SKIP (internal): build_cred_def_request
-
-    // SKIP (scope): generate_rev_reg // uses libindy_create_and_store_revoc_reg
-    // SKIP (internal): build_rev_reg_request
-    // SKIP (scope): publish_rev_reg_def
-
-    // SKIP (internal): is_cred_def_on_ledger
-
-    // calculates new rev reg entry json and publishes to ledger (different to issuer_revoke_credential)
-    // async fn revoke_credential_and_publish(
-    //     &self,
-    //     tails_file: &str,
-    //     rev_reg_id: &str,
-    //     cred_rev_id: &str,
-    // ) -> VcxResult<String>;
     
     // todo - move?
     async fn revoke_credential_local(
@@ -153,14 +122,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     
     // todo - move?
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
-
-    // SKIP (internal): libindy_to_unqualified
-    // SKIP{ (internla)}: libindy_build_get_txn_request
-    // SKIP Internal: build_get_txn_request
-
-    
-    // SKIP (tineral): _check_schema_response
-    // SKIP (Internal): _check_response
 
     async fn generate_nonce(&self) -> VcxResult<String>;
 }

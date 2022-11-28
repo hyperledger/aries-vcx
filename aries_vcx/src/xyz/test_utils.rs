@@ -9,6 +9,7 @@ use crate::core::profile::profile::Profile;
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR, TEST_TAILS_URL, TRUSTEE_SEED};
 use crate::utils::get_temp_dir_path;
+use crate::utils::mockdata::profile::mock_profile::MockProfile;
 use crate::xyz::credentials::encoding::encode_attributes;
 use crate::xyz::primitives::credential_definition::CredentialDef;
 use crate::xyz::primitives::credential_definition::CredentialDefConfigBuilder;
@@ -424,11 +425,11 @@ pub async fn create_key(profile: &Arc<dyn Profile>) -> String {
 }
 
 // used for mocking profile
-pub fn dummy_profile() -> Arc<dyn Profile> {
-    indy_handles_to_profile(WalletHandle(0), 0)
+pub fn mock_profile() -> Arc<dyn Profile> {
+    Arc::new(MockProfile { })
 }
 
-// should only ben used for quick mock setups
+// should only be used for quick mock setups
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
     Arc::new(IndySdkProfile::new(wallet_handle, pool_handle))
 }

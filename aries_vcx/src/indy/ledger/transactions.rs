@@ -344,7 +344,7 @@ pub async fn libindy_build_get_cred_def_request(
     Ok(res)
 }
 
-pub async fn libindy_get_cred_def(
+async fn libindy_get_cred_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     cred_def_id: &str,
@@ -962,7 +962,6 @@ pub async fn build_cred_def_request(issuer_did: &str, cred_def_json: &str) -> Vc
     Ok(cred_def_req)
 }
 
-#[allow(dead_code)]
 pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHandle, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         debug!("get_cred_def_json >>> returning mocked value");

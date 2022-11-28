@@ -1080,7 +1080,7 @@ mod tests {
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
         CONNECTION_SM_INVITER_COMPLETED,
     };
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
     use messages::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -1098,7 +1098,7 @@ mod tests {
         enable_agency_mocks();
         let connection = MediatedConnection::create_with_invite(
             "abc",
-            &dummy_profile(),
+            &mock_profile(),
             &agency_client,
             Invitation::Pairwise(_pairwise_invitation()),
             DidDoc::default(),
@@ -1116,7 +1116,7 @@ mod tests {
         enable_agency_mocks();
         let connection = MediatedConnection::create_with_invite(
             "abc",
-            &dummy_profile(),
+            &mock_profile(),
             &agency_client,
             Invitation::Public(_public_invitation()),
             DidDoc::default(),
@@ -1136,7 +1136,7 @@ mod tests {
         let pub_inv = _public_invitation_random_id();
         let mut connection = MediatedConnection::create_with_invite(
             "abcd",
-            &dummy_profile(),
+            &mock_profile(),
             &agency_client,
             Invitation::Public(pub_inv.clone()),
             DidDoc::default(),
@@ -1144,7 +1144,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&dummy_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
@@ -1154,7 +1154,7 @@ mod tests {
         let pw_inv = _pairwise_invitation_random_id();
         let mut connection = MediatedConnection::create_with_invite(
             "dcba",
-            &dummy_profile(),
+            &mock_profile(),
             &agency_client,
             Invitation::Pairwise(pw_inv.clone()),
             DidDoc::default(),
@@ -1162,7 +1162,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&dummy_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
@@ -1175,7 +1175,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = MediatedConnection::create_with_request(&dummy_profile(), _request(), _pw_info(), &agency_client)
+        let connection = MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1190,7 +1190,7 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = MediatedConnection::create_with_request(&dummy_profile(), _request(), _pw_info(), &agency_client)
+        let connection = MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
             .await
             .unwrap();
         assert_eq!(
@@ -1254,7 +1254,7 @@ mod tests {
 
         let connection = MediatedConnection::create(
             "test_serialize_deserialize",
-            &dummy_profile(),
+            &mock_profile(),
             &_dummy_agency_client(),
             true,
         )
@@ -1274,7 +1274,7 @@ mod tests {
 
         let connection = MediatedConnection::create(
             "test_serialize_deserialize",
-            &dummy_profile(),
+            &mock_profile(),
             &_dummy_agency_client(),
             true,
         )

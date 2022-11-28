@@ -346,7 +346,7 @@ pub mod unit_tests {
     use super::*;
 
     pub mod inviter {
-        use crate::xyz::test_utils::dummy_profile;
+        use crate::xyz::test_utils::mock_profile;
 
         use super::*;
 
@@ -355,7 +355,7 @@ pub mod unit_tests {
         }
 
         pub async fn inviter_sm() -> SmConnectionInviter {
-            let pairwise_info = PairwiseInfo::create(&dummy_profile().inject_wallet()).await.unwrap();
+            let pairwise_info = PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
             SmConnectionInviter::new(&source_id(), pairwise_info)
         }
 
@@ -369,12 +369,12 @@ pub mod unit_tests {
 
             async fn to_inviter_requested_state(mut self) -> SmConnectionInviter {
                 self = self.to_inviter_invited_state();
-                let new_pairwise_info = PairwiseInfo::create(&dummy_profile().inject_wallet()).await.unwrap();
+                let new_pairwise_info = PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
                 let new_routing_keys: Vec<String> = vec!["verkey456".into()];
                 let new_service_endpoint = String::from("https://example.org/agent");
                 self = self
                     .handle_connection_request(
-                        dummy_profile().inject_wallet(),
+                        mock_profile().inject_wallet(),
                         _request(),
                         &new_pairwise_info,
                         new_routing_keys,
@@ -432,7 +432,7 @@ pub mod unit_tests {
                 let new_service_endpoint = String::from("https://example.org/agent");
                 let msg = inviter
                     .build_response(
-                        &dummy_profile().inject_wallet(),
+                        &mock_profile().inject_wallet(),
                         &_request(),
                         &new_pairwise_info,
                         new_routing_keys,
@@ -546,7 +546,7 @@ pub mod unit_tests {
                 let new_service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
                     .handle_connection_request(
-                        dummy_profile().inject_wallet(),
+                        mock_profile().inject_wallet(),
                         _request(),
                         &new_pairwise_info,
                         new_routing_keys,
@@ -580,7 +580,7 @@ pub mod unit_tests {
                 let new_service_endpoint = String::from("https://example.org/agent");
                 did_exchange_sm = did_exchange_sm
                     .handle_connection_request(
-                        dummy_profile().inject_wallet(),
+                        mock_profile().inject_wallet(),
                         request,
                         &new_pairwise_info,
                         new_routing_keys,

@@ -613,7 +613,7 @@ mod test {
     use crate::test::source_id;
     use crate::utils::constants;
     use crate::utils::devsetup::SetupMocks;
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -629,7 +629,7 @@ mod test {
         async fn to_request_sent_state(mut self) -> HolderSM {
             self = self
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -641,7 +641,7 @@ mod test {
         async fn to_finished_state(mut self) -> HolderSM {
             self = self
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -649,7 +649,7 @@ mod test {
                 .unwrap();
             self = self
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -733,7 +733,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -755,7 +755,7 @@ mod test {
             let mut holder_sm = HolderSM::from_offer(credential_offer, "test source".to_string());
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -777,7 +777,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialSend(),
                     _send_message(),
                 )
@@ -787,7 +787,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -804,7 +804,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -812,7 +812,7 @@ mod test {
                 .unwrap();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -831,7 +831,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -839,7 +839,7 @@ mod test {
                 .unwrap();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::Credential(Credential::create()),
                     _send_message(),
                 )
@@ -861,7 +861,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -869,7 +869,7 @@ mod test {
                 .unwrap();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::ProblemReport(_problem_report()),
                     _send_message(),
                 )
@@ -891,7 +891,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -900,7 +900,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -910,7 +910,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )
@@ -927,7 +927,7 @@ mod test {
             let mut holder_sm = _holder_sm();
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialRequestSend(_my_pw_did()),
                     _send_message(),
                 )
@@ -937,7 +937,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -947,7 +947,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialOffer(_credential_offer()),
                     _send_message(),
                 )
@@ -957,7 +957,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::Credential(_credential()),
                     _send_message(),
                 )
@@ -967,7 +967,7 @@ mod test {
 
             holder_sm = holder_sm
                 .handle_message(
-                    &dummy_profile(),
+                    &mock_profile(),
                     CredentialIssuanceAction::CredentialAck(_ack()),
                     _send_message(),
                 )
@@ -1198,13 +1198,13 @@ mod test {
         #[cfg(feature = "general_test")]
         async fn test_is_revokable() {
             let _setup = SetupMocks::init();
-            assert_eq!(true, _holder_sm().is_revokable(&dummy_profile()).await.unwrap());
+            assert_eq!(true, _holder_sm().is_revokable(&mock_profile()).await.unwrap());
             assert_eq!(
                 true,
                 _holder_sm()
                     .to_request_sent_state()
                     .await
-                    .is_revokable(&dummy_profile())
+                    .is_revokable(&mock_profile())
                     .await
                     .unwrap()
             );
@@ -1213,7 +1213,7 @@ mod test {
                 _holder_sm()
                     .to_finished_state()
                     .await
-                    .is_revokable(&dummy_profile())
+                    .is_revokable(&mock_profile())
                     .await
                     .unwrap()
             );

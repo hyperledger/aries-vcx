@@ -5,10 +5,10 @@ use crate::{
     xyz::primitives::revocation_registry::RevocationRegistryDefinition,
 };
 
+// NOTE : currently matches the expected results if indy_mocks are enabled
+/// Implementation of [BaseLedger] which responds with mock data
 #[async_trait]
 pub trait BaseLedger: Send + Sync {
-    // multisign_request - internal
-    // libindy_sign_request - internal/unused
 
     // returns request result as JSON
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxResult<String>;
@@ -22,17 +22,7 @@ pub trait BaseLedger: Send + Sync {
     // adds endorser to request and signs with submitter_did, returns the transaction ready for endorser to take
     async fn set_endorser(&self, submitter_did: &str, request: &str, endorser: &str) -> VcxResult<String>;
 
-    // libindy_build_schema_request - internal/testing
-    // libindy_build_create_credential_def_txn - internal
-
     async fn get_txn_author_agreement(&self) -> VcxResult<String>;
-
-    // append_txn_author_agreement_to_request - internal
-    // libindy_build_auth_rules_request - unused
-    // libindy_build_attrib_request - internal
-    // libindy_build_get_auth_rule_request - unused
-    // libindy_build_get_nym_request - internal
-    // libindy_build_nym_request - signus
 
     // returns request result as JSON
     async fn get_nym(&self, did: &str) -> VcxResult<String>;
@@ -47,9 +37,6 @@ pub trait BaseLedger: Send + Sync {
         role: Option<&str>,
     ) -> VcxResult<String>;
 
-    // get_role - internal
-    // parse_response - internal
-
     // Schema json.
     // {
     //     id: identifier of schema
@@ -59,24 +46,18 @@ pub trait BaseLedger: Send + Sync {
     //     ver: Version of the Schema json
     // }
     // if submitter_did provided - use cache
+    // TO CONSIDER - do we need to return the schema ID in a tuple? is it ever different to the input?
     async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxResult<String>;
 
-    // libindy_build_get_cred_def_request - internal
 
     // if submitter_did provided, try use cache
+    // TO CONSIDER - do we need to return the cred def ID in a tuple? is it ever different to the input?
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxResult<String>;
-
-    // build_attrib_request - internal
-    // add_attr - internal
-    // get_attr - internal
 
     async fn get_service(&self, did: &Did) -> VcxResult<AriesService>;
 
     // returns request result as JSON
     async fn add_service(&self, did: &str, service: &AriesService) -> VcxResult<String>;
-
-    // libindy_build_revoc_reg_def_request - internal
-    // libindy_build_revoc_reg_entry_request - internal
 
     // # Returns
     // Revocation Registry Definition Id and Revocation Registry Definition json.
@@ -94,6 +75,7 @@ pub trait BaseLedger: Send + Sync {
     //     },
     //     "ver": string - version of revocation registry definition json.
     // }
+    // TO CONSIDER - do we need to return the rev reg id in a tuple? is it ever different to the input?
     async fn get_rev_reg_def_json(&self, rev_reg_id: &str) -> VcxResult<String>;
 
     // # Returns

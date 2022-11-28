@@ -472,7 +472,7 @@ pub mod unit_tests {
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
     use crate::xyz::proofs::proof_request::test_utils::_presentation_request_data;
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -496,7 +496,7 @@ pub mod unit_tests {
         async fn to_presentation_proposal_received_state(mut self) -> VerifierSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     None,
                 )
@@ -508,7 +508,7 @@ pub mod unit_tests {
         async fn to_presentation_proposal_received_state_with_request(mut self) -> VerifierSM {
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     None,
                 )
@@ -529,7 +529,7 @@ pub mod unit_tests {
             self = self.to_presentation_request_sent_state();
             self = self
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -569,7 +569,7 @@ pub mod unit_tests {
         async fn test_verifier_build_presentation_request() {
             let _setup = SetupMocks::init();
 
-            let presentation_request_data = PresentationRequestData::create(&dummy_profile(), "1").await.unwrap();
+            let presentation_request_data = PresentationRequestData::create(&mock_profile(), "1").await.unwrap();
             let msg = build_starting_presentation_request("12345", &presentation_request_data, Some("foobar".into()))
                 .unwrap();
 
@@ -660,7 +660,7 @@ pub mod unit_tests {
             let mut verifier_sm = _verifier_sm();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -690,7 +690,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -700,7 +700,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -710,7 +710,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -753,7 +753,7 @@ pub mod unit_tests {
             let mut verifier_sm = _verifier_sm().to_presentation_proposal_received_state().await;
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::RejectPresentationProposal(_reason()),
                     _send_message(),
                 )
@@ -774,7 +774,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -784,7 +784,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -803,7 +803,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -824,7 +824,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -847,7 +847,7 @@ pub mod unit_tests {
             let res = verifier_sm
                 .clone()
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation_1()),
                     _send_message(),
                 )
@@ -864,7 +864,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )
@@ -883,7 +883,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -906,7 +906,7 @@ pub mod unit_tests {
             verifier_sm = verifier_sm.mark_presentation_request_msg_sent().unwrap();
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::VerifyPresentation(_presentation()),
                     _send_message(),
                 )
@@ -915,7 +915,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationRejectReceived(_problem_report()),
                     _send_message(),
                 )
@@ -925,7 +925,7 @@ pub mod unit_tests {
 
             verifier_sm = verifier_sm
                 .step(
-                    &dummy_profile(),
+                    &mock_profile(),
                     VerifierMessages::PresentationProposalReceived(_presentation_proposal()),
                     _send_message(),
                 )

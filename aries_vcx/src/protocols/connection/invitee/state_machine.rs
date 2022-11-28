@@ -397,7 +397,7 @@ pub mod unit_tests {
         use messages::did_doc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
 
         use crate::xyz::signing::sign_connection_response;
-        use crate::xyz::test_utils::dummy_profile;
+        use crate::xyz::test_utils::mock_profile;
 
         use super::*;
 
@@ -406,7 +406,7 @@ pub mod unit_tests {
         }
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
-            let pairwise_info = PairwiseInfo::create(&dummy_profile().inject_wallet()).await.unwrap();
+            let pairwise_info = PairwiseInfo::create(&mock_profile().inject_wallet()).await.unwrap();
             SmConnectionInvitee::new(&source_id(), pairwise_info, _did_doc_inlined_recipient_keys())
         }
 
@@ -434,8 +434,8 @@ pub mod unit_tests {
                 self = self.to_invitee_requested_state().await;
                 self = self
                     .handle_connection_response(
-                        &dummy_profile().inject_wallet(),
-                        _response(&dummy_profile().inject_wallet(), &key, &_request().id.0).await,
+                        &mock_profile().inject_wallet(),
+                        _response(&mock_profile().inject_wallet(), &key, &_request().id.0).await,
                         _send_message(),
                     )
                     .await
@@ -534,8 +534,8 @@ pub mod unit_tests {
                 let recipient_key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL".to_string();
                 invitee = invitee
                     .handle_connection_response(
-                        &dummy_profile().inject_wallet(),
-                        _response(&dummy_profile().inject_wallet(), &recipient_key, &msg_request.id.0).await,
+                        &mock_profile().inject_wallet(),
+                        _response(&mock_profile().inject_wallet(), &recipient_key, &msg_request.id.0).await,
                         _send_message(),
                     )
                     .await
@@ -576,7 +576,7 @@ pub mod unit_tests {
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
                 assert!(invitee
-                    .handle_connection_response(&dummy_profile().inject_wallet(), _response_1(&dummy_profile().inject_wallet(), &key).await, _send_message())
+                    .handle_connection_response(&mock_profile().inject_wallet(), _response_1(&mock_profile().inject_wallet(), &key).await, _send_message())
                     .await
                     .is_err());
             }
@@ -637,8 +637,8 @@ pub mod unit_tests {
                 let key = "GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL";
                 assert!(did_exchange_sm
                     .handle_connection_response(
-                        &dummy_profile().inject_wallet(),
-                        _response(&dummy_profile().inject_wallet(), key, &_request().id.0).await,
+                        &mock_profile().inject_wallet(),
+                        _response(&mock_profile().inject_wallet(), key, &_request().id.0).await,
                         _send_message()
                     )
                     .await
@@ -685,8 +685,8 @@ pub mod unit_tests {
 
                 did_exchange_sm = did_exchange_sm
                     .handle_connection_response(
-                        &dummy_profile().inject_wallet(),
-                        _response(&dummy_profile().inject_wallet(), &key, &_request().id.0).await,
+                        &mock_profile().inject_wallet(),
+                        _response(&mock_profile().inject_wallet(), &key, &_request().id.0).await,
                         _send_message(),
                     )
                     .await
@@ -718,7 +718,7 @@ pub mod unit_tests {
                 signed_response.connection_sig.signature = String::from("other");
 
                 did_exchange_sm = did_exchange_sm
-                    .handle_connection_response(&dummy_profile().inject_wallet(), signed_response, _send_message())
+                    .handle_connection_response(&mock_profile().inject_wallet(), signed_response, _send_message())
                     .await
                     .unwrap();
                 did_exchange_sm = did_exchange_sm.handle_send_ack(_send_message()).await.unwrap();

@@ -323,7 +323,7 @@ pub mod unit_tests {
     use messages::issuance::credential_request::test_utils::_credential_request;
     use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
     use crate::utils::devsetup::SetupMocks;
-    use crate::xyz::test_utils::dummy_profile;
+    use crate::xyz::test_utils::mock_profile;
 
     use super::*;
 
@@ -347,7 +347,7 @@ pub mod unit_tests {
 
     impl Issuer {
         async fn to_offer_sent_state_unrevokable(mut self) -> Issuer {
-            self.build_credential_offer_msg(&dummy_profile(), _offer_info_unrevokable(), None)
+            self.build_credential_offer_msg(&mock_profile(), _offer_info_unrevokable(), None)
                 .await
                 .unwrap();
             self.mark_credential_offer_msg_sent().unwrap();
@@ -357,7 +357,7 @@ pub mod unit_tests {
         async fn to_request_received_state(mut self) -> Issuer {
             self = self.to_offer_sent_state_unrevokable().await;
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialRequest(_credential_request()),
                 _send_message(),
             )
@@ -369,14 +369,14 @@ pub mod unit_tests {
         async fn to_finished_state_unrevokable(mut self) -> Issuer {
             self = self.to_request_received_state().await;
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialSend(),
                 _send_message(),
             )
             .await
             .unwrap();
             self.step(
-                &dummy_profile(),
+                &mock_profile(),
                 CredentialIssuanceAction::CredentialAck(_ack()),
                 _send_message(),
             )
@@ -425,7 +425,7 @@ pub mod unit_tests {
         let _setup = SetupMocks::init();
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
-        let revoc_result = issuer.revoke_credential_local(&dummy_profile()).await;
+        let revoc_result = issuer.revoke_credential_local(&mock_profile()).await;
         assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidState)
     }
 
@@ -436,13 +436,13 @@ pub mod unit_tests {
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         let send_result = issuer
-            .send_credential(&dummy_profile(), _send_message_but_fail().unwrap())
+            .send_credential(&mock_profile(), _send_message_but_fail().unwrap())
             .await;
         assert_eq!(send_result.is_err(), true);
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         let send_result = issuer
-            .send_credential(&dummy_profile(), _send_message().unwrap())
+            .send_credential(&mock_profile(), _send_message().unwrap())
             .await;
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
@@ -455,7 +455,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer
-            .build_credential_offer_msg(&dummy_profile(), _offer_info(), Some("comment".into()))
+            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
             .await
             .unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
@@ -466,13 +466,13 @@ pub mod unit_tests {
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer
-            .send_credential(&dummy_profile(), _send_message().unwrap())
+            .send_credential(&mock_profile(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
@@ -482,7 +482,7 @@ pub mod unit_tests {
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
@@ -495,7 +495,7 @@ pub mod unit_tests {
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer
-            .build_credential_offer_msg(&dummy_profile(), _offer_info(), Some("comment".into()))
+            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
             .await
             .unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
@@ -506,13 +506,13 @@ pub mod unit_tests {
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer
-            .build_credential_offer_msg(&dummy_profile(), _offer_info(), Some("comment".into()))
+            .build_credential_offer_msg(&mock_profile(), _offer_info(), Some("comment".into()))
             .await
             .unwrap();
         issuer.send_credential_offer(_send_message().unwrap()).await.unwrap();
@@ -523,13 +523,13 @@ pub mod unit_tests {
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer
-            .send_credential(&dummy_profile(), _send_message().unwrap())
+            .send_credential(&mock_profile(), _send_message().unwrap())
             .await
             .unwrap();
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
@@ -539,7 +539,7 @@ pub mod unit_tests {
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
         issuer
-            .step(&dummy_profile(), msg.into(), _send_message())
+            .step(&mock_profile(), msg.into(), _send_message())
             .await
             .unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
