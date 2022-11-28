@@ -22,6 +22,7 @@ pub struct CredInfoProver {
     pub revocation_interval: Option<NonRevokedInterval>,
     pub tails_file: Option<String>,
     pub timestamp: Option<u64>,
+    pub revealed: bool
 }
 
 pub async fn build_schemas_json_prover(
@@ -121,6 +122,11 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
 
                 let tails_file = value["tails_file"].as_str().map(|x| x.to_string());
 
+                let mut revealed = true;
+                if value["credential"]["cred_info"]["revealed"].is_boolean() {
+                    revealed = value["credential"]["cred_info"]["revealed"].as_bool().unwrap();
+                }
+
                 rtn.push(CredInfoProver {
                     requested_attr: requested_attr.to_string(),
                     referent: referent.to_string(),
@@ -131,6 +137,7 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     rev_reg_id,
                     cred_rev_id,
                     tails_file,
+                    revealed: revealed,
                 });
             } else {
                 return Err(VcxError::from_msg(
@@ -238,7 +245,7 @@ pub fn build_requested_credentials_json(
         for cred_info in credentials_identifiers {
             if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
                 let insert_val =
-                    json!({"cred_id": cred_info.referent, "revealed": true, "timestamp": cred_info.timestamp});
+                    json!({"cred_id": cred_info.referent, "revealed": cred_info.revealed, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
         }
@@ -300,6 +307,7 @@ pub mod pool_tests {
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
+            revealed: true,
         };
         assert_eq!(
             build_rev_states_json(_dummy_pool_handle(), vec![cred1].as_mut()).await.unwrap(),
@@ -360,6 +368,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: None,
+            revealed: true,
         };
         let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
@@ -371,6 +380,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: None,
+            revealed: true,
         };
         let creds = vec![cred1, cred2];
 
@@ -392,6 +402,7 @@ pub mod unit_tests {
                 revocation_interval: None,
                 tails_file: None,
                 timestamp: None,
+                revealed: true,
             }];
             let err_kind = build_cred_defs_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
                 .await
@@ -414,6 +425,7 @@ pub mod unit_tests {
                 revocation_interval: None,
                 tails_file: None,
                 timestamp: None,
+                revealed: true,
             }];
             assert_eq!(
                 build_schemas_json_prover(setup.wallet_handle, _dummy_pool_handle(), &credential_ids)
@@ -444,6 +456,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: None,
+            revealed: true,
         };
         let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
@@ -455,6 +468,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: None,
+            revealed: true,
         };
         let creds = vec![cred1, cred2];
 
@@ -480,6 +494,7 @@ pub mod unit_tests {
             }),
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
+            revealed: true,
         };
         let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
@@ -494,6 +509,7 @@ pub mod unit_tests {
             }),
             tails_file: None,
             timestamp: None,
+            revealed: true,
         };
         let selected_credentials: Value = json!({
            "attrs":{
@@ -626,6 +642,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             timestamp: None,
+            revealed: true,
         }];
         assert_eq!(
             &credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval()).unwrap(),
@@ -693,6 +710,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: Some(800),
+            revealed: true,
         };
         let cred2 = CredInfoProver {
             requested_attr: "zip_2".to_string(),
@@ -704,6 +722,7 @@ pub mod unit_tests {
             revocation_interval: None,
             tails_file: None,
             timestamp: Some(800),
+            revealed: true,
         };
         let creds = vec![cred1, cred2];
         let self_attested_attrs = json!({
@@ -757,6 +776,7 @@ pub mod unit_tests {
             tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
             revocation_interval: None,
             timestamp: None,
+            revealed: true,
         };
         let mut cred_info = vec![cred1];
         let states = build_rev_states_json(_dummy_pool_handle(), cred_info.as_mut()).await.unwrap();
