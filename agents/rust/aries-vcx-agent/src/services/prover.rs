@@ -8,7 +8,6 @@ use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
 use serde_json::Value;
 

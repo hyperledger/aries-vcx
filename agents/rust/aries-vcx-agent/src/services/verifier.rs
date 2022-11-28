@@ -7,7 +7,6 @@ use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
-use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 use aries_vcx::xyz::proofs::proof_request::PresentationRequestData;
 

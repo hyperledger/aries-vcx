@@ -172,6 +172,7 @@ name = "aries-vcx"
 version = "0.47.0"
 dependencies = [
  "agency_client",
+ "android_logger",
  "async-channel",
  "async-trait",
  "base64 0.10.1",
