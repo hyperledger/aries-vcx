@@ -63,7 +63,7 @@ impl ServiceVerifier {
         verifier
             .send_presentation_request(connection.send_message_closure(self.wallet_handle, None).await?)
             .await?;
-        self.verifiers.set(
+        self.verifiers.insert(
             &verifier.get_thread_id()?,
             VerifierWrapper::new(verifier, connection_id),
         )
@@ -78,7 +78,7 @@ impl ServiceVerifier {
         let VerifierWrapper { mut verifier, connection_id } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
         verifier.verify_presentation(self.wallet_handle, self.pool_handle, presentation, connection.send_message_closure(self.wallet_handle, None).await?).await?;
-        self.verifiers.set(
+        self.verifiers.insert(
             thread_id,
             VerifierWrapper::new(verifier, &connection_id),
         )?;
@@ -91,6 +91,6 @@ impl ServiceVerifier {
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.verifiers.has_id(thread_id)
+        self.verifiers.contains_key(thread_id)
     }
 }

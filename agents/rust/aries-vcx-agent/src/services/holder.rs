@@ -69,7 +69,7 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -82,7 +82,7 @@ impl ServiceCredentialsHolder {
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -108,7 +108,7 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
@@ -130,7 +130,7 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
@@ -166,6 +166,6 @@ impl ServiceCredentialsHolder {
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.creds_holder.has_id(thread_id)
+        self.creds_holder.contains_key(thread_id)
     }
 }

@@ -43,7 +43,7 @@ impl ServiceRevocationRegistries {
             1,
         )
         .await?;
-        self.rev_regs.set(&rev_reg.get_rev_reg_id(), rev_reg)
+        self.rev_regs.insert(&rev_reg.get_rev_reg_id(), rev_reg)
     }
 
     pub fn tails_file_path(&self, thread_id: &str) -> AgentResult<String> {
@@ -64,7 +64,7 @@ impl ServiceRevocationRegistries {
         rev_reg
             .publish_revocation_primitives(self.wallet_handle, self.pool_handle, tails_url)
             .await?;
-        self.rev_regs.set(thread_id, rev_reg)?;
+        self.rev_regs.insert(thread_id, rev_reg)?;
         Ok(())
     }
 

@@ -39,7 +39,7 @@ impl ServiceConnections {
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
-        self.connections.set(&inviter.get_thread_id(), inviter)?;
+        self.connections.insert(&inviter.get_thread_id(), inviter)?;
         Ok(invite)
     }
 
@@ -48,7 +48,7 @@ impl ServiceConnections {
         let invitee = Connection::create_invitee(self.wallet_handle, did_doc)
             .await?
             .process_invite(invite)?;
-        self.connections.set(&invitee.get_thread_id(), invitee)
+        self.connections.insert(&invitee.get_thread_id(), invitee)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
@@ -57,7 +57,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .send_request(self.wallet_handle, self.service_endpoint.clone(), vec![], None)
             .await?;
-        self.connections.set(thread_id, invitee)?;
+        self.connections.insert(thread_id, invitee)?;
         Ok(())
     }
 
@@ -67,7 +67,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .process_request(self.wallet_handle, request, self.service_endpoint.clone(), vec![], None)
             .await?;
-        self.connections.set(thread_id, inviter)?;
+        self.connections.insert(thread_id, inviter)?;
         Ok(())
     }
 
@@ -77,7 +77,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .send_response(self.wallet_handle, None)
             .await?;
-        self.connections.set(thread_id, inviter)?;
+        self.connections.insert(thread_id, inviter)?;
         Ok(())
     }
 
@@ -87,7 +87,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .process_response(self.wallet_handle, response, None)
             .await?;
-        self.connections.set(thread_id, invitee)?;
+        self.connections.insert(thread_id, invitee)?;
         Ok(())
     }
 
@@ -97,7 +97,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .send_ack(self.wallet_handle, None)
             .await?;
-        self.connections.set(thread_id, invitee)?;
+        self.connections.insert(thread_id, invitee)?;
         Ok(())
     }
 
@@ -107,7 +107,7 @@ impl ServiceConnections {
             .get(thread_id)?
             .process_ack(A2AMessage::Ack(ack))
             .await?;
-        self.connections.set(thread_id, inviter)?;
+        self.connections.insert(thread_id, inviter)?;
         Ok(())
     }
 
@@ -133,6 +133,6 @@ impl ServiceConnections {
 
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.connections.has_id(thread_id)
+        self.connections.contains_key(thread_id)
     }
 }

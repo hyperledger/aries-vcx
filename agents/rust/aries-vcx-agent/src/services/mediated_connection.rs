@@ -59,7 +59,7 @@ impl ServiceMediatedConnections {
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
         self.mediated_connections
-            .set(&connection.get_thread_id(), connection)?;
+            .insert(&connection.get_thread_id(), connection)?;
         Ok(invite)
     }
 
@@ -75,7 +75,7 @@ impl ServiceMediatedConnections {
         )
         .await?;
         self.mediated_connections
-            .set(&connection.get_thread_id(), connection)
+            .insert(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
@@ -86,7 +86,7 @@ impl ServiceMediatedConnections {
         connection
             .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
             .await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
@@ -96,14 +96,14 @@ impl ServiceMediatedConnections {
             .process_request(self.wallet_handle, &self.agency_client()?, request)
             .await?;
         connection.send_response(self.wallet_handle).await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection.send_ping(self.wallet_handle, None).await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
@@ -116,12 +116,12 @@ impl ServiceMediatedConnections {
         connection
             .find_message_and_update_state(self.wallet_handle, &self.agency_client()?)
             .await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(self.mediated_connections.get(thread_id)?.get_state())
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.mediated_connections.has_id(thread_id)
+        self.mediated_connections.contains_key(thread_id)
     }
 
     pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {

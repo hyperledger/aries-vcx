@@ -60,7 +60,7 @@ impl ServiceCredentialsIssuer {
         proposal: &CredentialProposal,
     ) -> AgentResult<String> {
         let issuer = Issuer::create_from_proposal("", proposal)?;
-        self.creds_issuer.set(
+        self.creds_issuer.insert(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, connection_id),
         )
@@ -85,7 +85,7 @@ impl ServiceCredentialsIssuer {
         issuer
             .send_credential_offer(connection.send_message_closure(self.wallet_handle, None).await?)
             .await?;
-        self.creds_issuer.set(
+        self.creds_issuer.insert(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )
@@ -97,7 +97,7 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_request(request)?;
-        self.creds_issuer.set(
+        self.creds_issuer.insert(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )?;
@@ -110,7 +110,7 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_ack(ack)?;
-        self.creds_issuer.set(
+        self.creds_issuer.insert(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )?;
@@ -129,7 +129,7 @@ impl ServiceCredentialsIssuer {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.creds_issuer.set(
+        self.creds_issuer.insert(
             &issuer.get_thread_id()?,
             IssuerWrapper::new(issuer, &connection_id),
         )?;
@@ -156,7 +156,7 @@ impl ServiceCredentialsIssuer {
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.creds_issuer.has_id(thread_id)
+        self.creds_issuer.contains_key(thread_id)
     }
 }
 

@@ -55,7 +55,7 @@ where
         }
     }
 
-    pub fn has_id(&self, id: &str) -> bool {
+    pub fn contains_key(&self, id: &str) -> bool {
         let store = match self._lock_store_read() {
             Ok(g) => g,
             Err(_) => return false,
@@ -86,7 +86,7 @@ where
         }
     }
 
-    pub fn set(&self, id: &str, obj: T) -> AgentResult<String> {
+    pub fn insert(&self, id: &str, obj: T) -> AgentResult<String> {
         let mut store = self._lock_store_write()?;
 
         match store.insert(id.to_string(), Mutex::new(obj)) {
