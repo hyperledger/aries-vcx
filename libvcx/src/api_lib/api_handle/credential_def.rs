@@ -98,7 +98,6 @@ pub mod tests {
     use std::{thread::sleep, time::Duration};
 
     use aries_vcx::global::settings;
-    use aries_vcx::indy::utils::LibindyMock;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::xyz::primitives::credential_definition::RevocationDetailsBuilder;
     #[cfg(feature = "pool_tests")]
@@ -138,8 +137,7 @@ pub mod tests {
         )
         .await
         .unwrap();
-        // set error for cred def not found
-        LibindyMock::set_next_result(309);
+
         publish(cred_def_handle).await.unwrap();
         (schema_handle, cred_def_handle)
     }
