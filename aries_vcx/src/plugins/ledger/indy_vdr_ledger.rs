@@ -420,7 +420,10 @@ impl BaseLedger for IndyVdrLedger {
             "revoked": if let Some(v) = response_value.get("revoked") { v } else { &empty_json_list }
         });
 
-        if let Some(accum_from) = response_value.get("accum_from") {
+        if let Some(accum_from) = response_value
+            .get("accum_from")
+            .and_then(|val| (!val.is_null()).then(|| val))
+        {
             let prev_accum = accum_from.try_get("value")?.try_get("accum")?;
             // to check - should this be 'prevAccum'?
             delta_value["prev_accum"] = prev_accum.to_owned();

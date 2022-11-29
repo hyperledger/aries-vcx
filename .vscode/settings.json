@@ -9,6 +9,7 @@
     // ],
     "rust-analyzer.runnableEnv": {
         "TEST_POOL_IP": "13.211.141.121", // TODO - remove
-        "RUST_BACKTRACE": "full"
+        "RUST_BACKTRACE": "full",
+        "RUST_LOG": "debug"
     },
 }
