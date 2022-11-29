@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::primitives::credential_definition::{CredentialDef, CredentialDefConfig};
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
@@ -29,7 +30,7 @@ impl ServiceCredentialDefinitions {
             true,
         )
         .await?;
-        self.cred_defs.set(&cd.get_cred_def_id(), cd)
+        self.cred_defs.insert(&cd.get_cred_def_id(), cd)
     }
 
     pub async fn publish_cred_def(&self, thread_id: &str) -> AgentResult<()> {
@@ -37,7 +38,7 @@ impl ServiceCredentialDefinitions {
         let cred_def = cred_def
             .publish_cred_def(self.wallet_handle, self.pool_handle)
             .await?;
-        self.cred_defs.set(thread_id, cred_def)?;
+        self.cred_defs.insert(thread_id, cred_def)?;
         Ok(())
     }
 
