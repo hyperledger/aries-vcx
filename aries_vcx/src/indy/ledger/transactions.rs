@@ -13,6 +13,7 @@ use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use messages::connection::did::Did;
 use crate::utils;
+use crate::utils::parse_and_validate;
 use crate::utils::constants::{
     CRED_DEF_ID, CRED_DEF_JSON, CRED_DEF_REQ, rev_def_json,
     REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, REVOC_REG_TYPE,
@@ -98,7 +99,7 @@ pub async fn libindy_build_schema_request(submitter_did: &str, data: &str) -> Vc
         .ledger_controller
         .build_schema_request(
             DidValue(submitter_did.into()),
-            serde_json::from_str::<vdrtools::Schema>(data)?,
+            parse_and_validate(data)?,
         )?;
 
     Ok(res)
@@ -118,7 +119,7 @@ pub async fn libindy_build_create_credential_def_txn(
         .ledger_controller
         .build_cred_def_request(
             DidValue(submitter_did.into()),
-            serde_json::from_str(credential_def_json)?,
+            parse_and_validate(credential_def_json)?,
         )?;
 
     Ok(res)
@@ -602,7 +603,7 @@ pub async fn libindy_build_revoc_reg_def_request(submitter_did: &str, rev_reg_de
         .ledger_controller
         .build_revoc_reg_def_request(
             submitter_did.into(),
-            serde_json::from_str(rev_reg_def_json)?,
+            parse_and_validate(rev_reg_def_json)?,
         )?;
 
     Ok(res)

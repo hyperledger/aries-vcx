@@ -13,6 +13,7 @@ use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
 use crate::utils;
+use crate::utils::parse_and_validate;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
 
 pub async fn libindy_issuer_create_credential_offer(
@@ -59,9 +60,9 @@ pub async fn libindy_issuer_create_credential(
         .issuer_controller
         .new_credential(
             wallet_handle,
-            serde_json::from_str::<CredentialOffer>(cred_offer_json)?,
-            serde_json::from_str::<CredentialRequest>(cred_req_json)?,
-            serde_json::from_str::<CredentialValues>(cred_values_json)?,
+            parse_and_validate::<CredentialOffer>(cred_offer_json)?,
+            parse_and_validate::<CredentialRequest>(cred_req_json)?,
+            parse_and_validate::<CredentialValues>(cred_values_json)?,
             rev_reg_id.map(RevocationRegistryId),
             blob_handle,
         ).await?;

@@ -16,8 +16,8 @@ FOUNDATION_EXPORT const unsigned char vcxVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <vcx/PublicHeader.h>
 
-#import "ConnectMeVcx.h"
+#import "VcxAPI.h"
 #import "VcxLogger.h"
 #import "IndySdk.h"
-#include "libvcx.h"
+#import "libvcx.h"
 

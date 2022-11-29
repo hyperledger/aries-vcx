@@ -5,6 +5,7 @@ use vdrtools::Locator;
 use crate::error::VcxResult;
 use crate::global::settings;
 use crate::indy;
+use crate::utils::parse_and_validate;
 use crate::utils::constants::REV_STATE_JSON;
 
 pub async fn libindy_prover_create_revocation_state(
@@ -26,8 +27,8 @@ pub async fn libindy_prover_create_revocation_state(
         .prover_controller
         .create_revocation_state(
             blob_handle,
-            serde_json::from_str(rev_reg_def_json)?,
-            serde_json::from_str(rev_reg_delta_json)?,
+            parse_and_validate(rev_reg_def_json)?,
+            parse_and_validate(rev_reg_delta_json)?,
             timestamp,
             cred_rev_id.into(),
         ).await?;
@@ -53,9 +54,9 @@ pub async fn libindy_prover_update_revocation_state(
         .prover_controller
         .update_revocation_state(
             blob_handle,
-            serde_json::from_str(rev_state_json)?,
-            serde_json::from_str(rev_reg_def_json)?,
-            serde_json::from_str(rev_reg_delta_json)?,
+            parse_and_validate(rev_state_json)?,
+            parse_and_validate(rev_reg_def_json)?,
+            parse_and_validate(rev_reg_delta_json)?,
             100,
             cred_rev_id.into(),
         ).await?;

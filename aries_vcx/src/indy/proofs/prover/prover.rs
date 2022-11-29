@@ -1,5 +1,4 @@
 use vdrtools::{Locator, SearchHandle};
-use vdrtools::types::validation::Validatable;
 use vdrtools::{WalletHandle};
 use serde_json::{Map, Value};
 
@@ -7,6 +6,7 @@ use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
+use crate::utils::parse_and_validate;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
 use crate::utils::mockdata::mock_settings::{get_mock_creds_retrieved_for_proof_request};
 
@@ -24,19 +24,6 @@ pub async fn libindy_prover_create_proof(
     }
 
     let revoc_states_json = revoc_states_json.unwrap_or("{}");
-
-    fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-    where
-        T: Validatable,
-        T: serde::Deserialize<'a>,
-    {
-        let data = serde_json::from_str::<T>(s)?;
-
-        match data.validate() {
-            Ok(_) => Ok(data),
-            Err(s) => Err(VcxError::from_msg(VcxErrorKind::LibindyInvalidStructure, s)),
-        }
-    }
 
     let res = Locator::instance()
         .prover_controller
