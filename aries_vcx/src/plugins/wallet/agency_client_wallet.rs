@@ -17,6 +17,8 @@ pub(crate) struct AgencyClientWallet {
     inner: Arc<dyn BaseAgencyClientWallet>,
 }
 
+/// Implementation of [BaseWallet] for [AgencyClientWallet] such that a [BaseAgencyClientWallet]
+/// can be converted to a [BaseWallet] for packing and unpacking messages, and vice versa.
 #[allow(unused_variables)]
 #[async_trait]
 impl BaseWallet for AgencyClientWallet {
@@ -107,6 +109,7 @@ impl ToBaseWallet for Arc<dyn BaseAgencyClientWallet> {
 }
 
 fn unimplemented_agency_client_wallet_method(method_name: &str) -> VcxError {
+    // should not occur with proper internal usage - [AgencyClientWallet] is not public
     VcxError::from_msg(
         VcxErrorKind::UnimplementedFeature,
         format!("AgencyClientWallet::{} is not intended to be used.", method_name),
@@ -120,6 +123,8 @@ pub(crate) struct BaseWalletAgencyClientWallet {
     inner: Arc<dyn BaseWallet>,
 }
 
+/// Implementation of [BaseAgencyClientWallet] which wraps over an [BaseWallet] implementation
+/// to allow conversion
 #[async_trait]
 impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
     async fn pack_message(

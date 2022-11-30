@@ -31,7 +31,7 @@ use crate::indy::wallet::{
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::plugins::wallet::indy_wallet::IndySdkWallet;
 use crate::utils;
-use crate::utils::constants::{GENESIS_PATH};
+use crate::utils::constants::GENESIS_PATH;
 use crate::utils::file::write_file;
 use crate::utils::get_temp_dir_path;
 use crate::utils::provision::provision_cloud_agent;
@@ -364,10 +364,10 @@ impl SetupWalletPool {
 impl SetupProfile {
     async fn init() -> SetupProfile {
         if cfg!(feature = "modular_dependencies") {
-            println!("using modular profile");
+            info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
         } else {
-            println!("using indy profile");
+            info!("SetupProfile >> using indy profile");
         SetupProfile::init_indy().await
         }
     }
@@ -458,13 +458,6 @@ impl SetupProfile {
         reset_global_state();
     }
 }
-
-// impl Drop for SetupProfile {
-//     fn drop(&mut self) {
-//         futures::executor::block_on((self.teardown)());
-//         reset_global_state();
-//     }
-// }
 
 impl SetupInstitutionWallet {
     pub async fn init() -> SetupInstitutionWallet {

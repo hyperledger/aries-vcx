@@ -397,10 +397,6 @@ pub async fn create_proof_with_predicate(
 }
 
 pub async fn create_trustee_key(profile: &Arc<dyn Profile>) -> String {
-    // let key_config = json!({ "seed": TRUSTEE_SEED }).to_string();
-    // vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
-    //     .await
-    //     .unwrap()
     Arc::clone(profile)
         .inject_wallet()
         .create_and_store_my_did(Some(TRUSTEE_SEED), None)
@@ -409,13 +405,9 @@ pub async fn create_trustee_key(profile: &Arc<dyn Profile>) -> String {
         .1
 }
 
-// FUTURE - should be a standalone method within wallet - not depending on create did
+// TODO - FUTURE - should be a standalone method within wallet - not depending on create did
 pub async fn create_key(profile: &Arc<dyn Profile>) -> String {
     let seed: String = crate::utils::random::generate_random_seed();
-    // let key_config = json!({ "seed": seed }).to_string();
-    // vdrtools::crypto::create_key(wallet_handle, Some(&key_config))
-    //     .await
-    //     .unwrap()
     Arc::clone(profile)
         .inject_wallet()
         .create_and_store_my_did(Some(&seed), None)
@@ -429,7 +421,7 @@ pub fn mock_profile() -> Arc<dyn Profile> {
     Arc::new(MockProfile { })
 }
 
-// should only be used for quick mock setups
+// TODO - FUTURE - should only be used for quick mock setups, should be removable after full detachment from vdrtools dep
 pub fn indy_handles_to_profile(wallet_handle: WalletHandle, pool_handle: PoolHandle) -> Arc<dyn Profile> {
     Arc::new(IndySdkProfile::new(wallet_handle, pool_handle))
 }

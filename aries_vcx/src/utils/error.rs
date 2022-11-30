@@ -470,7 +470,7 @@ pub static PARSING: Error = Error {
 
 pub static UNIMPLEMENTED_FEATURE: Error = Error {
     code_num: 1117,
-    message: "Unimplemented feature was called"
+    message: "Unimplemented feature was invoked"
 };
 
 lazy_static! {

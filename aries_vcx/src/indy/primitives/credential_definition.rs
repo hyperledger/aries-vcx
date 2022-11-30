@@ -8,7 +8,7 @@ use crate::indy::ledger::transactions::{
     build_cred_def_request, check_response,sign_and_submit_to_ledger
 };
 
-// consider relocating
+// consider relocating out of primitive
 pub async fn publish_cred_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -29,7 +29,7 @@ pub async fn publish_cred_def(
     check_response(&response)
 }
 
-// consider relocating
+// consider relocating out of primitive
 pub async fn libindy_create_and_store_credential_def(
     wallet_handle: WalletHandle,
     issuer_did: &str,

@@ -6,7 +6,7 @@ extern crate serde_json;
 pub mod utils;
 
 #[cfg(test)]
-#[cfg(feature = "agency_pool_tests")]
+#[cfg(feature = "pool_test")]
 mod integration_tests {
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::messages::did_doc::service_aries::AriesService;
@@ -28,7 +28,7 @@ mod integration_tests {
 
     #[tokio::test]
     async fn test_get_credential_def() {
-        // todo - use SetupProfile::run after modular impls
+        // TODO - use SetupProfile::run after modular impls
         SetupProfile::run_indy(|setup| async move {
         let (_, _, cred_def_id, cred_def_json, _) =
             create_and_store_nonrevocable_credential_def(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS)

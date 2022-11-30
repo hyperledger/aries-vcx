@@ -119,7 +119,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // todo future - use profile wallet to stop indy dependency
+        // TODO - future - use profile wallet to stop indy dependency
         match indy::wallet::wallet_configure_issuer(get_main_wallet_handle(), &enterprise_seed).await {
             Err(err) => {
                 error!(
@@ -798,7 +798,7 @@ pub extern "C" fn vcx_wallet_open_search(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // todo future - use profile wallet to stop binding to indy
+        // TODO - future - use profile wallet to stop binding to indy
         match indy::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
             Ok(handle) => {
                 trace!(
@@ -867,7 +867,7 @@ pub extern "C" fn vcx_wallet_search_next_records(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // todo future - use profile wallet to stop binding to indy
+        // TODO - future - use profile wallet to stop binding to indy
         match indy::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
             Ok(handle) => {
                 trace!(

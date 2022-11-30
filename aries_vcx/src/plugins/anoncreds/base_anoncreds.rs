@@ -2,6 +2,9 @@ use async_trait::async_trait;
 
 use crate::error::VcxResult;
 
+/// Trait defining standard 'anoncreds' related functionality. The APIs, including
+/// input and output types are based off the indy Anoncreds API:
+/// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/anoncreds.rs>
 #[async_trait]
 pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
 
@@ -59,15 +62,6 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         revoc_states_json: Option<&str>,
     ) -> VcxResult<String>;
 
-    // * `filter_json`: filter for credentials {
-    //    "schema_id": string, (Optional)
-    //    "schema_issuer_did": string, (Optional)
-    //    "schema_name": string, (Optional)
-    //    "schema_version": string, (Optional)
-    //    "issuer_did": string, (Optional)
-    //    "cred_def_id": string, (Optional)
-    //  }
-
     async fn prover_get_credential(&self, cred_id: &str) -> VcxResult<String>;
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String>;
@@ -112,7 +106,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         attrs: &str,
     ) -> VcxResult<(String, String)>;
     
-    // TODO - think about moving this to somewhere else, as it aggregates other calls
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn revoke_credential_local(
         &self,
         tails_dir: &str,
@@ -120,7 +114,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_rev_id: &str,
     ) -> VcxResult<()>;
     
-    // TODO - think about moving this to somewhere else, as it aggregates other calls
+    // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
 
     async fn generate_nonce(&self) -> VcxResult<String>;

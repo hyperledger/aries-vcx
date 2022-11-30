@@ -17,6 +17,8 @@ use crate::{
 #[derive(Debug)]
 pub(crate) struct MockLedger;
 
+// NOTE : currently matches the expected results if indy_mocks are enabled
+/// Implementation of [BaseLedger] which responds with mock data
 #[allow(unused)]
 #[async_trait]
 impl BaseLedger for MockLedger {

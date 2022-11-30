@@ -481,7 +481,7 @@ pub(crate) async fn delete_wallet_record_tags(
     Ok(())
 }
 
-// todo future - revert to pub(crate) after libvcx dependency is fixed
+// TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
 pub async fn open_search_wallet(
     wallet_handle: WalletHandle,
     xtype: &str,
@@ -511,7 +511,7 @@ pub async fn open_search_wallet(
     Ok(res)
 }
 
-// todo future - revert to pub(crate) after libvcx dependency is fixed
+// TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
 pub async fn fetch_next_records_wallet(
     wallet_handle: WalletHandle,
     search_handle: SearchHandle,
@@ -538,7 +538,7 @@ pub async fn fetch_next_records_wallet(
     Ok(res)
 }
 
-// todo future - revert to pub(crate) after libvcx dependency is fixed
+// TODO - FUTURE - revert to pub(crate) after libvcx dependency is fixed
 pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
     trace!("close_search >>> search_handle: {:?}", search_handle);
 
@@ -554,7 +554,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
     Ok(())
 }
 
-// todo - can this be moved externally - move of a setup util?
+// TODO - FUTURE - can this be moved externally - move to a generic setup util?
 pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
         keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None)

@@ -5,8 +5,7 @@ use crate::{
     xyz::primitives::revocation_registry::RevocationRegistryDefinition,
 };
 
-// NOTE : currently matches the expected results if indy_mocks are enabled
-/// Implementation of [BaseLedger] which responds with mock data
+/// Trait defining standard 'ledger' related functionality.
 #[async_trait]
 pub trait BaseLedger: Send + Sync {
 

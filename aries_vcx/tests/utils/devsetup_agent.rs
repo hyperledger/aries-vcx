@@ -11,6 +11,7 @@ pub mod test_utils {
     use aries_vcx::plugins::wallet::base_wallet::BaseWallet;
     use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
+    use futures::future::BoxFuture;
     use messages::ack::please_ack::AckOn;
     use messages::revocation_notification::revocation_ack::RevocationAck;
     use messages::revocation_notification::revocation_notification::RevocationNotification;
@@ -32,7 +33,7 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::wallet::open_wallet;
+    use aries_vcx::indy::wallet::{open_wallet, close_wallet};
     use aries_vcx::indy::wallet::{
         create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig,
         WalletConfig,
@@ -120,7 +121,6 @@ pub mod test_utils {
     pub struct Faber {
         pub profile: Arc<dyn Profile>,
         pub is_active: bool,
-        pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub config_issuer: IssuerConfig,
         pub rev_not_sender: RevocationNotificationSender,
@@ -131,6 +131,7 @@ pub mod test_utils {
         pub verifier: Verifier,
         pub agent: PublicAgent,
         pub agency_client: AgencyClient,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
     }
 
     impl Faber {
@@ -177,11 +178,11 @@ pub mod test_utils {
             .await
             .unwrap();
             let rev_not_sender = RevocationNotificationSender::build();
+            
             let faber = Faber {
                 profile,
                 agency_client,
                 is_active: false,
-                config_wallet,
                 config_agency,
                 config_issuer,
                 schema: Schema::default(),
@@ -191,6 +192,7 @@ pub mod test_utils {
                 verifier: Verifier::default(),
                 rev_not_sender,
                 agent,
+                teardown: Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))),
             };
             faber
         }
@@ -421,26 +423,26 @@ pub mod test_utils {
     pub struct Alice {
         pub profile: Arc<dyn Profile>,
         pub is_active: bool,
-        pub config_wallet: WalletConfig,
         pub config_agency: AgencyClientConfig,
         pub connection: MediatedConnection,
         pub credential: Holder,
         pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
         pub agency_client: AgencyClient,
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        let (alice_profile, alice_wallet_config) = if cfg!(feature = "modular_dependencies") {
+        let (alice_profile, teardown) = if cfg!(feature = "modular_dependencies") {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
-            println!("using modular-based profile");
+            info!("create_test_alice_instance >> using modular profile");
             Alice::setup_modular_profile(config).await
         } else {
-            println!("using indy-based profile");
+            info!("create_test_alice_instance >> using indy profile");
             Alice::setup_indy_profile(setup.pool_handle).await
         };
-        Alice::setup(alice_profile, alice_wallet_config).await
+        Alice::setup(alice_profile, teardown).await
     }
 
     impl Alice {
@@ -462,7 +464,7 @@ pub mod test_utils {
             (wallet_handle, config_wallet)
         }
 
-        pub async fn setup_modular_profile(ledger_pool_config: LedgerPoolConfig) -> (Arc<dyn Profile>, WalletConfig) {
+        pub async fn setup_modular_profile(ledger_pool_config: LedgerPoolConfig) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -472,17 +474,18 @@ pub mod test_utils {
             // set up anoncreds link/master secret
             Arc::clone(&profile).inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
 
-            (profile, config_wallet)
+            (profile, Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))))
         }
 
-        pub async fn setup_indy_profile(pool_handle: PoolHandle) -> (Arc<dyn Profile>, WalletConfig) {
+        pub async fn setup_indy_profile(pool_handle: PoolHandle) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
-            (Arc::new(indy_profile), config_wallet)
+
+            (Arc::new(indy_profile), Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))))
         }
 
-        pub async fn setup(profile: Arc<dyn Profile>, config_wallet: WalletConfig) -> Alice {
+        pub async fn setup(profile: Arc<dyn Profile>, teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>) -> Alice {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: AGENCY_DID.to_string(),
                 agency_verkey: AGENCY_VERKEY.to_string(),
@@ -500,12 +503,12 @@ pub mod test_utils {
                 profile,
                 agency_client,
                 is_active: false,
-                config_wallet,
                 config_agency,
                 connection,
                 credential: Holder::default(),
                 prover: Prover::default(),
-                rev_not_receiver: None
+                rev_not_receiver: None,
+                teardown
             };
             alice
         }
@@ -725,23 +728,22 @@ pub mod test_utils {
         }
     }
 
+    async fn teardown_indy_wallet(wallet_handle: WalletHandle, config_wallet: WalletConfig) {
+        info!("Closing test indy wallet: {:?}", config_wallet);
+        close_wallet(wallet_handle).await.unwrap_or_else(|_| error!("Failed to close wallet while teardowning: {:?}", config_wallet));
+        info!("Deleting test indy wallet: {:?}", config_wallet);
+        delete_wallet(&config_wallet).await.unwrap_or_else(|_| error!("Failed to delete wallet while teardowning: {:?}", config_wallet));
+    }
+
     impl Drop for Faber {
         fn drop(&mut self) {
-            // todo - do we need some close wallet functionality in BaseWallet?
-            // futures::executor::block_on(close_wallet(self.wallet_handle))
-            //     .unwrap_or_else(|_| error!("Failed to close Faber's wallet while dropping Faber"));
-            futures::executor::block_on(delete_wallet(&self.config_wallet))
-                .unwrap_or_else(|_| error!("Failed to delete Faber's wallet while dropping"));
+            futures::executor::block_on((self.teardown)());
         }
     }
 
     impl Drop for Alice {
         fn drop(&mut self) {
-            // todo - do we need some close wallet functionality in BaseWallet?
-            // futures::executor::block_on(close_wallet(self.wallet_handle))
-            //     .unwrap_or_else(|_| error!("Failed to close Alice's wallet while dropping Alice"));
-            futures::executor::block_on(delete_wallet(&self.config_wallet))
-                .unwrap_or_else(|_| error!("Failed to delete Alice's wallet while dropping"));
+            futures::executor::block_on((self.teardown)());
         }
     }
 }

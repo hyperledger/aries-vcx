@@ -1,4 +1,4 @@
-// todo - visibility of all indy should be 'crate'
+// TODO - FUTURE - visibility of all indy should be 'crate' to confirm indy dependency is stripped
 pub(crate) mod credentials;
 pub(crate) mod proofs;
 pub mod utils;

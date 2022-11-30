@@ -133,6 +133,8 @@ impl IndyWalletRecordIterator {
     }
 }
 
+/// Implementation of a generic [AsyncFnIterator] iterator for indy/vdrtools wallet record iteration.
+/// Wraps over the vdrtools record [SearchHandle] functionality
 #[async_trait]
 impl AsyncFnIterator for IndyWalletRecordIterator {
     type Item = VcxResult<String>;

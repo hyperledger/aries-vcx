@@ -18,7 +18,6 @@ pub async fn add_new_did(profile: &Arc<dyn Profile>, submitter_did: &str, role: 
     let ledger = Arc::clone(profile).inject_ledger();
 
     ledger.publish_nym(submitter_did, &did, Some(&verkey),None, role).await?;
-    // validate response?
 
     Ok((did, verkey))
 }

@@ -2,6 +2,9 @@ use async_trait::async_trait;
 
 use crate::{error::VcxResult, utils::async_fn_iterator::AsyncFnIterator};
 
+/// Trait defining standard 'wallet' related functionality. The APIs, including
+/// input and output types are loosely based off the indy Wallet API:
+/// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/wallet.rs>
 #[async_trait]
 pub trait BaseWallet: std::fmt::Debug + Send + Sync {
     // ----- DIDs

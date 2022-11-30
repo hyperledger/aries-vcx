@@ -325,13 +325,8 @@ impl Connection {
 #[cfg(test)]
 pub mod test_utils {
     use async_channel::Sender;
-    use vdrtools::PoolHandle;
 
     use super::*;
-
-    pub(super) fn _pool_handle() -> PoolHandle {
-        0
-    }
 
     pub(super) fn _routing_keys() -> Vec<String> {
         vec![]

@@ -181,7 +181,7 @@ pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_ident
                     tails_file,
                     &rev_reg_def_json,
                     &rev_reg_delta_json,
-                    100, // todo - timestamp as 100?
+                    100, // TODO - should we use `timestamp` from above?
                     cred_rev_id,
                 )
                 .await?;
@@ -369,49 +369,49 @@ pub mod unit_tests {
     #[tokio::test]
     async fn test_find_credential_def_fails() {
         SetupLibraryWallet::run(|setup| async move {
-        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
-        let credential_ids = vec![CredInfoProver {
-            requested_attr: "1".to_string(),
-            referent: "2".to_string(),
-            schema_id: "3".to_string(),
-            cred_def_id: "3".to_string(),
-            rev_reg_id: Some("4".to_string()),
-            cred_rev_id: Some("5".to_string()),
-            revocation_interval: None,
-            tails_file: None,
-            timestamp: None,
-        }];
-        let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
-            .await
-            .unwrap_err()
-            .kind();
-        assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
+            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let credential_ids = vec![CredInfoProver {
+                requested_attr: "1".to_string(),
+                referent: "2".to_string(),
+                schema_id: "3".to_string(),
+                cred_def_id: "3".to_string(),
+                rev_reg_id: Some("4".to_string()),
+                cred_rev_id: Some("5".to_string()),
+                revocation_interval: None,
+                tails_file: None,
+                timestamp: None,
+            }];
+            let err_kind = build_cred_defs_json_prover(&profile, &credential_ids)
+                .await
+                .unwrap_err()
+                .kind();
+            assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
         }).await;
     }
 
     #[tokio::test]
     async fn test_find_schemas_fails() {
         SetupLibraryWallet::run(|setup| async move {
-        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
-        let credential_ids = vec![CredInfoProver {
-            requested_attr: "1".to_string(),
-            referent: "2".to_string(),
-            schema_id: "3".to_string(),
-            cred_def_id: "3".to_string(),
-            rev_reg_id: Some("4".to_string()),
-            cred_rev_id: Some("5".to_string()),
-            revocation_interval: None,
-            tails_file: None,
-            timestamp: None,
-        }];
-        
-        assert_eq!(
-            build_schemas_json_prover(&profile, &credential_ids)
-                .await
-                .unwrap_err()
-                .kind(),
-            VcxErrorKind::InvalidSchema
-        );
+            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let credential_ids = vec![CredInfoProver {
+                requested_attr: "1".to_string(),
+                referent: "2".to_string(),
+                schema_id: "3".to_string(),
+                cred_def_id: "3".to_string(),
+                rev_reg_id: Some("4".to_string()),
+                cred_rev_id: Some("5".to_string()),
+                revocation_interval: None,
+                tails_file: None,
+                timestamp: None,
+            }];
+            
+            assert_eq!(
+                build_schemas_json_prover(&profile, &credential_ids)
+                    .await
+                    .unwrap_err()
+                    .kind(),
+                VcxErrorKind::InvalidSchema
+            );
         }).await;
     }
 
@@ -749,7 +749,7 @@ pub mod unit_tests {
             timestamp: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(&&mock_profile(), cred_info.as_mut()).await.unwrap();
+        let states = build_rev_states_json(&mock_profile(), cred_info.as_mut()).await.unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);

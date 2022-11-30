@@ -5,7 +5,7 @@ use crate::error::VcxResult;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{_check_schema_response, build_schema_request, sign_and_submit_to_ledger, set_endorser};
 
-// consider relocating
+// consider relocating out of primitive
 pub async fn publish_schema(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, schema_json: &str, endorser_did: Option<String>) -> VcxResult<()> {
     trace!("publish_schema >>> submitter_did: {:?}, schema_json: {:?}, endorser_did: {:?}", submitter_did, schema_json, endorser_did);
 
@@ -24,7 +24,7 @@ pub async fn publish_schema(wallet_handle: WalletHandle, pool_handle: PoolHandle
     Ok(())
 }
 
-// consider relocating
+// consider relocating out of primitive
 pub async fn libindy_issuer_create_schema(
     issuer_did: &str,
     name: &str,
