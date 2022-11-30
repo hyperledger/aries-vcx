@@ -314,7 +314,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             }
         }
 
-        // TODO future self attested
+        // TODO - future - self attested
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
@@ -741,7 +741,6 @@ fn unimplemented_method_err(method_name: &str) -> VcxError {
 impl From<CredxError> for VcxError {
     fn from(err: CredxError) -> Self {
         match err.kind() {
-            // TODO - future - could work on error kind conversion
             credx::ErrorKind::Input => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
             credx::ErrorKind::IOError => VcxError::from_msg(VcxErrorKind::IOError, err),
             credx::ErrorKind::InvalidState => VcxError::from_msg(VcxErrorKind::InvalidState, err),

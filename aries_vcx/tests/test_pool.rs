@@ -10,7 +10,7 @@ pub mod utils;
 mod integration_tests {
     use aries_vcx::messages::connection::did::Did;
     use aries_vcx::messages::did_doc::service_aries::AriesService;
-    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::{SetupWalletPool, SetupProfile};
     use aries_vcx::xyz::keys::{get_verkey_from_ledger, rotate_verkey};
     use aries_vcx::xyz::ledger::transactions::add_new_did;
@@ -58,11 +58,20 @@ mod integration_tests {
         }).await;
     }
 
-    // TODO - bring back after endorser methods added to baseledger
+    // TODO - future - bring back after all endorser methods added to baseledger
     // #[tokio::test]
     // async fn test_endorse_transaction() {
-    //     SetupWalletPool::run(|setup| async move {
-    //         endorse_transaction(setup.wallet_handle, setup.pool_handle, &endorser_did, &schema_request).await.unwrap();
+    //     SetupProfile::run_indy(|setup| async move {
+    //         let ledger = Arc::clone(&setup.profile).inject_ledger();
+    //         let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
+    //         let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER")).await.unwrap();
+    
+    //         let schema_request = ledger.build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
+    //         let schema_request = append_request_endorser(&schema_request, &endorser_did).await.unwrap();
+    //         let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request)
+    //             .await
+    //             .unwrap();
+    //         ledger.endorse_transaction(&endorser_did, &schema_request).await.unwrap();
     //     }).await;
     // }
     

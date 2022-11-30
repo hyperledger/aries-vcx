@@ -448,7 +448,6 @@ mod unit_tests {
         );
     }
 
-    // TODO - consider moving test, as this isn't really a unit test
     #[tokio::test]
     async fn test_connection_e2e() {
         let setup = SetupInstitutionWallet::init().await;

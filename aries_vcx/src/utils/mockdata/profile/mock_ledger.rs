@@ -54,7 +54,7 @@ impl BaseLedger for MockLedger {
     }
 
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
-        // TODO FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
+        // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {

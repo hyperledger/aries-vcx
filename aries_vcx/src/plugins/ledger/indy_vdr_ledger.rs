@@ -266,9 +266,8 @@ impl BaseLedger for IndyVdrLedger {
 
     async fn get_schema(&self, schema_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
         let _ = submitter_did;
-        // TODO try from cache first
-
-        // TODO - do we need to handle someone submitting a schema request by seq number?
+        // TODO - future - try from cache first
+        // TODO - future - do we need to handle someone submitting a schema request by seq number?
 
         let id = SchemaId::from_str(schema_id)?;
 
@@ -277,7 +276,6 @@ impl BaseLedger for IndyVdrLedger {
         let response = self._submit_request(request).await?;
 
         // process the response
-
         let response_json: Value = serde_json::from_str(&response)?;
         let result_json = (&response_json).try_get("result")?;
         let data_json = result_json.try_get("data")?;
@@ -303,7 +301,7 @@ impl BaseLedger for IndyVdrLedger {
             seq_no,
         };
 
-        // TODO - store in cache
+        // TODO - future - store in cache if submitter_did provided
 
         Ok(serde_json::to_string(&Schema::SchemaV1(schema))?)
     }
@@ -528,7 +526,7 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
         let mut request = request;
         let acceptance = TxnAuthrAgrmtAcceptanceData {
             mechanism: taa.acceptance_mechanism_type,
-            // TODO - default digest?
+            // TODO - investigate default digest
             taa_digest: taa.taa_digest.map_or(String::from(""), |v| v),
             time: taa.time_of_acceptance,
         };
@@ -549,7 +547,6 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
 impl From<VdrError> for VcxError {
     fn from(err: VdrError) -> Self {
         match err.kind() {
-            // TODO - work on error kind conversion
             indy_vdr::common::error::VdrErrorKind::Config => {
                 VcxError::from_msg(VcxErrorKind::InvalidConfiguration, err)
             }
