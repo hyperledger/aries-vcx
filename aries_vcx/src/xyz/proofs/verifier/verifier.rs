@@ -65,7 +65,7 @@ pub mod unit_tests {
 
     #[tokio::test]
     async fn test_proof_self_attested_proof_validation() {
-        SetupProfile::run(|setup| async move {
+        SetupProfile::run_indy(|setup| async move {
 
         let requested_attrs = json!([
             json!({
@@ -115,16 +115,12 @@ pub mod unit_tests {
             .await
             .unwrap();
 
-        // TODO - FUTURE - should not need to run this in run_indy with seperate profile
-        SetupProfile::run_indy(|setup_verifier| async move { 
-
-            assert_eq!(
-                validate_indy_proof(&setup_verifier.profile, &prover_proof_json, &proof_req_json.to_string())
-                .await
-                .unwrap(),
-                true
-            );
-        }).await;
+        assert_eq!(
+            validate_indy_proof(&setup.profile, &prover_proof_json, &proof_req_json.to_string())
+            .await
+            .unwrap(),
+            true
+        );
         }).await;
     }
 
