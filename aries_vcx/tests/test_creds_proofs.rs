@@ -1154,25 +1154,6 @@ mod tests {
         }).await;
     }
 
-    pub struct Pool {
-        handle: PoolHandle,
-    }
-
-    impl Pool {
-        pub async fn open() -> Pool {
-            let handle = open_test_pool().await;
-            Pool {
-                handle,
-            }
-        }
-    }
-
-    impl Drop for Pool {
-        fn drop(&mut self) {
-            futures::executor::block_on(delete_test_pool(self.handle));
-        }
-    }
-
     #[tokio::test]
     async fn aries_demo() {
         let _setup = SetupEmpty::init();
