@@ -192,7 +192,6 @@ dependencies = [
  "openssl",
  "rand 0.7.3",
  "regex",
- "reqwest",
  "rust-base58",
  "serde",
  "serde_derive",
