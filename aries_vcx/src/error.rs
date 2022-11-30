@@ -577,7 +577,7 @@ impl From<VcxErrorKind> for u32 {
             VcxErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
             VcxErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num,
             VcxErrorKind::CreateAgent => error::CREATE_AGENT.code_num,
-            VcxErrorKind::InvalidInput => error::INDY_VDR_INPUT_INPUT.code_num,
+            VcxErrorKind::InvalidInput => error::INVALID_INPUT.code_num,
             VcxErrorKind::ParsingError => error::PARSING.code_num,
             VcxErrorKind::UnimplementedFeature => error::UNIMPLEMENTED_FEATURE.code_num,
         }

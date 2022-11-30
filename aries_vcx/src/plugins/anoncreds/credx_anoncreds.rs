@@ -741,7 +741,7 @@ fn unimplemented_method_err(method_name: &str) -> VcxError {
 impl From<CredxError> for VcxError {
     fn from(err: CredxError) -> Self {
         match err.kind() {
-            // TODO - could work on error kind conversion
+            // TODO - future - could work on error kind conversion
             credx::ErrorKind::Input => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
             credx::ErrorKind::IOError => VcxError::from_msg(VcxErrorKind::IOError, err),
             credx::ErrorKind::InvalidState => VcxError::from_msg(VcxErrorKind::InvalidState, err),
