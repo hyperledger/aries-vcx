@@ -92,7 +92,6 @@ dependencies = [
  "env_logger 0.9.1",
  "failure",
  "lazy_static",
- "libvdrtools",
  "log",
  "regex",
  "reqwest",
