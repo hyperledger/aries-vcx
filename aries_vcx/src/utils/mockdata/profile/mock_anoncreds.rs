@@ -2,13 +2,18 @@ use async_trait::async_trait;
 
 use crate::{
     error::{VcxError, VcxErrorKind, VcxResult},
+    global::settings,
     indy::utils::LibindyMock,
     plugins::anoncreds::base_anoncreds::BaseAnonCreds,
-    utils::{self, constants::{LIBINDY_CRED_OFFER, REV_STATE_JSON, LARGE_NONCE}, mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request}, global::settings,
+    utils::{
+        self,
+        constants::{LARGE_NONCE, LIBINDY_CRED_OFFER, REV_STATE_JSON},
+        mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
+    },
 };
 
 #[derive(Debug)]
-pub(super) struct MockAnoncreds;
+pub(crate) struct MockAnoncreds;
 
 // NOTE : currently matches the expected results if indy_mocks are enabled
 /// Implementation of [BaseAnoncreds] which responds with mock data
@@ -23,7 +28,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _rev_reg_defs_json: &str,
         _rev_regs_json: &str,
     ) -> VcxResult<bool> {
-        Err(VcxError::from_msg(VcxErrorKind::UnimplementedFeature, "unimplemented mock method"))
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn issuer_create_and_store_revoc_reg(
@@ -35,7 +43,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _tag: &str,
     ) -> VcxResult<(String, String, String)> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn issuer_create_and_store_credential_def(
@@ -47,7 +58,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _config_json: &str,
     ) -> VcxResult<(String, String)> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxResult<String> {
@@ -83,17 +97,26 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn prover_get_credential(&self, _cred_id: &str) -> VcxResult<String> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn prover_get_credentials(&self, _filter_json: Option<&str>) -> VcxResult<String> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn prover_get_credentials_for_proof_req(&self, _proof_request_json: &str) -> VcxResult<String> {
         match get_mock_creds_retrieved_for_proof_request() {
-            None => Err(VcxError::from_msg(VcxErrorKind::UnimplementedFeature, "mock data for `prover_get_credentials_for_proof_req` must be set")),
+            None => Err(VcxError::from_msg(
+                VcxErrorKind::UnimplementedFeature,
+                "mock data for `prover_get_credentials_for_proof_req` must be set",
+            )),
             Some(mocked_creds) => {
                 warn!("get_mock_creds_retrieved_for_proof_request  returning mocked response");
                 Ok(mocked_creds)
@@ -135,7 +158,10 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn prover_delete_credential(&self, _cred_id: &str) -> VcxResult<()> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn prover_create_link_secret(&self, _link_secret_id: &str) -> VcxResult<String> {
@@ -150,7 +176,10 @@ impl BaseAnonCreds for MockAnoncreds {
         _attrs: &str,
     ) -> VcxResult<(String, String)> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn revoke_credential_local(&self, _tails_dir: &str, _rev_reg_id: &str, _cred_rev_id: &str) -> VcxResult<()> {
@@ -163,5 +192,40 @@ impl BaseAnonCreds for MockAnoncreds {
 
     async fn generate_nonce(&self) -> VcxResult<String> {
         Ok(LARGE_NONCE.to_string())
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_tests {
+
+    use crate::{
+        error::{VcxErrorKind, VcxResult},
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
+        utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
+    };
+
+    #[tokio::test]
+    async fn test_unimplemented_methods() {
+        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+        }
+
+        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(MockAnoncreds);
+
+        assert_unimplemented(anoncreds.verifier_verify_proof("", "", "", "", "", "").await);
+        assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
+        assert_unimplemented(
+            anoncreds
+                .issuer_create_and_store_credential_def("", "", "", None, "")
+                .await,
+        );
+        assert_unimplemented(anoncreds.prover_get_credential("").await);
+        assert_unimplemented(anoncreds.prover_get_credentials(None).await);
+        assert_unimplemented(anoncreds.prover_get_credentials_for_proof_req("").await);
+        assert_unimplemented(anoncreds.prover_delete_credential("").await);
+        assert_unimplemented(anoncreds.issuer_create_schema("", "", "", "").await);
     }
 }

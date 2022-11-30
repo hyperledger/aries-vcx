@@ -2,12 +2,20 @@ use async_trait::async_trait;
 use messages::{connection::did::Did, did_doc::service_aries::AriesService};
 
 use crate::{
-    error::{VcxResult, VcxErrorKind, VcxError}, plugins::ledger::base_ledger::BaseLedger,
-    xyz::primitives::revocation_registry::RevocationRegistryDefinition, utils::{self, constants::{SCHEMA_JSON, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_TXN, CRED_DEF_JSON}}, indy::utils::LibindyMock,
+    error::{VcxError, VcxErrorKind, VcxResult},
+    indy::utils::LibindyMock,
+    plugins::ledger::base_ledger::BaseLedger,
+    utils::{
+        self,
+        constants::{
+            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
+        },
+    },
+    xyz::primitives::revocation_registry::RevocationRegistryDefinition,
 };
 
 #[derive(Debug)]
-pub(super) struct MockLedger;
+pub(crate) struct MockLedger;
 
 #[allow(unused)]
 #[async_trait]
@@ -18,7 +26,10 @@ impl BaseLedger for MockLedger {
 
     async fn submit_request(&self, request_json: &str) -> VcxResult<String> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn endorse_transaction(&self, endorser_did: &str, request_json: &str) -> VcxResult<()> {
@@ -35,7 +46,10 @@ impl BaseLedger for MockLedger {
 
     async fn get_nym(&self, did: &str) -> VcxResult<String> {
         // not needed yet
-        todo!()
+        Err(VcxError::from_msg(
+            VcxErrorKind::UnimplementedFeature,
+            "unimplemented mock method",
+        ))
     }
 
     async fn publish_nym(
@@ -58,7 +72,7 @@ impl BaseLedger for MockLedger {
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
-            return Err(VcxError::from(VcxErrorKind::LibndyError(309)))
+            return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
         };
         Ok(CRED_DEF_JSON.to_string())
     }
@@ -124,5 +138,31 @@ impl BaseLedger for MockLedger {
         submitter_did: &str,
     ) -> VcxResult<()> {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_tests {
+
+    use crate::{
+        error::{VcxErrorKind, VcxResult},
+        plugins::ledger::base_ledger::BaseLedger,
+    };
+
+    use super::MockLedger;
+
+    #[tokio::test]
+    async fn test_unimplemented_methods() {
+        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+        }
+
+        let ledger: Box<dyn BaseLedger> = Box::new(MockLedger);
+
+        assert_unimplemented(ledger.submit_request("").await);
+        assert_unimplemented(ledger.get_nym("").await);
     }
 }

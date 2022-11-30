@@ -112,7 +112,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         attrs: &str,
     ) -> VcxResult<(String, String)>;
     
-    // todo - move?
+    // TODO - think about moving this to somewhere else, as it aggregates other calls
     async fn revoke_credential_local(
         &self,
         tails_dir: &str,
@@ -120,7 +120,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_rev_id: &str,
     ) -> VcxResult<()>;
     
-    // todo - move?
+    // TODO - think about moving this to somewhere else, as it aggregates other calls
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
 
     async fn generate_nonce(&self) -> VcxResult<String>;

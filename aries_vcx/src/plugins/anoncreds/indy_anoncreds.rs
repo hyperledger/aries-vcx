@@ -214,7 +214,6 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         indy::primitives::credential_schema::libindy_issuer_create_schema(issuer_did, name, version, attrs).await
     }
 
-    // todo - think about moving this to somewhere else as it aggregates other calls
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
         indy::primitives::revocation_registry::revoke_credential_local(
             self.profile.indy_wallet_handle,
@@ -225,7 +224,6 @@ impl BaseAnonCreds for IndySdkAnonCreds {
         .await
     }
 
-    // todo - think about moving this to somewhere else as it aggregates other calls
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
         indy::primitives::revocation_registry::publish_local_revocations(
             self.profile.indy_wallet_handle,

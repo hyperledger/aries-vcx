@@ -17,8 +17,8 @@ use crate::{
 use async_trait::async_trait;
 use credx::{
     types::{
-        Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue,
-        MasterSecret, PresentationRequest, RevocationRegistryDefinition, RevocationRegistryDelta, Schema, SchemaId,
+        Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue, MasterSecret,
+        PresentationRequest, RevocationRegistryDefinition, RevocationRegistryDelta, Schema, SchemaId,
     },
     ursa::{bn::BigNumber, errors::UrsaCryptoError},
 };
@@ -31,7 +31,6 @@ use credx::{
     Error as CredxError,
 };
 use indy_credx as credx;
-// use indy_vdr::utils::{Qualifiable, Validatable};
 use serde_json::Value;
 
 use super::base_anoncreds::BaseAnonCreds;
@@ -79,15 +78,13 @@ impl IndyCredxAnonCreds {
 
         let credential: CredxCredential = serde_json::from_str(cred_json)?;
 
-        // credential.validate()?;
-
         Ok(credential)
     }
 
-    async fn _get_credentials(&self, query: &str) -> VcxResult<Vec<(String, CredxCredential)>> {
+    async fn _get_credentials(&self, wql: &str) -> VcxResult<Vec<(String, CredxCredential)>> {
         let wallet = self.profile.inject_wallet();
 
-        let mut record_iterator = wallet.iterate_wallet_records(CATEGORY_CREDENTIAL, query, "{}").await?;
+        let mut record_iterator = wallet.iterate_wallet_records(CATEGORY_CREDENTIAL, wql, "{}").await?;
         let records = record_iterator.collect().await?;
 
         let id_cred_tuple_list: VcxResult<Vec<(String, CredxCredential)>> = records
@@ -101,8 +98,6 @@ impl IndyCredxAnonCreds {
                 let cred_json = cred_record_value.try_as_str()?;
 
                 let credential: CredxCredential = serde_json::from_str(cred_json)?;
-
-                // credential.validate()?;
 
                 Ok((cred_record_id, credential))
             })
@@ -154,7 +149,14 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         rev_reg_defs_json: &str,
         rev_regs_json: &str,
     ) -> VcxResult<bool> {
-        let _ = (proof_req_json, proof_json, schemas_json, credential_defs_json, rev_reg_defs_json, rev_regs_json);
+        let _ = (
+            proof_req_json,
+            proof_json,
+            schemas_json,
+            credential_defs_json,
+            rev_reg_defs_json,
+            rev_regs_json,
+        );
         Err(unimplemented_method_err("credx verifier_verify_proof"))
     }
 
@@ -351,10 +353,11 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_get_credentials(&self, filter_json: Option<&str>) -> VcxResult<String> {
-        // TODO - properly convert filter_json to wql query to pass into get_creds;
-        let _query = filter_json;
+        // filter_json should map to WQL query directly
+        // TODO - future - may wish to validate the filter_json for more accurate error reporting
 
-        let creds = self._get_credentials("{}").await?;
+        let creds_wql = filter_json.map_or("{}", |x| x);
+        let creds = self._get_credentials(creds_wql).await?;
 
         let cred_info_list: VcxResult<Vec<Value>> = creds
             .iter()
@@ -450,7 +453,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         link_secret_id: &str,
     ) -> VcxResult<(String, String)> {
         let prover_did = DidValue::new(prover_did, None);
-        // let prover_did = DidValue::from_str(prover_did)?;
         let cred_def: CredentialDefinition = serde_json::from_str(credential_def_json)?;
         let credential_offer: CredentialOffer = serde_json::from_str(credential_offer_json)?;
         let link_secret = self.get_link_secret(link_secret_id).await?;
@@ -527,10 +529,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             rev_reg_def.as_ref(),
         )?;
 
-        // credential.validate()?;
-
         let schema_id = &credential.schema_id;
-        // schema_id.validate()?;
         let (_schema_method, schema_issuer_did, schema_name, schema_version) =
             schema_id.parts().ok_or(VcxError::from_msg(
                 VcxErrorKind::InvalidSchema,
@@ -538,7 +537,6 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             ))?;
 
         let cred_def_id = &credential.cred_def_id;
-        // cred_def_id.validate()?;
         let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) =
             cred_def_id.parts().ok_or(VcxError::from_msg(
                 VcxErrorKind::InvalidSchema,
@@ -628,17 +626,15 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let schema_json = serde_json::to_string(&schema)?;
         let schema_id = &schema.id().0;
 
-        // future - store as cache
+        // TODO - future - store as cache against issuer_did
         Ok((schema_id.to_string(), schema_json))
     }
 
-    // todo - think about moving this to somewhere else as it aggregates other calls
     async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()> {
         let _ = (tails_dir, rev_reg_id, cred_rev_id);
         Err(unimplemented_method_err("credx revoke_credential_local"))
     }
 
-    // todo - think about moving this to somewhere else as it aggregates other calls
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()> {
         let _ = (submitter_did, rev_reg_id);
         Err(unimplemented_method_err("credx publish_local_revocations"))
@@ -779,5 +775,41 @@ impl From<UrsaCryptoError> for VcxError {
                 VcxError::from_msg(VcxErrorKind::InvalidState, err)
             }
         }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_tests {
+    use crate::{
+        error::{VcxErrorKind, VcxResult},
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
+        xyz::test_utils::mock_profile,
+    };
+
+    use super::IndyCredxAnonCreds;
+
+    #[tokio::test]
+    async fn test_unimplemented_methods() {
+        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+        }
+
+        let profile = mock_profile();
+        let anoncreds: Box<dyn BaseAnonCreds> = Box::new(IndyCredxAnonCreds::new(profile));
+
+        assert_unimplemented(anoncreds.verifier_verify_proof("", "", "", "", "", "").await);
+        assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
+        assert_unimplemented(
+            anoncreds
+                .issuer_create_and_store_credential_def("", "", "", None, "")
+                .await,
+        );
+        assert_unimplemented(anoncreds.issuer_create_credential_offer("").await);
+        assert_unimplemented(anoncreds.issuer_create_credential("", "", "", None, None).await);
+        assert_unimplemented(anoncreds.revoke_credential_local("", "", "").await);
+        assert_unimplemented(anoncreds.publish_local_revocations("", "").await);
     }
 }

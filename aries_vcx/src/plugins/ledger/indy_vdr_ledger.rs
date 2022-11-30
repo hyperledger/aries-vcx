@@ -31,12 +31,13 @@ use crate::xyz::primitives::revocation_registry::RevocationRegistryDefinition;
 use super::base_ledger::BaseLedger;
 
 pub struct IndyVdrLedgerPool {
-    runner: PoolRunner,
+    // visibility strictly for internal unit testing
+    pub(self) runner: Option<PoolRunner>,
 }
 
 impl IndyVdrLedgerPool {
     pub fn new_from_runner(runner: PoolRunner) -> Self {
-        IndyVdrLedgerPool { runner }
+        IndyVdrLedgerPool { runner: Some(runner) }
     }
 
     pub fn new(config: LedgerPoolConfig) -> VcxResult<Self> {
@@ -45,7 +46,7 @@ impl IndyVdrLedgerPool {
 
         let runner = PoolBuilder::from(vdr_config).transactions(txns)?.into_runner()?;
 
-        Ok(IndyVdrLedgerPool { runner })
+        Ok(IndyVdrLedgerPool { runner: Some(runner) })
     }
 }
 
@@ -68,7 +69,7 @@ impl IndyVdrLedger {
     }
 
     pub fn request_builder(&self) -> VcxResult<RequestBuilder> {
-        // TODO - don't use this instance of protocol version
+        // TODO - confirm correct protocol version?
         let v = settings::get_protocol_version();
         let version = ProtocolVersion::from_id(v as u64)?;
         Ok(RequestBuilder::new(version))
@@ -80,13 +81,20 @@ impl IndyVdrLedger {
         type VdrSendRequestResult =
             Result<(RequestResult<String>, Option<HashMap<String, f32, RandomState>>), VdrError>;
         let (sender, recv) = oneshot::channel::<VdrSendRequestResult>();
-        self.pool.runner.send_request(
-            request,
-            Box::new(move |result| {
-                // unable to handle a failure from `send` here
-                sender.send(result).ok();
-            }),
-        )?;
+        self.pool
+            .runner
+            .as_ref()
+            .ok_or(
+                // should not happen - strictly for unit testing
+                VcxError::from_msg(VcxErrorKind::NoPoolOpen, "IndyVdrLedgerPool runner was not provided"),
+            )?
+            .send_request(
+                request,
+                Box::new(move |result| {
+                    // unable to handle a failure from `send` here
+                    sender.send(result).ok();
+                }),
+            )?;
 
         let send_req_result: VdrSendRequestResult = recv
             .await
@@ -236,7 +244,6 @@ impl BaseLedger for IndyVdrLedger {
         self._submit_request(request).await
     }
 
-    // returns request result as JSON
     async fn publish_nym(
         &self,
         submitter_did: &str,
@@ -245,7 +252,7 @@ impl BaseLedger for IndyVdrLedger {
         data: Option<&str>,
         role: Option<&str>,
     ) -> VcxResult<String> {
-        // to implement: convert data into "alias" for indy vdr. for now throw unimplemented
+        // TODO - FUTURE: convert data into "alias" for indy vdr. for now throw unimplemented
         if data.is_some() {
             return Err(unimplemented_method_err("indy_vdr publish_nym with data"));
         }
@@ -573,5 +580,46 @@ impl From<VdrError> for VcxError {
 impl From<ValidationError> for VcxError {
     fn from(err: ValidationError) -> Self {
         VcxError::from_msg(VcxErrorKind::InvalidInput, err)
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "general_test")]
+mod unit_tests {
+    use std::sync::Arc;
+
+    use crate::{
+        error::{VcxErrorKind, VcxResult},
+        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
+        xyz::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
+    };
+
+    use super::IndyVdrLedger;
+
+    #[tokio::test]
+    async fn test_unimplemented_methods() {
+        // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
+
+        fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
+            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+        }
+
+        let profile = mock_profile();
+        let pool = Arc::new(IndyVdrLedgerPool { runner: None });
+        let ledger: Box<dyn BaseLedger> = Box::new(IndyVdrLedger::new(profile, pool));
+
+        assert_unimplemented(ledger.endorse_transaction("", "").await);
+        assert_unimplemented(ledger.set_endorser("", "", "").await);
+        assert_unimplemented(ledger.get_txn_author_agreement().await);
+        assert_unimplemented(ledger.get_rev_reg("", 0).await);
+        assert_unimplemented(ledger.get_ledger_txn(0, None).await);
+        assert_unimplemented(ledger.build_schema_request("", "").await);
+        assert_unimplemented(ledger.publish_schema("", "", None).await);
+        assert_unimplemented(ledger.publish_cred_def("", "").await);
+        assert_unimplemented(
+            ledger
+                .publish_rev_reg_def(&RevocationRegistryDefinition::default(), "")
+                .await,
+        );
     }
 }
