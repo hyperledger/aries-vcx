@@ -3,7 +3,7 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 
 // Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
 // Note that is divergence from w3c spec https://w3c.github.io/did-core/#service-properties
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone,PartialEq)]
 pub struct EndpointDidSov {
     pub endpoint: String,
     #[serde(default)]
@@ -27,11 +27,7 @@ impl EndpointDidSov {
     }
 
 }
-impl PartialEq for EndpointDidSov {
-    fn eq(&self, other: &Self) -> bool {
-       self.endpoint == other.endpoint && self.routing_keys == other.routing_keys
-    }
-}
+
 impl Default for EndpointDidSov {
     fn default() -> EndpointDidSov {
         EndpointDidSov {
@@ -67,7 +63,7 @@ mod unit_tests {
             .set_routing_keys(Some(_routing_keys()));
 
         assert_eq!(service1, service2);
-        assert_eq!(service1, service3);
+        assert_eq!(service1, service4);
         assert_ne!(service1, service3);
     }
 }
