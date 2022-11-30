@@ -251,11 +251,11 @@ jobs:
         uses: actions/checkout@v3
       - name: "Setup rust codecov environment"
         uses: ./.github/actions/setup-codecov-rust
-      - name: "Run workspace tests: modular_deps pool_tests agency_pool_tests"
+      - name: "Run workspace tests: modular_dependencies pool_tests agency_pool_tests"
         run: |
           RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
           RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
-          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests modular_deps';
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests modular_dependencies';
 
           mkdir -p /tmp/artifacts/coverage
           grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov

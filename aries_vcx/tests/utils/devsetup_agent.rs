@@ -431,7 +431,7 @@ pub mod test_utils {
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
-        let (alice_profile, alice_wallet_config) = if cfg!(feature = "modular_deps") {
+        let (alice_profile, alice_wallet_config) = if cfg!(feature = "modular_dependencies") {
             let genesis_file_path = setup.genesis_file_path.clone();
             let config = LedgerPoolConfig { genesis_file_path };
             println!("using modular-based profile");

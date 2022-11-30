@@ -363,7 +363,7 @@ impl SetupWalletPool {
 
 impl SetupProfile {
     async fn init() -> SetupProfile {
-        if cfg!(feature = "modular_deps") {
+        if cfg!(feature = "modular_dependencies") {
             println!("using modular profile");
             SetupProfile::init_modular().await
         } else {
