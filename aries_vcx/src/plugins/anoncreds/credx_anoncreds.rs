@@ -229,7 +229,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
 
         let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let _self_attested_attributes = (&requested_credentials).try_get("self_attested_attributes")?;
+        let self_attested_attributes = (&requested_credentials).get("self_attested_attributes");
 
         let rev_states: Option<Value> = if let Some(revoc_states_json) = revoc_states_json {
             Some(serde_json::from_str(revoc_states_json)?)
@@ -302,6 +302,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             }
         }
 
+        // add all accumulated requested attributes and requested predicates to credx [PresentCredential] object
         for (_cred_id, (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts)) in
             proof_details_by_cred_id.iter()
         {
@@ -316,7 +317,21 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             }
         }
 
-        // TODO - future - self attested
+        // create self_attested by iterating thru self_attested_value
+        let self_attested = if let Some(self_attested_value) = self_attested_attributes {
+            let mut self_attested_map: HashMap<String, String> = HashMap::new();
+            let self_attested_obj =  self_attested_value.try_as_object()?.clone();
+            let self_attested_iter = self_attested_obj.iter();
+            for (k,v) in self_attested_iter {
+                self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
+            }
+
+            if self_attested_map.len() == 0 {
+                None
+            } else {
+                Some(self_attested_map)
+            }
+        } else { None };
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
@@ -335,7 +350,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let presentation = credx::prover::create_presentation(
             &pres_req,
             present_credentials,
-            None,
+            self_attested,
             &link_secret,
             &schemas,
             &cred_defs,
