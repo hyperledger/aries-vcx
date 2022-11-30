@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::messages::connection::invite::Invitation;
@@ -8,7 +9,6 @@ use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
-use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::xyz::ledger::transactions::into_did_doc;
 use aries_vcx::{
@@ -53,16 +53,24 @@ impl ServiceMediatedConnections {
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
             .clone();
-        self.mediated_connections.set(&connection.get_thread_id(), connection)?;
+        self.mediated_connections
+            .insert(&connection.get_thread_id(), connection)?;
         Ok(invite)
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let ddo = into_did_doc(&self.profile, &invite).await?;
-        let connection =
-            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
-                .await?;
-        self.mediated_connections.set(&connection.get_thread_id(), connection)
+        let connection = MediatedConnection::create_with_invite(
+            "",
+            &self.profile,
+            &self.agency_client()?,
+            invite,
+            ddo,
+            true,
+        )
+        .await?;
+        self.mediated_connections
+            .insert(&connection.get_thread_id(), connection)
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
@@ -71,7 +79,7 @@ impl ServiceMediatedConnections {
         connection
             .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
@@ -81,14 +89,14 @@ impl ServiceMediatedConnections {
             .process_request(&self.profile, &self.agency_client()?, request)
             .await?;
         connection.send_response(&self.profile).await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
     pub async fn send_ping(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
         connection.send_ping(&self.profile, None).await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(())
     }
 
@@ -101,26 +109,12 @@ impl ServiceMediatedConnections {
         connection
             .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;
-        self.mediated_connections.set(thread_id, connection)?;
+        self.mediated_connections.insert(thread_id, connection)?;
         Ok(self.mediated_connections.get(thread_id)?.get_state())
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.mediated_connections.has_id(thread_id)
-    }
-
-    pub async fn get_all_proof_requests(&self) -> AgentResult<Vec<(PresentationRequest, String)>> {
-        let agency_client = self.agency_client()?;
-        let mut requests = Vec::<(PresentationRequest, String)>::new();
-        for connection in self.mediated_connections.get_all()? {
-            for (uid, message) in connection.get_messages(&agency_client).await?.into_iter() {
-                if let A2AMessage::PresentationRequest(request) = message {
-                    connection.update_message_status(&uid, &agency_client).await.ok();
-                    requests.push((request, connection.get_thread_id()));
-                }
-            }
-        }
-        Ok(requests)
+        self.mediated_connections.contains_key(thread_id)
     }
 }
 

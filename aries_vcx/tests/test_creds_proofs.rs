@@ -323,7 +323,6 @@ mod integration_tests {
 #[cfg(test)]
 #[cfg(feature = "agency_pool_tests")]
 mod tests {
-    use aries_vcx::indy::ledger::pool::test_utils::{delete_test_pool, open_test_pool};
     use aries_vcx::xyz::test_utils::create_and_store_nonrevocable_credential_def;
     use serde_json::Value;
 
@@ -336,7 +335,6 @@ mod tests {
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::utils::{devsetup::*};
-    use vdrtools::PoolHandle;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber, PayloadKinds};
     use crate::utils::scenarios::test_utils::{

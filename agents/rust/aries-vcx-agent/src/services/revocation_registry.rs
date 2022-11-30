@@ -2,6 +2,7 @@ use std::path::Path;
 use std::sync::{Mutex, Arc};
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::xyz::primitives::revocation_registry::RevocationRegistry;
@@ -41,7 +42,7 @@ impl ServiceRevocationRegistries {
             1,
         )
         .await?;
-        self.rev_regs.set(&rev_reg.get_rev_reg_id(), rev_reg)
+        self.rev_regs.insert(&rev_reg.get_rev_reg_id(), rev_reg)
     }
 
     pub fn tails_file_path(&self, thread_id: &str) -> AgentResult<String> {
@@ -62,7 +63,7 @@ impl ServiceRevocationRegistries {
         rev_reg
             .publish_revocation_primitives(&self.profile, tails_url)
             .await?;
-        self.rev_regs.set(thread_id, rev_reg)?;
+        self.rev_regs.insert(thread_id, rev_reg)?;
         Ok(())
     }
 
