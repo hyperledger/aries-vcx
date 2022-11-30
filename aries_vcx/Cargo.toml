@@ -39,7 +39,7 @@ openssl = { version = "0.10.35" }
 num-traits = "0.2.0"
 libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "debf776c8" }
 # vdrtools alternatives ----
-indy-vdr = "0.3.4"
+indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"] }
 # PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
 # `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
 # `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
