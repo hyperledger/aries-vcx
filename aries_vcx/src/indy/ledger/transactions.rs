@@ -515,7 +515,7 @@ pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesS
         return Ok(AriesService::create()
             .set_recipient_keys(recipient_keys)
             .set_service_endpoint(endpoint.endpoint)
-            .set_routing_keys(endpoint.routing_keys.unwrap()));
+            .set_routing_keys(endpoint.routing_keys.unwrap_or_default()));
     }
     parse_legacy_endpoint_attrib(pool_handle, &did_raw).await
 }
