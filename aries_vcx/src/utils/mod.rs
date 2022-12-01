@@ -1,9 +1,10 @@
 use vdrtools::WalletHandle;
+use vdrtools::types::validation::Validatable;
 use std::env;
 use std::path::PathBuf;
 
 use messages::did_doc::DidDoc;
-use crate::error::VcxResult;
+use crate::error::{VcxResult, VcxError, VcxErrorKind};
 use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
@@ -111,4 +112,18 @@ pub async fn send_message_anonymously(
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
 
     Ok(())
+}
+
+
+pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
+where
+    T: Validatable,
+    T: serde::Deserialize<'a>,
+{
+    let data = serde_json::from_str::<T>(s)?;
+
+    match data.validate() {
+        Ok(_) => Ok(data),
+        Err(s) => Err(VcxError::from_msg(VcxErrorKind::LibindyInvalidStructure, s)),
+    }
 }

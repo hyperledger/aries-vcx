@@ -7,8 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "vcx.h"
-#include "vcx.h"
+#import "IndyTypes.h"
 
 @interface VcxLogger : NSObject
 
@@ -21,7 +20,7 @@
  NOTE: You should specify either `pattern` parameter or `RUST_LOG` environment variable to init logger.
  NOTE: Logger can be set only once.
 
- @param  pattern: (Optional) pattern that corresponds with the log messages to show.
+ @param pattern: (Optional) pattern that corresponds with the log messages to show.
  */
 + (void)setDefaultLogger:(NSString *)pattern;
 
@@ -30,9 +29,9 @@
 
  NOTE: Logger can be set only once.
 
- @param  logCb: function will be called to log a record.
+ @param logCb: function will be called to log a record.
  */
-+ (void)setLogger:(id)logCb;
++ (void)setLogger:(void (^)(NSObject *context, NSNumber *level, NSString *target, NSString *message, NSString *modulePath, NSString *file, NSNumber *line))logCb;
 
 + (VcxLogger *)sharedInstance;
 

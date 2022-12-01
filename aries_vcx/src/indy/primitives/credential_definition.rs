@@ -2,6 +2,7 @@ use vdrtools::{Locator, DidValue};
 
 use vdrtools::{PoolHandle, WalletHandle};
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::utils::parse_and_validate;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
 
@@ -270,10 +271,10 @@ pub async fn libindy_create_and_store_credential_def(
         .create_and_store_credential_definition(
             wallet_handle,
             DidValue(issuer_did.into()),
-            serde_json::from_str(schema_json)?,
+            parse_and_validate(schema_json)?,
             tag.into(),
             sig_type.map(|s| s.into()),
-            serde_json::from_str(config_json)?,
+            Some(serde_json::from_str(config_json)?),
         ).await?;
 
     Ok(res)

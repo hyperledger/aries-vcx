@@ -22,12 +22,11 @@ impl CredentialPreviewData {
     }
 
     pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialPreviewData {
-        let data_value = match mime_type {
-            MimeType::Plain => CredentialValue {
-                name: name.to_string(),
-                value: value.to_string(),
-                _type: None,
-            },
+        let data_value = 
+        CredentialValue {
+            name: name.to_string(),
+            value: value.to_string(),
+            _type: Some(mime_type),
         };
         self.attributes.push(data_value);
         self

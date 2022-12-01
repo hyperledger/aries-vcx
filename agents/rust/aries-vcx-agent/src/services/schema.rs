@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::indy::ledger::transactions::get_schema_json;
 use aries_vcx::indy::primitives::credential_schema::Schema;
@@ -30,7 +31,7 @@ impl ServiceSchemas {
         attributes: &Vec<String>,
     ) -> AgentResult<String> {
         let schema = Schema::create("", &self.issuer_did, name, version, attributes).await?;
-        self.schemas.set(&schema.get_schema_id(), schema)
+        self.schemas.insert(&schema.get_schema_id(), schema)
     }
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
@@ -38,7 +39,7 @@ impl ServiceSchemas {
         let schema = schema
             .publish(self.wallet_handle, self.pool_handle, None)
             .await?;
-        self.schemas.set(thread_id, schema)?;
+        self.schemas.insert(thread_id, schema)?;
         Ok(())
     }
 

@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::proof_presentation::presentation_ack::PresentationAck;
@@ -86,7 +87,7 @@ impl ServiceProver {
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
-        self.provers.set(
+        self.provers.insert(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, connection_id),
         )
@@ -105,7 +106,7 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.provers.set(
+        self.provers.insert(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, connection_id),
         )
@@ -138,7 +139,7 @@ impl ServiceProver {
                 connection.send_message_closure(self.wallet_handle, None).await?,
             )
             .await?;
-        self.provers.set(
+        self.provers.insert(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, &connection_id),
         )?;
@@ -152,7 +153,7 @@ impl ServiceProver {
     ) -> AgentResult<String> {
         let ProverWrapper { mut prover, connection_id } = self.provers.get(thread_id)?;
         prover.process_presentation_ack(ack)?;
-        self.provers.set(
+        self.provers.insert(
             &prover.get_thread_id()?,
             ProverWrapper::new(prover, &connection_id),
         )
@@ -164,6 +165,6 @@ impl ServiceProver {
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.provers.has_id(thread_id)
+        self.provers.contains_key(thread_id)
     }
 }
