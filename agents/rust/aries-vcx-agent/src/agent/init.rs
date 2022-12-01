@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::{Arc, RwLock}, collections::LinkedList};
 
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
@@ -152,6 +152,7 @@ impl Agent {
                 config_issuer,
                 config_agency_client,
             },
+            received_messages: Arc::new(RwLock::new(LinkedList::new()))
         })
     }
 }

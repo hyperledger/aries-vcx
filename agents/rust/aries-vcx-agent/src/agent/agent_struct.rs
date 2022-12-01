@@ -1,6 +1,8 @@
-use std::sync::Arc;
+use std::collections::LinkedList;
+use std::sync::{Arc, RwLock};
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::agent::agent_config::AgentConfig;
@@ -27,6 +29,7 @@ pub struct Agent {
     pub(super) issuer: Arc<ServiceCredentialsIssuer>,
     pub(super) verifier: Arc<ServiceVerifier>,
     pub(super) prover: Arc<ServiceProver>,
+    pub(super) received_messages: Arc<RwLock<LinkedList<A2AMessage>>>
 }
 
 impl Agent {
@@ -99,5 +102,9 @@ impl Agent {
 
     pub fn prover(&self) -> Arc<ServiceProver> {
         self.prover.clone()
+    }
+
+    pub fn received_messages(&self) -> Arc<RwLock<LinkedList<A2AMessage>>> {
+        self.received_messages.clone()
     }
 }

@@ -1,5 +1,6 @@
 mod agent_config;
 mod agent_struct;
+mod actor;
 mod init;
 
 pub use agent_config::AgentConfig;

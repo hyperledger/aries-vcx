@@ -10,6 +10,7 @@ use aries_vcx::messages::ack::Ack;
 use aries_vcx::messages::connection::invite::Invitation;
 use aries_vcx::messages::connection::request::Request;
 use aries_vcx::messages::connection::response::SignedResponse;
+use aries_vcx::protocols::SendClosureConnection;
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 pub type ServiceEndpoint = String;
@@ -52,11 +53,11 @@ impl ServiceConnections {
         self.connections.insert(&invitee.get_thread_id(), invitee)
     }
 
-    pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
+    pub async fn send_request(&self, thread_id: &str, send_closure: Option<SendClosureConnection>) -> AgentResult<()> {
         let invitee = self
             .connections
             .get(thread_id)?
-            .send_request(self.wallet_handle, self.service_endpoint.clone(), vec![], None)
+            .send_request(self.wallet_handle, self.service_endpoint.clone(), vec![], send_closure)
             .await?;
         self.connections.insert(thread_id, invitee)?;
         Ok(())
@@ -72,11 +73,11 @@ impl ServiceConnections {
         Ok(())
     }
 
-    pub async fn send_response(&self, thread_id: &str) -> AgentResult<()> {
+    pub async fn send_response(&self, thread_id: &str, send_closure: Option<SendClosureConnection>) -> AgentResult<()> {
         let inviter = self
             .connections
             .get(thread_id)?
-            .send_response(self.wallet_handle, None)
+            .send_response(self.wallet_handle, send_closure)
             .await?;
         self.connections.insert(thread_id, inviter)?;
         Ok(())
@@ -92,11 +93,11 @@ impl ServiceConnections {
         Ok(())
     }
 
-    pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
+    pub async fn send_ack(&self, thread_id: &str, send_closure: Option<SendClosureConnection>) -> AgentResult<()> {
         let invitee = self
             .connections
             .get(thread_id)?
-            .send_ack(self.wallet_handle, None)
+            .send_ack(self.wallet_handle, send_closure)
             .await?;
         self.connections.insert(thread_id, invitee)?;
         Ok(())
@@ -110,6 +111,15 @@ impl ServiceConnections {
             .await?;
         self.connections.insert(thread_id, inviter)?;
         Ok(())
+    }
+
+    pub async fn send_message(&self, thread_id: &str, message: &str, send_closure: Option<SendClosureConnection>) -> AgentResult<()> {
+        self
+            .connections
+            .get(thread_id)?
+            .send_generic_message(self.wallet_handle, message, send_closure)
+            .await
+            .map_err(Into::into)
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {

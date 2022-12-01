@@ -1,6 +1,7 @@
 use std::clone::Clone;
 
 use messages::a2a::A2AMessage;
+use messages::basic_message::message::BasicMessage;
 use messages::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 use vdrtools::WalletHandle;
@@ -317,6 +318,21 @@ impl Connection {
             Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
         })
     }
+
+    pub async fn send_generic_message(&self, wallet_handle: WalletHandle, message: &str, send_message: Option<SendClosureConnection>) -> VcxResult<()> {
+        trace!("Connection::send_generic_message >>> message: {:?}", message);
+        let message = match ::serde_json::from_str::<A2AMessage>(message) {
+            Ok(a2a_message) => a2a_message,
+            Err(_) => BasicMessage::create()
+                .set_content(message.to_string())
+                .set_time()
+                .set_out_time()
+                .to_a2a_message(),
+        };
+        let send_message = self.send_message_closure(wallet_handle, send_message).await?;
+        send_message(message).await
+    }
+
 }
 
 #[cfg(feature = "test_utils")]
