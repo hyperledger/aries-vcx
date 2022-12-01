@@ -9,10 +9,10 @@ pub mod utils;
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
     use aries_vcx::messages::did_doc::service_aries::AriesService;
-    use aries_vcx::indy::ledger::transactions::get_cred_def_json;
+    use aries_vcx::indy::ledger::transactions::{write_endpoint, get_cred_def_json};
     use aries_vcx::indy::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::indy::ledger::transactions::{
-        add_new_did, add_service, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
+        add_new_did, write_endpoint_legacy, endorse_transaction, get_service, libindy_build_schema_request, multisign_request,
     };
     use aries_vcx::indy::keys::{get_verkey_from_ledger, get_verkey_from_wallet, rotate_verkey};
     use aries_vcx::messages::connection::did::Did;
@@ -21,6 +21,7 @@ mod integration_tests {
     use aries_vcx::indy::ledger::transactions::append_request_endorser;
     use std::thread;
     use std::time::Duration;
+    use messages::did_doc::service_aries_public::EndpointDidSov;
 
     #[tokio::test]
     async fn test_open_close_pool() {
@@ -77,14 +78,32 @@ mod integration_tests {
     #[tokio::test]
     async fn test_add_get_service() {
         SetupWalletPool::run(|setup| async move {
+            let did = setup.institution_did.clone();
+            let expect_service = AriesService::default();
+            write_endpoint_legacy(setup.wallet_handle, setup.pool_handle, &did, &expect_service).await.unwrap();
+            thread::sleep(Duration::from_millis(50));
+            let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
 
-        let did = setup.institution_did.clone();
-        let expect_service = AriesService::default();
-        add_service(setup.wallet_handle, setup.pool_handle, &did, &expect_service).await.unwrap();
-        thread::sleep(Duration::from_millis(50));
-        let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
+            assert_eq!(expect_service, service)
+        }).await;
+    }
 
-        assert_eq!(expect_service, service)
+    #[tokio::test]
+    async fn test_add_get_service_public() {
+        SetupWalletPool::run(|setup| async move {
+            let did = setup.institution_did.clone();
+            let create_service = EndpointDidSov::create()
+                .set_service_endpoint("https://example.org".into())
+                .set_routing_keys(Some(vec!["did:sov:456".into()]));
+            write_endpoint(setup.wallet_handle, setup.pool_handle, &did, &create_service).await.unwrap();
+            thread::sleep(Duration::from_millis(50));
+            let service = get_service(setup.pool_handle, &Did::new(&did).unwrap()).await.unwrap();
+            let expect_recipient_key = get_verkey_from_ledger(setup.pool_handle, &setup.institution_did).await.unwrap();
+            let expect_service = AriesService::default()
+                .set_service_endpoint("https://example.org".into())
+                .set_recipient_keys(vec![expect_recipient_key])
+                .set_routing_keys(vec!["did:sov:456".into()]);
+            assert_eq!(expect_service, service)
         }).await;
     }
 }

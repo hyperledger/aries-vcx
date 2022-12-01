@@ -17,7 +17,7 @@ use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::utils::constants::*;
 use aries_vcx::utils::error;
 use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::transactions::{get_ledger_txn, add_service, get_service};
+use aries_vcx::indy::ledger::transactions::{get_ledger_txn, write_endpoint_legacy, get_service};
 use crate::api_lib::global::pool::get_main_pool_handle;
 
 use crate::api_lib::api_handle::mediated_connection;
@@ -886,7 +886,7 @@ pub extern "C" fn vcx_create_service(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match add_service(get_main_wallet_handle(), pool_handle, &institution_did, &service).await {
+            match write_endpoint_legacy(get_main_wallet_handle(), pool_handle, &institution_did, &service).await {
                 Ok(_res) => {
                     trace!(
                         "vcx_create_service(command_handle: {}, rc: {})",
