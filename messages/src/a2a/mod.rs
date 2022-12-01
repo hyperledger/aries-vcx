@@ -1,4 +1,3 @@
-use actix::Message;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
@@ -36,8 +35,7 @@ pub mod message_family;
 pub mod message_type;
 pub mod protocol_registry;
 
-#[derive(Debug, PartialEq, Clone, Message)]
-#[rtype(result = "Result<(), String>")]
+#[derive(Debug, PartialEq, Clone)]
 pub enum A2AMessage {
     /// routing
     Forward(Forward),

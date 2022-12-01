@@ -2,6 +2,7 @@ mod agent_config;
 mod agent_struct;
 mod actor;
 mod init;
+pub mod a2a_msg_actix;
 
 pub use agent_config::AgentConfig;
 pub use agent_struct::Agent;
