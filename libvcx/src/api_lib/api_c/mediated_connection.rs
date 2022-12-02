@@ -6,12 +6,11 @@ use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::indy;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::mediated_connection::*;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::profile::get_main_wallet;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
@@ -1141,7 +1140,9 @@ pub extern "C" fn vcx_connection_sign_data(
             }
         };
 
-        match indy::signing::sign(get_main_wallet_handle(), &vk, &data_raw).await {
+        let wallet = get_main_wallet();
+
+        match wallet.sign(&vk, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1238,7 +1239,9 @@ pub extern "C" fn vcx_connection_verify_signature(
             }
         };
 
-        match indy::signing::verify(&vk, &data_raw, &signature_raw).await {
+        let wallet = get_main_wallet();
+
+        match wallet.verify(&vk, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",

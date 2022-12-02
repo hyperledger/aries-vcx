@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-
 use vdrtools::{
     Locator,
     DidValue,
@@ -8,13 +5,10 @@ use vdrtools::{
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use messages::did_doc::service_aries::AriesService;
+use crate::common::ledger::transactions::{Response, Request};
 use crate::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
-use crate::indy::keys::{create_and_store_my_did, get_verkey_from_ledger};
-use messages::connection::did::Did;
-use messages::connection::invite::Invitation;
 use crate::utils;
 use crate::utils::parse_and_validate;
 use crate::utils::constants::{
@@ -23,9 +17,6 @@ use crate::utils::constants::{
     SCHEMA_ID, SCHEMA_JSON, SCHEMA_TXN, SUBMIT_SCHEMA_RESPONSE,
 };
 use crate::utils::random::generate_random_did;
-use messages::did_doc::service_resolvable::ServiceResolvable;
-use messages::did_doc::DidDoc;
-use messages::did_doc::service_aries_public::EndpointDidSov;
 
 pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     let res = Locator::instance()
@@ -39,6 +30,7 @@ pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: 
     Ok(res)
 }
 
+#[allow(dead_code)]
 pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
     let res = Locator::instance()
         .ledger_controller
@@ -204,6 +196,7 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxResult<String> {
     let res = Locator::instance()
         .ledger_controller
@@ -236,6 +229,7 @@ pub async fn libindy_build_attrib_request(
     Ok(res)
 }
 
+#[allow(dead_code)]
 pub async fn libindy_build_get_auth_rule_request(
     submitter_did: Option<&str>,
     txn_type: Option<&str>,
@@ -333,6 +327,7 @@ pub async fn libindy_get_schema(
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 pub async fn libindy_build_get_cred_def_request(
     submitter_did: Option<&str>,
     cred_def_id: &str,
@@ -347,7 +342,7 @@ pub async fn libindy_build_get_cred_def_request(
     Ok(res)
 }
 
-pub async fn libindy_get_cred_def(
+async fn libindy_get_cred_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
     cred_def_id: &str,
@@ -372,7 +367,7 @@ pub async fn libindy_get_cred_def(
 
     Ok(res)
 }
-
+#[allow(dead_code)]
 pub async fn append_request_endorser(request: &str, endorser: &str) -> VcxResult<String> {
     let request = Locator::instance()
         .ledger_controller
@@ -500,155 +495,6 @@ pub async fn get_attr(pool_handle: PoolHandle, did: &str, attr_name: &str) -> Vc
     libindy_submit_request(pool_handle, &get_attrib_req).await
 }
 
-
-pub async fn get_service(pool_handle: PoolHandle, did: &Did) -> VcxResult<AriesService> {
-    let did_raw = did.to_string();
-    let did_raw = match did_raw.rsplit_once(':') {
-        None => { did_raw }
-        Some((_, value)) => { value.to_string() }
-    };
-    let attr_resp = get_attr(pool_handle, &did_raw, "endpoint").await?;
-    let data = get_data_from_response(&attr_resp)?;
-    if data["endpoint"].is_object() {
-        let endpoint: EndpointDidSov = serde_json::from_value(data["endpoint"].clone())?;
-        let recipient_keys = vec![get_verkey_from_ledger(pool_handle, &did_raw).await.unwrap()];
-        return Ok(AriesService::create()
-            .set_recipient_keys(recipient_keys)
-            .set_service_endpoint(endpoint.endpoint)
-            .set_routing_keys(endpoint.routing_keys.unwrap()));
-    }
-    parse_legacy_endpoint_attrib(pool_handle, &did_raw).await
-}
-
-pub async fn parse_legacy_endpoint_attrib(pool_handle: PoolHandle, did_raw: &String) -> VcxResult<AriesService> {
-    let attr_resp = get_attr(pool_handle, &did_raw, "service").await?;
-    let data = get_data_from_response(&attr_resp)?;
-    let ser_service = match data["service"].as_str() {
-        Some(ser_service) => ser_service.to_string(),
-        None => {
-            warn!("Failed converting service read from ledger {:?} to string, falling back to new single-serialized format", data["service"]);
-            data["service"].to_string()
-        }
-    };
-    serde_json::from_str(&ser_service).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
-            format!("Failed to deserialize service read from the ledger: {:?}", err),
-        )
-    })
-}
-
-pub async fn resolve_service(pool_handle: PoolHandle, service: &ServiceResolvable) -> VcxResult<AriesService> {
-    match service {
-        ServiceResolvable::AriesService(service) => Ok(service.clone()),
-        ServiceResolvable::Did(did) => get_service(pool_handle, did).await,
-    }
-}
-
-pub async fn into_did_doc(pool_handle: PoolHandle, invitation: &Invitation) -> VcxResult<DidDoc> {
-    let mut did_doc: DidDoc = DidDoc::default();
-    let (service_endpoint, recipient_keys, routing_keys) = match invitation {
-        Invitation::Public(invitation) => {
-            did_doc.set_id(invitation.did.to_string());
-            let service = get_service(pool_handle, &invitation.did).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-        Invitation::Pairwise(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            (
-                invitation.service_endpoint.clone(),
-                invitation.recipient_keys.clone(),
-                invitation.routing_keys.clone(),
-            )
-        }
-        Invitation::OutOfBand(invitation) => {
-            did_doc.set_id(invitation.id.0.clone());
-            let service = resolve_service(pool_handle, &invitation.services[0]).await.unwrap_or_else(|err| {
-                error!("Failed to obtain service definition from the ledger: {}", err);
-                AriesService::default()
-            });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
-        }
-    };
-    did_doc.set_service_endpoint(service_endpoint);
-    did_doc.set_recipient_keys(recipient_keys);
-    did_doc.set_routing_keys(routing_keys);
-    Ok(did_doc)
-}
-
-pub async fn write_endpoint_legacy(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &AriesService) -> VcxResult<String> {
-    let attrib_json = json!({ "service": service }).to_string();
-    let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
-    check_response(&res)?;
-    Ok(res)
-}
-
-pub async fn write_endpoint(wallet_handle: WalletHandle, pool_handle: PoolHandle, did: &str, service: &EndpointDidSov) -> VcxResult<String> {
-    let attrib_json = json!({ "endpoint": service }).to_string();
-    let res = add_attr(wallet_handle, pool_handle, did, &attrib_json).await?;
-    check_response(&res)?;
-    Ok(res)
-}
-
-fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
-    let resp: serde_json::Value = serde_json::from_str(resp)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
-    serde_json::from_str(resp["result"]["data"].as_str().unwrap_or("{}"))
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Request {
-    pub req_id: u64,
-    pub identifier: String,
-    pub signature: Option<String>,
-    pub signatures: Option<HashMap<String, String>>,
-    pub endorser: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(tag = "op")]
-pub enum Response {
-    #[serde(rename = "REQNACK")]
-    ReqNACK(Reject),
-    #[serde(rename = "REJECT")]
-    Reject(Reject),
-    #[serde(rename = "REPLY")]
-    Reply(Reply),
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Reject {
-    pub reason: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum Reply {
-    ReplyV0(ReplyV0),
-    ReplyV1(ReplyV1),
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ReplyV0 {
-    pub result: serde_json::Value,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ReplyV1 {
-    pub data: ReplyDataV1,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ReplyDataV1 {
-    pub result: serde_json::Value,
-}
-
 pub async fn sign_and_submit_to_ledger(wallet_handle: WalletHandle, pool_handle: PoolHandle, submitter_did: &str, req: &str) -> VcxResult<String> {
     debug!("sign_and_submit_to_ledger(submitter_did: {}, req: {}", submitter_did, req);
     if settings::indy_mocks_enabled() {
@@ -657,39 +503,6 @@ pub async fn sign_and_submit_to_ledger(wallet_handle: WalletHandle, pool_handle:
     let response = libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await?;
     debug!("sign_and_submit_to_ledger >>> response: {}", &response);
     Ok(response)
-}
-
-pub async fn add_new_did(
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
-    submitter_did: &str,
-    role: Option<&str>,
-) -> (String, String) {
-    let (did, verkey) =
-        create_and_store_my_did(
-            wallet_handle,
-            None,
-            None,
-        ).await.unwrap();
-
-    let mut req_nym = Locator::instance()
-        .ledger_controller
-        .build_nym_request(
-            submitter_did.into(),
-            did.as_str().into(),
-            Some(verkey.clone()),
-            None,
-            role.map(|s| s.into()),
-        ).await
-        .unwrap();
-
-    req_nym = append_txn_author_agreement_to_request(&req_nym).await.unwrap();
-
-    libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, &req_nym)
-        .await
-        .unwrap();
-
-    (did, verkey)
 }
 
 pub async fn libindy_build_revoc_reg_def_request(submitter_did: &str, rev_reg_def_json: &str) -> VcxResult<String> {
@@ -798,6 +611,7 @@ async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxRes
 }
 
 // TODO: remove async
+#[allow(dead_code)]
 async fn libindy_parse_get_cred_def_response(get_rev_reg_resp: &str) -> VcxResult<(String, String)> {
     let res = Locator::instance()
         .ledger_controller
@@ -935,6 +749,7 @@ pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u
     libindy_parse_get_revoc_reg_response(&res).await
 }
 
+#[allow(dead_code)]
 pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
@@ -947,6 +762,7 @@ pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cre
     libindy_parse_get_cred_def_response(&res).await
 }
 
+#[allow(dead_code)]
 pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
     match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
         Ok(_) => Ok(true),
@@ -987,8 +803,8 @@ pub async fn build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> 
 pub async fn get_ledger_txn(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
-    submitter_did: Option<&str>,
     seq_no: i32,
+    submitter_did: Option<&str>,
 ) -> VcxResult<String> {
     trace!(
         "get_ledger_txn >>> submitter_did: {:?}, seq_no: {}",
@@ -1074,9 +890,6 @@ pub async fn get_cred_def_json(wallet_handle: WalletHandle, pool_handle: PoolHan
 #[cfg(feature = "general_test")]
 mod test {
     use crate::utils::devsetup::*;
-    use messages::a2a::MessageId;
-    use messages::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
-    use messages::connection::invite::test_utils::_pairwise_invitation;
 
     use super::*;
 
@@ -1098,16 +911,6 @@ mod test {
             r#"{"reqId":1, "identifier": "EbP4aYNeTHL6q385GuVpRV", "endorser": "NcYxiDXkpYi6ov5FcYDi1e"}"#;
         assert!(_verify_transaction_can_be_endorsed(transaction, "EbP4aYNeTHL6q385GuVpRV").is_err());
     }
-
-    #[tokio::test]
-    async fn test_did_doc_from_invitation_works() {
-        let mut did_doc = DidDoc::default();
-        did_doc.set_id(MessageId::id().0);
-        did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_recipient_keys(_recipient_keys());
-        did_doc.set_routing_keys(_routing_keys());
-        assert_eq!(did_doc, into_did_doc(0, &Invitation::Pairwise(_pairwise_invitation())).await.unwrap());
-    }
 }
 
 #[cfg(test)]
@@ -1119,12 +922,12 @@ pub mod integration_tests {
     #[tokio::test]
     async fn test_get_txn() {
         SetupWalletPool::run(|setup| async move {
-        get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, None, 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, None).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, None).await;
         assert!(txn.is_ok());
 
-        get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 0).await.unwrap_err();
-        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, Some(&setup.institution_did), 1).await;
+        get_ledger_txn(setup.wallet_handle, setup.pool_handle, 0, Some(&setup.institution_did)).await.unwrap_err();
+        let txn = get_ledger_txn(setup.wallet_handle, setup.pool_handle, 1, Some(&setup.institution_did)).await;
         assert!(txn.is_ok());
         }).await;
     }

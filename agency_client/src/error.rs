@@ -1,7 +1,6 @@
 use std::fmt;
 
 use failure::{Backtrace, Context, Fail};
-use vdrtools::types::errors::IndyError;
 
 use crate::utils::error_utils::kind_to_error_message;
 
@@ -156,13 +155,6 @@ impl From<AgencyClientErrorKind> for AgencyClientError {
 impl From<Context<AgencyClientErrorKind>> for AgencyClientError {
     fn from(inner: Context<AgencyClientErrorKind>) -> AgencyClientError {
         AgencyClientError { inner }
-    }
-}
-
-// TODO: provide REAL implementation
-impl From<IndyError> for AgencyClientError {
-    fn from(_indy: IndyError) -> Self {
-        AgencyClientErrorKind::InvalidState.into()
     }
 }
 

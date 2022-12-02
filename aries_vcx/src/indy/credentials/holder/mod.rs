@@ -117,6 +117,7 @@ pub async fn libindy_prover_create_credential_req(
     prover_did: &str,
     credential_offer_json: &str,
     credential_def_json: &str,
+    master_secret_name: &str
 ) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
         return Ok((utils::constants::CREDENTIAL_REQ_STRING.to_owned(), String::new()));
@@ -125,8 +126,6 @@ pub async fn libindy_prover_create_credential_req(
     let cred_offer = serde_json::from_str::<CredentialOffer>(credential_offer_json)?;
 
     let cred_def = serde_json::from_str::<CredentialDefinition>(credential_def_json)?;
-
-    let master_secret_name = settings::DEFAULT_LINK_SECRET_ALIAS;
 
     let res = Locator::instance()
         .prover_controller

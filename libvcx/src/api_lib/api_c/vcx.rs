@@ -3,19 +3,20 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
+use crate::api_lib::global::pool::{close_main_pool, is_main_pool_open, open_main_pool};
+use crate::api_lib::global::profile::get_main_profile;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use crate::api_lib::global::pool::{close_main_pool, get_main_pool_handle, is_main_pool_open, open_main_pool};
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
-use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::indy::ledger::{pool, transactions};
+use aries_vcx::indy::ledger::pool;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::{indy, utils};
 use aries_vcx::utils::error;
 use aries_vcx::utils::version_constants;
+use aries_vcx::vdrtools::CommandHandle;
+use aries_vcx::{indy, utils};
 
 use crate::api_lib;
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
@@ -425,7 +426,7 @@ pub extern "C" fn vcx_update_webhook_url(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS.code_num
@@ -442,14 +443,15 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
     trace!("vcx_get_ledger_author_agreement(command_handle: {})", command_handle);
 
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
+    let profile = match get_main_profile() {
+        Ok(profile) => profile,
         Err(err) => return err.into(),
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match transactions::libindy_get_txn_author_agreement(pool_handle).await {
+            let ledger = profile.inject_ledger();
+            match ledger.get_txn_author_agreement().await {
                 Ok(err) => {
                     trace!(
                         "vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
@@ -473,7 +475,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS.code_num
@@ -682,7 +684,7 @@ pub mod test_utils {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW
         })
-            .to_string();
+        .to_string();
 
         info!("_vcx_create_and_open_wallet >>>");
 
@@ -735,7 +737,7 @@ pub mod test_utils {
             "retrieveValue": true,
             "retrieveTags": false
         })
-            .to_string();
+        .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -774,8 +776,8 @@ mod tests {
     #[cfg(feature = "general_test")]
     use std::ptr;
 
-    use aries_vcx::indy;
     use aries_vcx::error::VcxResult;
+    use aries_vcx::indy;
 
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
@@ -785,38 +787,32 @@ mod tests {
 
     #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::ledger::pool::{
-        test_utils::{
-            create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
-        },
+        test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
         PoolConfig,
     };
 
     use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::devsetup::{
-        SetupDefaults, SetupEmpty, SetupMocks,
-        SetupPoolConfig,  TempFile, TestSetupCreateWallet,
+        SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet,
     };
 
     use crate::api_lib;
     use crate::api_lib::api_c;
     use crate::api_lib::api_c::mediated_connection::vcx_connection_create;
     use crate::api_lib::api_c::vcx::test_utils::{
-        _test_add_and_get_wallet_record,
-        _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_threadpool,
-        _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure,
-        _vcx_open_main_wallet_c_closure, _vcx_open_pool,
+        _test_add_and_get_wallet_record, _vcx_create_and_open_wallet, _vcx_create_wallet, _vcx_init_threadpool,
+        _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure, _vcx_open_main_wallet_c_closure, _vcx_open_pool,
         _vcx_open_wallet,
     };
     use crate::api_lib::api_handle::{
         mediated_connection, credential, credential_def, disclosed_proof, issuer_credential, proof, schema,
     };
-    #[cfg(feature = "pool_tests")]
-    use crate::api_lib::global::wallet::get_main_wallet_handle;
+    use crate::api_lib::global::pool::reset_main_pool_handle;
     use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
+    use crate::api_lib::global::wallet::get_main_wallet_handle;
     use crate::api_lib::utils::error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::api_lib::global::pool::reset_main_pool_handle;
 
     use super::*;
 
@@ -916,7 +912,7 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-            .to_string();
+        .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&content).unwrap();
@@ -959,7 +955,7 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-            .to_string();
+        .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
@@ -1023,8 +1019,8 @@ mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof(
             "1".to_string(),
@@ -1033,8 +1029,8 @@ mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let schema = schema::create_and_publish_schema(
             "5",
             "VsKV7grR1BUE29mG2Fm2kX".to_string(),
@@ -1042,8 +1038,8 @@ mod tests {
             "0.1".to_string(),
             data.to_string(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let disclosed_proof =
             disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION)
                 .unwrap();

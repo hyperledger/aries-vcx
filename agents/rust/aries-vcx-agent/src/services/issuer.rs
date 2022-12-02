@@ -4,13 +4,13 @@ use crate::error::*;
 use crate::services::connection::ServiceConnections;
 use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::issuance::credential_ack::CredentialAck;
 use aries_vcx::messages::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
-use aries_vcx::vdrtools::WalletHandle;
 
 #[derive(Clone)]
 struct IssuerWrapper {
@@ -28,18 +28,18 @@ impl IssuerWrapper {
 }
 
 pub struct ServiceCredentialsIssuer {
-    wallet_handle: WalletHandle,
+    profile: Arc<dyn Profile>,
     creds_issuer: ObjectCache<IssuerWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsIssuer {
     pub fn new(
-        wallet_handle: WalletHandle,
+        profile: Arc<dyn Profile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
+            profile,
             service_connections,
             creds_issuer: ObjectCache::new("creds-issuer"),
         }
@@ -81,10 +81,10 @@ impl ServiceCredentialsIssuer {
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
-            .build_credential_offer_msg(self.wallet_handle, offer_info, None)
+            .build_credential_offer_msg(&self.profile, offer_info, None)
             .await?;
         issuer
-            .send_credential_offer(connection.send_message_closure(self.wallet_handle, None).await?)
+            .send_credential_offer(connection.send_message_closure(&self.profile, None).await?)
             .await?;
         self.creds_issuer.insert(
             &issuer.get_thread_id()?,
@@ -126,8 +126,8 @@ impl ServiceCredentialsIssuer {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         issuer
             .send_credential(
-                self.wallet_handle,
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                &self.profile,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
         self.creds_issuer.insert(
