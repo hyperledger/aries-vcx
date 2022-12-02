@@ -12,7 +12,7 @@ SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 OUTPUT_DIR=/tmp/artifacts
 
 setup() {
-    echo "ios/ci/build.sh: running setup()"
+    echo "ios_legacy/ci/build.sh: running setup()"
     echo "Setup rustup"
     rustup default 1.64.0
     rustup component add rls-preview rust-analysis rust-src
@@ -72,7 +72,7 @@ setup() {
 # NOTE: Each built archive must be a fat file, i.e support all required architectures
 # Can be checked via e.g. `lipo -info $OUTPUT_DIR/OpenSSL-for-iPhone/lib/libssl.a`
 build_crypto() {
-    echo "ios/ci/build.sh: running build_crypto()"
+    echo "ios_legacy/ci/build.sh: running build_crypto()"
     if [ ! -d $OUTPUT_DIR/OpenSSL-for-iPhone ]; then
         git clone https://github.com/x2on/OpenSSL-for-iPhone.git $OUTPUT_DIR/OpenSSL-for-iPhone
         cd $OUTPUT_DIR/OpenSSL-for-iPhone
@@ -87,7 +87,7 @@ build_crypto() {
 }
 
 build_libsodium() {
-    echo "ios/ci/build.sh: running build_libsodium()"
+    echo "ios_legacy/ci/build.sh: running build_libsodium()"
     if [ ! -d $OUTPUT_DIR/libsodium-ios ]; then
         git clone https://github.com/evernym/libsodium-ios.git $OUTPUT_DIR/libsodium-ios
     fi
@@ -98,7 +98,7 @@ build_libsodium() {
 }
 
 build_libzmq() {
-    echo "ios/ci/build.sh: running build_libzmq()"
+    echo "ios_legacy/ci/build.sh: running build_libzmq()"
     if [ ! -d $OUTPUT_DIR/libzmq-ios ]; then
         git clone https://github.com/evernym/libzmq-ios.git $OUTPUT_DIR/libzmq-ios
     fi
@@ -119,7 +119,7 @@ extract_architectures() {
     FILE_PATH=$1
     LIB_FILE_NAME=$2
     LIB_NAME=$3
-    echo "ios/ci/build.sh: running extract_architectures() FILE_PATH=${FILE_PATH} LIB_FILE_NAME=${LIB_FILE_NAME} LIB_NAME=${LIB_NAME}"
+    echo "ios_legacy/ci/build.sh: running extract_architectures() FILE_PATH=${FILE_PATH} LIB_FILE_NAME=${LIB_FILE_NAME} LIB_NAME=${LIB_NAME}"
 
     echo FILE_PATH=$FILE_PATH
     echo LIB_FILE_NAME=$LIB_FILE_NAME
@@ -142,7 +142,7 @@ extract_architectures() {
 }
 
 build_libvcx() {
-    echo "ios/ci/build.sh: running build_libvcx()"
+    echo "ios_legacy/ci/build.sh: running build_libvcx()"
     WORK_DIR=$(abspath "$OUTPUT_DIR")
     ARCHS="arm64 x86_64"
 
@@ -162,7 +162,7 @@ build_libvcx() {
 }
 
 copy_libvcx_architectures() {
-    echo "ios/ci/build.sh: running copy_libvcx_architectures()"
+    echo "ios_legacy/ci/build.sh: running copy_libvcx_architectures()"
     ARCHS="arm64 x86_64"
     LIB_NAME="vcx"
 
@@ -182,7 +182,7 @@ copy_libvcx_architectures() {
 }
 
 copy_libs_to_combine() {
-    echo "ios/ci/build.sh: running copy_libs_to_combine()"
+    echo "ios_legacy/ci/build.sh: running copy_libs_to_combine()"
     mkdir -p $OUTPUT_DIR/cache/arch_libs
 
     copy_lib_tocombine sodium libsodium
@@ -202,7 +202,7 @@ copy_lib_tocombine() {
 }
 
 combine_libs() {
-    echo "ios/ci/build.sh: running combine_libs()"
+    echo "ios_legacy/ci/build.sh: running combine_libs()"
     COMBINED_LIB=$1
 
     BUILD_CACHE=$(abspath "$OUTPUT_DIR/cache")
@@ -239,13 +239,13 @@ combine_libs() {
 }
 
 build_vcx_framework() {
-    echo "ios/ci/build.sh: running build_vcx_framework() COMBINED_LIB=${COMBINED_LIB}"
+    echo "ios_legacy/ci/build.sh: running build_vcx_framework() COMBINED_LIB=${COMBINED_LIB}"
     COMBINED_LIB=$1
     ARCHS="arm64 x86_64"
 
-    cp -v $OUTPUT_DIR/${COMBINED_LIB}.a $REPO_DIR/wrappers/ios/vcx/lib/libvcx.a
+    cp -v $OUTPUT_DIR/${COMBINED_LIB}.a $REPO_DIR/wrappers/ios_legacy/vcx/lib/libvcx.a
 
-    pushd $REPO_DIR/wrappers/ios/vcx
+    pushd $REPO_DIR/wrappers/ios_legacy/vcx
         rm -rf vcx.framework.previousbuild
 
         for ARCH in ${ARCHS[*]}; do

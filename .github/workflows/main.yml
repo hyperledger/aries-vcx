@@ -386,6 +386,35 @@ jobs:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
 
+  build-and-publish-ios-legacy-wrapper:
+    needs: workflow-setup
+    runs-on: macos-11
+    env:
+      LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v2
+      - name: Switch to xcode version 12.4
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
+          xcodebuild -version
+      - name: "Build Legacy iOS wrapper"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          ./wrappers/ios_legacy/ci/build.sh
+      - uses: actions/upload-artifact@v2
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        with:
+          name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device
+          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
+      - uses: actions/upload-artifact@v2
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        with:
+          name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal
+          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
+
   build-and-publish-android-device:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, build-docker-android ]
