@@ -11,13 +11,14 @@ use aries_vcx::{
         SendClosureConnection,
     },
 };
+use aries_vcx_agent::a2a_msg_actix::A2AMessageActix;
 use aries_vcx_agent::Agent;
 
 fn _send_message(sender: Addr<Agent>) -> Option<SendClosureConnection> {
     Some(Box::new(
         move |message: A2AMessage, _sender_vk: String, _did_doc: DidDoc| {
             Box::pin(async move {
-                sender.send(message).await.unwrap().map_err(|err| {
+                sender.send(A2AMessageActix(message)).await.unwrap().map_err(|err| {
                     VcxError::from_msg(VcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
                 })
             })

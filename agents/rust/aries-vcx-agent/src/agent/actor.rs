@@ -2,20 +2,21 @@ use actix::{Actor, Context, Handler, ResponseFuture};
 use aries_vcx::messages::a2a::A2AMessage;
 
 use crate::Agent;
+use crate::agent::a2a_msg_actix::A2AMessageActix;
 
 impl Actor for Agent {
     type Context = Context<Self>;
 }
 
-impl Handler<A2AMessage> for Agent {
+impl Handler<A2AMessageActix> for Agent {
     type Result = ResponseFuture<Result<(), String>>;
 
-    fn handle(&mut self, msg: A2AMessage, _ctx: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: A2AMessageActix, _ctx: &mut Context<Self>) -> Self::Result {
         match self.received_messages().write() {
-            Ok(mut g) => g.push_back(msg.clone()),
+            Ok(mut g) => g.push_back(msg.clone().into()),
             Err(e) => warn!("Error ackquiring lock: {}", e)
         };
-        match msg {
+        match msg.0 {
             A2AMessage::ConnectionRequest(request) => {
                 let conns = self.connections().clone();
                 Box::pin(async move {
