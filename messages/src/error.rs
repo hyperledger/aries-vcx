@@ -1,266 +1,249 @@
 use std::fmt;
-use std::sync;
-
-use failure::{Backtrace, Context, Fail};
+use std::error::Error;
 
 use crate::utils::error;
 
 pub mod prelude {
-    pub use super::{err_msg, MessagesError, MessagesErrorExt, MesssagesErrorKind, MessagesResult, MessagesResultExt};
+    pub use super::{err_msg, MessagesError, MesssagesErrorKind, MessagesResult};
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum MesssagesErrorKind {
     // Common
-    #[fail(display = "Object is in invalid state for requested operation")]
+    #[error("Object is in invalid state for requested operation")]
     InvalidState,
-    #[fail(display = "Invalid Configuration")]
+    #[error("Invalid Configuration")]
     InvalidConfiguration,
-    #[fail(display = "Obj was not found with handle")]
+    #[error("Obj was not found with handle")]
     InvalidHandle,
-    #[fail(display = "Invalid JSON string")]
+    #[error("Invalid JSON string")]
     InvalidJson,
-    #[fail(display = "Invalid Option")]
+    #[error("Invalid Option")]
     InvalidOption,
-    #[fail(display = "Invalid MessagePack")]
+    #[error("Invalid MessagePack")]
     InvalidMessagePack,
-    #[fail(display = "Object cache error")]
+    #[error("Object cache error")]
     ObjectCacheError,
-    #[fail(display = "Object not ready for specified action")]
+    #[error("Object not ready for specified action")]
     NotReady,
-    #[fail(display = "IO Error, possibly creating a backup wallet")]
+    #[error("IO Error, possibly creating a backup wallet")]
     IOError,
-    #[fail(display = "Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
+    #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
     LibindyInvalidStructure,
-    #[fail(display = "Waiting for callback timed out")]
+    #[error("Waiting for callback timed out")]
     TimeoutLibindy,
-    #[fail(display = "Parameter passed to libindy was invalid")]
+    #[error("Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
-    #[fail(display = "Library already initialized")]
+    #[error("Library already initialized")]
     AlreadyInitialized,
-    #[fail(display = "Action is not supported")]
+    #[error("Action is not supported")]
     ActionNotSupported,
 
     // Connection
-    #[fail(display = "Could not create connection")]
+    #[error("Could not create connection")]
     CreateConnection,
-    #[fail(display = "Invalid Connection Handle")]
+    #[error("Invalid Connection Handle")]
     InvalidConnectionHandle,
-    #[fail(display = "Invalid invite details structure")]
+    #[error("Invalid invite details structure")]
     InvalidInviteDetail,
-    #[fail(display = "Invalid redirect details structure")]
+    #[error("Invalid redirect details structure")]
     InvalidRedirectDetail,
-    #[fail(display = "Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency.")]
+    #[error("Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency.")]
     DeleteConnection,
-    #[fail(display = "Error with Connection")]
+    #[error("Error with Connection")]
     GeneralConnectionError,
 
     // Payment
-    #[fail(display = "No payment information associated with object")]
+    #[error("No payment information associated with object")]
     NoPaymentInformation,
-    #[fail(display = "Insufficient amount of tokens to process request")]
+    #[error("Insufficient amount of tokens to process request")]
     InsufficientTokenAmount,
-    #[fail(display = "Invalid payment address")]
+    #[error("Invalid payment address")]
     InvalidPaymentAddress,
 
     // Credential Definition error
-    #[fail(display = "Call to create Credential Definition failed")]
+    #[error("Call to create Credential Definition failed")]
     CreateCredDef,
-    #[fail(display = "Can't create, Credential Def already on ledger")]
+    #[error("Can't create, Credential Def already on ledger")]
     CredDefAlreadyCreated,
-    #[fail(display = "Invalid Credential Definition handle")]
+    #[error("Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[fail(display = "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[error("No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
     RevDeltaNotFound,
-    #[fail(display = "Failed to clean stored revocation delta")]
+    #[error("Failed to clean stored revocation delta")]
     RevDeltaFailedToClear,
 
     // Revocation
-    #[fail(display = "Failed to create Revocation Registration Definition")]
+    #[error("Failed to create Revocation Registration Definition")]
     CreateRevRegDef,
-    #[fail(display = "Invalid Revocation Details")]
+    #[error("Invalid Revocation Details")]
     InvalidRevocationDetails,
-    #[fail(display = "Unable to Update Revocation Delta On Ledger")]
+    #[error("Unable to Update Revocation Delta On Ledger")]
     InvalidRevocationEntry,
-    #[fail(display = "Invalid Credential Revocation timestamp")]
+    #[error("Invalid Credential Revocation timestamp")]
     InvalidRevocationTimestamp,
-    #[fail(display = "No revocation definition found")]
+    #[error("No revocation definition found")]
     RevRegDefNotFound,
 
     // Credential
-    #[fail(display = "Invalid credential handle")]
+    #[error("Invalid credential handle")]
     InvalidCredentialHandle,
-    #[fail(display = "could not create credential request")]
+    #[error("could not create credential request")]
     CreateCredentialRequest,
 
     // Issuer Credential
-    #[fail(display = "Invalid Credential Issuer Handle")]
+    #[error("Invalid Credential Issuer Handle")]
     InvalidIssuerCredentialHandle,
-    #[fail(display = "Invalid Credential Request")]
+    #[error("Invalid Credential Request")]
     InvalidCredentialRequest,
-    #[fail(display = "Invalid credential json")]
+    #[error("Invalid credential json")]
     InvalidCredential,
-    #[fail(display = "Attributes provided to Credential Offer are not correct, possibly malformed")]
+    #[error("Attributes provided to Credential Offer are not correct, possibly malformed")]
     InvalidAttributesStructure,
 
     // Proof
-    #[fail(display = "Invalid proof handle")]
+    #[error("Invalid proof handle")]
     InvalidProofHandle,
-    #[fail(display = "Obj was not found with handle")]
+    #[error("Obj was not found with handle")]
     InvalidDisclosedProofHandle,
-    #[fail(display = "Proof had invalid format")]
+    #[error("Proof had invalid format")]
     InvalidProof,
-    #[fail(display = "Schema was invalid or corrupt")]
+    #[error("Schema was invalid or corrupt")]
     InvalidSchema,
-    #[fail(display = "The Proof received does not have valid credentials listed.")]
+    #[error("The Proof received does not have valid credentials listed.")]
     InvalidProofCredentialData,
-    #[fail(display = "Could not create proof")]
+    #[error("Could not create proof")]
     CreateProof,
-    #[fail(display = "Proof Request Passed into Libindy Call Was Invalid")]
+    #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
 
     // Schema
-    #[fail(display = "Could not create schema")]
+    #[error("Could not create schema")]
     CreateSchema,
-    #[fail(display = "Invalid Schema Handle")]
+    #[error("Invalid Schema Handle")]
     InvalidSchemaHandle,
-    #[fail(display = "No Schema for that schema sequence number")]
+    #[error("No Schema for that schema sequence number")]
     InvalidSchemaSeqNo,
-    #[fail(display = "Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination")]
+    #[error("Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination")]
     DuplicationSchema,
-    #[fail(display = "Unknown Rejection of Schema Creation, refer to libindy documentation")]
+    #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
 
     // Public agent
-    #[fail(display = "Could not create public agent")]
+    #[error("Could not create public agent")]
     CreatePublicAgent,
 
     // Out of Band
-    #[fail(display = "Could not create out of band message.")]
+    #[error("Could not create out of band message.")]
     CreateOutOfBand,
 
     // Pool
-    #[fail(display = "Invalid genesis transactions path.")]
+    #[error("Invalid genesis transactions path.")]
     InvalidGenesisTxnPath,
-    #[fail(display = "Formatting for Pool Config are incorrect.")]
+    #[error("Formatting for Pool Config are incorrect.")]
     CreatePoolConfig,
-    #[fail(display = "Connection to Pool Ledger.")]
+    #[error("Connection to Pool Ledger.")]
     PoolLedgerConnect,
-    #[fail(display = "Ledger rejected submitted request.")]
+    #[error("Ledger rejected submitted request.")]
     InvalidLedgerResponse,
-    #[fail(display = "No Pool open. Can't return handle.")]
+    #[error("No Pool open. Can't return handle.")]
     NoPoolOpen,
-    #[fail(display = "Message failed in post")]
+    #[error("Message failed in post")]
     PostMessageFailed,
 
     // Wallet
-    #[fail(display = "Error Creating a wallet")]
+    #[error("Error Creating a wallet")]
     WalletCreate,
-    #[fail(display = "Missing wallet name in config")]
+    #[error("Missing wallet name in config")]
     MissingWalletName,
-    #[fail(display = "Missing exported wallet path in config")]
+    #[error("Missing exported wallet path in config")]
     MissingExportedWalletPath,
-    #[fail(display = "Missing exported backup key in config")]
+    #[error("Missing exported backup key in config")]
     MissingBackupKey,
-    #[fail(display = "Attempt to open wallet with invalid credentials")]
+    #[error("Attempt to open wallet with invalid credentials")]
     WalletAccessFailed,
-    #[fail(display = "Invalid Wallet or Search Handle")]
+    #[error("Invalid Wallet or Search Handle")]
     InvalidWalletHandle,
-    #[fail(display = "Indy wallet already exists")]
+    #[error("Indy wallet already exists")]
     DuplicationWallet,
-    #[fail(display = "Wallet record not found")]
+    #[error("Wallet record not found")]
     WalletRecordNotFound,
-    #[fail(display = "Record already exists in the wallet")]
+    #[error("Record already exists in the wallet")]
     DuplicationWalletRecord,
-    #[fail(display = "Wallet not found")]
+    #[error("Wallet not found")]
     WalletNotFound,
-    #[fail(display = "Indy wallet already open")]
+    #[error("Indy wallet already open")]
     WalletAlreadyOpen,
-    #[fail(display = "Configuration is missing wallet key")]
+    #[error("Configuration is missing wallet key")]
     MissingWalletKey,
-    #[fail(display = "Attempted to add a Master Secret that already existed in wallet")]
+    #[error("Attempted to add a Master Secret that already existed in wallet")]
     DuplicationMasterSecret,
-    #[fail(display = "Attempted to add a DID to wallet when that DID already exists in wallet")]
+    #[error("Attempted to add a DID to wallet when that DID already exists in wallet")]
     DuplicationDid,
 
     // Logger
-    #[fail(display = "Logging Error")]
+    #[error("Logging Error")]
     LoggingError,
 
     // Validation
-    #[fail(display = "Could not encode string to a big integer.")]
+    #[error("Could not encode string to a big integer.")]
     EncodeError,
-    #[fail(display = "Unknown Error")]
+    #[error("Unknown Error")]
     UnknownError,
-    #[fail(display = "Invalid DID")]
+    #[error("Invalid DID")]
     InvalidDid,
-    #[fail(display = "Invalid VERKEY")]
+    #[error("Invalid VERKEY")]
     InvalidVerkey,
-    #[fail(display = "Invalid NONCE")]
+    #[error("Invalid NONCE")]
     InvalidNonce,
-    #[fail(display = "Invalid URL")]
+    #[error("Invalid URL")]
     InvalidUrl,
-    #[fail(display = "Configuration is missing the Payment Method parameter")]
+    #[error("Configuration is missing the Payment Method parameter")]
     MissingPaymentMethod,
-    #[fail(display = "Unable to serialize")]
+    #[error("Unable to serialize")]
     SerializationError,
-    #[fail(display = "Value needs to be base58")]
+    #[error("Value needs to be base58")]
     NotBase58,
 
     // A2A
-    #[fail(display = "Invalid HTTP response.")]
+    #[error("Invalid HTTP response.")]
     InvalidHttpResponse,
-    #[fail(display = "No Endpoint set for Connection Object")]
+    #[error("No Endpoint set for Connection Object")]
     NoEndpoint,
-    #[fail(display = "Error Retrieving messages from API")]
+    #[error("Error Retrieving messages from API")]
     InvalidMessages,
-    #[fail(display = "Error creating agent in agency")]
+    #[error("Error creating agent in agency")]
     CreateAgent,
 
-    #[fail(display = "Common error {}", 0)]
+    #[error("Common error {}", 0)]
     Common(u32),
-    #[fail(display = "Libndy error {}", 0)]
+    #[error("Libndy error {}", 0)]
     LibndyError(u32),
-    #[fail(display = "Unknown libindy error")]
+    #[error("Unknown libindy error")]
     UnknownLibndyError,
-    #[fail(display = "No Agent pairwise information")]
+    #[error("No Agent pairwise information")]
     NoAgentInformation,
 
-    #[fail(display = "Invalid message format")]
+    #[error("Invalid message format")]
     InvalidMessageFormat,
-
-    #[fail(display = "Attempted to unlock poisoned lock")]
-    PoisonedLock,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub struct MessagesError {
-    inner: Context<MesssagesErrorKind>,
-}
-
-impl Fail for MessagesError {
-    fn cause(&self) -> Option<&dyn Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
+    msg: String,
+    kind: MesssagesErrorKind,
+    #[source]
+    source: Option<std::io::Error>,
 }
 
 impl fmt::Display for MessagesError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut first = true;
-
-        for cause in <dyn Fail>::iter_chain(&self.inner) {
-            if first {
-                first = false;
-                writeln!(f, "Error: {}", cause)?;
-            } else {
-                writeln!(f, "  Caused by: {}", cause)?;
-            }
+        writeln!(f, "Error: {}\n", self.msg)?;
+        let mut current = self.source();
+        while let Some(cause) = current {
+            writeln!(f, "Caused by:\n\t{}", cause)?;
+            current = cause.source();
         }
-
         Ok(())
     }
 }
@@ -271,31 +254,14 @@ impl MessagesError {
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
         MessagesError {
-            inner: Context::new(msg).context(kind),
+            msg: msg.to_string(),
+            kind,
+            source: None
         }
     }
 
     pub fn kind(&self) -> MesssagesErrorKind {
-        *self.inner.get_context()
-    }
-
-    pub fn extend<D>(self, msg: D) -> MessagesError
-    where
-        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
-    {
-        let kind = self.kind();
-        MessagesError {
-            inner: self.inner.map(|_| msg).context(kind),
-        }
-    }
-
-    pub fn map<D>(self, kind: MesssagesErrorKind, msg: D) -> MessagesError
-    where
-        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
-    {
-        MessagesError {
-            inner: self.inner.map(|_| msg).context(kind),
-        }
+        self.kind
     }
 }
 
@@ -312,61 +278,7 @@ impl From<MesssagesErrorKind> for MessagesError {
     }
 }
 
-impl<T> From<sync::PoisonError<T>> for MessagesError {
-    fn from(_: sync::PoisonError<T>) -> Self {
-        MessagesError {
-            inner: Context::new(Backtrace::new()).context(MesssagesErrorKind::PoisonedLock),
-        }
-    }
-}
-
-impl From<Context<MesssagesErrorKind>> for MessagesError {
-    fn from(inner: Context<MesssagesErrorKind>) -> MessagesError {
-        MessagesError { inner }
-    }
-}
-
 pub type MessagesResult<T> = Result<T, MessagesError>;
-
-/// Extension methods for `Result`.
-pub trait MessagesResultExt<T, E> {
-    fn to_vcx<D>(self, kind: MesssagesErrorKind, msg: D) -> MessagesResult<T>
-    where
-        D: fmt::Display + Send + Sync + 'static;
-}
-
-impl<T, E> MessagesResultExt<T, E> for Result<T, E>
-where
-    E: Fail,
-{
-    fn to_vcx<D>(self, kind: MesssagesErrorKind, msg: D) -> MessagesResult<T>
-    where
-        D: fmt::Display + Send + Sync + 'static,
-    {
-        self.map_err(|err| err.context(msg).context(kind).into())
-    }
-}
-
-/// Extension methods for `Error`.
-pub trait MessagesErrorExt {
-    fn to_vcx<D>(self, kind: MesssagesErrorKind, msg: D) -> MessagesError
-    where
-        D: fmt::Display + Send + Sync + 'static;
-}
-
-impl<E> MessagesErrorExt for E
-where
-    E: Fail,
-{
-    fn to_vcx<D>(self, kind: MesssagesErrorKind, msg: D) -> MessagesError
-    where
-        D: fmt::Display + Send + Sync + 'static,
-    {
-        self.context(format!("\n{}: {}", std::any::type_name::<E>(), msg))
-            .context(kind)
-            .into()
-    }
-}
 
 impl From<MessagesError> for u32 {
     fn from(code: MessagesError) -> u32 {
@@ -465,7 +377,6 @@ impl From<MesssagesErrorKind> for u32 {
             MesssagesErrorKind::RevRegDefNotFound => error::REV_REG_DEF_NOT_FOUND.code_num,
             MesssagesErrorKind::RevDeltaNotFound => error::REV_DELTA_NOT_FOUND.code_num,
             MesssagesErrorKind::RevDeltaFailedToClear => error::REV_DELTA_FAILED_TO_CLEAR.code_num,
-            MesssagesErrorKind::PoisonedLock => error::POISONED_LOCK.code_num,
             MesssagesErrorKind::InvalidMessageFormat => error::INVALID_MESSAGE_FORMAT.code_num,
             MesssagesErrorKind::CreatePublicAgent => error::CREATE_PUBLIC_AGENT.code_num,
             MesssagesErrorKind::CreateOutOfBand => error::CREATE_OUT_OF_BAND.code_num,
@@ -568,7 +479,6 @@ impl From<u32> for MesssagesErrorKind {
             _ if { error::REV_DELTA_NOT_FOUND.code_num == code } => MesssagesErrorKind::RevDeltaNotFound,
             _ if { error::CREATE_PUBLIC_AGENT.code_num == code } => MesssagesErrorKind::CreatePublicAgent,
             _ if { error::CREATE_OUT_OF_BAND.code_num == code } => MesssagesErrorKind::CreateOutOfBand,
-            _ if { error::POISONED_LOCK.code_num == code } => MesssagesErrorKind::PoisonedLock,
             _ if { error::INVALID_MESSAGE_FORMAT.code_num == code } => MesssagesErrorKind::InvalidMessageFormat,
             _ if { error::CREATE_OUT_OF_BAND.code_num == code } => MesssagesErrorKind::CreateOutOfBand,
             _ if { error::CREATE_AGENT.code_num == code } => MesssagesErrorKind::CreateAgent,
@@ -577,4 +487,3 @@ impl From<u32> for MesssagesErrorKind {
         }
     }
 }
-

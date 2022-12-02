@@ -28,8 +28,8 @@ base64 = "0.10"
 num-traits = "0.2.0"
 libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "debf776c8" }
 uuid = {version = "0.8", default-features = false, features = ["v4"]}
-failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
 derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
+thiserror = "1.0.37"
