@@ -4,3 +4,5 @@
 **/node_modules
 wrappers/ios/vcx/vcx.framework/**
 wrappers/ios/vcx/vcx.framework.dSYM/**
+wrappers/ios_legacy/vcx/vcx.framework/**
+wrappers/ios_legacy/vcx/vcx.framework.dSYM/**
