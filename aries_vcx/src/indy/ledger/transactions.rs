@@ -304,7 +304,7 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
 
 fn parse_response(response: &str) -> VcxResult<Response> {
     serde_json::from_str::<Response>(response)
-        .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize transaction response")
+        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
 }
 
 pub async fn libindy_get_schema(
