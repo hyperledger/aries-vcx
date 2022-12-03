@@ -250,8 +250,6 @@ pub enum VcxErrorKind {
 pub struct VcxError {
     msg: String,
     kind: VcxErrorKind,
-    #[source]
-    source: Option<std::io::Error>,
 }
 
 impl fmt::Display for VcxError {
@@ -274,7 +272,6 @@ impl VcxError {
         VcxError {
             msg: msg.to_string(),
             kind,
-            source: None
         }
     }
 

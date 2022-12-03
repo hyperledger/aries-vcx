@@ -232,8 +232,6 @@ pub enum MesssagesErrorKind {
 pub struct MessagesError {
     msg: String,
     kind: MesssagesErrorKind,
-    #[source]
-    source: Option<std::io::Error>,
 }
 
 impl fmt::Display for MessagesError {
@@ -256,7 +254,6 @@ impl MessagesError {
         MessagesError {
             msg: msg.to_string(),
             kind,
-            source: None
         }
     }
 

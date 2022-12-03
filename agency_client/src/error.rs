@@ -85,8 +85,6 @@ pub enum AgencyClientErrorKind {
 pub struct AgencyClientError {
     msg: String,
     kind: AgencyClientErrorKind,
-    #[source]
-    source: Option<std::io::Error>,
 }
 
 impl fmt::Display for AgencyClientError {
@@ -108,8 +106,7 @@ impl AgencyClientError {
     {
         AgencyClientError {
             msg: msg.to_string(),
-            kind,
-            source: None
+            kind
         }
     }
 
