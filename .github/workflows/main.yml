@@ -622,8 +622,8 @@ jobs:
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: main
           pullRequests: true
-          unreleased: true
-          unreleasedOnly: true
+          unreleased: false
+          unreleasedOnly: false
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
