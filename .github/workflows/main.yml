@@ -596,7 +596,7 @@ jobs:
 
   make-release:
     runs-on: ubuntu-20.04
-    needs:
+#    needs:
 #      - workflow-setup
 #      - build-and-publish-ios-wrapper
 #      - build-and-publish-ios-legacy-wrapper
