@@ -66,7 +66,7 @@ mod integration_tests {
     //         let ledger = Arc::clone(&setup.profile).inject_ledger();
     //         let (author_did, _) = add_new_did(&setup.profile, &setup.institution_did, None).await.unwrap();
     //         let (endorser_did, _) = add_new_did(&setup.profile, &setup.institution_did, Some("ENDORSER")).await.unwrap();
-    
+
     //         let schema_request = ledger.build_schema_request(&author_did, SCHEMA_DATA).await.unwrap();
     //         let schema_request = append_request_endorser(&schema_request, &endorser_did).await.unwrap();
     //         let schema_request = multisign_request(setup.wallet_handle, &author_did, &schema_request)
@@ -75,19 +75,19 @@ mod integration_tests {
     //         ledger.endorse_transaction(&endorser_did, &schema_request).await.unwrap();
     //     }).await;
     // }
-    
+
     #[tokio::test]
     async fn test_add_get_service() {
         SetupProfile::run(|setup| async move {
-        let did = setup.institution_did.clone();
-        let expect_service = AriesService::default();
-        write_endpoint_legacy(&setup.profile, &did, &expect_service).await.unwrap();
-        thread::sleep(Duration::from_millis(50));
-        let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
-        assert_eq!(expect_service, service);
+            let did = setup.institution_did.clone();
+            let expect_service = AriesService::default();
+            write_endpoint_legacy(&setup.profile, &did, &expect_service).await.unwrap();
+            thread::sleep(Duration::from_millis(50));
+            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            assert_eq!(expect_service, service);
 
-        // clean up written legacy service
-        clear_attr(&setup.profile, &setup.institution_did, "service").await.unwrap();
+            // clean up written legacy service
+            clear_attr(&setup.profile, &setup.institution_did, "service").await.unwrap();
         }).await;
     }
 
@@ -107,7 +107,29 @@ mod integration_tests {
                 .set_recipient_keys(vec![expect_recipient_key])
                 .set_routing_keys(vec!["did:sov:456".into()]);
             assert_eq!(expect_service, service);
-            
+
+            // clean up written endpoint
+            clear_attr(&setup.profile, &setup.institution_did, "endpoint").await.unwrap();
+        }).await;
+    }
+
+    #[tokio::test]
+    async fn test_add_get_service_public_none_routing_keys() {
+        SetupProfile::run(|setup| async move {
+            let did = setup.institution_did.clone();
+            let create_service = EndpointDidSov::create()
+                .set_service_endpoint("https://example.org".into())
+                .set_routing_keys(None);
+            write_endpoint(&setup.profile, &did, &create_service).await.unwrap();
+            thread::sleep(Duration::from_millis(50));
+            let service = get_service(&setup.profile, &Did::new(&did).unwrap()).await.unwrap();
+            let expect_recipient_key = get_verkey_from_ledger(&setup.profile, &setup.institution_did).await.unwrap();
+            let expect_service = AriesService::default()
+                .set_service_endpoint("https://example.org".into())
+                .set_recipient_keys(vec![expect_recipient_key])
+                .set_routing_keys(vec![]);
+            assert_eq!(expect_service, service);
+
             // clean up written endpoint
             clear_attr(&setup.profile, &setup.institution_did, "endpoint").await.unwrap();
         }).await;

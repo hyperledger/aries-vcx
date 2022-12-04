@@ -139,7 +139,7 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<Ari
         return Ok(AriesService::create()
             .set_recipient_keys(recipient_keys)
             .set_service_endpoint(endpoint.endpoint)
-            .set_routing_keys(endpoint.routing_keys.unwrap()));
+            .set_routing_keys(endpoint.routing_keys.unwrap_or_default()));
     }
     parse_legacy_endpoint_attrib(profile, &did_raw).await
 }
