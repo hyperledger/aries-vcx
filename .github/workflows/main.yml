@@ -51,6 +51,7 @@ jobs:
         id: docker-imgs
         run: |
           set -x
+
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
@@ -591,8 +592,8 @@ jobs:
              echo "New version was not defined, skipping release."
           fi
 
-#  #  ##########################################################################################
-#  #  ##############################      RELEASE      #########################################
+  #  ##########################################################################################
+  #  ##############################      RELEASE      #########################################
 
   make-release:
     runs-on: ubuntu-20.04
@@ -622,8 +623,8 @@ jobs:
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: main
           pullRequests: true
-          unreleased: true
-          unreleasedOnly: true
+          unreleased: false
+          unreleasedOnly: false
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
