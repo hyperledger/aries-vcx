@@ -405,16 +405,24 @@ jobs:
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           ./wrappers/ios_legacy/ci/build.sh
+      - name: "Rename device as legacy"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
+      - name: "Rename universal as legacy"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
       - uses: actions/upload-artifact@v2
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device
-          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
+          path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
       - uses: actions/upload-artifact@v2
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal
-          path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
+          path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
 
   build-and-publish-android-device:
     runs-on: ubuntu-20.04
