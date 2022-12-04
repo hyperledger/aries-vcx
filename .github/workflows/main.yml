@@ -51,6 +51,12 @@ jobs:
         id: docker-imgs
         run: |
           set -x
+          echo "steps.run-info.outputs.publish-version: ${{ steps.run-info.outputs.publish-version }}"
+          echo "steps.run-info.outputs.release: ${{ steps.run-info.outputs.release }}"
+          echo "steps.run-info.outputs.pre-release: ${{ steps.run-info.outputs.pre-release }}"
+          echo "steps.run-info.outputs.branch-name: ${{ steps.run-info.outputs.branch-name }}"
+          echo "steps.run-info.outputs.is-fork: ${{ steps.run-info.outputs.is-fork }}"
+
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
@@ -596,8 +602,8 @@ jobs:
 
   make-release:
     runs-on: ubuntu-20.04
-#    needs:
-#      - workflow-setup
+    needs:
+      - workflow-setup
 #      - build-and-publish-ios-wrapper
 #      - build-and-publish-ios-legacy-wrapper
 #      - build-and-publish-android-device
