@@ -275,6 +275,15 @@ impl VcxError {
         }
     }
 
+    pub fn find_root_cause(&self) -> String {
+        let mut current = self.source();
+        while let Some(cause) = current {
+            if cause.source().is_none() { return cause.to_string() }
+            current = cause.source();
+        }
+        self.to_string()
+    }
+
     pub fn kind(&self) -> VcxErrorKind {
         self.kind
     }
