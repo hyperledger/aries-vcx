@@ -58,9 +58,10 @@ where
     }
 }
 
-
 impl<T> Storage<T> for ObjectCache<T>
-where T: Clone {
+where
+    T: Clone,
+{
     type Value = Mutex<T>;
 
     fn get(&self, id: &str) -> AgentResult<T> {
@@ -70,18 +71,12 @@ where T: Clone {
                 Ok(obj) => Ok((*obj.deref()).clone()),
                 Err(_) => Err(AgentError::from_msg(
                     AgentErrorKind::LockError,
-                    &format!(
-                        "[ObjectCache: {}] Unable to lock Object Store",
-                        self.cache_name
-                    ),
+                    &format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
             None => Err(AgentError::from_msg(
                 AgentErrorKind::NotFound,
-                &format!(
-                    "[ObjectCache: {}] Object not found for id: {}",
-                    self.cache_name, id
-                ),
+                &format!("[ObjectCache: {}] Object not found for id: {}", self.cache_name, id),
             )),
         }
     }
@@ -109,5 +104,13 @@ where T: Clone {
     {
         let store = self._lock_store_read()?;
         Ok(store.iter().filter_map(closure).collect())
+    }
+
+    fn get_all_keys(&self) -> AgentResult<Vec<String>> {
+        let store = self._lock_store_read()?;
+        Ok(store
+            .keys()
+            .map(String::to_string)
+            .collect())
     }
 }

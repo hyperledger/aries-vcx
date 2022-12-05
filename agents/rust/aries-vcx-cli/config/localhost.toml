@@ -1,0 +1,8 @@
+genesis_file = "genesis/indypool.txn"
+port = "5050"
+host = "localhost"
+log_level = "error"
+accept_taa = "true"
+wallet_key = "8dvfYSt5d1taSd6yJdpjq4emkwsPDDLYxkNFysFD2cZY"
+wallet_kdf = "RAW"
+trustee_seed = "000000000000000000000000Trustee1"

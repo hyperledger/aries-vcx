@@ -130,8 +130,11 @@ impl ServiceConnections {
         self.connections.find_by(f)
     }
 
-
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.connections.contains_key(thread_id)
+    }
+
+    pub fn get_all_thread_ids(&self) -> AgentResult<Vec<String>> {
+        self.connections.get_all_keys()
     }
 }

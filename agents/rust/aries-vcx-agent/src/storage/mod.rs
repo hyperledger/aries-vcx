@@ -10,4 +10,5 @@ pub trait Storage<T> {
     fn find_by<F>(&self, closure: F) -> AgentResult<Vec<String>>
     where
         F: FnMut((&String, &Self::Value)) -> Option<String>;
+    fn get_all_keys(&self) -> AgentResult<Vec<String>>;
 }
