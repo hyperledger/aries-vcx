@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "agency_client"
-version = "0.49.1"
+version = "0.50.0"
 dependencies = [
  "android_logger",
  "async-trait",
@@ -168,7 +168,7 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx"
-version = "0.49.1"
+version = "0.50.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -2014,7 +2014,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.49.1"
+version = "0.50.0"
 dependencies = [
  "android_logger",
  "aries-vcx",
@@ -2161,7 +2161,7 @@ dependencies = [
 
 [[package]]
 name = "messages"
-version = "0.49.1"
+version = "0.50.0"
 dependencies = [
  "base64 0.10.1",
  "chrono",
