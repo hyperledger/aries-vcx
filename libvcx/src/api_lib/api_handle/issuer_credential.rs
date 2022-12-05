@@ -10,7 +10,7 @@ use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+use crate::api_lib::global::profile::get_main_profile_optional_pool;
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -34,6 +34,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         return Ok(credential.get_state().into());
     }
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
@@ -43,13 +44,13 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             )
         })?;
         credential
-            .step(get_main_wallet_handle(), message.into(), Some(send_message))
+            .step(&profile, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
             credential
-                .step(get_main_wallet_handle(), msg.into(), Some(send_message))
+                .step(&profile, msg.into(), Some(send_message))
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
@@ -139,9 +140,10 @@ pub async fn build_credential_offer_msg_v2(
             tails_file: None,
         }
     };
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
         .build_credential_offer_msg(
-            get_main_wallet_handle(),
+            &profile,
             offer_info.clone(),
             comment.map(|s| s.to_string()),
         )
@@ -177,9 +179,10 @@ pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<Stri
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
         .send_credential(
-            get_main_wallet_handle(),
+            &profile,
             mediated_connection::send_message_closure(connection_handle).await?,
         )
         .await?;
@@ -190,8 +193,9 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
 
 pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
-        .revoke_credential_local(get_main_wallet_handle())
+        .revoke_credential_local(&profile)
         .await
         .map_err(|err| err.into())
 }

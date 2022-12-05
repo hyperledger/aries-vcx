@@ -40,6 +40,10 @@ pub mod global;
 pub mod indy;
 pub mod protocols;
 
+pub mod core;
+pub mod plugins;
+pub mod common;
+
 #[cfg(test)]
 pub mod test {
     pub fn source_id() -> String {

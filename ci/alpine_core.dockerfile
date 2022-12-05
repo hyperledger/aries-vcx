@@ -12,7 +12,8 @@ RUN apk update && apk upgrade && \
         build-base \
         curl \
         openssl-dev \
-        zeromq-dev
+        zeromq-dev \
+        cmake
 
 USER indy
 WORKDIR /home/indy

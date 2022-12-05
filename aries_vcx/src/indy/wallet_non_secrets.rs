@@ -7,6 +7,9 @@ use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_re
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
 
+
+// consider moving these methods out of indy dir to generic methods, as this aggregates calls
+
 ///
 /// Returns stored revocation registry delta record
 ///
