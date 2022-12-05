@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::storage::Storage;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
+use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::issuance::credential::Credential;
 use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 #[derive(Clone)]
 struct HolderWrapper {
@@ -26,21 +27,18 @@ impl HolderWrapper {
 }
 
 pub struct ServiceCredentialsHolder {
-    wallet_handle: WalletHandle,
-    pool_handle: PoolHandle,
+    profile: Arc<dyn Profile>,
     creds_holder: ObjectCache<HolderWrapper>,
     service_connections: Arc<ServiceConnections>,
 }
 
 impl ServiceCredentialsHolder {
     pub fn new(
-        wallet_handle: WalletHandle,
-        pool_handle: PoolHandle,
+        profile: Arc<dyn Profile>,
         service_connections: Arc<ServiceConnections>,
     ) -> Self {
         Self {
-            wallet_handle,
-            pool_handle,
+            profile,
             service_connections,
             creds_holder: ObjectCache::new("creds-holder"),
         }
@@ -66,10 +64,10 @@ impl ServiceCredentialsHolder {
         holder
             .send_proposal(
                 proposal_data,
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -82,7 +80,7 @@ impl ServiceCredentialsHolder {
     ) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, connection_id),
         )
@@ -102,13 +100,12 @@ impl ServiceCredentialsHolder {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         holder
             .send_request(
-                self.wallet_handle,
-                self.pool_handle,
+                &self.profile,
                 connection.pairwise_info().pw_did.to_string(),
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
@@ -124,13 +121,12 @@ impl ServiceCredentialsHolder {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         holder
             .process_credential(
-                self.wallet_handle,
-                self.pool_handle,
+                &self.profile,
                 credential,
-                connection.send_message_closure(self.wallet_handle, None).await?,
+                connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.set(
+        self.creds_holder.insert(
             &holder.get_thread_id()?,
             HolderWrapper::new(holder, &connection_id),
         )
@@ -142,7 +138,7 @@ impl ServiceCredentialsHolder {
 
     pub async fn is_revokable(&self, thread_id: &str) -> AgentResult<bool> {
         self.get_holder(thread_id)?
-            .is_revokable(self.wallet_handle, self.pool_handle)
+            .is_revokable(&self.profile)
             .await
             .map_err(|err| err.into())
     }
@@ -166,6 +162,6 @@ impl ServiceCredentialsHolder {
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
-        self.creds_holder.has_id(thread_id)
+        self.creds_holder.contains_key(thread_id)
     }
 }

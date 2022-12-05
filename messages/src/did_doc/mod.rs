@@ -9,6 +9,7 @@ use crate::utils::validation::validate_verkey;
 use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 pub mod model;
+pub mod service_aries_public;
 pub mod service_aries;
 pub mod service_resolvable;
 

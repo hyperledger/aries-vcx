@@ -1,10 +1,11 @@
 use std::clone::Clone;
+use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
 use messages::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
-use vdrtools::WalletHandle;
 
+use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
@@ -40,20 +41,20 @@ pub enum ConnectionState {
 
 impl Connection {
     // ----------------------------- CONSTRUCTORS ------------------------------------
-    pub async fn create_inviter(wallet_handle: WalletHandle) -> VcxResult<Self> {
+    pub async fn create_inviter(profile: &Arc<dyn Profile>) -> VcxResult<Self> {
         trace!("Connection::create >>>");
-        let pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+        let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
         Ok(Self {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new("", pairwise_info)),
         })
     }
 
-    pub async fn create_invitee(wallet_handle: WalletHandle, did_doc: DidDoc) -> VcxResult<Self> {
+    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: DidDoc) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>>");
         Ok(Self {
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
                 "",
-                PairwiseInfo::create(wallet_handle).await?,
+                PairwiseInfo::create(&profile.inject_wallet()).await?,
                 did_doc,
             )),
         })
@@ -133,7 +134,7 @@ impl Connection {
 
     pub async fn process_request(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         request: Request,
         service_endpoint: String,
         routing_keys: Vec<String>,
@@ -147,13 +148,13 @@ impl Connection {
         );
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => {
-                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
-                let new_pairwise_info = PairwiseInfo::create(wallet_handle).await?;
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
+                let new_pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
                 SmConnection::Inviter(
                     sm_inviter
                         .clone()
                         .handle_connection_request(
-                            wallet_handle,
+                            profile.inject_wallet(),
                             request,
                             &new_pairwise_info,
                             routing_keys,
@@ -172,7 +173,7 @@ impl Connection {
 
     pub async fn process_response(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         response: SignedResponse,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
@@ -181,11 +182,11 @@ impl Connection {
                 return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
-                let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                 SmConnection::Invitee(
                     sm_invitee
                         .clone()
-                        .handle_connection_response(response, send_message)
+                        .handle_connection_response(&profile.inject_wallet(), response, send_message)
                         .await?,
                 )
             }
@@ -209,14 +210,14 @@ impl Connection {
     // ----------------------------- MSG SENDING ------------------------------------
     pub async fn send_response(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!("Connection::send_response >>>");
         let connection_sm = match self.connection_sm.clone() {
             SmConnection::Inviter(sm_inviter) => {
                 if let InviterFullState::Requested(_) = sm_inviter.state_object() {
-                    let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+                    let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                     SmConnection::Inviter(sm_inviter.handle_send_response(send_message).await?)
                 } else {
                     return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
@@ -231,7 +232,7 @@ impl Connection {
 
     pub async fn send_request(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         service_endpoint: String,
         routing_keys: Vec<String>,
         send_message: Option<SendClosureConnection>,
@@ -250,7 +251,7 @@ impl Connection {
                     .send_connection_request(
                         routing_keys,
                         service_endpoint,
-                        send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)),
+                        send_message.unwrap_or(self.send_message_closure_connection(profile)),
                     )
                     .await?,
             ),
@@ -260,7 +261,7 @@ impl Connection {
 
     pub async fn send_ack(
         self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
         trace!("Connection::send_request");
@@ -271,7 +272,7 @@ impl Connection {
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
                     .clone()
-                    .handle_send_ack(send_message.unwrap_or(self.send_message_closure_connection(wallet_handle)))
+                    .handle_send_ack(send_message.unwrap_or(self.send_message_closure_connection(profile)))
                     .await?,
             ),
         };
@@ -296,7 +297,7 @@ impl Connection {
 
     pub async fn send_message_closure(
         &self,
-        wallet_handle: WalletHandle,
+        profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
@@ -305,16 +306,17 @@ impl Connection {
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
-        let send_message = send_message.unwrap_or(self.send_message_closure_connection(wallet_handle));
+        let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
         Ok(Box::new(move |message: A2AMessage| {
             Box::pin(send_message(message, sender_vk.clone(), did_doc.clone()))
         }))
     }
 
-    fn send_message_closure_connection(&self, wallet_handle: WalletHandle) -> SendClosureConnection {
+    fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
+        let wallet = profile.inject_wallet();
         Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
-            Box::pin(send_message(wallet_handle, sender_vk, did_doc, message))
+            Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
 }
@@ -323,18 +325,8 @@ impl Connection {
 #[cfg(test)]
 pub mod test_utils {
     use async_channel::Sender;
-    use vdrtools::PoolHandle;
 
     use super::*;
-
-    // TODO: Deduplicate test helpers to reduce build times
-    pub(super) fn _wallet_handle() -> WalletHandle {
-        WalletHandle(0)
-    }
-
-    pub(super) fn _pool_handle() -> PoolHandle {
-        0
-    }
 
     pub(super) fn _routing_keys() -> Vec<String> {
         vec![]
@@ -360,8 +352,9 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::indy::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
+    use crate::common::ledger::transactions::into_did_doc;
+    use crate::utils::devsetup::{SetupMocks, SetupInstitutionWallet};
+    use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
 
     use async_channel::bounded;
     use messages::basic_message::message::BasicMessage;
@@ -378,7 +371,7 @@ mod unit_tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -390,7 +383,7 @@ mod unit_tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Public(_public_invitation());
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -403,12 +396,12 @@ mod unit_tests {
         let _setup = SetupMocks::init();
 
         let invite = _public_invitation_random_id();
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -418,12 +411,12 @@ mod unit_tests {
         assert_ne!(connection.get_thread_id(), invite.id.0);
 
         let invite = _pairwise_invitation_random_id();
-        let connection = Connection::create_invitee(_wallet_handle(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))
             .unwrap()
-            .send_request(_wallet_handle(), _service_endpoint(), vec![], None)
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
             .await
             .unwrap();
         assert_eq!(
@@ -437,10 +430,10 @@ mod unit_tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create_inviter(_wallet_handle())
+        let connection = Connection::create_inviter(&mock_profile())
             .await
             .unwrap()
-            .process_request(_wallet_handle(), _request(), _service_endpoint(), _routing_keys(), None)
+            .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
             .await
             .unwrap();
 
@@ -453,11 +446,12 @@ mod unit_tests {
     #[tokio::test]
     async fn test_connection_e2e() {
         let setup = SetupInstitutionWallet::init().await;
+        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
 
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(setup.wallet_handle)
+        let inviter = Connection::create_inviter(&profile)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())
@@ -470,10 +464,10 @@ mod unit_tests {
         };
 
         // Invitee receives an invite and sends request
-        let did_doc = into_did_doc(_pool_handle(), &Invitation::Pairwise(invite.clone()))
+        let did_doc = into_did_doc(&mock_profile(), &Invitation::Pairwise(invite.clone()))
             .await
             .unwrap();
-        let invitee = Connection::create_invitee(setup.wallet_handle, did_doc)
+        let invitee = Connection::create_invitee(&profile, did_doc)
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite))
@@ -481,7 +475,7 @@ mod unit_tests {
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
         let invitee = invitee
             .send_request(
-                setup.wallet_handle,
+                &profile,
                 _service_endpoint(),
                 _routing_keys(),
                 _send_message(sender.clone()),
@@ -499,7 +493,7 @@ mod unit_tests {
 
         let inviter = inviter
             .process_request(
-                setup.wallet_handle,
+                &profile,
                 request,
                 _service_endpoint(),
                 _routing_keys(),
@@ -509,7 +503,7 @@ mod unit_tests {
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
         let inviter = inviter
-            .send_response(setup.wallet_handle, _send_message(sender.clone()))
+            .send_response(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
@@ -522,12 +516,12 @@ mod unit_tests {
         };
 
         let invitee = invitee
-            .process_response(setup.wallet_handle, response, _send_message(sender.clone()))
+            .process_response(&profile, response, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
         let invitee = invitee
-            .send_ack(setup.wallet_handle, _send_message(sender.clone()))
+            .send_ack(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
@@ -541,7 +535,7 @@ mod unit_tests {
         let content = "Hello";
         let basic_message = BasicMessage::create().set_content(content.to_string()).to_a2a_message();
         invitee
-            .send_message_closure(setup.wallet_handle, _send_message(sender.clone()))
+            .send_message_closure(&profile, _send_message(sender.clone()))
             .await
             .unwrap()(basic_message)
         .await

@@ -458,6 +458,20 @@ pub static REV_DELTA_FAILED_TO_CLEAR: Error = Error {
     code_num: 1114,
     message: "Failed to clear stored revocation deltas",
 };
+pub static INVALID_INPUT: Error = Error {
+    code_num: 1115,
+    message: "Input was invalid",
+};
+
+pub static PARSING: Error = Error {
+    code_num: 1116,
+    message: "Parsing error occured"
+};
+
+pub static UNIMPLEMENTED_FEATURE: Error = Error {
+    code_num: 1117,
+    message: "Unimplemented feature was invoked"
+};
 
 lazy_static! {
     static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {

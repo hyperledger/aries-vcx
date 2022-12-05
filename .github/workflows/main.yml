@@ -51,6 +51,7 @@ jobs:
         id: docker-imgs
         run: |
           set -x
+
           HASH_DOCKERFILE_ALPINE_CORE=${{ hashFiles('ci/alpine_core.dockerfile')}}
           HASH_DOCKERFILE_LIBVCX=${{ hashFiles('ci/libvcx.dockerfile') }}
           HASH_SRC_LIBVCX=${{ hashFiles('libvcx') }}
@@ -242,6 +243,36 @@ jobs:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
 
+  #TODO - can this be included within code-coverage-aries-vcx-integration-tests?
+  code-coverage-aries-vcx-modular-dependencies-integration-tests:
+    needs: workflow-setup
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "Setup rust codecov environment"
+        uses: ./.github/actions/setup-codecov-rust
+      - name: "Run workspace tests: modular_dependencies pool_tests agency_pool_tests"
+        run: |
+          RUSTFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
+          RUSTDOCFLAGS='-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests' \
+          RUST_TEST_THREADS=1 CARGO_INCREMENTAL=0 TEST_POOL_IP=127.0.0.1 cargo test --package aries-vcx -F 'pool_tests agency_pool_tests modular_dependencies';
+
+          mkdir -p /tmp/artifacts/coverage
+          grcov ./target/debug/ -s . -t lcov --llvm --branch --ignore-not-existing -o /tmp/artifacts/coverage/coverage.lcov
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v2
+        with:
+          directory: /tmp/artifacts/coverage
+          flags: unittests-aries-vcx
+          name: codecov-unit-aries-vcx
+          fail_ci_if_error: true
+          path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report-unit-aries-vcx
+          path: /tmp/artifacts/coverage
+
 #  #  ##########################################################################################
 #  #  ###############################    TESTING    ###########################################
 
@@ -385,6 +416,43 @@ jobs:
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip
+
+  build-and-publish-ios-legacy-wrapper:
+    needs: workflow-setup
+    runs-on: macos-11
+    env:
+      LIBVCX_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+      PUBLISH_VERSION: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v2
+      - name: Switch to xcode version 12.4
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
+          xcodebuild -version
+      - name: "Build Legacy iOS wrapper"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          ./wrappers/ios_legacy/ci/build.sh
+      - name: "Rename device as legacy"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
+      - name: "Rename universal as legacy"
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        run: |
+          mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
+      - uses: actions/upload-artifact@v2
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        with:
+          name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device
+          path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
+      - uses: actions/upload-artifact@v2
+        if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
+        with:
+          name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal
+          path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
 
   build-and-publish-android-device:
     runs-on: ubuntu-20.04
@@ -562,14 +630,15 @@ jobs:
              echo "New version was not defined, skipping release."
           fi
 
-#  #  ##########################################################################################
-#  #  ##############################      RELEASE      #########################################
+  #  ##########################################################################################
+  #  ##############################      RELEASE      #########################################
 
   make-release:
     runs-on: ubuntu-20.04
     needs:
       - workflow-setup
       - build-and-publish-ios-wrapper
+      - build-and-publish-ios-legacy-wrapper
       - build-and-publish-android-device
       - build-and-publish-android-emulator
       - test-unit-workspace
@@ -592,8 +661,8 @@ jobs:
           futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: main
           pullRequests: true
-          unreleased: true
-          unreleasedOnly: true
+          unreleased: false
+          unreleasedOnly: false
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
@@ -680,6 +749,24 @@ jobs:
           asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
           asset_content_type: application/zip
 
+  release-ios-legacy-device:
+    runs-on: ubuntu-20.04
+    needs: [ workflow-setup, make-release ]
+    steps:
+      - name: "Fetch iOS device build from artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device
+      - name: "Upload release assets"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
+          asset_name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-device.zip
+          asset_content_type: application/zip
+
   release-ios-universal:
     runs-on: ubuntu-20.04
     needs: [ workflow-setup, make-release ]
@@ -696,4 +783,22 @@ jobs:
           upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
           asset_path: ./libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
           asset_name: libvcx-ios-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
+          asset_content_type: application/zip
+
+  release-ios-legacy-universal:
+    runs-on: ubuntu-20.04
+    needs: [ workflow-setup, make-release ]
+    steps:
+      - name: "Fetch iOS universal build from artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal
+      - name: "Upload release assets"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.make-release.outputs.RELEASE_UPLOAD_URL }}
+          asset_path: ./libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
+          asset_name: libvcx-ios-legacy-${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}-universal.zip
           asset_content_type: application/zip

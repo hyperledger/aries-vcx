@@ -7,19 +7,6 @@
 //
 
 #import "AppDelegate.h"
-#import "ConnectMeVcx.h"
-/*
- typedef unsigned int vcx_error_t;
- typedef unsigned int vcx_schema_handle_t;
- typedef unsigned int vcx_credentialdef_handle_t;
- typedef unsigned int vcx_connection_handle_t;
- typedef unsigned int vcx_credential_handle_t;
- typedef unsigned int vcx_proof_handle_t;
- typedef unsigned int vcx_command_handle_t;
- typedef unsigned int vcx_bool_t;
-
- */
-
 
 @interface AppDelegate ()
 

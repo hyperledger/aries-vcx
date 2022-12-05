@@ -276,7 +276,7 @@ build_vcx_framework() {
         rm lib/libvcx.a
         rm -rf vcx.framework.previousbuild
         mkdir -p vcx.framework/Headers
-        cp -v ConnectMeVcx.h vcx.framework/Headers
+        cp -v VcxAPI.h vcx.framework/Headers
         cp -v include/libvcx.h vcx.framework/Headers
         cp -v vcx/vcx.h vcx.framework/Headers
         cp -v utils/*.h vcx.framework/Headers

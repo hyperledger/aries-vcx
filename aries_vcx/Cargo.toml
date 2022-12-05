@@ -19,8 +19,10 @@ fatal_warnings = []
 warnlog_fetched_messages = []
 mysql_test = ["test_utils" ]
 ios-wrapper = ["libvdrtools/ffi_api"]
+modular_dependencies = ["test_utils", "tokio/rt", "tokio/macros"]
 
 [dependencies]
+async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"
 chrono = "0.4.19"
@@ -36,6 +38,22 @@ base64 = "0.10"
 openssl = { version = "0.10.35" }
 num-traits = "0.2.0"
 libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "debf776c8" }
+# vdrtools alternatives ----
+indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"] }
+# PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on
+# `ursa "0.3.6"` rather than `ursa "=0.3.6"`. Currently, `libvdrtools` depends on `ursa "0.3.7"`, which causes a mismatch of
+# `indy-utils` versions, which causes some types within credx to fail. Details about the issue can be found here: https://github.com/hyperledger/indy-shared-rs/issues/20
+# `indy-data-types` depends on `ursa =0.3.6` due to a 'broken cl feature', see commmit: https://github.com/hyperledger/indy-shared-rs/commit/2403eed6449a3b5e347697b215a732fc33c014c0
+# however using ursa 0.3.7 does not seem to affect our usage of indy-credx currently. More testing would be ideal.
+# various combinations of indy-vdr and indy-credx have been tried to resolve the dependency mismatches, however this patch appears
+# to be the only quick solution.
+# Potential resolutions:
+# - wait for ursa 0.3.8+ to resolve the CL issue and update indy-shared-rs,
+# - monitor anoncred-rs (which will replace indy-credx) as the fix will likely go in here,
+# - monitor the issue for other fixes from the maintainers: https://github.com/hyperledger/indy-shared-rs/issues/20
+# - update libvdrtools to use =0.3.6 ursa
+indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "7342bc624d23ece8845d1a701cd2cdc9cd401bb0" }
+# ----------------------
 futures = { version = "0.3", default-features = false }
 libloading = "0.5.0"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
