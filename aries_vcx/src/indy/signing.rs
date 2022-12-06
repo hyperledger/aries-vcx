@@ -1,4 +1,4 @@
-use vdrtools::{Locator, KeyInfo};
+use vdrtools::Locator;
 
 use vdrtools::WalletHandle;
 
@@ -94,7 +94,10 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResul
     Ok(res)
 }
 
+#[cfg(feature = "test_utils")]
 pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxResult<String> {
+    use vdrtools::KeyInfo;
+
     let res = Locator::instance()
         .crypto_controller
         .create_key(

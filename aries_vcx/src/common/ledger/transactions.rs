@@ -12,7 +12,7 @@ use serde_json::Value;
 use crate::{
     common::keys::get_verkey_from_ledger,
     core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult, VcxResultExt},
+    error::{VcxError, VcxErrorKind, VcxResult},
     global::settings,
 };
 
@@ -200,7 +200,12 @@ pub(self) fn check_response(response: &str) -> VcxResult<()> {
 
 fn parse_response(response: &str) -> VcxResult<Response> {
     serde_json::from_str::<Response>(response)
-        .to_vcx(VcxErrorKind::InvalidJson, "Cannot deserialize transaction response")
+        .map_err(|err|
+            VcxError::from_msg(
+                VcxErrorKind::InvalidJson,
+                format!("Cannot deserialize transaction response: {:?}", err)
+            )
+        )
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {

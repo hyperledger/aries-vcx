@@ -1,6 +1,7 @@
 use std::fmt;
+use std::error::Error;
 
-use failure::{Backtrace, Context, Fail};
+use thiserror;
 
 use crate::utils::error_utils::kind_to_error_message;
 
@@ -8,106 +9,92 @@ pub mod prelude {
     pub use super::*;
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum AgencyClientErrorKind {
     // Common
-    #[fail(display = "Object is in invalid state for requested operation")]
+    #[error("Object is in invalid state for requested operation")]
     InvalidState,
-    #[fail(display = "Invalid Configuration")]
+    #[error("Invalid Configuration")]
     InvalidConfiguration,
-    #[fail(display = "Obj was not found with handle")]
+    #[error("Obj was not found with handle")]
     InvalidJson,
-    #[fail(display = "Invalid Option")]
+    #[error("Invalid Option")]
     InvalidOption,
-    #[fail(display = "Invalid MessagePack")]
+    #[error("Invalid MessagePack")]
     InvalidMessagePack,
-    #[fail(display = "IO Error, possibly creating a backup wallet")]
+    #[error("IO Error, possibly creating a backup wallet")]
     IOError,
-    #[fail(display = "Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
+    #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
     LibindyInvalidStructure,
-    #[fail(display = "Waiting for callback timed out")]
+    #[error("Waiting for callback timed out")]
     TimeoutLibindy,
-    #[fail(display = "Parameter passed to libindy was invalid")]
+    #[error("Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
 
-    #[fail(display = "Message failed in post")]
+    #[error("Message failed in post")]
     PostMessageFailed,
 
     // Wallet
-    #[fail(display = "Invalid Wallet or Search Handle")]
+    #[error("Invalid Wallet or Search Handle")]
     InvalidWalletHandle,
-    #[fail(display = "Indy wallet already exists")]
+    #[error("Indy wallet already exists")]
     DuplicationWallet,
-    #[fail(display = "Wallet record not found")]
+    #[error("Wallet record not found")]
     WalletRecordNotFound,
-    #[fail(display = "Record already exists in the wallet")]
+    #[error("Record already exists in the wallet")]
     DuplicationWalletRecord,
-    #[fail(display = "Wallet not found")]
+    #[error("Wallet not found")]
     WalletNotFound,
-    #[fail(display = "Indy wallet already open")]
+    #[error("Indy wallet already open")]
     WalletAlreadyOpen,
-    #[fail(display = "Configuration is missing wallet key")]
+    #[error("Configuration is missing wallet key")]
     MissingWalletKey,
-    #[fail(display = "Attempted to add a Master Secret that already existed in wallet")]
+    #[error("Attempted to add a Master Secret that already existed in wallet")]
     DuplicationMasterSecret,
-    #[fail(display = "Attempted to add a DID to wallet when that DID already exists in wallet")]
+    #[error("Attempted to add a DID to wallet when that DID already exists in wallet")]
     DuplicationDid,
 
     // Validation
-    #[fail(display = "Unknown Error")]
+    #[error("Unknown Error")]
     UnknownError,
-    #[fail(display = "Invalid DID")]
+    #[error("Invalid DID")]
     InvalidDid,
-    #[fail(display = "Invalid VERKEY")]
+    #[error("Invalid VERKEY")]
     InvalidVerkey,
-    #[fail(display = "Invalid URL")]
+    #[error("Invalid URL")]
     InvalidUrl,
-    #[fail(display = "Unable to serialize")]
+    #[error("Unable to serialize")]
     SerializationError,
-    #[fail(display = "Value needs to be base58")]
+    #[error("Value needs to be base58")]
     NotBase58,
 
     // A2A
-    #[fail(display = "Invalid HTTP response.")]
+    #[error("Invalid HTTP response.")]
     InvalidHttpResponse,
 
-    #[fail(display = "Failed to create agency client")]
+    #[error("Failed to create agency client")]
     CreateAgent,
 
-    #[fail(display = "Libndy error {}", 0)]
+    #[error("Libndy error {}", 0)]
     LibndyError(u32),
-    #[fail(display = "Unknown libindy error")]
+    #[error("Unknown libindy error")]
     UnknownLibndyError,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub struct AgencyClientError {
-    inner: Context<AgencyClientErrorKind>,
-}
-
-impl Fail for AgencyClientError {
-    fn cause(&self) -> Option<&dyn Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
+    msg: String,
+    kind: AgencyClientErrorKind,
 }
 
 impl fmt::Display for AgencyClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut first = true;
-
-        for cause in <dyn Fail>::iter_chain(&self.inner) {
-            if first {
-                first = false;
-                writeln!(f, "Error: {}", cause)?;
-            } else {
-                writeln!(f, "  Caused by: {}", cause)?;
-            }
+        writeln!(f, "Error: {}\n", self.msg)?;
+        let mut current = self.source();
+        while let Some(cause) = current {
+            writeln!(f, "Caused by:\n\t{}", cause)?;
+            current = cause.source();
         }
-
         Ok(())
     }
 }
@@ -118,21 +105,32 @@ impl AgencyClientError {
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
         AgencyClientError {
-            inner: Context::new(msg).context(kind),
+            msg: msg.to_string(),
+            kind,
         }
     }
 
+    pub fn find_root_cause(&self) -> String {
+        let mut current = self.source();
+        while let Some(cause) = current {
+            if cause.source().is_none() { return cause.to_string() }
+            current = cause.source();
+        }
+        self.to_string()
+    }
+
+
     pub fn kind(&self) -> AgencyClientErrorKind {
-        *self.inner.get_context()
+        self.kind
     }
 
     pub fn extend<D>(self, msg: D) -> AgencyClientError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        let kind = self.kind();
         AgencyClientError {
-            inner: self.inner.map(|_| msg).context(kind),
+            msg: msg.to_string(),
+            ..self
         }
     }
 
@@ -141,7 +139,9 @@ impl AgencyClientError {
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
         AgencyClientError {
-            inner: self.inner.map(|_| msg).context(kind),
+            msg: msg.to_string(),
+            kind,
+            ..self
         }
     }
 }
@@ -149,12 +149,6 @@ impl AgencyClientError {
 impl From<AgencyClientErrorKind> for AgencyClientError {
     fn from(kind: AgencyClientErrorKind) -> AgencyClientError {
         AgencyClientError::from_msg(kind, kind_to_error_message(&kind))
-    }
-}
-
-impl From<Context<AgencyClientErrorKind>> for AgencyClientError {
-    fn from(inner: Context<AgencyClientErrorKind>) -> AgencyClientError {
-        AgencyClientError { inner }
     }
 }
 

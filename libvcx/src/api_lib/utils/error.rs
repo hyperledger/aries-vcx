@@ -4,7 +4,6 @@ use std::ffi::CString;
 use std::ptr;
 
 use aries_vcx::agency_client::error::AgencyClientError;
-use failure::Fail;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -26,8 +25,9 @@ pub fn set_current_error_agency(err: &AgencyClientError) {
             let error_json = json!({
                 "error": err.kind().to_string(),
                 "message": err.to_string(),
-                "cause": <dyn Fail>::find_root_cause(err).to_string(),
-                "backtrace": err.backtrace().map(|bt| bt.to_string())
+                "cause": err.find_root_cause(),
+                // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
+                // "backtrace": err.backtrace()
             })
             .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));
@@ -42,8 +42,9 @@ pub fn set_current_error_vcx(err: &VcxError) {
             let error_json = json!({
                 "error": err.kind().to_string(),
                 "message": err.to_string(),
-                "cause": <dyn Fail>::find_root_cause(err).to_string(),
-                "backtrace": err.backtrace().map(|bt| bt.to_string())
+                "cause": err.find_root_cause(),
+                // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
+                // "backtrace": err.backtrace()
             })
             .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));

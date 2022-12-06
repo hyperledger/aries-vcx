@@ -57,7 +57,6 @@ indy-credx = { git = "https://github.com/anonyome/indy-shared-rs.git", rev = "73
 futures = { version = "0.3", default-features = false }
 libloading = "0.5.0"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
-failure = "0.1.6"
 strum = "0.16.0"
 strum_macros = "0.16.0"
 agency_client = { path = "../agency_client" }
@@ -65,6 +64,7 @@ derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
 messages = { path  = "../messages" }
 zmq = { version = "0.9.2" }
+thiserror = "1.0.37"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

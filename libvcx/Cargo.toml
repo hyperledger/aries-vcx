@@ -36,7 +36,6 @@ base64 = "0.10"
 futures = { version = "0.3", default-features = false }
 tokio = { version = "1.15.0", features = ["rt-multi-thread"] }
 uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
-failure = "0.1.8"
 aries-vcx = { path = "../aries_vcx" }
 
 [target.'cfg(target_os = "android")'.dependencies]
