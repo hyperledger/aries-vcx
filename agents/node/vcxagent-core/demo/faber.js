@@ -34,7 +34,7 @@ async function runFaber (options) {
 
     vcxAgent = await createVcxAgent({
       agentName,
-      agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
+      agencyUrl: process.env.AGENCY_URL || 'http://localhost:8080',
       seed: '000000000000000000000000Trustee1',
       walletExtraConfigs,
       logger

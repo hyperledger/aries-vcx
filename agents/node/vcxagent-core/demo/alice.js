@@ -43,7 +43,7 @@ async function getInvitationString (fetchInviteUrl) {
 async function runAlice (options) {
   logger.info('Starting.')
 
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error,agency_client=error')
+  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=trace,agency_client=error')
   const agentName = `alice-${uuid.v4()}`
   const connectionId = 'alice-to-faber'
   const holderCredentialId = 'alice-credential'
@@ -54,7 +54,7 @@ async function runAlice (options) {
 
   const vcxAgent = await createVcxAgent({
     agentName,
-    agencyUrl: process.env.AGENCY_URL || 'https://ariesvcx.agency.staging.absa.id',
+    agencyUrl: process.env.AGENCY_URL || 'https://mobile.dev.izipass.com.br/mediator',
     seed: '000000000000000000000000Trustee1',
     walletExtraConfigs,
     logger
@@ -63,7 +63,7 @@ async function runAlice (options) {
   await vcxAgent.updateWebhookUrl(`http://localhost:7209/notifications/${agentName}`)
 
   const invitationString = await getInvitationString(options['autofetch-invitation-url'])
-  await vcxAgent.serviceConnections.inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
+  await vcxAgent.serviceOutOfBand.createConnectionFromOobMsg(connectionId, invitationString) // inviteeConnectionAcceptFromInvitationAndProgress(connectionId, invitationString)
   logger.info('Connection to alice was Accepted!')
 
   await vcxAgent.serviceCredHolder.waitForCredentialOfferAndAcceptAndProgress(connectionId, holderCredentialId)

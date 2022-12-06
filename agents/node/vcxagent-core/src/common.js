@@ -1,7 +1,9 @@
 const sleepPromise = require('sleep-promise')
 const axios = require('axios')
 module.exports.testTailsUrl = 'http://some-tails-url.org'
-
+if(typeof process != 'undefined'){
+  axios.defaults.adapter = require('axios/lib/adapters/http');
+}
 async function waitUntilAgencyIsReady (agencyEndpoint, logger) {
   let agencyReady = false
   while (!agencyReady) {

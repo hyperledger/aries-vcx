@@ -11,7 +11,7 @@ module.exports.createAlice = async function createAlice () {
 
   const aliceAgentConfig = {
     agentName,
-    agencyUrl: 'http://localhost:8080',
+    agencyUrl: 'https://mobile.dev.izipass.com.br/mediator',
     seed: '000000000000000000000000Alice000',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
     logger
