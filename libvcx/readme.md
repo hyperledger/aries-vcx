@@ -12,7 +12,7 @@ cargo test  --features "general_test" -- --test-threads=1
 ```
 Or specific test:
 ```
-cargo test test_add_get_service --features "pool_tests" -- --test-threads=1 -- --exact
+cargo test test_init_minimal_with_invalid_agency_config --features "general_test" -- --test-threads=1 -- --exact
 ```
 
 Run integration tests:
