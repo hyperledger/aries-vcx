@@ -336,6 +336,10 @@ pub mod test_utils {
         String::from("3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU")
     }
 
+    pub fn _key_4()-> String {
+        String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
+    }
+
     pub fn _did() -> String {
         String::from("VsKV7grR1BUE29mG2Fm2kX")
     }

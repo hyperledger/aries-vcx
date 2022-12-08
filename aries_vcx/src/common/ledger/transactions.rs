@@ -1,4 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
+use bs58;
 
 use messages::{
     connection::{did::Did, invite::Invitation},
@@ -115,13 +116,53 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
-            (service.service_endpoint, service.recipient_keys, service.routing_keys)
+            (service.service_endpoint, did_key_to_public_key(service.recipient_keys), service.routing_keys)
         }
     };
     did_doc.set_service_endpoint(service_endpoint);
     did_doc.set_recipient_keys(recipient_keys);
     did_doc.set_routing_keys(routing_keys);
     Ok(did_doc)
+}
+
+fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
+    let public_key_bytes = bs58::decode(public_key_base58).into_vec().unwrap();
+    // Add the multicodec prefix for ed25519 (0xed 0x01)
+    let mut did_key_bytes = vec![0xed, 0x01];
+    did_key_bytes.extend_from_slice(&public_key_bytes);
+    // Base58 encode the resulting bytes and add the "z" prefix for base58 encoding
+    let mut did_key = String::from("z");
+    did_key.push_str(&bs58::encode(&did_key_bytes).into_string());
+    // Add the "did:key:" prefix
+    did_key.insert_str(0, "did:key:");
+    Ok(did_key)
+}
+
+fn did_key_to_public_key(recipient_keys: Vec<String>) -> Vec<String> {
+    let did_key_prefix = "did:key:";
+
+    let mut result = Vec::new();
+    let edd2599 = [0xed, 0x01];
+
+    for recipient_key in recipient_keys {
+        if recipient_key.starts_with(did_key_prefix) {
+            let fingerprint = recipient_key[did_key_prefix.len()..].to_string();
+
+            let fingerprint = match fingerprint.chars().nth(0) {
+                Some('z') => &fingerprint[1..],
+                _ => &fingerprint,
+            };
+
+            let decoded_value = bs58::decode(fingerprint).into_vec().unwrap();
+            let stripped_value = &decoded_value[edd2599.len()..]; // assuming edd2599 is just the first two bytes of decoded_value
+            let encoded_value = bs58::encode(stripped_value).into_string();
+
+            result.push(encoded_value);
+        } else {
+            result.push(recipient_key);
+        }
+    }
+    result
 }
 
 pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<AriesService> {
@@ -220,8 +261,8 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 mod test {
     use messages::a2a::MessageId;
     use messages::connection::invite::test_utils::_pairwise_invitation;
-    use messages::did_doc::test_utils::{_recipient_keys, _routing_keys, _service_endpoint};
-
+    use messages::did_doc::test_utils::{_key_1, _key_2, _recipient_keys, _routing_keys, _service_endpoint};
+    use messages::out_of_band::invitation::test_utils::_oob_invitation;
     use crate::common::test_utils::mock_profile;
 
     use super::*;
@@ -239,5 +280,44 @@ mod test {
                 .await
                 .unwrap()
         );
+    }
+
+    #[tokio::test]
+    async fn test_did_doc_from_oob_invitation_works() {
+        let mut did_doc = DidDoc::default();
+       // let recipient_keys = vec![_ed25519_public_key_to_did_key(_key_1().as_str()).unwrap()];
+        did_doc.set_id(MessageId::id().0);
+        did_doc.set_service_endpoint(_service_endpoint());
+        did_doc.set_recipient_keys(vec![_key_2()]);
+        did_doc.set_routing_keys(_routing_keys());
+        assert_eq!(
+            did_doc,
+            into_did_doc(&mock_profile(), &Invitation::OutOfBand(_oob_invitation()))
+                .await
+                .unwrap()
+        );
+    }
+
+
+    #[tokio::test]
+    async fn test_did_key_to_did_raw() {
+        // Test 1
+        let val1 = _key_1();
+        let val2 = _key_2();
+        let recipient_keys = vec![_ed25519_public_key_to_did_key(&val1).unwrap(),
+                                  _ed25519_public_key_to_did_key(&val2).unwrap(),
+        ];
+        let expected_output = vec![_key_1(), _key_2()];
+        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
+
+        // Test 2
+        let recipient_keys = vec![_key_1()];
+        let expected_output = vec![_key_1()];
+        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
+
+        // Test 3
+        let recipient_keys = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
+        let expected_output = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
+        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
     }
 }

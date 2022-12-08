@@ -46,3 +46,37 @@ impl OutOfBandInvitation {
         })
     }
 }
+
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+
+    use crate::did_doc::service_aries::AriesService;
+    use super::*;
+    use crate::did_doc::test_utils::*;
+
+
+    pub fn _oob_invitation() -> OutOfBandInvitation {
+          OutOfBandInvitation {
+            id: Default::default(),
+            label: None,
+            goal_code: None,
+            goal: None,
+            accept: None,
+            handshake_protocols: None,
+            services : vec![_create_service()],
+
+            requests_attach: Default::default(),
+            timing: None,
+        }
+
+    }
+    fn _create_service() -> ServiceResolvable {
+        ServiceResolvable::AriesService(
+            AriesService::create()
+                .set_service_endpoint(_service_endpoint())
+                .set_routing_keys(_routing_keys())
+                .set_recipient_keys(vec![_key_4()]),
+        )
+    }
+}
+
