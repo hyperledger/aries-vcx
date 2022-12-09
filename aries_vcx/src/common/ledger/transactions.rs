@@ -65,6 +65,8 @@ pub struct ReplyV1 {
 pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
+const DID_KEY_PREFIX: &str = "did:key:";
+const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
 pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceResolvable) -> VcxResult<AriesService> {
     match service {
@@ -116,7 +118,13 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
-            (service.service_endpoint, did_key_to_public_key(service.recipient_keys), service.routing_keys)
+            let recipient_keys = normalize_keys_as_naked(service.recipient_keys)
+                .await
+                .unwrap_or_else(|err| {
+                    error!("Is not did valid: {}", err);
+                    Vec::new()
+                });
+            (service.service_endpoint,recipient_keys, service.routing_keys)
         }
     };
     did_doc.set_service_endpoint(service_endpoint);
@@ -126,43 +134,51 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
 }
 
 fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
-    let public_key_bytes = bs58::decode(public_key_base58).into_vec().unwrap();
-    // Add the multicodec prefix for ed25519 (0xed 0x01)
-    let mut did_key_bytes = vec![0xed, 0x01];
+    let public_key_bytes = bs58::decode(public_key_base58).into_vec().map_err(|_| {
+        VcxError::from_msg(
+            VcxErrorKind::InvalidDid,
+            format!("Could not base58 decode a did:key fingerprint: {}", public_key_base58),
+        )
+    })?;
+    let mut did_key_bytes = ED25519_MULTIBASE_CODEC.to_vec().clone();
     did_key_bytes.extend_from_slice(&public_key_bytes);
-    // Base58 encode the resulting bytes and add the "z" prefix for base58 encoding
-    let mut did_key = String::from("z");
-    did_key.push_str(&bs58::encode(&did_key_bytes).into_string());
-    // Add the "did:key:" prefix
-    did_key.insert_str(0, "did:key:");
+    let did_key_bytes_bs58 = bs58::encode(&did_key_bytes).into_string();
+    let did_key = format!("{DID_KEY_PREFIX}z{did_key_bytes_bs58}");
     Ok(did_key)
 }
 
-fn did_key_to_public_key(recipient_keys: Vec<String>) -> Vec<String> {
-    let did_key_prefix = "did:key:";
-
+async fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     let mut result = Vec::new();
-    let edd2599 = [0xed, 0x01];
-
-    for recipient_key in recipient_keys {
-        if recipient_key.starts_with(did_key_prefix) {
-            let fingerprint = recipient_key[did_key_prefix.len()..].to_string();
-
-            let fingerprint = match fingerprint.chars().nth(0) {
-                Some('z') => &fingerprint[1..],
-                _ => &fingerprint,
+    for key in keys_list {
+        if let Some(fingerprint) = key.strip_prefix(DID_KEY_PREFIX) {
+            let fingerprint = if fingerprint.chars().nth(0) == Some('z') {
+               &fingerprint[1..]
+            } else {
+                Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidDid,
+                    format!("Only Ed25519-based did:keys are currently supported: {}", key),
+                ))?
             };
-
-            let decoded_value = bs58::decode(fingerprint).into_vec().unwrap();
-            let stripped_value = &decoded_value[edd2599.len()..]; // assuming edd2599 is just the first two bytes of decoded_value
-            let encoded_value = bs58::encode(stripped_value).into_string();
-
-            result.push(encoded_value);
+            let decoded_value = bs58::decode(fingerprint).into_vec().map_err(|_| {
+                VcxError::from_msg(
+                    VcxErrorKind::InvalidDid,
+                    format!("Could not base58 decode a did:key fingerprint: {}", fingerprint),
+                )
+            })?;
+            let verkey = if let Some(public_key_bytes) = decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC) {
+                Ok(bs58::encode(public_key_bytes).into_string())
+            } else {
+                Err(VcxError::from_msg(
+                    VcxErrorKind::InvalidDid,
+                    format!("Only Ed25519-based did:keys are currently supported: {}", key),
+                ))
+            }?;
+            result.push(verkey);
         } else {
-            result.push(recipient_key);
+            result.push(key);
         }
     }
-    result
+    Ok(result)
 }
 
 pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<AriesService> {
@@ -261,7 +277,7 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 mod test {
     use messages::a2a::MessageId;
     use messages::connection::invite::test_utils::_pairwise_invitation;
-    use messages::did_doc::test_utils::{_key_1, _key_2, _recipient_keys, _routing_keys, _service_endpoint};
+    use messages::did_doc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
     use messages::out_of_band::invitation::test_utils::_oob_invitation;
     use crate::common::test_utils::mock_profile;
 
@@ -285,7 +301,6 @@ mod test {
     #[tokio::test]
     async fn test_did_doc_from_oob_invitation_works() {
         let mut did_doc = DidDoc::default();
-       // let recipient_keys = vec![_ed25519_public_key_to_did_key(_key_1().as_str()).unwrap()];
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(vec![_key_2()]);
@@ -298,26 +313,40 @@ mod test {
         );
     }
 
-
     #[tokio::test]
     async fn test_did_key_to_did_raw() {
-        // Test 1
-        let val1 = _key_1();
-        let val2 = _key_2();
-        let recipient_keys = vec![_ed25519_public_key_to_did_key(&val1).unwrap(),
-                                  _ed25519_public_key_to_did_key(&val2).unwrap(),
-        ];
-        let expected_output = vec![_key_1(), _key_2()];
-        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
 
-        // Test 2
+        let did_pub_with_key = "did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string();
+        let did_pub = "HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string();
+        let did_raw = _ed25519_public_key_to_did_key(&did_pub).unwrap();
+        let recipient_keys = vec![did_raw];
+        let expected_output = vec![did_pub_with_key];
+        //test 1
+        assert_eq!(recipient_keys, expected_output);
+
+        let recipient_keys = vec![_key_1_did_key(),_key_2_did_key()];
+        let expected_output = vec![_key_1(), _key_2()];
+        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
+
         let recipient_keys = vec![_key_1()];
         let expected_output = vec![_key_1()];
-        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
+        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
 
-        // Test 3
+        //test did bad format without `z`
+        let recipient_keys = vec!["did:key:invalid".to_string()];
+        let test = normalize_keys_as_naked(recipient_keys).await.map_err(|e| e.kind());
+        let expected_error_kind = VcxErrorKind::InvalidDid;
+        assert_eq!(test.unwrap_err(),expected_error_kind);
+
+        //test did bad format without ed25519_public
+        let recipient_keys = vec!["did:key:zInvalid".to_string()];
+        let test = normalize_keys_as_naked(recipient_keys).await.map_err(|e| e.kind());
+        let expected_error_kind = VcxErrorKind::InvalidDid;
+        assert_eq!(test.unwrap_err(),expected_error_kind);
+
+
         let recipient_keys = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
         let expected_output = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
-        assert_eq!(did_key_to_public_key(recipient_keys), expected_output);
+        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
     }
 }
