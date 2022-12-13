@@ -119,7 +119,6 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                     AriesService::default()
                 });
             let recipient_keys = normalize_keys_as_naked(service.recipient_keys)
-                .await
                 .unwrap_or_else(|err| {
                     error!("Is not did valid: {}", err);
                     Vec::new()
@@ -147,16 +146,16 @@ fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> 
     Ok(did_key)
 }
 
-async fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
+fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     let mut result = Vec::new();
     for key in keys_list {
         if let Some(fingerprint) = key.strip_prefix(DID_KEY_PREFIX) {
             let fingerprint = if fingerprint.chars().nth(0) == Some('z') {
-               &fingerprint[1..]
+                &fingerprint[1..]
             } else {
                 Err(VcxError::from_msg(
                     VcxErrorKind::InvalidDid,
-                    format!("Only Ed25519-based did:keys are currently supported: {}", key),
+                    format!("z prefix is missing: {}", key),
                 ))?
             };
             let decoded_value = bs58::decode(fingerprint).into_vec().map_err(|_| {
@@ -315,38 +314,69 @@ mod test {
 
     #[tokio::test]
     async fn test_did_key_to_did_raw() {
+        let recipient_keys = vec![_key_1()];
+        let expected_output = vec![_key_1()];
+        assert_eq!(normalize_keys_as_naked(recipient_keys).unwrap(), expected_output);
+        let recipient_keys = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
+        let expected_output = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
+        assert_eq!(normalize_keys_as_naked(recipient_keys).unwrap(), expected_output);
+    }
 
+    #[tokio::test]
+    async fn test_did_naked_to_did_raw() {
+        let recipient_keys = vec![_key_1_did_key(), _key_2_did_key()];
+        let expected_output = vec![_key_1(), _key_2()];
+        assert_eq!(normalize_keys_as_naked(recipient_keys).unwrap(), expected_output);
+    }
+
+    #[tokio::test]
+    async fn test_did_bad_format_without_z_prefix() {
+        let recipient_keys = vec!["did:key:invalid".to_string()];
+        let test = normalize_keys_as_naked(recipient_keys).map_err(|e| e.kind());
+        let expected_error_kind = VcxErrorKind::InvalidDid;
+        assert_eq!(test.unwrap_err(), expected_error_kind);
+    }
+
+    #[tokio::test]
+    async fn test_did_bad_format_without_ed25519_public() {
+        let recipient_keys = vec!["did:key:zInvalid".to_string()];
+        let test = normalize_keys_as_naked(recipient_keys).map_err(|e| e.kind());
+        let expected_error_kind = VcxErrorKind::InvalidDid;
+        assert_eq!(test.unwrap_err(), expected_error_kind);
+    }
+
+    #[tokio::test]
+    async fn test_public_key_to_did_naked_with_previously_known_keys_suggested() {
         let did_pub_with_key = "did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string();
         let did_pub = "HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string();
         let did_raw = _ed25519_public_key_to_did_key(&did_pub).unwrap();
         let recipient_keys = vec![did_raw];
         let expected_output = vec![did_pub_with_key];
-        //test 1
         assert_eq!(recipient_keys, expected_output);
+    }
 
-        let recipient_keys = vec![_key_1_did_key(),_key_2_did_key()];
-        let expected_output = vec![_key_1(), _key_2()];
-        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
+    #[tokio::test]
+    async fn test_public_key_to_did_naked_with_previously_known_keys_rfc_0360() {
+        let did_pub_with_key_rfc_0360 = "did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string();
+        let did_pub_rfc_0360 = "8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string();
+        let did_raw = _ed25519_public_key_to_did_key(&did_pub_rfc_0360).unwrap();
+        let recipient_keys = vec![did_raw];
+        let expected_output = vec![did_pub_with_key_rfc_0360];
+        assert_eq!(recipient_keys, expected_output);
+    }
 
-        let recipient_keys = vec![_key_1()];
-        let expected_output = vec![_key_1()];
-        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
+    #[tokio::test]
+    async fn test_did_naked_with_previously_known_keys_suggested() {
+        let did_pub_with_key = vec!["did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string()];
+        let did_pub = vec!["HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string()];
+        assert_eq!(normalize_keys_as_naked(did_pub_with_key).unwrap(),did_pub );
 
-        //test did bad format without `z`
-        let recipient_keys = vec!["did:key:invalid".to_string()];
-        let test = normalize_keys_as_naked(recipient_keys).await.map_err(|e| e.kind());
-        let expected_error_kind = VcxErrorKind::InvalidDid;
-        assert_eq!(test.unwrap_err(),expected_error_kind);
+    }
 
-        //test did bad format without ed25519_public
-        let recipient_keys = vec!["did:key:zInvalid".to_string()];
-        let test = normalize_keys_as_naked(recipient_keys).await.map_err(|e| e.kind());
-        let expected_error_kind = VcxErrorKind::InvalidDid;
-        assert_eq!(test.unwrap_err(),expected_error_kind);
-
-
-        let recipient_keys = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
-        let expected_output = vec!["abc".to_string(), "def".to_string(), "ghi".to_string()];
-        assert_eq!(normalize_keys_as_naked(recipient_keys).await.unwrap(), expected_output);
+    #[tokio::test]
+    async fn test_did_naked_with_previously_known_keys_rfc_0360() {
+        let did_pub_with_key_rfc_0360 = vec!["did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string()];
+        let did_pub_rfc_0360 = vec!["8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string()];
+        assert_eq!(normalize_keys_as_naked(did_pub_with_key_rfc_0360).unwrap(), did_pub_rfc_0360);
     }
 }
