@@ -22,6 +22,7 @@ ios-wrapper = ["libvdrtools/ffi_api"]
 modular_dependencies = ["test_utils", "tokio/rt", "tokio/macros"]
 
 [dependencies]
+bs58 = "0.4.0"
 async-trait = "0.1.53"
 env_logger = "0.9.0"
 log = "0.4.16"

@@ -327,13 +327,21 @@ pub mod test_utils {
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
     }
-
+    pub fn _key_1_did_key() -> String {
+        String::from("did:key:z6MkukGVb3mRvTu1msArDKY9UwxeZFGjmwnCKtdQttr4Fk6i")
+    }
     pub fn _key_2() -> String {
         String::from("Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR")
     }
-
+    pub fn _key_2_did_key() -> String {
+        String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
+    }
     pub fn _key_3() -> String {
         String::from("3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU")
+    }
+
+    pub fn _key_4()-> String {
+        String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
     }
 
     pub fn _did() -> String {
