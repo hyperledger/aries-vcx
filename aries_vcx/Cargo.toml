@@ -34,7 +34,6 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 regex = "1.1.0"
-rust-base58 = "0.0.4"
 base64 = "0.10"
 openssl = { version = "0.10.35" }
 num-traits = "0.2.0"

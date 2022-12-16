@@ -23,7 +23,6 @@ serde_json = "1.0.40"
 serde_derive = "1.0.97"
 url = "2.3"
 regex = "1.1.0"
-rust-base58 = "0.0.4"
 base64 = "0.10"
 num-traits = "0.2.0"
 libvdrtools = { git = "https://gitlab.com/left-arm/vdr-tools.git", rev = "debf776c8" }
@@ -33,3 +32,4 @@ strum_macros = "0.16.0"
 derive_builder = "0.10.2"
 tokio = { version = "1.15.0" }
 thiserror = "1.0.37"
+bs58 = "0.4.0"

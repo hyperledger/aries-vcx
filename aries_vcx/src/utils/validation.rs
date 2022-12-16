@@ -3,30 +3,29 @@ use crate::error::prelude::*;
 use crate::utils::qualifier;
 
 use openssl::bn::BigNum;
-use rust_base58::FromBase58;
+use bs58;
 
 pub fn validate_did(did: &str) -> VcxResult<String> {
     if qualifier::is_fully_qualified(did) {
         Ok(did.to_string())
     } else {
-        //    assert len(base58.b58decode(did)) == 16
         let check_did = String::from(did);
-        match check_did.from_base58() {
+        match bs58::decode(check_did.clone()).into_vec() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => {
-                warn!("ok(_)");
-                Err(VcxError::from_msg(VcxErrorKind::InvalidDid, "Invalid DID length"))
-            }
-            Err(x) => {
-                warn!("Err(x)");
+            Ok(x) => Err(VcxError::from_msg(
+                VcxErrorKind::InvalidDid,
+                format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
+            )),
+            Err(err) => {
                 return Err(VcxError::from_msg(
                     VcxErrorKind::NotBase58,
-                    format!("Invalid DID: {}", x),
+                    format!("DID is not valid base58, details: {}", err),
                 ));
             }
         }
     }
 }
+
 
 pub fn validate_nonce(nonce: &str) -> VcxResult<String> {
     let nonce = BigNum::from_dec_str(nonce).map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidNonce, err))?;

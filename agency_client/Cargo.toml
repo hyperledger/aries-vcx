@@ -22,7 +22,7 @@ serde_json = "1.0.40"
 serde_derive = "1.0.97"
 reqwest = "0.11.10"
 regex = "1.1.0"
-rust-base58 = "0.0.4"
+bs58 = "0.4.0"
 url = "2.3"
 uuid = { version = "0.8", default-features = false, features = ["v4"]}
 thiserror = "1.0.37"
