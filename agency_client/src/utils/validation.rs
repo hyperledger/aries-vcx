@@ -2,7 +2,7 @@ use regex::Regex;
 
 use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
-use rust_base58::FromBase58;
+use bs58;
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -18,17 +18,16 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
         Ok(did.to_string())
     } else {
         let check_did = String::from(did);
-        match check_did.from_base58() {
+        match bs58::decode(check_did.clone()).into_vec() {
             Ok(ref x) if x.len() == 16 => Ok(check_did),
-            Ok(_) => Err(AgencyClientError::from_msg(
+            Ok(x) => Err(AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidDid,
-                "Invalid DID length",
+                format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
             )),
-            Err(x) => {
-                warn!("Err({:?})", x);
+            Err(err) => {
                 return Err(AgencyClientError::from_msg(
                     AgencyClientErrorKind::NotBase58,
-                    format!("Invalid DID: {}", x),
+                    format!("DID is not valid base58, details: {}", err),
                 ));
             }
         }
@@ -37,15 +36,15 @@ pub fn validate_did(did: &str) -> AgencyClientResult<String> {
 
 pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
     let check_verkey = String::from(verkey);
-    match check_verkey.from_base58() {
+    match bs58::decode(check_verkey.clone()).into_vec() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(_) => Err(AgencyClientError::from_msg(
+        Ok(x) => Err(AgencyClientError::from_msg(
             AgencyClientErrorKind::InvalidVerkey,
-            "Invalid Verkey length",
+            format!("Invalid verkey length, expected 32 bytes, decoded {} bytes", x.len()),
         )),
-        Err(x) => Err(AgencyClientError::from_msg(
+        Err(err) => Err(AgencyClientError::from_msg(
             AgencyClientErrorKind::NotBase58,
-            format!("Invalid Verkey: {}", x),
+            format!("Verkey is not valid base58, details: {}", err),
         )),
     }
 }

@@ -1,15 +1,19 @@
 use crate::error::prelude::*;
 
-use rust_base58::FromBase58;
+use bs58;
 
 pub fn validate_verkey(verkey: &str) -> MessagesResult<String> {
     let check_verkey = String::from(verkey);
-    match check_verkey.from_base58() {
+    match bs58::decode(check_verkey.clone())
+        .into_vec() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(_) => Err(MessagesError::from_msg(MesssagesErrorKind::InvalidVerkey, "Invalid Verkey length")),
-        Err(x) => Err(MessagesError::from_msg(
+        Ok(x) => Err(MessagesError::from_msg(
+            MesssagesErrorKind::InvalidVerkey,
+            format!("Invalid verkey length, expected 32 bytes, decoded {} bytes", x.len()),
+        )),
+        Err(err) => Err(MessagesError::from_msg(
             MesssagesErrorKind::NotBase58,
-            format!("Invalid Verkey: {}", x),
+            format!("Verkey is not valid base58, details: {}", err),
         )),
     }
 }
