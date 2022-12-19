@@ -1,7 +1,7 @@
-use messages::connection::invite::Invitation;
-use messages::connection::problem_report::ProblemReport;
-use messages::connection::request::Request;
-use messages::connection::response::SignedResponse;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::problem_report::ProblemReport;
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::SignedResponse;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 

@@ -8,12 +8,12 @@ use crate::error::prelude::*;
 use crate::global::settings;
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use messages::a2a::{A2AMessage, MessageId};
-use messages::ack::Ack;
-use messages::issuance::credential::Credential;
-use messages::issuance::credential_ack::CredentialAck;
-use messages::issuance::credential_offer::CredentialOffer;
-use messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::issuance::credential_request::CredentialRequest;
+use messages::concepts::ack::Ack;
+use messages::protocols::issuance::credential::Credential;
+use messages::protocols::issuance::credential_ack::CredentialAck;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
+use messages::protocols::issuance::credential_request::CredentialRequest;
 use messages::concepts::problem_report::ProblemReport;
 use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
@@ -605,11 +605,11 @@ async fn _make_credential_request(
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use messages::issuance::credential::test_utils::_credential;
-    use messages::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
-    use messages::issuance::test_utils::{_ack, _problem_report};
+    use messages::protocols::issuance::credential::test_utils::_credential;
+    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
+    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
+    use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
+    use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::constants;
     use crate::utils::devsetup::SetupMocks;
@@ -911,7 +911,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialAck(_ack()),
+                    CredentialIssuanceAction::CredentialAck(_credential_ack()),
                     _send_message(),
                 )
                 .await
@@ -968,7 +968,7 @@ mod test {
             holder_sm = holder_sm
                 .handle_message(
                     &mock_profile(),
-                    CredentialIssuanceAction::CredentialAck(_ack()),
+                    CredentialIssuanceAction::CredentialAck(_credential_ack()),
                     _send_message(),
                 )
                 .await
@@ -995,7 +995,7 @@ mod test {
                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
                     "key_4".to_string() => A2AMessage::Credential(_credential()),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_ack()),
+                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
                 );
 
@@ -1030,7 +1030,7 @@ mod test {
                     "key_1".to_string() => A2AMessage::CredentialOffer(_credential_offer()),
                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
-                    "key_4".to_string() => A2AMessage::CredentialAck(_ack()),
+                    "key_4".to_string() => A2AMessage::CredentialAck(_credential_ack()),
                     "key_5".to_string() => A2AMessage::CommonProblemReport(_problem_report())
                 );
 
@@ -1046,7 +1046,7 @@ mod test {
                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request().set_thread_id("")),
                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal().set_thread_id("")),
                     "key_4".to_string() => A2AMessage::Credential(_credential().set_thread_id("")),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_ack().set_thread_id("")),
+                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack().set_thread_id("")),
                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report().set_thread_id(""))
                 );
 
@@ -1079,7 +1079,7 @@ mod test {
                     "key_2".to_string() => A2AMessage::CredentialRequest(_credential_request()),
                     "key_3".to_string() => A2AMessage::CredentialProposal(_credential_proposal()),
                     "key_4".to_string() => A2AMessage::Credential(_credential()),
-                    "key_5".to_string() => A2AMessage::CredentialAck(_ack()),
+                    "key_5".to_string() => A2AMessage::CredentialAck(_credential_ack()),
                     "key_6".to_string() => A2AMessage::CommonProblemReport(_problem_report())
                 );
 

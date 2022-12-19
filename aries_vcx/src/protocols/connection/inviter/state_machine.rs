@@ -9,11 +9,11 @@ use crate::protocols::SendClosureConnection;
 use crate::common::signing::sign_connection_response;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::{A2AMessage, MessageId};
-use messages::connection::invite::{Invitation, PairwiseInvitation};
-use messages::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::connection::request::Request;
-use messages::connection::response::{Response, SignedResponse};
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
+use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::{Response, SignedResponse};
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
@@ -334,13 +334,13 @@ impl SmConnectionInviter {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::_ack;
-    use messages::connection::problem_report::unit_tests::_problem_report;
-    use messages::connection::request::unit_tests::_request;
-    use messages::connection::response::test_utils::_signed_response;
-    use messages::discovery::disclose::test_utils::_disclose;
-    use messages::discovery::query::test_utils::_query;
-    use messages::trust_ping::ping::unit_tests::_ping;
+    use messages::concepts::ack::test_utils::_ack;
+    use messages::protocols::connection::problem_report::unit_tests::_problem_report;
+    use messages::protocols::connection::request::unit_tests::_request;
+    use messages::protocols::connection::response::test_utils::_signed_response;
+    use messages::protocols::discovery::disclose::test_utils::_disclose;
+    use messages::protocols::discovery::query::test_utils::_query;
+    use messages::protocols::trust_ping::ping::unit_tests::_ping;
 
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
@@ -453,7 +453,7 @@ pub mod unit_tests {
         }
 
         mod get_thread_id {
-            use messages::ack::test_utils::_ack_random_thread;
+            use messages::concepts::ack::test_utils::_ack_random_thread;
 
             use super::*;
 

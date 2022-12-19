@@ -1,5 +1,5 @@
-use messages::connection::invite::Invitation;
-use messages::connection::request::Request;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::request::Request;
 use messages::did_doc::DidDoc;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 

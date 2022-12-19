@@ -1,6 +1,6 @@
 use messages::did_doc::DidDoc;
-use messages::connection::problem_report::ProblemReport;
-use messages::connection::response::SignedResponse;
+use messages::protocols::connection::problem_report::ProblemReport;
+use messages::protocols::connection::response::SignedResponse;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 

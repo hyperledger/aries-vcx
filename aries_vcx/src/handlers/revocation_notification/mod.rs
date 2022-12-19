@@ -4,8 +4,8 @@ pub mod sender;
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
-    use messages::ack::Ack;
-    use messages::revocation_notification::revocation_notification::RevocationNotification;
+    use messages::concepts::ack::Ack;
+    use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 
     use crate::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;

@@ -6,10 +6,10 @@ use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
-use aries_vcx::messages::issuance::credential_ack::CredentialAck;
-use aries_vcx::messages::issuance::credential_offer::OfferInfo;
-use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::issuance::credential_request::CredentialRequest;
+use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
+use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
+use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::protocols::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
 #[derive(Clone)]

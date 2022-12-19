@@ -1,4 +1,4 @@
-use messages::revocation_notification::revocation_notification::RevocationNotification;
+use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct NotificationSentState {

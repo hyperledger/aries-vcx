@@ -1,8 +1,8 @@
 use serde_json;
 
 use crate::error::prelude::*;
-use messages::issuance::credential_offer::CredentialOffer;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests).map_err(|err| {

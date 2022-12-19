@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
-use messages::connection::response::SignedResponse;
+use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::core::profile::profile::Profile;
@@ -12,8 +12,8 @@ use crate::protocols::connection::inviter::state_machine::{InviterFullState, Inv
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
-use messages::connection::invite::Invitation;
-use messages::connection::request::Request;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::request::Request;
 use messages::did_doc::DidDoc;
 
 #[derive(Clone, PartialEq)]
@@ -357,11 +357,11 @@ mod unit_tests {
     use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
 
     use async_channel::bounded;
-    use messages::basic_message::message::BasicMessage;
-    use messages::connection::invite::test_utils::{
+    use messages::protocols::basic_message::message::BasicMessage;
+    use messages::protocols::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
-    use messages::connection::request::unit_tests::_request;
+    use messages::protocols::connection::request::unit_tests::_request;
 
     use super::test_utils::*;
     use super::*;

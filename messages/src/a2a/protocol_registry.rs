@@ -4,7 +4,7 @@ use strum::IntoEnumIterator;
 use crate::actors;
 use crate::actors::Actors;
 use crate::a2a::message_family::MessageFamilies;
-use crate::discovery::disclose::ProtocolDescriptor;
+use crate::protocols::discovery::disclose::ProtocolDescriptor;
 
 pub struct ProtocolRegistry {
     protocols: Vec<ProtocolDescriptor>,

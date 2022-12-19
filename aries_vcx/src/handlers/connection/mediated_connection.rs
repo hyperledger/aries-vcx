@@ -29,11 +29,11 @@ use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
-use messages::basic_message::message::BasicMessage;
-use messages::connection::invite::Invitation;
-use messages::connection::request::Request;
+use messages::protocols::basic_message::message::BasicMessage;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::request::Request;
 use messages::did_doc::DidDoc;
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
 pub struct MediatedConnection {
@@ -1081,13 +1081,13 @@ mod tests {
         CONNECTION_SM_INVITER_COMPLETED,
     };
     use crate::common::test_utils::mock_profile;
-    use messages::connection::invite::test_utils::{
+    use messages::protocols::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
-    use messages::connection::request::unit_tests::_request;
-    use messages::connection::response::test_utils::_signed_response;
-    use messages::discovery::disclose::test_utils::_disclose;
-    use messages::discovery::query::test_utils::_query;
+    use messages::protocols::connection::request::unit_tests::_request;
+    use messages::protocols::connection::response::test_utils::_signed_response;
+    use messages::protocols::discovery::disclose::test_utils::_disclose;
+    use messages::protocols::discovery::query::test_utils::_query;
 
     use super::*;
 

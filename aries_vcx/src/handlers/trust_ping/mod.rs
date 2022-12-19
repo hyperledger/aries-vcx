@@ -1,7 +1,7 @@
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 
-use messages::trust_ping::ping::Ping;
-use messages::trust_ping::ping_response::PingResponse;
+use messages::protocols::trust_ping::ping::Ping;
+use messages::protocols::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
 

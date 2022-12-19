@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use messages::issuance::credential::Credential;
-use messages::revocation_notification::revocation_notification::RevocationNotification;
+use messages::protocols::issuance::credential::Credential;
+use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -12,8 +12,8 @@ use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
 use crate::common::credentials::get_cred_rev_id;
 use messages::a2a::A2AMessage;
-use messages::issuance::credential_offer::CredentialOffer;
-use messages::issuance::credential_proposal::CredentialProposalData;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_proposal::CredentialProposalData;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::state_machine::{HolderSM, HolderState};
 use crate::protocols::SendClosure;
@@ -241,10 +241,10 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
 
-    use messages::issuance::credential::test_utils::_credential;
-    use messages::issuance::credential_offer::test_utils::_credential_offer;
-    use messages::issuance::credential_proposal::test_utils::_credential_proposal_data;
-    use messages::issuance::credential_request::test_utils::_my_pw_did;
+    use messages::protocols::issuance::credential::test_utils::_credential;
+    use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
+    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal_data;
+    use messages::protocols::issuance::credential_request::test_utils::_my_pw_did;
     use crate::utils::devsetup::SetupMocks;
     use crate::common::test_utils::mock_profile;
 

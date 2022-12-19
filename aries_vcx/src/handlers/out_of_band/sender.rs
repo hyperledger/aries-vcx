@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
-use messages::out_of_band::invitation::OutOfBandInvitation;
-use messages::out_of_band::{GoalCode, HandshakeProtocol};
+use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 use messages::a2a::message_family::MessageFamilies;
 use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
@@ -103,8 +103,8 @@ impl OutOfBandSender {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use messages::did_doc::service_aries::AriesService;
-    use messages::connection::did::Did;
-    use messages::issuance::credential_offer::CredentialOffer;
+    use messages::protocols::connection::did::Did;
+    use messages::protocols::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
 
     use super::*;

@@ -35,7 +35,7 @@ impl AgencyClient {
     pub fn get_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
         Arc::clone(&self.wallet)
     }
-    
+
     pub fn get_agency_url_full(&self) -> String {
         format!("{}/agency/msg", self.agency_url.clone())
     }

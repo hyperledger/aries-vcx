@@ -12,8 +12,8 @@ use crate::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::common::ledger::transactions::write_endpoint_legacy;
 use messages::a2a::A2AMessage;
-use messages::connection::did::Did;
-use messages::connection::request::Request;
+use messages::protocols::connection::did::Did;
+use messages::protocols::connection::request::Request;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

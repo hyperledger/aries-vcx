@@ -21,7 +21,7 @@ mod integration_tests {
     use agency_client::MessageStatusCode;
     use aries_vcx::global::settings;
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::ack::test_utils::_ack;
+    use aries_vcx::messages::concepts::ack::test_utils::_ack;
     use aries_vcx::plugins::wallet::{
         agency_client_wallet::ToBaseAgencyClientWallet, base_wallet::BaseWallet, indy_wallet::IndySdkWallet,
     };
@@ -208,7 +208,7 @@ mod integration_tests {
 
         info!("test_connection_send_works:: Test if Download Messages");
         {
-            let credential_offer = aries_vcx::messages::issuance::credential_offer::test_utils::_credential_offer();
+            let credential_offer = aries_vcx::messages::protocols::issuance::credential_offer::test_utils::_credential_offer();
 
             faber.connection.send_message_closure(&faber.profile).await.unwrap()(credential_offer.to_a2a_message())
                 .await
@@ -220,7 +220,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             let message: DownloadedMessage = msgs[0].clone();
-            let _payload: aries_vcx::messages::issuance::credential_offer::CredentialOffer =
+            let _payload: aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer =
                 serde_json::from_str(&message.decrypted_msg).unwrap();
 
             alice

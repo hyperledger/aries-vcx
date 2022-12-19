@@ -8,10 +8,10 @@ use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_ack::PresentationAck;
-use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
 use crate::protocols::SendClosure;
@@ -252,7 +252,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
-    use messages::proof_presentation::presentation_request::PresentationRequest;
+    use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use crate::{utils::devsetup::*, common::test_utils::indy_handles_to_profile};
 
     use super::*;

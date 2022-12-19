@@ -80,9 +80,9 @@ pub async fn send_message(
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
     let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet, 
-        &message, 
-        Some(&sender_verkey), 
+        &wallet,
+        &message,
+        Some(&sender_verkey),
         &did_doc)
         .await?;
 
@@ -102,12 +102,12 @@ pub async fn send_message_anonymously(
         &did_doc
     );
     let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet, 
-        &message, 
+        &wallet,
+        &message,
         None,
         &did_doc)
         .await?;
-        
+
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
 }

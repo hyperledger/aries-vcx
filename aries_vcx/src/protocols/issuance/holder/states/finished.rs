@@ -1,6 +1,6 @@
 use crate::error::prelude::*;
 use messages::concepts::problem_report::ProblemReport;
-use messages::issuance::credential::{Credential, CredentialData};
+use messages::protocols::issuance::credential::{Credential, CredentialData};
 use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

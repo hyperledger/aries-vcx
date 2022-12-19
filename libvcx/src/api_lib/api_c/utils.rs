@@ -2,7 +2,7 @@ use std::ptr;
 
 use aries_vcx::common::ledger::transactions::{write_endpoint_legacy, get_service};
 use aries_vcx::common::signing::unpack_message_to_string;
-use aries_vcx::messages::connection::did::Did;
+use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::{BoxFuture, FutureExt};

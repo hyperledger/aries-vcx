@@ -1,0 +1,9 @@
+pub mod basic_message;
+pub mod connection;
+pub mod discovery;
+pub mod issuance;
+pub mod revocation_notification;
+pub mod out_of_band;
+pub mod proof_presentation;
+pub mod trust_ping;
+pub mod routing;

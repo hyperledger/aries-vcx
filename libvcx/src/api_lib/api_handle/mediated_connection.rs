@@ -1,24 +1,24 @@
 use std::collections::HashMap;
 
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use serde_json;
 
-use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 use aries_vcx::agency_client::api::downloaded_message::DownloadedMessage;
 use aries_vcx::agency_client::MessageStatusCode;
+use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::connection::mediated_connection::MediatedConnection;
-use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::connection::invite::Invitation as InvitationV3;
-use aries_vcx::messages::connection::invite::PublicInvitation;
-use aries_vcx::messages::connection::request::Request;
+use aries_vcx::messages::protocols::connection::invite::Invitation as InvitationV3;
+use aries_vcx::messages::protocols::connection::invite::PublicInvitation;
+use aries_vcx::messages::protocols::connection::request::Request;
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::SendClosure;
 use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::agency_client::get_main_agency_client;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
@@ -473,7 +473,7 @@ pub mod tests {
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::global::settings;
-    use aries_vcx::messages::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
+    use aries_vcx::messages::protocols::connection::invite::test_utils::{_pairwise_invitation_json, _public_invitation_json};
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_connection::{

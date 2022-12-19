@@ -1,5 +1,5 @@
 use crate::error::prelude::*;
-use messages::issuance::credential::Credential;
+use messages::protocols::issuance::credential::Credential;
 use messages::status::Status;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
 

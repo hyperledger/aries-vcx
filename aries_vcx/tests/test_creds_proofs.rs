@@ -10,7 +10,7 @@ mod integration_tests {
     use std::sync::Arc;
 
     use aries_vcx::handlers::proof_presentation::prover::Prover;
-    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, TAILS_DIR};
     use aries_vcx::utils::devsetup::{SetupProfile, init_holder_setup_in_indy_context};
     use aries_vcx::utils::get_temp_dir_path;
@@ -331,8 +331,8 @@ mod tests {
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;

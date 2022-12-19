@@ -10,7 +10,7 @@ use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
-use messages::routing::forward::Forward;
+use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -198,7 +198,7 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use messages::ack::test_utils::_ack;
+    use messages::concepts::ack::test_utils::_ack;
     use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;
     use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile, create_key};

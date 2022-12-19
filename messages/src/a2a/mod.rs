@@ -1,30 +1,30 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::ack::Ack;
-use crate::basic_message::message::BasicMessage;
-use crate::connection::invite::{PairwiseInvitation, PublicInvitation};
-use crate::connection::problem_report::ProblemReport as ConnectionProblemReport;
-use crate::connection::request::Request;
-use crate::connection::response::SignedResponse;
-use crate::discovery::disclose::Disclose;
-use crate::discovery::query::Query;
-use crate::revocation_notification::revocation_ack::RevocationAck;
-use crate::revocation_notification::revocation_notification::RevocationNotification;
+use crate::concepts::ack::Ack;
+use crate::protocols::basic_message::message::BasicMessage;
+use crate::protocols::connection::invite::{PairwiseInvitation, PublicInvitation};
+use crate::protocols::connection::problem_report::ProblemReport as ConnectionProblemReport;
+use crate::protocols::connection::request::Request;
+use crate::protocols::connection::response::SignedResponse;
+use crate::protocols::discovery::disclose::Disclose;
+use crate::protocols::discovery::query::Query;
+use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
+use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
 use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
-use crate::routing::forward::Forward;
-use crate::issuance::credential::Credential;
-use crate::issuance::credential_offer::CredentialOffer;
-use crate::issuance::credential_proposal::CredentialProposal;
-use crate::issuance::credential_request::CredentialRequest;
-use crate::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::out_of_band::invitation::OutOfBandInvitation;
-use crate::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use crate::proof_presentation::presentation::Presentation;
-use crate::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::proof_presentation::presentation_request::PresentationRequest;
-use crate::trust_ping::ping::Ping;
-use crate::trust_ping::ping_response::PingResponse;
+use crate::protocols::routing::forward::Forward;
+use crate::protocols::issuance::credential::Credential;
+use crate::protocols::issuance::credential_offer::CredentialOffer;
+use crate::protocols::issuance::credential_proposal::CredentialProposal;
+use crate::protocols::issuance::credential_request::CredentialRequest;
+use crate::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
+use crate::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use crate::protocols::proof_presentation::presentation::Presentation;
+use crate::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use crate::protocols::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::trust_ping::ping::Ping;
+use crate::protocols::trust_ping::ping_response::PingResponse;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -417,9 +417,9 @@ pub mod test_a2a_serialization {
     use serde_json::Value;
 
     use crate::a2a::{A2AMessage, MessageId};
-    use crate::ack::{Ack, AckStatus};
-    use crate::connection::request::Request;
-    use crate::forward::Forward;
+    use crate::concepts::ack::{Ack, AckStatus};
+    use crate::protocols::connection::request::Request;
+    use crate::protocols::routing::forward::Forward;
 
     #[test]
     fn test_serialization_deserialization_connection_request() {

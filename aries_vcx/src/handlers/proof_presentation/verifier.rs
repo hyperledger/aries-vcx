@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use messages::status::Status;
-use messages::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation::Presentation;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -14,8 +14,8 @@ use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
-use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct Verifier {
@@ -212,7 +212,7 @@ mod unit_tests {
     use crate::utils::devsetup::*;
     use crate::utils::mockdata::mock_settings::MockBuilder;
     use messages::a2a::A2AMessage;
-    use messages::proof_presentation::presentation::test_utils::_presentation;
+    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
     use vdrtools::WalletHandle;
 
     use super::*;
