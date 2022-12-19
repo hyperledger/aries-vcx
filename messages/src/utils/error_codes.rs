@@ -23,10 +23,7 @@ pub fn map_indy_error<T, C: PrimInt>(rtn: T, error_code: C) -> Result<T, u32> {
 
 pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
     let error_code = match error_code.to_u32() {
-        Some(n) => {
-            error!("MAPPING ERROR: {:?} -- {}", n, error::error_message(&n));
-            n
-        }
+        Some(n) => n,
         None => return error::UNKNOWN_LIBINDY_ERROR.code_num,
     };
 

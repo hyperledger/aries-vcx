@@ -43,7 +43,6 @@ impl PresentationRequest {
         mut self,
         request_presentations: &str,
     ) -> MessagesResult<PresentationRequest> {
-        trace!("set_request_presentations_attach >>> {}", request_presentations);
         self.request_presentations_attach
             .add_base64_encoded_json_attachment(AttachmentId::PresentationRequest, json!(request_presentations))?;
         Ok(self)
@@ -122,7 +121,7 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::proof_presentation::presentation_request::test_utils::*;
     use crate::utils::devsetup::was_in_past;
-    
+
 
     use super::*;
 

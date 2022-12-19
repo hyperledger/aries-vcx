@@ -1,4 +1,3 @@
-use crate::did_doc::DidDoc;
 use crate::error::prelude::*;
 use crate::out_of_band::invitation::OutOfBandInvitation;
 use crate::a2a::{A2AMessage, MessageId};
@@ -32,19 +31,6 @@ pub struct PairwiseInvitation {
 }
 
 timing_optional!(PairwiseInvitation);
-
-impl From<DidDoc> for PairwiseInvitation {
-    fn from(did_doc: DidDoc) -> PairwiseInvitation {
-        let recipient_keys = did_doc.recipient_keys();
-        let routing_keys = did_doc.routing_keys();
-
-        PairwiseInvitation::create()
-            .set_id(&did_doc.id)
-            .set_service_endpoint(did_doc.get_endpoint())
-            .set_recipient_keys(recipient_keys)
-            .set_routing_keys(routing_keys)
-    }
-}
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Default)]
 pub struct PublicInvitation {

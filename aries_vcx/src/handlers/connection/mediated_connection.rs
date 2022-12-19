@@ -880,7 +880,7 @@ impl MediatedConnection {
         let remote = match self.their_did_doc() {
             Some(did_doc) => Some(SideConnectionInfo {
                 did: did_doc.id.clone(),
-                recipient_keys: did_doc.recipient_keys(),
+                recipient_keys: did_doc.recipient_keys()?,
                 routing_keys: did_doc.routing_keys(),
                 service_endpoint: did_doc.get_endpoint(),
                 protocols: self.get_remote_protocols(),

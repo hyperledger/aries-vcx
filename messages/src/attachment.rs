@@ -110,7 +110,6 @@ impl Json {
 
     pub fn get_data(&self) -> MessagesResult<String> {
         let data = self.data.get_bytes()?;
-        trace!("Json::get_data >>> data: {:?}", data);
         from_utf8(data.as_slice())
             .map(|s| s.to_string())
             .map_err(|_| MessagesError::from_msg(MesssagesErrorKind::IOError, "Wrong bytes in attachment".to_string()))

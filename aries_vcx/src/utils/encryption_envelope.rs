@@ -52,7 +52,7 @@ impl EncryptionEnvelope {
             message => json!(message).to_string(),
         };
 
-        let receiver_keys = json!(did_doc.recipient_keys()).to_string();
+        let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
 
         debug!(
             "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
@@ -67,7 +67,7 @@ impl EncryptionEnvelope {
         mut message: Vec<u8>,
         did_doc: &DidDoc,
     ) -> VcxResult<Vec<u8>> {
-        let recipient_keys = did_doc.recipient_keys();
+        let recipient_keys = did_doc.recipient_keys()?;
         let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys.get(0).map(String::from).ok_or(VcxError::from_msg(

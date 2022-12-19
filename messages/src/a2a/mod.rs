@@ -1,8 +1,6 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use log;
-
 use crate::ack::Ack;
 use crate::basic_message::message::BasicMessage;
 use crate::connection::invite::{PairwiseInvitation, PublicInvitation};
@@ -142,14 +140,6 @@ impl<'de> Deserialize<'de> for A2AMessage {
     {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
-        if log::log_enabled!(log::Level::Trace) {
-            let message_json = serde_json::ser::to_string(&value);
-            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
-
-            trace!("Deserializing v3::A2AMessage in V3 json: {:?}", &message_json);
-            trace!("Found v3::A2AMessage message type {:?}", &message_type_json);
-        };
-
         let message_type: MessageType = match serde_json::from_value(value["@type"].clone()) {
             Ok(message_type) => message_type,
             Err(_) => return Ok(A2AMessage::Generic(value)),
@@ -257,8 +247,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(A2AMessage::RevocationAck)
                     .map_err(de::Error::custom)
             }
-            (_, other_type) => {
-                warn!("Unexpected @type field structure: {}", other_type);
+            (_, _) => {
                 Ok(A2AMessage::Generic(value))
             }
         }

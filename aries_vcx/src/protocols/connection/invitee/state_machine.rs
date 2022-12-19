@@ -173,12 +173,14 @@ impl SmConnectionInvitee {
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        self.their_did_doc()
-            .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
-                "Remote Connection Verkey is not set",
-            ))
+        let did_did = self.their_did_doc().ok_or(VcxError::from_msg(
+            VcxErrorKind::NotReady,
+            "Counterparty diddoc is not available.",
+        ))?;
+        did_did.recipient_keys()?.get(0).ok_or(VcxError::from_msg(
+            VcxErrorKind::NotReady,
+            "Can't resolve recipient key from the counterparty diddoc.",
+        )).map(|s| s.to_string())
     }
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
@@ -296,7 +298,7 @@ impl SmConnectionInvitee {
             InviteeFullState::Requested(state) => {
                 let remote_vk: String = state
                     .did_doc
-                    .recipient_keys()
+                    .recipient_keys()?
                     .get(0)
                     .cloned()
                     .ok_or(VcxError::from_msg(
@@ -402,7 +404,7 @@ pub mod unit_tests {
         use super::*;
 
         fn _send_message() -> SendClosureConnection {
-            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
+            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { Ok(()) }))
         }
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
