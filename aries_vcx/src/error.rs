@@ -425,8 +425,3 @@ impl From<VcxErrorKind> for u32 {
     }
 }
 
-impl From<serde_json::Error> for VcxError {
-    fn from(_err: serde_json::Error) -> Self {
-        VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid json"))
-    }
-}
