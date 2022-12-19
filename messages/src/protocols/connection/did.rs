@@ -11,7 +11,7 @@ impl Did {
             Ok(Self(did.to_string()))
         } else {
             Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidDid,
+                MessagesErrorKind::InvalidDid,
                 format!("{} is not a valid DID", did),
             ))
         }

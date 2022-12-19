@@ -11,9 +11,6 @@ impl From<IndyErrorKind> for VcxErrorKind {
             // 100..=111, 115..=129
             InvalidParam(_) => VcxErrorKind::InvalidLibindyParam,
 
-            // 112
-            // InvalidState => VcxErrorKind::LibndyError(err_code),
-
             // 113
             InvalidStructure => VcxErrorKind::LibindyInvalidStructure,
 

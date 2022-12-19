@@ -413,7 +413,7 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            
+
             assert_eq!(
                 build_schemas_json_prover(&profile, &credential_ids)
                     .await

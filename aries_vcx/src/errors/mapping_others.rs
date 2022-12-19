@@ -1,0 +1,17 @@
+use crate::error::{VcxError, VcxErrorKind};
+use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
+use std::sync;
+
+impl From<SenderConfigBuilderError> for VcxError {
+    fn from(err: SenderConfigBuilderError) -> VcxError {
+        let vcx_error_kind = VcxErrorKind::InvalidConfiguration;
+        VcxError::from_msg(vcx_error_kind, err.to_string())
+    }
+}
+
+// todo: vcx
+impl<T> From<sync::PoisonError<T>> for VcxError {
+    fn from(err: sync::PoisonError<T>) -> Self {
+        VcxError::from_msg(VcxErrorKind::PoisonedLock, err.to_string())
+    }
+}

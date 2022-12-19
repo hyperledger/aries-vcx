@@ -35,7 +35,7 @@ pub fn get_main_profile() -> VcxResult<Arc<dyn Profile>> {
     ))
 }
 
-// constructs an indy profile under the condition where a pool_handle is NOT required 
+// constructs an indy profile under the condition where a pool_handle is NOT required
 // - e.g. where only a Wallet is used (no ledger interactions). Should be used sparingly.
 pub fn get_main_profile_optional_pool() -> Arc<dyn Profile> {
     if indy_mocks_enabled() {

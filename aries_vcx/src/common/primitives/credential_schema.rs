@@ -50,7 +50,7 @@ impl Schema {
 
         let data_str = serde_json::to_string(data)
         .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
-        
+
         let anoncreds = Arc::clone(profile).inject_anoncreds();
         let (schema_id, schema_json) = anoncreds.issuer_create_schema(&submitter_did, name, version, &data_str).await?;
 

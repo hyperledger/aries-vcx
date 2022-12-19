@@ -2,11 +2,11 @@ use std::fmt;
 use std::error::Error;
 
 pub mod prelude {
-    pub use super::{err_msg, MessagesError, MesssagesErrorKind, MessagesResult};
+    pub use super::{err_msg, MessagesError, MessagesErrorKind, MessagesResult};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum MesssagesErrorKind {
+pub enum MessagesErrorKind {
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
     #[error("Invalid JSON string")]
@@ -28,7 +28,7 @@ pub enum MesssagesErrorKind {
 #[derive(Debug, thiserror::Error)]
 pub struct MessagesError {
     msg: String,
-    kind: MesssagesErrorKind,
+    kind: MessagesErrorKind,
 }
 
 impl fmt::Display for MessagesError {
@@ -44,7 +44,7 @@ impl fmt::Display for MessagesError {
 }
 
 impl MessagesError {
-    pub fn from_msg<D>(kind: MesssagesErrorKind, msg: D) -> MessagesError
+    pub fn from_msg<D>(kind: MessagesErrorKind, msg: D) -> MessagesError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
@@ -54,12 +54,12 @@ impl MessagesError {
         }
     }
 
-    pub fn kind(&self) -> MesssagesErrorKind {
+    pub fn kind(&self) -> MessagesErrorKind {
         self.kind
     }
 }
 
-pub fn err_msg<D>(kind: MesssagesErrorKind, msg: D) -> MessagesError
+pub fn err_msg<D>(kind: MessagesErrorKind, msg: D) -> MessagesError
 where
     D: fmt::Display + fmt::Debug + Send + Sync + 'static,
 {

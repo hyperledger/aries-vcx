@@ -3,12 +3,8 @@ use std::error::Error;
 
 use thiserror;
 
-use agency_client;
-use agency_client::error::AgencyClientErrorKind;
 use messages;
-use messages::utils::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
-use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorKind, VcxResult};
@@ -315,76 +311,7 @@ where
     VcxError::from_msg(kind, msg)
 }
 
-// impl From<VcxErrorKind> for VcxError {
-//     fn from(kind: VcxErrorKind) -> VcxError {
-//         VcxError::from_msg(kind, error::error_message(&kind.into()))
-//     }
-// }
 
-impl From<agency_client::error::AgencyClientError> for VcxError {
-    fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
-        let vcx_error_kind: VcxErrorKind = agency_err.kind().into();
-        VcxError::from_msg(vcx_error_kind, agency_err.to_string())
-    }
-}
-
-impl From<SenderConfigBuilderError> for VcxError {
-    fn from(err: SenderConfigBuilderError) -> VcxError {
-        let vcx_error_kind = VcxErrorKind::InvalidConfiguration;
-        VcxError::from_msg(vcx_error_kind, err.to_string())
-    }
-}
-
-impl From<AgencyClientErrorKind> for VcxErrorKind {
-    fn from(agency_err: AgencyClientErrorKind) -> VcxErrorKind {
-        match agency_err {
-            AgencyClientErrorKind::InvalidState => VcxErrorKind::InvalidState,
-            AgencyClientErrorKind::InvalidConfiguration => VcxErrorKind::InvalidConfiguration,
-            AgencyClientErrorKind::InvalidJson => VcxErrorKind::InvalidJson,
-            AgencyClientErrorKind::InvalidOption => VcxErrorKind::InvalidOption,
-            AgencyClientErrorKind::InvalidMessagePack => VcxErrorKind::InvalidMessagePack,
-            AgencyClientErrorKind::IOError => VcxErrorKind::IOError,
-            AgencyClientErrorKind::PostMessageFailed => VcxErrorKind::PostMessageFailed,
-            AgencyClientErrorKind::InvalidWalletHandle => VcxErrorKind::InvalidWalletHandle,
-            AgencyClientErrorKind::UnknownError => VcxErrorKind::UnknownError,
-            AgencyClientErrorKind::InvalidDid => VcxErrorKind::InvalidDid,
-            AgencyClientErrorKind::InvalidVerkey => VcxErrorKind::InvalidVerkey,
-            AgencyClientErrorKind::InvalidUrl => VcxErrorKind::InvalidUrl,
-            AgencyClientErrorKind::SerializationError => VcxErrorKind::SerializationError,
-            AgencyClientErrorKind::NotBase58 => VcxErrorKind::NotBase58,
-            AgencyClientErrorKind::InvalidHttpResponse => VcxErrorKind::InvalidHttpResponse,
-        }
-    }
-}
-
-impl From<messages::utils::error::MessagesError> for VcxError {
-    fn from(msg_err: messages::utils::error::MessagesError) -> VcxError {
-        let vcx_error_kind: VcxErrorKind = msg_err.kind().into();
-        VcxError::from_msg(vcx_error_kind, msg_err.to_string())
-    }
-}
-
-impl From<MessagesErrorKind> for VcxErrorKind {
-    fn from(msg_err: MessagesErrorKind) -> VcxErrorKind {
-        match msg_err {
-            MessagesErrorKind::InvalidState => VcxErrorKind::InvalidState,
-            MessagesErrorKind::InvalidJson => VcxErrorKind::InvalidJson,
-            MessagesErrorKind::IOError => VcxErrorKind::IOError,
-            MessagesErrorKind::InvalidDid => VcxErrorKind::InvalidDid,
-            MessagesErrorKind::InvalidVerkey => VcxErrorKind::InvalidVerkey,
-            MessagesErrorKind::InvalidUrl => VcxErrorKind::InvalidUrl,
-            MessagesErrorKind::NotBase58 => VcxErrorKind::NotBase58,
-            _ => VcxErrorKind::UnknownLibndyError,
-        }
-    }
-}
-
-
-impl<T> From<sync::PoisonError<T>> for VcxError {
-    fn from(err: sync::PoisonError<T>) -> Self {
-        VcxError::from_msg(VcxErrorKind::PoisonedLock, err.to_string())
-    }
-}
 
 pub type VcxResult<T> = Result<T, VcxError>;
 

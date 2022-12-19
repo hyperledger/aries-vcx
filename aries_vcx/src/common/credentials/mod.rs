@@ -55,9 +55,9 @@ mod integration_tests {
     #[tokio::test]
     async fn test_prover_get_credential() {
         SetupProfile::run_indy(|setup| async move {
-        
+
         let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-        
+
         let res = create_and_store_credential(&setup.profile, &holder_setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let schema_id = res.0;
         let cred_def_id = res.2;

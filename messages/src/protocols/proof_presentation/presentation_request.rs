@@ -55,7 +55,7 @@ impl PresentationRequest {
     pub fn to_json(&self) -> MessagesResult<String> {
         serde_json::to_string(self).map_err(|err| {
             MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Cannot serialize PresentationRequest: {}", err),
             )
         })

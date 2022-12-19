@@ -107,7 +107,7 @@ async fn _try_get_cred_def_from_ledger(
     issuer_did: &str,
     cred_def_id: &str,
 ) -> VcxResult<Option<String>> {
-    // TODO - future - may require more customized logic. We set the rc to 309, as the mock for ledger.get_cred_def will return a valid 
+    // TODO - future - may require more customized logic. We set the rc to 309, as the mock for ledger.get_cred_def will return a valid
     // mock cred def unless it reads an rc of 309. Returning a valid mock cred def will result in this method returning an error.
     if indy_mocks_enabled() {
         LibindyMock::set_next_result(309)

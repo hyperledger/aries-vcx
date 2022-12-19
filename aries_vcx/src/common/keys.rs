@@ -9,7 +9,7 @@ pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk:
     let ledger = Arc::clone(profile).inject_ledger();
 
     let nym_result = ledger.publish_nym(did, did, Some(temp_vk), None, None).await?;
-    
+
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,
@@ -43,7 +43,7 @@ pub async fn rotate_verkey(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<(
 pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> VcxResult<String> {
     let ledger = Arc::clone(profile).inject_ledger();
 
-    let nym_response: String = ledger.get_nym(did).await?; 
+    let nym_response: String = ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
         VcxError::from_msg(
             VcxErrorKind::SerializationError,
