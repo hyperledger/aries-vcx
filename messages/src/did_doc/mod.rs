@@ -122,9 +122,9 @@ impl DidDoc {
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
                 MessagesError::from_msg(
-                    MesssagesErrorKind::InvalidJson,
+                    MesssagesErrorKind::InvalidUrl,
                     format!(
-                        "DIDDoc validation failed: Invalid endpoint \"{:?}\", err: {:?}",
+                        "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
                         service.service_endpoint, err
                     ),
                 )
