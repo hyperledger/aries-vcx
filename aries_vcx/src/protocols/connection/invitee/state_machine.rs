@@ -513,7 +513,7 @@ pub mod unit_tests {
 
                 assert_eq!(msg.connection.did_doc.routing_keys(), routing_keys);
                 assert_eq!(
-                    msg.connection.did_doc.recipient_keys(),
+                    msg.connection.did_doc.recipient_keys().unwrap(),
                     vec![invitee.pairwise_info.pw_vk.clone()]
                 );
                 assert_eq!(msg.connection.did_doc.get_endpoint(), service_endpoint.to_string());

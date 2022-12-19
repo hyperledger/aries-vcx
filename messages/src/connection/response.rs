@@ -168,13 +168,11 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::connection::response::test_utils::{_did, _response, _thread_id};
-    use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
     #[test]
     fn test_response_build_works() {
-        SetupEmpty::init();
         let response: Response = Response::default()
             .set_did(_did())
             .set_thread_id(&_thread_id())

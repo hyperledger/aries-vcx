@@ -97,18 +97,15 @@ macro_rules! timing_optional (($type:ident) => (
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    
+
     use std::thread;
     use std::time::Duration;
 
-    
-    use crate::utils::devsetup::SetupEmpty;
 
     use super::*;
 
     #[test]
     fn test_timing_serialize_deserialize() {
-        let _setup = SetupEmpty::init();
         let dt1: DateTime<Utc> = DateTime::parse_from_rfc3339("2020-01-01T00:01:00Z").unwrap().into();
         let dt2: DateTime<Utc> = DateTime::parse_from_rfc3339("2020-02-01T05:01:11Z").unwrap().into();
         let dt3: DateTime<Utc> = DateTime::parse_from_rfc3339("2020-03-01T05:01:22Z").unwrap().into();
