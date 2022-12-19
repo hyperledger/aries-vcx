@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::utils::error::prelude::*;
 use crate::a2a::MessageId;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Default)]

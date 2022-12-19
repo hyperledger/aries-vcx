@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::utils::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::attachment::{AttachmentId, Attachments};
 use crate::thread::Thread;

@@ -6,7 +6,7 @@ use thiserror;
 use agency_client;
 use agency_client::error::AgencyClientErrorKind;
 use messages;
-use messages::error::MesssagesErrorKind as MessagesErrorKind;
+use messages::utils::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
@@ -373,8 +373,8 @@ impl From<AgencyClientErrorKind> for VcxErrorKind {
     }
 }
 
-impl From<messages::error::MessagesError> for VcxError {
-    fn from(msg_err: messages::error::MessagesError) -> VcxError {
+impl From<messages::utils::error::MessagesError> for VcxError {
+    fn from(msg_err: messages::utils::error::MessagesError) -> VcxError {
         let vcx_error_kind: VcxErrorKind = msg_err.kind().into();
         VcxError::from_msg(vcx_error_kind, msg_err.to_string())
     }

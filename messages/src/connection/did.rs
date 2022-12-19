@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::error::prelude::*;
+use crate::utils::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Did(String);

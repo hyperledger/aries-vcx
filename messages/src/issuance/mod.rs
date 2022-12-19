@@ -1,4 +1,4 @@
-use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
+use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::mime_type::MimeType;
@@ -22,7 +22,7 @@ impl CredentialPreviewData {
     }
 
     pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialPreviewData {
-        let data_value = 
+        let data_value =
         CredentialValue {
             name: name.to_string(),
             value: value.to_string(),

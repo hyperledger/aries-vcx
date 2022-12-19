@@ -2,7 +2,7 @@ use std::str::from_utf8;
 
 use serde_json;
 
-use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
+use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Attachments(pub Vec<Attachment>);
