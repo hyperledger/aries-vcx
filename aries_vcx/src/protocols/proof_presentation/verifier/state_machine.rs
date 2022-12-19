@@ -443,7 +443,7 @@ impl VerifierSM {
             VerifierFullState::Finished(ref state) => state
                 .presentation
                 .clone()
-                .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle)),
+                .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, format!("State machine is final state, but presentation is not available"))),
             _ => Err(VcxError::from_msg(
                 VcxErrorKind::InvalidState,
                 "Presentation not received yet",

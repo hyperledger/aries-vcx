@@ -204,8 +204,7 @@ pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle:
             wallet_handle,
             pool_handle, &submitter_did, rev_reg_id, &delta).await?;
 
-        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
-              rev_reg_id);
+        info!("publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}", rev_reg_id);
 
         match clear_rev_reg_delta(wallet_handle, rev_reg_id).await {
             Ok(_) => {
@@ -213,13 +212,11 @@ pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle:
                       rev_reg_id);
                 Ok(())
             },
-            Err(err) => {
-                error!("publish_local_revocations >>> failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
-                       rev_reg_id, err);
-                Err(VcxError::from(VcxErrorKind::RevDeltaFailedToClear))
-            }
+            Err(err) => Err(VcxError::from_msg(VcxErrorKind::RevDeltaFailedToClear,
+                                               format!("Failed to clear revocation delta storage for rev_reg_id: {}, error: {}", rev_reg_id, err.to_string())))
         }
     } else {
-        Err(VcxError::from(VcxErrorKind::RevDeltaNotFound))
+        Err(VcxError::from_msg(VcxErrorKind::RevDeltaNotFound,
+                               format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
     }
 }

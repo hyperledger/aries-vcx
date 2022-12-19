@@ -43,6 +43,7 @@ pub mod protocols;
 pub mod core;
 pub mod plugins;
 pub mod common;
+pub mod errors;
 
 #[cfg(test)]
 pub mod test {

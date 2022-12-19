@@ -50,7 +50,7 @@ impl OutOfBandSender {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => {
-                return Err(VcxError::from(VcxErrorKind::ActionNotSupported));
+                return Err(VcxError::from_msg(VcxErrorKind::ActionNotSupported, format!("DidExchange protocol is not implemented")))
             }
         };
         match self.oob.handshake_protocols {

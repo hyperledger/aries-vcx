@@ -130,7 +130,7 @@ fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, VcxE
         "RAW" => Ok(KeyDerivationMethod::RAW),
         "ARGON2I_MOD" => Ok(KeyDerivationMethod::ARGON2I_MOD),
         "ARGON2I_INT" => Ok(KeyDerivationMethod::ARGON2I_INT),
-        _ => Err(VcxErrorKind::InvalidOption.into()),
+        _ => Err(VcxError::from_msg(VcxErrorKind::InvalidOption, format!("Unknown derivation method {}", method)))
     }
 }
 

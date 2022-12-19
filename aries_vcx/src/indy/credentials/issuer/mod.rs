@@ -23,7 +23,7 @@ pub async fn libindy_issuer_create_credential_offer(
     if settings::indy_mocks_enabled() {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(VcxError::from(VcxErrorKind::InvalidState));
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidState,"Mocked error result of libindy_issuer_create_credential_offer"));
         };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }

@@ -752,7 +752,7 @@ pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u
 #[allow(dead_code)]
 pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
-        return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
+        return Err(VcxError::from_msg(VcxErrorKind::LibndyError(309), format!("Mocked error")))
     }
 
     let req = libindy_build_get_cred_def_request(issuer_did, cred_def_id).await?;

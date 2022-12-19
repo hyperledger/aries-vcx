@@ -67,7 +67,7 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxResult<String> {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(VcxError::from(VcxErrorKind::InvalidState));
+            return Err(VcxError::from_msg(VcxErrorKind::InvalidState,"Mocked error result of issuer_create_credential_offer"));
         };
         Ok(LIBINDY_CRED_OFFER.to_string())
     }

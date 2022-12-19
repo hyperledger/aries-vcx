@@ -10,8 +10,6 @@ use messages::utils::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
-use vdrtools::types;
-
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorKind, VcxResult};
 }
@@ -317,11 +315,11 @@ where
     VcxError::from_msg(kind, msg)
 }
 
-impl From<VcxErrorKind> for VcxError {
-    fn from(kind: VcxErrorKind) -> VcxError {
-        VcxError::from_msg(kind, crate::utils::error::error_message(&kind.into()))
-    }
-}
+// impl From<VcxErrorKind> for VcxError {
+//     fn from(kind: VcxErrorKind) -> VcxError {
+//         VcxError::from_msg(kind, error::error_message(&kind.into()))
+//     }
+// }
 
 impl From<agency_client::error::AgencyClientError> for VcxError {
     fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
@@ -606,105 +604,6 @@ impl From<u32> for VcxErrorKind {
 
 impl From<serde_json::Error> for VcxError {
     fn from(_err: serde_json::Error) -> Self {
-        VcxErrorKind::InvalidJson.into()
-    }
-}
-
-impl From<types::errors::IndyErrorKind> for VcxErrorKind {
-    fn from(indy: types::errors::IndyErrorKind) -> Self {
-        use types::errors::IndyErrorKind::*;
-
-
-
-        match indy {
-            // 100..=111, 115..=129
-            InvalidParam(_) => VcxErrorKind::InvalidLibindyParam,
-
-            // 112
-            // InvalidState => VcxErrorKind::LibndyError(err_code),
-
-            // 113
-            InvalidStructure => VcxErrorKind::LibindyInvalidStructure,
-
-            // 114
-            IOError => VcxErrorKind::IOError,
-
-            // 200
-            InvalidWalletHandle => VcxErrorKind::InvalidWalletHandle,
-
-            // 203
-            WalletAlreadyExists => VcxErrorKind::DuplicationWallet,
-
-            // 204
-            WalletNotFound => VcxErrorKind::WalletNotFound,
-
-            // 206
-            WalletAlreadyOpened => VcxErrorKind::WalletAlreadyOpen,
-
-            // 212
-            WalletItemNotFound => VcxErrorKind::WalletRecordNotFound,
-
-            // 213
-            WalletItemAlreadyExists => VcxErrorKind::DuplicationWalletRecord,
-
-            // 306
-            PoolConfigAlreadyExists => VcxErrorKind::CreatePoolConfig,
-
-            // 404
-            MasterSecretDuplicateName => VcxErrorKind::DuplicationMasterSecret,
-
-            // 407
-            CredDefAlreadyExists => VcxErrorKind::CredDefAlreadyCreated,
-
-            // 600
-            DIDAlreadyExists => VcxErrorKind::DuplicationDid,
-
-            // 702
-            PaymentInsufficientFunds => VcxErrorKind::InsufficientTokenAmount,
-
-            InvalidState |
-            ProofRejected |
-            RevocationRegistryFull |
-            LedgerItemNotFound |
-            InvalidPoolHandle |
-            UnknownWalletStorageType |
-            InvalidUserRevocId |
-            CredentialRevoked |
-            NoConsensus |
-            InvalidTransaction |
-            PoolNotCreated |
-            PoolTerminated |
-            PoolTimeout |
-            PoolIncompatibleProtocolVersion |
-            UnknownCrypto |
-            WalletStorageTypeAlreadyRegistered |
-            WalletAccessFailed |
-            WalletEncodingError |
-            WalletStorageError |
-            WalletEncryptionError |
-            WalletQueryError |
-            UnknownPaymentMethodType |
-            IncompatiblePaymentMethods |
-            PaymentSourceDoesNotExist |
-            PaymentOperationNotSupported |
-            PaymentExtraFunds |
-            TransactionNotAllowed |
-            QueryAccountDoesNotExist |
-            InvalidVDRHandle |
-            InvalidVDRNamespace |
-            IncompatibleLedger => {
-                let err_code = types::ErrorCode::from(indy) as u32;
-                VcxErrorKind::LibndyError(err_code)
-            }
-        }
-    }
-}
-
-impl From<types::errors::IndyError> for VcxError {
-    fn from(indy: types::errors::IndyError) -> Self {
-
-        let vcx_kind: VcxErrorKind = indy.kind().into();
-
-        vcx_kind.into()
+        VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid json"))
     }
 }

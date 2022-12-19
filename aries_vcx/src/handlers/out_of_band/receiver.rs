@@ -31,7 +31,8 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
-            _ => Err(VcxError::from(VcxErrorKind::InvalidMessageFormat)),
+            m @ _ => Err(VcxError::from_msg(VcxErrorKind::InvalidMessageFormat,
+                                            format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
         }
     }
 

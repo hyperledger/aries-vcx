@@ -80,7 +80,6 @@ impl Agent {
             &init_config.pool_config.pool_name,
             &init_config.pool_config.genesis_path,
         )
-        .await
         .unwrap();
         let pool_handle = open_pool_ledger(&init_config.pool_config.pool_name, Some(pool_config))
             .await
