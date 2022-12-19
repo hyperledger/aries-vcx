@@ -19,23 +19,6 @@ pub fn reset_current_error() {
     })
 }
 
-pub fn set_current_error_agency(err: &AgencyClientError) {
-    CURRENT_ERROR_C_JSON
-        .try_with(|error| {
-            let error_json = json!({
-                "error": err.kind().to_string(),
-                "message": err.to_string(),
-                "cause": err.find_root_cause(),
-                // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
-                // "backtrace": err.backtrace()
-            })
-            .to_string();
-            error.replace(Some(CStringUtils::string_to_cstring(error_json)));
-        })
-        .map_err(|err| error!("Thread local variable access failed with: {:?}", err))
-        .ok();
-}
-
 pub fn set_current_error_vcx(err: &VcxError) {
     CURRENT_ERROR_C_JSON
         .try_with(|error| {

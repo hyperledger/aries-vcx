@@ -18,20 +18,7 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
-pub fn validate_mandotory_config_val<F, S, E>(
-    val: &str,
-    err: AgencyClientErrorKind,
-    closure: F,
-) -> AgencyClientResult<()>
-where
-    F: Fn(&str) -> Result<S, E>,
-{
-    closure(val).or(Err(AgencyClientError::from(err)))?;
-    Ok(())
-}
-
 impl AgencyClient {
-
     pub fn get_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
         Arc::clone(&self.wallet)
     }
@@ -90,37 +77,21 @@ impl AgencyClient {
     pub fn configure(mut self, wallet: Arc<dyn BaseAgencyClientWallet>, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
-        validate_mandotory_config_val(
-            &config.agency_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.agency_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(
-            &config.sdk_to_remote_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.sdk_to_remote_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(
-            &config.remote_to_sdk_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.remote_to_sdk_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(&config.agency_endpoint, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
+        validation::validate_did(&config.agency_did)?;
+        validation::validate_verkey(&config.agency_verkey)?;
+        validation::validate_did(&config.sdk_to_remote_did)?;
+        validation::validate_verkey(&config.sdk_to_remote_verkey)?;
+        validation::validate_did(&config.remote_to_sdk_did)?;
+        validation::validate_verkey(&config.remote_to_sdk_verkey)?;
+
+        match Url::parse(&config.agency_endpoint) {
+            Err(_) => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidUrl,
+                format!("Endpoint {} is not valid url", &config.agency_endpoint),
+            )),
+            _ => Ok(())
+        }?;
+
 
         self.set_agency_url(&config.agency_endpoint);
         self.set_agency_did(&config.agency_did);

@@ -44,8 +44,7 @@ pub async fn create_agent_keys(
 
     let (agent_did, agent_verkey) = agency_client
         .create_connection_agent(pw_did, pw_verkey)
-        .await
-        .map_err(|err| err.extend("Cannot create pairwise keys"))?;
+        .await?;
 
     trace!(
         "create_agent_keys <<< agent_did: {}, agent_verkey: {}",
