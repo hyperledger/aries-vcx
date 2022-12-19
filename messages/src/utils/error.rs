@@ -8,18 +8,6 @@ use std::fmt;
 // STEP 2: Add Error to the static MAP (used for getting messages to wrappers)
 // STEP 3: create a test making sure that your message can be retrieved
 
-pub static SUCCESS: Error = Error {
-    code_num: 0,
-    message: "Success",
-};
-pub static INDY_WALLET_RECORD_NOT_FOUND: Error = Error {
-    code_num: 212,
-    message: "Error from Indy: Wallet Item not found",
-};
-pub static INDY_DUPLICATE_WALLET_RECORD: Error = Error {
-    code_num: 213,
-    message: "Error from Indy: Duplicate Wallet Record",
-};
 pub static UNKNOWN_ERROR: Error = Error {
     code_num: 1001,
     message: "Unknown Error",
@@ -27,10 +15,6 @@ pub static UNKNOWN_ERROR: Error = Error {
 pub static CONNECTION_ERROR: Error = Error {
     code_num: 1002,
     message: "Error with Connection",
-};
-pub static INVALID_CONNECTION_HANDLE: Error = Error {
-    code_num: 1003,
-    message: "Invalid Connection Handle",
 };
 pub static INVALID_CONFIGURATION: Error = Error {
     code_num: 1004,
@@ -459,132 +443,6 @@ pub static REV_DELTA_FAILED_TO_CLEAR: Error = Error {
     message: "Failed to clear stored revocation deltas",
 };
 
-lazy_static! {
-    static ref ERROR_C_MESSAGES: HashMap<u32, CString> = {
-        let mut m = HashMap::new();
-        insert_c_message(&mut m, &SUCCESS);
-        insert_c_message(&mut m, &UNKNOWN_ERROR);
-        insert_c_message(&mut m, &CONNECTION_ERROR);
-        insert_c_message(&mut m, &INVALID_CONNECTION_HANDLE);
-        insert_c_message(&mut m, &INVALID_CONFIGURATION);
-        insert_c_message(&mut m, &NOT_READY);
-        insert_c_message(&mut m, &NO_ENDPOINT);
-        insert_c_message(&mut m, &INVALID_OPTION);
-        insert_c_message(&mut m, &INVALID_DID);
-        insert_c_message(&mut m, &INVALID_VERKEY);
-        insert_c_message(&mut m, &POST_MSG_FAILURE);
-        insert_c_message(&mut m, &INVALID_NONCE);
-        insert_c_message(&mut m, &INVALID_KEY_DELEGATE);
-        insert_c_message(&mut m, &INVALID_URL);
-        insert_c_message(&mut m, &NOT_BASE58);
-        insert_c_message(&mut m, &INVALID_ISSUER_CREDENTIAL_HANDLE);
-        insert_c_message(&mut m, &INVALID_JSON);
-        insert_c_message(&mut m, &INVALID_MESSAGES);
-        insert_c_message(&mut m, &INVALID_MSGPACK);
-        insert_c_message(&mut m, &INVALID_ATTRIBUTES_STRUCTURE);
-        insert_c_message(&mut m, &INVALID_PROOF_HANDLE);
-        insert_c_message(&mut m, &INVALID_CREDENTIAL_REQUEST);
-        insert_c_message(&mut m, &BIG_NUMBER_ERROR);
-        insert_c_message(&mut m, &INVALID_PROOF);
-        insert_c_message(&mut m, &INVALID_GENESIS_TXN_PATH);
-        insert_c_message(&mut m, &CREATE_POOL_CONFIG);
-        insert_c_message(&mut m, &INVALID_PROOF_CREDENTIAL_DATA);
-        insert_c_message(&mut m, &POOL_LEDGER_CONNECT);
-        insert_c_message(&mut m, &INDY_SUBMIT_REQUEST_ERR);
-        insert_c_message(&mut m, &BUILD_CREDENTIAL_DEF_REQ_ERR);
-        insert_c_message(&mut m, &NO_POOL_OPEN);
-        insert_c_message(&mut m, &INVALID_SCHEMA);
-        insert_c_message(&mut m, &FAILED_PROOF_COMPLIANCE);
-        insert_c_message(&mut m, &INVALID_HTTP_RESPONSE);
-        insert_c_message(&mut m, &CREATE_CREDENTIAL_DEF_ERR);
-        insert_c_message(&mut m, &UNKNOWN_LIBINDY_ERROR);
-        insert_c_message(&mut m, &TIMEOUT_LIBINDY_ERROR);
-        insert_c_message(&mut m, &INVALID_CREDENTIAL_DEF_JSON);
-        insert_c_message(&mut m, &INVALID_CREDENTIAL_DEF_HANDLE);
-        insert_c_message(&mut m, &CREDENTIAL_DEF_ALREADY_CREATED);
-        insert_c_message(&mut m, &INVALID_SCHEMA_SEQ_NO);
-        insert_c_message(&mut m, &INVALID_SCHEMA_CREATION);
-        insert_c_message(&mut m, &INVALID_SCHEMA_HANDLE);
-        insert_c_message(&mut m, &ALREADY_INITIALIZED);
-        insert_c_message(&mut m, &INVALID_INVITE_DETAILS);
-        insert_c_message(&mut m, &INVALID_MASTER_SECRET);
-        insert_c_message(&mut m, &INVALID_OBJ_HANDLE);
-        insert_c_message(&mut m, &INVALID_DISCLOSED_PROOF_HANDLE);
-        insert_c_message(&mut m, &SERIALIZATION_ERROR);
-        insert_c_message(&mut m, &WALLET_ALREADY_EXISTS);
-        insert_c_message(&mut m, &WALLET_ALREADY_OPEN);
-        insert_c_message(&mut m, &INVALID_CREDENTIAL_HANDLE);
-        insert_c_message(&mut m, &INVALID_CREDENTIAL_JSON);
-        insert_c_message(&mut m, &CREATE_CREDENTIAL_REQUEST_ERROR);
-        insert_c_message(&mut m, &CREATE_PROOF_ERROR);
-        insert_c_message(&mut m, &INVALID_WALLET_HANDLE);
-        insert_c_message(&mut m, &INVALID_WALLET_CREATION);
-        insert_c_message(&mut m, &INVALID_POOL_NAME);
-        insert_c_message(&mut m, &CANNOT_DELETE_CONNECTION);
-        insert_c_message(&mut m, &CREATE_CONNECTION_ERROR);
-        insert_c_message(&mut m, &INVALID_WALLET_SETUP);
-        insert_c_message(&mut m, &COMMON_ERROR);
-        insert_c_message(&mut m, &INSUFFICIENT_TOKEN_AMOUNT);
-        insert_c_message(&mut m, &UNKNOWN_TXN_TYPE);
-        insert_c_message(&mut m, &INVALID_PAYMENT);
-        insert_c_message(&mut m, &INVALID_PAYMENT_ADDRESS);
-        insert_c_message(&mut m, &INVALID_LIBINDY_PARAM);
-        insert_c_message(&mut m, &MISSING_WALLET_KEY);
-        insert_c_message(&mut m, &DUPLICATE_WALLET_RECORD);
-        insert_c_message(&mut m, &WALLET_RECORD_NOT_FOUND);
-        insert_c_message(&mut m, &IOERROR);
-        insert_c_message(&mut m, &WALLET_ACCESS_FAILED);
-        insert_c_message(&mut m, &OBJECT_CACHE_ERROR);
-        insert_c_message(&mut m, &NO_PAYMENT_INFORMATION);
-        insert_c_message(&mut m, &INDY_DUPLICATE_WALLET_RECORD);
-        insert_c_message(&mut m, &INDY_WALLET_RECORD_NOT_FOUND);
-        insert_c_message(&mut m, &MISSING_WALLET_NAME);
-        insert_c_message(&mut m, &MISSING_EXPORTED_WALLET_PATH);
-        insert_c_message(&mut m, &MISSING_BACKUP_KEY);
-        insert_c_message(&mut m, &WALLET_NOT_FOUND);
-        insert_c_message(&mut m, &LIBINDY_INVALID_STRUCTURE);
-        insert_c_message(&mut m, &INVALID_STATE);
-        insert_c_message(&mut m, &DID_ALREADY_EXISTS_IN_WALLET);
-        insert_c_message(&mut m, &DUPLICATE_MASTER_SECRET);
-        insert_c_message(&mut m, &INVALID_LEDGER_RESPONSE);
-        insert_c_message(&mut m, &THREAD_ERROR);
-        insert_c_message(&mut m, &INVALID_PROOF_REQUEST);
-        insert_c_message(&mut m, &INVALID_REVOCATION_DETAILS);
-        insert_c_message(&mut m, &INVALID_REV_REG_DEF_CREATION);
-        insert_c_message(&mut m, &INVALID_REVOCATION_TIMESTAMP);
-        insert_c_message(&mut m, &INVALID_REV_ENTRY);
-        insert_c_message(&mut m, &DUPLICATE_SCHEMA);
-        insert_c_message(&mut m, &UNKNOWN_SCHEMA_REJECTION);
-        insert_c_message(&mut m, &UKNOWN_LIBINDY_TRANSACTION_REJECTION);
-        insert_c_message(&mut m, &MISSING_PAYMENT_METHOD);
-        insert_c_message(&mut m, &LOGGING_ERROR);
-        insert_c_message(&mut m, &INVALID_ATTACHMENT_ENCODING);
-        insert_c_message(&mut m, &UNKNOWN_ATTACHMENT_ENCODING);
-        insert_c_message(&mut m, &UNKNOWN_MIME_TYPE);
-        insert_c_message(&mut m, &ACTION_NOT_SUPPORTED);
-        insert_c_message(&mut m, &INVALID_REDIRECT_DETAILS);
-        insert_c_message(&mut m, &NO_AGENT_INFO);
-        insert_c_message(&mut m, &REV_REG_DEF_NOT_FOUND);
-        insert_c_message(&mut m, &REV_DELTA_NOT_FOUND);
-        insert_c_message(&mut m, &POISONED_LOCK);
-        insert_c_message(&mut m, &CREATE_PUBLIC_AGENT);
-        insert_c_message(&mut m, &INVALID_MESSAGE_FORMAT);
-        insert_c_message(&mut m, &CREATE_OUT_OF_BAND);
-        insert_c_message(&mut m, &CREATE_AGENT);
-        insert_c_message(&mut m, &REV_DELTA_FAILED_TO_CLEAR);
-        m
-    };
-}
-
-// ******* END *******
-
-// Helper function for static defining of error messages. Does limited checking that it can.
-fn insert_c_message(map: &mut HashMap<u32, CString>, error: &Error) {
-    if map.contains_key(&error.code_num) {
-        panic!("Error Code number was repeated which is not allowed! (likely a copy/paste error)")
-    }
-    map.insert(error.code_num, CString::new(error.message).unwrap());
-}
 
 #[derive(Clone, Copy)]
 pub struct Error {
@@ -597,25 +455,18 @@ impl Error {
         self.code_num
     }
 }
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let msg = error_message(&self.code_num);
-        write!(f, "{}: (Error Num:{})", msg, &self.code_num)
-    }
-}
-
-pub fn error_c_message(code_num: &u32) -> &CString {
-    match ERROR_C_MESSAGES.get(code_num) {
-        Some(msg) => msg,
-        None => error_c_message(&UNKNOWN_ERROR.code_num),
-    }
-}
-
-pub fn error_message(code_num: &u32) -> String {
-    match ERROR_C_MESSAGES.get(code_num) {
-        Some(msg) => msg.to_str().unwrap().to_string(),
-        None => error_message(&UNKNOWN_ERROR.code_num),
-    }
-}
+//
+// impl fmt::Display for Error {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         let msg = error_message(&self.code_num);
+//         write!(f, "{}: (Error Num:{})", msg, &self.code_num)
+//     }
+// }
+//
+// pub fn error_message(code_num: &u32) -> String {
+//     match ERROR_C_MESSAGES.get(code_num) {
+//         Some(msg) => msg.to_str().unwrap().to_string(),
+//         None => error_message(&UNKNOWN_ERROR.code_num),
+//     }
+// }
 

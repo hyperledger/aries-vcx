@@ -921,13 +921,13 @@ pub extern "C" fn vcx_create_service(
 #[no_mangle]
 pub extern "C" fn vcx_get_service_from_ledger(
     command_handle: CommandHandle,
-    institution_did: *const c_char,
+    target_did: *const c_char,
     cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, service: *const c_char)>,
 ) -> u32 {
     info!("vcx_get_service_from_ledger >>>");
 
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(institution_did, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(target_did, VcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_get_service_from_ledger(command_handle: {})",
@@ -939,9 +939,15 @@ pub extern "C" fn vcx_get_service_from_ledger(
         Err(err) => return err.into(),
     };
 
-    let institution_did = match Did::new(&institution_did) {
+    let institution_did = match Did::new(&target_did) {
         Ok(did) => did,
-        Err(err) => return err.into(),
+        Err(err) => {
+            error!("Error parsing value {} as DID, err: {}", target_did, err.to_string());
+            return VcxError::from_msg(
+                VcxErrorKind::InvalidDid,
+                err.to_string()
+            ).into()
+        }
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(

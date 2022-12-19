@@ -410,7 +410,6 @@ impl From<MessagesErrorKind> for VcxErrorKind {
             MessagesErrorKind::NotBase58 => VcxErrorKind::NotBase58,
             MessagesErrorKind::InvalidHttpResponse => VcxErrorKind::InvalidHttpResponse,
             MessagesErrorKind::CreateAgent => VcxErrorKind::CreateAgent,
-            MessagesErrorKind::LibndyError(v) => VcxErrorKind::LibndyError(v),
             _ => VcxErrorKind::UnknownLibndyError,
         }
     }
