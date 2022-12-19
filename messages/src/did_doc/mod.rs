@@ -500,7 +500,6 @@ pub mod test_utils {
 mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::did_doc::DidDoc;
-    use crate::utils::devsetup::SetupEmpty;
 
     #[test]
     fn test_did_doc_build_works() {
@@ -564,15 +563,15 @@ mod unit_tests {
             ]
         }))
             .unwrap();
-        assert_eq!(_recipient_keys(), ddo.recipient_keys());
+        assert_eq!(_recipient_keys(), ddo.recipient_keys().unwrap());
     }
 
     #[test]
     fn test_did_doc_resolve_recipient_keys_works() {
-        let recipient_keys = _did_doc_vcx_legacy().recipient_keys();
+        let recipient_keys = _did_doc_vcx_legacy().recipient_keys().unwrap();
         assert_eq!(_recipient_keys(), recipient_keys);
 
-        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys();
+        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys().unwrap();
         assert_eq!(_recipient_keys(), recipient_keys);
     }
 
@@ -587,7 +586,6 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_serialization() {
-        SetupEmpty::init();
         let ddo = _did_doc_vcx_legacy();
         let ddo_value = serde_json::to_value(&ddo).unwrap();
         let expected_value = json!({

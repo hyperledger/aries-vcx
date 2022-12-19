@@ -2,9 +2,9 @@ use crate::did_doc::DidDoc;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::ack::please_ack::PleaseAck;
-use crate::concepts::thread::Thread;
-use crate::concepts::timing::Timing;
+use crate::ack::please_ack::PleaseAck;
+use crate::thread::Thread;
+use crate::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -167,7 +167,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
-    use crate::protocols::connection::response::test_utils::{_did, _response, _thread_id};
+    use crate::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;
 

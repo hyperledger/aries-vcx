@@ -2149,10 +2149,7 @@ dependencies = [
  "base64 0.10.1",
  "bs58 0.4.0",
  "chrono",
- "derive_builder 0.10.2",
  "lazy_static",
- "libvdrtools",
- "num-traits",
  "regex",
  "serde",
  "serde_derive",
@@ -2161,7 +2158,6 @@ dependencies = [
  "strum_macros",
  "thiserror",
  "time",
- "tokio",
  "url",
  "uuid 0.8.2",
 ]
