@@ -70,7 +70,7 @@ pub fn get_cred_def_id(handle: u32) -> VcxResult<String> {
 pub fn release(handle: u32) -> VcxResult<()> {
     CREDENTIALDEF_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidCredDefHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,e.to_string())))
 }
 
 pub fn release_all() {

@@ -34,13 +34,15 @@ pub struct OOBConfig {
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> VcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP
         .add(oob)
-        .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateOutOfBand,
+                                            e.to_string())))
 }
 
 fn store_out_of_band_sender(oob: OutOfBandSender) -> VcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP
         .add(oob)
-        .or(Err(VcxError::from(VcxErrorKind::CreateOutOfBand)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateOutOfBand,
+                                            e.to_string())))
 }
 
 pub async fn create_out_of_band(config: &str) -> VcxResult<u32> {
@@ -145,6 +147,7 @@ pub fn to_a2a_message(handle: u32) -> VcxResult<String> {
     })
 }
 
+// todo: remove this
 pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResult<(u32, bool)> {
     trace!(
         "connection_exists >>> handle: {}, conn_handles: {:?}",
@@ -164,7 +167,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> VcxResul
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
             Ok((handle, true))
         } else {
-            Err(VcxError::from(VcxErrorKind::InvalidState))
+            Err(VcxError::from_msg(VcxErrorKind::UnknownError, format!("Can't find handel for found connection. Instance was probably released in the meantime.")))
         }
     } else {
         Ok((0, false))
@@ -213,13 +216,13 @@ pub fn from_string_receiver(oob_data: &str) -> VcxResult<u32> {
 pub fn release_sender(handle: u32) -> VcxResult<()> {
     OUT_OF_BAND_SENDER_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 pub fn release_receiver(handle: u32) -> VcxResult<()> {
     OUT_OF_BAND_RECEIVER_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 #[cfg(test)]

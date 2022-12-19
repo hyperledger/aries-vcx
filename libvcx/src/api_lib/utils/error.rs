@@ -3,7 +3,6 @@ use std::error::Error;
 use std::ffi::CString;
 use std::ptr;
 
-use aries_vcx::agency_client::error::AgencyClientError;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;

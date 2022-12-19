@@ -1576,7 +1576,8 @@ pub extern "C" fn vcx_connection_messages_download(
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(_err) => return VcxError::from(VcxErrorKind::InvalidConnectionHandle).into(),
+        Err(_err) => return VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle,
+                                               format!("Invalid connection handle {}", connection_handle)).into(),
     };
 
     let uids = if !uids.is_null() {

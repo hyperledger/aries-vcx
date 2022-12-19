@@ -49,7 +49,6 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     );
 
     create_pool_ledger_config(&pool_name, &config.genesis_path)
-        .await
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
     debug!("open_pool ::: Pool Config Created Successfully");

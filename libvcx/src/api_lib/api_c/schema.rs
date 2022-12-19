@@ -192,7 +192,8 @@ pub extern "C" fn vcx_schema_serialize(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidSchemaHandle,
+                                  format!("Invalid schema handle {}", schema_handle)).into();
     };
 
     execute(move || {
@@ -338,7 +339,8 @@ pub extern "C" fn vcx_schema_get_schema_id(
         schema_handle
     );
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidSchemaHandle,
+                                  format!("Invalid schema handle {}", schema_handle)).into();
     }
 
     execute(move || {
@@ -475,7 +477,8 @@ pub extern "C" fn vcx_schema_update_state(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidSchemaHandle,
+                                  format!("Invalid schema handle {}", schema_handle)).into();
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -538,7 +541,8 @@ pub extern "C" fn vcx_schema_get_state(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return VcxError::from(VcxErrorKind::InvalidSchemaHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidSchemaHandle,
+                                  format!("Invalid schema handle {}", schema_handle)).into();
     };
 
     execute(move || {

@@ -550,51 +550,13 @@ pub extern "C" fn vcx_issuer_send_credential(
 /// Error code as a u32
 #[no_mangle]
 pub extern "C" fn vcx_issuer_get_credential_msg(
-    command_handle: CommandHandle,
-    credential_handle: u32,
-    my_pw_did: *const c_char,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>,
+    _command_handle: CommandHandle,
+    _credential_handle: u32,
+    _my_pw_did: *const c_char,
+    _cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, msg: *const c_char)>,
 ) -> u32 {
-    info!("vcx_issuer_get_credential_msg >>>");
-
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(my_pw_did, VcxErrorKind::InvalidOption);
-
-    let source_id = issuer_credential::get_source_id(credential_handle).unwrap_or_default();
-    trace!(
-        "vcx_issuer_get_credential_msg(command_handle: {}, credential_handle: {}, my_pw_did: {}) source_id: {}",
-        command_handle,
-        credential_handle,
-        my_pw_did,
-        source_id
-    );
-    execute(move || {
-        match issuer_credential::generate_credential_msg(credential_handle, &my_pw_did) {
-            Ok(msg) => {
-                let msg = CStringUtils::string_to_cstring(msg);
-                trace!(
-                    "vcx_issuer_get_credential_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                    command_handle,
-                    credential_handle,
-                    error::SUCCESS.message,
-                    source_id
-                );
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!(
-                    "vcx_issuer_get_credential_msg_cb(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}",
-                    command_handle, credential_handle, err, source_id
-                );
-                cb(command_handle, err.into(), ptr::null_mut());
-            }
-        };
-
-        Ok(())
-    });
-
-    error::SUCCESS.code_num
+    error!("vcx_issuer_get_credential_msg >>> not implemented");
+    error::ACTION_NOT_SUPPORTED.code_num
 }
 
 #[no_mangle]

@@ -73,7 +73,7 @@ pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     ISSUER_CREDENTIAL_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidIssuerCredentialHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidIssuerCredentialHandle,e.to_string())))
 }
 
 pub fn release_all() {
@@ -169,14 +169,6 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     Ok(error::SUCCESS.code_num)
 }
 
-pub fn generate_credential_msg(_handle: u32, _my_pw_did: &str) -> VcxResult<String> {
-    Err(VcxError::from_msg(
-        VcxErrorKind::ActionNotSupported,
-        "Not implemented yet",
-    ))
-    // TODO: implement
-}
-
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
@@ -208,10 +200,6 @@ pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::
             error::INVALID_ATTRIBUTES_STRUCTURE.message,
         )
     })
-}
-
-pub fn get_credential_attributes(_handle: u32) -> VcxResult<String> {
-    Err(VcxError::from(VcxErrorKind::NotReady)) // TODO: implement
 }
 
 pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {

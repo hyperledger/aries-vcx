@@ -165,7 +165,7 @@ pub mod test_utils {
     }
 
     pub fn _send_message_but_fail() -> SendClosure {
-        Box::new(|_: A2AMessage| Box::pin(async { Err(VcxError::from(VcxErrorKind::IOError)) }))
+        Box::new(|_: A2AMessage| Box::pin(async { Err(VcxError::from_msg(VcxErrorKind::IOError, "Mocked error")) }))
     }
 }
 

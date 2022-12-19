@@ -50,7 +50,8 @@ pub async fn create_and_publish_schema(
 
     SCHEMA_MAP
         .add(schema)
-        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateSchema,
+                                            e.to_string())))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -96,7 +97,8 @@ pub async fn prepare_schema_for_endorser(
 
     let schema_handle = SCHEMA_MAP
         .add(schema)
-        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))?;
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateSchema,
+                                            e.to_string())))?;
 
     Ok((schema_handle, schema_request))
 }
@@ -119,7 +121,8 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> VcxResult
 
     let handle = SCHEMA_MAP
         .add(schema)
-        .or(Err(VcxError::from(VcxErrorKind::CreateSchema)))?;
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateSchema,
+                                            e.to_string())))?;
 
     Ok((handle, schema_json))
 }
@@ -148,7 +151,7 @@ pub fn from_string(schema_data: &str) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     SCHEMA_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidSchemaHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidSchemaHandle, e.to_string())))
 }
 
 pub fn release_all() {

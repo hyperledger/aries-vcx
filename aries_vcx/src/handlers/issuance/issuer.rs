@@ -340,7 +340,7 @@ pub mod unit_tests {
 
     fn _send_message_but_fail() -> Option<SendClosure> {
         Some(Box::new(|_: A2AMessage| {
-            Box::pin(async { Err(VcxError::from(VcxErrorKind::IOError)) })
+            Box::pin(async { Err(VcxError::from_msg(VcxErrorKind::IOError, "Mocked error")) })
         }))
     }
 

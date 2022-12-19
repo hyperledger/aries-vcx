@@ -35,9 +35,7 @@ pub async fn create_proof(
         .set_requested_predicates_as_string(requested_predicates)?
         .set_not_revoked_interval(revocation_details)?;
     let verifier = Verifier::create_from_request(source_id, &presentation_request)?;
-    PROOF_MAP
-        .add(verifier)
-        .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
+    PROOF_MAP.add(verifier)
 }
 
 pub async fn is_valid_handle(handle: u32) -> bool {
@@ -106,7 +104,8 @@ pub async fn get_proof_state(handle: u32) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     PROOF_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidProofHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidProofHandle,
+                                            e.to_string())))
 }
 
 pub fn release_all() {

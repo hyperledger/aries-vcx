@@ -28,7 +28,7 @@ enum DisclosedProofs {
 
 fn handle_err(err: VcxError) -> VcxError {
     if err.kind() == VcxErrorKind::InvalidHandle {
-        VcxError::from(VcxErrorKind::InvalidDisclosedProofHandle)
+        VcxError::from_msg(VcxErrorKind::InvalidDisclosedProofHandle,err.to_string())
     } else {
         err
     }
@@ -64,7 +64,8 @@ pub async fn create_proof_with_msgid(
 pub fn get_state(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidDisclosedProofHandle,
+                                   e.to_string())))
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {

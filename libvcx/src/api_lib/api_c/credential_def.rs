@@ -75,7 +75,8 @@ pub extern "C" fn vcx_credentialdef_publish(
     check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,
+                                  format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
@@ -134,7 +135,8 @@ pub extern "C" fn vcx_credentialdef_serialize(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,
+                                  format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
     execute(move || {
@@ -241,7 +243,8 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
         source_id
     );
     if !credential_def::is_valid_handle(cred_def_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,
+                                  format!("Invalid creddef handle {}", cred_def_handle)).into();
     }
 
     execute(move || {
@@ -331,7 +334,8 @@ pub extern "C" fn vcx_credentialdef_update_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,
+                                  format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -394,7 +398,8 @@ pub extern "C" fn vcx_credentialdef_get_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return VcxError::from_msg(VcxErrorKind::InvalidCredDefHandle,
+                                  format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
     execute(move || {
@@ -451,7 +456,7 @@ mod tests {
                 CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -471,7 +476,7 @@ mod tests {
                     ptr::null(),
                     CString::new("tag").unwrap().into_raw(),
                     true,
-                    Some(cb.get_callback())
+                    Some(cb.get_callback()),
                 ),
                 error::SUCCESS.code_num
             );
@@ -493,7 +498,7 @@ mod tests {
                 ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -520,7 +525,7 @@ mod tests {
             vcx_credentialdef_deserialize(
                 cb.command_handle,
                 CString::new(original).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -541,7 +546,7 @@ mod tests {
             vcx_credentialdef_deserialize(
                 cb.command_handle,
                 CString::new(original).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -564,7 +569,7 @@ mod tests {
                 ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -591,7 +596,7 @@ mod tests {
                 CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             error::SUCCESS.code_num
         );
@@ -620,7 +625,7 @@ mod tests {
             "{}".to_string(),
             "V4SGRU86Z58d6TV7PBUe6f".to_string(),
         )
-        .unwrap();
+            .unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));

@@ -29,14 +29,6 @@ enum Credentials {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Credential {}
 
-fn handle_err(err: VcxError) -> VcxError {
-    if err.kind() == VcxErrorKind::InvalidHandle {
-        VcxError::from(VcxErrorKind::InvalidCredentialHandle)
-    } else {
-        err
-    }
-}
-
 fn create_credential(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> {
     trace!(
         "create_credential >>> source_id: {}, offer: {}",
@@ -56,7 +48,7 @@ fn create_credential(source_id: &str, offer: &str) -> VcxResult<Option<Holder>> 
             return Err(VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
                 "Received offer in legacy format",
-            ))
+            ));
         }
         offer => offer,
     };
@@ -110,7 +102,7 @@ pub async fn credential_create_with_msgid(
     );
 
     let credential = create_credential(source_id, &offer)?.ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidConnectionHandle,
+        VcxErrorKind::InvalidCredentialHandle,
         format!("Connection can not be used for Proprietary Issuance protocol"),
     ))?;
 
@@ -207,10 +199,6 @@ pub async fn delete_credential(handle: u32) -> VcxResult<u32> {
     Ok(error::SUCCESS.code_num)
 }
 
-pub fn get_credential_offer(_handle: u32) -> VcxResult<String> {
-    Err(VcxError::from(VcxErrorKind::InvalidCredentialHandle)) // TODO: implement
-}
-
 pub fn get_state(handle: u32) -> VcxResult<u32> {
     HANDLE_MAP.get(handle, |credential| Ok(credential.get_state().into()))
 }
@@ -294,7 +282,9 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
 }
 
 pub fn release(handle: u32) -> VcxResult<()> {
-    HANDLE_MAP.release(handle).map_err(handle_err)
+    HANDLE_MAP.release(handle)
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidCredentialHandle,
+                                            e.to_string())))
 }
 
 pub fn release_all() {
@@ -319,7 +309,8 @@ pub fn to_string(handle: u32) -> VcxResult<String> {
 pub fn get_source_id(handle: u32) -> VcxResult<String> {
     HANDLE_MAP
         .get(handle, |credential| Ok(credential.get_source_id()))
-        .map_err(handle_err)
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidCredentialHandle,
+                                            e.to_string())))
 }
 
 pub fn from_string(credential_data: &str) -> VcxResult<u32> {

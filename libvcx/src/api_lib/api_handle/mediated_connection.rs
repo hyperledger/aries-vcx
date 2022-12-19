@@ -101,7 +101,8 @@ pub fn get_source_id(handle: u32) -> VcxResult<String> {
 pub fn store_connection(connection: MediatedConnection) -> VcxResult<u32> {
     CONNECTION_MAP
         .add(connection)
-        .or(Err(VcxError::from(VcxErrorKind::CreateConnection)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreateConnection,
+                                            e.to_string())))
 }
 
 pub async fn create_connection(source_id: &str) -> VcxResult<u32> {
@@ -302,7 +303,8 @@ pub fn from_string(connection_data: &str) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     CONNECTION_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle,
+                                            e.to_string())))
 }
 
 pub fn release_all() {
@@ -319,9 +321,9 @@ pub fn get_invite_details(handle: u32) -> VcxResult<String> {
                     InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
                     InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string(),
                 })
-                .ok_or(VcxError::from(VcxErrorKind::ActionNotSupported))
+                .ok_or(VcxError::from_msg(VcxErrorKind::ActionNotSupported, "Invitation is not available for the connection."))
         })
-        .or(Err(VcxError::from(VcxErrorKind::InvalidConnectionHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle,e.to_string())))
 }
 
 pub async fn get_messages(handle: u32) -> VcxResult<HashMap<String, A2AMessage>> {

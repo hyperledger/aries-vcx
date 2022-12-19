@@ -77,7 +77,7 @@ pub fn from_string(rev_reg_data: &str) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     REV_REG_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 pub fn get_tails_hash(handle: u32) -> VcxResult<String> {

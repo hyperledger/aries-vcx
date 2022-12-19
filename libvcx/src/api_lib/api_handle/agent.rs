@@ -16,7 +16,8 @@ pub async fn is_valid_handle(handle: u32) -> bool {
 fn store_public_agent(agent: PublicAgent) -> VcxResult<u32> {
     PUBLIC_AGENT_MAP
         .add(agent)
-        .or(Err(VcxError::from(VcxErrorKind::CreatePublicAgent)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::CreatePublicAgent,
+                                            e.to_string())))
 }
 
 pub async fn create_public_agent(source_id: &str, institution_did: &str) -> VcxResult<u32> {
@@ -90,5 +91,6 @@ pub fn from_string(agent_data: &str) -> VcxResult<u32> {
 pub fn release(handle: u32) -> VcxResult<()> {
     PUBLIC_AGENT_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidHandle)))
+        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidHandle,
+                                            e.to_string())))
 }
