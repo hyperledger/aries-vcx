@@ -9,15 +9,15 @@ use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
-use messages::protocols::connection::invite::Invitation;
+use messages::connection::invite::Invitation;
 use messages::did_doc::DidDoc;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+use messages::issuance::credential::Credential;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_request::CredentialRequest;
+use messages::out_of_band::invitation::OutOfBandInvitation;
 
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_request::PresentationRequest;
 
 use messages::did_doc::service_resolvable::ServiceResolvable;
 

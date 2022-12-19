@@ -1,7 +1,7 @@
 use crate::utils::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::{AttachmentId, Attachments};
-use crate::protocols::issuance::CredentialPreviewData;
+use crate::issuance::CredentialPreviewData;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -88,7 +88,7 @@ impl OfferInfo {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::_thread;
+    use crate::connection::response::test_utils::_thread;
 
     use super::*;
 
@@ -174,8 +174,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::connection::response::test_utils::_thread_id;
-    use crate::protocols::issuance::credential_offer::test_utils::*;
+    use crate::connection::response::test_utils::_thread_id;
+    use crate::issuance::credential_offer::test_utils::*;
 
     use super::*;
 

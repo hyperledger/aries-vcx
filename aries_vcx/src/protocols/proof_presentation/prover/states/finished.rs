@@ -1,6 +1,6 @@
 use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::proof_presentation::presentation::Presentation;
+use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

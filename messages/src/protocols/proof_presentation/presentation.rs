@@ -1,6 +1,6 @@
 use crate::utils::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::concepts::ack::please_ack::PleaseAck;
+use crate::ack::please_ack::PleaseAck;
 use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -48,8 +48,8 @@ impl Presentation {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::connection::response::test_utils::_thread_1;
-    use crate::protocols::proof_presentation::presentation_request::test_utils::thread;
+    use crate::connection::response::test_utils::_thread_1;
+    use crate::proof_presentation::presentation_request::test_utils::thread;
 
     use super::*;
 
@@ -97,8 +97,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::proof_presentation::presentation::test_utils::*;
-    use crate::protocols::proof_presentation::presentation_request::test_utils::thread_id;
+    use crate::proof_presentation::presentation::test_utils::*;
+    use crate::proof_presentation::presentation_request::test_utils::thread_id;
 
     use super::*;
 

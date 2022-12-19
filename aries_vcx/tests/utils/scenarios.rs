@@ -16,12 +16,12 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::messages::protocols::connection::invite::Invitation;
-    use aries_vcx::messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
-    use aries_vcx::messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
+    use aries_vcx::messages::connection::invite::Invitation;
+    use aries_vcx::messages::issuance::credential_offer::{CredentialOffer, OfferInfo};
+    use aries_vcx::messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
     use aries_vcx::messages::concepts::mime_type::MimeType;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{Attribute, PresentationProposalData};
-    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::proof_presentation::presentation_proposal::{Attribute, PresentationProposalData};
+    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;

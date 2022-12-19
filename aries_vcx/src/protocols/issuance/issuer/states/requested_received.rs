@@ -1,6 +1,6 @@
 use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages::issuance::credential_offer::CredentialOffer;
+use messages::issuance::credential_request::CredentialRequest;
 use messages::status::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::credential_sent::CredentialSentState;

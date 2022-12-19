@@ -5,5 +5,3 @@ pub mod problem_report;
 pub mod localization;
 pub mod mime_type;
 pub mod timing;
-#[macro_use]
-pub mod ack;

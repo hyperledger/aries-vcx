@@ -1,5 +1,5 @@
 use crate::a2a::{A2AMessage, MessageId};
-use crate::protocols::issuance::CredentialPreviewData;
+use crate::issuance::CredentialPreviewData;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -106,7 +106,7 @@ impl From<CredentialProposalData> for CredentialProposal {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::protocols::issuance::credential_offer::test_utils::{_value, thread};
+    use crate::issuance::credential_offer::test_utils::{_value, thread};
 
     use super::*;
 
@@ -157,8 +157,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::issuance::credential_offer::test_utils::{_value, thread_id};
-    use crate::protocols::issuance::credential_proposal::test_utils::*;
+    use crate::issuance::credential_offer::test_utils::{_value, thread_id};
+    use crate::issuance::credential_proposal::test_utils::*;
 
     use super::*;
 

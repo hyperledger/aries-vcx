@@ -11,29 +11,25 @@ extern crate serde_json;
 extern crate strum_macros;
 
 #[macro_use]
-pub mod thread;
+pub mod a2a;
 
 #[macro_use]
-pub mod a2a;
+pub mod concepts;
 
 #[macro_use]
 pub mod ack;
 
-pub mod attachment;
 pub mod basic_message;
 pub mod connection;
 pub mod discovery;
-pub mod problem_report;
-pub mod forward;
 pub mod issuance;
 pub mod revocation_notification;
-pub mod localization;
-pub mod mime_type;
 pub mod out_of_band;
 pub mod proof_presentation;
 pub mod status;
-pub mod timing;
 pub mod trust_ping;
 pub mod did_doc;
 pub mod actors;
 pub mod utils;
+pub mod routing;
+pub mod protocols;
