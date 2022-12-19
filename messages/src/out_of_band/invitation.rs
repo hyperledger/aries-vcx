@@ -2,10 +2,10 @@ use crate::a2a_message;
 use crate::utils::error::prelude::*;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::attachment::Attachments;
+use crate::concepts::attachment::Attachments;
 use crate::did_doc::service_resolvable::ServiceResolvable;
-use crate::mime_type::MimeType;
-use crate::timing::Timing;
+use crate::concepts::mime_type::MimeType;
+use crate::concepts::timing::Timing;
 use crate::out_of_band::GoalCode;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::common::proofs::prover::prover::generate_indy_proof;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
@@ -27,7 +27,7 @@ impl PresentationRequestReceived {
         credentials: &str,
         self_attested_attrs: &str,
     ) -> VcxResult<String> {
-        
+
         generate_indy_proof(
             profile,
             credentials,

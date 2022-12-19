@@ -10,7 +10,7 @@ use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
-use messages::forward::Forward;
+use messages::routing::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);

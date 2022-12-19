@@ -1,9 +1,9 @@
 use crate::utils::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::please_ack::PleaseAck;
-use crate::attachment::{AttachmentId, Attachments};
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::attachment::{AttachmentId, Attachments};
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -64,7 +64,7 @@ impl Credential {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::a2a::MessageId;
-    use crate::attachment::{AttachmentId, Attachments};
+    use crate::concepts::attachment::{AttachmentId, Attachments};
     use crate::issuance::credential::Credential;
     use crate::issuance::credential_offer::test_utils::thread;
 

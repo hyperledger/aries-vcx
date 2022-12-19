@@ -2,7 +2,7 @@ use crate::utils::error::prelude::*;
 use crate::out_of_band::invitation::OutOfBandInvitation;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::connection::did::Did;
-use crate::timing::Timing;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -16,7 +16,7 @@ use messages::a2a::A2AMessage;
 use messages::issuance::credential_offer::OfferInfo;
 use messages::issuance::credential_proposal::CredentialProposal;
 use messages::issuance::CredentialPreviewData;
-use messages::mime_type::MimeType;
+use messages::concepts::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;

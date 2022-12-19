@@ -1,5 +1,5 @@
 use messages::a2a::A2AMessage;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_proposal::PresentationProposal;
 use messages::proof_presentation::presentation_request::PresentationRequest;

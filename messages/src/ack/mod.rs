@@ -2,8 +2,8 @@
 pub mod please_ack;
 
 use crate::a2a::{A2AMessage, MessageId};
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

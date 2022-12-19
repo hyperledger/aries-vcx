@@ -6,7 +6,7 @@ use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use messages::a2a::{A2AMessage, MessageId};
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_ack::PresentationAck;
 use messages::proof_presentation::presentation_proposal::PresentationProposal;
@@ -140,7 +140,7 @@ impl VerifierSM {
                 (
                     VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
                             proposal
-                    )), 
+                    )),
                     self.thread_id.clone()
                 )
             }
@@ -613,7 +613,7 @@ pub mod unit_tests {
     mod step {
         use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
-        
+
 
         use super::*;
 

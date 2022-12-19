@@ -1,4 +1,4 @@
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 
 pub fn build_problem_report_msg(comment: Option<String>, thread_id: &str) -> ProblemReport {
     ProblemReport::create()

@@ -1,4 +1,4 @@
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_request::CredentialRequest;
 use messages::status::Status;

@@ -8,7 +8,7 @@ use crate::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;
-use messages::attachment::AttachmentId;
+use messages::concepts::attachment::AttachmentId;
 use messages::connection::invite::Invitation;
 use messages::did_doc::DidDoc;
 use messages::issuance::credential::Credential;

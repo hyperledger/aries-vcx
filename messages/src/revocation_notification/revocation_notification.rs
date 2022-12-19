@@ -1,7 +1,7 @@
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::please_ack::PleaseAck;
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 type CredentialId = String;

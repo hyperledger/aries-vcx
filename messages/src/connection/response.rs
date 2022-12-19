@@ -3,8 +3,8 @@ use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::ack::please_ack::PleaseAck;
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]

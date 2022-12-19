@@ -1,7 +1,7 @@
 use crate::did_doc::DidDoc;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]

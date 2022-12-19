@@ -1,5 +1,5 @@
 use messages::a2a::A2AMessage;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::issuance::credential::Credential;
 use messages::issuance::credential_ack::CredentialAck;
 use messages::issuance::credential_offer::CredentialOffer;

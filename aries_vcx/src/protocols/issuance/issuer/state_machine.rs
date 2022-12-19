@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use messages::ack::Ack;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use crate::core::profile::profile::Profile;
 
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
@@ -549,7 +549,7 @@ pub mod unit_tests {
     use messages::issuance::credential_proposal::test_utils::_credential_proposal;
     use messages::issuance::credential_request::test_utils::{_credential_request, _credential_request_1};
     use messages::issuance::test_utils::{_ack, _problem_report};
-    use messages::problem_report::ProblemReport;
+    use messages::concepts::problem_report::ProblemReport;
     use crate::test::source_id;
     use crate::utils::constants::LIBINDY_CRED_OFFER;
     use crate::utils::devsetup::SetupMocks;

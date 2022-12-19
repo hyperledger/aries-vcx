@@ -1,4 +1,4 @@
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::proof_presentation::presentation::Presentation;
 use messages::proof_presentation::presentation_ack::PresentationAck;
 use messages::proof_presentation::presentation_request::PresentationRequest;

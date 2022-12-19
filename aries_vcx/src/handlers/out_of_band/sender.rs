@@ -4,7 +4,7 @@ use messages::out_of_band::{GoalCode, HandshakeProtocol};
 use messages::a2a::message_family::MessageFamilies;
 use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
-use messages::attachment::AttachmentId;
+use messages::concepts::attachment::AttachmentId;
 
 use messages::did_doc::service_resolvable::ServiceResolvable;
 

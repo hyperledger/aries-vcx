@@ -1,7 +1,7 @@
 use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
-use crate::mime_type::MimeType;
+use crate::concepts::mime_type::MimeType;
 
 pub mod credential;
 pub mod credential_ack;

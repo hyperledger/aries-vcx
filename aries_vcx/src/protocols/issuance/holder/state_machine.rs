@@ -14,7 +14,7 @@ use messages::issuance::credential_ack::CredentialAck;
 use messages::issuance::credential_offer::CredentialOffer;
 use messages::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 use messages::issuance::credential_request::CredentialRequest;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;

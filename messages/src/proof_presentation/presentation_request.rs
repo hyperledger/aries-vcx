@@ -1,8 +1,8 @@
 use crate::utils::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::attachment::{AttachmentId, Attachments};
-use crate::thread::Thread;
-use crate::timing::Timing;
+use crate::concepts::attachment::{AttachmentId, Attachments};
+use crate::concepts::thread::Thread;
+use crate::concepts::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -64,7 +64,7 @@ impl PresentationRequest {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::thread::Thread;
+    use crate::concepts::thread::Thread;
 
     use super::*;
 

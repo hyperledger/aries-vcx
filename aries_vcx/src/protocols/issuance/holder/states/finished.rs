@@ -1,5 +1,5 @@
 use crate::error::prelude::*;
-use messages::problem_report::ProblemReport;
+use messages::concepts::problem_report::ProblemReport;
 use messages::issuance::credential::{Credential, CredentialData};
 use messages::status::Status;
 
