@@ -6,7 +6,7 @@ use crate::concepts::attachment::Attachments;
 use crate::did_doc::service_resolvable::ServiceResolvable;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::timing::Timing;
-use crate::out_of_band::GoalCode;
+use crate::protocols::out_of_band::GoalCode;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
 pub struct OutOfBandInvitation {

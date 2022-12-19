@@ -1,6 +1,6 @@
 use crate::utils::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::ack::please_ack::PleaseAck;
+use crate::concepts::ack::please_ack::PleaseAck;
 use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -65,8 +65,8 @@ impl Credential {
 pub mod test_utils {
     use crate::a2a::MessageId;
     use crate::concepts::attachment::{AttachmentId, Attachments};
-    use crate::issuance::credential::Credential;
-    use crate::issuance::credential_offer::test_utils::thread;
+    use crate::protocols::issuance::credential::Credential;
+    use crate::protocols::issuance::credential_offer::test_utils::thread;
 
     pub fn _attachment() -> ::serde_json::Value {
         json!({
@@ -101,8 +101,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::issuance::credential::test_utils::*;
-    use crate::issuance::credential_offer::test_utils::thread_id;
+    use crate::protocols::issuance::credential::test_utils::*;
+    use crate::protocols::issuance::credential_offer::test_utils::thread_id;
 
     use super::*;
 
