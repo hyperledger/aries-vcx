@@ -6,7 +6,7 @@ use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::utils::validation::validate_verkey;
-use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
+use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries_public;
@@ -122,9 +122,9 @@ impl DidDoc {
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
                 MessagesError::from_msg(
-                    MesssagesErrorKind::InvalidUrl,
+                    MesssagesErrorKind::InvalidJson,
                     format!(
-                        "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
+                        "DIDDoc validation failed: Invalid endpoint \"{:?}\", err: {:?}",
                         service.service_endpoint, err
                     ),
                 )
@@ -500,6 +500,7 @@ pub mod test_utils {
 mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::did_doc::DidDoc;
+    use crate::utils::devsetup::SetupEmpty;
 
     #[test]
     fn test_did_doc_build_works() {
@@ -563,15 +564,15 @@ mod unit_tests {
             ]
         }))
             .unwrap();
-        assert_eq!(_recipient_keys(), ddo.recipient_keys().unwrap());
+        assert_eq!(_recipient_keys(), ddo.recipient_keys());
     }
 
     #[test]
     fn test_did_doc_resolve_recipient_keys_works() {
-        let recipient_keys = _did_doc_vcx_legacy().recipient_keys().unwrap();
+        let recipient_keys = _did_doc_vcx_legacy().recipient_keys();
         assert_eq!(_recipient_keys(), recipient_keys);
 
-        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys().unwrap();
+        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys();
         assert_eq!(_recipient_keys(), recipient_keys);
     }
 
@@ -586,6 +587,7 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_serialization() {
+        SetupEmpty::init();
         let ddo = _did_doc_vcx_legacy();
         let ddo_value = serde_json::to_value(&ddo).unwrap();
         let expected_value = json!({

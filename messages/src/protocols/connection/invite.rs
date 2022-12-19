@@ -1,8 +1,8 @@
-use crate::utils::error::prelude::*;
-use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
+use crate::error::prelude::*;
+use crate::out_of_band::invitation::OutOfBandInvitation;
 use crate::a2a::{A2AMessage, MessageId};
-use crate::protocols::connection::did::Did;
-use crate::concepts::timing::Timing;
+use crate::connection::did::Did;
+use crate::timing::Timing;
 use crate::timing_optional;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -157,7 +157,7 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use crate::did_doc::test_utils::*;
-    use crate::protocols::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
+    use crate::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
 
     use super::*;
 

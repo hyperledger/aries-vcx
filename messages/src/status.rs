@@ -1,4 +1,4 @@
-use crate::concepts::problem_report::ProblemReport;
+use crate::problem_report::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {
@@ -15,6 +15,15 @@ impl Status {
             Status::Success => 1,
             Status::Failed(_) => 2,
             Status::Declined(_) => 3
+        }
+    }
+
+    pub fn from_u32(state: u32) -> Self {
+        match state {
+            1 => Self::Success,
+            2 => Self::Failed(ProblemReport::create()),
+            3 => Self::Declined(ProblemReport::create()),
+            _ => Self::Undefined,
         }
     }
 }
