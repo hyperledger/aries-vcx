@@ -55,7 +55,8 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn from_string(data: &str) -> LibvcxResult<u32> {
-    let cred_def: CredentialDef = CredentialDef::from_string(data)?;
+    let cred_def: CredentialDef = CredentialDef::from_string(data)
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateCredDef, e.to_string())))?;
     CREDENTIALDEF_MAP.add(cred_def)
 }
 
