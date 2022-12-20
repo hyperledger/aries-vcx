@@ -1,6 +1,6 @@
-use messages::ack::please_ack::AckOn;
-use messages::revocation_notification::revocation_ack::RevocationAck;
-use messages::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
+use messages::concepts::ack::please_ack::AckOn;
+use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
+use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
 use crate::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
@@ -131,7 +131,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::{_ack, _ack_1};
+    use messages::concepts::ack::test_utils::{_ack, _ack_1};
 
     use crate::protocols::revocation_notification::{
         sender::state_machine::test_utils::*,

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
-use messages::issuance::credential_proposal::CredentialProposal;
+use messages::protocols::issuance::credential_proposal::CredentialProposal;
 use crate::protocols::issuance::is_cred_def_revokable;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

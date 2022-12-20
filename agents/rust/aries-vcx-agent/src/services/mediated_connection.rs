@@ -4,11 +4,11 @@ use crate::error::*;
 use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::connection::invite::Invitation;
-use aries_vcx::messages::connection::request::Request;
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-use aries_vcx::messages::issuance::credential_proposal::CredentialProposal;
-use aries_vcx::messages::proof_presentation::presentation_proposal::PresentationProposal;
+use aries_vcx::messages::protocols::connection::invite::Invitation;
+use aries_vcx::messages::protocols::connection::request::Request;
+use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
+use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::{

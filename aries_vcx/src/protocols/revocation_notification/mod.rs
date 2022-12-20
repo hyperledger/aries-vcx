@@ -3,9 +3,9 @@ pub mod sender;
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use messages::ack::please_ack::AckOn;
-    use messages::revocation_notification::revocation_notification::RevocationFormat;
-    use messages::{a2a::A2AMessage, revocation_notification::revocation_notification::RevocationNotification};
+    use messages::a2a::A2AMessage;
+    use messages::concepts::ack::please_ack::AckOn;
+    use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
     use crate::{error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
 

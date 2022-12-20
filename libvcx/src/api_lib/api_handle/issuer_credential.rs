@@ -3,11 +3,11 @@ use serde_json;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::issuance::credential_offer::OfferInfo;
+use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
 use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::credential_def;
+use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
 use crate::api_lib::global::profile::get_main_profile_optional_pool;
@@ -244,9 +244,9 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
 
-    use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
+    use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;

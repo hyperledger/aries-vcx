@@ -3,8 +3,8 @@ use std::sync::Arc;
 use messages::did_doc::DidDoc;
 use crate::error::VcxResult;
 
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
-use messages::discovery::query::Query;
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::discovery::query::Query;
 use crate::utils::send_message;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 

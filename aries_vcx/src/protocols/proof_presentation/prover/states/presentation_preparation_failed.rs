@@ -1,5 +1,5 @@
-use messages::problem_report::ProblemReport;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 

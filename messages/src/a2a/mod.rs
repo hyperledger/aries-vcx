@@ -1,32 +1,30 @@
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use log;
-
-use crate::ack::Ack;
-use crate::basic_message::message::BasicMessage;
-use crate::connection::invite::{PairwiseInvitation, PublicInvitation};
-use crate::connection::problem_report::ProblemReport as ConnectionProblemReport;
-use crate::connection::request::Request;
-use crate::connection::response::SignedResponse;
-use crate::discovery::disclose::Disclose;
-use crate::discovery::query::Query;
-use crate::revocation_notification::revocation_ack::RevocationAck;
-use crate::revocation_notification::revocation_notification::RevocationNotification;
-use crate::problem_report::ProblemReport as CommonProblemReport;
-use crate::forward::Forward;
-use crate::issuance::credential::Credential;
-use crate::issuance::credential_offer::CredentialOffer;
-use crate::issuance::credential_proposal::CredentialProposal;
-use crate::issuance::credential_request::CredentialRequest;
-use crate::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::out_of_band::invitation::OutOfBandInvitation;
-use crate::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
-use crate::proof_presentation::presentation::Presentation;
-use crate::proof_presentation::presentation_proposal::PresentationProposal;
-use crate::proof_presentation::presentation_request::PresentationRequest;
-use crate::trust_ping::ping::Ping;
-use crate::trust_ping::ping_response::PingResponse;
+use crate::concepts::ack::Ack;
+use crate::protocols::basic_message::message::BasicMessage;
+use crate::protocols::connection::invite::{PairwiseInvitation, PublicInvitation};
+use crate::protocols::connection::problem_report::ProblemReport as ConnectionProblemReport;
+use crate::protocols::connection::request::Request;
+use crate::protocols::connection::response::SignedResponse;
+use crate::protocols::discovery::disclose::Disclose;
+use crate::protocols::discovery::query::Query;
+use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
+use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
+use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
+use crate::protocols::routing::forward::Forward;
+use crate::protocols::issuance::credential::Credential;
+use crate::protocols::issuance::credential_offer::CredentialOffer;
+use crate::protocols::issuance::credential_proposal::CredentialProposal;
+use crate::protocols::issuance::credential_request::CredentialRequest;
+use crate::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
+use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
+use crate::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use crate::protocols::proof_presentation::presentation::Presentation;
+use crate::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use crate::protocols::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::trust_ping::ping::Ping;
+use crate::protocols::trust_ping::ping_response::PingResponse;
 
 use self::message_family::MessageFamilies;
 use self::message_type::MessageType;
@@ -142,14 +140,6 @@ impl<'de> Deserialize<'de> for A2AMessage {
     {
         let value = Value::deserialize(deserializer).map_err(de::Error::custom)?;
 
-        if log::log_enabled!(log::Level::Trace) {
-            let message_json = serde_json::ser::to_string(&value);
-            let message_type_json = serde_json::ser::to_string(&value["@type"].clone());
-
-            trace!("Deserializing v3::A2AMessage in V3 json: {:?}", &message_json);
-            trace!("Found v3::A2AMessage message type {:?}", &message_type_json);
-        };
-
         let message_type: MessageType = match serde_json::from_value(value["@type"].clone()) {
             Ok(message_type) => message_type,
             Err(_) => return Ok(A2AMessage::Generic(value)),
@@ -257,8 +247,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(A2AMessage::RevocationAck)
                     .map_err(de::Error::custom)
             }
-            (_, other_type) => {
-                warn!("Unexpected @type field structure: {}", other_type);
+            (_, _) => {
                 Ok(A2AMessage::Generic(value))
             }
         }
@@ -428,14 +417,12 @@ pub mod test_a2a_serialization {
     use serde_json::Value;
 
     use crate::a2a::{A2AMessage, MessageId};
-    use crate::ack::{Ack, AckStatus};
-    use crate::connection::request::Request;
-    use crate::forward::Forward;
-    use crate::utils::devsetup::SetupEmpty;
+    use crate::concepts::ack::{Ack, AckStatus};
+    use crate::protocols::connection::request::Request;
+    use crate::protocols::routing::forward::Forward;
 
     #[test]
     fn test_serialization_deserialization_connection_request() {
-        let _setup = SetupEmpty::init();
         let a2a_msg = A2AMessage::ConnectionRequest(Request {
             id: Default::default(),
             label: "foobar".to_string(),
@@ -471,7 +458,6 @@ pub mod test_a2a_serialization {
 
     #[test]
     fn test_serialize_deserialize_connection_ack() {
-        let _setup = SetupEmpty::init();
         let a2a_msg = A2AMessage::Ack(Ack::create().set_status(AckStatus::Ok).set_thread_id("threadid"));
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
 
@@ -502,7 +488,6 @@ pub mod test_a2a_serialization {
     #[cfg(feature = "general_test")]
     // todo: Add support for aries @type-ed messages on vcxagency-node, then we can stop giving fwd messages special treatment, delete this test
     fn test_serialize_forward_message_to_legacy_format() {
-        let _setup = SetupEmpty::init();
         let a2a_msg =
             A2AMessage::Forward(Forward::new("BzCbsNYhMrjHiqZDTUASHg".into(), "{}".as_bytes().to_vec()).unwrap());
         let serialized = serde_json::to_string(&a2a_msg).unwrap();
@@ -518,7 +503,6 @@ pub mod test_a2a_serialization {
 
     #[test]
     fn test_deserialize_connection_ack_legacy() {
-        let _setup = SetupEmpty::init();
         let msg = r#"{
             "@id": "testid",
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack",
@@ -539,7 +523,6 @@ pub mod test_a2a_serialization {
 
     #[test]
     fn test_deserialization_connection_request_legacy() {
-        let _setup = SetupEmpty::init();
         let msg = r#"{
             "@id": "testid",
             "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request",

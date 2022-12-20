@@ -1,14 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
 use bs58;
 
-use messages::{
-    connection::{did::Did, invite::Invitation},
-    did_doc::{
-        service_aries::AriesService, service_aries_public::EndpointDidSov, service_resolvable::ServiceResolvable,
-        DidDoc,
-    },
-};
 use serde_json::Value;
+use messages::did_doc::DidDoc;
+use messages::did_doc::service_aries::AriesService;
+use messages::did_doc::service_aries_public::EndpointDidSov;
+use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::protocols::connection::did::Did;
+use messages::protocols::connection::invite::Invitation;
 
 use crate::{
     common::keys::get_verkey_from_ledger,
@@ -65,6 +64,7 @@ pub struct ReplyV1 {
 pub struct ReplyDataV1 {
     pub result: serde_json::Value,
 }
+
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
@@ -123,7 +123,7 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                     error!("Is not did valid: {}", err);
                     Vec::new()
                 });
-            (service.service_endpoint,recipient_keys, service.routing_keys)
+            (service.service_endpoint, recipient_keys, service.routing_keys)
         }
     };
     did_doc.set_service_endpoint(service_endpoint);
@@ -259,7 +259,7 @@ fn parse_response(response: &str) -> VcxResult<Response> {
         .map_err(|err|
             VcxError::from_msg(
                 VcxErrorKind::InvalidJson,
-                format!("Cannot deserialize transaction response: {:?}", err)
+                format!("Cannot deserialize transaction response: {:?}", err),
             )
         )
 }
@@ -275,9 +275,9 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 #[cfg(feature = "general_test")]
 mod test {
     use messages::a2a::MessageId;
-    use messages::connection::invite::test_utils::_pairwise_invitation;
+    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
     use messages::did_doc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
-    use messages::out_of_band::invitation::test_utils::_oob_invitation;
+    use messages::protocols::out_of_band::invitation::test_utils::_oob_invitation;
     use crate::common::test_utils::mock_profile;
 
     use super::*;
@@ -369,8 +369,7 @@ mod test {
     async fn test_did_naked_with_previously_known_keys_suggested() {
         let did_pub_with_key = vec!["did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string()];
         let did_pub = vec!["HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string()];
-        assert_eq!(normalize_keys_as_naked(did_pub_with_key).unwrap(),did_pub );
-
+        assert_eq!(normalize_keys_as_naked(did_pub_with_key).unwrap(), did_pub);
     }
 
     #[tokio::test]

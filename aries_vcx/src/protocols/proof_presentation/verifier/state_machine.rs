@@ -6,11 +6,11 @@ use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use messages::a2a::{A2AMessage, MessageId};
-use messages::problem_report::ProblemReport;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_ack::PresentationAck;
-use messages::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
@@ -140,7 +140,7 @@ impl VerifierSM {
                 (
                     VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
                             proposal
-                    )), 
+                    )),
                     self.thread_id.clone()
                 )
             }
@@ -465,10 +465,10 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
-    use messages::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
-    use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::proof_presentation::test_utils::{_ack, _problem_report};
+    use messages::protocols::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
+    use messages::protocols::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
+    use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::{SetupEmpty, SetupMocks};
     use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
@@ -613,7 +613,7 @@ pub mod unit_tests {
     mod step {
         use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
-        
+
 
         use super::*;
 

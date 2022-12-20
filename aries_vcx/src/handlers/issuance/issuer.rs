@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use messages::ack::please_ack::AckOn;
-use messages::issuance::credential_ack::CredentialAck;
-use messages::issuance::credential_request::CredentialRequest;
+use messages::concepts::ack::please_ack::AckOn;
+use messages::protocols::issuance::credential_ack::CredentialAck;
+use messages::protocols::issuance::credential_request::CredentialRequest;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
@@ -13,10 +13,10 @@ use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
 use messages::a2a::A2AMessage;
-use messages::issuance::credential_offer::OfferInfo;
-use messages::issuance::credential_proposal::CredentialProposal;
-use messages::issuance::CredentialPreviewData;
-use messages::mime_type::MimeType;
+use messages::protocols::issuance::credential_offer::OfferInfo;
+use messages::protocols::issuance::credential_proposal::CredentialProposal;
+use messages::protocols::issuance::CredentialPreviewData;
+use messages::concepts::mime_type::MimeType;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::SendClosure;
@@ -293,7 +293,7 @@ pub mod test_utils {
     use crate::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
-    use messages::issuance::credential_proposal::CredentialProposal;
+    use messages::protocols::issuance::credential_proposal::CredentialProposal;
 
     pub async fn get_credential_proposal_messages(
         agency_client: &AgencyClient,
@@ -316,10 +316,10 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::_ack;
-    use messages::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
-    use messages::issuance::credential_proposal::test_utils::_credential_proposal;
-    use messages::issuance::credential_request::test_utils::_credential_request;
+    use messages::concepts::ack::test_utils::_ack;
+    use messages::protocols::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
+    use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
+    use messages::protocols::issuance::credential_request::test_utils::_credential_request;
     use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
     use crate::utils::devsetup::SetupMocks;
     use crate::common::test_utils::mock_profile;

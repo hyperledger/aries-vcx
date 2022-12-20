@@ -6,7 +6,7 @@ use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::utils::validation::validate_verkey;
-use crate::error::{MessagesError, MesssagesErrorKind, MessagesResult};
+use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries_public;
@@ -122,16 +122,16 @@ impl DidDoc {
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
                 MessagesError::from_msg(
-                    MesssagesErrorKind::InvalidJson,
+                    MesssagesErrorKind::InvalidUrl,
                     format!(
-                        "DIDDoc validation failed: Invalid endpoint \"{:?}\", err: {:?}",
+                        "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
                         service.service_endpoint, err
                     ),
                 )
             })?;
 
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
-                let public_key = self.find_key(recipient_key_entry)?;
+                let public_key = self.get_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;
                 Ok::<_, MessagesError>(())
             })?;
@@ -149,24 +149,18 @@ impl DidDoc {
         Ok(())
     }
 
-    pub fn recipient_keys(&self) -> Vec<String> {
+    pub fn recipient_keys(&self) -> MessagesResult<Vec<String>> {
         let service: AriesService = match self.service.get(0).cloned() {
             Some(service) => service,
-            None => return Vec::new(),
+            None => return Ok(Vec::new()),
         };
         let recipient_keys = service
             .recipient_keys
             .iter()
-            .filter_map(|recipient_key_entry| match self.find_key(recipient_key_entry) {
-                Ok(key) => Some(key.public_key_base_58),
-                Err(err) => {
-                    warn!(
-                        "ddo:: recipient_keys >> error occurred trying to recipient key entry {}, error: {}",
-                        recipient_key_entry, err
-                    );
-                    None
-                }
-            })
+            .map(|key_entry|
+                self.get_key(key_entry)
+                    .map(|key_record| key_record.public_key_base_58)
+            )
             .collect();
         recipient_keys
     }
@@ -191,7 +185,7 @@ impl DidDoc {
             MesssagesErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
         ))?;
-        let recipient_keys = self.recipient_keys();
+        let recipient_keys = self.recipient_keys()?;
         let routing_keys = self.routing_keys();
         Ok(AriesService {
             recipient_keys,
@@ -200,7 +194,10 @@ impl DidDoc {
         })
     }
 
-    fn find_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
+    /**
+
+     **/
+    fn get_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
             Err(_) => {
@@ -327,20 +324,24 @@ pub mod test_utils {
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
     }
+
     pub fn _key_1_did_key() -> String {
         String::from("did:key:z6MkukGVb3mRvTu1msArDKY9UwxeZFGjmwnCKtdQttr4Fk6i")
     }
+
     pub fn _key_2() -> String {
         String::from("Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR")
     }
+
     pub fn _key_2_did_key() -> String {
         String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
     }
+
     pub fn _key_3() -> String {
         String::from("3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU")
     }
 
-    pub fn _key_4()-> String {
+    pub fn _key_4() -> String {
         String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
     }
 
@@ -499,7 +500,6 @@ pub mod test_utils {
 mod unit_tests {
     use crate::did_doc::test_utils::*;
     use crate::did_doc::DidDoc;
-    use crate::utils::devsetup::SetupEmpty;
 
     #[test]
     fn test_did_doc_build_works() {
@@ -562,16 +562,16 @@ mod unit_tests {
                 }
             ]
         }))
-        .unwrap();
-        assert_eq!(_recipient_keys(), ddo.recipient_keys());
+            .unwrap();
+        assert_eq!(_recipient_keys(), ddo.recipient_keys().unwrap());
     }
 
     #[test]
     fn test_did_doc_resolve_recipient_keys_works() {
-        let recipient_keys = _did_doc_vcx_legacy().recipient_keys();
+        let recipient_keys = _did_doc_vcx_legacy().recipient_keys().unwrap();
         assert_eq!(_recipient_keys(), recipient_keys);
 
-        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys();
+        let recipient_keys = _did_doc_recipient_keys_by_value().recipient_keys().unwrap();
         assert_eq!(_recipient_keys(), recipient_keys);
     }
 
@@ -586,7 +586,6 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_serialization() {
-        SetupEmpty::init();
         let ddo = _did_doc_vcx_legacy();
         let ddo_value = serde_json::to_value(&ddo).unwrap();
         let expected_value = json!({

@@ -10,7 +10,7 @@ use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
-use messages::forward::Forward;
+use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
 pub struct EncryptionEnvelope(pub Vec<u8>);
@@ -52,7 +52,7 @@ impl EncryptionEnvelope {
             message => json!(message).to_string(),
         };
 
-        let receiver_keys = json!(did_doc.recipient_keys()).to_string();
+        let receiver_keys = json!(did_doc.recipient_keys()?).to_string();
 
         debug!(
             "Encrypting for pairwise; pw_verkey: {:?}, receiver_keys: {:?}",
@@ -67,7 +67,7 @@ impl EncryptionEnvelope {
         mut message: Vec<u8>,
         did_doc: &DidDoc,
     ) -> VcxResult<Vec<u8>> {
-        let recipient_keys = did_doc.recipient_keys();
+        let recipient_keys = did_doc.recipient_keys()?;
         let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys.get(0).map(String::from).ok_or(VcxError::from_msg(
@@ -198,7 +198,7 @@ impl EncryptionEnvelope {
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
     use messages::did_doc::test_utils::*;
-    use messages::ack::test_utils::_ack;
+    use messages::concepts::ack::test_utils::_ack;
     use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;
     use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile, create_key};

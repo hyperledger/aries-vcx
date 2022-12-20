@@ -1,5 +1,5 @@
-use messages::connection::invite::Invitation;
-use messages::connection::problem_report::ProblemReport;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::problem_report::ProblemReport;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

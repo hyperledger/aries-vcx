@@ -6,9 +6,9 @@ use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
-use aries_vcx::messages::issuance::credential::Credential;
-use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-use aries_vcx::messages::issuance::credential_proposal::CredentialProposalData;
+use aries_vcx::messages::protocols::issuance::credential::Credential;
+use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
 
 #[derive(Clone)]

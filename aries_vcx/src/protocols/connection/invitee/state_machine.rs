@@ -15,13 +15,13 @@ use crate::protocols::SendClosureConnection;
 use crate::common::signing::decode_signed_connection_response;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
-use messages::ack::Ack;
-use messages::connection::invite::Invitation;
-use messages::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::connection::request::Request;
-use messages::connection::response::SignedResponse;
+use messages::concepts::ack::Ack;
+use messages::protocols::connection::invite::Invitation;
+use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::SignedResponse;
 use messages::did_doc::DidDoc;
-use messages::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
 pub struct SmConnectionInvitee {
@@ -173,12 +173,14 @@ impl SmConnectionInvitee {
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        self.their_did_doc()
-            .and_then(|did_doc| did_doc.recipient_keys().get(0).cloned())
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
-                "Remote Connection Verkey is not set",
-            ))
+        let did_did = self.their_did_doc().ok_or(VcxError::from_msg(
+            VcxErrorKind::NotReady,
+            "Counterparty diddoc is not available.",
+        ))?;
+        did_did.recipient_keys()?.get(0).ok_or(VcxError::from_msg(
+            VcxErrorKind::NotReady,
+            "Can't resolve recipient key from the counterparty diddoc.",
+        )).map(|s| s.to_string())
     }
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
@@ -296,7 +298,7 @@ impl SmConnectionInvitee {
             InviteeFullState::Requested(state) => {
                 let remote_vk: String = state
                     .did_doc
-                    .recipient_keys()
+                    .recipient_keys()?
                     .get(0)
                     .cloned()
                     .ok_or(VcxError::from_msg(
@@ -377,14 +379,14 @@ impl SmConnectionInvitee {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::ack::test_utils::_ack;
-    use messages::connection::invite::test_utils::_pairwise_invitation;
-    use messages::connection::problem_report::unit_tests::_problem_report;
-    use messages::connection::request::unit_tests::_request;
-    use messages::connection::response::test_utils::_signed_response;
-    use messages::discovery::disclose::test_utils::_disclose;
+    use messages::concepts::ack::test_utils::_ack;
+    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
+    use messages::protocols::connection::problem_report::unit_tests::_problem_report;
+    use messages::protocols::connection::request::unit_tests::_request;
+    use messages::protocols::connection::response::test_utils::_signed_response;
+    use messages::protocols::discovery::disclose::test_utils::_disclose;
 
-    use messages::trust_ping::ping::unit_tests::_ping;
+    use messages::protocols::trust_ping::ping::unit_tests::_ping;
 
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
@@ -393,7 +395,7 @@ pub mod unit_tests {
 
     pub mod invitee {
 
-        use messages::connection::response::{Response, SignedResponse};
+        use messages::protocols::connection::response::{Response, SignedResponse};
         use messages::did_doc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
 
         use crate::common::signing::sign_connection_response;
@@ -402,7 +404,7 @@ pub mod unit_tests {
         use super::*;
 
         fn _send_message() -> SendClosureConnection {
-            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
+            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { Ok(()) }))
         }
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
@@ -490,7 +492,7 @@ pub mod unit_tests {
             use super::*;
             use crate::utils::devsetup::was_in_past;
             use messages::a2a::MessageId;
-            use messages::ack::AckStatus;
+            use messages::concepts::ack::AckStatus;
 
             #[tokio::test]
             #[cfg(feature = "general_test")]
@@ -511,7 +513,7 @@ pub mod unit_tests {
 
                 assert_eq!(msg.connection.did_doc.routing_keys(), routing_keys);
                 assert_eq!(
-                    msg.connection.did_doc.recipient_keys(),
+                    msg.connection.did_doc.recipient_keys().unwrap(),
                     vec![invitee.pairwise_info.pw_vk.clone()]
                 );
                 assert_eq!(msg.connection.did_doc.get_endpoint(), service_endpoint.to_string());

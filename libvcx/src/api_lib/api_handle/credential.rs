@@ -3,17 +3,16 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
+use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
-use aries_vcx::{
-    handlers::issuance::holder::Holder, messages::a2a::A2AMessage,
-    messages::issuance::credential_offer::CredentialOffer,
-};
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -370,11 +369,11 @@ pub mod tests {
         ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
-    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
-    use crate::aries_vcx::messages::issuance::credential::Credential;
+    use crate::api_lib::api_handle::mediated_connection;
+    use crate::aries_vcx::messages::protocols::issuance::credential::Credential;
 
     use super::*;
 

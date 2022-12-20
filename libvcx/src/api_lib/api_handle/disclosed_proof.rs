@@ -3,18 +3,17 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::global::settings::indy_mocks_enabled;
-use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
+use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::messages;
 use aries_vcx::messages::a2a::A2AMessage;
+use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
 use aries_vcx::utils::error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
-use aries_vcx::{
-    handlers::proof_presentation::prover::Prover,
-    messages::proof_presentation::presentation_request::PresentationRequest,
-};
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");

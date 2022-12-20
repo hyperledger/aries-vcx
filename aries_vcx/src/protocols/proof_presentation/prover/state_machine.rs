@@ -5,11 +5,11 @@ use std::sync::Arc;
 use crate::core::profile::profile::Profile;
 use crate::error::prelude::*;
 use messages::a2a::{A2AMessage, MessageId};
-use messages::problem_report::ProblemReport;
-use messages::proof_presentation::presentation::Presentation;
-use messages::proof_presentation::presentation_ack::PresentationAck;
-use messages::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal, PresentationProposalData};
-use messages::proof_presentation::presentation_request::PresentationRequest;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal, PresentationProposalData};
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
@@ -514,12 +514,12 @@ impl ProverSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::proof_presentation::presentation::test_utils::_presentation;
-    use messages::proof_presentation::presentation_proposal::test_utils::{
+    use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
+    use messages::protocols::proof_presentation::presentation_proposal::test_utils::{
         _presentation_preview, _presentation_proposal, _presentation_proposal_data,
     };
-    use messages::proof_presentation::presentation_request::test_utils::_presentation_request;
-    use messages::proof_presentation::test_utils::{_ack, _problem_report};
+    use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
+    use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
     use crate::test::source_id;
     use crate::utils::devsetup::SetupMocks;
     use crate::common::test_utils::mock_profile;

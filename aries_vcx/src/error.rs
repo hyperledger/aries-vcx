@@ -6,7 +6,7 @@ use thiserror;
 use agency_client;
 use agency_client::error::AgencyClientErrorKind;
 use messages;
-use messages::error::MesssagesErrorKind as MessagesErrorKind;
+use messages::utils::error::MesssagesErrorKind as MessagesErrorKind;
 use crate::utils::error;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 
@@ -373,8 +373,8 @@ impl From<AgencyClientErrorKind> for VcxErrorKind {
     }
 }
 
-impl From<messages::error::MessagesError> for VcxError {
-    fn from(msg_err: messages::error::MessagesError) -> VcxError {
+impl From<messages::utils::error::MessagesError> for VcxError {
+    fn from(msg_err: messages::utils::error::MessagesError) -> VcxError {
         let vcx_error_kind: VcxErrorKind = msg_err.kind().into();
         VcxError::from_msg(vcx_error_kind, msg_err.to_string())
     }
@@ -384,33 +384,12 @@ impl From<MessagesErrorKind> for VcxErrorKind {
     fn from(msg_err: MessagesErrorKind) -> VcxErrorKind {
         match msg_err {
             MessagesErrorKind::InvalidState => VcxErrorKind::InvalidState,
-            MessagesErrorKind::InvalidConfiguration => VcxErrorKind::InvalidConfiguration,
             MessagesErrorKind::InvalidJson => VcxErrorKind::InvalidJson,
-            MessagesErrorKind::InvalidOption => VcxErrorKind::InvalidOption,
-            MessagesErrorKind::InvalidMessagePack => VcxErrorKind::InvalidMessagePack,
             MessagesErrorKind::IOError => VcxErrorKind::IOError,
-            MessagesErrorKind::LibindyInvalidStructure => VcxErrorKind::LibindyInvalidStructure,
-            MessagesErrorKind::TimeoutLibindy => VcxErrorKind::TimeoutLibindy,
-            MessagesErrorKind::InvalidLibindyParam => VcxErrorKind::InvalidLibindyParam,
-            MessagesErrorKind::PostMessageFailed => VcxErrorKind::PostMessageFailed,
-            MessagesErrorKind::InvalidWalletHandle => VcxErrorKind::InvalidWalletHandle,
-            MessagesErrorKind::DuplicationWallet => VcxErrorKind::DuplicationWallet,
-            MessagesErrorKind::WalletRecordNotFound => VcxErrorKind::WalletRecordNotFound,
-            MessagesErrorKind::DuplicationWalletRecord => VcxErrorKind::DuplicationWalletRecord,
-            MessagesErrorKind::WalletNotFound => VcxErrorKind::WalletNotFound,
-            MessagesErrorKind::WalletAlreadyOpen => VcxErrorKind::WalletAlreadyOpen,
-            MessagesErrorKind::MissingWalletKey => VcxErrorKind::MissingWalletKey,
-            MessagesErrorKind::DuplicationMasterSecret => VcxErrorKind::DuplicationMasterSecret,
-            MessagesErrorKind::DuplicationDid => VcxErrorKind::DuplicationDid,
-            MessagesErrorKind::UnknownError => VcxErrorKind::UnknownError,
             MessagesErrorKind::InvalidDid => VcxErrorKind::InvalidDid,
             MessagesErrorKind::InvalidVerkey => VcxErrorKind::InvalidVerkey,
             MessagesErrorKind::InvalidUrl => VcxErrorKind::InvalidUrl,
-            MessagesErrorKind::SerializationError => VcxErrorKind::SerializationError,
             MessagesErrorKind::NotBase58 => VcxErrorKind::NotBase58,
-            MessagesErrorKind::InvalidHttpResponse => VcxErrorKind::InvalidHttpResponse,
-            MessagesErrorKind::CreateAgent => VcxErrorKind::CreateAgent,
-            MessagesErrorKind::LibndyError(v) => VcxErrorKind::LibndyError(v),
             _ => VcxErrorKind::UnknownLibndyError,
         }
     }

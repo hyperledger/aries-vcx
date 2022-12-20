@@ -46,11 +46,9 @@ impl Serialize for DdoKeyReference {
 mod unit_test {
     use crate::did_doc::model::DdoKeyReference;
     use crate::did_doc::test_utils::_did;
-    use crate::utils::devsetup::SetupEmpty;
 
     #[test]
     fn test_key_reference_serialization() {
-        SetupEmpty::init();
         let key_ref = DdoKeyReference {
             did: Some(_did()),
             key_id: "1".to_string(),

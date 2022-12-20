@@ -8,7 +8,7 @@ pub mod utils;
 #[cfg(test)]
 #[cfg(feature = "pool_tests")]
 mod integration_tests {
-    use aries_vcx::messages::connection::did::Did;
+    use aries_vcx::messages::protocols::connection::did::Did;
     use aries_vcx::messages::did_doc::service_aries::AriesService;
     use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
     use aries_vcx::utils::devsetup::{SetupWalletPool, SetupProfile};

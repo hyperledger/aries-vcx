@@ -1,27 +1,11 @@
 use std::sync::Once;
 
-use crate::utils::test_logger::LibvcxDefaultLogger;
 #[cfg(feature = "test_utils")]
 use chrono::{DateTime, Duration, Utc};
 
 
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
-}
-
-pub fn init_test_logging() {
-    TEST_LOGGING_INIT.call_once(|| {
-        LibvcxDefaultLogger::init_testing_logger();
-    })
-}
-
-pub struct SetupEmpty;
-
-impl SetupEmpty {
-    pub fn init() -> SetupEmpty {
-        init_test_logging();
-        SetupEmpty {}
-    }
 }
 
 #[cfg(feature = "test_utils")]

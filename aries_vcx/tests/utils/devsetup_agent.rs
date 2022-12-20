@@ -12,9 +12,9 @@ pub mod test_utils {
     use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use futures::future::BoxFuture;
-    use messages::ack::please_ack::AckOn;
-    use messages::revocation_notification::revocation_ack::RevocationAck;
-    use messages::revocation_notification::revocation_notification::RevocationNotification;
+    use messages::concepts::ack::please_ack::AckOn;
+    use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
+    use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
     use messages::status::Status;
 
     use agency_client::agency_client::AgencyClient;
@@ -39,10 +39,10 @@ pub mod test_utils {
         WalletConfig,
     };
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::connection::invite::{Invitation, PublicInvitation};
-    use aries_vcx::messages::issuance::credential_offer::CredentialOffer;
-    use aries_vcx::messages::issuance::credential_offer::OfferInfo;
-    use aries_vcx::messages::proof_presentation::presentation_request::PresentationRequest;
+    use aries_vcx::messages::protocols::connection::invite::{Invitation, PublicInvitation};
+    use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
+    use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
+    use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -178,7 +178,7 @@ pub mod test_utils {
             .await
             .unwrap();
             let rev_not_sender = RevocationNotificationSender::build();
-            
+
             let faber = Faber {
                 profile,
                 agency_client,
