@@ -1,4 +1,4 @@
-use aries_vcx::agency_client::error::{AgencyClientError, AgencyClientErrorKind};
+use aries_vcx::agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind};
 use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 
 impl From<AgencyClientError> for LibvcxError {

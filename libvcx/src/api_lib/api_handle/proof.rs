@@ -505,9 +505,9 @@ pub mod tests {
         let _request = get_presentation_request_msg(handle_proof).await.unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
-        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(
-            aries_vcx::agency_client::error::AgencyClientError::from_msg(
-                aries_vcx::agency_client::error::AgencyClientErrorKind::IOError,
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
+            aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
+                aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
                 "Sending message timeout.",
             ),
         ));

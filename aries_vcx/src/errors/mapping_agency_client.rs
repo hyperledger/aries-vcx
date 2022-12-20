@@ -1,4 +1,4 @@
-use agency_client::error::{AgencyClientError, AgencyClientErrorKind};
+use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind};
 use crate::errors::error::{VcxError, VcxErrorKind};
 
 impl From<AgencyClientError> for VcxError {

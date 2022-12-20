@@ -5,7 +5,7 @@ use crate::messages::update_com_method::{ComMethodType, UpdateComMethod};
 use crate::messages::update_connection::DeleteConnectionBuilder;
 use crate::testing::mocking::{agency_mocks_enabled, AgencyMock};
 use crate::testing::{mocking, test_constants};
-use crate::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 impl AgencyClient {
     pub async fn delete_connection_agent(

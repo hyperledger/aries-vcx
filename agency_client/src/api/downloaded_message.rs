@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::MessageStatusCode;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;

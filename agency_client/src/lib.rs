@@ -12,8 +12,7 @@ extern crate serde_derive;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-pub mod error;
-use error::prelude::*;
+use errors::error::prelude::*;
 
 mod utils;
 use utils::validation;
@@ -30,6 +29,7 @@ pub mod testing;
 pub mod wallet;
 
 mod internal;
+pub mod errors;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {
@@ -37,7 +37,7 @@ pub enum MessageStatusCode {
     Reviewed,
 }
 
-impl std::string::ToString for MessageStatusCode {
+impl ToString for MessageStatusCode {
     fn to_string(&self) -> String {
         match self {
             MessageStatusCode::Received => "MS-103",

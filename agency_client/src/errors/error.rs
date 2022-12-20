@@ -1,10 +1,8 @@
 use std::fmt;
 use std::error::Error;
 
-use thiserror;
-
 pub mod prelude {
-    pub use super::*;
+    pub use crate::error::*;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]

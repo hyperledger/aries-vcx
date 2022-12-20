@@ -2,9 +2,9 @@ use std::sync::Arc;
 use url::Url;
 
 use crate::configuration::AgencyClientConfig;
-use crate::error::AgencyClientResult;
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
-use crate::{validation, AgencyClientError, AgencyClientErrorKind};
+use crate::validation;
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
