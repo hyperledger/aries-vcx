@@ -19,16 +19,12 @@ pub enum LibvcxErrorKind {
     InvalidOption,
     #[error("Invalid MessagePack")]
     InvalidMessagePack,
-    #[error("Object cache error")]
-    ObjectCacheError,
     #[error("Object not ready for specified action")]
     NotReady,
     #[error("IO Error, possibly creating a backup wallet")]
     IOError,
     #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
     LibindyInvalidStructure,
-    #[error("Waiting for callback timed out")]
-    TimeoutLibindy,
     #[error("Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
     #[error("Library already initialized")]
@@ -45,22 +41,6 @@ pub enum LibvcxErrorKind {
     CreateConnection,
     #[error("Invalid Connection Handle")]
     InvalidConnectionHandle,
-    #[error("Invalid invite details structure")]
-    InvalidInviteDetail,
-    #[error("Invalid redirect details structure")]
-    InvalidRedirectDetail,
-    #[error("Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency.")]
-    DeleteConnection,
-    #[error("Error with Connection")]
-    GeneralConnectionError,
-
-    // Payment
-    #[error("No payment information associated with object")]
-    NoPaymentInformation,
-    #[error("Insufficient amount of tokens to process request")]
-    InsufficientTokenAmount,
-    #[error("Invalid payment address")]
-    InvalidPaymentAddress,
 
     // Credential Definition error
     #[error("Call to create Credential Definition failed")]
@@ -89,14 +69,10 @@ pub enum LibvcxErrorKind {
     // Credential
     #[error("Invalid credential handle")]
     InvalidCredentialHandle,
-    #[error("could not create credential request")]
-    CreateCredentialRequest,
 
     // Issuer Credential
     #[error("Invalid Credential Issuer Handle")]
     InvalidIssuerCredentialHandle,
-    #[error("Invalid Credential Request")]
-    InvalidCredentialRequest,
     #[error("Invalid credential json")]
     InvalidCredential,
     #[error("Attributes provided to Credential Offer are not correct, possibly malformed")]
@@ -113,8 +89,6 @@ pub enum LibvcxErrorKind {
     InvalidSchema,
     #[error("The Proof received does not have valid credentials listed.")]
     InvalidProofCredentialData,
-    #[error("Could not create proof")]
-    CreateProof,
     #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
 
@@ -155,12 +129,6 @@ pub enum LibvcxErrorKind {
     // Wallet
     #[error("Error Creating a wallet")]
     WalletCreate,
-    #[error("Missing wallet name in config")]
-    MissingWalletName,
-    #[error("Missing exported wallet path in config")]
-    MissingExportedWalletPath,
-    #[error("Missing exported backup key in config")]
-    MissingBackupKey,
     #[error("Attempt to open wallet with invalid credentials")]
     WalletAccessFailed,
     #[error("Invalid Wallet or Search Handle")]
@@ -199,8 +167,6 @@ pub enum LibvcxErrorKind {
     InvalidNonce,
     #[error("Invalid URL")]
     InvalidUrl,
-    #[error("Configuration is missing the Payment Method parameter")]
-    MissingPaymentMethod,
     #[error("Unable to serialize")]
     SerializationError,
     #[error("Value needs to be base58")]
@@ -211,12 +177,8 @@ pub enum LibvcxErrorKind {
     // A2A
     #[error("Invalid HTTP response.")]
     InvalidHttpResponse,
-    #[error("No Endpoint set for Connection Object")]
-    NoEndpoint,
     #[error("Error Retrieving messages from API")]
     InvalidMessages,
-    #[error("Error creating agent in agency")]
-    CreateAgent,
 
     #[error("Common error {}", 0)]
     Common(u32),
