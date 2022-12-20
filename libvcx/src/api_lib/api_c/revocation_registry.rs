@@ -3,17 +3,17 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
 use aries_vcx::vdrtools::CommandHandle;
-use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig};
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
+use crate::api_lib::utils::error_libvcx::set_current_error;
+use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
+{VcxError, VcxErrorKind};
 #[no_mangle]
 pub extern "C" fn vcx_revocation_registry_create(
     command_handle: CommandHandle,
@@ -22,8 +22,8 @@ pub extern "C" fn vcx_revocation_registry_create(
 ) -> u32 {
     info!("vcx_revocation_registry_create >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(rev_reg_config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(rev_reg_config, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_revocation_registry_create(command_handle: {})", command_handle);
 
@@ -77,8 +77,8 @@ pub extern "C" fn vcx_revocation_registry_publish(
 ) -> u32 {
     info!("vcx_revocation_registry_publish >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tails_url, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tails_url, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_revocation_registry_publish(command_handle: {}, rev_reg_handle: {}, tails_url: {})",
@@ -121,7 +121,7 @@ pub extern "C" fn vcx_revocation_registry_publish_revocations(
 ) -> u32 {
     info!("vcx_revocation_registry_publish_revocations >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let issuer_did: String = match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
         Ok(err) => err,
@@ -168,7 +168,7 @@ pub extern "C" fn vcx_revocation_registry_get_rev_reg_id(
 ) -> u32 {
     info!("vcx_revocation_registry_get_rev_reg_id >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_revocation_registry_get_rev_reg_id(command_handle: {}, handle: {})",
@@ -211,7 +211,7 @@ pub extern "C" fn vcx_revocation_registry_get_tails_hash(
 ) -> u32 {
     info!("vcx_revocation_registry_get_tails_hash >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_revocation_registry_get_tails_hash(command_handle: {}, handle: {})",
@@ -254,7 +254,7 @@ pub extern "C" fn vcx_revocation_registry_serialize(
 ) -> u32 {
     info!("vcx_revocation_registry_serialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_revocation_registry_serialize(command_handle: {}, handle: {})",
@@ -297,8 +297,8 @@ pub extern "C" fn vcx_revocation_registry_deserialize(
 ) -> u32 {
     info!("vcx_revocation_registry_deserialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(rev_reg_json, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(rev_reg_json, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_revocation_registry_deserialize(command_handle: {}, rev_reg_json: {})",

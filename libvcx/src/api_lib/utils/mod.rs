@@ -6,7 +6,6 @@ pub mod runtime;
 
 pub mod callback;
 pub mod callback_u32;
-pub mod error;
 pub mod logger;
 pub mod return_types_u32;
 pub mod timeout;
@@ -16,3 +15,4 @@ pub mod devsetup;
 pub mod libvcx_error;
 pub mod mapping_ariesvcx_libvcx;
 pub mod mapping_libvcx_ffi;
+pub mod current_error;

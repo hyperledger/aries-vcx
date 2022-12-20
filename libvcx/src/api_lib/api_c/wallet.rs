@@ -3,18 +3,17 @@ use std::ptr::null;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::indy;
-use aries_vcx::vdrtools::{SearchHandle, WalletHandle, CommandHandle};
 use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
-use crate::api_lib::utils::libvcx_error;
+use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
 use crate::api_lib;
 use crate::api_lib::global::profile::get_main_wallet;
-use crate::api_lib::global::wallet::open_as_main_wallet;
 use crate::api_lib::global::wallet::{export_main_wallet, get_main_wallet_handle};
+use crate::api_lib::global::wallet::open_as_main_wallet;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error, set_current_error_vcx};
+use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
+use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::execute_async;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
@@ -46,8 +45,8 @@ pub extern "C" fn vcx_create_wallet(
 ) -> u32 {
     info!("vcx_create_wallet >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(wallet_config, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_create_wallet(command_handle: {}, wallet_config: {})",
@@ -109,8 +108,8 @@ pub extern "C" fn vcx_configure_issuer_wallet(
 ) -> u32 {
     info!("vcx_configure_issuer_wallet >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(enterprise_seed, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(enterprise_seed, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_configure_issuer_wallet(command_handle: {}, enterprise_seed: {})",
@@ -165,8 +164,8 @@ pub extern "C" fn vcx_open_main_wallet(
 ) -> u32 {
     info!("vcx_open_main_wallet >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(wallet_config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(wallet_config, LibvcxErrorKind::InvalidOption);
 
     let wallet_config = match serde_json::from_str::<WalletConfig>(&wallet_config) {
         Ok(wallet_config) => wallet_config,
@@ -219,7 +218,7 @@ pub extern "C" fn vcx_close_main_wallet(
 ) -> u32 {
     info!("vcx_close_main_wallet >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_close_main_wallet(command_handle: {})", command_handle);
 
@@ -285,11 +284,11 @@ pub extern "C" fn vcx_wallet_add_record(
 ) -> u32 {
     info!("vcx_wallet_add_record >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(value, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tags_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(value, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tags_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_add_record(command_handle: {}, type_: {}, id: {}, value: {}, tags_json: {})",
@@ -353,10 +352,10 @@ pub extern "C" fn vcx_wallet_update_record_value(
 ) -> u32 {
     info!("vcx_wallet_update_record_value >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(value, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(value, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_update_record_value(command_handle: {}, type_: {}, id: {}, value: {})",
@@ -423,10 +422,10 @@ pub extern "C" fn vcx_wallet_update_record_tags(
 ) -> u32 {
     info!("vcx_wallet_update_record_tags >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tags_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tags_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_update_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
@@ -493,10 +492,10 @@ pub extern "C" fn vcx_wallet_add_record_tags(
 ) -> u32 {
     info!("vcx_wallet_add_record_tags >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tags_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tags_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_add_record_tags(command_handle: {}, type_: {}, id: {}, tags_json: {})",
@@ -563,10 +562,10 @@ pub extern "C" fn vcx_wallet_delete_record_tags(
 ) -> u32 {
     info!("vcx_wallet_delete_record_tags >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tag_names_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tag_names_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_delete_record_tags(command_handle: {}, type_: {}, id: {}, tag_names_json: {})",
@@ -632,10 +631,10 @@ pub extern "C" fn vcx_wallet_get_record(
 ) -> u32 {
     info!("vcx_wallet_get_record >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(options_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(options_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_get_record(command_handle: {}, type_: {}, id: {}, options: {})",
@@ -705,9 +704,9 @@ pub extern "C" fn vcx_wallet_delete_record(
 ) -> u32 {
     info!("vcx_wallet_delete_record >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(id, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_delete_record(command_handle: {}, type_: {}, id: {})",
@@ -784,10 +783,10 @@ pub extern "C" fn vcx_wallet_open_search(
 ) -> u32 {
     info!("vcx_wallet_open_search >>>");
 
-    check_useful_c_str!(type_, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(query_json, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(options_json, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(query_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(options_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_open_search(command_handle: {}, type_: {}, query_json: {}, options_json: {})",
@@ -858,7 +857,7 @@ pub extern "C" fn vcx_wallet_search_next_records(
 ) -> u32 {
     info!("vcx_wallet_search_next_records >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_search_next_records(command_handle: {}, wallet_search_handle: {:?})",
@@ -921,7 +920,7 @@ pub extern "C" fn vcx_wallet_close_search(
 ) -> u32 {
     info!("vcx_wallet_close_search >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_close_search(command_handle: {}, search_handle: {:?})",
@@ -982,9 +981,9 @@ pub extern "C" fn vcx_wallet_export(
 ) -> u32 {
     info!("vcx_wallet_export >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(path, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(backup_key, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(path, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(backup_key, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_wallet_export(command_handle: {}, path: {}, backup_key: ****)",
@@ -1046,8 +1045,8 @@ pub extern "C" fn vcx_wallet_import(
 ) -> u32 {
     info!("vcx_wallet_import >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(config, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_wallet_import(command_handle: {}, config: ****)", command_handle);
 
@@ -1121,7 +1120,7 @@ pub mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW
         })
-        .to_string();
+            .to_string();
         let cb = return_types_u32::Return_U32::new().unwrap();
         let err = vcx_create_wallet(
             cb.command_handle,
@@ -1150,7 +1149,7 @@ pub mod tests {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1164,7 +1163,7 @@ pub mod tests {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1194,7 +1193,7 @@ pub mod tests {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1215,7 +1214,7 @@ pub mod tests {
             "retrieveValue": true,
             "retrieveTags": false
         })
-        .to_string();
+            .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1225,7 +1224,7 @@ pub mod tests {
                 xtype.as_ptr(),
                 id.as_ptr(),
                 options.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1264,7 +1263,7 @@ pub mod tests {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1306,7 +1305,7 @@ pub mod tests {
             "retrieveValue": true,
             "retrieveTags": false
         })
-        .to_string();
+            .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         // Assert no record to update
@@ -1317,7 +1316,7 @@ pub mod tests {
                 xtype.as_ptr(),
                 id.as_ptr(),
                 options.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1334,7 +1333,7 @@ pub mod tests {
                 id.as_ptr(),
                 value.as_ptr(),
                 tags.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1348,7 +1347,7 @@ pub mod tests {
                 xtype.as_ptr(),
                 id.as_ptr(),
                 options.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1387,7 +1386,7 @@ pub mod tests {
                 cb.command_handle,
                 cstr_file.as_ptr(),
                 cstr_backup_key.as_ptr(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1403,7 +1402,7 @@ pub mod tests {
             settings::CONFIG_WALLET_BACKUP_KEY: backup_key,
             settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
         })
-        .to_string();
+            .to_string();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         let cstr_config = CString::new(import_config).unwrap();

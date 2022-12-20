@@ -1,14 +1,9 @@
 use std::collections::HashMap;
-use std::ffi::CString;
+use std::error::Error;
 use std::fmt;
-use aries_vcx::error::VcxErrorKind;
 
-// **** DEFINE NEW ERRORS HERE ****
-// STEP 1: create new public static instance of Error, assign it a new unused number and
-// give it a human readable error message
-// STEP 2: Add Error to the static MAP (used for getting messages to wrappers)
-// STEP 3: create a test making sure that your message can be retrieved
-
+use aries_vcx::error::{VcxError, VcxErrorKind};
+use crate::api_lib::utils::libvcx_error;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum LibvcxErrorKind {
@@ -246,18 +241,40 @@ pub struct LibvcxError {
     pub kind: LibvcxErrorKind,
 }
 
-// todo: probably don't need this?
-// impl LibvcxError {
-//     pub fn get_code(&self) -> u32 {
-//         self.code_num
-//     }
-// }
+
+impl LibvcxError {
+    pub fn from_msg<D>(kind: LibvcxErrorKind, msg: D) -> Self
+        where
+            D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    {
+        Self {
+            msg: msg.to_string(),
+            kind,
+        }
+    }
+}
+
+impl From<VcxError> for LibvcxError {
+    fn from(error: VcxError) -> LibvcxError {
+        LibvcxError {
+            kind: error.kind().into(),
+            msg: error.to_string(),
+        }
+    }
+}
 
 impl fmt::Display for LibvcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // todo::
-        // let msg = error_message(&self.code_num);
-        // write!(f, "{}: (Error Num:{})", msg, &self.code_num)
-        write!("foobar")
+        let code: u32 = self.kind.into();
+        // todo: how can we get the enum variant error annotation?
+        writeln!(f, "Error num: {}, Error kind: {:?}, Error message: {}\n", code, self.kind, self.msg)?;
+        let mut source = self.source();
+        while let Some(cause) = source {
+            writeln!(f, "Caused by:\n\t{}", cause)?;
+            source = cause.source();
+        }
+        Ok(())
     }
 }
+
+pub type LibvcxResult<T> = Result<T, LibvcxError>;

@@ -3,7 +3,19 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
+use chrono::{
+    format::{DelayedFormat, StrftimeItems},
+    Local,
+};
+use env_logger::{
+    Builder as EnvLoggerBuilder,
+    fmt::Formatter,
+};
 use libc::{c_char, c_void};
+use log::{Level, LevelFilter, Metadata, Record};
+
+use crate::api_lib::utils::cstring::CStringUtils;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub type CVoid = c_void;
 
@@ -20,23 +32,6 @@ pub type LogCB = extern "C" fn(
 );
 
 pub type FlushCB = extern "C" fn(context: *const CVoid);
-
-use chrono::{
-    Local,
-    format::{DelayedFormat, StrftimeItems},
-};
-
-use log::{Level, LevelFilter, Metadata, Record};
-
-use env_logger::{
-    Builder as EnvLoggerBuilder,
-    fmt::Formatter,
-};
-
-pub use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-
-use crate::api_lib::utils::cstring::CStringUtils;
-
 
 pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 
@@ -87,14 +82,14 @@ impl LibvcxLogger {
         enabled: Option<EnabledCB>,
         log: LogCB,
         flush: Option<FlushCB>,
-    ) -> VcxResult<()> {
+    ) -> LibvcxResult<()> {
         trace!("LibvcxLogger::init >>>");
 
         let logger = LibvcxLogger::new(context, enabled, log, flush);
 
         log::set_boxed_logger(Box::new(logger)).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::LoggingError,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::LoggingError,
                 format!("Setting logger failed with: {}", err),
             )
         })?;
@@ -202,7 +197,7 @@ fn text_no_color_format(buf: &mut Formatter, record: &Record) -> std::io::Result
 }
 
 impl LibvcxDefaultLogger {
-    pub fn init(pattern: Option<String>) -> VcxResult<()> {
+    pub fn init(pattern: Option<String>) -> LibvcxResult<()> {
         info!("LibvcxDefaultLogger::init >>> pattern: {:?}", pattern);
 
         let pattern = pattern.or(env::var("RUST_LOG").ok());
@@ -354,7 +349,7 @@ mod tests {
             custom_log,
             Some(custom_flush),
         )
-        .unwrap();
+            .unwrap();
         error!("error level message"); // first call of log function
         unsafe {
             assert_eq!(COUNT, 2) // second-time log function was called inside libindy

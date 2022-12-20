@@ -1,7 +1,5 @@
 extern crate num_traits;
 
-use vcx::api_lib::utils::libvcx_error;
-
 use self::num_traits::int::PrimInt;
 
 pub fn map_indy_error<T, C: PrimInt>(rtn: T, error_code: C) -> Result<T, u32> {

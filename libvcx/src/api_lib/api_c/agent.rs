@@ -3,13 +3,12 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::vdrtools::CommandHandle;
-use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
+use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]

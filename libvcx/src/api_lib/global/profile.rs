@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
-    error::VcxResult,
+    error::LibvcxResult,
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     vdrtools::{PoolHandle, WalletHandle}, utils::mockdata::profile::mock_profile::MockProfile, global::settings::indy_mocks_enabled,
 };
@@ -25,7 +25,7 @@ fn mock_profile() -> Arc<dyn Profile> {
     Arc::new(MockProfile {})
 }
 
-pub fn get_main_profile() -> VcxResult<Arc<dyn Profile>> {
+pub fn get_main_profile() -> LibvcxResult<Arc<dyn Profile>> {
     if indy_mocks_enabled() {
         return Ok(mock_profile());
     }

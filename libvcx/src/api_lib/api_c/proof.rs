@@ -3,13 +3,12 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::vdrtools::CommandHandle;
-use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::proof;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
+use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::execute_async;
 
 /*
@@ -127,12 +126,12 @@ pub extern "C" fn vcx_proof_create(
 ) -> u32 {
     info!("vcx_proof_create >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(requested_attrs, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(requested_predicates, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(name, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(revocation_interval, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(requested_attrs, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(requested_predicates, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(name, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(revocation_interval, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_proof_create(command_handle: {}, source_id: {}, requested_attrs: {}, requested_predicates: {}, revocation_interval: {}, name: {})", command_handle, source_id, requested_attrs, requested_predicates, revocation_interval, name);
 
@@ -144,7 +143,7 @@ pub extern "C" fn vcx_proof_create(
             revocation_interval,
             name,
         )
-        .await
+            .await
         {
             Ok(err) => {
                 trace!(
@@ -201,7 +200,7 @@ pub extern "C" fn vcx_v2_proof_update_state(
 ) -> u32 {
     info!("vcx_v2_proof_update_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -261,8 +260,8 @@ pub extern "C" fn vcx_v2_proof_update_state_with_message(
 ) -> u32 {
     info!("vcx_v2_proof_update_state_with_message >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -315,7 +314,7 @@ pub extern "C" fn vcx_proof_get_state(
 ) -> u32 {
     info!("vcx_proof_get_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -373,7 +372,7 @@ pub extern "C" fn vcx_proof_serialize(
 ) -> u32 {
     info!("vcx_proof_serialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -432,8 +431,8 @@ pub extern "C" fn vcx_proof_deserialize(
 ) -> u32 {
     info!("vcx_proof_deserialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(proof_data, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(proof_data, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_proof_deserialize(command_handle: {}, proof_data: {})",
@@ -525,7 +524,7 @@ pub extern "C" fn vcx_proof_send_request(
 ) -> u32 {
     info!("vcx_proof_send_request >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -587,7 +586,7 @@ pub extern "C" fn vcx_proof_get_request_msg(
 ) -> u32 {
     info!("vcx_proof_get_request_msg >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -646,7 +645,7 @@ pub extern "C" fn vcx_get_proof_msg(
 ) -> u32 {
     info!("vcx_get_proof_msg >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -703,7 +702,7 @@ pub extern "C" fn vcx_mark_presentation_request_msg_sent(
 ) -> u32 {
     info!("vcx_mark_presentation_request_msg_sent >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -748,7 +747,7 @@ pub extern "C" fn vcx_proof_get_thread_id(
 ) -> u32 {
     info!("vcx_proof_get_thread_id >>> proof_handle: {:?}", proof_handle);
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = proof::get_source_id(proof_handle).unwrap_or_default();
     trace!(
@@ -803,9 +802,9 @@ mod tests {
 
     use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
+    use crate::api_lib::ProofStateType;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
-    use crate::api_lib::ProofStateType;
 
     use super::*;
 
@@ -851,7 +850,7 @@ mod tests {
                 ptr::null(),
                 CString::new(r#"{"support_revocation":false}"#).unwrap().into_raw(),
                 ptr::null(),
-                None
+                None,
             ),
             libvcx_error::INVALID_OPTION.code_num
         );
@@ -899,7 +898,7 @@ mod tests {
                 CString::new(mockdata_proof::SERIALIZIED_PROOF_INITIAL)
                     .unwrap()
                     .into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -921,7 +920,7 @@ mod tests {
                 cb.command_handle,
                 proof_handle,
                 connection_handle,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -947,7 +946,7 @@ mod tests {
                 cb.command_handle,
                 proof_handle,
                 connection_handle,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -967,7 +966,7 @@ mod tests {
                 CString::new(mockdata_proof::ARIES_PROOF_PRESENTATION)
                     .unwrap()
                     .into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );

@@ -1,4 +1,4 @@
-use aries_vcx::error::VcxResult;
+use aries_vcx::error::LibvcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
 use aries_vcx::indy;
@@ -24,29 +24,29 @@ pub fn reset_main_wallet_handle() {
     set_main_wallet_handle(INVALID_WALLET_HANDLE);
 }
 
-pub async fn export_main_wallet(path: &str, backup_key: &str) -> VcxResult<()> {
+pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()> {
     indy::wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await
 }
 
-pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {
     let handle = indy::wallet::open_wallet(wallet_config).await?;
     set_main_wallet_handle(handle);
     Ok(handle)
 }
 
-pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
+pub async fn create_and_open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {
     let handle = indy::wallet::create_and_open_wallet(wallet_config).await?;
     set_main_wallet_handle(handle);
     Ok(handle)
 }
 
-pub async fn close_main_wallet() -> VcxResult<()> {
+pub async fn close_main_wallet() -> LibvcxResult<()> {
     indy::wallet::close_wallet(get_main_wallet_handle()).await?;
     reset_main_wallet_handle();
     Ok(())
 }
 
-pub async fn create_main_wallet(config: &WalletConfig) -> VcxResult<()> {
+pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
     let wallet_handle = create_and_open_as_main_wallet(&config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);
 

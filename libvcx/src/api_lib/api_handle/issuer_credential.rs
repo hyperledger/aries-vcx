@@ -4,13 +4,14 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
-use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
 use crate::api_lib::global::profile::get_main_profile_optional_pool;
+use crate::api_lib::utils::libvcx_error;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
@@ -23,11 +24,11 @@ enum IssuerCredentials {
     V3(Issuer),
 }
 
-pub fn issuer_credential_create(source_id: String) -> VcxResult<u32> {
+pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
+pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     if credential.is_terminal_state() {
@@ -38,8 +39,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
@@ -60,20 +61,20 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(res)
 }
 
-pub fn get_state(handle: u32) -> VcxResult<u32> {
+pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_state().into()))
 }
 
-pub fn get_credential_status(handle: u32) -> VcxResult<u32> {
+pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_credential_status().map_err(|err| err.into())
     })
 }
 
-pub fn release(handle: u32) -> VcxResult<()> {
+pub fn release(handle: u32) -> LibvcxResult<()> {
     ISSUER_CREDENTIAL_MAP
         .release(handle)
-        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidIssuerCredentialHandle,e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string())))
 }
 
 pub fn release_all() {
@@ -84,21 +85,21 @@ pub fn is_valid_handle(handle: u32) -> bool {
     ISSUER_CREDENTIAL_MAP.has_handle(handle)
 }
 
-pub fn to_string(handle: u32) -> VcxResult<String> {
+pub fn to_string(handle: u32) -> LibvcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         serde_json::to_string(&IssuerCredentials::V3(credential.clone())).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidState,
                 format!("cannot serialize IssuerCredential credentialect: {:?}", err),
             )
         })
     })
 }
 
-pub fn from_string(credential_data: &str) -> VcxResult<u32> {
+pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {
     let issuer_credential: IssuerCredentials = serde_json::from_str(credential_data).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize IssuerCredential: {:?}", err),
         )
     })?;
@@ -114,10 +115,10 @@ pub async fn build_credential_offer_msg_v2(
     rev_reg_handle: u32,
     credential_json: &str,
     comment: Option<&str>,
-) -> VcxResult<()> {
+) -> LibvcxResult<()> {
     if !credential_def::check_is_published(cred_def_handle)? {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        return Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot issue credential of specified credential definition has not been published on the ledger"),
         ));
     };
@@ -151,17 +152,17 @@ pub async fn build_credential_offer_msg_v2(
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }
 
-pub fn mark_credential_offer_msg_sent(handle: u32) -> VcxResult<()> {
+pub fn mark_credential_offer_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     credential.mark_credential_offer_msg_sent()?;
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)
 }
 
-pub fn get_credential_offer_msg(handle: u32) -> VcxResult<A2AMessage> {
+pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<A2AMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
-pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> VcxResult<u32> {
+pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
@@ -169,7 +170,7 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     Ok(libvcx_error::SUCCESS.code_num)
 }
 
-pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
+pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
@@ -183,7 +184,7 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u
     Ok(state)
 }
 
-pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
+pub async fn revoke_credential_local(handle: u32) -> LibvcxResult<()> {
     let credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
@@ -192,33 +193,33 @@ pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
         .map_err(|err| err.into())
 }
 
-pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
+pub fn convert_to_map(s: &str) -> LibvcxResult<serde_json::Map<String, serde_json::Value>> {
     serde_json::from_str(s).map_err(|_| {
         warn!("{}", libvcx_error::INVALID_ATTRIBUTES_STRUCTURE.message);
-        VcxError::from_msg(
-            VcxErrorKind::InvalidAttributesStructure,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidAttributesStructure,
             libvcx_error::INVALID_ATTRIBUTES_STRUCTURE.message,
         )
     })
 }
 
-pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
+pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_rev_reg_id().map_err(|err| err.into())
     })
 }
 
-pub fn is_revokable(handle: u32) -> VcxResult<bool> {
+pub fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.is_revokable()))
 }
 
-pub fn get_source_id(handle: u32) -> VcxResult<String> {
+pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_source_id().map_err(|err| err.into())
     })
 }
 
-pub fn get_thread_id(handle: u32) -> VcxResult<String> {
+pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         credential.get_thread_id().map_err(|err| err.into())
     })
@@ -398,23 +399,23 @@ pub mod tests {
         release_all();
         assert_eq!(
             release(h1).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h2).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h3).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h4).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h5).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
     }
 
@@ -423,10 +424,10 @@ pub mod tests {
     async fn test_errors() {
         let _setup = SetupEmpty::init();
 
-        assert_eq!(to_string(0).unwrap_err().kind(), VcxErrorKind::InvalidHandle);
+        assert_eq!(to_string(0).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
         assert_eq!(
             release(0).unwrap_err().kind(),
-            VcxErrorKind::InvalidIssuerCredentialHandle
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
         );
     }
 }

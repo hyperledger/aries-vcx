@@ -1,9 +1,10 @@
-use aries_vcx::error::prelude::*;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistryDefinition;
+use aries_vcx::error::prelude::*;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::global::profile::{get_main_profile_optional_pool, get_main_profile};
+use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> =
@@ -19,7 +20,7 @@ pub struct RevocationRegistryConfig {
     pub max_creds: u32,
 }
 
-pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
+pub async fn create(config: RevocationRegistryConfig) -> LibvcxResult<u32> {
     let RevocationRegistryConfig {
         issuer_did,
         cred_def_id,
@@ -36,12 +37,12 @@ pub async fn create(config: RevocationRegistryConfig) -> VcxResult<u32> {
         max_creds,
         tag,
     )
-    .await?;
+        .await?;
     let handle = REV_REG_MAP.add(rev_reg)?;
     Ok(handle)
 }
 
-pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
+pub async fn publish(handle: u32, tails_url: &str) -> LibvcxResult<u32> {
     let mut rev_reg = REV_REG_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
     rev_reg
@@ -51,7 +52,7 @@ pub async fn publish(handle: u32, tails_url: &str) -> VcxResult<u32> {
     Ok(handle)
 }
 
-pub async fn publish_revocations(handle: u32, submitter_did: &str) -> VcxResult<()> {
+pub async fn publish_revocations(handle: u32, submitter_did: &str) -> LibvcxResult<()> {
     let rev_reg = REV_REG_MAP.get_cloned(handle)?;
     let rev_reg_id = rev_reg.get_rev_reg_id();
     // TODO: Check result
@@ -61,29 +62,29 @@ pub async fn publish_revocations(handle: u32, submitter_did: &str) -> VcxResult<
     Ok(())
 }
 
-pub fn get_rev_reg_id(handle: u32) -> VcxResult<String> {
+pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
     REV_REG_MAP.get(handle, |rev_reg| Ok(rev_reg.rev_reg_id.clone()))
 }
 
-pub fn to_string(handle: u32) -> VcxResult<String> {
+pub fn to_string(handle: u32) -> LibvcxResult<String> {
     REV_REG_MAP.get(handle, |rev_reg| rev_reg.to_string().map_err(|err| err.into()))
 }
 
-pub fn from_string(rev_reg_data: &str) -> VcxResult<u32> {
+pub fn from_string(rev_reg_data: &str) -> LibvcxResult<u32> {
     let rev_reg = RevocationRegistry::from_string(rev_reg_data)?;
     REV_REG_MAP.add(rev_reg).map_err(|err| err.into())
 }
 
-pub fn release(handle: u32) -> VcxResult<()> {
+pub fn release(handle: u32) -> LibvcxResult<()> {
     REV_REG_MAP
         .release(handle)
-        .or_else(|e| Err(VcxError::from_msg(VcxErrorKind::InvalidHandle, e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
 }
 
-pub fn get_tails_hash(handle: u32) -> VcxResult<String> {
+pub fn get_tails_hash(handle: u32) -> LibvcxResult<String> {
     REV_REG_MAP.get(handle, |rev_reg| Ok(rev_reg.get_rev_reg_def().value.tails_hash))
 }
 
-pub fn get_rev_reg_def(handle: u32) -> VcxResult<RevocationRegistryDefinition> {
+pub fn get_rev_reg_def(handle: u32) -> LibvcxResult<RevocationRegistryDefinition> {
     REV_REG_MAP.get(handle, |rev_reg| Ok(rev_reg.get_rev_reg_def()))
 }

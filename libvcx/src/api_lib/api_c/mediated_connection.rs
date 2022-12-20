@@ -1,19 +1,20 @@
 use std::ptr;
 
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::vdrtools::CommandHandle;
-use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::mediated_connection::*;
 use crate::api_lib::global::profile::get_main_wallet;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::{set_current_error_vcx, set_current_error};
+use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
+use crate::api_lib::utils::error_libvcx::{set_current_error, set_current_error_vcx};
+use crate::api_lib::utils::libvcx_error;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -111,9 +112,9 @@ pub extern "C" fn vcx_generate_public_invite(
 ) -> u32 {
     info!("vcx_generate_public_invite >>> ");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(public_did, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(label, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(public_did, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(label, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_generate_public_invite(command_handle: {}, public_did: {}, label: {})",
@@ -171,7 +172,7 @@ pub extern "C" fn vcx_connection_delete_connection(
 ) -> u32 {
     info!("vcx_delete_connection >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_delete_connection(command_handle: {}, connection_handle: {})",
@@ -225,8 +226,8 @@ pub extern "C" fn vcx_connection_create(
 ) -> u32 {
     info!("vcx_connection_create >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_create(command_handle: {}, source_id: {})",
@@ -295,9 +296,9 @@ pub extern "C" fn vcx_connection_create_with_invite(
 ) -> u32 {
     info!("vcx_connection_create_with_invite >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(invite_details, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(invite_details, LibvcxErrorKind::InvalidOption);
     trace!(
         "vcx_connection_create_with_invite(command_handle: {}, source_id: {})",
         command_handle,
@@ -342,9 +343,9 @@ pub extern "C" fn vcx_connection_create_with_connection_request(
 ) -> u32 {
     info!("vcx_connection_create_with_connection_request >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
 
@@ -377,10 +378,10 @@ pub extern "C" fn vcx_connection_create_with_connection_request_v2(
 ) -> u32 {
     info!("vcx_connection_create_with_connection_request_v2 >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(pw_info, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(request, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(pw_info, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(request, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_connection_create_with_connection_request_v2(command_handle: {}, pw_info: {}, request: {}) source_id: {}", command_handle, pw_info, request, source_id);
 
@@ -442,10 +443,10 @@ pub extern "C" fn vcx_connection_connect(
 ) -> u32 {
     info!("vcx_connection_connect >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let _options = if !connection_options.is_null() {
-        check_useful_opt_c_str!(connection_options, VcxErrorKind::InvalidOption);
+        check_useful_opt_c_str!(connection_options, LibvcxErrorKind::InvalidOption);
         connection_options.to_owned()
     } else {
         None
@@ -488,7 +489,7 @@ pub extern "C" fn vcx_connection_get_thread_id(
 ) -> u32 {
     info!("vcx_connection_get_thread_id >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -537,7 +538,7 @@ pub extern "C" fn vcx_connection_serialize(
 ) -> u32 {
     info!("vcx_connection_serialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -586,8 +587,8 @@ pub extern "C" fn vcx_connection_deserialize(
 ) -> u32 {
     info!("vcx_connection_deserialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(connection_data, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(connection_data, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_deserialize(command_handle: {}, connection_data: {})",
@@ -651,7 +652,7 @@ pub extern "C" fn vcx_connection_update_state(
 ) -> u32 {
     info!("vcx_connection_update_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -705,8 +706,8 @@ pub extern "C" fn vcx_connection_update_state_with_message(
 ) -> u32 {
     info!("vcx_connection_update_state_with_message >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -760,8 +761,8 @@ pub extern "C" fn vcx_connection_handle_message(
 ) -> u32 {
     info!("vcx_connection_handle_message >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(message, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -814,7 +815,7 @@ pub extern "C" fn vcx_connection_get_state(
 ) -> u32 {
     info!("vcx_connection_get_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -870,7 +871,7 @@ pub extern "C" fn vcx_connection_invite_details(
 ) -> u32 {
     info!("vcx_connection_invite_details >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -928,8 +929,8 @@ pub extern "C" fn vcx_connection_send_message(
 ) -> u32 {
     info!("vcx_connection_send_message >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(msg, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(msg, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_send_message(command_handle: {}, connection_handle: {}, msg: {})",
@@ -995,8 +996,8 @@ pub extern "C" fn vcx_connection_send_ping(
 ) -> u32 {
     info!("vcx_connection_send_ping >>>");
 
-    check_useful_opt_c_str!(comment, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(comment, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_send_ping(command_handle: {}, connection_handle: {}, comment: {:?})",
@@ -1040,8 +1041,8 @@ pub extern "C" fn vcx_connection_send_handshake_reuse(
 ) -> u32 {
     info!("vcx_connection_send_handshake_reuse >>>");
 
-    check_useful_c_str!(oob_msg, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(oob_msg, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_send_handshake_reuse(command_handle: {}, connection_handle: {}, oob_msg: {})",
@@ -1115,10 +1116,10 @@ pub extern "C" fn vcx_connection_sign_data(
     check_useful_c_byte_array!(
         data_raw,
         data_len,
-        VcxErrorKind::InvalidOption,
-        VcxErrorKind::InvalidOption
+        LibvcxErrorKind::InvalidOption,
+        LibvcxErrorKind::InvalidOption
     );
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_sign_data: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}",
@@ -1213,16 +1214,16 @@ pub extern "C" fn vcx_connection_verify_signature(
     check_useful_c_byte_array!(
         data_raw,
         data_len,
-        VcxErrorKind::InvalidOption,
-        VcxErrorKind::InvalidOption
+        LibvcxErrorKind::InvalidOption,
+        LibvcxErrorKind::InvalidOption
     );
     check_useful_c_byte_array!(
         signature_raw,
         signature_len,
-        VcxErrorKind::InvalidOption,
-        VcxErrorKind::InvalidOption
+        LibvcxErrorKind::InvalidOption,
+        LibvcxErrorKind::InvalidOption
     );
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
@@ -1336,9 +1337,9 @@ pub extern "C" fn vcx_connection_send_discovery_features(
 ) -> u32 {
     info!("vcx_connection_send_discovery_features >>>");
 
-    check_useful_opt_c_str!(query, VcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(comment, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(query, LibvcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(comment, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_connection_send_discovery_features(command_handle: {}, connection_handle: {}, query: {:?}, comment: {:?})",
@@ -1415,7 +1416,7 @@ pub extern "C" fn vcx_connection_info(
 ) -> u32 {
     info!("vcx_connection_info >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -1474,7 +1475,7 @@ pub extern "C" fn vcx_connection_get_pw_did(
 ) -> u32 {
     info!("vcx_connection_get_pw_did >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -1523,7 +1524,7 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
 ) -> u32 {
     info!("vcx_connection_get_pw_did >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = get_source_id(connection_handle).unwrap_or_default();
     trace!(
@@ -1563,10 +1564,10 @@ pub extern "C" fn vcx_connection_messages_download(
 ) -> u32 {
     info!("vcx_connection_messages_download >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let message_statuses = if !message_statuses.is_null() {
-        check_useful_c_str!(message_statuses, VcxErrorKind::InvalidOption);
+        check_useful_c_str!(message_statuses, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = message_statuses.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         Some(v.to_owned())
@@ -1576,12 +1577,12 @@ pub extern "C" fn vcx_connection_messages_download(
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(_err) => return VcxError::from_msg(VcxErrorKind::InvalidConnectionHandle,
-                                               format!("Invalid connection handle {}", connection_handle)).into(),
+        Err(_err) => return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle,
+                                                  format!("Invalid connection handle {}", connection_handle)).into(),
     };
 
     let uids = if !uids.is_null() {
-        check_useful_c_str!(uids, VcxErrorKind::InvalidOption);
+        check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         Some(v.to_owned())
@@ -1614,8 +1615,8 @@ pub extern "C" fn vcx_connection_messages_download(
                         cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
                     }
                     Err(err) => {
-                        let err = VcxError::from_msg(
-                            VcxErrorKind::InvalidJson,
+                        let err = LibvcxError::from_msg(
+                            LibvcxErrorKind::InvalidJson,
                             format!("Cannot serialize messages: {}", err),
                         );
                         error!(
@@ -1654,8 +1655,6 @@ mod tests {
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::SetupMocks;
-    use crate::api_lib::utils::libvcx_error;
-    use crate::api_lib::utils::libvcx_error::SUCCESS;
     use aries_vcx::utils::mockdata::mockdata_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION,
     };
@@ -1664,6 +1663,8 @@ mod tests {
         build_test_connection_inviter_invited, build_test_connection_inviter_null,
         build_test_connection_inviter_requested,
     };
+    use crate::api_lib::utils::libvcx_error;
+    use crate::api_lib::utils::libvcx_error::{LibvcxErrorKind, SUCCESS};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
@@ -1920,7 +1921,7 @@ mod tests {
 
         assert_eq!(
             mediated_connection::get_source_id(connection_handle).unwrap_err().kind(),
-            VcxErrorKind::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
     }
 
@@ -1943,7 +1944,7 @@ mod tests {
                 connection_handle,
                 msg,
                 send_msg_options,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1968,7 +1969,7 @@ mod tests {
                 connection_handle,
                 cstr_msg.as_ptr() as *const u8,
                 msg_len as u32,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );
@@ -1999,7 +2000,7 @@ mod tests {
                 msg_len as u32,
                 cstr_sig.as_ptr() as *const u8,
                 signature_length as u32,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
             libvcx_error::SUCCESS.code_num
         );

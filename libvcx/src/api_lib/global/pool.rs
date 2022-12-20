@@ -1,6 +1,6 @@
 use std::sync::RwLock;
 
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use aries_vcx::error::{VcxError, VcxErrorKind, LibvcxResult};
 use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::ledger::pool::{create_pool_ledger_config, open_pool_ledger, close};
@@ -15,7 +15,7 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
     *h = handle;
 }
 
-pub fn get_main_pool_handle() -> VcxResult<i32> {
+pub fn get_main_pool_handle() -> LibvcxResult<i32> {
     if settings::indy_mocks_enabled() {
         return Ok(INVALID_POOL_HANDLE)
     }
@@ -36,7 +36,7 @@ pub fn reset_main_pool_handle() {
     set_main_pool_handle(None);
 }
 
-pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
+pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
     let pool_name = config
         .pool_name
         .clone()
@@ -64,7 +64,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> VcxResult<()> {
     Ok(())
 }
 
-pub async fn close_main_pool() -> VcxResult<()> {
+pub async fn close_main_pool() -> LibvcxResult<()> {
     info!("close_main_pool ::: Closing main pool");
     close(get_main_pool_handle()?).await?;
     Ok(())

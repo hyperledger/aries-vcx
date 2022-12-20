@@ -1,10 +1,8 @@
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
-use crate::api_lib::utils::libvcx_error::SUCCESS;
-
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
+use crate::api_lib::utils::libvcx_error::SUCCESS;
 use crate::api_lib::utils::logger::{
     CVoid, EnabledCB, FlushCB,
     LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE,
@@ -26,7 +24,7 @@ use crate::api_lib::utils::logger::{
 pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
     info!("vcx_set_default_logger >>>");
 
-    check_useful_opt_c_str!(pattern, VcxErrorKind::InvalidConfiguration);
+    check_useful_opt_c_str!(pattern, LibvcxErrorKind::InvalidConfiguration);
 
     trace!("vcx_set_default_logger(pattern: {:?})", pattern);
 
@@ -71,7 +69,7 @@ pub extern "C" fn vcx_set_logger(
         log,
         flush
     );
-    check_useful_c_callback!(log, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(log, LibvcxErrorKind::InvalidOption);
 
     let res = LibvcxLogger::init(context, enabled, log, flush);
     match res {

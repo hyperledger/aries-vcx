@@ -2,13 +2,12 @@ use std::ptr;
 
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::vdrtools::CommandHandle;
-use crate::api_lib::utils::libvcx_error;
 use aries_vcx::utils::filters;
+use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
+use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::execute;
 
 /// Filters proof requests based on name selected by verifier when creating the request.
@@ -31,9 +30,9 @@ pub extern "C" fn vcx_filter_proof_requests_by_name(
 ) -> u32 {
     info!("vcx_filter_proof_requests_by_name >>>");
 
-    check_useful_c_str!(requests, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(match_name, VcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_str!(requests, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(match_name, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_filter_proof_requests_by_name(command_handle: {}, requests: {}, match_name: {})",
@@ -81,8 +80,8 @@ mod tests {
     use aries_vcx::utils::{constants::GET_MESSAGES_DECRYPTED_RESPONSE, devsetup::*, mockdata::mockdata_proof};
 
     use crate::api_lib::api_c::filters::vcx_filter_proof_requests_by_name;
-    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::api_handle::disclosed_proof::get_proof_request_messages;
+    use crate::api_lib::api_handle::mediated_connection;
     use crate::api_lib::utils::{libvcx_error, return_types_u32};
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
