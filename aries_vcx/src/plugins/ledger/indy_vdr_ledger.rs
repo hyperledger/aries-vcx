@@ -19,8 +19,8 @@ use vdr::utils::{Qualifiable, ValidationError};
 
 use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
 use crate::core::profile::profile::Profile;
-use crate::error::VcxResult;
-use crate::error::{VcxError, VcxErrorKind};
+use crate::errors::error::VcxResult;
+use crate::errors::error::{VcxError, VcxErrorKind};
 use crate::global::settings;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
@@ -571,10 +571,10 @@ mod unit_tests {
     use std::sync::Arc;
 
     use crate::{
-        error::{VcxErrorKind, VcxResult},
-        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
         common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
+        plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
+    use crate::errors::error::{VcxErrorKind, VcxResult};
 
     use super::IndyVdrLedger;
 

@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{VcxError, VcxErrorKind};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
 use std::sync;
 

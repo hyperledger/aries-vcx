@@ -2,7 +2,7 @@ use std::fs::{DirBuilder, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 pub fn write_file<P: AsRef<Path>>(file: P, content: &str) -> VcxResult<()>
 where

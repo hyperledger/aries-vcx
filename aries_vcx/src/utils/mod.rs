@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use messages::did_doc::DidDoc;
 use vdrtools::types::validation::Validatable;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::plugins::wallet::base_wallet::BaseWallet;

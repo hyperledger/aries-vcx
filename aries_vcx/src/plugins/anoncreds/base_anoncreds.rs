@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:

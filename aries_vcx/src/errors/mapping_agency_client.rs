@@ -1,5 +1,5 @@
 use agency_client::error::{AgencyClientError, AgencyClientErrorKind};
-use crate::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{VcxError, VcxErrorKind};
 
 impl From<AgencyClientError> for VcxError {
     fn from(agency_err: AgencyClientError) -> VcxError {

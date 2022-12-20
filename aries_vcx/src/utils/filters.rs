@@ -1,6 +1,6 @@
 use serde_json;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 

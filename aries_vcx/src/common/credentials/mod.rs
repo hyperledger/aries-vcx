@@ -2,10 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use time::get_time;
 
-use crate::{
-    core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult},
-};
+use crate::core::profile::profile::Profile;
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
 
@@ -49,7 +47,7 @@ mod integration_tests {
     use super::*;
 
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::{SetupProfile, init_holder_setup_in_indy_context};
+    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use crate::common::test_utils::create_and_store_credential;
 
     #[tokio::test]

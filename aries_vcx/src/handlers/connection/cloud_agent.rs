@@ -7,7 +7,7 @@ use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 use crate::agency_client::MessageStatusCode;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;

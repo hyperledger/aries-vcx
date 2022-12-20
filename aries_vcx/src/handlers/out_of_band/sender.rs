@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 use messages::a2a::message_family::MessageFamilies;

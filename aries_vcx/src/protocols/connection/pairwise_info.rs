@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

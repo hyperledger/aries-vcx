@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use messages::a2a::{A2AMessage, MessageId};

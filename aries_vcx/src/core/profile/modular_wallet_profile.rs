@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use crate::{
-    error::VcxResult,
     plugins::{
         anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
         ledger::{
@@ -11,6 +10,7 @@ use crate::{
         wallet::base_wallet::BaseWallet,
     },
 };
+use crate::errors::error::VcxResult;
 
 use super::profile::Profile;
 

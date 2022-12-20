@@ -8,7 +8,7 @@ use vdrtools::{
 
 use vdrtools::WalletHandle;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;

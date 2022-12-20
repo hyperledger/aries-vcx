@@ -12,7 +12,7 @@ use std::io::Write;
 use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;

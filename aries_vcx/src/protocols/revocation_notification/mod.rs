@@ -7,7 +7,8 @@ pub mod test_utils {
     use messages::concepts::ack::please_ack::AckOn;
     use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
-    use crate::{error::VcxResult, protocols::SendClosure, utils::constants::REV_REG_ID};
+    use crate::{protocols::SendClosure, utils::constants::REV_REG_ID};
+    use crate::errors::error::VcxResult;
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))

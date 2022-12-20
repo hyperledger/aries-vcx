@@ -1,5 +1,5 @@
 use aries_vcx::common::signing::unpack_message_to_string;
-use aries_vcx::error::VcxResult;
+use aries_vcx::errors::error::VcxResult;
 use aries_vcx::indy;
 use aries_vcx::indy::wallet::{close_search_wallet, fetch_next_records_wallet, import, IssuerConfig, open_search_wallet, RestoreWalletConfigs};
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;

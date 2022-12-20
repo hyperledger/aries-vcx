@@ -1,5 +1,5 @@
 use messages::actors::Actors;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::utils::qualifier;
 
 use openssl::bn::BigNum;

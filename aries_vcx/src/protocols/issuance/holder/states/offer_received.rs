@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;

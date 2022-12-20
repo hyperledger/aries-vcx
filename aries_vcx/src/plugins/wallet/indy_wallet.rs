@@ -6,10 +6,10 @@ use serde_json::Value;
 use vdrtools::{SearchHandle, WalletHandle};
 
 use crate::{
-    error::{VcxError, VcxResult},
     indy::{self},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
 };
+use crate::errors::error::{VcxError, VcxResult};
 
 use super::base_wallet::BaseWallet;
 

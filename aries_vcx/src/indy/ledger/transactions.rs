@@ -6,7 +6,7 @@ use vdrtools::{
 use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::common::ledger::transactions::{Response, Request};
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::utils;

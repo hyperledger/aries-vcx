@@ -2,7 +2,7 @@ use vdrtools::{Locator, SearchHandle};
 use vdrtools::{WalletHandle};
 use serde_json::{Map, Value};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;

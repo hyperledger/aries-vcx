@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
-    utils::async_fn_iterator::AsyncFnIterator,
-};
+use crate::utils::async_fn_iterator::AsyncFnIterator;
 
 use super::base_wallet::BaseWallet;
 use agency_client::{
@@ -11,6 +8,7 @@ use agency_client::{
     wallet::base_agency_client_wallet::BaseAgencyClientWallet,
 };
 use async_trait::async_trait;
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct AgencyClientWallet {

@@ -1,5 +1,5 @@
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::utils::LibindyMock;
 use crate::plugins::ledger::base_ledger::BaseLedger;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};

@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InitialHolderState {}

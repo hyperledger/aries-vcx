@@ -21,7 +21,7 @@ pub mod test_utils {
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use agency_client::MessageStatusCode;
-    use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+    use aries_vcx::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;

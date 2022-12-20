@@ -194,9 +194,6 @@ impl DidDoc {
         })
     }
 
-    /**
-
-     **/
     fn get_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),

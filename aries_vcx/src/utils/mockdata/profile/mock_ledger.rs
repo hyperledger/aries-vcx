@@ -1,17 +1,17 @@
 use async_trait::async_trait;
 
 use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
+    common::primitives::revocation_registry::RevocationRegistryDefinition,
     indy::utils::LibindyMock,
     plugins::ledger::base_ledger::BaseLedger,
     utils::{
         self,
         constants::{
-            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
+            CRED_DEF_JSON, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
         },
     },
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
 };
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -146,10 +146,8 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::{
-        error::{VcxErrorKind, VcxResult},
-        plugins::ledger::base_ledger::BaseLedger,
-    };
+    use crate::plugins::ledger::base_ledger::BaseLedger;
+    use crate::errors::error::{VcxErrorKind, VcxResult};
 
     use super::MockLedger;
 

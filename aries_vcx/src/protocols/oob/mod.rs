@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use messages::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;

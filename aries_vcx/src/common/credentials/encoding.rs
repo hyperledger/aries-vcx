@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {

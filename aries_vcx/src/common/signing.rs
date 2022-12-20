@@ -3,8 +3,9 @@ use std::sync::Arc;
 use time;
 use base64;
 
-use crate::{error::prelude::*, plugins::wallet::base_wallet::BaseWallet, global::settings};
-use messages::protocols::connection::response::{Response, SignedResponse, ConnectionSignature, ConnectionData};
+use crate::{global::settings, plugins::wallet::base_wallet::BaseWallet};
+use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
+use crate::errors::error::prelude::*;
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
     let now: u64 = time::get_time().sec as u64;

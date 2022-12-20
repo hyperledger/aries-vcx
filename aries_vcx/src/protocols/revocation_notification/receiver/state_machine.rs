@@ -2,7 +2,7 @@ use messages::concepts::ack::please_ack::AckOn;
 use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
 use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::revocation_notification::receiver::states::finished::FinishedState;
 use crate::protocols::revocation_notification::receiver::states::initial::InitialState;
 use crate::protocols::revocation_notification::receiver::states::received::NotificationReceivedState;

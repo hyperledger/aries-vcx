@@ -6,7 +6,7 @@ use std::string::String;
 use serde_json::Map;
 use serde_json::Value;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 pub trait KeyMatch {
     fn matches(&self, key: &String, context: &Vec<String>) -> bool;

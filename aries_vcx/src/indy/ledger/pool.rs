@@ -3,7 +3,7 @@ use vdrtools::Locator;
 use vdrtools::PoolHandle;
 use vdrtools::types::errors::IndyErrorKind;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 
 pub fn set_protocol_version() -> VcxResult<()> {

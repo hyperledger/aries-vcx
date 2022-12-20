@@ -4,7 +4,7 @@ use std::sync::Arc;
 use agency_client::agency_client::AgencyClient;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;

@@ -2,7 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde_json::Value;
 
-use crate::{error::prelude::*, common::proofs::{proof_request_internal::NonRevokedInterval, proof_request::ProofRequestData}, core::profile::profile::Profile};
+use crate::{common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval}, core::profile::profile::Profile};
+use crate::errors::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -270,7 +271,7 @@ pub fn build_requested_credentials_json(
 pub mod pool_tests {
 
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
-    use crate::utils::devsetup::{SetupProfile};
+    use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
@@ -316,7 +317,7 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
+    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
 
     use super::*;
 

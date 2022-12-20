@@ -2,7 +2,7 @@ pub mod prover;
 
 use vdrtools::Locator;
 
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::global::settings;
 use crate::indy;
 use crate::utils::parse_and_validate;

@@ -3,7 +3,7 @@ use std::fmt;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation::Presentation;

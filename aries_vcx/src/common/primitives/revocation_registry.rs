@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::REV_REG_ID;
 

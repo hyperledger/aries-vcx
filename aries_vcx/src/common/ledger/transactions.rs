@@ -12,9 +12,9 @@ use messages::protocols::connection::invite::Invitation;
 use crate::{
     common::keys::get_verkey_from_ledger,
     core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult},
     global::settings,
 };
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]

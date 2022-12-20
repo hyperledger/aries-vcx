@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxResult, VcxErrorKind};
+use crate::errors::error::{VcxError, VcxResult, VcxErrorKind};
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
 use crate::utils::serialization::ObjectWithVersion;

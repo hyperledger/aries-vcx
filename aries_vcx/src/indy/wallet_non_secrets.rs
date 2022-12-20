@@ -1,7 +1,7 @@
 use vdrtools::WalletHandle;
 use serde_json;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static WALLET_RECORD_TYPE: &str = "cache";

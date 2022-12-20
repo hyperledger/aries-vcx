@@ -6,7 +6,7 @@ use messages::concepts::ack::Ack;
 use messages::concepts::problem_report::ProblemReport;
 use crate::core::profile::profile::Profile;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::credentials::is_cred_revoked;
 use messages::a2a::{A2AMessage, MessageId};

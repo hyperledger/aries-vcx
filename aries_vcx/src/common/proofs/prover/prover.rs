@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 use crate::common::proofs::proof_request::ProofRequestData;

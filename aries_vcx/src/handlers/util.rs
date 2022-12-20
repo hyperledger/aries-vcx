@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 use messages::a2a::A2AMessage;
 

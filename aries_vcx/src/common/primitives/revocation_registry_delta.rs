@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use crate::{core::profile::profile::Profile, error::prelude::*};
+use crate::core::profile::profile::Profile;
+use crate::errors::error::prelude::*;
 
 #[derive(Clone, Deserialize, Debug, Serialize, Default)]
 pub struct RevocationRegistryDelta {
@@ -60,7 +61,7 @@ impl RevocationRegistryDelta {
 #[cfg(feature = "pool_tests")]
 pub mod integration_tests {
     use super::*;
-    use crate::{utils::devsetup::SetupProfile, common::test_utils::create_and_store_credential_def};
+    use crate::{common::test_utils::create_and_store_credential_def, utils::devsetup::SetupProfile};
 
     #[tokio::test]
     async fn test_create_rev_reg_delta_from_ledger() {

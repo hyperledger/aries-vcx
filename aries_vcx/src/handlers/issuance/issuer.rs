@@ -8,7 +8,7 @@ use std::sync::Arc;
 use agency_client::agency_client::AgencyClient;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
@@ -290,7 +290,7 @@ impl Issuer {
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
-    use crate::error::prelude::*;
+    use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
     use messages::protocols::issuance::credential_proposal::CredentialProposal;

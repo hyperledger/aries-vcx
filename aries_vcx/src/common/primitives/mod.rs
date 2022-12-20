@@ -8,7 +8,7 @@ pub mod revocation_registry_delta;
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::error::VcxErrorKind;
+    use crate::errors::error::VcxErrorKind;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;

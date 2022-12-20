@@ -1,5 +1,5 @@
 use messages::utils::error::MessagesError;
-use crate::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{VcxError, VcxErrorKind};
 use messages::utils::error::MessagesErrorKind;
 
 impl From<MessagesError> for VcxError {

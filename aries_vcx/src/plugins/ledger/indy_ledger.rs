@@ -6,7 +6,7 @@ use crate::core::profile::indy_profile::IndySdkProfile;
 
 use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::indy;
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 
 use super::base_ledger::BaseLedger;
 

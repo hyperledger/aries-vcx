@@ -6,7 +6,7 @@ use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;

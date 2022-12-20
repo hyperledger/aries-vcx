@@ -5,7 +5,7 @@ use std::sync::Arc;
 use agency_client::agency_client::AgencyClient;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation::Presentation;
@@ -227,7 +227,7 @@ impl Prover {
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
-    use crate::error::prelude::*;
+    use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 

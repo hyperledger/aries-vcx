@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 
-use crate::{error::VcxResult, utils::async_fn_iterator::AsyncFnIterator};
+use crate::utils::async_fn_iterator::AsyncFnIterator;
+use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'wallet' related functionality. The APIs, including
 /// input and output types are loosely based off the indy Wallet API:

@@ -5,7 +5,7 @@ use futures::TryFutureExt;
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use messages::did_doc::DidDoc;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;

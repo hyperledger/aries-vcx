@@ -1,6 +1,6 @@
 use std::convert::From;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::errors::error::{VcxError, VcxErrorKind};
 
 use crate::error::*;
 

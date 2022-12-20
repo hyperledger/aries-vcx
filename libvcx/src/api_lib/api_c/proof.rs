@@ -794,7 +794,7 @@ mod tests {
     use std::ffi::CString;
     use std::ptr;
     use std::str;
-    use aries_vcx::error::VcxErrorKind;
+    use aries_vcx::errors::error::VcxErrorKind;
 
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::constants::*;

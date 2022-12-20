@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 
 use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
     global::settings,
     indy::utils::LibindyMock,
     plugins::anoncreds::base_anoncreds::BaseAnonCreds,
@@ -11,6 +10,7 @@ use crate::{
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockAnoncreds;
@@ -200,10 +200,10 @@ impl BaseAnonCreds for MockAnoncreds {
 mod unit_tests {
 
     use crate::{
-        error::{VcxErrorKind, VcxResult},
         plugins::anoncreds::base_anoncreds::BaseAnonCreds,
         utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
     };
+    use crate::errors::error::{VcxErrorKind, VcxResult};
 
     #[tokio::test]
     async fn test_unimplemented_methods() {

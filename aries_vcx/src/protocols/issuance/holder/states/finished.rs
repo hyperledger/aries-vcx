@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::issuance::credential::{Credential, CredentialData};
 use messages::status::Status;

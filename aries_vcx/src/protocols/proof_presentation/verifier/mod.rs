@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 

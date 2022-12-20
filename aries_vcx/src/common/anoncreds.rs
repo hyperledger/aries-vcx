@@ -3,7 +3,7 @@
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::error::VcxErrorKind;
+    use crate::errors::error::VcxErrorKind;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{SetupProfile, init_holder_setup_in_indy_context};
     use crate::utils::get_temp_dir_path;

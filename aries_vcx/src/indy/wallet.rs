@@ -9,7 +9,7 @@ use vdrtools::{
     WalletHandle,
 };
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::{
     credentials::holder,
@@ -637,7 +637,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::error::VcxErrorKind;
+    use crate::errors::error::VcxErrorKind;
     use crate::indy::wallet::add_wallet_record;
     use crate::utils::devsetup::SetupLibraryWallet;
 

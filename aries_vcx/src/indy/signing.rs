@@ -2,7 +2,7 @@ use vdrtools::Locator;
 
 use vdrtools::WalletHandle;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 
 

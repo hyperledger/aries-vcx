@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 

@@ -14,7 +14,7 @@ use agency_client::api::downloaded_message::DownloadedMessage;
 use agency_client::MessageStatusCode;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};

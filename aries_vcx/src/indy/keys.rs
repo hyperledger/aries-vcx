@@ -7,7 +7,7 @@ use vdrtools::{
 };
 
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::did_mocks::{did_mocks_enabled, DidMocks};
 use crate::utils;

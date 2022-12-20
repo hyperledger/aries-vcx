@@ -4,7 +4,7 @@ use vdrtools::{
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::ledger::transactions::{

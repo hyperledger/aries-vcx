@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use messages::did_doc::DidDoc;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::protocols::SendClosureConnection;
 use crate::common::signing::sign_connection_response;

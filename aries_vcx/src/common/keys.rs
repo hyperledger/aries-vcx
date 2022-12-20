@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk: &str) -> VcxResult<()> {
     let ledger = Arc::clone(profile).inject_ledger();

@@ -6,7 +6,6 @@ use std::{
 
 use crate::{
     core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
     utils::{
         constants::ATTRS,
@@ -27,11 +26,12 @@ use credx::{
     ursa::cl::MasterSecret as UrsaMasterSecret,
 };
 use credx::{
-    types::{CredentialRequestMetadata, PresentCredentials},
     Error as CredxError,
+    types::{CredentialRequestMetadata, PresentCredentials},
 };
 use indy_credx as credx;
 use serde_json::Value;
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -797,10 +797,10 @@ impl From<UrsaCryptoError> for VcxError {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::{
-        error::{VcxErrorKind, VcxResult},
-        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
         common::test_utils::mock_profile,
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
     };
+    use crate::errors::error::{VcxErrorKind, VcxResult};
 
     use super::IndyCredxAnonCreds;
 

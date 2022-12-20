@@ -1,4 +1,4 @@
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
 
 use messages::protocols::trust_ping::ping::Ping;
 use messages::protocols::trust_ping::ping_response::PingResponse;
@@ -58,7 +58,7 @@ impl TrustPingSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::error::VcxResult;
+    use crate::errors::error::VcxResult;
     use crate::handlers::trust_ping::TrustPingSender;
     use messages::a2a::A2AMessage;
     use crate::protocols::trustping::build_ping_response;

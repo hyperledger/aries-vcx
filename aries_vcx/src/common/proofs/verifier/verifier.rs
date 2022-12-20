@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use crate::common::proofs::verifier::verifier_internal::{
     build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,

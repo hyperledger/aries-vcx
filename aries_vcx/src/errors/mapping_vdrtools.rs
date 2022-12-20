@@ -1,7 +1,7 @@
 use vdrtools::types;
 use vdrtools::types::errors::IndyErrorKind;
 
-use crate::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{VcxError, VcxErrorKind};
 
 impl From<IndyErrorKind> for VcxErrorKind {
     fn from(indy: IndyErrorKind) -> Self {

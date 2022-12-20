@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::indy::wallet::IssuerConfig;
 
 pub static CONFIG_POOL_NAME: &str = "pool_name";
