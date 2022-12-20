@@ -5,7 +5,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
@@ -146,7 +146,7 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResul
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
     PROOF_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> VcxResult<()> {
@@ -274,7 +274,7 @@ pub mod tests {
         let handle_proof = create_default_proof().await;
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         assert_eq!(
             get_state(handle_proof).await.unwrap(),

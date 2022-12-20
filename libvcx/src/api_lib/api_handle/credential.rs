@@ -7,7 +7,7 @@ use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 use crate::api_lib::api_handle::mediated_connection;
@@ -196,7 +196,7 @@ pub async fn delete_credential(handle: u32) -> VcxResult<u32> {
 
     credential.delete_credential(&profile).await?;
     HANDLE_MAP.release(handle)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub fn get_state(handle: u32) -> VcxResult<u32> {
@@ -225,7 +225,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Vcx
         .send_request(&profile, my_pw_did, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> VcxResult<String> {
@@ -347,7 +347,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.decline_offer(comment, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 #[cfg(test)]

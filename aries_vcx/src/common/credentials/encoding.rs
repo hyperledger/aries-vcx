@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
-use crate::utils::error::INVALID_ATTRIBUTES_STRUCTURE;
+use vcx::api_lib::utils::libvcx_error::INVALID_ATTRIBUTES_STRUCTURE;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();

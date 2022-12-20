@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use messages::did_doc::DidDoc;
 use vdrtools::types::validation::Validatable;
-use crate::error::{VcxResult, VcxError, VcxErrorKind};
+use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::plugins::wallet::base_wallet::BaseWallet;
@@ -48,7 +48,6 @@ macro_rules! map (
 pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
-pub mod error;
 pub mod file;
 pub mod json;
 pub mod mockdata;

@@ -4,7 +4,7 @@ use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::mediated_connection;
@@ -166,7 +166,7 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> VcxResult<u32> {
@@ -194,10 +194,10 @@ pub async fn revoke_credential_local(handle: u32) -> VcxResult<()> {
 
 pub fn convert_to_map(s: &str) -> VcxResult<serde_json::Map<String, serde_json::Value>> {
     serde_json::from_str(s).map_err(|_| {
-        warn!("{}", error::INVALID_ATTRIBUTES_STRUCTURE.message);
+        warn!("{}", libvcx_error::INVALID_ATTRIBUTES_STRUCTURE.message);
         VcxError::from_msg(
             VcxErrorKind::InvalidAttributesStructure,
-            error::INVALID_ATTRIBUTES_STRUCTURE.message,
+            libvcx_error::INVALID_ATTRIBUTES_STRUCTURE.message,
         )
     })
 }
@@ -283,7 +283,7 @@ pub mod tests {
             send_credential_offer_v2(credential_handle, connection_handle)
                 .await
                 .unwrap(),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
@@ -298,7 +298,7 @@ pub mod tests {
         let credential_handle = _issuer_credential_create();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
-        LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR.code_num);
+        LibindyMock::set_next_result(libvcx_error::TIMEOUT_LIBINDY_ERROR.code_num);
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
@@ -349,7 +349,7 @@ pub mod tests {
             send_credential_offer_v2(credential_handle, connection_handle)
                 .await
                 .unwrap(),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
@@ -375,7 +375,7 @@ pub mod tests {
             .unwrap();
         assert_eq!(
             send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 

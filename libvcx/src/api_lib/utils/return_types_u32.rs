@@ -12,7 +12,7 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::indy::utils::error_codes::map_indy_error;
 use aries_vcx::indy::utils::next_command_handle;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::utils::callback::POISON_MSG;
 use crate::api_lib::utils::callback_u32 as callback;
@@ -39,11 +39,11 @@ pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T
         Err(e) => match e {
             RecvTimeoutError::Timeout => {
                 warn!("Timed out waiting for callback");
-                Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
+                Err(libvcx_error::TIMEOUT_LIBINDY_ERROR.code_num)
             }
             RecvTimeoutError::Disconnected => {
                 warn!("Channel to libindy was disconnected unexpectedly");
-                Err(error::TIMEOUT_LIBINDY_ERROR.code_num)
+                Err(libvcx_error::TIMEOUT_LIBINDY_ERROR.code_num)
             }
         },
     }

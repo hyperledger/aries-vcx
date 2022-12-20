@@ -2,11 +2,14 @@ use std::cell::RefCell;
 use std::error::Error;
 use std::ffi::CString;
 use std::ptr;
+use futures::future::err;
 
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use aries_vcx::error::VcxError;
+use aries_vcx::error::{VcxError, VcxErrorKind};
+use crate::api_lib::utils::libvcx_error;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
@@ -57,4 +60,14 @@ pub fn get_current_error_c_json() -> *const c_char {
         .ok();
 
     value
+}
+
+impl From<VcxError> for LibvcxError {
+    fn from(error: VcxError) -> LibvcxError {
+        LibvcxError {
+            kind: error.kind().into(),
+            code_num: 0,
+            message: "",
+        }
+    }
 }

@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
 use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 
 use crate::api_lib::api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig};
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -35,7 +35,7 @@ pub extern "C" fn vcx_revocation_registry_create(
                 "vcx_revocation_registry_create >>> invalid revocation registry configuration; err: {:?}",
                 err
             );
-            return error::INVALID_CONFIGURATION.code_num;
+            return libvcx_error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -45,10 +45,10 @@ pub extern "C" fn vcx_revocation_registry_create(
                 trace!(
                     "vcx_revocation_registry_create_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     handle
                 );
-                (error::SUCCESS.code_num, handle)
+                (libvcx_error::SUCCESS.code_num, handle)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -65,7 +65,7 @@ pub extern "C" fn vcx_revocation_registry_create(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -93,10 +93,10 @@ pub extern "C" fn vcx_revocation_registry_publish(
                 trace!(
                     "vcx_revocation_registry_publish_cb(command_handle: {}, rc: {}) handle: {}",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     handle
                 );
-                cb(command_handle, error::SUCCESS.code_num, handle);
+                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -110,7 +110,7 @@ pub extern "C" fn vcx_revocation_registry_publish(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -141,9 +141,9 @@ pub extern "C" fn vcx_revocation_registry_publish_revocations(
                     "vcx_revocation_registry_publish_revocations_cb(command_handle: {}, issuer_did: {}, rc: {})",
                     command_handle,
                     issuer_did,
-                    error::SUCCESS.message
+                    libvcx_error::SUCCESS.message
                 );
-                cb(command_handle, error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS.code_num);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -157,7 +157,7 @@ pub extern "C" fn vcx_revocation_registry_publish_revocations(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -182,11 +182,11 @@ pub extern "C" fn vcx_revocation_registry_get_rev_reg_id(
                 trace!(
                     "vcx_revocation_registry_get_rev_reg_id_cb(command_handle: {}, rc: {}, rev_reg_id: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     rev_reg_id
                 );
                 let rev_reg_json = CStringUtils::string_to_cstring(rev_reg_id);
-                cb(command_handle, error::SUCCESS.code_num, rev_reg_json.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS.code_num, rev_reg_json.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -200,7 +200,7 @@ pub extern "C" fn vcx_revocation_registry_get_rev_reg_id(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -225,11 +225,11 @@ pub extern "C" fn vcx_revocation_registry_get_tails_hash(
                 trace!(
                     "vcx_revocation_registry_get_tails_hash_cb(command_handle: {}, rc: {}, tails_hash: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     tails_hash
                 );
                 let tails_hash = CStringUtils::string_to_cstring(tails_hash);
-                cb(command_handle, error::SUCCESS.code_num, tails_hash.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS.code_num, tails_hash.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -243,7 +243,7 @@ pub extern "C" fn vcx_revocation_registry_get_tails_hash(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -268,11 +268,11 @@ pub extern "C" fn vcx_revocation_registry_serialize(
                 trace!(
                     "vcx_revocation_registry_serialize_cb(command_handle: {}, rc: {}, rev_reg_json: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     rev_reg_json
                 );
                 let rev_reg_json = CStringUtils::string_to_cstring(rev_reg_json);
-                cb(command_handle, error::SUCCESS.code_num, rev_reg_json.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS.code_num, rev_reg_json.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -286,7 +286,7 @@ pub extern "C" fn vcx_revocation_registry_serialize(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -312,10 +312,10 @@ pub extern "C" fn vcx_revocation_registry_deserialize(
                 trace!(
                     "vcx_revocation_registry_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    libvcx_error::SUCCESS.message,
                     handle
                 );
-                cb(command_handle, error::SUCCESS.code_num, handle);
+                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -329,7 +329,7 @@ pub extern "C" fn vcx_revocation_registry_deserialize(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -338,8 +338,8 @@ pub extern "C" fn vcx_revocation_registry_release(handle: u32) -> u32 {
 
     match revocation_registry::release(handle) {
         Ok(()) => {
-            trace!("vcx_revocation_registry_release_cb(rc: {})", error::SUCCESS.message);
-            error::SUCCESS.code_num
+            trace!("vcx_revocation_registry_release_cb(rc: {})", libvcx_error::SUCCESS.message);
+            libvcx_error::SUCCESS.code_num
         }
         Err(err) => {
             set_current_error_vcx(&err);

@@ -1,7 +1,7 @@
 use libc::c_char;
 
 use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::utils::error::SUCCESS;
+use crate::api_lib::utils::libvcx_error::SUCCESS;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::error::set_current_error_vcx;

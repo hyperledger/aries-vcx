@@ -13,7 +13,7 @@ use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::indy::ledger::pool;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 use aries_vcx::utils::version_constants;
 use aries_vcx::vdrtools::CommandHandle;
 use aries_vcx::{indy, utils};
@@ -39,10 +39,10 @@ pub extern "C" fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
     match enable_indy_mocks() {
         Ok(_) => {}
-        Err(_) => return error::UNKNOWN_ERROR.code_num,
+        Err(_) => return libvcx_error::UNKNOWN_ERROR.code_num,
     };
     enable_agency_mocks();
-    return error::SUCCESS.code_num;
+    return libvcx_error::SUCCESS.code_num;
 }
 
 /// Initializes threadpool.
@@ -66,8 +66,8 @@ pub extern "C" fn vcx_init_threadpool(config: *const c_char) -> u32 {
     check_useful_c_str!(config, VcxErrorKind::InvalidOption);
 
     match init_threadpool(&config) {
-        Ok(_) => error::SUCCESS.code_num,
-        Err(_) => error::UNKNOWN_ERROR.code_num,
+        Ok(_) => libvcx_error::SUCCESS.code_num,
+        Err(_) => libvcx_error::UNKNOWN_ERROR.code_num,
     }
 }
 
@@ -114,7 +114,7 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
                 "vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}",
                 err
             );
-            return error::INVALID_CONFIGURATION.code_num;
+            return libvcx_error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -124,9 +124,9 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
                 info!(
                     "vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}",
                     command_handle,
-                    error::SUCCESS.code_num
+                    libvcx_error::SUCCESS.code_num
                 );
-                cb(command_handle, error::SUCCESS.code_num)
+                cb(command_handle, libvcx_error::SUCCESS.code_num)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -140,7 +140,7 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
         }
         Ok(())
     });
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 /// Stores institution did and verkey in memory.
@@ -177,7 +177,7 @@ pub extern "C" fn vcx_init_issuer_config(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num;
+            return libvcx_error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -187,9 +187,9 @@ pub extern "C" fn vcx_init_issuer_config(
                 info!(
                     "vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}",
                     command_handle,
-                    error::SUCCESS.code_num
+                    libvcx_error::SUCCESS.code_num
                 );
-                cb(command_handle, error::SUCCESS.code_num)
+                cb(command_handle, libvcx_error::SUCCESS.code_num)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -203,7 +203,7 @@ pub extern "C" fn vcx_init_issuer_config(
         }
         Ok(())
     });
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 /// Opens pool based on vcx configuration passed as a parameter
@@ -255,7 +255,7 @@ pub extern "C" fn vcx_open_main_pool(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
-            return error::INVALID_CONFIGURATION.code_num;
+            return libvcx_error::INVALID_CONFIGURATION.code_num;
         }
     };
 
@@ -263,7 +263,7 @@ pub extern "C" fn vcx_open_main_pool(
         match open_main_pool(&pool_config).await {
             Ok(()) => {
                 info!("vcx_open_main_pool_cb :: Vcx Pool Init Successful");
-                cb(command_handle, error::SUCCESS.code_num)
+                cb(command_handle, libvcx_error::SUCCESS.code_num)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -274,7 +274,7 @@ pub extern "C" fn vcx_open_main_pool(
         }
         Ok(())
     }));
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 lazy_static! {
@@ -359,7 +359,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
     crate::api_lib::global::pool::reset_main_pool_handle();
     trace!("vcx_shutdown(delete: {})", delete);
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 /// Get the message corresponding to an error code
@@ -373,7 +373,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 pub extern "C" fn vcx_error_c_message(error_code: u32) -> *const c_char {
     info!("vcx_error_c_message >>>");
     trace!("vcx_error_message(error_code: {})", error_code);
-    error::error_c_message(&error_code).as_ptr()
+    libvcx_error::ACTION_NOT_SUPPORTED.code_num
 }
 
 /// Update agency webhook url setting
@@ -408,10 +408,10 @@ pub extern "C" fn vcx_update_webhook_url(
                     trace!(
                         "vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS.message
+                        libvcx_error::SUCCESS.message
                     );
 
-                    cb(command_handle, error::SUCCESS.code_num);
+                    cb(command_handle, libvcx_error::SUCCESS.code_num);
                 }
                 Err(err) => {
                     set_current_error_vcx(&err);
@@ -429,7 +429,7 @@ pub extern "C" fn vcx_update_webhook_url(
         .boxed(),
     );
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 #[no_mangle]
@@ -456,12 +456,12 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
                     trace!(
                         "vcx_get_ledger_author_agreement(command_handle: {}, rc: {}, author_agreement: {})",
                         command_handle,
-                        error::SUCCESS.message,
+                        libvcx_error::SUCCESS.message,
                         err
                     );
 
                     let msg = CStringUtils::string_to_cstring(err);
-                    cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                    cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
                 }
                 Err(err) => {
                     set_current_error_vcx(&err);
@@ -478,7 +478,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
         .boxed(),
     );
 
-    error::SUCCESS.code_num
+    libvcx_error::SUCCESS.code_num
 }
 
 /// Set some accepted agreement as active.
@@ -513,7 +513,7 @@ pub extern "C" fn vcx_set_active_txn_author_agreement_meta(
     trace!("vcx_set_active_txn_author_agreement_meta(text: {:?}, version: {:?}, hash: {:?}, acc_mech_type: {:?}, time_of_acceptance: {:?})", text, version, hash, acc_mech_type, time_of_acceptance);
 
     match utils::author_agreement::set_txn_author_agreement(text, version, hash, acc_mech_type, time_of_acceptance) {
-        Ok(()) => error::SUCCESS.code_num,
+        Ok(()) => libvcx_error::SUCCESS.code_num,
         Err(err) => err.into(),
     }
 }
@@ -569,7 +569,7 @@ pub mod test_utils {
             CString::new(pool_config).unwrap().into_raw(),
             cb.get_callback(),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             return Err(rc);
         }
         cb.receive(TimeoutUtils::some_medium())
@@ -583,7 +583,7 @@ pub mod test_utils {
             CString::new(wallet_config).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             return Err(rc);
         }
         cb.receive(TimeoutUtils::some_medium())
@@ -591,7 +591,7 @@ pub mod test_utils {
 
     pub fn _vcx_init_threadpool_c_closure(config: &str) -> Result<(), u32> {
         let rc = vcx_init_threadpool(CString::new(config).unwrap().into_raw());
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             return Err(rc);
         }
         Ok(())
@@ -600,7 +600,7 @@ pub mod test_utils {
     pub fn _vcx_init_threadpool(config_threadpool: &str) -> Result<(), u32> {
         info!("_vcx_init_threadpool >>>");
         let rc = vcx_init_threadpool(CString::new(config_threadpool).unwrap().into_raw());
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_init_threadpool failed");
             return Err(rc);
         }
@@ -615,7 +615,7 @@ pub mod test_utils {
             CString::new(config_pool).unwrap().into_raw(),
             cb.get_callback(),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_open_pool failed");
             return Err(rc);
         }
@@ -626,7 +626,7 @@ pub mod test_utils {
     pub fn _vcx_init_full(config_threadpool: &str, config_pool: &str, config_wallet: &str) -> Result<(), u32> {
         info!("_vcx_init_full >>>");
         let rc = vcx_init_threadpool(CString::new(config_threadpool).unwrap().into_raw());
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_init_threadpool failed");
             return Err(rc);
         }
@@ -640,7 +640,7 @@ pub mod test_utils {
             CString::new(config_pool).unwrap().into_raw(),
             cb.get_callback(),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_open_pool failed");
             return Err(rc);
         }
@@ -653,7 +653,7 @@ pub mod test_utils {
             CString::new(config_wallet).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_open_wallet failed");
             return Err(rc);
         }
@@ -669,7 +669,7 @@ pub mod test_utils {
             CString::new(config_wallet.clone()).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        if rc != error::SUCCESS.code_num {
+        if rc != libvcx_error::SUCCESS.code_num {
             error!("vcx_open_wallet failed");
             return Err(rc);
         }
@@ -694,7 +694,7 @@ pub mod test_utils {
             CString::new(format!("{}", config_wallet.clone())).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(err, error::SUCCESS.code_num);
+        assert_eq!(err, libvcx_error::SUCCESS.code_num);
         cb.receive(TimeoutUtils::some_custom(3)).unwrap();
         Ok(config_wallet)
     }
@@ -750,7 +750,7 @@ pub mod test_utils {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         cb.receive(TimeoutUtils::some_custom(1)).unwrap();
 
@@ -763,7 +763,7 @@ pub mod test_utils {
                 options.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         let record_value = cb.receive(TimeoutUtils::some_custom(1)).unwrap().unwrap();
         assert!(record_value.contains("Record Value"));
@@ -834,7 +834,7 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, error::POOL_LEDGER_CONNECT.code_num);
+        assert_eq!(err, libvcx_error::POOL_LEDGER_CONNECT.code_num);
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
             aries_vcx::error::VcxErrorKind::NoPoolOpen
@@ -856,7 +856,7 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, error::INVALID_GENESIS_TXN_PATH.code_num);
+        assert_eq!(err, libvcx_error::INVALID_GENESIS_TXN_PATH.code_num);
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
             aries_vcx::error::VcxErrorKind::NoPoolOpen
@@ -959,7 +959,7 @@ mod tests {
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
-        assert_eq!(err, error::WALLET_NOT_FOUND.code_num);
+        assert_eq!(err, libvcx_error::WALLET_NOT_FOUND.code_num);
 
         indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
@@ -993,7 +993,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_init_no_config_path() {
         let _setup = SetupEmpty::init();
-        assert_eq!(vcx_init_threadpool(ptr::null()), error::INVALID_OPTION.code_num)
+        assert_eq!(vcx_init_threadpool(ptr::null()), libvcx_error::INVALID_OPTION.code_num)
     }
 
     #[test]
@@ -1085,22 +1085,22 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(0)).unwrap().unwrap();
-        assert_eq!(c_message, error::SUCCESS.message);
+        assert_eq!(c_message, libvcx_error::SUCCESS.message);
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(1001))
             .unwrap()
             .unwrap();
-        assert_eq!(c_message, error::UNKNOWN_ERROR.message);
+        assert_eq!(c_message, libvcx_error::UNKNOWN_ERROR.message);
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(100100))
             .unwrap()
             .unwrap();
-        assert_eq!(c_message, error::UNKNOWN_ERROR.message);
+        assert_eq!(c_message, libvcx_error::UNKNOWN_ERROR.message);
 
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(1021))
             .unwrap()
             .unwrap();
-        assert_eq!(c_message, error::INVALID_ATTRIBUTES_STRUCTURE.message);
+        assert_eq!(c_message, libvcx_error::INVALID_ATTRIBUTES_STRUCTURE.message);
     }
 
     #[test]
@@ -1120,7 +1120,7 @@ mod tests {
         let webhook_url = "https://example.com";
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
-            error::SUCCESS.code_num,
+            libvcx_error::SUCCESS.code_num,
             vcx_update_webhook_url(
                 cb.command_handle,
                 CString::new(webhook_url.to_string()).unwrap().into_raw(),
@@ -1184,7 +1184,7 @@ mod tests {
         let time_of_acceptance = 123456789;
 
         assert_eq!(
-            error::SUCCESS.code_num,
+            libvcx_error::SUCCESS.code_num,
             vcx_set_active_txn_author_agreement_meta(
                 CString::new(text.to_string()).unwrap().into_raw(),
                 CString::new(version.to_string()).unwrap().into_raw(),
@@ -1217,7 +1217,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_get_ledger_author_agreement(cb.command_handle, Some(cb.get_callback())),
-            error::SUCCESS.code_num
+            libvcx_error::SUCCESS.code_num
         );
         let agreement = cb.receive(TimeoutUtils::some_short()).unwrap();
         assert_eq!(

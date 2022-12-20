@@ -13,3 +13,6 @@ pub mod timeout;
 
 #[cfg(feature = "test_utils")]
 pub mod devsetup;
+pub mod libvcx_error;
+pub mod mapping_ariesvcx_libvcx;
+pub mod mapping_libvcx_ffi;

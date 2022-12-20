@@ -8,7 +8,7 @@ use aries_vcx::messages;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::error;
+use crate::api_lib::utils::libvcx_error;
 use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
 use crate::api_lib::api_handle::mediated_connection;
@@ -154,7 +154,7 @@ pub async fn send_proof(handle: u32, connection_handle: u32) -> VcxResult<u32> {
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub fn generate_reject_proof_msg(_handle: u32) -> VcxResult<String> {
@@ -175,7 +175,7 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> VcxResult<u32>
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> VcxResult<u32> {
@@ -189,7 +189,7 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub async fn decline_presentation_request(
@@ -208,7 +208,7 @@ pub async fn decline_presentation_request(
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS.code_num)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> VcxResult<String> {
