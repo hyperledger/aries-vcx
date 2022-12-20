@@ -3,8 +3,8 @@ use aries_vcx::global::settings::init_issuer_config;
 use aries_vcx::indy::wallet::IssuerConfig;
 
 use crate::api_lib::errors::error_libvcx::LibvcxResult;
-use crate::api_lib::errors::mapping_ariesvcx_libvcx;
-use crate::api_lib::errors::mapping_ariesvcx_libvcx::map_ariesvcx_result;
+use crate::api_lib::errors::mapping_from_ariesvcx;
+use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub fn get_config_value(key: &str) -> LibvcxResult<String> {
     map_ariesvcx_result(settings::get_config_value(key))

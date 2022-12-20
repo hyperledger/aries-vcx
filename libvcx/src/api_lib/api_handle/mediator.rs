@@ -3,7 +3,7 @@ use aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvision
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::get_main_wallet;
 use crate::api_lib::errors::error_libvcx::LibvcxResult;
-use crate::api_lib::errors::mapping_ariesvcx_libvcx::map_ariesvcx_result;
+use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub async fn provision_cloud_agent(agency_config: &AgentProvisionConfig) -> LibvcxResult<AgencyClientConfig> {
     let wallet = get_main_wallet();
