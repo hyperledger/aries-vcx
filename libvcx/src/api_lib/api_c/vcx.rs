@@ -6,6 +6,7 @@ use libc::c_char;
 use aries_vcx::{indy, utils};
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
+use aries_vcx::errors::error::VcxErrorKind;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::indy::ledger::pool;
@@ -373,8 +374,9 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 /// #Returns
 /// Error message
 #[no_mangle]
-pub extern "C" fn vcx_error_c_message(_error_code: u32) -> *const c_char {
-    unimplemented!("vcx_error_c_message >>> unimplemented")
+pub extern "C" fn vcx_error_c_message(error_code: u32) -> *const c_char {
+    let kind_string = LibvcxErrorKind::from(error_code).to_string();
+    CString::new(kind_string).unwrap().into_raw()
 }
 
 /// Update agency webhook url setting
@@ -931,6 +933,28 @@ mod tests {
 
         indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_error_c_message() {
+        let _setup = SetupMocks::init();
+
+        let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(1001))
+            .unwrap()
+            .unwrap();
+        assert_match!(c_message, "Unknown error");
+
+        let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(100100))
+            .unwrap()
+            .unwrap();
+        assert_match!(c_message, "Unknown error");
+        //
+        let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(1021))
+            .unwrap()
+            .unwrap();
+        assert_eq!(c_message, "Attributes provided to Credential Offer are not correct, possibly malformed");
+    }
+
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
