@@ -962,7 +962,7 @@ mod tests {
             .to_string();
 
         let err = _vcx_agent_provision_async_c_closure(&config).unwrap_err();
-        assert_eq!(err, LibvcxErrorKind::InvalidConfiguration.into());
+        assert_eq!(err, u32::from(LibvcxErrorKind::InvalidConfiguration));
     }
 
     #[test]

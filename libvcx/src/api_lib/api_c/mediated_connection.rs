@@ -1688,10 +1688,10 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let rc = vcx_connection_create(0, CString::new("test_create_fails").unwrap().into_raw(), None);
-        assert_eq!(rc, libvcx_error::INVALID_OPTION.code_num);
+        assert_eq!(rc, u32::from(LibvcxErrorKind::InvalidOption));
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_create(cb.command_handle, ptr::null(), Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::INVALID_OPTION.code_num);
+        assert_eq!(rc, u32::from(LibvcxErrorKind::InvalidOption));
     }
 
     #[tokio::test]
@@ -1707,7 +1707,7 @@ mod tests {
             Some(cb.get_callback()),
         );
         assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
 
         let handle = build_test_connection_inviter_null().await;
         assert!(handle > 0);
@@ -1719,7 +1719,7 @@ mod tests {
             CString::new("{}").unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         let invite_details = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(invite_details.is_some());
     }
@@ -1752,7 +1752,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1763,7 +1763,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateAccepted as u32
@@ -1785,7 +1785,7 @@ mod tests {
             CString::new(ARIES_CONNECTION_REQUEST).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1798,7 +1798,7 @@ mod tests {
             CString::new(ARIES_CONNECTION_ACK).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateAccepted as u32
@@ -1811,7 +1811,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let rc = vcx_connection_update_state(0, 0, None);
-        assert_eq!(rc, libvcx_error::INVALID_OPTION.code_num);
+        assert_eq!(rc, u32::from(LibvcxErrorKind::InvalidOption));
     }
 
     #[tokio::test]
@@ -1824,7 +1824,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_serialize(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
 
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
@@ -1837,12 +1837,12 @@ mod tests {
         let handle = build_test_connection_inviter_requested().await;
 
         let rc = vcx_connection_release(handle);
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
 
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_connection_release(unknown_handle),
-            libvcx_error::INVALID_CONNECTION_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidConnectionHandle)
         );
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1853,7 +1853,7 @@ mod tests {
             Some(cb.get_callback()),
         );
         assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
     }
 
     #[test]
@@ -1867,7 +1867,7 @@ mod tests {
             CString::new(DEFAULT_SERIALIZED_CONNECTION).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(err, SUCCESS_ERR_CODE.code_num);
+        assert_eq!(err, SUCCESS_ERR_CODE);
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
         assert!(handle > 0);
     }
@@ -1884,7 +1884,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1892,7 +1892,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(rc, SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1911,7 +1911,7 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1942,7 +1942,7 @@ mod tests {
                 send_msg_options,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1967,7 +1967,7 @@ mod tests {
                 msg_len as u32,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            SUCCESS_ERR_CODE
         );
         let _sig = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1998,7 +1998,7 @@ mod tests {
                 signature_length as u32,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }

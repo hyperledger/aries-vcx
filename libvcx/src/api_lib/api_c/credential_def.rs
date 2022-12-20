@@ -577,7 +577,7 @@ mod tests {
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_credentialdef_release(unknown_handle),
-            libvcx_error::INVALID_CREDENTIAL_DEF_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidCredDefHandle)
         );
     }
 

@@ -770,13 +770,13 @@ mod tests {
         _vcx_open_wallet,
     };
     use crate::api_lib::api_handle::{credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema, vcx_settings};
+    use crate::api_lib::api_handle::wallet::wallet_import;
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
     use crate::api_lib::global::pool::reset_main_pool_handle;
     use crate::api_lib::global::wallet::get_main_wallet_handle;
     use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use crate::api_lib::utils::current_error::reset_current_error;
-    use crate::api_lib::utils::error_libvcx::reset_current_error;
     use crate::api_lib::utils::libvcx_error::{LibvcxErrorKind, LibvcxResult};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -801,10 +801,10 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, libvcx_error::POOL_LEDGER_CONNECT.code_num);
+        assert_eq!(err, u32::from(LibvcxErrorKind::PoolLedgerConnect));
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
-            aries_vcx::error::LibvcxErrorKind::NoPoolOpen
+            LibvcxErrorKind::NoPoolOpen
         );
 
         delete_named_test_pool(0, &pool_name).await;
@@ -823,10 +823,10 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, libvcx_error::INVALID_GENESIS_TXN_PATH.code_num);
+        assert_eq!(err, u32::from(LibvcxErrorKind::InvalidGenesisTxnPath));
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
-            aries_vcx::error::LibvcxErrorKind::NoPoolOpen
+            LibvcxErrorKind::NoPoolOpen
         );
     }
 
@@ -925,7 +925,7 @@ mod tests {
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
-        assert_eq!(err, libvcx_error::WALLET_NOT_FOUND.code_num);
+        assert_eq!(err, u32::from(LibvcxErrorKind::WalletNotFound));
 
         indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
@@ -948,8 +948,8 @@ mod tests {
             wallet_key_derivation: None,
         };
         assert_eq!(
-            import(&import_config).await.unwrap_err().kind(),
-            aries_vcx::error::LibvcxErrorKind::DuplicationWallet
+            wallet_import(&import_config).await.unwrap_err().kind(),
+            LibvcxErrorKind::DuplicationWallet
         );
 
         vcx_shutdown(true);
@@ -959,7 +959,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_init_no_config_path() {
         let _setup = SetupEmpty::init();
-        assert_eq!(vcx_init_threadpool(ptr::null()), libvcx_error::INVALID_OPTION.code_num)
+        assert_eq!(vcx_init_threadpool(ptr::null()), u32::from(LibvcxErrorKind::InvalidOption))
     }
 
     #[test]

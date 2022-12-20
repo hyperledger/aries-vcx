@@ -429,7 +429,7 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
                 "vcx_out_of_band_receiver_connection_exists >>> failed to parse connection handles: {}, err: {:?}",
                 conn_handles, err
             );
-            return LibvcxErrorKind::InvalidConnectionHandle.into();
+            return u32::from(LibvcxErrorKind::InvalidConnectionHandle);
         }
     };
 

@@ -1162,7 +1162,7 @@ pub mod tests {
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
-            Some(libvcx_error::DUPLICATE_WALLET_RECORD.code_num)
+            Some(u32::from(LibvcxErrorKind::DuplicationWalletRecord))
         );
 
         close_main_wallet().await.unwrap();
@@ -1223,7 +1223,7 @@ pub mod tests {
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
-            Some(libvcx_error::WALLET_RECORD_NOT_FOUND.code_num)
+            Some(LibvcxErrorKind::WalletRecordNotFound.into())
         );
 
         close_main_wallet().await.unwrap();
@@ -1278,7 +1278,7 @@ pub mod tests {
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
-            Some(libvcx_error::WALLET_RECORD_NOT_FOUND.code_num)
+            Some(LibvcxErrorKind::WalletRecordNotFound.into())
         );
 
         close_main_wallet().await.unwrap();
@@ -1315,7 +1315,7 @@ pub mod tests {
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
-            Some(libvcx_error::WALLET_RECORD_NOT_FOUND.code_num)
+            Some(LibvcxErrorKind::WalletRecordNotFound.into())
         );
 
         let cb = return_types_u32::Return_U32::new().unwrap();

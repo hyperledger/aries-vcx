@@ -707,7 +707,7 @@ mod tests {
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_schema_release(unknown_handle),
-            libvcx_error::INVALID_SCHEMA_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidSchemaHandle)
         );
     }
 

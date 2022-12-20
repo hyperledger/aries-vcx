@@ -1186,7 +1186,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let err = _vcx_disclosed_proof_create_with_request_c_closure(BAD_PROOF_REQUEST).unwrap_err();
-        assert_eq!(err, libvcx_error::INVALID_JSON.code_num);
+        assert_eq!(err, u32::from(LibvcxErrorKind::InvalidJson));
     }
 
     #[tokio::test]
@@ -1219,12 +1219,12 @@ mod tests {
         let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(
             vcx_disclosed_proof_release(handle + 1),
-            libvcx_error::INVALID_DISCLOSED_PROOF_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
         );
         assert_eq!(vcx_disclosed_proof_release(handle), libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             vcx_disclosed_proof_release(handle),
-            libvcx_error::INVALID_DISCLOSED_PROOF_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
         );
     }
 

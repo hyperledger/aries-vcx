@@ -794,6 +794,7 @@ mod tests {
     use std::ffi::CString;
     use std::ptr;
     use std::str;
+    use aries_vcx::error::VcxErrorKind;
 
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::constants::*;
@@ -853,7 +854,7 @@ mod tests {
                 ptr::null(),
                 None,
             ),
-            libvcx_error::INVALID_OPTION.code_num
+            u32::from(LibvcxErrorKind::InvalidOption)
         );
     }
 
@@ -1012,7 +1013,7 @@ mod tests {
         assert_eq!(state, ProofStateType::ProofInvalid as u32);
 
         vcx_proof_release(proof_handle);
-        assert_eq!(vcx_proof_release(proof_handle), libvcx_error::INVALID_PROOF_HANDLE.code_num);
+        assert_eq!(vcx_proof_release(proof_handle), u32::from(LibvcxErrorKind::InvalidProofHandle));
     }
 
     #[tokio::test]

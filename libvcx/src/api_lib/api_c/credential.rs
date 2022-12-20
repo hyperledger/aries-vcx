@@ -1261,7 +1261,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let err = _vcx_credential_create_with_offer_c_closure(BAD_CREDENTIAL_OFFER).unwrap_err();
-        assert_eq!(err, libvcx_error::INVALID_JSON.code_num);
+        assert_eq!(err, u32::from(LibvcxErrorKind::InvalidJson));
     }
 
     #[test]
@@ -1428,14 +1428,14 @@ mod tests {
 
         assert_eq!(
             vcx_credential_release(handle + 1),
-            libvcx_error::INVALID_CREDENTIAL_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidCredentialHandle)
         );
 
         assert_eq!(vcx_credential_release(handle), libvcx_error::SUCCESS_ERR_CODE);
 
         assert_eq!(
             vcx_credential_release(handle),
-            libvcx_error::INVALID_CREDENTIAL_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidCredentialHandle)
         );
     }
 }

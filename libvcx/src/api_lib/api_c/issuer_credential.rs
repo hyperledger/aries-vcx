@@ -984,7 +984,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(
             vcx_issuer_create_credential(cb.command_handle, ptr::null(), Some(cb.get_callback())),
-            libvcx_error::INVALID_OPTION.code_num
+            u32::from(LibvcxErrorKind::InvalidOption)
         );
         let _ = cb.receive(TimeoutUtils::some_short()).is_err();
     }
@@ -1072,14 +1072,14 @@ pub mod tests {
         let handle = _vcx_issuer_create_credential_c_closure().unwrap();
         assert_eq!(
             vcx_issuer_credential_release(handle + 1),
-            libvcx_error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle)
         );
 
         assert_eq!(vcx_issuer_credential_release(handle), libvcx_error::SUCCESS_ERR_CODE);
 
         assert_eq!(
             vcx_issuer_credential_release(handle),
-            libvcx_error::INVALID_ISSUER_CREDENTIAL_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle)
         );
     }
 }

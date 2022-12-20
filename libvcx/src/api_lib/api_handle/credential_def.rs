@@ -225,8 +225,8 @@ pub mod tests {
 
         assert_eq!(credentialdef1, credentialdef2);
         assert_eq!(
-            CredentialDef::from_string("{}").unwrap_err().kind(),
-            aries_vcx::error::LibvcxErrorKind::CreateCredDef
+            from_string("{}").unwrap_err().kind(),
+            LibvcxErrorKind::CreateCredDef
         );
     }
 
