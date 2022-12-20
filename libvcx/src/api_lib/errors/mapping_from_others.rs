@@ -1,5 +1,5 @@
 use std::sync::PoisonError;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
 impl<T> From<PoisonError<T>> for LibvcxError {
     fn from(err: PoisonError<T>) -> Self {

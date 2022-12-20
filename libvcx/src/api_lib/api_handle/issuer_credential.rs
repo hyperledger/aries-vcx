@@ -8,10 +8,10 @@ use crate::api_lib::api_handle::credential_def;
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
-use crate::api_lib::errors::error_libvcx;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile_optional_pool;
-use crate::api_lib::utils::libvcx_error;
+
 lazy_static! {
     static ref ISSUER_CREDENTIAL_MAP: ObjectCache<Issuer> = ObjectCache::<Issuer>::new("issuer-credentials-cache");
 }
@@ -166,7 +166,7 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
@@ -225,7 +225,7 @@ pub mod tests {
     use crate::api_lib::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_lib::api_handle::issuer_credential;
     use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
-    use crate::api_lib::errors::error_libvcx;
+    use crate::api_lib::errors::error;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
 
     use super::*;
@@ -274,7 +274,7 @@ pub mod tests {
             send_credential_offer_v2(credential_handle, connection_handle)
                 .await
                 .unwrap(),
-            error_libvcx::SUCCESS_ERR_CODE
+            error::SUCCESS_ERR_CODE
         );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
@@ -289,7 +289,7 @@ pub mod tests {
         let credential_handle = _issuer_credential_create();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::Initial));
 
-        LibindyMock::set_next_result(error_libvcx::TIMEOUT_LIBINDY_ERROR);
+        LibindyMock::set_next_result(error::TIMEOUT_LIBINDY_ERROR);
 
         let (_, cred_def_handle) = create_and_publish_nonrevocable_creddef().await;
         let _err = build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
@@ -340,7 +340,7 @@ pub mod tests {
             send_credential_offer_v2(credential_handle, connection_handle)
                 .await
                 .unwrap(),
-            error_libvcx::SUCCESS_ERR_CODE
+            error::SUCCESS_ERR_CODE
         );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
@@ -366,7 +366,7 @@ pub mod tests {
             .unwrap();
         assert_eq!(
             send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(),
-            error_libvcx::SUCCESS_ERR_CODE
+            error::SUCCESS_ERR_CODE
         );
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 

@@ -13,7 +13,7 @@ use env_logger::{
 };
 use libc::{c_char, c_void};
 use log::{Level, LevelFilter, Metadata, Record};
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 use crate::api_lib::utils::cstring::CStringUtils;
 

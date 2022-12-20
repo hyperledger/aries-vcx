@@ -3,8 +3,9 @@ use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBui
 use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile;
+
 lazy_static! {
     pub static ref CREDENTIALDEF_MAP: ObjectCache<CredentialDef> =
         ObjectCache::<CredentialDef>::new("credential-defs-cache");

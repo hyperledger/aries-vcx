@@ -7,7 +7,7 @@ use futures::future::err;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::errors::error_libvcx::LibvcxError;
+use crate::api_lib::errors::error::LibvcxError;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);

@@ -11,10 +11,10 @@ use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error_libvcx;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
-use crate::api_lib::utils::libvcx_error;
+
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Prover> = ObjectCache::<Prover>::new("disclosed-proofs-cache");
 }
@@ -148,7 +148,7 @@ pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u32
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
@@ -169,7 +169,7 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<u32> {
@@ -183,7 +183,7 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn decline_presentation_request(
@@ -202,7 +202,7 @@ pub async fn decline_presentation_request(
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {

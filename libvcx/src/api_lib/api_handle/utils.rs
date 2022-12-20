@@ -1,7 +1,7 @@
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 
 pub async fn agency_update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> LibvcxResult<()> {

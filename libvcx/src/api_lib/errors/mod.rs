@@ -4,4 +4,4 @@ pub mod mapping_ffi_tests;
 pub mod mapping_from_agency_client;
 pub mod mapping_from_messages;
 pub mod mapping_from_others;
-pub mod error_libvcx;
+pub mod error;

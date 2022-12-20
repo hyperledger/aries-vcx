@@ -6,7 +6,7 @@ use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 
 use crate::api_lib::global::profile::get_main_profile;
-use crate::api_lib::errors::error_libvcx::LibvcxResult;
+use crate::api_lib::errors::error::LibvcxResult;
 use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub async fn endorse_transaction(issuer_did: &str, transaction: &str) -> LibvcxResult<()> {

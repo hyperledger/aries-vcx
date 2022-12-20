@@ -4,7 +4,7 @@ use url::Url;
 use crate::configuration::AgencyClientConfig;
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
-use crate::validation;
+use crate::utils::validation;
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {

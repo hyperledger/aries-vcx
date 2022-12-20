@@ -5,10 +5,10 @@ use aries_vcx::indy::wallet::{close_search_wallet, fetch_next_records_wallet, im
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::vdrtools::SearchHandle;
 
+use crate::api_lib::errors::error::LibvcxResult;
+use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 use crate::api_lib::global::profile::{get_main_profile, get_main_wallet};
 use crate::api_lib::global::wallet::get_main_wallet_handle;
-use crate::api_lib::errors::error_libvcx::LibvcxResult;
-use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub async fn key_for_local_did(did: &str) -> LibvcxResult<String> {
     let wallet = get_main_wallet();

@@ -15,11 +15,10 @@ use aries_vcx::protocols::SendClosure;
 
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error_libvcx;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
-use crate::api_lib::utils::libvcx_error;
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> = ObjectCache::<MediatedConnection>::new("connections-cache");
 }
@@ -216,7 +215,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
         )
         .await?;
     CONNECTION_MAP.insert(handle, connection)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
@@ -233,7 +232,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection.handle_message(message, &profile).await?;
     CONNECTION_MAP.insert(handle, connection)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
@@ -248,7 +247,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
             .await
         {
-            Ok(_) => Ok(error_libvcx::SUCCESS_ERR_CODE),
+            Ok(_) => Ok(error::SUCCESS_ERR_CODE),
             Err(err) => Err(err.into()),
         }
     } else {
@@ -261,7 +260,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
             .await
         {
-            Ok(_) => Ok(error_libvcx::SUCCESS_ERR_CODE),
+            Ok(_) => Ok(error::SUCCESS_ERR_CODE),
             Err(err) => Err(err.into()),
         }
     };
@@ -273,7 +272,7 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<u32> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.delete(&get_main_agency_client().unwrap()).await?;
     release(handle)?;
-    Ok(error_libvcx::SUCCESS_ERR_CODE)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
@@ -484,7 +483,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::agent::create_public_agent;
     use crate::api_lib::api_handle::mediated_connection;
-    use crate::api_lib::errors::error_libvcx;
+    use crate::api_lib::errors::error;
     use crate::api_lib::VcxStateType;
 
     use super::*;
@@ -737,7 +736,7 @@ pub mod tests {
 
         let handle = create_connection("test_process_acceptance_message").await.unwrap();
         assert_eq!(
-            error_libvcx::SUCCESS_ERR_CODE,
+            error::SUCCESS_ERR_CODE,
             update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
                 .await
                 .unwrap()

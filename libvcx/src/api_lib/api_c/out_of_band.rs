@@ -6,11 +6,10 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::out_of_band;
-use crate::api_lib::errors::error_libvcx;
-use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
-use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
@@ -36,10 +35,10 @@ pub extern "C" fn vcx_out_of_band_sender_create(
                 trace!(
                     "vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     handle
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle);
+                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -53,7 +52,7 @@ pub extern "C" fn vcx_out_of_band_sender_create(
         Ok(())
     }));
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -79,10 +78,10 @@ pub extern "C" fn vcx_out_of_band_receiver_create(
                 trace!(
                     "vcx_out_of_band_receiver_create_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     handle
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle);
+                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -96,7 +95,7 @@ pub extern "C" fn vcx_out_of_band_receiver_create(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -121,11 +120,11 @@ pub extern "C" fn vcx_out_of_band_sender_get_thread_id(
                 trace!(
                     "vcx_out_of_band_sender_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     thid
                 );
                 let thid = CStringUtils::string_to_cstring(thid);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, thid.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, thid.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -139,7 +138,7 @@ pub extern "C" fn vcx_out_of_band_sender_get_thread_id(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -164,11 +163,11 @@ pub extern "C" fn vcx_out_of_band_receiver_get_thread_id(
                 trace!(
                     "vcx_out_of_band_receiver_get_thread_id_cb(command_handle: {}, rc: {}, thid: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     thid
                 );
                 let thid = CStringUtils::string_to_cstring(thid);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, thid.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, thid.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -182,7 +181,7 @@ pub extern "C" fn vcx_out_of_band_receiver_get_thread_id(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -210,9 +209,9 @@ pub extern "C" fn vcx_out_of_band_sender_append_message(
                 trace!(
                     "vcx_out_of_band_sender_append_message_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE
+                    error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -226,7 +225,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_message(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -254,9 +253,9 @@ pub extern "C" fn vcx_out_of_band_sender_append_service(
                 trace!(
                     "vcx_out_of_band_sender_append_service_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE
+                    error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -270,7 +269,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -298,9 +297,9 @@ pub extern "C" fn vcx_out_of_band_sender_append_service_did(
                 trace!(
                     "vcx_out_of_band_sender_append_service_did_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE
+                    error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -314,7 +313,7 @@ pub extern "C" fn vcx_out_of_band_sender_append_service_did(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -339,11 +338,11 @@ pub extern "C" fn vcx_out_of_band_receiver_extract_message(
                 trace!(
                     "vcx_out_of_band_receiver_extract_message_cb(command_handle: {}, rc: {}, msg: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     msg
                 );
                 let msg = CStringUtils::string_to_cstring(msg);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -357,7 +356,7 @@ pub extern "C" fn vcx_out_of_band_receiver_extract_message(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -382,11 +381,11 @@ pub extern "C" fn vcx_out_of_band_to_message(
                 trace!(
                     "vcx_out_of_band_to_message_cb(command_handle: {}, rc: {}, msg: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     msg
                 );
                 let msg = CStringUtils::string_to_cstring(msg);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -400,7 +399,7 @@ pub extern "C" fn vcx_out_of_band_to_message(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -437,8 +436,8 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match out_of_band::connection_exists(handle, &conn_handles).await {
             Ok((conn_handle, found_one)) => {
-                trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})", command_handle, libvcx_error::SUCCESS_ERR_CODE, conn_handle, found_one);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, conn_handle, found_one);
+                trace!("vcx_out_of_band_receiver_connection_exists_cb(command_handle: {}, rc: {}, conn_handle: {}, found_one: {})", command_handle, error::SUCCESS_ERR_CODE, conn_handle, found_one);
+                cb(command_handle, error::SUCCESS_ERR_CODE, conn_handle, found_one);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -449,7 +448,7 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
         Ok(())
     }));
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -474,11 +473,11 @@ pub extern "C" fn vcx_out_of_band_receiver_build_connection(
                 trace!(
                     "vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     connection
                 );
                 let connection = CStringUtils::string_to_cstring(connection);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, connection.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, connection.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -492,7 +491,7 @@ pub extern "C" fn vcx_out_of_band_receiver_build_connection(
         Ok(())
     }));
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -517,11 +516,11 @@ pub extern "C" fn vcx_out_of_band_sender_serialize(
                 trace!(
                     "vcx_out_of_band_sender_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     oob_json
                 );
                 let oob_json = CStringUtils::string_to_cstring(oob_json);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, oob_json.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, oob_json.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -535,7 +534,7 @@ pub extern "C" fn vcx_out_of_band_sender_serialize(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -560,11 +559,11 @@ pub extern "C" fn vcx_out_of_band_receiver_serialize(
                 trace!(
                     "vcx_out_of_band_receiver_serialize_cb(command_handle: {}, rc: {}, oob_json: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     oob_json
                 );
                 let oob_json = CStringUtils::string_to_cstring(oob_json);
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, oob_json.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, oob_json.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -578,7 +577,7 @@ pub extern "C" fn vcx_out_of_band_receiver_serialize(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -604,10 +603,10 @@ pub extern "C" fn vcx_out_of_band_sender_deserialize(
                 trace!(
                     "vcx_out_of_band_sender_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     handle
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle);
+                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -621,7 +620,7 @@ pub extern "C" fn vcx_out_of_band_sender_deserialize(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -647,10 +646,10 @@ pub extern "C" fn vcx_out_of_band_receiver_deserialize(
                 trace!(
                     "vcx_out_of_band_receiver_deserialize_cb(command_handle: {}, rc: {}, handle: {})",
                     command_handle,
-                    libvcx_error::SUCCESS_ERR_CODE,
+                    error::SUCCESS_ERR_CODE,
                     handle
                 );
-                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle);
+                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -664,7 +663,7 @@ pub extern "C" fn vcx_out_of_band_receiver_deserialize(
         Ok(())
     });
 
-    error_libvcx::SUCCESS_ERR_CODE
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -676,9 +675,9 @@ pub extern "C" fn vcx_out_of_band_sender_release(handle: u32) -> u32 {
             trace!(
                 "vcx_out_of_band_sender_release(handle: {}, rc: {})",
                 handle,
-                libvcx_error::SUCCESS_ERR_CODE
+                error::SUCCESS_ERR_CODE
             );
-            error_libvcx::SUCCESS_ERR_CODE
+            error::SUCCESS_ERR_CODE
         }
         Err(err) => {
             error!("vcx_out_of_band_sender_release(handle: {}), rc: {})", handle, err);
@@ -696,9 +695,9 @@ pub extern "C" fn vcx_out_of_band_receiver_release(handle: u32) -> u32 {
             trace!(
                 "vcx_out_of_band_receiver_release(handle: {}, rc: {})",
                 handle,
-                libvcx_error::SUCCESS_ERR_CODE
+                error::SUCCESS_ERR_CODE
             );
-            error_libvcx::SUCCESS_ERR_CODE
+            error::SUCCESS_ERR_CODE
         }
         Err(err) => {
             error!("vcx_out_of_band_receiver_release(handle: {}), rc: {})", handle, err);

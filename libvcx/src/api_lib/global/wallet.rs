@@ -4,7 +4,7 @@ use aries_vcx::indy;
 use aries_vcx::indy::wallet::WalletConfig;
 
 use crate::api_lib::global::profile::{indy_handles_to_profile};
-use crate::api_lib::errors::error_libvcx::LibvcxResult;
+use crate::api_lib::errors::error::LibvcxResult;
 use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
