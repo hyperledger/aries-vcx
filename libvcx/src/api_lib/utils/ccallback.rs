@@ -3,7 +3,7 @@ macro_rules! check_useful_c_callback {
         let $x = match $x {
             Some($x) => $x,
             None => {
-                let err = VcxError::from_msg($e, "Invalid callback has been passed");
+                let err = LibvcxError::from_msg($e, "Invalid callback has been passed");
                 set_current_error_vcx(&err);
                 return err.into();
             }

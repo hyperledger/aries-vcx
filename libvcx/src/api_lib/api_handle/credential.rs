@@ -196,7 +196,7 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<u32> {
 
     credential.delete_credential(&profile).await?;
     HANDLE_MAP.release(handle)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
@@ -225,7 +225,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
         .send_request(&profile, my_pw_did, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
@@ -347,7 +347,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.decline_offer(comment, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 #[cfg(test)]

@@ -3,8 +3,8 @@ use std::sync::{RwLock, RwLockWriteGuard};
 
 use aries_vcx::agency_client::agency_client::AgencyClient;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::error::LibvcxResult;
 use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
+use crate::api_lib::utils::libvcx_error::LibvcxResult;
 
 use super::profile::get_main_wallet;
 

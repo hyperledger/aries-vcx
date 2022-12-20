@@ -1,10 +1,11 @@
-use aries_vcx::error::LibvcxResult;
 use aries_vcx::global::settings;
 use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
 use aries_vcx::indy;
 use aries_vcx::indy::wallet::WalletConfig;
 
 use crate::api_lib::global::profile::{indy_handles_to_profile};
+use crate::api_lib::utils::libvcx_error::LibvcxResult;
+use crate::api_lib::utils::mapping_ariesvcx_libvcx::map_ariesvcx_result;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -25,7 +26,7 @@ pub fn reset_main_wallet_handle() {
 }
 
 pub async fn export_main_wallet(path: &str, backup_key: &str) -> LibvcxResult<()> {
-    indy::wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await
+    map_ariesvcx_result(indy::wallet::export_wallet(get_main_wallet_handle(), path, backup_key).await)
 }
 
 pub async fn open_as_main_wallet(wallet_config: &WalletConfig) -> LibvcxResult<WalletHandle> {

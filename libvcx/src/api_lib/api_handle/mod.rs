@@ -10,3 +10,7 @@ pub mod proof;
 pub mod revocation_registry;
 pub mod schema;
 pub mod utils;
+pub mod wallet;
+pub mod vcx_settings;
+pub mod mediator;
+pub mod ledger;

@@ -8,11 +8,11 @@ use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::mediated_connection::*;
+use crate::api_lib::api_handle::wallet::{wallet_sign, wallet_verify};
 use crate::api_lib::global::profile::get_main_wallet;
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
-use crate::api_lib::utils::error_libvcx::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::libvcx_error;
 use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
@@ -129,11 +129,11 @@ pub extern "C" fn vcx_generate_public_invite(
                 trace!(
                     "vcx_generate_public_invite_cb(command_handle: {}, rc: {}, public_invite: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     public_invite
                 );
                 let public_invite = CStringUtils::string_to_cstring(public_invite);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, public_invite.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, public_invite.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -147,7 +147,7 @@ pub extern "C" fn vcx_generate_public_invite(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Delete a Connection object from the agency and release its handle.
@@ -185,9 +185,9 @@ pub extern "C" fn vcx_connection_delete_connection(
                 trace!(
                     "vcx_connection_delete_connection_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -203,7 +203,7 @@ pub extern "C" fn vcx_connection_delete_connection(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Create a Connection object that provides a pairwise connection for an institution's user
@@ -241,11 +241,11 @@ pub extern "C" fn vcx_connection_create(
                 trace!(
                     "vcx_connection_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     handle,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -260,7 +260,7 @@ pub extern "C" fn vcx_connection_create(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Create a Connection object from the given invite_details that provides a pairwise connection.
@@ -310,11 +310,11 @@ pub extern "C" fn vcx_connection_create_with_invite(
                 trace!(
                     "vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     handle,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -329,7 +329,7 @@ pub extern "C" fn vcx_connection_create_with_invite(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -352,8 +352,8 @@ pub extern "C" fn vcx_connection_create_with_connection_request(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match create_with_request(&request, agent_handle).await {
             Ok(handle) => {
-                trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, libvcx_error::SUCCESS.message, handle, source_id);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
+                trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, source_id);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -365,7 +365,7 @@ pub extern "C" fn vcx_connection_create_with_connection_request(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -393,15 +393,15 @@ pub extern "C" fn vcx_connection_create_with_connection_request_v2(
                 "vcx_connection_create_with_connection_request_v2 >>> Cannot deserialize pw info: {:?}",
                 err
             );
-            return libvcx_error::INVALID_CONFIGURATION.code_num;
+            return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match create_with_request_v2(&request, pw_info).await {
             Ok(handle) => {
-                trace!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, libvcx_error::SUCCESS.message, handle, source_id);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
+                trace!("vcx_connection_create_with_connection_request_v2_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, source_id);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -413,7 +413,7 @@ pub extern "C" fn vcx_connection_create_with_connection_request_v2(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Establishes connection between institution and its user
@@ -464,9 +464,9 @@ pub extern "C" fn vcx_connection_connect(
         match connect(connection_handle).await {
             Ok(invitation) => {
                 let invitation = invitation.unwrap_or(String::from("{}"));
-                trace!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {}", command_handle, connection_handle, libvcx_error::SUCCESS.message, invitation, source_id);
+                trace!("vcx_connection_connect_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, invitation, source_id);
                 let invitation = CStringUtils::string_to_cstring(invitation);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, invitation.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, invitation.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -478,7 +478,7 @@ pub extern "C" fn vcx_connection_connect(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -502,9 +502,9 @@ pub extern "C" fn vcx_connection_get_thread_id(
     execute(move || {
         match get_thread_id(connection_handle) {
             Ok(tid) => {
-                trace!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS.message, tid, source_id);
+                trace!("vcx_connection_get_thread_id_cb(command_handle: {}, connection_handle: {}, rc: {}, thread_id: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, tid, source_id);
                 let tid = CStringUtils::string_to_cstring(tid);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, tid.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, tid.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -516,7 +516,7 @@ pub extern "C" fn vcx_connection_get_thread_id(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Takes the Connection object and returns a json string of all its attributes
@@ -551,9 +551,9 @@ pub extern "C" fn vcx_connection_serialize(
     execute(move || {
         match to_string(connection_handle) {
             Ok(json) => {
-                trace!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS.message, json, source_id);
+                trace!("vcx_connection_serialize_cb(command_handle: {}, connection_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -565,7 +565,7 @@ pub extern "C" fn vcx_connection_serialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Takes a json string representing a connection object and recreates an object matching the json
@@ -603,11 +603,11 @@ pub extern "C" fn vcx_connection_deserialize(
                 trace!(
                     "vcx_connection_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {:?}",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     err,
                     source_id
                 );
-                (libvcx_error::SUCCESS.code_num, err)
+                (libvcx_error::SUCCESS_ERR_CODE, err)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -624,7 +624,7 @@ pub extern "C" fn vcx_connection_deserialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Query the agency for the received messages.
@@ -665,7 +665,7 @@ pub extern "C" fn vcx_connection_update_state(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state(connection_handle).await {
             Ok(err) => {
-                trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
+                trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
                 err
             }
             Err(err) => {
@@ -681,7 +681,7 @@ pub extern "C" fn vcx_connection_update_state(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Update the state of the connection based on the given message.
@@ -720,7 +720,7 @@ pub extern "C" fn vcx_connection_update_state_with_message(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state_with_message(connection_handle, &message).await {
             Ok(err) => {
-                trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
+                trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
                 err
             }
             Err(err) => {
@@ -736,7 +736,7 @@ pub extern "C" fn vcx_connection_update_state_with_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Update the state of the connection based on the given message.
@@ -775,7 +775,7 @@ pub extern "C" fn vcx_connection_handle_message(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match handle_message(connection_handle, &message).await {
             Ok(err) => {
-                trace!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS.message, connection_handle, source_id);
+                trace!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS_ERR_CODE, connection_handle, source_id);
                 err
             }
             Err(err) => {
@@ -789,7 +789,7 @@ pub extern "C" fn vcx_connection_handle_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Returns the current internal state of the connection. Does NOT query agency for state updates.
@@ -826,13 +826,13 @@ pub extern "C" fn vcx_connection_get_state(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS.message, connection_handle, get_state(connection_handle), source_id);
-        cb(command_handle, libvcx_error::SUCCESS.code_num, get_state(connection_handle));
+        trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
+        cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, get_state(connection_handle));
 
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Get the invite details that were sent or can be sent to the remote side.
@@ -884,9 +884,9 @@ pub extern "C" fn vcx_connection_invite_details(
     execute(move || {
         match get_invite_details(connection_handle) {
             Ok(str) => {
-                trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS.message, str, source_id);
+                trace!("vcx_connection_invite_details_cb(command_handle: {}, connection_handle: {}, rc: {}, details: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, str, source_id);
                 let msg = CStringUtils::string_to_cstring(str);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -898,7 +898,7 @@ pub extern "C" fn vcx_connection_invite_details(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Send a message to the specified connection
@@ -945,12 +945,12 @@ pub extern "C" fn vcx_connection_send_message(
                 trace!(
                     "vcx_connection_send_message_cb(command_handle: {}, rc: {}, msg_id: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     err
                 );
 
                 let msg_id = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg_id.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg_id.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -965,7 +965,7 @@ pub extern "C" fn vcx_connection_send_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Send trust ping message to the specified connection to prove that two agents have a functional pairwise channel.
@@ -1012,9 +1012,9 @@ pub extern "C" fn vcx_connection_send_ping(
                 trace!(
                     "vcx_connection_send_ping(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -1029,7 +1029,7 @@ pub extern "C" fn vcx_connection_send_ping(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -1057,9 +1057,9 @@ pub extern "C" fn vcx_connection_send_handshake_reuse(
                 trace!(
                     "vcx_connection_send_handshake_reuse_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -1074,7 +1074,7 @@ pub extern "C" fn vcx_connection_send_handshake_reuse(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Generate a signature for the specified data using connection pairwise keys
@@ -1141,20 +1141,18 @@ pub extern "C" fn vcx_connection_sign_data(
             }
         };
 
-        let wallet = get_main_wallet();
-
-        match wallet.sign(&vk, &data_raw).await {
+        match wallet_sign(&vk, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
                     command_handle,
                     connection_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     err
                 );
 
                 let (signature_raw, signature_len) = utils::cstring::vec_to_pointer(&err);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, signature_raw, signature_len);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, signature_raw, signature_len);
             }
             Err(err) => {
                 error!(
@@ -1169,7 +1167,7 @@ pub extern "C" fn vcx_connection_sign_data(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Verify the signature is valid for the specified data using connection pairwise keys
@@ -1240,18 +1238,16 @@ pub extern "C" fn vcx_connection_verify_signature(
             }
         };
 
-        let wallet = get_main_wallet();
-
-        match wallet.verify(&vk, &data_raw, &signature_raw).await {
+        match wallet_verify(&vk, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     err
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num, err);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, err);
             }
             Err(err) => {
                 error!(
@@ -1266,7 +1262,7 @@ pub extern "C" fn vcx_connection_verify_signature(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Releases the connection object by de-allocating memory
@@ -1286,10 +1282,10 @@ pub extern "C" fn vcx_connection_release(connection_handle: u32) -> u32 {
             trace!(
                 "vcx_connection_release(connection_handle: {}, rc: {}), source_id: {:?}",
                 connection_handle,
-                libvcx_error::SUCCESS.message,
+                libvcx_error::SUCCESS_ERR_CODE,
                 source_id
             );
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         }
         Err(err) => {
             error!(
@@ -1355,9 +1351,9 @@ pub extern "C" fn vcx_connection_send_discovery_features(
                 trace!(
                     "vcx_connection_send_discovery_features(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -1372,7 +1368,7 @@ pub extern "C" fn vcx_connection_send_discovery_features(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Get the information about the connection state.
@@ -1433,12 +1429,12 @@ pub extern "C" fn vcx_connection_info(
                     "vcx_connection_info(command_handle: {}, connection_handle: {}, rc: {}, info: {}), source_id: {:?}",
                     command_handle,
                     connection_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     info,
                     source_id
                 );
                 let info = CStringUtils::string_to_cstring(info);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, info.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, info.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1453,7 +1449,7 @@ pub extern "C" fn vcx_connection_info(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Retrieves pw_did from Connection object
@@ -1488,9 +1484,9 @@ pub extern "C" fn vcx_connection_get_pw_did(
     execute(move || {
         match get_pw_did(connection_handle) {
             Ok(json) => {
-                trace!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS.message, json, source_id);
+                trace!("vcx_connection_get_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, pw_did: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1502,7 +1498,7 @@ pub extern "C" fn vcx_connection_get_pw_did(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Retrieves their_pw_did from Connection object
@@ -1537,9 +1533,9 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
     execute(move || {
         match get_their_pw_did(connection_handle) {
             Ok(json) => {
-                trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS.message, json, source_id);
+                trace!("vcx_connection_get_their_pw_did_cb(command_handle: {}, connection_handle: {}, rc: {}, their_pw_did: {}), source_id: {:?}", command_handle, connection_handle, libvcx_error::SUCCESS_ERR_CODE, json, source_id);
                 let msg = CStringUtils::string_to_cstring(json);
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1551,7 +1547,7 @@ pub extern "C" fn vcx_connection_get_their_pw_did(
         Ok(())
     });
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -1607,12 +1603,12 @@ pub extern "C" fn vcx_connection_messages_download(
                         trace!(
                             "vcx_connection_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                             command_handle,
-                            libvcx_error::SUCCESS.message,
+                            libvcx_error::SUCCESS_ERR_CODE,
                             err
                         );
 
                         let msg = CStringUtils::string_to_cstring(err);
-                        cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                        cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
                     }
                     Err(err) => {
                         let err = LibvcxError::from_msg(
@@ -1641,7 +1637,7 @@ pub extern "C" fn vcx_connection_messages_download(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 #[cfg(test)]
@@ -1664,7 +1660,7 @@ mod tests {
         build_test_connection_inviter_requested,
     };
     use crate::api_lib::utils::libvcx_error;
-    use crate::api_lib::utils::libvcx_error::{LibvcxErrorKind, SUCCESS};
+    use crate::api_lib::utils::libvcx_error::{LibvcxErrorKind, SUCCESS_ERR_CODE};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
@@ -1711,7 +1707,7 @@ mod tests {
             Some(cb.get_callback()),
         );
         assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
 
         let handle = build_test_connection_inviter_null().await;
         assert!(handle > 0);
@@ -1723,7 +1719,7 @@ mod tests {
             CString::new("{}").unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         let invite_details = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(invite_details.is_some());
     }
@@ -1756,7 +1752,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1767,7 +1763,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateAccepted as u32
@@ -1789,7 +1785,7 @@ mod tests {
             CString::new(ARIES_CONNECTION_REQUEST).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1802,7 +1798,7 @@ mod tests {
             CString::new(ARIES_CONNECTION_ACK).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateAccepted as u32
@@ -1828,7 +1824,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         let rc = vcx_connection_serialize(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
 
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
@@ -1841,7 +1837,7 @@ mod tests {
         let handle = build_test_connection_inviter_requested().await;
 
         let rc = vcx_connection_release(handle);
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
 
         let unknown_handle = handle + 1;
         assert_eq!(
@@ -1857,7 +1853,7 @@ mod tests {
             Some(cb.get_callback()),
         );
         assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
     }
 
     #[test]
@@ -1871,7 +1867,7 @@ mod tests {
             CString::new(DEFAULT_SERIALIZED_CONNECTION).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(err, SUCCESS.code_num);
+        assert_eq!(err, SUCCESS_ERR_CODE.code_num);
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
         assert!(handle > 0);
     }
@@ -1888,7 +1884,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1896,7 +1892,7 @@ mod tests {
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         let rc = vcx_connection_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-        assert_eq!(rc, libvcx_error::SUCCESS.code_num);
+        assert_eq!(rc, libvcx_error::SUCCESS_ERR_CODE);
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
             VcxStateType::VcxStateRequestReceived as u32
@@ -1915,7 +1911,7 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_connection_delete_connection(cb.command_handle, connection_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1946,7 +1942,7 @@ mod tests {
                 send_msg_options,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1971,7 +1967,7 @@ mod tests {
                 msg_len as u32,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         let _sig = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -2002,7 +1998,7 @@ mod tests {
                 signature_length as u32,
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }

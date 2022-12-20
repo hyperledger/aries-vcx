@@ -216,7 +216,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
         )
         .await?;
     CONNECTION_MAP.insert(handle, connection)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
@@ -233,7 +233,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection.handle_message(message, &profile).await?;
     CONNECTION_MAP.insert(handle, connection)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
@@ -248,7 +248,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
             .await
         {
-            Ok(_) => Ok(libvcx_error::SUCCESS.code_num),
+            Ok(_) => Ok(libvcx_error::SUCCESS_ERR_CODE),
             Err(err) => Err(err.into()),
         }
     } else {
@@ -261,7 +261,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
             .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
             .await
         {
-            Ok(_) => Ok(libvcx_error::SUCCESS.code_num),
+            Ok(_) => Ok(libvcx_error::SUCCESS_ERR_CODE),
             Err(err) => Err(err.into()),
         }
     };
@@ -273,7 +273,7 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<u32> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.delete(&get_main_agency_client().unwrap()).await?;
     release(handle)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
@@ -736,7 +736,7 @@ pub mod tests {
 
         let handle = create_connection("test_process_acceptance_message").await.unwrap();
         assert_eq!(
-            libvcx_error::SUCCESS.code_num,
+            libvcx_error::SUCCESS_ERR_CODE,
             update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
                 .await
                 .unwrap()

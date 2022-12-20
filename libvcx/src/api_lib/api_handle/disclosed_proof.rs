@@ -26,14 +26,6 @@ enum DisclosedProofs {
     V3(Prover),
 }
 
-fn handle_err(err: VcxError) -> VcxError {
-    if err.kind() == LibvcxErrorKind::InvalidHandle {
-        LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, err.to_string())
-    } else {
-        err
-    }
-}
-
 pub fn create_proof(source_id: &str, proof_req: &str) -> LibvcxResult<u32> {
     trace!("create_proof >>> source_id: {}, proof_req: {}", source_id, proof_req);
     debug!("creating disclosed proof with id: {}", source_id);
@@ -136,7 +128,9 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle).map_err(handle_err)
+    HANDLE_MAP.release(handle)
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle,
+                                               e.to_string())))
 }
 
 pub fn release_all() {
@@ -154,7 +148,7 @@ pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u32
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
@@ -175,7 +169,7 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<u32> {
@@ -189,7 +183,7 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn decline_presentation_request(
@@ -208,7 +202,7 @@ pub async fn decline_presentation_request(
         )
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
@@ -290,7 +284,8 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_source_id()))
-        .map_err(handle_err)
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
+                                               e.to_string())))
 }
 
 pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {

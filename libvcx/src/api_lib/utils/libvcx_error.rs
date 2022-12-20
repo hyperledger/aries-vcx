@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use crate::api_lib::utils::libvcx_error;
+
+pub static SUCCESS_ERR_CODE: u32 = 0;
+pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
 pub enum LibvcxErrorKind {
@@ -235,7 +237,7 @@ pub enum LibvcxErrorKind {
     PoisonedLock,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, thiserror::Error)]
 pub struct LibvcxError {
     pub msg: String,
     pub kind: LibvcxErrorKind,
@@ -252,16 +254,21 @@ impl LibvcxError {
             kind,
         }
     }
-}
 
-impl From<VcxError> for LibvcxError {
-    fn from(error: VcxError) -> LibvcxError {
-        LibvcxError {
-            kind: error.kind().into(),
-            msg: error.to_string(),
+    pub fn find_root_cause(&self) -> String {
+        let mut current = self.source();
+        while let Some(cause) = current {
+            if cause.source().is_none() { return cause.to_string() }
+            current = cause.source();
         }
+        self.to_string()
+    }
+
+    pub fn kind(&self) -> LibvcxErrorKind {
+        self.kind
     }
 }
+
 
 impl fmt::Display for LibvcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

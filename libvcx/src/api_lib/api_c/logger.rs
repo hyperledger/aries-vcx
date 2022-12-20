@@ -2,7 +2,8 @@ use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
-use crate::api_lib::utils::libvcx_error::SUCCESS;
+use crate::api_lib::utils::libvcx_error;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, SUCCESS_ERR_CODE};
 use crate::api_lib::utils::logger::{
     CVoid, EnabledCB, FlushCB,
     LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE,
@@ -31,7 +32,7 @@ pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
     match LibvcxDefaultLogger::init(pattern.clone()) {
         Ok(()) => {
             info!("Logger Successfully Initialized with pattern {:?}", &pattern);
-            SUCCESS.code_num
+            SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);
@@ -75,7 +76,7 @@ pub extern "C" fn vcx_set_logger(
     match res {
         Ok(()) => {
             debug!("Logger Successfully Initialized");
-            SUCCESS.code_num
+            SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);
@@ -124,7 +125,6 @@ pub extern "C" fn vcx_get_logger(
         *flush_cb_p = flush_cb;
     }
 
-    let res = SUCCESS.code_num;
-    trace!("vcx_get_logger: <<< res: {:?}", res);
-    res
+    trace!("vcx_get_logger <<<");
+    SUCCESS_ERR_CODE
 }

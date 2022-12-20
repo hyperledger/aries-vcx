@@ -1,8 +1,8 @@
-use agency_client::error::AgencyClientErrorKind;
+use agency_client::error::{AgencyClientError, AgencyClientErrorKind};
 use crate::error::{VcxError, VcxErrorKind};
 
-impl From<agency_client::error::AgencyClientError> for VcxError {
-    fn from(agency_err: agency_client::error::AgencyClientError) -> VcxError {
+impl From<AgencyClientError> for VcxError {
+    fn from(agency_err: AgencyClientError) -> VcxError {
         let vcx_error_kind: VcxErrorKind = agency_err.kind().into();
         VcxError::from_msg(vcx_error_kind, agency_err.to_string())
     }

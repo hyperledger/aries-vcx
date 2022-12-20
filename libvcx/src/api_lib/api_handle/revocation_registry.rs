@@ -1,6 +1,5 @@
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistryDefinition;
-use aries_vcx::error::prelude::*;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};

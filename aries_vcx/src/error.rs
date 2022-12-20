@@ -4,7 +4,6 @@ use std::error::Error;
 use thiserror;
 
 use messages;
-use vcx::api_lib::utils::libvcx_error;
 
 pub mod prelude {
     pub use super::{err_msg, VcxError, VcxErrorKind, VcxResult};

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::error::{VcxError, VcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
-use vcx::api_lib::utils::libvcx_error::INVALID_ATTRIBUTES_STRUCTURE;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();
@@ -17,10 +16,6 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
                             Some(x) => x,
                             None => {
-                                warn!(
-                                    "Cannot encode attribute: {}",
-                                    INVALID_ATTRIBUTES_STRUCTURE.message
-                                );
                                 return Err(VcxError::from_msg(
                                     VcxErrorKind::InvalidAttributesStructure,
                                     "Attribute value not found",
@@ -31,10 +26,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         warn!("Old attribute format detected. See vcx_issuer_create_credential api for additional information.");
                         attrib_value
                     }
-
-                    // anything else is an error
                     _ => {
-                        warn!("Invalid Json for Attribute data");
                         return Err(VcxError::from_msg(
                             VcxErrorKind::InvalidJson,
                             "Invalid Json for Attribute data",

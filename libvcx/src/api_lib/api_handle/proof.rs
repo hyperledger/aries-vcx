@@ -146,7 +146,7 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
     PROOF_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS.code_num)
+    Ok(libvcx_error::SUCCESS_ERR_CODE)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
@@ -274,7 +274,7 @@ pub mod tests {
         let handle_proof = create_default_proof().await;
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             get_state(handle_proof).await.unwrap(),

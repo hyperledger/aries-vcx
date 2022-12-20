@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
-    error::LibvcxResult,
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     vdrtools::{PoolHandle, WalletHandle}, utils::mockdata::profile::mock_profile::MockProfile, global::settings::indy_mocks_enabled,
 };
+use crate::api_lib::utils::libvcx_error::LibvcxResult;
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};
 

@@ -8,12 +8,14 @@ use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
 use crate::api_lib;
+use crate::api_lib::api_handle::wallet::{wallet_add_wallet_record, wallet_add_wallet_record_tags, wallet_close_search_wallet, wallet_configure_issuer, wallet_delete_wallet_record, wallet_delete_wallet_record_tags, wallet_fetch_next_records_wallet, wallet_get_wallet_record, wallet_import, wallet_open_search_wallet, wallet_update_wallet_record_tags, wallet_update_wallet_record_value};
 use crate::api_lib::global::profile::get_main_wallet;
 use crate::api_lib::global::wallet::{export_main_wallet, get_main_wallet_handle};
 use crate::api_lib::global::wallet::open_as_main_wallet;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::libvcx_error;
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::execute_async;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
@@ -59,7 +61,7 @@ pub extern "C" fn vcx_create_wallet(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_create_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return libvcx_error::INVALID_CONFIGURATION.code_num;
+            return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
 
@@ -73,7 +75,7 @@ pub extern "C" fn vcx_create_wallet(
                 trace!(
                     "vcx_create_wallet_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
                 cb(command_handle, 0);
             }
@@ -81,7 +83,7 @@ pub extern "C" fn vcx_create_wallet(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Creates issuer's did and keypair and stores them in the wallet.
@@ -118,8 +120,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // TODO - future - use profile wallet to stop indy dependency
-        match indy::wallet::wallet_configure_issuer(get_main_wallet_handle(), &enterprise_seed).await {
+        match wallet_configure_issuer(&enterprise_seed).await {
             Err(err) => {
                 error!(
                     "vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}",
@@ -132,7 +133,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
                 trace!(
                     "vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     conf
                 );
                 let conf = CStringUtils::string_to_cstring(conf.to_string());
@@ -142,7 +143,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Opens wallet chosen using provided config.
@@ -172,7 +173,7 @@ pub extern "C" fn vcx_open_main_wallet(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_open_main_wallet >>> invalid wallet configuration; err: {:?}", err);
-            return libvcx_error::INVALID_CONFIGURATION.code_num;
+            return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
 
@@ -192,7 +193,7 @@ pub extern "C" fn vcx_open_main_wallet(
                 trace!(
                     "vcx_open_main_wallet_cb(command_handle: {}, rc: {}, wh: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     wh.0
                 );
                 cb(command_handle, 0, wh.0);
@@ -201,7 +202,7 @@ pub extern "C" fn vcx_open_main_wallet(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Closes the main wallet.
@@ -235,7 +236,7 @@ pub extern "C" fn vcx_close_main_wallet(
                 trace!(
                     "vcx_close_main_wallet_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
                 cb(command_handle, 0);
             }
@@ -243,7 +244,7 @@ pub extern "C" fn vcx_close_main_wallet(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Adds a record to the wallet
@@ -300,16 +301,15 @@ pub extern "C" fn vcx_wallet_add_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.add_wallet_record(&type_, &id, &value, Some(&tags_json)).await {
+        match wallet_add_wallet_record(&type_, &id, &value, Some(&tags_json)).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_add_record(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -322,7 +322,7 @@ pub extern "C" fn vcx_wallet_add_record(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Updates the value of a record already in the wallet.
@@ -345,14 +345,14 @@ pub extern "C" fn vcx_wallet_add_record(
 #[no_mangle]
 pub extern "C" fn vcx_wallet_update_record_value(
     command_handle: CommandHandle,
-    type_: *const c_char,
+    xtype: *const c_char,
     id: *const c_char,
     value: *const c_char,
     cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32)>,
 ) -> u32 {
     info!("vcx_wallet_update_record_value >>>");
 
-    check_useful_c_str!(type_, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(xtype, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(id, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(value, LibvcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
@@ -360,22 +360,21 @@ pub extern "C" fn vcx_wallet_update_record_value(
     trace!(
         "vcx_wallet_update_record_value(command_handle: {}, type_: {}, id: {}, value: {})",
         command_handle,
-        secret!(&type_),
+        secret!(&xtype),
         secret!(&id),
         secret!(&value)
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.update_wallet_record_value(&type_, &id, &value).await {
+        match wallet_update_wallet_record_value(&xtype, &id, &value).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_update_record_value(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -392,7 +391,7 @@ pub extern "C" fn vcx_wallet_update_record_value(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Updates the value of a record tags already in the wallet.
@@ -436,16 +435,15 @@ pub extern "C" fn vcx_wallet_update_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.update_wallet_record_tags(&type_, &id, &tags_json).await {
+        match wallet_update_wallet_record_tags(&type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_update_record_tags(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -462,7 +460,7 @@ pub extern "C" fn vcx_wallet_update_record_tags(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Adds tags to a record.
@@ -506,16 +504,15 @@ pub extern "C" fn vcx_wallet_add_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.add_wallet_record_tags(&type_, &id, &tags_json).await {
+        match wallet_add_wallet_record_tags(&type_, &id, &tags_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_add_record_tags(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -532,7 +529,7 @@ pub extern "C" fn vcx_wallet_add_record_tags(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Deletes tags from a record.
@@ -576,16 +573,15 @@ pub extern "C" fn vcx_wallet_delete_record_tags(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.delete_wallet_record_tags(&type_, &id, &tag_names_json).await {
+        match wallet_delete_wallet_record_tags(&type_, &id, &tag_names_json).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_delete_record_tags(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -602,7 +598,7 @@ pub extern "C" fn vcx_wallet_delete_record_tags(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Deletes an existing record.
@@ -645,19 +641,18 @@ pub extern "C" fn vcx_wallet_get_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.get_wallet_record(&type_, &id, &options_json).await {
+        match wallet_get_wallet_record(&type_, &id, &options_json).await {
             Ok(err) => {
                 trace!(
                     "vcx_wallet_get_record(command_handle: {}, rc: {}, record_json: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     err
                 );
 
                 let msg = CStringUtils::string_to_cstring(err);
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -676,7 +671,7 @@ pub extern "C" fn vcx_wallet_get_record(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Deletes an existing record.
@@ -716,16 +711,15 @@ pub extern "C" fn vcx_wallet_delete_record(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let wallet = get_main_wallet();
-        match wallet.delete_wallet_record(&type_, &id).await {
+        match wallet_delete_wallet_record(&type_, &id).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_delete_record(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -742,7 +736,7 @@ pub extern "C" fn vcx_wallet_delete_record(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Opens a storage search handle
@@ -797,17 +791,16 @@ pub extern "C" fn vcx_wallet_open_search(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // TODO - future - use profile wallet to stop binding to indy
-        match indy::wallet::open_search_wallet(get_main_wallet_handle(), &type_, &query_json, &options_json).await {
+        match wallet_open_search_wallet(&type_, &query_json, &options_json).await {
             Ok(handle) => {
                 trace!(
                     "vcx_wallet_open_search(command_handle: {}, rc_: {}, search_handle: {:?})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     handle
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num, handle);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -825,7 +818,7 @@ pub extern "C" fn vcx_wallet_open_search(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Fetch next records for wallet search.
@@ -866,19 +859,18 @@ pub extern "C" fn vcx_wallet_search_next_records(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        // TODO - future - use profile wallet to stop binding to indy
-        match indy::wallet::fetch_next_records_wallet(get_main_wallet_handle(), wallet_search_handle, count).await {
+        match wallet_fetch_next_records_wallet(wallet_search_handle, count).await {
             Ok(handle) => {
                 trace!(
                     "vcx_wallet_search_next_records(command_handle: {}, rc: {}, record_json: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message,
+                    libvcx_error::SUCCESS_ERR_CODE,
                     handle
                 );
 
                 let msg = CStringUtils::string_to_cstring(handle);
 
-                cb(command_handle, libvcx_error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -897,7 +889,7 @@ pub extern "C" fn vcx_wallet_search_next_records(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Close a search
@@ -932,16 +924,16 @@ pub extern "C" fn vcx_wallet_close_search(
         trace!(
             "vcx_wallet_close_search(command_handle: {}, rc: {})",
             command_handle,
-            libvcx_error::SUCCESS.message
+            libvcx_error::SUCCESS_ERR_CODE
         );
-        match indy::wallet::close_search_wallet(search_handle).await {
+        match wallet_close_search_wallet(search_handle).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_close_search(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 trace!(
@@ -956,7 +948,7 @@ pub extern "C" fn vcx_wallet_close_search(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Exports opened wallet
@@ -999,7 +991,7 @@ pub extern "C" fn vcx_wallet_export(
         );
         match export_main_wallet(&path, &backup_key).await {
             Ok(()) => {
-                let return_code = libvcx_error::SUCCESS.code_num;
+                let return_code = libvcx_error::SUCCESS_ERR_CODE;
                 trace!(
                     "vcx_wallet_export(command_handle: {}, rc: {})",
                     command_handle,
@@ -1016,7 +1008,7 @@ pub extern "C" fn vcx_wallet_export(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Creates a new secure wallet and then imports its content
@@ -1055,20 +1047,20 @@ pub extern "C" fn vcx_wallet_import(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_wallet_import >>> invalid import configuration; err: {:?}", err);
-            return libvcx_error::INVALID_CONFIGURATION.code_num;
+            return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_wallet_import(command_handle: {}, config: ****)", command_handle);
-        match import(&config).await {
+        match wallet_import(&config).await {
             Ok(()) => {
                 trace!(
                     "vcx_wallet_import(command_handle: {}, rc: {})",
                     command_handle,
-                    libvcx_error::SUCCESS.message
+                    libvcx_error::SUCCESS_ERR_CODE
                 );
-                cb(command_handle, libvcx_error::SUCCESS.code_num);
+                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!("vcx_wallet_import(command_handle: {}, rc: {})", command_handle, err);
@@ -1078,7 +1070,7 @@ pub extern "C" fn vcx_wallet_import(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS.code_num
+    libvcx_error::SUCCESS_ERR_CODE
 }
 
 /// Set the wallet handle before calling vcx_init_minimal
@@ -1103,6 +1095,7 @@ pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
 
     use crate::api_lib::api_c::vcx::test_utils::{_test_add_and_get_wallet_record, _vcx_create_and_open_wallet};
+    use crate::api_lib::api_handle::vcx_settings;
     use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -1127,7 +1120,7 @@ pub mod tests {
             CString::new(format!("{}", config)).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(err, libvcx_error::SUCCESS.code_num);
+        assert_eq!(err, libvcx_error::SUCCESS_ERR_CODE);
         cb.receive(TimeoutUtils::some_custom(1)).unwrap();
     }
 
@@ -1151,7 +1144,7 @@ pub mod tests {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         // Failure because of duplicate
@@ -1165,7 +1158,7 @@ pub mod tests {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
@@ -1195,7 +1188,7 @@ pub mod tests {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1226,7 +1219,7 @@ pub mod tests {
                 options.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
@@ -1265,7 +1258,7 @@ pub mod tests {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1273,7 +1266,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_wallet_delete_record(cb.command_handle, xtype.as_ptr(), id.as_ptr(), Some(cb.get_callback())),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1281,7 +1274,7 @@ pub mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_wallet_delete_record(cb.command_handle, xtype.as_ptr(), id.as_ptr(), Some(cb.get_callback())),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
@@ -1318,7 +1311,7 @@ pub mod tests {
                 options.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).err(),
@@ -1335,7 +1328,7 @@ pub mod tests {
                 tags.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
@@ -1349,7 +1342,7 @@ pub mod tests {
                 options.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         close_main_wallet().await.unwrap();
@@ -1376,7 +1369,7 @@ pub mod tests {
         };
         create_and_open_as_main_wallet(&wallet_config).await.unwrap();
 
-        let backup_key = settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
+        let backup_key = vcx_settings::get_config_value(settings::CONFIG_WALLET_BACKUP_KEY).unwrap();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         let cstr_file = CString::new(export_file.path.clone()).unwrap();
@@ -1388,7 +1381,7 @@ pub mod tests {
                 cstr_backup_key.as_ptr(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_long()).unwrap();
 
@@ -1408,7 +1401,7 @@ pub mod tests {
         let cstr_config = CString::new(import_config).unwrap();
         assert_eq!(
             vcx_wallet_import(cb.command_handle, cstr_config.as_ptr(), Some(cb.get_callback())),
-            libvcx_error::SUCCESS.code_num
+            libvcx_error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_long()).unwrap();
 

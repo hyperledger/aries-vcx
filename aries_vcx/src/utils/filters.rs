@@ -57,6 +57,7 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
     Ok(filtered)
 }
 
+// todo: need not to return Result, can be modified to return String, never error - likely for other functions in this file as well
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
     let presentation_requests: Vec<PresentationRequest> = _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {

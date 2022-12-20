@@ -7,8 +7,6 @@ use crate::global::settings;
 
 pub mod mocks;
 
-pub mod error_codes;
-
 static COMMAND_HANDLE_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
 pub fn next_command_handle() -> CommandHandle {

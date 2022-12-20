@@ -1,10 +1,11 @@
 use std::sync::RwLock;
 
-use aries_vcx::error::{VcxError, VcxErrorKind, LibvcxResult};
 use aries_vcx::global::settings;
+use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
 use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::ledger::pool::{create_pool_ledger_config, open_pool_ledger, close};
 use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
+
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -17,15 +18,15 @@ pub fn set_main_pool_handle(handle: Option<i32>) {
 
 pub fn get_main_pool_handle() -> LibvcxResult<i32> {
     if settings::indy_mocks_enabled() {
-        return Ok(INVALID_POOL_HANDLE)
+        return Ok(INVALID_POOL_HANDLE);
     }
     POOL_HANDLE
         .read()
-        .or(Err(VcxError::from_msg(
-            VcxErrorKind::NoPoolOpen,
+        .or(Err(LibvcxError::from_msg(
+            LibvcxErrorKind::NoPoolOpen,
             "There is no pool opened",
         )))?
-        .ok_or(VcxError::from_msg(VcxErrorKind::NoPoolOpen, "There is no pool opened"))
+        .ok_or(LibvcxError::from_msg(LibvcxErrorKind::NoPoolOpen, "There is no pool opened"))
 }
 
 pub fn is_main_pool_open() -> bool {

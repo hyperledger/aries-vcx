@@ -1,5 +1,21 @@
-use aries_vcx::error::VcxErrorKind;
-use crate::api_lib::utils::libvcx_error::LibvcxErrorKind;
+use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+
+pub fn map_ariesvcx_result<T>(result: VcxResult<T>) -> LibvcxResult<T> {
+    match result {
+        Ok(val) => Ok(val),
+        Err(err) => Err(err.into())
+    }
+}
+
+impl From<VcxError> for LibvcxError {
+    fn from(error: VcxError) -> LibvcxError {
+        LibvcxError {
+            kind: error.kind().into(),
+            msg: error.to_string(),
+        }
+    }
+}
 
 impl From<VcxErrorKind> for LibvcxErrorKind {
     fn from(kind: VcxErrorKind) -> Self {
@@ -94,8 +110,8 @@ impl From<VcxErrorKind> for LibvcxErrorKind {
             VcxErrorKind::NoEndpoint => LibvcxErrorKind::NoEndpoint,
             VcxErrorKind::InvalidMessages => LibvcxErrorKind::InvalidMessages,
             VcxErrorKind::CreateAgent => LibvcxErrorKind::CreateAgent,
-            VcxErrorKind::Common(_) => LibvcxErrorKind::Common,
-            VcxErrorKind::LibndyError(_) => LibvcxErrorKind::LibndyError,
+            VcxErrorKind::Common(num) => LibvcxErrorKind::Common(num),
+            VcxErrorKind::LibndyError(num) => LibvcxErrorKind::LibndyError(num),
             VcxErrorKind::UnknownLibndyError => LibvcxErrorKind::UnknownLibndyError,
             VcxErrorKind::NoAgentInformation => LibvcxErrorKind::NoAgentInformation,
             VcxErrorKind::InvalidMessageFormat => LibvcxErrorKind::InvalidMessageFormat,

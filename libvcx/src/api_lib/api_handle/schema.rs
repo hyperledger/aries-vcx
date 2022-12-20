@@ -115,8 +115,7 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
         &source_id,
         &schema_id,
     )
-        .await
-        .map_err(|err| err.map(LibvcxErrorKind::CreateSchema, "Create schema from ledger failed"))?;
+        .await?;
     let schema_json = schema.to_string()?;
 
     let handle = SCHEMA_MAP

@@ -9,13 +9,6 @@ impl From<SenderConfigBuilderError> for VcxError {
     }
 }
 
-// todo: vcx
-impl<T> From<sync::PoisonError<T>> for VcxError {
-    fn from(err: sync::PoisonError<T>) -> Self {
-        VcxError::from_msg(VcxErrorKind::PoisonedLock, err.to_string())
-    }
-}
-
 impl From<serde_json::Error> for VcxError {
     fn from(_err: serde_json::Error) -> Self {
         VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Invalid json"))
