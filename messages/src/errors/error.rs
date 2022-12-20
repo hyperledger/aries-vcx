@@ -2,7 +2,7 @@ use std::fmt;
 use std::error::Error;
 
 pub mod prelude {
-    pub use super::{err_msg, MessagesError, MessagesErrorKind, MessagesResult};
+    pub use crate::errors::error::{err_msg, MessagesError, MessagesErrorKind, MessagesResult};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]

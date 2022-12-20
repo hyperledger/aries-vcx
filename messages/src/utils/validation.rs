@@ -1,4 +1,4 @@
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 use bs58;
 

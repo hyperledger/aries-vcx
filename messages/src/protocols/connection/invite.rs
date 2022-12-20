@@ -1,4 +1,4 @@
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::protocols::connection::did::Did;

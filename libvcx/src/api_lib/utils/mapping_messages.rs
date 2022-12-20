@@ -1,5 +1,5 @@
-use aries_vcx::messages::utils::error::MessagesError;
-use aries_vcx::messages::utils::error::MessagesErrorKind;
+use aries_vcx::messages::errors::error::MessagesError;
+use aries_vcx::messages::errors::error::MessagesErrorKind;
 
 use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 

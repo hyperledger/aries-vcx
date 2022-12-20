@@ -6,7 +6,7 @@ use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::utils::validation::validate_verkey;
-use crate::utils::error::{MessagesError, MessagesErrorKind, MessagesResult};
+use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries_public;

@@ -1,5 +1,5 @@
 use crate::a2a_message;
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::Attachments;

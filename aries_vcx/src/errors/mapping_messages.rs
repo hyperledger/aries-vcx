@@ -1,6 +1,6 @@
-use messages::utils::error::MessagesError;
+use messages::errors::error::MessagesError;
 use crate::errors::error::{VcxError, VcxErrorKind};
-use messages::utils::error::MessagesErrorKind;
+use messages::errors::error::MessagesErrorKind;
 
 impl From<MessagesError> for VcxError {
     fn from(msg_err: MessagesError) -> VcxError {

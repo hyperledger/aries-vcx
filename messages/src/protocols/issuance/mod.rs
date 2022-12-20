@@ -1,4 +1,4 @@
-use crate::utils::error::{MessagesError, MessagesErrorKind, MessagesResult};
+use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::concepts::mime_type::MimeType;
