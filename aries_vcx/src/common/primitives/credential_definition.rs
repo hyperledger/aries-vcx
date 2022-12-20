@@ -194,7 +194,7 @@ impl CredentialDef {
             .map(|obj: ObjectWithVersion<Self>| obj.data)
             .map_err(|err| {
                 VcxError::from_msg(
-                    VcxErrorKind::CreateCredDef,
+                    VcxErrorKind::InvalidJson,
                     format!("Cannot deserialize CredentialDefinition: {}", err),
                 )
             })

@@ -71,7 +71,7 @@ impl EncryptionEnvelope {
         let routing_keys = did_doc.routing_keys();
 
         let mut to = recipient_keys.get(0).map(String::from).ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidConnectionHandle,
+            VcxErrorKind::InvalidState,
             format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
         ))?;
 

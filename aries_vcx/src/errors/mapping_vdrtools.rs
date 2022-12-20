@@ -48,8 +48,7 @@ impl From<IndyErrorKind> for VcxErrorKind {
             DIDAlreadyExists => VcxErrorKind::DuplicationDid,
 
             // 702
-            PaymentInsufficientFunds => VcxErrorKind::InsufficientTokenAmount,
-
+            PaymentInsufficientFunds |
             InvalidState |
             ProofRejected |
             RevocationRegistryFull |

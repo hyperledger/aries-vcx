@@ -16,28 +16,20 @@ pub enum VcxErrorKind {
     InvalidState,
     #[error("Invalid Configuration")]
     InvalidConfiguration,
-    #[error("Obj was not found with handle")]
-    InvalidHandle,
     #[error("Invalid JSON string")]
     InvalidJson,
     #[error("Invalid Option")]
     InvalidOption,
     #[error("Invalid MessagePack")]
     InvalidMessagePack,
-    #[error("Object cache error")]
-    ObjectCacheError,
     #[error("Object not ready for specified action")]
     NotReady,
     #[error("IO Error, possibly creating a backup wallet")]
     IOError,
     #[error("Object (json, config, key, credential and etc...) passed to libindy has invalid structure")]
     LibindyInvalidStructure,
-    #[error("Waiting for callback timed out")]
-    TimeoutLibindy,
     #[error("Parameter passed to libindy was invalid")]
     InvalidLibindyParam,
-    #[error("Library already initialized")]
-    AlreadyInitialized,
     #[error("Action is not supported")]
     ActionNotSupported,
     #[error("Invalid input parameter")]
@@ -45,35 +37,9 @@ pub enum VcxErrorKind {
     #[error("Unimplemented feature")]
     UnimplementedFeature,
 
-    // Connection
-    #[error("Could not create connection")]
-    CreateConnection,
-    #[error("Invalid Connection Handle")]
-    InvalidConnectionHandle,
-    #[error("Invalid invite details structure")]
-    InvalidInviteDetail,
-    #[error("Invalid redirect details structure")]
-    InvalidRedirectDetail,
-    #[error("Cannot Delete Connection. Check status of connection is appropriate to be deleted from agency.")]
-    DeleteConnection,
-    #[error("Error with Connection")]
-    GeneralConnectionError,
-
-    // Payment
-    #[error("No payment information associated with object")]
-    NoPaymentInformation,
-    #[error("Insufficient amount of tokens to process request")]
-    InsufficientTokenAmount,
-    #[error("Invalid payment address")]
-    InvalidPaymentAddress,
-
     // Credential Definition error
-    #[error("Call to create Credential Definition failed")]
-    CreateCredDef,
     #[error("Can't create, Credential Def already on ledger")]
     CredDefAlreadyCreated,
-    #[error("Invalid Credential Definition handle")]
-    InvalidCredDefHandle,
     #[error("No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
     RevDeltaNotFound,
     #[error("Failed to clean stored revocation delta")]
@@ -91,57 +57,27 @@ pub enum VcxErrorKind {
     #[error("No revocation definition found")]
     RevRegDefNotFound,
 
-    // Credential
-    #[error("Invalid credential handle")]
-    InvalidCredentialHandle,
-    #[error("could not create credential request")]
-    CreateCredentialRequest,
-
     // Issuer Credential
-    #[error("Invalid Credential Issuer Handle")]
-    InvalidIssuerCredentialHandle,
-    #[error("Invalid Credential Request")]
-    InvalidCredentialRequest,
-    #[error("Invalid credential json")]
-    InvalidCredential,
     #[error("Attributes provided to Credential Offer are not correct, possibly malformed")]
     InvalidAttributesStructure,
 
     // Proof
-    #[error("Invalid proof handle")]
-    InvalidProofHandle,
-    #[error("Obj was not found with handle")]
-    InvalidDisclosedProofHandle,
     #[error("Proof had invalid format")]
     InvalidProof,
     #[error("Schema was invalid or corrupt")]
     InvalidSchema,
     #[error("The Proof received does not have valid credentials listed.")]
     InvalidProofCredentialData,
-    #[error("Could not create proof")]
-    CreateProof,
     #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
 
     // Schema
-    #[error("Could not create schema")]
-    CreateSchema,
-    #[error("Invalid Schema Handle")]
-    InvalidSchemaHandle,
     #[error("No Schema for that schema sequence number")]
     InvalidSchemaSeqNo,
     #[error("Duplicate Schema: Ledger Already Contains Schema For Given DID, Version, and Name Combination")]
     DuplicationSchema,
     #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
-
-    // Public agent
-    #[error("Could not create public agent")]
-    CreatePublicAgent,
-
-    // Out of Band
-    #[error("Could not create out of band message.")]
-    CreateOutOfBand,
 
     // Pool
     #[error("Invalid genesis transactions path.")]
@@ -160,12 +96,6 @@ pub enum VcxErrorKind {
     // Wallet
     #[error("Error Creating a wallet")]
     WalletCreate,
-    #[error("Missing wallet name in config")]
-    MissingWalletName,
-    #[error("Missing exported wallet path in config")]
-    MissingExportedWalletPath,
-    #[error("Missing exported backup key in config")]
-    MissingBackupKey,
     #[error("Attempt to open wallet with invalid credentials")]
     WalletAccessFailed,
     #[error("Invalid Wallet or Search Handle")]
@@ -180,8 +110,6 @@ pub enum VcxErrorKind {
     WalletNotFound,
     #[error("Indy wallet already open")]
     WalletAlreadyOpen,
-    #[error("Configuration is missing wallet key")]
-    MissingWalletKey,
     #[error("Attempted to add a Master Secret that already existed in wallet")]
     DuplicationMasterSecret,
     #[error("Attempted to add a DID to wallet when that DID already exists in wallet")]
@@ -204,8 +132,6 @@ pub enum VcxErrorKind {
     InvalidNonce,
     #[error("Invalid URL")]
     InvalidUrl,
-    #[error("Configuration is missing the Payment Method parameter")]
-    MissingPaymentMethod,
     #[error("Unable to serialize")]
     SerializationError,
     #[error("Value needs to be base58")]
@@ -216,12 +142,8 @@ pub enum VcxErrorKind {
     // A2A
     #[error("Invalid HTTP response.")]
     InvalidHttpResponse,
-    #[error("No Endpoint set for Connection Object")]
-    NoEndpoint,
     #[error("Error Retrieving messages from API")]
     InvalidMessages,
-    #[error("Error creating agent in agency")]
-    CreateAgent,
 
     #[error("Common error {}", 0)]
     Common(u32),
@@ -234,9 +156,6 @@ pub enum VcxErrorKind {
 
     #[error("Invalid message format")]
     InvalidMessageFormat,
-
-    #[error("Attempted to unlock poisoned lock")]
-    PoisonedLock,
 }
 
 #[derive(Debug, thiserror::Error)]
