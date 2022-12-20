@@ -11,7 +11,7 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
@@ -36,16 +36,16 @@ fn create_credential(source_id: &str, offer: &str) -> LibvcxResult<Option<Holder
     );
 
     let offer_message = serde_json::from_str::<serde_json::Value>(offer).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot deserialize Message: {:?}", err),
         )
     })?;
 
     let offer_message = match offer_message {
         serde_json::Value::Array(_) => {
-            return Err(LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidJson,
+            return Err(ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidJson,
                 "Received offer in legacy format",
             ));
         }
@@ -68,8 +68,8 @@ pub fn credential_create_with_offer(source_id: &str, offer: &str) -> LibvcxResul
     );
 
     let cred_offer: CredentialOffer = serde_json::from_str(offer).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!(
                 "Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}",
                 err
@@ -100,8 +100,8 @@ pub async fn credential_create_with_msgid(
         offer
     );
 
-    let credential = create_credential(source_id, &offer)?.ok_or(LibvcxError::from_msg(
-        LibvcxErrorKind::InvalidCredentialHandle,
+    let credential = create_credential(source_id, &offer)?.ok_or(ErrorLibvcx::from_msg(
+        ErrorKindLibvcx::InvalidCredentialHandle,
         format!("Connection can not be used for Proprietary Issuance protocol"),
     ))?;
 
@@ -123,8 +123,8 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidOption,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
@@ -203,8 +203,8 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn generate_credential_request_msg(_handle: u32, _my_pw_did: &str, _their_pw_did: &str) -> LibvcxResult<String> {
-    Err(LibvcxError::from_msg(
-        LibvcxErrorKind::ActionNotSupported,
+    Err(ErrorLibvcx::from_msg(
+        ErrorKindLibvcx::ActionNotSupported,
         "This action is not implemented yet",
     ))
     // TODO: implement
@@ -242,8 +242,8 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         Ok(message) => match message {
             A2AMessage::CredentialOffer(_) => Ok(message),
             msg => {
-                return Err(LibvcxError::from_msg(
-                    LibvcxErrorKind::InvalidMessages,
+                return Err(ErrorLibvcx::from_msg(
+                    ErrorKindLibvcx::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
                 ));
             }
@@ -252,8 +252,8 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
     }?;
 
     return serde_json::to_string(&credential_offer).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidState,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidState,
             format!("Cannot serialize Offers: {:?}", err),
         )
     });
@@ -282,7 +282,7 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
     HANDLE_MAP.release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredentialHandle,
                                                e.to_string())))
 }
 
@@ -297,8 +297,8 @@ pub fn is_valid_handle(handle: u32) -> bool {
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP.get(handle, |credential| {
         serde_json::to_string(&Credentials::V3(credential.clone())).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidState,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidState,
                 format!("cannot serialize Credential credentialect: {:?}", err),
             )
         })
@@ -308,14 +308,14 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |credential| Ok(credential.get_source_id()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredentialHandle,
                                                e.to_string())))
 }
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {
     let credential: Credentials = serde_json::from_str(credential_data).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot deserialize Credential: {:?}", err),
         )
     })?;
@@ -403,7 +403,7 @@ pub mod tests {
 
         let err =
             credential_create_with_offer("test_credential_create_with_bad_offer", BAD_CREDENTIAL_OFFER).unwrap_err();
-        assert_eq!(err.kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(err.kind(), ErrorKindLibvcx::InvalidJson);
     }
 
     #[tokio::test]

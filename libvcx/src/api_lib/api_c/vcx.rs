@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::{indy, utils};
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
-use aries_vcx::errors::error::VcxErrorKind;
+use aries_vcx::errors::error::ErrorKindAriesVcx;
 use aries_vcx::global::settings;
 use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
 use aries_vcx::indy::ledger::pool;
@@ -20,7 +20,7 @@ use crate::api_lib::api_handle::ledger::{ledger_get_txn_author_agreement, ledger
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::api_handle::vcx_settings;
 use crate::api_lib::api_handle::vcx_settings::settings_init_issuer_config;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
 use crate::api_lib::errors::error;
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
 use crate::api_lib::global::pool::{close_main_pool, is_main_pool_open, open_main_pool};
@@ -43,7 +43,7 @@ pub extern "C" fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
     match enable_indy_mocks() {
         Ok(_) => {}
-        Err(_) => return LibvcxErrorKind::UnknownError.into(),
+        Err(_) => return ErrorKindLibvcx::UnknownError.into(),
     };
     enable_agency_mocks();
     return error::SUCCESS_ERR_CODE;
@@ -67,11 +67,11 @@ pub extern "C" fn vcx_enable_mocks() -> u32 {
 pub extern "C" fn vcx_init_threadpool(config: *const c_char) -> u32 {
     info!("vcx_init_threadpool >>>");
 
-    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(config, ErrorKindLibvcx::InvalidOption);
 
     match init_threadpool(&config) {
         Ok(_) => error::SUCCESS_ERR_CODE,
-        Err(_) => LibvcxErrorKind::UnknownError.into(),
+        Err(_) => ErrorKindLibvcx::UnknownError.into(),
     }
 }
 
@@ -105,8 +105,8 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
 ) -> u32 {
     info!("vcx_create_agency_client_for_main_wallet >>>");
 
-    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(config, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!("vcx_create_agency_client_for_main_wallet >>> config: {}", config);
 
@@ -118,7 +118,7 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
                 "vcx_create_agency_client_for_main_wallet >>> invalid configuration, err: {:?}",
                 err
             );
-            return LibvcxErrorKind::InvalidConfiguration.into();
+            return ErrorKindLibvcx::InvalidConfiguration.into();
         }
     };
 
@@ -171,8 +171,8 @@ pub extern "C" fn vcx_init_issuer_config(
 ) -> u32 {
     info!("vcx_init_issuer_config >>>");
 
-    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(config, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!("vcx_init_issuer_config >>> config: {}", config);
 
@@ -181,7 +181,7 @@ pub extern "C" fn vcx_init_issuer_config(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_init_issuer_config >>> invalid configuration, err: {:?}", err);
-            return LibvcxErrorKind::InvalidConfiguration.into();
+            return ErrorKindLibvcx::InvalidConfiguration.into();
         }
     };
 
@@ -248,10 +248,10 @@ pub extern "C" fn vcx_open_main_pool(
     cb: extern "C" fn(xcommand_handle: CommandHandle, err: u32),
 ) -> u32 {
     info!("vcx_open_main_pool >>>");
-    check_useful_c_str!(pool_config, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(pool_config, ErrorKindLibvcx::InvalidOption);
     if is_main_pool_open() {
         error!("vcx_open_main_pool :: Pool connection is already open.");
-        return LibvcxError::from_msg(LibvcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
+        return ErrorLibvcx::from_msg(ErrorKindLibvcx::AlreadyInitialized, "Pool connection is already open.").into();
     }
 
     let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
@@ -259,7 +259,7 @@ pub extern "C" fn vcx_open_main_pool(
         Err(err) => {
             set_current_error(&err);
             error!("vcx_open_main_pool >>> invalid wallet configuration; err: {:?}", err);
-            return LibvcxErrorKind::InvalidConfiguration.into();
+            return ErrorKindLibvcx::InvalidConfiguration.into();
         }
     };
 
@@ -375,7 +375,7 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 /// Error message
 #[no_mangle]
 pub extern "C" fn vcx_error_c_message(error_code: u32) -> *const c_char {
-    let kind_string = LibvcxErrorKind::from(error_code).to_string();
+    let kind_string = ErrorKindLibvcx::from(error_code).to_string();
     CString::new(kind_string).unwrap().into_raw()
 }
 
@@ -399,8 +399,8 @@ pub extern "C" fn vcx_update_webhook_url(
 ) -> u32 {
     info!("vcx_update_webhook {:?} >>>", notification_webhook_url);
 
-    check_useful_c_str!(notification_webhook_url, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(notification_webhook_url, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!("vcx_update_webhook(webhook_url: {})", notification_webhook_url);
 
@@ -442,7 +442,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 ) -> u32 {
     info!("vcx_get_ledger_author_agreement >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!("vcx_get_ledger_author_agreement(command_handle: {})", command_handle);
 
@@ -502,10 +502,10 @@ pub extern "C" fn vcx_set_active_txn_author_agreement_meta(
 ) -> u32 {
     info!("vcx_set_active_txn_author_agreement_meta >>>");
 
-    check_useful_opt_c_str!(text, LibvcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(version, LibvcxErrorKind::InvalidOption);
-    check_useful_opt_c_str!(hash, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(acc_mech_type, LibvcxErrorKind::InvalidOption);
+    check_useful_opt_c_str!(text, ErrorKindLibvcx::InvalidOption);
+    check_useful_opt_c_str!(version, ErrorKindLibvcx::InvalidOption);
+    check_useful_opt_c_str!(hash, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_str!(acc_mech_type, ErrorKindLibvcx::InvalidOption);
 
     trace!("vcx_set_active_txn_author_agreement_meta(text: {:?}, version: {:?}, hash: {:?}, acc_mech_type: {:?}, time_of_acceptance: {:?})", text, version, hash, acc_mech_type, time_of_acceptance);
 
@@ -775,7 +775,7 @@ mod tests {
     use crate::api_lib::api_handle::{credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema, vcx_settings};
     use crate::api_lib::api_handle::wallet::wallet_import;
     use crate::api_lib::errors::error;
-    use crate::api_lib::errors::error::{LibvcxErrorKind, LibvcxResult};
+    use crate::api_lib::errors::error::{ErrorKindLibvcx, LibvcxResult};
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
     use crate::api_lib::global::pool::reset_main_pool_handle;
@@ -805,10 +805,10 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, u32::from(LibvcxErrorKind::PoolLedgerConnect));
+        assert_eq!(err, u32::from(ErrorKindLibvcx::PoolLedgerConnect));
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
-            LibvcxErrorKind::NoPoolOpen
+            ErrorKindLibvcx::NoPoolOpen
         );
 
         delete_named_test_pool(0, &pool_name).await;
@@ -827,10 +827,10 @@ mod tests {
             pool_config: None,
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
-        assert_eq!(err, u32::from(LibvcxErrorKind::InvalidGenesisTxnPath));
+        assert_eq!(err, u32::from(ErrorKindLibvcx::InvalidGenesisTxnPath));
         assert_eq!(
             get_main_pool_handle().unwrap_err().kind(),
-            LibvcxErrorKind::NoPoolOpen
+            ErrorKindLibvcx::NoPoolOpen
         );
     }
 
@@ -929,7 +929,7 @@ mod tests {
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
-        assert_eq!(err, u32::from(LibvcxErrorKind::WalletNotFound));
+        assert_eq!(err, u32::from(ErrorKindLibvcx::WalletNotFound));
 
         indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
@@ -975,7 +975,7 @@ mod tests {
         };
         assert_eq!(
             wallet_import(&import_config).await.unwrap_err().kind(),
-            LibvcxErrorKind::DuplicationWallet
+            ErrorKindLibvcx::DuplicationWallet
         );
 
         vcx_shutdown(true);
@@ -985,7 +985,7 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_init_no_config_path() {
         let _setup = SetupEmpty::init();
-        assert_eq!(vcx_init_threadpool(ptr::null()), u32::from(LibvcxErrorKind::InvalidOption))
+        assert_eq!(vcx_init_threadpool(ptr::null()), u32::from(ErrorKindLibvcx::InvalidOption))
     }
 
     #[test]
@@ -1042,31 +1042,31 @@ mod tests {
         vcx_shutdown(true);
         assert_eq!(
             mediated_connection::release(connection).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
+            ErrorKindLibvcx::InvalidConnectionHandle
         );
         assert_eq!(
             issuer_credential::release(issuer_credential).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             schema::release(schema).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidSchemaHandle
+            ErrorKindLibvcx::InvalidSchemaHandle
         );
         assert_eq!(
             proof::release(proof).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidProofHandle
+            ErrorKindLibvcx::InvalidProofHandle
         );
         assert_eq!(
             credential_def::release(credentialdef).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidCredDefHandle
+            ErrorKindLibvcx::InvalidCredDefHandle
         );
         assert_eq!(
             credential::release(credential).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidCredentialHandle
+            ErrorKindLibvcx::InvalidCredentialHandle
         );
         assert_eq!(
             disclosed_proof::release(disclosed_proof).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidDisclosedProofHandle
+            ErrorKindLibvcx::InvalidDisclosedProofHandle
         );
         assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
     }

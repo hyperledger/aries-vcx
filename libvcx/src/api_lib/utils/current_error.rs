@@ -7,7 +7,7 @@ use futures::future::err;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::errors::error::LibvcxError;
+use crate::api_lib::errors::error::ErrorLibvcx;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
@@ -19,7 +19,7 @@ pub fn reset_current_error() {
     })
 }
 
-pub fn set_current_error_vcx(err: &LibvcxError) {
+pub fn set_current_error_vcx(err: &ErrorLibvcx) {
     CURRENT_ERROR_C_JSON
         .try_with(|error| {
             let error_json = json!({

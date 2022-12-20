@@ -13,7 +13,7 @@ pub struct Forward {
 impl Forward {
     pub fn new(to: String, msg: Vec<u8>) -> MessagesResult<Forward> {
         let msg = serde_json::from_slice(msg.as_slice())
-            .map_err(|err| MessagesError::from_msg(MessagesErrorKind::InvalidState, err))?;
+            .map_err(|err| ErrorMessages::from_msg(ErrorKindMessages::InvalidState, err))?;
 
         Ok(Forward {
             id: MessageId::new(),

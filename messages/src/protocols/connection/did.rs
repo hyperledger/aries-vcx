@@ -10,8 +10,8 @@ impl Did {
         if Self::validate(did) {
             Ok(Self(did.to_string()))
         } else {
-            Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidDid,
+            Err(ErrorMessages::from_msg(
+                ErrorKindMessages::InvalidDid,
                 format!("{} is not a valid DID", did),
             ))
         }

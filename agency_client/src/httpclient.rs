@@ -5,7 +5,7 @@ use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
 use crate::testing::mocking;
 use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
@@ -15,8 +15,8 @@ lazy_static! {
         .pool_idle_timeout(Some(Duration::from_secs(4)))
         .build()
         .map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::PostMessageFailed,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::PostMessageFailed,
                 format!("Building reqwest client failed: {:?}", err),
             )
         })
@@ -59,8 +59,8 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
         .send()
         .await
         .map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::PostMessageFailed,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::PostMessageFailed,
                 format!("HTTP Client could not connect with {}, err: {}", url, err),
             )
         })?;
@@ -72,14 +72,14 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
             if response_status.is_success() {
                 Ok(payload.into_bytes())
             } else {
-                Err(AgencyClientError::from_msg(
-                    AgencyClientErrorKind::PostMessageFailed,
+                Err(ErrorAgencyClient::from_msg(
+                    ErrorKindAgencyClient::PostMessageFailed,
                     format!("POST {} failed due to non-success HTTP status: {}, response body: {}",
                             url, response_status, payload)))
             }
         }
-        Err(error) => Err(AgencyClientError::from_msg(
-            AgencyClientErrorKind::PostMessageFailed,
+        Err(error) => Err(ErrorAgencyClient::from_msg(
+            ErrorKindAgencyClient::PostMessageFailed,
             format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
                      content-length header: {:?}, error: {:?}",
                     url, response_status, content_length, error))),

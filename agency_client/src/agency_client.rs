@@ -2,7 +2,7 @@ use std::sync::Arc;
 use url::Url;
 
 use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
 use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
 use crate::utils::validation;
 
@@ -85,8 +85,8 @@ impl AgencyClient {
         validation::validate_verkey(&config.remote_to_sdk_verkey)?;
 
         match Url::parse(&config.agency_endpoint) {
-            Err(_) => Err(AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidUrl,
+            Err(_) => Err(ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::InvalidUrl,
                 format!("Endpoint {} is not valid url", &config.agency_endpoint),
             )),
             _ => Ok(())

@@ -155,19 +155,19 @@ impl SmConnectionInviter {
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id)
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            .ok_or(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Remote Connection DID is not set",
             ))
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        let did_did = self.their_did_doc().ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        let did_did = self.their_did_doc().ok_or(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::NotReady,
             "Counterparty diddoc is not available.",
         ))?;
-        did_did.recipient_keys()?.get(0).ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        did_did.recipient_keys()?.get(0).ok_or(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::NotReady,
             "Can't resolve recipient key from the counterparty diddoc.",
         )).map(|s| s.to_string())
     }
@@ -323,8 +323,8 @@ impl SmConnectionInviter {
                         .set_out_time()
                 ).await
             }
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Building connection ack in current state is not allowed",
             )),
         }

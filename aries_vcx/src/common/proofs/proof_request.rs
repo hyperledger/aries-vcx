@@ -41,15 +41,15 @@ impl ProofRequestData {
             Ok(attrs) => self.requested_attributes = attrs,
             Err(_err) => {
                 let requested_attributes: Vec<AttrInfo> = ::serde_json::from_str(&requested_attrs).map_err(|err| {
-                    VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidJson,
                         format!("Invalid Requested Attributes: {:?}, err: {:?}", requested_attrs, err),
                     )
                 })?;
                 for attribute in requested_attributes.iter() {
                     if attribute.name.is_some() && attribute.names.is_some() {
-                        return Err(VcxError::from_msg(
-                            VcxErrorKind::InvalidProofRequest,
+                        return Err(ErrorAriesVcx::from_msg(
+                            ErrorKindAriesVcx::InvalidProofRequest,
                             "Requested attribute can contain either 'name' or 'names'. Not both.".to_string(),
                         ));
                     };
@@ -72,8 +72,8 @@ impl ProofRequestData {
     pub fn set_requested_predicates_as_string(mut self, requested_predicates: String) -> VcxResult<Self> {
         let requested_predicates: Vec<PredicateInfo> =
             ::serde_json::from_str(&requested_predicates).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidJson,
                     format!(
                         "Invalid Requested Predicates: {:?}, err: {:?}",
                         requested_predicates, err
@@ -91,8 +91,8 @@ impl ProofRequestData {
 
     pub fn set_not_revoked_interval(mut self, non_revoc_interval: String) -> VcxResult<Self> {
         let non_revoc_interval: NonRevokedInterval = ::serde_json::from_str(&non_revoc_interval).map_err(|_| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidJson,
                 format!("Invalid Revocation Interval: {:?}", non_revoc_interval),
             )
         })?;
@@ -296,7 +296,7 @@ mod unit_tests {
             .set_requested_attributes_as_string(requested_attrs.into())
             .unwrap_err();
 
-        assert_eq!(VcxErrorKind::InvalidProofRequest, err.kind());
+        assert_eq!(ErrorKindAriesVcx::InvalidProofRequest, err.kind());
     }
 
     #[test]

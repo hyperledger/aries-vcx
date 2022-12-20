@@ -6,7 +6,7 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::out_of_band;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
 use crate::api_lib::errors::error;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
@@ -20,8 +20,8 @@ pub extern "C" fn vcx_out_of_band_sender_create(
 ) -> u32 {
     info!("vcx_out_of_band_sender_create >>>");
 
-    check_useful_c_str!(config, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(config, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_create(command_handle: {}, config: {})",
@@ -63,8 +63,8 @@ pub extern "C" fn vcx_out_of_band_receiver_create(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_create >>>");
 
-    check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_create(command_handle: {}, message: {})",
@@ -106,7 +106,7 @@ pub extern "C" fn vcx_out_of_band_sender_get_thread_id(
 ) -> u32 {
     info!("vcx_out_of_band_sender_get_thread_id >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_get_thread_id(command_handle: {}, handle: {})",
@@ -149,7 +149,7 @@ pub extern "C" fn vcx_out_of_band_receiver_get_thread_id(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_get_thread_id >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_get_thread_id(command_handle: {}, handle: {})",
@@ -193,8 +193,8 @@ pub extern "C" fn vcx_out_of_band_sender_append_message(
 ) -> u32 {
     info!("vcx_out_of_band_sender_append_message >>>");
 
-    check_useful_c_str!(message, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(message, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_append_message(command_handle: {}, handle: {}, message: {})",
@@ -237,8 +237,8 @@ pub extern "C" fn vcx_out_of_band_sender_append_service(
 ) -> u32 {
     info!("vcx_out_of_band_sender_append_service >>>");
 
-    check_useful_c_str!(service, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(service, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_append_service(command_handle: {}, handle: {}, service: {})",
@@ -281,8 +281,8 @@ pub extern "C" fn vcx_out_of_band_sender_append_service_did(
 ) -> u32 {
     info!("vcx_out_of_band_sender_append_service_did >>>");
 
-    check_useful_c_str!(did, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(did, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_append_service_did(command_handle: {}, handle: {}, did: {})",
@@ -324,7 +324,7 @@ pub extern "C" fn vcx_out_of_band_receiver_extract_message(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_extract_message >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_extract_message(command_handle: {}, handle: {})",
@@ -367,7 +367,7 @@ pub extern "C" fn vcx_out_of_band_to_message(
 ) -> u32 {
     info!("vcx_out_of_band_to_message >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_to_message(command_handle: {}, handle: {})",
@@ -411,8 +411,8 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_connection_exists >>>");
 
-    check_useful_c_str!(conn_handles, LibvcxErrorKind::InvalidOption);
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(conn_handles, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_connection_exists(command_handle: {}, handle: {}, conn_handles: {})",
@@ -429,7 +429,7 @@ pub extern "C" fn vcx_out_of_band_receiver_connection_exists(
                 "vcx_out_of_band_receiver_connection_exists >>> failed to parse connection handles: {}, err: {:?}",
                 conn_handles, err
             );
-            return u32::from(LibvcxErrorKind::InvalidConnectionHandle);
+            return u32::from(ErrorKindLibvcx::InvalidConnectionHandle);
         }
     };
 
@@ -459,7 +459,7 @@ pub extern "C" fn vcx_out_of_band_receiver_build_connection(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_build_connection >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_build_connection(command_handle: {}, handle: {})",
@@ -502,7 +502,7 @@ pub extern "C" fn vcx_out_of_band_sender_serialize(
 ) -> u32 {
     info!("vcx_out_of_band_sender_serialize >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_serialize(command_handle: {}, handle: {})",
@@ -545,7 +545,7 @@ pub extern "C" fn vcx_out_of_band_receiver_serialize(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_serialize >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_serialize(command_handle: {}, handle: {})",
@@ -588,8 +588,8 @@ pub extern "C" fn vcx_out_of_band_sender_deserialize(
 ) -> u32 {
     info!("vcx_out_of_band_sender_deserialize >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(oob_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_str!(oob_json, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_sender_deserialize(command_handle: {}, oob_json: {})",
@@ -631,8 +631,8 @@ pub extern "C" fn vcx_out_of_band_receiver_deserialize(
 ) -> u32 {
     info!("vcx_out_of_band_receiver_deserialize >>>");
 
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(oob_json, LibvcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_str!(oob_json, ErrorKindLibvcx::InvalidOption);
 
     trace!(
         "vcx_out_of_band_receiver_deserialize(command_handle: {}, oob_json: {})",

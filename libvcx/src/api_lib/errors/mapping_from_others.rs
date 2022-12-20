@@ -1,8 +1,8 @@
 use std::sync::PoisonError;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
 
-impl<T> From<PoisonError<T>> for LibvcxError {
+impl<T> From<PoisonError<T>> for ErrorLibvcx {
     fn from(err: PoisonError<T>) -> Self {
-        LibvcxError::from_msg(LibvcxErrorKind::PoisonedLock, err.to_string())
+        ErrorLibvcx::from_msg(ErrorKindLibvcx::PoisonedLock, err.to_string())
     }
 }

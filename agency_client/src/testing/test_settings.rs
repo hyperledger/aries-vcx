@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 
@@ -40,14 +40,14 @@ fn _get_config_value(key: &str) -> AgencyClientResult<String> {
 
     AGENCY_SETTINGS
         .read()
-        .or(Err(AgencyClientError::from_msg(
-            AgencyClientErrorKind::InvalidConfiguration,
+        .or(Err(ErrorAgencyClient::from_msg(
+            ErrorKindAgencyClient::InvalidConfiguration,
             "Cannot read AGENCY_SETTINGS",
         )))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(AgencyClientError::from_msg(
-            AgencyClientErrorKind::InvalidConfiguration,
+        .ok_or(ErrorAgencyClient::from_msg(
+            ErrorKindAgencyClient::InvalidConfiguration,
             format!("Cannot read \"{}\" from AGENCY_SETTINGS", key),
         ))
 }

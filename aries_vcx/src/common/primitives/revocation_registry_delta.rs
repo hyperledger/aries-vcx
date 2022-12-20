@@ -41,8 +41,8 @@ impl RevocationRegistryDelta {
         let ledger = Arc::clone(profile).inject_ledger();
         let (_, rev_reg_delta_json, _) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
         serde_json::from_str(&rev_reg_delta_json).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::SerializationError,
+            ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::SerializationError,
                 format!("Failed to deserialize rev_reg_delta_json from ledger, err: {}", err),
             )
         })

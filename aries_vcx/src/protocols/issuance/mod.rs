@@ -11,8 +11,8 @@ pub mod issuer;
 
 pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> VcxResult<()> {
     if !settings::indy_mocks_enabled() && !message.thread_id_matches(thread_id) {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        return Err(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Cannot handle message {:?}: thread id does not match, expected {:?}",
                 message, thread_id
@@ -25,14 +25,14 @@ pub fn verify_thread_id(thread_id: &str, message: &CredentialIssuanceAction) -> 
 pub async fn is_cred_def_revokable(profile: &Arc<dyn Profile>, cred_def_id: &str) -> VcxResult<bool> {
     let ledger = Arc::clone(profile).inject_ledger();
     let cred_def_json = ledger.get_cred_def(cred_def_id, None).await.map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidLedgerResponse,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidLedgerResponse,
             format!("Failed to obtain credential definition from ledger or cache: {}", err),
         )
     })?;
     let parsed_cred_def: serde_json::Value = serde_json::from_str(&cred_def_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::SerializationError,
             format!(
                 "Failed deserialize credential definition json {}\nError: {}",
                 cred_def_json, err

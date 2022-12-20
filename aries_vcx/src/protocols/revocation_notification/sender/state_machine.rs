@@ -41,8 +41,8 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_notification()),
             SenderFullState::Finished(state) => Ok(state.get_notification()),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidState,
                     "Revocation notification not yet known in this state",
                 ));
             }
@@ -54,8 +54,8 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_thread_id()),
             SenderFullState::Finished(state) => Ok(state.get_thread_id()),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidState,
                     "Thread ID not yet known in this state",
                 ));
             }
@@ -84,7 +84,7 @@ impl RevocationNotificationSenderSM {
                 }
             }
             _ => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received"));
+                return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidState, "Ack already received"));
             }
         };
         Ok(Self { state, ..self })
@@ -97,8 +97,8 @@ impl RevocationNotificationSenderSM {
                 SenderFullState::Finished(FinishedState::new(state.get_notification(), Some(ack)))
             }
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidState,
                     "Ack not expected in this state",
                 ));
             }

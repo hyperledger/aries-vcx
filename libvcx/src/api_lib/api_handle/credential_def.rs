@@ -3,7 +3,7 @@ use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBui
 use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile;
 
 lazy_static! {
@@ -24,8 +24,8 @@ pub async fn create(
         .tag(tag)
         .build()
         .map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidConfiguration,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidConfiguration,
                 format!("Failed build credential config using provided parameters: {:?}", err),
             )
         })?;
@@ -70,7 +70,7 @@ pub fn get_cred_def_id(handle: u32) -> LibvcxResult<String> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     CREDENTIALDEF_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle, e.to_string())))
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle, e.to_string())))
 }
 
 pub fn release_all() {
@@ -226,7 +226,7 @@ pub mod tests {
         assert_eq!(credentialdef1, credentialdef2);
         assert_eq!(
             from_string("{}").unwrap_err().kind(),
-            LibvcxErrorKind::CreateCredDef
+            ErrorKindLibvcx::CreateCredDef
         );
     }
 
@@ -282,10 +282,10 @@ pub mod tests {
             .await
             .unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
+        assert_eq!(release(h1).unwrap_err().kind(), ErrorKindLibvcx::InvalidCredDefHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), ErrorKindLibvcx::InvalidCredDefHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), ErrorKindLibvcx::InvalidCredDefHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), ErrorKindLibvcx::InvalidCredDefHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), ErrorKindLibvcx::InvalidCredDefHandle);
     }
 }

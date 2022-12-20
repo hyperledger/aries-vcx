@@ -39,8 +39,8 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         secret!(credential_json)
     );
     let cred_values: serde_json::Value = serde_json::from_str(credential_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Can't deserialize credential preview json. credential_json: {}, error: {:?}",
                 credential_json, err
@@ -52,27 +52,27 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
     match cred_values {
         serde_json::Value::Array(cred_values) => {
             for cred_value in cred_values.iter() {
-                let key = cred_value.get("name").ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidAttributesStructure,
+                let key = cred_value.get("name").ok_or(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidAttributesStructure,
                     format!("No 'name' field in cred_value: {:?}", cred_value),
                 ))?;
-                let value = cred_value.get("value").ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidAttributesStructure,
+                let value = cred_value.get("value").ok_or(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidAttributesStructure,
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
                 credential_preview =
                     credential_preview.add_value(
                         &key.as_str()
                             .ok_or(
-                                VcxError::from_msg(
-                                    VcxErrorKind::InvalidOption,
+                                ErrorAriesVcx::from_msg(
+                                    ErrorKindAriesVcx::InvalidOption,
                                     "Credential value names are currently only allowed to be strings",
                                 )
                             )?,
                         &value.as_str()
                             .ok_or(
-                                VcxError::from_msg(
-                                    VcxErrorKind::InvalidOption,
+                                ErrorAriesVcx::from_msg(
+                                    ErrorKindAriesVcx::InvalidOption,
                                     "Credential values are currently only allowed to be strings",
                                 )
                             )?,
@@ -86,8 +86,8 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                 credential_preview = credential_preview.add_value(
                     key,
                     value.as_str().ok_or_else(|| {
-                        VcxError::from_msg(
-                            VcxErrorKind::InvalidOption,
+                        ErrorAriesVcx::from_msg(
+                            ErrorKindAriesVcx::InvalidOption,
                             "Credential values are currently only allowed to be strings",
                         )
                     })?,
@@ -180,8 +180,8 @@ impl Issuer {
                 .send_revocation_notification(config, send_message).await?;
             Ok(())
         } else {
-            Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidState,
                 format!("Can't send revocation notification in state {:?}, credential is not revokable", self.issuer_sm.get_state()),
             ))
         }
@@ -204,8 +204,8 @@ impl Issuer {
     }
 
     pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>) -> VcxResult<()> {
-        let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidState,
+        let revocation_info: RevocationInfoV1 = self.issuer_sm.get_revocation_info().ok_or(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidState,
             "Credential is not revocable, no revocation info has been found.",
         ))?;
         if let (Some(cred_rev_id), Some(rev_reg_id), Some(tails_file)) = (
@@ -216,8 +216,8 @@ impl Issuer {
             let anoncreds = Arc::clone(profile).inject_anoncreds();
             anoncreds.revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id).await?;
         } else {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            return Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidState,
                 "Revocation info is not complete, cannot revoke credential.",
             ));
         }
@@ -340,7 +340,7 @@ pub mod unit_tests {
 
     fn _send_message_but_fail() -> Option<SendClosure> {
         Some(Box::new(|_: A2AMessage| {
-            Box::pin(async { Err(VcxError::from_msg(VcxErrorKind::IOError, "Mocked error")) })
+            Box::pin(async { Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::IOError, "Mocked error")) })
         }))
     }
 
@@ -425,7 +425,7 @@ pub mod unit_tests {
         let issuer = _issuer().to_finished_state_unrevokable().await;
         assert_eq!(IssuerState::Finished, issuer.get_state());
         let revoc_result = issuer.revoke_credential_local(&mock_profile()).await;
-        assert_eq!(revoc_result.unwrap_err().kind(), VcxErrorKind::InvalidState)
+        assert_eq!(revoc_result.unwrap_err().kind(), ErrorKindAriesVcx::InvalidState)
     }
 
     #[tokio::test]

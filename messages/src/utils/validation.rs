@@ -7,12 +7,12 @@ pub fn validate_verkey(verkey: &str) -> MessagesResult<String> {
     match bs58::decode(check_verkey.clone())
         .into_vec() {
         Ok(ref x) if x.len() == 32 => Ok(check_verkey),
-        Ok(x) => Err(MessagesError::from_msg(
-            MessagesErrorKind::InvalidVerkey,
+        Ok(x) => Err(ErrorMessages::from_msg(
+            ErrorKindMessages::InvalidVerkey,
             format!("Invalid verkey length, expected 32 bytes, decoded {} bytes", x.len()),
         )),
-        Err(err) => Err(MessagesError::from_msg(
-            MessagesErrorKind::NotBase58,
+        Err(err) => Err(ErrorMessages::from_msg(
+            ErrorKindMessages::NotBase58,
             format!("Verkey is not valid base58, details: {}", err),
         )),
     }
@@ -37,7 +37,7 @@ mod unit_tests {
     fn test_verkey_is_b58_but_invalid_length() {
         let verkey = "8XFh8yBzrpJQmNyZzgoT";
         match validate_verkey(&verkey) {
-            Err(x) => assert_eq!(x.kind(), MessagesErrorKind::InvalidVerkey),
+            Err(x) => assert_eq!(x.kind(), ErrorKindMessages::InvalidVerkey),
             Ok(_) => panic!("Should be invalid verkey"),
         }
     }
@@ -46,7 +46,7 @@ mod unit_tests {
     fn test_validate_verkey_with_non_base58() {
         let verkey = "*kVTa7SCJ5SntpYyX7CSb2pcBhiVGT9kWSagA8a9T69A";
         match validate_verkey(&verkey) {
-            Err(x) => assert_eq!(x.kind(), MessagesErrorKind::NotBase58),
+            Err(x) => assert_eq!(x.kind(), ErrorKindMessages::NotBase58),
             Ok(_) => panic!("Should be invalid verkey"),
         }
     }

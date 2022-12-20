@@ -11,7 +11,7 @@ use crate::{
         },
     },
 };
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -27,8 +27,8 @@ impl BaseLedger for MockLedger {
 
     async fn submit_request(&self, request_json: &str) -> VcxResult<String> {
         // not needed yet
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
+        Err(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::UnimplementedFeature,
             "unimplemented mock method",
         ))
     }
@@ -47,8 +47,8 @@ impl BaseLedger for MockLedger {
 
     async fn get_nym(&self, did: &str) -> VcxResult<String> {
         // not needed yet
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
+        Err(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::UnimplementedFeature,
             "unimplemented mock method",
         ))
     }
@@ -73,7 +73,7 @@ impl BaseLedger for MockLedger {
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
-            return Err(VcxError::from_msg(VcxErrorKind::LibndyError(309), format!("Mocked error")))
+            return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::LibndyError(309), format!("Mocked error")))
         };
         Ok(CRED_DEF_JSON.to_string())
     }
@@ -147,7 +147,7 @@ impl BaseLedger for MockLedger {
 mod unit_tests {
 
     use crate::plugins::ledger::base_ledger::BaseLedger;
-    use crate::errors::error::{VcxErrorKind, VcxResult};
+    use crate::errors::error::{ErrorKindAriesVcx, VcxResult};
 
     use super::MockLedger;
 
@@ -156,7 +156,7 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), ErrorKindAriesVcx::UnimplementedFeature)
         }
 
         let ledger: Box<dyn BaseLedger> = Box::new(MockLedger);

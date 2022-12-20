@@ -12,7 +12,7 @@ use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 
 lazy_static! {
@@ -30,7 +30,7 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> LibvcxResult<u32> {
     trace!("create_proof >>> source_id: {}, proof_req: {}", source_id, proof_req);
     debug!("creating disclosed proof with id: {}", source_id);
 
-    let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
+    let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
     HANDLE_MAP.add(proof)
@@ -43,7 +43,7 @@ pub async fn create_proof_with_msgid(
 ) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, &msg_id).await?;
 
-    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
+    let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
 
     let proof = Prover::create_from_request(source_id, presentation_request)?;
 
@@ -56,7 +56,7 @@ pub async fn create_proof_with_msgid(
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidDisclosedProofHandle,
                                                e.to_string())))
 }
 
@@ -76,8 +76,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidOption,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidOption,
                 format!(
                     "Can not updated state with message: Message deserialization failed: {:?}",
                     err
@@ -106,8 +106,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
         serde_json::to_string(&DisclosedProofs::V3(proof.clone())).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidState,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidState,
                 format!("cannot serialize DisclosedProof proofect: {:?}", err),
             )
         })
@@ -116,8 +116,8 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     let proof: DisclosedProofs = serde_json::from_str(proof_data).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("cannot deserialize DisclosedProofs object: {:?}", err),
         )
     })?;
@@ -129,7 +129,7 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
     HANDLE_MAP.release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidDisclosedProofHandle,
                                                e.to_string())))
 }
 
@@ -152,8 +152,8 @@ pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u32
 }
 
 pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
-    Err(LibvcxError::from_msg(
-        LibvcxErrorKind::ActionNotSupported,
+    Err(ErrorLibvcx::from_msg(
+        ErrorKindLibvcx::ActionNotSupported,
         "Action generate_reject_proof_msg is not implemented for V3 disclosed proof.",
     ))
 }
@@ -252,15 +252,15 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
         match message {
             A2AMessage::PresentationRequest(presentation_request) => presentation_request,
             msg => {
-                return Err(LibvcxError::from_msg(
-                    LibvcxErrorKind::InvalidMessages,
+                return Err(ErrorLibvcx::from_msg(
+                    ErrorKindLibvcx::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
                 ));
             }
         }
     };
     serde_json::to_string_pretty(&presentation_request)
-        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)))
+        .map_err(|err| ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidJson, format!("Cannot serialize message: {}", err)))
 }
 
 pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<String> {
@@ -284,7 +284,7 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_source_id()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidProofHandle,
                                                e.to_string())))
 }
 
@@ -332,7 +332,7 @@ mod tests {
     async fn test_create_fails() {
         let _setup = SetupMocks::init();
 
-        assert_eq!(create_proof("1", "{}").unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(create_proof("1", "{}").unwrap_err().kind(), ErrorKindLibvcx::InvalidJson);
     }
 
     #[tokio::test]
@@ -457,7 +457,7 @@ mod tests {
     async fn test_deserialize_fails() {
         let _setup = SetupDefaults::init();
 
-        assert_eq!(from_string("{}").unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(from_string("{}").unwrap_err().kind(), ErrorKindLibvcx::InvalidJson);
     }
 
     #[tokio::test]

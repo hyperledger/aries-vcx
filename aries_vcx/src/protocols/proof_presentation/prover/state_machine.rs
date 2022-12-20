@@ -272,8 +272,8 @@ impl ProverSM {
         let prover_sm = match &self.state {
             ProverFullState::Initial(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation_proposal(proposal_data, send_message).await?
@@ -302,8 +302,8 @@ impl ProverSM {
             }
             ProverFullState::PresentationRequestReceived(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation_proposal(proposal_data, send_message).await?
@@ -315,15 +315,15 @@ impl ProverSM {
                     self.generate_presentation(profile, credentials, self_attested_attrs).await?
                 },
                 ProverMessages::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.negotiate_presentation(preview, send_message).await?
@@ -335,22 +335,22 @@ impl ProverSM {
             },
             ProverFullState::PresentationPrepared(_) => match message {
                 ProverMessages::SendPresentation => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation(send_message).await?
                 }
                 ProverMessages::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.negotiate_presentation(preview, send_message).await?
@@ -362,8 +362,8 @@ impl ProverSM {
             },
             ProverFullState::PresentationPreparationFailed(_) => match message {
                 ProverMessages::SendPresentation => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation(send_message).await?
@@ -383,8 +383,8 @@ impl ProverSM {
                     ProverSM { state, ..self }
                 }
                 ProverMessages::RejectPresentationRequest(_) => {
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::ActionNotSupported,
+                    return Err(ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::ActionNotSupported,
                         "Presentation is already sent",
                     ));
                 }
@@ -465,12 +465,12 @@ impl ProverSM {
 
     pub fn presentation_request(&self) -> VcxResult<&PresentationRequest> {
         match self.state {
-            ProverFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Initial(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation request is not available",
             )),
-            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationProposalSent(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation request is not available",
             )),
             ProverFullState::PresentationRequestReceived(ref state) => Ok(&state.presentation_request),
@@ -478,33 +478,33 @@ impl ProverSM {
             ProverFullState::PresentationPreparationFailed(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation_request),
             ProverFullState::Finished(ref state) => Ok(state.presentation_request.as_ref().ok_or(
-                VcxError::from_msg(VcxErrorKind::NotReady, "Presentation request is not available"),
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Presentation request is not available"),
             )?),
         }
     }
 
     pub fn presentation(&self) -> VcxResult<&Presentation> {
         match self.state {
-            ProverFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Initial(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation is not created yet",
             )),
-            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationProposalSent(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation is not created yet",
             )),
-            ProverFullState::PresentationRequestReceived(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationRequestReceived(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation is not created yet",
             )),
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation),
-            ProverFullState::PresentationPreparationFailed(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationPreparationFailed(_) => Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation is not created yet",
             )),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation),
-            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::NotReady,
                 "Presentation is not available",
             ))?),
         }
@@ -1104,7 +1104,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap_err();
-            assert_eq!(VcxErrorKind::ActionNotSupported, err.kind());
+            assert_eq!(ErrorKindAriesVcx::ActionNotSupported, err.kind());
         }
 
         #[tokio::test]

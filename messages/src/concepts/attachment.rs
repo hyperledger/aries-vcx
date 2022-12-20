@@ -2,7 +2,7 @@ use std::str::from_utf8;
 
 use serde_json;
 
-use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
+use crate::errors::error::{ErrorMessages, ErrorKindMessages, MessagesResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Attachments(pub Vec<Attachment>);
@@ -42,8 +42,8 @@ impl Attachments {
     pub fn content(&self) -> MessagesResult<String> {
         match self.get() {
             Some(Attachment::JSON(ref attach)) => attach.get_data(),
-            _ => Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            _ => Err(ErrorMessages::from_msg(
+                ErrorKindMessages::InvalidJson,
                 "Unsupported Attachment type",
             )),
         }
@@ -93,12 +93,12 @@ impl Json {
         let data: AttachmentData = match encoding {
             AttachmentEncoding::Base64 => AttachmentData::Base64(base64::encode(&match json {
                 serde_json::Value::Object(obj) => serde_json::to_string(&obj).map_err(|_| {
-                    MessagesError::from_msg(MessagesErrorKind::InvalidJson, "Invalid Attachment Json".to_string())
+                    ErrorMessages::from_msg(ErrorKindMessages::InvalidJson, "Invalid Attachment Json".to_string())
                 })?,
                 serde_json::Value::String(str) => str,
                 val => {
-                    return Err(MessagesError::from_msg(
-                        MessagesErrorKind::InvalidJson,
+                    return Err(ErrorMessages::from_msg(
+                        ErrorKindMessages::InvalidJson,
                         format!("Unsupported Json value: {:?}", val),
                     ))
                 }
@@ -112,7 +112,7 @@ impl Json {
         let data = self.data.get_bytes()?;
         from_utf8(data.as_slice())
             .map(|s| s.to_string())
-            .map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment".to_string()))
+            .map_err(|_| ErrorMessages::from_msg(ErrorKindMessages::IOError, "Wrong bytes in attachment".to_string()))
     }
 }
 
@@ -134,10 +134,10 @@ impl AttachmentData {
     pub fn get_bytes(&self) -> MessagesResult<Vec<u8>> {
         match self {
             AttachmentData::Base64(s) => {
-                base64::decode(s).map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment"))
+                base64::decode(s).map_err(|_| ErrorMessages::from_msg(ErrorKindMessages::IOError, "Wrong bytes in attachment"))
             }
             AttachmentData::Json(json) => serde_json::to_vec(&json)
-                .map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment")),
+                .map_err(|_| ErrorMessages::from_msg(ErrorKindMessages::IOError, "Wrong bytes in attachment")),
         }
     }
 }

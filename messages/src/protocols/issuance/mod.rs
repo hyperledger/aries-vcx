@@ -1,4 +1,4 @@
-use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
+use crate::errors::error::{ErrorMessages, ErrorKindMessages, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::concepts::mime_type::MimeType;
@@ -34,8 +34,8 @@ impl CredentialPreviewData {
 
     pub fn to_string(&self) -> MessagesResult<String> {
         serde_json::to_string(&self.attributes).map_err(|err| {
-            MessagesError::from_msg(
-                MessagesErrorKind::SerializationError,
+            ErrorMessages::from_msg(
+                ErrorKindMessages::SerializationError,
                 format!("Failed serialize credential preview attributes\nError: {}", err),
             )
         })

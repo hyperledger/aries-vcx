@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use time::get_time;
 
 use crate::core::profile::profile::Profile;
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
 
@@ -23,13 +23,13 @@ pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRe
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let cred_json = anoncreds.prover_get_credential(cred_id).await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::SerializationError,
             format!("Failed to deserialize anoncreds credential: {}", err),
         )
     })?;
-    prover_cred.cred_rev_id.ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidRevocationDetails,
+    prover_cred.cred_rev_id.ok_or(ErrorAriesVcx::from_msg(
+        ErrorKindAriesVcx::InvalidRevocationDetails,
         "Credenial revocation id missing on credential - is this credential revokable?",
     ))
 }

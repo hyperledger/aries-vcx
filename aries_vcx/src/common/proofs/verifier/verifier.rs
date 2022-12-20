@@ -200,7 +200,7 @@ pub mod unit_tests {
                 .await
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::LibndyError(405)
+            ErrorKindAriesVcx::LibndyError(405)
         );  // AnoncredsProofRejected
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
@@ -301,7 +301,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                VcxErrorKind::InvalidProof
+                ErrorKindAriesVcx::InvalidProof
             );
         }
         {
@@ -314,7 +314,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                VcxErrorKind::InvalidProof
+                ErrorKindAriesVcx::InvalidProof
             );
         }
         }).await;

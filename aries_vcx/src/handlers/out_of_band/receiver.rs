@@ -31,8 +31,8 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
-            m @ _ => Err(VcxError::from_msg(VcxErrorKind::InvalidMessageFormat,
-                                            format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
+            m @ _ => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidMessageFormat,
+                                                 format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
         }
     }
 
@@ -75,8 +75,8 @@ impl OutOfBandReceiver {
                 Some(id) => match id {
                     AttachmentId::CredentialOffer => {
                         let offer: CredentialOffer = serde_json::from_str(&attach_json).map_err(|_| {
-                            VcxError::from_msg(
-                                VcxErrorKind::SerializationError,
+                            ErrorAriesVcx::from_msg(
+                                ErrorKindAriesVcx::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
@@ -86,8 +86,8 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::CredentialRequest => {
                         let request: CredentialRequest = serde_json::from_str(&attach_json).map_err(|_| {
-                            VcxError::from_msg(
-                                VcxErrorKind::SerializationError,
+                            ErrorAriesVcx::from_msg(
+                                ErrorKindAriesVcx::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
@@ -97,8 +97,8 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::Credential => {
                         let credential: Credential = serde_json::from_str(&attach_json).map_err(|_| {
-                            VcxError::from_msg(
-                                VcxErrorKind::SerializationError,
+                            ErrorAriesVcx::from_msg(
+                                ErrorKindAriesVcx::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
@@ -108,8 +108,8 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::PresentationRequest => {
                         let request: PresentationRequest = serde_json::from_str(&attach_json).map_err(|_| {
-                            VcxError::from_msg(
-                                VcxErrorKind::SerializationError,
+                            ErrorAriesVcx::from_msg(
+                                ErrorKindAriesVcx::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;
@@ -117,8 +117,8 @@ impl OutOfBandReceiver {
                     }
                     AttachmentId::Presentation => {
                         let presentation: Presentation = serde_json::from_str(&attach_json).map_err(|_| {
-                            VcxError::from_msg(
-                                VcxErrorKind::SerializationError,
+                            ErrorAriesVcx::from_msg(
+                                ErrorKindAriesVcx::SerializationError,
                                 format!("Failed to deserialize attachment: {}", attach_json),
                             )
                         })?;

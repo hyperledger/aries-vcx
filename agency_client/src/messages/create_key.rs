@@ -67,7 +67,7 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use crate::agency_client::AgencyClient;
-    use crate::errors::error::AgencyClientErrorKind;
+    use crate::errors::error::ErrorKindAgencyClient;
     use crate::testing::test_utils::SetupMocks;
 
     use super::*;
@@ -104,6 +104,6 @@ mod tests {
     fn test_create_key_set_invalid_did_errors() {
         let for_did = "11235yBzrpJQmNyZzgoT";
         let res = CreateKeyBuilder::create().for_did(for_did).unwrap_err();
-        assert_eq!(res.kind(), AgencyClientErrorKind::InvalidDid);
+        assert_eq!(res.kind(), ErrorKindAgencyClient::InvalidDid);
     }
 }

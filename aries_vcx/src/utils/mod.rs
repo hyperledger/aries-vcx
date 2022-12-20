@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use messages::did_doc::DidDoc;
 use vdrtools::types::validation::Validatable;
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 use messages::a2a::A2AMessage;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::plugins::wallet::base_wallet::BaseWallet;
@@ -121,6 +121,6 @@ where
 
     match data.validate() {
         Ok(_) => Ok(data),
-        Err(s) => Err(VcxError::from_msg(VcxErrorKind::LibindyInvalidStructure, s)),
+        Err(s) => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::LibindyInvalidStructure, s)),
     }
 }

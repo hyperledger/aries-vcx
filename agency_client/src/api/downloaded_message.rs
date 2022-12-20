@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use crate::MessageStatusCode;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
@@ -37,7 +37,7 @@ impl DownloadedMessageEncrypted {
     pub fn payload(&self) -> AgencyClientResult<Vec<u8>> {
         match &self.payload {
             MessagePayload::V2(payload) => serde_json::to_vec(payload)
-                .map_err(|err| AgencyClientError::from_msg(AgencyClientErrorKind::InvalidHttpResponse, err)),
+                .map_err(|err| ErrorAgencyClient::from_msg(ErrorKindAgencyClient::InvalidHttpResponse, err)),
         }
     }
 

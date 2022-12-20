@@ -1,7 +1,7 @@
 use vdrtools::WalletHandle;
 use serde_json;
 
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static WALLET_RECORD_TYPE: &str = "cache";
@@ -78,8 +78,8 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
                 Err(err) => Err(err),
             }
         }
-        Err(_) => Err(VcxError::from_msg(VcxErrorKind::SerializationError,
-                                         format!("Expected cache argument to be valid json. Found instead: {}", cache))),
+        Err(_) => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::SerializationError,
+                                              format!("Expected cache argument to be valid json. Found instead: {}", cache))),
     }
 }
 
@@ -97,6 +97,6 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
         info!("clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, wallet record: ${}", rev_reg_id, wallet_id);
         Ok(last_delta)
     } else {
-        Err(VcxError::from_msg(VcxErrorKind::IOError, format!("Couldn't fetch delta for rev_reg_id {} before deletion, deletion skipped", rev_reg_id)))
+        Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::IOError, format!("Couldn't fetch delta for rev_reg_id {} before deletion, deletion skipped", rev_reg_id)))
     }
 }

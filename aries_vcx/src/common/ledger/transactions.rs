@@ -14,7 +14,7 @@ use crate::{
     core::profile::profile::Profile,
     global::settings,
 };
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -134,8 +134,8 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
 
 fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
     let public_key_bytes = bs58::decode(public_key_base58).into_vec().map_err(|_| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidDid,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidDid,
             format!("Could not base58 decode a did:key fingerprint: {}", public_key_base58),
         )
     })?;
@@ -153,22 +153,22 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
             let fingerprint = if fingerprint.chars().nth(0) == Some('z') {
                 &fingerprint[1..]
             } else {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidDid,
+                Err(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidDid,
                     format!("z prefix is missing: {}", key),
                 ))?
             };
             let decoded_value = bs58::decode(fingerprint).into_vec().map_err(|_| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidDid,
+                ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidDid,
                     format!("Could not base58 decode a did:key fingerprint: {}", fingerprint),
                 )
             })?;
             let verkey = if let Some(public_key_bytes) = decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC) {
                 Ok(bs58::encode(public_key_bytes).into_string())
             } else {
-                Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidDid,
+                Err(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidDid,
                     format!("Only Ed25519-based did:keys are currently supported: {}", key),
                 ))
             }?;
@@ -212,8 +212,8 @@ pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &
         }
     };
     serde_json::from_str(&ser_service).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::SerializationError,
             format!("Failed to deserialize service read from the ledger: {:?}", err),
         )
     })
@@ -247,8 +247,8 @@ pub(self) fn check_response(response: &str) -> VcxResult<()> {
     }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(
-            VcxErrorKind::InvalidLedgerResponse,
+        Response::Reject(res) | Response::ReqNACK(res) => Err(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidLedgerResponse,
             format!("{:?}", res),
         )),
     }
@@ -257,8 +257,8 @@ pub(self) fn check_response(response: &str) -> VcxResult<()> {
 fn parse_response(response: &str) -> VcxResult<Response> {
     serde_json::from_str::<Response>(response)
         .map_err(|err|
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidJson,
                 format!("Cannot deserialize transaction response: {:?}", err),
             )
         )
@@ -266,9 +266,9 @@ fn parse_response(response: &str) -> VcxResult<Response> {
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
     let resp: serde_json::Value = serde_json::from_str(resp)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))?;
+        .map_err(|err| ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidLedgerResponse, format!("{:?}", err)))?;
     serde_json::from_str(resp["result"]["data"].as_str().unwrap_or("{}"))
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidLedgerResponse, format!("{:?}", err)))
+        .map_err(|err| ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidLedgerResponse, format!("{:?}", err)))
 }
 
 #[cfg(test)]
@@ -333,7 +333,7 @@ mod test {
     async fn test_did_bad_format_without_z_prefix() {
         let recipient_keys = vec!["did:key:invalid".to_string()];
         let test = normalize_keys_as_naked(recipient_keys).map_err(|e| e.kind());
-        let expected_error_kind = VcxErrorKind::InvalidDid;
+        let expected_error_kind = ErrorKindAriesVcx::InvalidDid;
         assert_eq!(test.unwrap_err(), expected_error_kind);
     }
 
@@ -341,7 +341,7 @@ mod test {
     async fn test_did_bad_format_without_ed25519_public() {
         let recipient_keys = vec!["did:key:zInvalid".to_string()];
         let test = normalize_keys_as_naked(recipient_keys).map_err(|e| e.kind());
-        let expected_error_kind = VcxErrorKind::InvalidDid;
+        let expected_error_kind = ErrorKindAriesVcx::InvalidDid;
         assert_eq!(test.unwrap_err(), expected_error_kind);
     }
 

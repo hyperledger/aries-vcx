@@ -9,8 +9,8 @@ impl InitialHolderState {
     }
 
     pub fn is_revokable(&self) -> VcxResult<bool> {
-        Err(VcxError::from_msg(
-            VcxErrorKind::InvalidState,
+        Err(ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidState,
             "Revocation information not available in the initial state",
         ))
     }

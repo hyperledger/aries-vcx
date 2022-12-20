@@ -20,7 +20,7 @@ use vdr::utils::{Qualifiable, ValidationError};
 use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::VcxResult;
-use crate::errors::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx};
 use crate::global::settings;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
@@ -84,7 +84,7 @@ impl IndyVdrLedger {
             .as_ref()
             .ok_or(
                 // should not happen - strictly for unit testing
-                VcxError::from_msg(VcxErrorKind::NoPoolOpen, "IndyVdrLedgerPool runner was not provided"),
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NoPoolOpen, "IndyVdrLedgerPool runner was not provided"),
             )?
             .send_request(
                 request,
@@ -96,7 +96,7 @@ impl IndyVdrLedger {
 
         let send_req_result: VdrSendRequestResult = recv
             .await
-            .map_err(|e| VcxError::from_msg(VcxErrorKind::InvalidState, e))?;
+            .map_err(|e| ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidState, e))?;
         let (result, _) = send_req_result?;
 
         let reply = match result {
@@ -423,21 +423,21 @@ impl BaseLedger for IndyVdrLedger {
                 .try_get("accum_to")?
                 .try_get("txnTime")?
                 .as_u64()
-                .ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                .ok_or(ErrorAriesVcx::from_msg(
+                    ErrorKindAriesVcx::InvalidJson,
                     "Error parsing accum_to.txnTime value as u64",
                 ))?;
 
         let response_reg_def_id = (&res_data)
             .try_get("revocRegDefId")?
             .as_str()
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidJson,
                 "Erroring parsing revocRegDefId value as string",
             ))?;
         if response_reg_def_id != rev_reg_id {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidRevocationDetails,
+            return Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidRevocationDetails,
                 "ID of revocation registry response does not match requested ID",
             ));
         }
@@ -499,9 +499,9 @@ impl BaseLedger for IndyVdrLedger {
     }
 }
 
-fn unimplemented_method_err(method_name: &str) -> VcxError {
-    VcxError::from_msg(
-        VcxErrorKind::UnimplementedFeature,
+fn unimplemented_method_err(method_name: &str) -> ErrorAriesVcx {
+    ErrorAriesVcx::from_msg(
+        ErrorKindAriesVcx::UnimplementedFeature,
         format!("method called '{}' is not yet implemented in AriesVCX", method_name),
     )
 }
@@ -533,35 +533,35 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
     Ok(result.try_get("data")?.to_owned())
 }
 
-impl From<VdrError> for VcxError {
+impl From<VdrError> for ErrorAriesVcx {
     fn from(err: VdrError) -> Self {
         match err.kind() {
             indy_vdr::common::error::VdrErrorKind::Config => {
-                VcxError::from_msg(VcxErrorKind::InvalidConfiguration, err)
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidConfiguration, err)
             }
             indy_vdr::common::error::VdrErrorKind::Connection => {
-                VcxError::from_msg(VcxErrorKind::PoolLedgerConnect, err)
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::PoolLedgerConnect, err)
             }
-            indy_vdr::common::error::VdrErrorKind::FileSystem(_) => VcxError::from_msg(VcxErrorKind::IOError, err),
-            indy_vdr::common::error::VdrErrorKind::Input => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
-            indy_vdr::common::error::VdrErrorKind::Resource => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unavailable => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unexpected => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Incompatible => VcxError::from_msg(VcxErrorKind::UnknownError, err),
+            indy_vdr::common::error::VdrErrorKind::FileSystem(_) => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::IOError, err),
+            indy_vdr::common::error::VdrErrorKind::Input => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidInput, err),
+            indy_vdr::common::error::VdrErrorKind::Resource => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err),
+            indy_vdr::common::error::VdrErrorKind::Unavailable => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err),
+            indy_vdr::common::error::VdrErrorKind::Unexpected => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err),
+            indy_vdr::common::error::VdrErrorKind::Incompatible => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err),
             indy_vdr::common::error::VdrErrorKind::PoolNoConsensus => {
-                VcxError::from_msg(VcxErrorKind::UnknownError, err)
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err)
             }
             indy_vdr::common::error::VdrErrorKind::PoolRequestFailed(_) => {
-                VcxError::from_msg(VcxErrorKind::PoolLedgerConnect, err)
+                ErrorAriesVcx::from_msg(ErrorKindAriesVcx::PoolLedgerConnect, err)
             }
-            indy_vdr::common::error::VdrErrorKind::PoolTimeout => VcxError::from_msg(VcxErrorKind::UnknownError, err),
+            indy_vdr::common::error::VdrErrorKind::PoolTimeout => ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, err),
         }
     }
 }
 
-impl From<ValidationError> for VcxError {
+impl From<ValidationError> for ErrorAriesVcx {
     fn from(err: ValidationError) -> Self {
-        VcxError::from_msg(VcxErrorKind::InvalidInput, err)
+        ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidInput, err)
     }
 }
 
@@ -574,7 +574,7 @@ mod unit_tests {
         common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
         plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
-    use crate::errors::error::{VcxErrorKind, VcxResult};
+    use crate::errors::error::{ErrorKindAriesVcx, VcxResult};
 
     use super::IndyVdrLedger;
 
@@ -583,7 +583,7 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), ErrorKindAriesVcx::UnimplementedFeature)
         }
 
         let profile = mock_profile();

@@ -16,7 +16,7 @@ use aries_vcx::protocols::SendClosure;
 use crate::api_lib::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 lazy_static! {
@@ -42,8 +42,8 @@ pub fn get_agent_did(handle: u32) -> LibvcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection
             .cloud_agent_info()
-            .ok_or(LibvcxError::from_msg(
-                LibvcxErrorKind::NoAgentInformation,
+            .ok_or(ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
             .agent_did
@@ -55,8 +55,8 @@ pub fn get_agent_verkey(handle: u32) -> LibvcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| {
         Ok(connection
             .cloud_agent_info()
-            .ok_or(LibvcxError::from_msg(
-                LibvcxErrorKind::NoAgentInformation,
+            .ok_or(ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
             .agent_vk
@@ -100,7 +100,7 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
 pub fn store_connection(connection: MediatedConnection) -> LibvcxResult<u32> {
     CONNECTION_MAP
         .add(connection)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateConnection,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateConnection,
                                                e.to_string())))
 }
 
@@ -132,8 +132,8 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
             .await?;
         store_connection(connection)
     } else {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        Err(ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             "Used invite has invalid structure",
         ))
         // TODO: Specific error type
@@ -143,8 +143,8 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
 pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResult<u32> {
     let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
     let request: Request = serde_json::from_str(request).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
@@ -161,8 +161,8 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResu
 
 pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> LibvcxResult<u32> {
     let request: Request = serde_json::from_str(request).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot deserialize connection request: {:?}", err),
         )
     })?;
@@ -198,8 +198,8 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
 pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!(
                 "Failed to deserialize message {} into A2AMessage, err: {:?}",
                 message, err
@@ -221,8 +221,8 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
 pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!(
                 "Failed to deserialize message {} into A2AMessage, err: {:?}",
                 message, err
@@ -302,7 +302,7 @@ pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     CONNECTION_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle,
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidConnectionHandle,
                                                e.to_string())))
 }
 
@@ -320,9 +320,9 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
                     InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
                     InvitationV3::OutOfBand(invitation) => json!(invitation.to_a2a_message()).to_string(),
                 })
-                .ok_or(LibvcxError::from_msg(LibvcxErrorKind::ActionNotSupported, "Invitation is not available for the connection."))
+                .ok_or(ErrorLibvcx::from_msg(ErrorKindLibvcx::ActionNotSupported, "Invitation is not available for the connection."))
         })
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, e.to_string())))
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidConnectionHandle, e.to_string())))
 }
 
 pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessage>> {
@@ -408,8 +408,8 @@ pub fn parse_status_codes(status_codes: Option<Vec<String>>) -> LibvcxResult<Opt
                 .iter()
                 .map(|code| {
                     ::serde_json::from_str::<MessageStatusCode>(&format!("\"{}\"", code)).map_err(|err| {
-                        LibvcxError::from_msg(
-                            LibvcxErrorKind::InvalidJson,
+                        ErrorLibvcx::from_msg(
+                            ErrorKindLibvcx::InvalidJson,
                             format!("Cannot parse message status code: {}", err),
                         )
                     })
@@ -427,8 +427,8 @@ pub fn parse_connection_handles(conn_handles: Vec<String>) -> LibvcxResult<Vec<u
         .iter()
         .map(|handle| {
             ::serde_json::from_str::<u32>(handle).map_err(|err| {
-                LibvcxError::from_msg(
-                    LibvcxErrorKind::InvalidJson,
+                ErrorLibvcx::from_msg(
+                    ErrorKindLibvcx::InvalidJson,
                     format!("Cannot parse connection handles: {}", err),
                 )
             })
@@ -643,7 +643,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = release(1);
-        assert_eq!(rc.unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(rc.unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
     }
 
     #[tokio::test]
@@ -661,7 +661,7 @@ pub mod tests {
         let _setup = SetupEmpty::init();
 
         let rc = to_string(0);
-        assert_eq!(rc.unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
+        assert_eq!(rc.unwrap_err().kind(), ErrorKindLibvcx::InvalidHandle);
     }
 
     #[tokio::test]
@@ -678,7 +678,7 @@ pub mod tests {
 
         assert_eq!(
             get_invite_details(0).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
+            ErrorKindLibvcx::InvalidConnectionHandle
         );
     }
 
@@ -706,11 +706,11 @@ pub mod tests {
         let h4 = create_connection("rel4").await.unwrap();
         let h5 = create_connection("rel5").await.unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
+        assert_eq!(release(h1).unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), ErrorKindLibvcx::InvalidConnectionHandle);
     }
 
     #[tokio::test]
@@ -762,7 +762,7 @@ pub mod tests {
         let handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
 
         let err = send_generic_message(handle, "this is the message").await.unwrap_err();
-        assert_eq!(err.kind(), LibvcxErrorKind::NotReady);
+        assert_eq!(err.kind(), ErrorKindLibvcx::NotReady);
     }
 
     #[test]

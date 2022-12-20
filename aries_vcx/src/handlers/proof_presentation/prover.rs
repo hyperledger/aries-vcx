@@ -138,8 +138,8 @@ impl Prover {
             .request_presentations_attach
             .content()?;
         let proof_request_data: serde_json::Value = serde_json::from_str(&data).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidJson,
                 format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err),
             )
         })?;
@@ -183,19 +183,19 @@ impl Prover {
             (Some(reason), None) => self.prover_sm.clone().decline_presentation_request(reason, send_message).await?,
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
-                    VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    ErrorAriesVcx::from_msg(
+                        ErrorKindAriesVcx::InvalidJson,
                         format!("Cannot serialize Presentation Preview: {:?}", err),
                     )
                 })?;
                 self.prover_sm.clone().negotiate_presentation(presentation_preview, send_message).await?
             }
-            (None, None) => { return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            (None, None) => { return Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidOption,
                 "Either `reason` or `proposal` parameter must be specified.",
             )); },
-            (Some(_), Some(_)) => { return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            (Some(_), Some(_)) => { return Err(ErrorAriesVcx::from_msg(
+                ErrorKindAriesVcx::InvalidOption,
                 "Only one of `reason` or `proposal` parameters must be specified.",
             )); },
         };
@@ -269,7 +269,7 @@ mod tests {
                 .await
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidJson
+            ErrorKindAriesVcx::InvalidJson
         );
         }).await;
     }

@@ -6,8 +6,8 @@ use messages::protocols::proof_presentation::presentation_request::PresentationR
 
 fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult<Vec<PresentationRequest>> {
     let presentation_requests: Vec<PresentationRequest> = serde_json::from_str(requests).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Failed to deserialize Vec<PresentationRequest>: {}\nObtained error: {:?}",
                 requests, err
@@ -39,8 +39,8 @@ fn _filter_proof_requests_by_name(requests: &str, match_name: &str) -> VcxResult
 
 fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec<CredentialOffer>> {
     let credential_offers: Vec<CredentialOffer> = serde_json::from_str(offers).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Failed to deserialize Vec<CredentialOffer>: {}\nObtained error: {:?}",
                 offers, err
@@ -61,8 +61,8 @@ fn _filter_offers_by_comment(offers: &str, match_comment: &str) -> VcxResult<Vec
 pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<String> {
     let presentation_requests: Vec<PresentationRequest> = _filter_proof_requests_by_name(requests, name)?;
     let filtered: String = serde_json::to_string(&presentation_requests).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Failed to serialize filtered proof requests: {}\nObtained error: {:?}",
                 requests, err
@@ -75,8 +75,8 @@ pub fn filter_proof_requests_by_name(requests: &str, name: &str) -> VcxResult<St
 pub fn filter_credential_offers_by_comment(offers: &str, comment: &str) -> VcxResult<String> {
     let credential_offers: Vec<CredentialOffer> = _filter_offers_by_comment(offers, comment)?;
     let filtered: String = serde_json::to_string(&credential_offers).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        ErrorAriesVcx::from_msg(
+            ErrorKindAriesVcx::InvalidJson,
             format!(
                 "Failed to serialize filtered credential offers: {}\nObtained error: {:?}",
                 offers, err

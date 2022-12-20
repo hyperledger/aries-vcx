@@ -5,7 +5,7 @@ use crate::messages::forward::ForwardV2;
 use crate::testing::mocking::AgencyMockDecrypted;
 use core::u8;
 use serde_json::Value;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
@@ -25,14 +25,14 @@ impl AgencyClient {
             agent_did, agent_vk, message
         );
         let message = ::serde_json::to_string(&message).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize A2A message: {}", err),
             )
         })?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize receiver keys: {}", err),
             )
         })?;
@@ -53,14 +53,14 @@ impl AgencyClient {
         let agent_vk = self.get_agent_vk();
         let my_vk = self.get_my_vk();
         let message = ::serde_json::to_string(&message).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize A2A message: {}", err),
             )
         })?;
         let receiver_keys = ::serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize receiver keys: {}", err),
             )
         })?;
@@ -75,15 +75,15 @@ impl AgencyClient {
     pub async fn parse_message_from_response(&self, response: &Vec<u8>) -> AgencyClientResult<String> {
         let unpacked_msg = self.get_wallet().unpack_message(&response[..]).await?;
         let message: Value = ::serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidJson,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::InvalidJson,
                 format!("Cannot deserialize response: {}", err),
             )
         })?;
         Ok(message["message"]
             .as_str()
-            .ok_or(AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidJson,
+            .ok_or(ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::InvalidJson,
                 "Cannot find `message` field on response",
             ))?
             .to_string())
@@ -106,8 +106,8 @@ impl AgencyClient {
         };
         trace!("parse_response_from_agency >> decrypted message: {}", message);
         let message: Client2AgencyMessage = serde_json::from_str(&message).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidJson,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
@@ -123,8 +123,8 @@ impl AgencyClient {
 
         match message {
             Client2AgencyMessage::Forward(msg) => self.prepare_forward_message_for_agency_v2(&msg, &agency_vk).await,
-            _ => Err(AgencyClientError::from_msg(
-                AgencyClientErrorKind::InvalidState,
+            _ => Err(ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::InvalidState,
                 "Invalid message type",
             )),
         }
@@ -136,15 +136,15 @@ impl AgencyClient {
         agency_vk: &str,
     ) -> AgencyClientResult<Vec<u8>> {
         let message = serde_json::to_string(message).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize Forward message: {}", err),
             )
         })?;
 
         let receiver_keys = serde_json::to_string(&vec![agency_vk]).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize receiver keys: {}", err),
             )
         })?;
@@ -160,19 +160,19 @@ impl AgencyClient {
         agent_vk: &str,
     ) -> AgencyClientResult<Vec<u8>> {
         debug!("prepare_message_for_connection_agent >> {:?}", messages);
-        let message = messages.get(0).ok_or(AgencyClientError::from_msg(
-            AgencyClientErrorKind::SerializationError,
+        let message = messages.get(0).ok_or(ErrorAgencyClient::from_msg(
+            ErrorKindAgencyClient::SerializationError,
             "Cannot get message",
         ))?;
         let message = serde_json::to_string(message).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot serialize A2A message: {}", err),
             )
         })?;
         let receiver_keys = serde_json::to_string(&vec![&agent_vk]).map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::SerializationError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::SerializationError,
                 format!("Cannot receiver keys: {}", err),
             )
         })?;

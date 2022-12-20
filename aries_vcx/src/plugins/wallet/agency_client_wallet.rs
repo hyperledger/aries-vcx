@@ -5,8 +5,8 @@ use crate::utils::async_fn_iterator::AsyncFnIterator;
 use super::base_wallet::BaseWallet;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 use async_trait::async_trait;
-use agency_client::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-use crate::errors::error::{VcxError, VcxErrorKind, VcxResult};
+use agency_client::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct AgencyClientWallet {
@@ -104,10 +104,10 @@ impl ToBaseWallet for Arc<dyn BaseAgencyClientWallet> {
     }
 }
 
-fn unimplemented_agency_client_wallet_method(method_name: &str) -> VcxError {
+fn unimplemented_agency_client_wallet_method(method_name: &str) -> ErrorAriesVcx {
     // should not occur with proper internal usage - [AgencyClientWallet] is not public
-    VcxError::from_msg(
-        VcxErrorKind::UnimplementedFeature,
+    ErrorAriesVcx::from_msg(
+        ErrorKindAriesVcx::UnimplementedFeature,
         format!("AgencyClientWallet::{} is not intended to be used.", method_name),
     )
 }
@@ -133,8 +133,8 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
             .pack_message(sender_vk, receiver_keys, msg)
             .await
             .map_err(|e| {
-                AgencyClientError::from_msg(
-                    AgencyClientErrorKind::UnknownError,
+                ErrorAgencyClient::from_msg(
+                    ErrorKindAgencyClient::UnknownError,
                     format!("A VCXError occured while calling pack_message: {:?}", e),
                 )
             })
@@ -142,8 +142,8 @@ impl BaseAgencyClientWallet for BaseWalletAgencyClientWallet {
 
     async fn unpack_message(&self, msg: &[u8]) -> AgencyClientResult<Vec<u8>> {
         self.inner.unpack_message(msg).await.map_err(|e| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::UnknownError,
+            ErrorAgencyClient::from_msg(
+                ErrorKindAgencyClient::UnknownError,
                 format!("A VCXError occured while calling unpack_message: {:?}", e),
             )
         })

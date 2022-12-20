@@ -1,51 +1,51 @@
 use vdrtools::types;
 use vdrtools::types::errors::IndyErrorKind;
 
-use crate::errors::error::{VcxError, VcxErrorKind};
+use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx};
 
-impl From<IndyErrorKind> for VcxErrorKind {
+impl From<IndyErrorKind> for ErrorKindAriesVcx {
     fn from(indy: IndyErrorKind) -> Self {
         use types::errors::IndyErrorKind::*;
 
         match indy {
             // 100..=111, 115..=129
-            InvalidParam(_) => VcxErrorKind::InvalidLibindyParam,
+            InvalidParam(_) => ErrorKindAriesVcx::InvalidLibindyParam,
 
             // 113
-            InvalidStructure => VcxErrorKind::LibindyInvalidStructure,
+            InvalidStructure => ErrorKindAriesVcx::LibindyInvalidStructure,
 
             // 114
-            IOError => VcxErrorKind::IOError,
+            IOError => ErrorKindAriesVcx::IOError,
 
             // 200
-            InvalidWalletHandle => VcxErrorKind::InvalidWalletHandle,
+            InvalidWalletHandle => ErrorKindAriesVcx::InvalidWalletHandle,
 
             // 203
-            WalletAlreadyExists => VcxErrorKind::DuplicationWallet,
+            WalletAlreadyExists => ErrorKindAriesVcx::DuplicationWallet,
 
             // 204
-            WalletNotFound => VcxErrorKind::WalletNotFound,
+            WalletNotFound => ErrorKindAriesVcx::WalletNotFound,
 
             // 206
-            WalletAlreadyOpened => VcxErrorKind::WalletAlreadyOpen,
+            WalletAlreadyOpened => ErrorKindAriesVcx::WalletAlreadyOpen,
 
             // 212
-            WalletItemNotFound => VcxErrorKind::WalletRecordNotFound,
+            WalletItemNotFound => ErrorKindAriesVcx::WalletRecordNotFound,
 
             // 213
-            WalletItemAlreadyExists => VcxErrorKind::DuplicationWalletRecord,
+            WalletItemAlreadyExists => ErrorKindAriesVcx::DuplicationWalletRecord,
 
             // 306
-            PoolConfigAlreadyExists => VcxErrorKind::CreatePoolConfig,
+            PoolConfigAlreadyExists => ErrorKindAriesVcx::CreatePoolConfig,
 
             // 404
-            MasterSecretDuplicateName => VcxErrorKind::DuplicationMasterSecret,
+            MasterSecretDuplicateName => ErrorKindAriesVcx::DuplicationMasterSecret,
 
             // 407
-            CredDefAlreadyExists => VcxErrorKind::CredDefAlreadyCreated,
+            CredDefAlreadyExists => ErrorKindAriesVcx::CredDefAlreadyCreated,
 
             // 600
-            DIDAlreadyExists => VcxErrorKind::DuplicationDid,
+            DIDAlreadyExists => ErrorKindAriesVcx::DuplicationDid,
 
             // 702
             PaymentInsufficientFunds |
@@ -81,15 +81,15 @@ impl From<IndyErrorKind> for VcxErrorKind {
             InvalidVDRNamespace |
             IncompatibleLedger => {
                 let err_code = types::ErrorCode::from(indy) as u32;
-                VcxErrorKind::LibndyError(err_code)
+                ErrorKindAriesVcx::LibndyError(err_code)
             }
         }
     }
 }
 
-impl From<types::errors::IndyError> for VcxError {
+impl From<types::errors::IndyError> for ErrorAriesVcx {
     fn from(indy: types::errors::IndyError) -> Self {
-        let vcx_kind: VcxErrorKind = indy.kind().into();
-        VcxError::from_msg(vcx_kind, indy.to_string())
+        let vcx_kind: ErrorKindAriesVcx = indy.kind().into();
+        ErrorAriesVcx::from_msg(vcx_kind, indy.to_string())
     }
 }

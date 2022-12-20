@@ -9,7 +9,7 @@ use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::api_handle::revocation_registry::REV_REG_MAP;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile_optional_pool;
 
 lazy_static! {
@@ -38,8 +38,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidOption,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
@@ -73,7 +73,7 @@ pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     ISSUER_CREDENTIAL_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string())))
+        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidIssuerCredentialHandle, e.to_string())))
 }
 
 pub fn release_all() {
@@ -87,8 +87,8 @@ pub fn is_valid_handle(handle: u32) -> bool {
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| {
         serde_json::to_string(&IssuerCredentials::V3(credential.clone())).map_err(|err| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidState,
+            ErrorLibvcx::from_msg(
+                ErrorKindLibvcx::InvalidState,
                 format!("cannot serialize IssuerCredential credentialect: {:?}", err),
             )
         })
@@ -97,8 +97,8 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {
     let issuer_credential: IssuerCredentials = serde_json::from_str(credential_data).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot deserialize IssuerCredential: {:?}", err),
         )
     })?;
@@ -116,8 +116,8 @@ pub async fn build_credential_offer_msg_v2(
     comment: Option<&str>,
 ) -> LibvcxResult<()> {
     if !credential_def::check_is_published(cred_def_handle)? {
-        return Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
+        return Err(ErrorLibvcx::from_msg(
+            ErrorKindLibvcx::InvalidJson,
             format!("Cannot issue credential of specified credential definition has not been published on the ledger"),
         ));
     };
@@ -389,23 +389,23 @@ pub mod tests {
         release_all();
         assert_eq!(
             release(h1).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h2).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h3).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h4).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
         assert_eq!(
             release(h5).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
     }
 
@@ -414,10 +414,10 @@ pub mod tests {
     async fn test_errors() {
         let _setup = SetupEmpty::init();
 
-        assert_eq!(to_string(0).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
+        assert_eq!(to_string(0).unwrap_err().kind(), ErrorKindLibvcx::InvalidHandle);
         assert_eq!(
             release(0).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
+            ErrorKindLibvcx::InvalidIssuerCredentialHandle
         );
     }
 }
