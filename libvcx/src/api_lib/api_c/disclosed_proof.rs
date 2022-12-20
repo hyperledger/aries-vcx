@@ -6,10 +6,11 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::disclosed_proof;
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -115,7 +116,7 @@ pub extern "C" fn vcx_disclosed_proof_create_with_request(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Create a proof based off of a known message id for a given connection.
@@ -161,7 +162,7 @@ pub extern "C" fn vcx_disclosed_proof_create_with_msgid(
             Ok((handle, request)) => {
                 trace!("vcx_disclosed_proof_create_with_msgid_cb(command_handle: {}, rc: {}, handle: {}, proof_req: {}) source_id: {}", command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, request, source_id);
                 let msg = CStringUtils::string_to_cstring(request);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, msg.as_ptr())
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle, msg.as_ptr())
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -172,7 +173,7 @@ pub extern "C" fn vcx_disclosed_proof_create_with_msgid(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Send a proof to the connection, called after having received a proof request
@@ -217,7 +218,7 @@ pub extern "C" fn vcx_disclosed_proof_send_proof(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -232,7 +233,7 @@ pub extern "C" fn vcx_disclosed_proof_send_proof(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Send a proof rejection to the connection, called after having received a proof request
@@ -277,7 +278,7 @@ pub extern "C" fn vcx_disclosed_proof_reject_proof(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -292,7 +293,7 @@ pub extern "C" fn vcx_disclosed_proof_reject_proof(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get the proof message for sending.
@@ -334,7 +335,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_msg(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -349,7 +350,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_msg(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get the reject proof message for sending.
@@ -391,7 +392,7 @@ pub extern "C" fn vcx_disclosed_proof_get_reject_msg(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -406,7 +407,7 @@ pub extern "C" fn vcx_disclosed_proof_get_reject_msg(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Queries agency for all pending proof requests from the given connection.
@@ -447,7 +448,7 @@ pub extern "C" fn vcx_disclosed_proof_get_requests(
                     err
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -464,7 +465,7 @@ pub extern "C" fn vcx_disclosed_proof_get_requests(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get the current state of the disclosed proof object
@@ -509,7 +510,7 @@ pub extern "C" fn vcx_disclosed_proof_get_state(
                     s,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, s)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -524,7 +525,7 @@ pub extern "C" fn vcx_disclosed_proof_get_state(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -556,7 +557,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_request_attachment(
                     source_id
                 );
                 let attrs = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, attrs.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, attrs.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -574,7 +575,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_request_attachment(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -607,7 +608,7 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state(
                     s,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, s)
             }
             Err(err) => {
                 error!(
@@ -621,7 +622,7 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Checks for any state change from the given message and updates the state attribute
@@ -664,7 +665,7 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state_with_message(
         match disclosed_proof::update_state(proof_handle, Some(&message), connection_handle).await {
             Ok(state) => {
                 trace!("vcx_v2_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, libvcx_error::SUCCESS_ERR_CODE, state, source_id);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, state)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, state)
             }
             Err(err) => {
                 error!("vcx_v2_disclosed_proof_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, err, 0, source_id);
@@ -675,7 +676,7 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state_with_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes the disclosed proof object and returns a json string of all its attributes
@@ -718,7 +719,7 @@ pub extern "C" fn vcx_disclosed_proof_serialize(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -733,7 +734,7 @@ pub extern "C" fn vcx_disclosed_proof_serialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes a json string representing an disclosed proof object and recreates an object matching the json
@@ -791,7 +792,7 @@ pub extern "C" fn vcx_disclosed_proof_deserialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get credentials from wallet matching to the proof request associated with proof object
@@ -837,7 +838,7 @@ pub extern "C" fn vcx_disclosed_proof_retrieve_credentials(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -852,7 +853,7 @@ pub extern "C" fn vcx_disclosed_proof_retrieve_credentials(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Accept proof request associated with proof object and generates a proof from the selected credentials and self attested attributes
@@ -922,7 +923,7 @@ pub extern "C" fn vcx_disclosed_proof_generate_proof(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -937,7 +938,7 @@ pub extern "C" fn vcx_disclosed_proof_generate_proof(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Declines presentation request.
@@ -1035,7 +1036,7 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1050,7 +1051,7 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -1081,7 +1082,7 @@ pub extern "C" fn vcx_disclosed_proof_get_thread_id(
                     source_id
                 );
                 let thread_id = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, thread_id.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, thread_id.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -1098,7 +1099,7 @@ pub extern "C" fn vcx_disclosed_proof_get_thread_id(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Releases the disclosed proof object by de-allocating memory
@@ -1121,7 +1122,7 @@ pub extern "C" fn vcx_disclosed_proof_release(handle: u32) -> u32 {
                 libvcx_error::SUCCESS_ERR_CODE,
                 source_id
             );
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         }
         Err(err) => {
             error!(
@@ -1149,6 +1150,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
 
     use crate::api_lib::api_handle::mediated_connection;
+    use crate::api_lib::errors::error_libvcx;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
@@ -1165,7 +1167,7 @@ mod tests {
             CString::new(proof_request).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        if rc != libvcx_error::SUCCESS_ERR_CODE {
+        if rc != error_libvcx::SUCCESS_ERR_CODE {
             return Err(rc);
         }
         cb.receive(TimeoutUtils::some_medium())
@@ -1205,7 +1207,7 @@ mod tests {
                 CString::new("123").unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let (handle, disclosed_proof) = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(handle > 0 && disclosed_proof.is_some());
@@ -1221,7 +1223,7 @@ mod tests {
             vcx_disclosed_proof_release(handle + 1),
             u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
         );
-        assert_eq!(vcx_disclosed_proof_release(handle), libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(vcx_disclosed_proof_release(handle), error_libvcx::SUCCESS_ERR_CODE);
         assert_eq!(
             vcx_disclosed_proof_release(handle),
             u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
@@ -1238,7 +1240,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_serialize(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let s = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
 
@@ -1252,7 +1254,7 @@ mod tests {
                 CString::new(s).unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
 
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
@@ -1274,14 +1276,14 @@ mod tests {
                 CString::new("{}").unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let _s = cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_get_proof_msg(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let _s = cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1303,7 +1305,7 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_send_proof(cb.command_handle, handle_proof, handle_conn, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1324,7 +1326,7 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_reject_proof(cb.command_handle, handle, connection_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1347,7 +1349,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_get_reject_msg(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1365,7 +1367,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_get_requests(cb.command_handle, cxn, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE as u32
+            error_libvcx::SUCCESS_ERR_CODE as u32
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1380,7 +1382,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_get_state(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let state = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(state, ProverState::PresentationRequestReceived as u32);
@@ -1398,7 +1400,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_disclosed_proof_retrieve_credentials(cb.command_handle, proof_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let _credentials = cb.receive(None).unwrap().unwrap();
     }
@@ -1419,7 +1421,7 @@ mod tests {
                 CString::new("{}").unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }

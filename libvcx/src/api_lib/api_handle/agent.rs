@@ -1,10 +1,9 @@
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::get_main_profile;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
 }

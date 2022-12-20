@@ -1,5 +1,5 @@
 use aries_vcx::agency_client::error::{AgencyClientError, AgencyClientErrorKind};
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 
 impl From<AgencyClientError> for LibvcxError {
     fn from(agency_err: AgencyClientError) -> LibvcxError {

@@ -6,10 +6,11 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::agent;
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
@@ -41,7 +42,7 @@ pub extern "C" fn vcx_public_agent_create(
                     libvcx_error::SUCCESS_ERR_CODE,
                     handle
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -55,7 +56,7 @@ pub extern "C" fn vcx_public_agent_create(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -95,7 +96,7 @@ pub extern "C" fn vcx_public_agent_download_connection_requests(
                     requests
                 );
                 let requests = CStringUtils::string_to_cstring(requests);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, requests.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, requests.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -109,7 +110,7 @@ pub extern "C" fn vcx_public_agent_download_connection_requests(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -141,7 +142,7 @@ pub extern "C" fn vcx_public_agent_download_message(
                     msg
                 );
                 let msg = CStringUtils::string_to_cstring(msg);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -155,7 +156,7 @@ pub extern "C" fn vcx_public_agent_download_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -184,7 +185,7 @@ pub extern "C" fn vcx_public_agent_get_service(
                     service
                 );
                 let service = CStringUtils::string_to_cstring(service);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, service.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, service.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -198,7 +199,7 @@ pub extern "C" fn vcx_public_agent_get_service(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -227,7 +228,7 @@ pub extern "C" fn vcx_public_agent_serialize(
                     agent_json
                 );
                 let agent_json = CStringUtils::string_to_cstring(agent_json);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, agent_json.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, agent_json.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -241,7 +242,7 @@ pub extern "C" fn vcx_public_agent_serialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -270,7 +271,7 @@ pub extern "C" fn vcx_public_agent_deserialize(
                     libvcx_error::SUCCESS_ERR_CODE,
                     agent_handle
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, agent_handle);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, agent_handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -284,7 +285,7 @@ pub extern "C" fn vcx_public_agent_deserialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -298,7 +299,7 @@ pub extern "C" fn vcx_public_agent_release(agent_handle: u32) -> u32 {
                 agent_handle,
                 libvcx_error::SUCCESS_ERR_CODE
             );
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);

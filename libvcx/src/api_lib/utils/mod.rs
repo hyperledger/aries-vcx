@@ -12,11 +12,4 @@ pub mod timeout;
 
 #[cfg(feature = "test_utils")]
 pub mod devsetup;
-pub mod libvcx_error;
-pub mod mapping_ariesvcx_libvcx;
-pub mod mapping_libvcx_ffi;
 pub mod current_error;
-pub mod mapping_vdrtools_ffi;
-pub mod mapping_agency_client;
-pub mod mapping_messages;
-pub mod mapping_others;

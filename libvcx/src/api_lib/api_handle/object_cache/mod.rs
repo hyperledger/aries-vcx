@@ -5,8 +5,7 @@ use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use futures::future::BoxFuture;
 use rand::Rng;
-
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
     where

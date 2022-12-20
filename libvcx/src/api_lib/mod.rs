@@ -5,6 +5,7 @@ pub mod utils;
 pub mod api_c;
 pub mod api_handle;
 pub mod global;
+pub mod errors;
 
 /// This macro allows the VcxStateType to be
 /// serialized within serde as an integer (represented as

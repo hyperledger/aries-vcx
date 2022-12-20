@@ -7,8 +7,8 @@ use aries_vcx::vdrtools::SearchHandle;
 
 use crate::api_lib::global::profile::{get_main_profile, get_main_wallet};
 use crate::api_lib::global::wallet::get_main_wallet_handle;
-use crate::api_lib::utils::libvcx_error::LibvcxResult;
-use crate::api_lib::utils::mapping_ariesvcx_libvcx::map_ariesvcx_result;
+use crate::api_lib::errors::error_libvcx::LibvcxResult;
+use crate::api_lib::errors::mapping_ariesvcx_libvcx::map_ariesvcx_result;
 
 pub async fn key_for_local_did(did: &str) -> LibvcxResult<String> {
     let wallet = get_main_wallet();

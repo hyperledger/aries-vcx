@@ -11,10 +11,9 @@ use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_lib::api_handle::mediated_connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::get_main_profile;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     pub static ref OUT_OF_BAND_SENDER_MAP: ObjectCache<OutOfBandSender> =
         ObjectCache::<OutOfBandSender>::new("out-of-band-sender-cache");

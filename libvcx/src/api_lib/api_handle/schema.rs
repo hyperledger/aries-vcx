@@ -7,9 +7,8 @@ use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, indy_handles_to_profile};
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
 }

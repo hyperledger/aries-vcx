@@ -8,12 +8,13 @@ use aries_vcx::global::settings;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::{schema, vcx_settings};
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::pool::get_main_pool_handle;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /// Create a new Schema object and publish corresponding record on the ledger
@@ -70,7 +71,7 @@ pub extern "C" fn vcx_schema_create(
             Ok(err) => {
                 trace!(target: "vcx", "vcx_schema_create_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                        command_handle, libvcx_error::SUCCESS_ERR_CODE, err, source_id);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, err);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, err);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -85,7 +86,7 @@ pub extern "C" fn vcx_schema_create(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Create a new Schema object that will be published by Endorser later.
@@ -147,7 +148,7 @@ pub extern "C" fn vcx_schema_prepare_for_endorser(
                 trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
                        command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, transaction, source_id);
                 let transaction = CStringUtils::string_to_cstring(transaction);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, transaction.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle, transaction.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -159,7 +160,7 @@ pub extern "C" fn vcx_schema_prepare_for_endorser(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes the schema object and returns a json string of all its attributes
@@ -208,7 +209,7 @@ pub extern "C" fn vcx_schema_serialize(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -223,7 +224,7 @@ pub extern "C" fn vcx_schema_serialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes a json string representing a schema object and recreates an object matching the json
@@ -263,7 +264,7 @@ pub extern "C" fn vcx_schema_deserialize(
                     err,
                     schema::get_source_id(err).unwrap_or_default()
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, err);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, err);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -278,7 +279,7 @@ pub extern "C" fn vcx_schema_deserialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Releases the schema object by de-allocating memory
@@ -301,7 +302,7 @@ pub extern "C" fn vcx_schema_release(schema_handle: u32) -> u32 {
                 libvcx_error::SUCCESS_ERR_CODE,
                 source_id
             );
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);
@@ -354,7 +355,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
                     err
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -369,7 +370,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Retrieves all of the data associated with a schema on the ledger.
@@ -420,7 +421,7 @@ pub extern "C" fn vcx_schema_get_attributes(
                     data
                 );
                 let msg = CStringUtils::string_to_cstring(data.to_string());
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -435,7 +436,7 @@ pub extern "C" fn vcx_schema_get_attributes(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Checks if schema is published on the Ledger and updates the  state
@@ -490,7 +491,7 @@ pub extern "C" fn vcx_schema_update_state(
                     libvcx_error::SUCCESS_ERR_CODE,
                     state
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, state);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -505,7 +506,7 @@ pub extern "C" fn vcx_schema_update_state(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get the current state of the schema object
@@ -554,7 +555,7 @@ pub extern "C" fn vcx_schema_get_state(
                     libvcx_error::SUCCESS_ERR_CODE,
                     state
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, state);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -569,7 +570,7 @@ pub extern "C" fn vcx_schema_get_state(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[cfg(test)]
@@ -586,6 +587,7 @@ mod tests {
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
     use crate::api_lib::api_handle::schema::tests::prepare_schema_data;
     use crate::api_lib::api_handle::vcx_settings;
+    use crate::api_lib::errors::error_libvcx;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
@@ -602,7 +604,7 @@ mod tests {
             0,
             Some(cb.get_callback()),
         );
-        if rc != libvcx_error::SUCCESS_ERR_CODE {
+        if rc != error_libvcx::SUCCESS_ERR_CODE {
             return Err(rc);
         }
 
@@ -614,7 +616,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_schema_serialize(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let schema_json = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
         schema_json
@@ -652,7 +654,7 @@ mod tests {
             CString::new(SCHEMA_WITH_VERSION).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        assert_eq!(err, libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(err, error_libvcx::SUCCESS_ERR_CODE);
         let schema_handle = cb.receive(TimeoutUtils::some_short()).unwrap();
         assert!(schema_handle > 0);
     }
@@ -668,7 +670,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_schema_get_schema_id(cb.command_handle, schema_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let id = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
         assert_eq!(DEFAULT_SCHEMA_ID, &id);
@@ -688,7 +690,7 @@ mod tests {
                 CString::new(SCHEMA_ID).unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let (_handle, schema_data_as_string) = cb.receive(TimeoutUtils::some_short()).unwrap();
         let schema_data_as_string = schema_data_as_string.unwrap();
@@ -727,7 +729,7 @@ mod tests {
                 CString::new("V4SGRU86Z58d6TV7PBUe6f").unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let (_handle, schema_transaction) = cb.receive(TimeoutUtils::some_short()).unwrap();
         let schema_transaction = schema_transaction.unwrap();

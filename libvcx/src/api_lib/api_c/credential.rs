@@ -6,10 +6,11 @@ use libc::c_char;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::credential;
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 /*
@@ -95,7 +96,7 @@ pub extern "C" fn vcx_credential_create_with_offer(
                     libvcx_error::SUCCESS_ERR_CODE,
                     err
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, err)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, err)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -110,7 +111,7 @@ pub extern "C" fn vcx_credential_create_with_offer(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Retrieve information about a stored credential in user's wallet, including credential id and the credential itself.
@@ -158,7 +159,7 @@ pub extern "C" fn vcx_get_credential(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -176,7 +177,7 @@ pub extern "C" fn vcx_get_credential(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Delete a Credential from the wallet and release its handle.
@@ -218,7 +219,7 @@ pub extern "C" fn vcx_delete_credential(
                     credential_handle,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -236,7 +237,7 @@ pub extern "C" fn vcx_delete_credential(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -270,7 +271,7 @@ pub extern "C" fn vcx_credential_get_attributes(
                     source_id
                 );
                 let attrs = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, attrs.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, attrs.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -288,7 +289,7 @@ pub extern "C" fn vcx_credential_get_attributes(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -322,7 +323,7 @@ pub extern "C" fn vcx_credential_get_attachment(
                     source_id
                 );
                 let attach = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, attach.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, attach.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -340,7 +341,7 @@ pub extern "C" fn vcx_credential_get_attachment(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -374,7 +375,7 @@ pub extern "C" fn vcx_credential_get_tails_location(
                     source_id
                 );
                 let location = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, location.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, location.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -392,7 +393,7 @@ pub extern "C" fn vcx_credential_get_tails_location(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -426,7 +427,7 @@ pub extern "C" fn vcx_credential_get_tails_hash(
                     source_id
                 );
                 let hash = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, hash.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, hash.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -444,7 +445,7 @@ pub extern "C" fn vcx_credential_get_tails_hash(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -478,7 +479,7 @@ pub extern "C" fn vcx_credential_get_rev_reg_id(
                     source_id
                 );
                 let rev_reg_id = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, rev_reg_id.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, rev_reg_id.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -496,7 +497,7 @@ pub extern "C" fn vcx_credential_get_rev_reg_id(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -530,7 +531,7 @@ pub extern "C" fn vcx_credential_get_thread_id(
                     source_id
                 );
                 let thread_id = CStringUtils::string_to_cstring(s);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, thread_id.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, thread_id.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -547,7 +548,7 @@ pub extern "C" fn vcx_credential_get_thread_id(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -580,7 +581,7 @@ pub extern "C" fn vcx_credential_is_revokable(
                     revokable,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, revokable);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, revokable);
             }
             Err(err) => {
                 error!(
@@ -594,7 +595,7 @@ pub extern "C" fn vcx_credential_is_revokable(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Create a Credential object based off of a known message id for a given connection.
@@ -640,7 +641,7 @@ pub extern "C" fn vcx_credential_create_with_msgid(
             Ok((handle, offer_string)) => {
                 let c_offer = CStringUtils::string_to_cstring(offer_string);
                 trace!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {}) source_id: {}", command_handle, source_id, libvcx_error::SUCCESS_ERR_CODE, handle, source_id);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, handle, c_offer.as_ptr())
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, handle, c_offer.as_ptr())
             }
             Err(err) => {
                 error!("vcx_credential_create_with_offer_cb(command_handle: {}, source_id: {}, rc: {}, handle: {}) source_id: {}", command_handle, source_id, err, 0, source_id);
@@ -651,7 +652,7 @@ pub extern "C" fn vcx_credential_create_with_msgid(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Approves the credential offer and submits a credential request. The result will be a credential stored in the prover's wallet.
@@ -705,7 +706,7 @@ pub extern "C" fn vcx_credential_send_request(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Approves the credential offer and gets the credential request message that can be sent to the specified connection
@@ -755,7 +756,7 @@ pub extern "C" fn vcx_credential_get_request_msg(
                     libvcx_error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -769,7 +770,7 @@ pub extern "C" fn vcx_credential_get_request_msg(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Queries agency for credential offers from the given connection.
@@ -811,7 +812,7 @@ pub extern "C" fn vcx_credential_get_offers(
                     err
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -826,7 +827,7 @@ pub extern "C" fn vcx_credential_get_offers(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -868,7 +869,7 @@ pub extern "C" fn vcx_credential_decline_offer(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Query the agency for the received messages.
@@ -921,7 +922,7 @@ pub extern "C" fn vcx_v2_credential_update_state(
                     s,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, s)
             }
             Err(err) => {
                 error!(
@@ -935,7 +936,7 @@ pub extern "C" fn vcx_v2_credential_update_state(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Update the state of the credential based on the given message.
@@ -986,7 +987,7 @@ pub extern "C" fn vcx_v2_credential_update_state_with_message(
         match credential::get_state(credential_handle) {
             Ok(s) => {
                 trace!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, libvcx_error::SUCCESS_ERR_CODE, s, source_id);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, s)
             }
             Err(err) => {
                 error!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, err, 0, source_id);
@@ -997,7 +998,7 @@ pub extern "C" fn vcx_v2_credential_update_state_with_message(
         Ok(())
     }));
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Get the current state of the credential object
@@ -1042,7 +1043,7 @@ pub extern "C" fn vcx_credential_get_state(
                     s,
                     source_id
                 );
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, s)
             }
             Err(err) => {
                 error!(
@@ -1056,7 +1057,7 @@ pub extern "C" fn vcx_credential_get_state(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes the credential object and returns a json string of all its attributes
@@ -1099,7 +1100,7 @@ pub extern "C" fn vcx_credential_serialize(
                     source_id
                 );
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, msg.as_ptr());
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1114,7 +1115,7 @@ pub extern "C" fn vcx_credential_serialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Takes a json string representing an credential object and recreates an object matching the json
@@ -1157,7 +1158,7 @@ pub extern "C" fn vcx_credential_deserialize(
                     credential::get_source_id(err).unwrap_or_default()
                 );
 
-                cb(command_handle, libvcx_error::SUCCESS_ERR_CODE, err);
+                cb(command_handle, error_libvcx::SUCCESS_ERR_CODE, err);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1172,7 +1173,7 @@ pub extern "C" fn vcx_credential_deserialize(
         Ok(())
     });
 
-    libvcx_error::SUCCESS_ERR_CODE
+    error_libvcx::SUCCESS_ERR_CODE
 }
 
 /// Releases the credential object by de-allocating memory
@@ -1195,7 +1196,7 @@ pub extern "C" fn vcx_credential_release(handle: u32) -> u32 {
                 libvcx_error::SUCCESS_ERR_CODE,
                 source_id
             );
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         }
 
         Err(err) => {
@@ -1225,6 +1226,7 @@ mod tests {
 
     use crate::api_lib::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
     use crate::api_lib::api_handle::mediated_connection;
+    use crate::api_lib::errors::error_libvcx;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
@@ -1238,7 +1240,7 @@ mod tests {
             CString::new(offer).unwrap().into_raw(),
             Some(cb.get_callback()),
         );
-        if rc != libvcx_error::SUCCESS_ERR_CODE {
+        if rc != error_libvcx::SUCCESS_ERR_CODE {
             return Err(rc);
         }
 
@@ -1274,7 +1276,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_credential_serialize(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let credential_json = cb.receive(TimeoutUtils::some_short()).unwrap().unwrap();
         debug!("Serialized credential: {:?}", credential_json);
@@ -1289,7 +1291,7 @@ mod tests {
                 CString::new(credential_json).unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
         assert!(handle > 0);
@@ -1305,7 +1307,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_credential_get_offers(cb.command_handle, handle_conn, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE as u32
+            error_libvcx::SUCCESS_ERR_CODE as u32
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1326,7 +1328,7 @@ mod tests {
                 CString::new("123").unwrap().into_raw(),
                 Some(cb.get_callback()),
             ),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -1341,7 +1343,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(
             vcx_credential_get_state(cb.command_handle, handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         assert_eq!(
             cb.receive(TimeoutUtils::some_medium()).unwrap(),
@@ -1366,7 +1368,7 @@ mod tests {
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
             vcx_credential_send_request(cb.command_handle, handle_cred, handle_conn, 0, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(
@@ -1379,7 +1381,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
         assert_eq!(
             vcx_v2_credential_update_state(cb.command_handle, handle_cred, handle_conn, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert_eq!(
@@ -1390,7 +1392,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_credential_get_rev_reg_id(cb.command_handle, handle_cred, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         let rev_reg_id = cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
         let rev_reg_id_expected =
@@ -1407,7 +1409,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_get_credential(cb.command_handle, handle_cred, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
 
@@ -1415,7 +1417,7 @@ mod tests {
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_get_credential(cb.command_handle, bad_handle, Some(cb.get_callback())),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
     }
 
@@ -1431,7 +1433,7 @@ mod tests {
             u32::from(LibvcxErrorKind::InvalidCredentialHandle)
         );
 
-        assert_eq!(vcx_credential_release(handle), libvcx_error::SUCCESS_ERR_CODE);
+        assert_eq!(vcx_credential_release(handle), error_libvcx::SUCCESS_ERR_CODE);
 
         assert_eq!(
             vcx_credential_release(handle),

@@ -6,10 +6,10 @@ use aries_vcx::messages::a2a::A2AMessage;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile;
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
 }
@@ -146,7 +146,7 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
     PROOF_MAP.insert(handle, proof)?;
-    Ok(libvcx_error::SUCCESS_ERR_CODE)
+    Ok(error_libvcx::SUCCESS_ERR_CODE)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
@@ -183,6 +183,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
+    use crate::api_lib::errors::error_libvcx;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 
     use super::*;
@@ -274,7 +275,7 @@ pub mod tests {
         let handle_proof = create_default_proof().await;
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            libvcx_error::SUCCESS_ERR_CODE
+            error_libvcx::SUCCESS_ERR_CODE
         );
         assert_eq!(
             get_state(handle_proof).await.unwrap(),

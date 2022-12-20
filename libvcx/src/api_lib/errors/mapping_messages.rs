@@ -1,7 +1,6 @@
 use aries_vcx::messages::errors::error::MessagesError;
 use aries_vcx::messages::errors::error::MessagesErrorKind;
-
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 
 impl From<MessagesError> for LibvcxError {
     fn from(msg_err: MessagesError) -> LibvcxError {

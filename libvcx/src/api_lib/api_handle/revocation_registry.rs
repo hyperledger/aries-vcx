@@ -2,9 +2,8 @@ use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> =
         ObjectCache::<RevocationRegistry>::new("revocation-registry-cache");

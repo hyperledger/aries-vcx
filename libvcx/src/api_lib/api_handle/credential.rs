@@ -10,10 +10,10 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error_libvcx;
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
-
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
 }
@@ -196,7 +196,7 @@ pub async fn delete_credential(handle: u32) -> LibvcxResult<u32> {
 
     credential.delete_credential(&profile).await?;
     HANDLE_MAP.release(handle)?;
-    Ok(libvcx_error::SUCCESS_ERR_CODE)
+    Ok(error_libvcx::SUCCESS_ERR_CODE)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
@@ -225,7 +225,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
         .send_request(&profile, my_pw_did, send_message)
         .await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(libvcx_error::SUCCESS_ERR_CODE)
+    Ok(error_libvcx::SUCCESS_ERR_CODE)
 }
 
 async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
@@ -347,7 +347,7 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.decline_offer(comment, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
-    Ok(libvcx_error::SUCCESS_ERR_CODE)
+    Ok(error_libvcx::SUCCESS_ERR_CODE)
 }
 
 #[cfg(test)]

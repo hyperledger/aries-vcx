@@ -1,5 +1,5 @@
+use crate::api_lib::errors::error_libvcx::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::libvcx_error;
-use crate::api_lib::utils::libvcx_error::{LibvcxError, LibvcxErrorKind};
 
 impl From<LibvcxError> for u32 {
     fn from(error: LibvcxError) -> u32 {
