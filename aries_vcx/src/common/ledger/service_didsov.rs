@@ -2,14 +2,27 @@ pub const SERVICE_SUFFIX: &str = "indy";
 
 pub const SERVICE_TYPE: &str = "IndyAgent";
 
-// Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
-// Note that is divergence from w3c spec https://w3c.github.io/did-core/#service-properties
-#[derive(Debug, Deserialize, Serialize, Clone,PartialEq)]
+// https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct EndpointDidSov {
     pub endpoint: String,
     #[serde(default)]
-    #[serde(rename = "routingKeys")]
+    #[serde(rename = "camelCase")]
     pub routing_keys: Option<Vec<String>>,
+    #[serde(default)]
+    pub types: Option<Vec<DidSovServiceType>>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum DidSovServiceType {
+    #[serde(rename = "endpoint")] // AIP 1.0
+    Endpoint,
+    #[serde(rename = "did-communication")] // AIP 2.0
+    DidCommunication,
+    #[serde(rename = "DIDComm")] // DIDComm V2
+    DIDComm,
+    #[serde(other)]
+    Unknown
 }
 
 impl EndpointDidSov {
@@ -33,6 +46,7 @@ impl Default for EndpointDidSov {
         EndpointDidSov {
             endpoint: String::new(),
             routing_keys: Some(Vec::new()),
+            types: None,
         }
     }
 }
