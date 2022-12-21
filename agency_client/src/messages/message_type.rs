@@ -2,7 +2,7 @@ use regex::{Match, Regex};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::A2AMessageKinds;
 
 const DID: &str = "did:sov:123456789abcdefghi1234";
@@ -101,8 +101,8 @@ pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(Stri
                 _ => None,
             }
         })
-        .ok_or(ErrorAgencyClient::from_msg(
-            ErrorKindAgencyClient::InvalidOption,
+        .ok_or(AgencyClientError::from_msg(
+            AgencyClientErrorKind::InvalidOption,
             "Cannot parse @type",
         ))
 }

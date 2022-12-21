@@ -8,7 +8,7 @@ use aries_vcx::global::settings;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::{schema, vcx_settings};
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
 use crate::api_lib::global::pool::get_main_pool_handle;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
@@ -52,11 +52,11 @@ pub extern "C" fn vcx_schema_create(
 ) -> u32 {
     info!("vcx_schema_create >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_name, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(version, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(source_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_data, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_name, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(version, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_data, LibvcxErrorKind::InvalidOption);
 
     let issuer_did = match vcx_settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
         Ok(err) => err,
@@ -125,12 +125,12 @@ pub extern "C" fn vcx_schema_prepare_for_endorser(
 ) -> u32 {
     info!("vcx_schema_prepare_for_endorser >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_name, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(version, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(source_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_data, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(endorser, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_name, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(version, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_data, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(endorser, LibvcxErrorKind::InvalidOption);
 
     let issuer_did = match vcx_settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
         Ok(err) => err,
@@ -181,7 +181,7 @@ pub extern "C" fn vcx_schema_serialize(
 ) -> u32 {
     info!("vcx_schema_serialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
     trace!(
@@ -192,7 +192,7 @@ pub extern "C" fn vcx_schema_serialize(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidSchemaHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
                                      format!("Invalid schema handle {}", schema_handle)).into();
     };
 
@@ -245,8 +245,8 @@ pub extern "C" fn vcx_schema_deserialize(
 ) -> u32 {
     info!("vcx_schema_deserialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_data, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_data, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_schema_deserialize(command_handle: {}, schema_data: {})",
@@ -331,7 +331,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
 ) -> u32 {
     info!("vcx_schema_get_schema_id >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_schema_get_schema_id(command_handle: {}, schema_handle: {})",
@@ -339,7 +339,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
         schema_handle
     );
     if !schema::is_valid_handle(schema_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidSchemaHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
                                      format!("Invalid schema handle {}", schema_handle)).into();
     }
 
@@ -397,9 +397,9 @@ pub extern "C" fn vcx_schema_get_attributes(
 ) -> u32 {
     info!("vcx_schema_get_attributes >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(source_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_id, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_id, LibvcxErrorKind::InvalidOption);
     trace!(
         "vcx_schema_get_attributes(command_handle: {}, source_id: {}, schema_id: {})",
         command_handle,
@@ -460,7 +460,7 @@ pub extern "C" fn vcx_schema_update_state(
 ) -> u32 {
     info!("vcx_schema_update_state >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
     let pool_handle = match get_main_pool_handle() {
@@ -477,7 +477,7 @@ pub extern "C" fn vcx_schema_update_state(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidSchemaHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
                                      format!("Invalid schema handle {}", schema_handle)).into();
     };
 
@@ -530,7 +530,7 @@ pub extern "C" fn vcx_schema_get_state(
 ) -> u32 {
     info!("vcx_schema_get_state >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
     trace!(
@@ -541,7 +541,7 @@ pub extern "C" fn vcx_schema_get_state(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidSchemaHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
                                      format!("Invalid schema handle {}", schema_handle)).into();
     };
 
@@ -708,7 +708,7 @@ mod tests {
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_schema_release(unknown_handle),
-            u32::from(ErrorKindLibvcx::InvalidSchemaHandle)
+            u32::from(LibvcxErrorKind::InvalidSchemaHandle)
         );
     }
 

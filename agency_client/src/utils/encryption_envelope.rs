@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking::AgencyMockDecrypted;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
@@ -20,8 +20,8 @@ impl EncryptionEnvelope {
         let unpacked_msg = wallet.unpack_message(&payload).await?;
 
         let msg_value: ::serde_json::Value = ::serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
-            ErrorAgencyClient::from_msg(
-                ErrorKindAgencyClient::InvalidJson,
+            AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidJson,
                 format!("Cannot deserialize message: {}", err),
             )
         })?;
@@ -32,8 +32,8 @@ impl EncryptionEnvelope {
 
         let msg_string = msg_value["message"]
             .as_str()
-            .ok_or(ErrorAgencyClient::from_msg(
-                ErrorKindAgencyClient::InvalidJson,
+            .ok_or(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidJson,
                 "Cannot find `message` field",
             ))?
             .to_string();
@@ -90,13 +90,13 @@ impl EncryptionEnvelope {
                             "auth_unpack :: sender_vk != expected_vk.... sender_vk={}, expected_vk={}",
                             sender_vk, expected_vk
                         );
-                        return Err(ErrorAgencyClient::from_msg(ErrorKindAgencyClient::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
+                        return Err(AgencyClientError::from_msg(AgencyClientErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
                     }
                 }
                 None => {
                     error!("auth_unpack :: message was authcrypted");
-                    return Err(ErrorAgencyClient::from_msg(
-                        ErrorKindAgencyClient::InvalidJson,
+                    return Err(AgencyClientError::from_msg(
+                        AgencyClientErrorKind::InvalidJson,
                         "Can't authenticate message because it was anoncrypted.",
                     ));
                 }

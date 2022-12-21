@@ -34,11 +34,11 @@ pub async fn build_schemas_json_prover(
         if rtn.get(&cred_info.schema_id).is_none() {
             let schema_json = ledger.get_schema( &cred_info.schema_id, None)
                 .await
-                .map_err(|err| err.map(ErrorKindAriesVcx::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
-                ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidSchema,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
@@ -66,14 +66,14 @@ pub async fn build_cred_defs_json_prover(
                 .await
                 .map_err(|err| {
                     err.map(
-                        ErrorKindAriesVcx::InvalidProofCredentialData,
+                        AriesVcxErrorKind::InvalidProofCredentialData,
                         "Cannot get credential definition",
                     )
                 })?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
-                ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidProofCredentialData,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidProofCredentialData,
                     format!("Cannot deserialize credential definition: {}", err),
                 )
             })?;
@@ -93,8 +93,8 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(credentials).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize credentials: {}", err),
         )
     })?;
@@ -131,8 +131,8 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     revealed: revealed,
                 });
             } else {
-                return Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidProofCredentialData,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidProofCredentialData,
                     "Cannot get identifiers",
                 ));
             }
@@ -149,8 +149,8 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
         // Handle case for predicates
         Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
     } else {
-        Err(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidProofCredentialData,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidProofCredentialData,
             format!("Attribute not found for: {}", attr_name),
         ))
     }
@@ -192,8 +192,8 @@ pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_ident
                 .await?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
-                    ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::InvalidJson,
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidJson,
                         format!("Cannot deserialize RevocationState: {}", err),
                     )
                 })?;
@@ -256,8 +256,8 @@ pub fn build_requested_credentials_json(
 
     // handle if the attribute is not revealed
     let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize self attested attributes: {}", err),
         )
     })?;
@@ -394,7 +394,7 @@ pub mod unit_tests {
                 .await
                 .unwrap_err()
                 .kind();
-            assert_eq!(err_kind, ErrorKindAriesVcx::InvalidProofCredentialData);
+            assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
         }).await;
     }
 
@@ -420,7 +420,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                ErrorKindAriesVcx::InvalidSchema
+                AriesVcxErrorKind::InvalidSchema
             );
         }).await;
     }
@@ -571,7 +571,7 @@ pub mod unit_tests {
             credential_def_identifiers("", &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            ErrorKindAriesVcx::InvalidJson
+            AriesVcxErrorKind::InvalidJson
         );
 
         // No Creds
@@ -594,7 +594,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            ErrorKindAriesVcx::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // Optional Revocation
@@ -671,7 +671,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            ErrorKindAriesVcx::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // Schema Id is null
@@ -680,7 +680,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            ErrorKindAriesVcx::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
     }
 
@@ -797,7 +797,7 @@ pub mod unit_tests {
         // Attribute not found in proof req
         assert_eq!(
             _get_revocation_interval("not here", &proof_req).unwrap_err().kind(),
-            ErrorKindAriesVcx::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // attribute interval overrides proof request interval

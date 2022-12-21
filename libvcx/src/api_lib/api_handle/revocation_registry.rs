@@ -2,7 +2,7 @@ use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
 use aries_vcx::common::primitives::revocation_registry::RevocationRegistryDefinition;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
 lazy_static! {
     pub static ref REV_REG_MAP: ObjectCache<RevocationRegistry> =
@@ -76,7 +76,7 @@ pub fn from_string(rev_reg_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     REV_REG_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidHandle, e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 pub fn get_tails_hash(handle: u32) -> LibvcxResult<String> {

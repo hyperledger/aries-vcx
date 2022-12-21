@@ -6,11 +6,11 @@ use thiserror;
 use messages;
 
 pub mod prelude {
-    pub use super::{err_msg, ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+    pub use super::{err_msg, AriesVcxError, AriesVcxErrorKind, VcxResult};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum ErrorKindAriesVcx {
+pub enum AriesVcxErrorKind {
     // Common
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
@@ -159,12 +159,12 @@ pub enum ErrorKindAriesVcx {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct ErrorAriesVcx {
+pub struct AriesVcxError {
     msg: String,
-    kind: ErrorKindAriesVcx,
+    kind: AriesVcxErrorKind,
 }
 
-impl fmt::Display for ErrorAriesVcx {
+impl fmt::Display for AriesVcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
@@ -176,12 +176,12 @@ impl fmt::Display for ErrorAriesVcx {
     }
 }
 
-impl ErrorAriesVcx {
-    pub fn from_msg<D>(kind: ErrorKindAriesVcx, msg: D) -> ErrorAriesVcx
+impl AriesVcxError {
+    pub fn from_msg<D>(kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        ErrorAriesVcx {
+        AriesVcxError {
             msg: msg.to_string(),
             kind,
         }
@@ -196,25 +196,25 @@ impl ErrorAriesVcx {
         self.to_string()
     }
 
-    pub fn kind(&self) -> ErrorKindAriesVcx {
+    pub fn kind(&self) -> AriesVcxErrorKind {
         self.kind
     }
 
-    pub fn extend<D>(self, msg: D) -> ErrorAriesVcx
+    pub fn extend<D>(self, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        ErrorAriesVcx {
+        AriesVcxError {
             msg: msg.to_string(),
             ..self
         }
     }
 
-    pub fn map<D>(self, kind: ErrorKindAriesVcx, msg: D) -> ErrorAriesVcx
+    pub fn map<D>(self, kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        ErrorAriesVcx {
+        AriesVcxError {
             msg: msg.to_string(),
             kind,
             ..self
@@ -222,13 +222,13 @@ impl ErrorAriesVcx {
     }
 }
 
-pub fn err_msg<D>(kind: ErrorKindAriesVcx, msg: D) -> ErrorAriesVcx
+pub fn err_msg<D>(kind: AriesVcxErrorKind, msg: D) -> AriesVcxError
 where
     D: fmt::Display + fmt::Debug + Send + Sync + 'static,
 {
-    ErrorAriesVcx::from_msg(kind, msg)
+    AriesVcxError::from_msg(kind, msg)
 }
 
 
 
-pub type VcxResult<T> = Result<T, ErrorAriesVcx>;
+pub type VcxResult<T> = Result<T, AriesVcxError>;

@@ -2,11 +2,11 @@ use std::fmt;
 use std::error::Error;
 
 pub mod prelude {
-    pub use crate::errors::error::{err_msg, ErrorMessages, ErrorKindMessages, MessagesResult};
+    pub use crate::errors::error::{err_msg, MessagesError, MessagesErrorKind, MessagesResult};
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum ErrorKindMessages {
+pub enum MessagesErrorKind {
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
     #[error("Invalid JSON string")]
@@ -26,12 +26,12 @@ pub enum ErrorKindMessages {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct ErrorMessages {
+pub struct MessagesError {
     msg: String,
-    kind: ErrorKindMessages,
+    kind: MessagesErrorKind,
 }
 
-impl fmt::Display for ErrorMessages {
+impl fmt::Display for MessagesError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
@@ -43,27 +43,27 @@ impl fmt::Display for ErrorMessages {
     }
 }
 
-impl ErrorMessages {
-    pub fn from_msg<D>(kind: ErrorKindMessages, msg: D) -> ErrorMessages
+impl MessagesError {
+    pub fn from_msg<D>(kind: MessagesErrorKind, msg: D) -> MessagesError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        ErrorMessages {
+        MessagesError {
             msg: msg.to_string(),
             kind,
         }
     }
 
-    pub fn kind(&self) -> ErrorKindMessages {
+    pub fn kind(&self) -> MessagesErrorKind {
         self.kind
     }
 }
 
-pub fn err_msg<D>(kind: ErrorKindMessages, msg: D) -> ErrorMessages
+pub fn err_msg<D>(kind: MessagesErrorKind, msg: D) -> MessagesError
 where
     D: fmt::Display + fmt::Debug + Send + Sync + 'static,
 {
-    ErrorMessages::from_msg(kind, msg)
+    MessagesError::from_msg(kind, msg)
 }
 
-pub type MessagesResult<T> = Result<T, ErrorMessages>;
+pub type MessagesResult<T> = Result<T, MessagesError>;

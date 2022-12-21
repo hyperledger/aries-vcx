@@ -21,7 +21,7 @@ pub mod test_utils {
     use agency_client::api::downloaded_message::DownloadedMessage;
     use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
     use agency_client::MessageStatusCode;
-    use aries_vcx::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+    use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
@@ -89,8 +89,8 @@ pub mod test_utils {
 
     fn str_message_to_a2a_message(message: &str) -> VcxResult<A2AMessage> {
         Ok(serde_json::from_str(message).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?)
@@ -565,8 +565,8 @@ pub mod test_utils {
                 .download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap();
-            filter_messages(messages, message_type).await.ok_or(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::UnknownError,
+            filter_messages(messages, message_type).await.ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::UnknownError,
                 format!("Failed to download a message"),
             ))
         }
@@ -579,8 +579,8 @@ pub mod test_utils {
             let offer = serde_json::to_string(&offer).unwrap();
             let cred_offer: CredentialOffer = serde_json::from_str(&offer)
                 .map_err(|err| {
-                    ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::InvalidJson,
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidJson,
                         format!(
                             "Strict `aries` protocol is enabled. Can not parse `aries` formatted Credential Offer: {}",
                             err
@@ -639,8 +639,8 @@ pub mod test_utils {
                 .unwrap()
             {
                 A2AMessage::PresentationRequest(presentation_request) => Ok(presentation_request),
-                msg => Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidMessages,
+                msg => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
                 )),
             }
@@ -654,8 +654,8 @@ pub mod test_utils {
                 .unwrap()
             {
                 A2AMessage::CredentialOffer(cred_offer) => Ok(cred_offer),
-                msg => Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidMessages,
+                msg => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidMessages,
                     format!("Message of different type was received: {:?}", msg),
                 )),
             }

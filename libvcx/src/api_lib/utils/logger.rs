@@ -13,7 +13,7 @@ use env_logger::{
 };
 use libc::{c_char, c_void};
 use log::{Level, LevelFilter, Metadata, Record};
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 use crate::api_lib::utils::cstring::CStringUtils;
 
@@ -88,8 +88,8 @@ impl LibvcxLogger {
         let logger = LibvcxLogger::new(context, enabled, log, flush);
 
         log::set_boxed_logger(Box::new(logger)).map_err(|err| {
-            ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::LoggingError,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::LoggingError,
                 format!("Setting logger failed with: {}", err),
             )
         })?;
@@ -233,7 +233,7 @@ impl LibvcxDefaultLogger {
                     .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
                     .try_init()
                     .map_err(|err| {
-                        ErrorLibvcx::from_msg(ErrorKindLibvcx::LoggingError, format!("Cannot init logger: {:?}", err))
+                        LibvcxError::from_msg(LibvcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
                     })?;
             }
         }

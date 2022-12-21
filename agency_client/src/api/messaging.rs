@@ -6,7 +6,7 @@ use crate::messages::update_message::{UIDsByConn, UpdateMessageStatusByConnectio
 use crate::testing::mocking::AgencyMock;
 use crate::testing::{mocking, test_constants};
 use crate::MessageStatusCode;
-use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 impl AgencyClient {
     pub async fn update_messages(
@@ -37,8 +37,8 @@ impl AgencyClient {
 
         match response.remove(0) {
             Client2AgencyMessage::UpdateMessageStatusByConnectionsResponse(_) => Ok(()),
-            _ => Err(ErrorAgencyClient::from_msg(
-                ErrorKindAgencyClient::InvalidHttpResponse,
+            _ => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidHttpResponse,
                 "Message does not match any variant of UpdateMessageStatusByConnectionsResponse",
             )),
         }
@@ -78,8 +78,8 @@ impl AgencyClient {
                 trace!("Interpreting response as V2");
                 Ok(res.msgs)
             }
-            _ => Err(ErrorAgencyClient::from_msg(
-                ErrorKindAgencyClient::InvalidHttpResponse,
+            _ => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidHttpResponse,
                 "Message does not match any variant of GetMessagesResponse",
             )),
         }

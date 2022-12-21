@@ -48,16 +48,16 @@ pub async fn pack_message(
     // parse json array of keys
     let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys)
         .map_err(|_| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 "Invalid RecipientKeys has been passed",
             )
         })
         .and_then(|list| {
             // break early and error out if no receivers keys are provided
             if list.is_empty() {
-                Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidLibindyParam,
+                Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidLibindyParam,
                     "Empty RecipientKeys has been passed",
                 ))
             } else {

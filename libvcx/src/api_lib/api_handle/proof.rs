@@ -7,7 +7,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::get_main_profile;
 
 lazy_static! {
@@ -58,8 +58,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
-            ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidOption,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidOption,
                 format!(
                     "Cannot updated state with message: Message deserialization failed: {:?}",
                     err
@@ -104,7 +104,7 @@ pub async fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PROOF_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidProofHandle,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
                                                e.to_string())))
 }
 
@@ -115,8 +115,8 @@ pub fn release_all() {
 pub async fn to_string(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         serde_json::to_string(&Proofs::V3(proof.clone())).map_err(|err| {
-            ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidState,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidState,
                 format!("cannot serialize Proof proofect: {:?}", err),
             )
         })
@@ -129,8 +129,8 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
 
 pub async fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     let proof: Proofs = serde_json::from_str(proof_data).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("cannot deserialize Proofs proofect: {:?}", err),
         )
     })?;
@@ -487,11 +487,11 @@ pub mod tests {
             .await
             .unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), ErrorKindLibvcx::InvalidProofHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), ErrorKindLibvcx::InvalidProofHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), ErrorKindLibvcx::InvalidProofHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), ErrorKindLibvcx::InvalidProofHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), ErrorKindLibvcx::InvalidProofHandle);
+        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
     }
 
     #[tokio::test]
@@ -506,14 +506,14 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
-            aries_vcx::agency_client::errors::error::ErrorAgencyClient::from_msg(
-                aries_vcx::agency_client::errors::error::ErrorKindAgencyClient::IOError,
+            aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
+                aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
                 "Sending message timeout.",
             ),
         ));
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap_err().kind(),
-            ErrorKindLibvcx::IOError
+            LibvcxErrorKind::IOError
         );
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
@@ -562,7 +562,7 @@ pub mod tests {
 
         assert_eq!(
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
-            ErrorKindLibvcx::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(get_proof_state(handle_proof).await.unwrap(), 0);
         assert_eq!(
@@ -576,16 +576,16 @@ pub mod tests {
                 .await
                 .unwrap_err()
                 .kind(),
-            ErrorKindLibvcx::InvalidJson
+            LibvcxErrorKind::InvalidJson
         );
         assert_eq!(
             to_string(bad_handle).await.unwrap_err().kind(),
-            ErrorKindLibvcx::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(
             get_source_id(bad_handle).unwrap_err().kind(),
-            ErrorKindLibvcx::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(from_string(empty).await.unwrap_err().kind(), ErrorKindLibvcx::InvalidJson);
+        assert_eq!(from_string(empty).await.unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
     }
 }

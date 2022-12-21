@@ -11,21 +11,21 @@ pub async fn rotate_verkey_apply(profile: &Arc<dyn Profile>, did: &str, temp_vk:
     let nym_result = ledger.publish_nym(did, did, Some(temp_vk), None, None).await?;
 
     let nym_result_json: Value = serde_json::from_str(&nym_result).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into Value, err: {:?}", nym_result, err),
         )
     })?;
     let response_type: String = nym_result_json["op"]
         .as_str()
-        .ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot failed to convert {:?} into str", nym_result_json["op"]),
         ))?
         .to_string();
     if response_type != "REPLY" {
-        return Err(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidLedgerResponse,
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
             format!("Obained non-success ledger response: {}", nym_result_json),
         ));
     }
@@ -45,28 +45,28 @@ pub async fn get_verkey_from_ledger(profile: &Arc<dyn Profile>, did: &str) -> Vc
 
     let nym_response: String = ledger.get_nym(did).await?;
     let nym_json: Value = serde_json::from_str(&nym_response).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into Value, err: {:?}", nym_response, err),
         )
     })?;
     let nym_data: String = nym_json["result"]["data"]
         .as_str()
-        .ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into String", nym_json["result"]["data"]),
         ))?
         .to_string();
     let nym_data: Value = serde_json::from_str(&nym_data).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into Value, err: {:?}", nym_data, err),
         )
     })?;
     Ok(nym_data["verkey"]
         .as_str()
-        .ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Cannot deserialize {:?} into String", nym_data["verkey"]),
         ))?
         .to_string())
@@ -92,7 +92,7 @@ mod test {
         let local_verkey_1 = setup.profile.inject_wallet().key_for_local_did(&setup.institution_did).await.unwrap();
         assert_eq!(
             rotate_verkey(&setup.profile, &setup.institution_did).await.unwrap_err().kind(),
-            ErrorKindAriesVcx::InvalidLedgerResponse
+            AriesVcxErrorKind::InvalidLedgerResponse
         );
         let local_verkey_2 =  setup.profile.inject_wallet().key_for_local_did(&setup.institution_did).await.unwrap();
         assert_eq!(local_verkey_1, local_verkey_2);

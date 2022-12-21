@@ -28,8 +28,8 @@ pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
         Ok(_) => Ok(()),
         Err(indy) if indy.kind() == IndyErrorKind::PoolConfigAlreadyExists => Ok(()),
         Err(indy) if indy.kind() == IndyErrorKind::IOError =>
-            Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidGenesisTxnPath, indy.to_string())),
-        Err(indy) => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::CreatePoolConfig, indy.to_string())),
+            Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidGenesisTxnPath, indy.to_string())),
+        Err(indy) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::CreatePoolConfig, indy.to_string())),
     }
 }
 
@@ -49,7 +49,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
 
     match handle {
         Ok(handle) => Ok(handle),
-        Err(err) => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::PoolLedgerConnect, err.to_string())),
+        Err(err) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err.to_string())),
     }
 }
 

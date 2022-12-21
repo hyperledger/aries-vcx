@@ -8,7 +8,7 @@ use vdrtools::{
 
 use vdrtools::WalletHandle;
 
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
@@ -23,7 +23,7 @@ pub async fn libindy_issuer_create_credential_offer(
     if settings::indy_mocks_enabled() {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidState, "Mocked error result of libindy_issuer_create_credential_offer"));
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Mocked error result of libindy_issuer_create_credential_offer"));
         };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }

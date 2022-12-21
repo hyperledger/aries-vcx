@@ -1,5 +1,5 @@
-use aries_vcx::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub fn map_ariesvcx_result<T>(result: VcxResult<T>) -> LibvcxResult<T> {
     match result {
@@ -8,79 +8,79 @@ pub fn map_ariesvcx_result<T>(result: VcxResult<T>) -> LibvcxResult<T> {
     }
 }
 
-impl From<ErrorAriesVcx> for ErrorLibvcx {
-    fn from(error: ErrorAriesVcx) -> ErrorLibvcx {
-        ErrorLibvcx {
+impl From<AriesVcxError> for LibvcxError {
+    fn from(error: AriesVcxError) -> LibvcxError {
+        LibvcxError {
             kind: error.kind().into(),
             msg: error.to_string(),
         }
     }
 }
 
-impl From<ErrorKindAriesVcx> for ErrorKindLibvcx {
-    fn from(kind: ErrorKindAriesVcx) -> Self {
+impl From<AriesVcxErrorKind> for LibvcxErrorKind {
+    fn from(kind: AriesVcxErrorKind) -> Self {
         match kind {
-            ErrorKindAriesVcx::InvalidState => ErrorKindLibvcx::InvalidState,
-            ErrorKindAriesVcx::InvalidConfiguration => ErrorKindLibvcx::InvalidConfiguration,
-            ErrorKindAriesVcx::InvalidJson => ErrorKindLibvcx::InvalidJson,
-            ErrorKindAriesVcx::InvalidOption => ErrorKindLibvcx::InvalidOption,
-            ErrorKindAriesVcx::InvalidMessagePack => ErrorKindLibvcx::InvalidMessagePack,
-            ErrorKindAriesVcx::NotReady => ErrorKindLibvcx::NotReady,
-            ErrorKindAriesVcx::IOError => ErrorKindLibvcx::IOError,
-            ErrorKindAriesVcx::LibindyInvalidStructure => ErrorKindLibvcx::LibindyInvalidStructure,
-            ErrorKindAriesVcx::InvalidLibindyParam => ErrorKindLibvcx::InvalidLibindyParam,
-            ErrorKindAriesVcx::ActionNotSupported => ErrorKindLibvcx::ActionNotSupported,
-            ErrorKindAriesVcx::InvalidInput => ErrorKindLibvcx::InvalidInput,
-            ErrorKindAriesVcx::UnimplementedFeature => ErrorKindLibvcx::UnimplementedFeature,
-            ErrorKindAriesVcx::CredDefAlreadyCreated => ErrorKindLibvcx::CredDefAlreadyCreated,
-            ErrorKindAriesVcx::RevDeltaNotFound => ErrorKindLibvcx::RevDeltaNotFound,
-            ErrorKindAriesVcx::RevDeltaFailedToClear => ErrorKindLibvcx::RevDeltaFailedToClear,
-            ErrorKindAriesVcx::CreateRevRegDef => ErrorKindLibvcx::CreateRevRegDef,
-            ErrorKindAriesVcx::InvalidRevocationDetails => ErrorKindLibvcx::InvalidRevocationDetails,
-            ErrorKindAriesVcx::InvalidRevocationEntry => ErrorKindLibvcx::InvalidRevocationEntry,
-            ErrorKindAriesVcx::InvalidRevocationTimestamp => ErrorKindLibvcx::InvalidRevocationTimestamp,
-            ErrorKindAriesVcx::RevRegDefNotFound => ErrorKindLibvcx::RevRegDefNotFound,
-            ErrorKindAriesVcx::InvalidAttributesStructure => ErrorKindLibvcx::InvalidAttributesStructure,
-            ErrorKindAriesVcx::InvalidProof => ErrorKindLibvcx::InvalidProof,
-            ErrorKindAriesVcx::InvalidSchema => ErrorKindLibvcx::InvalidSchema,
-            ErrorKindAriesVcx::InvalidProofCredentialData => ErrorKindLibvcx::InvalidProofCredentialData,
-            ErrorKindAriesVcx::InvalidProofRequest => ErrorKindLibvcx::InvalidProofRequest,
-            ErrorKindAriesVcx::InvalidSchemaSeqNo => ErrorKindLibvcx::InvalidSchemaSeqNo,
-            ErrorKindAriesVcx::DuplicationSchema => ErrorKindLibvcx::DuplicationSchema,
-            ErrorKindAriesVcx::UnknownSchemaRejection => ErrorKindLibvcx::UnknownSchemaRejection,
-            ErrorKindAriesVcx::InvalidGenesisTxnPath => ErrorKindLibvcx::InvalidGenesisTxnPath,
-            ErrorKindAriesVcx::CreatePoolConfig => ErrorKindLibvcx::CreatePoolConfig,
-            ErrorKindAriesVcx::PoolLedgerConnect => ErrorKindLibvcx::PoolLedgerConnect,
-            ErrorKindAriesVcx::InvalidLedgerResponse => ErrorKindLibvcx::InvalidLedgerResponse,
-            ErrorKindAriesVcx::NoPoolOpen => ErrorKindLibvcx::NoPoolOpen,
-            ErrorKindAriesVcx::PostMessageFailed => ErrorKindLibvcx::PostMessageFailed,
-            ErrorKindAriesVcx::WalletCreate => ErrorKindLibvcx::WalletCreate,
-            ErrorKindAriesVcx::WalletAccessFailed => ErrorKindLibvcx::WalletAccessFailed,
-            ErrorKindAriesVcx::InvalidWalletHandle => ErrorKindLibvcx::InvalidWalletHandle,
-            ErrorKindAriesVcx::DuplicationWallet => ErrorKindLibvcx::DuplicationWallet,
-            ErrorKindAriesVcx::WalletRecordNotFound => ErrorKindLibvcx::WalletRecordNotFound,
-            ErrorKindAriesVcx::DuplicationWalletRecord => ErrorKindLibvcx::DuplicationWalletRecord,
-            ErrorKindAriesVcx::WalletNotFound => ErrorKindLibvcx::WalletNotFound,
-            ErrorKindAriesVcx::WalletAlreadyOpen => ErrorKindLibvcx::WalletAlreadyOpen,
-            ErrorKindAriesVcx::DuplicationMasterSecret => ErrorKindLibvcx::DuplicationMasterSecret,
-            ErrorKindAriesVcx::DuplicationDid => ErrorKindLibvcx::DuplicationDid,
-            ErrorKindAriesVcx::LoggingError => ErrorKindLibvcx::LoggingError,
-            ErrorKindAriesVcx::EncodeError => ErrorKindLibvcx::EncodeError,
-            ErrorKindAriesVcx::UnknownError => ErrorKindLibvcx::UnknownError,
-            ErrorKindAriesVcx::InvalidDid => ErrorKindLibvcx::InvalidDid,
-            ErrorKindAriesVcx::InvalidVerkey => ErrorKindLibvcx::InvalidVerkey,
-            ErrorKindAriesVcx::InvalidNonce => ErrorKindLibvcx::InvalidNonce,
-            ErrorKindAriesVcx::InvalidUrl => ErrorKindLibvcx::InvalidUrl,
-            ErrorKindAriesVcx::SerializationError => ErrorKindLibvcx::SerializationError,
-            ErrorKindAriesVcx::NotBase58 => ErrorKindLibvcx::NotBase58,
-            ErrorKindAriesVcx::ParsingError => ErrorKindLibvcx::ParsingError,
-            ErrorKindAriesVcx::InvalidHttpResponse => ErrorKindLibvcx::InvalidHttpResponse,
-            ErrorKindAriesVcx::InvalidMessages => ErrorKindLibvcx::InvalidMessages,
-            ErrorKindAriesVcx::Common(num) => ErrorKindLibvcx::Common(num),
-            ErrorKindAriesVcx::LibndyError(num) => ErrorKindLibvcx::LibndyError(num),
-            ErrorKindAriesVcx::UnknownLibndyError => ErrorKindLibvcx::UnknownLibndyError,
-            ErrorKindAriesVcx::NoAgentInformation => ErrorKindLibvcx::NoAgentInformation,
-            ErrorKindAriesVcx::InvalidMessageFormat => ErrorKindLibvcx::InvalidMessageFormat,
+            AriesVcxErrorKind::InvalidState => LibvcxErrorKind::InvalidState,
+            AriesVcxErrorKind::InvalidConfiguration => LibvcxErrorKind::InvalidConfiguration,
+            AriesVcxErrorKind::InvalidJson => LibvcxErrorKind::InvalidJson,
+            AriesVcxErrorKind::InvalidOption => LibvcxErrorKind::InvalidOption,
+            AriesVcxErrorKind::InvalidMessagePack => LibvcxErrorKind::InvalidMessagePack,
+            AriesVcxErrorKind::NotReady => LibvcxErrorKind::NotReady,
+            AriesVcxErrorKind::IOError => LibvcxErrorKind::IOError,
+            AriesVcxErrorKind::LibindyInvalidStructure => LibvcxErrorKind::LibindyInvalidStructure,
+            AriesVcxErrorKind::InvalidLibindyParam => LibvcxErrorKind::InvalidLibindyParam,
+            AriesVcxErrorKind::ActionNotSupported => LibvcxErrorKind::ActionNotSupported,
+            AriesVcxErrorKind::InvalidInput => LibvcxErrorKind::InvalidInput,
+            AriesVcxErrorKind::UnimplementedFeature => LibvcxErrorKind::UnimplementedFeature,
+            AriesVcxErrorKind::CredDefAlreadyCreated => LibvcxErrorKind::CredDefAlreadyCreated,
+            AriesVcxErrorKind::RevDeltaNotFound => LibvcxErrorKind::RevDeltaNotFound,
+            AriesVcxErrorKind::RevDeltaFailedToClear => LibvcxErrorKind::RevDeltaFailedToClear,
+            AriesVcxErrorKind::CreateRevRegDef => LibvcxErrorKind::CreateRevRegDef,
+            AriesVcxErrorKind::InvalidRevocationDetails => LibvcxErrorKind::InvalidRevocationDetails,
+            AriesVcxErrorKind::InvalidRevocationEntry => LibvcxErrorKind::InvalidRevocationEntry,
+            AriesVcxErrorKind::InvalidRevocationTimestamp => LibvcxErrorKind::InvalidRevocationTimestamp,
+            AriesVcxErrorKind::RevRegDefNotFound => LibvcxErrorKind::RevRegDefNotFound,
+            AriesVcxErrorKind::InvalidAttributesStructure => LibvcxErrorKind::InvalidAttributesStructure,
+            AriesVcxErrorKind::InvalidProof => LibvcxErrorKind::InvalidProof,
+            AriesVcxErrorKind::InvalidSchema => LibvcxErrorKind::InvalidSchema,
+            AriesVcxErrorKind::InvalidProofCredentialData => LibvcxErrorKind::InvalidProofCredentialData,
+            AriesVcxErrorKind::InvalidProofRequest => LibvcxErrorKind::InvalidProofRequest,
+            AriesVcxErrorKind::InvalidSchemaSeqNo => LibvcxErrorKind::InvalidSchemaSeqNo,
+            AriesVcxErrorKind::DuplicationSchema => LibvcxErrorKind::DuplicationSchema,
+            AriesVcxErrorKind::UnknownSchemaRejection => LibvcxErrorKind::UnknownSchemaRejection,
+            AriesVcxErrorKind::InvalidGenesisTxnPath => LibvcxErrorKind::InvalidGenesisTxnPath,
+            AriesVcxErrorKind::CreatePoolConfig => LibvcxErrorKind::CreatePoolConfig,
+            AriesVcxErrorKind::PoolLedgerConnect => LibvcxErrorKind::PoolLedgerConnect,
+            AriesVcxErrorKind::InvalidLedgerResponse => LibvcxErrorKind::InvalidLedgerResponse,
+            AriesVcxErrorKind::NoPoolOpen => LibvcxErrorKind::NoPoolOpen,
+            AriesVcxErrorKind::PostMessageFailed => LibvcxErrorKind::PostMessageFailed,
+            AriesVcxErrorKind::WalletCreate => LibvcxErrorKind::WalletCreate,
+            AriesVcxErrorKind::WalletAccessFailed => LibvcxErrorKind::WalletAccessFailed,
+            AriesVcxErrorKind::InvalidWalletHandle => LibvcxErrorKind::InvalidWalletHandle,
+            AriesVcxErrorKind::DuplicationWallet => LibvcxErrorKind::DuplicationWallet,
+            AriesVcxErrorKind::WalletRecordNotFound => LibvcxErrorKind::WalletRecordNotFound,
+            AriesVcxErrorKind::DuplicationWalletRecord => LibvcxErrorKind::DuplicationWalletRecord,
+            AriesVcxErrorKind::WalletNotFound => LibvcxErrorKind::WalletNotFound,
+            AriesVcxErrorKind::WalletAlreadyOpen => LibvcxErrorKind::WalletAlreadyOpen,
+            AriesVcxErrorKind::DuplicationMasterSecret => LibvcxErrorKind::DuplicationMasterSecret,
+            AriesVcxErrorKind::DuplicationDid => LibvcxErrorKind::DuplicationDid,
+            AriesVcxErrorKind::LoggingError => LibvcxErrorKind::LoggingError,
+            AriesVcxErrorKind::EncodeError => LibvcxErrorKind::EncodeError,
+            AriesVcxErrorKind::UnknownError => LibvcxErrorKind::UnknownError,
+            AriesVcxErrorKind::InvalidDid => LibvcxErrorKind::InvalidDid,
+            AriesVcxErrorKind::InvalidVerkey => LibvcxErrorKind::InvalidVerkey,
+            AriesVcxErrorKind::InvalidNonce => LibvcxErrorKind::InvalidNonce,
+            AriesVcxErrorKind::InvalidUrl => LibvcxErrorKind::InvalidUrl,
+            AriesVcxErrorKind::SerializationError => LibvcxErrorKind::SerializationError,
+            AriesVcxErrorKind::NotBase58 => LibvcxErrorKind::NotBase58,
+            AriesVcxErrorKind::ParsingError => LibvcxErrorKind::ParsingError,
+            AriesVcxErrorKind::InvalidHttpResponse => LibvcxErrorKind::InvalidHttpResponse,
+            AriesVcxErrorKind::InvalidMessages => LibvcxErrorKind::InvalidMessages,
+            AriesVcxErrorKind::Common(num) => LibvcxErrorKind::Common(num),
+            AriesVcxErrorKind::LibndyError(num) => LibvcxErrorKind::LibndyError(num),
+            AriesVcxErrorKind::UnknownLibndyError => LibvcxErrorKind::UnknownLibndyError,
+            AriesVcxErrorKind::NoAgentInformation => LibvcxErrorKind::NoAgentInformation,
+            AriesVcxErrorKind::InvalidMessageFormat => LibvcxErrorKind::InvalidMessageFormat,
         }
     }
 }

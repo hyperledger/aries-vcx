@@ -5,7 +5,7 @@ use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use futures::future::BoxFuture;
 use rand::Rng;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
     where
@@ -31,8 +31,8 @@ impl<T> ObjectCache<T>
             Ok(g) => Ok(g),
             Err(e) => {
                 error!("Unable to read-lock Object Store: {:?}", e);
-                Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!(
                         "[ObjectCache: {}] Unable to lock Object Store: {:?}",
                         self.cache_name, e
@@ -47,8 +47,8 @@ impl<T> ObjectCache<T>
             Ok(g) => Ok(g),
             Err(e) => {
                 error!("Unable to write-lock Object Store: {:?}", e);
-                Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!(
                         "[ObjectCache: {}] Unable to lock Object Store: {:?}",
                         self.cache_name, e
@@ -74,13 +74,13 @@ impl<T> ObjectCache<T>
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref()),
-                Err(_) => Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(_) => Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle
@@ -94,13 +94,13 @@ impl<T> ObjectCache<T>
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => Ok((*obj.deref()).clone()),
-                Err(_) => Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(_) => Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle
@@ -117,13 +117,13 @@ impl<T> ObjectCache<T>
         match store.get(&handle) {
             Some(m) => match m.lock() {
                 Ok(obj) => closure(obj.deref(), []).await,
-                Err(_) => Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(_) => Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle
@@ -140,13 +140,13 @@ impl<T> ObjectCache<T>
         match store.get_mut(&handle) {
             Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut()),
-                Err(_) => Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(_) => Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle
@@ -163,13 +163,13 @@ impl<T> ObjectCache<T>
         match store.get_mut(&handle) {
             Some(m) => match m.lock() {
                 Ok(mut obj) => closure(obj.deref_mut(), []).await,
-                Err(_) => Err(ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::Common(10),
+                Err(_) => Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::Common(10),
                     format!("[ObjectCache: {}] Unable to lock Object Store", self.cache_name),
                 )), //TODO better error
             },
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle
@@ -207,8 +207,8 @@ impl<T> ObjectCache<T>
         let mut store = self._lock_store_write()?;
         match store.remove(&handle) {
             Some(_) => Ok(()),
-            None => Err(ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::InvalidHandle,
+            None => Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidHandle,
                 format!(
                     "[ObjectCache: {}] Object not found for handle: {}",
                     self.cache_name, handle

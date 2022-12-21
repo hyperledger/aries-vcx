@@ -4,7 +4,7 @@ use vdrtools::{
 
 use vdrtools::{PoolHandle, WalletHandle};
 
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::ledger::transactions::{
@@ -108,8 +108,8 @@ pub async fn publish_rev_reg_def(
     }
 
     let rev_reg_def_json = serde_json::to_string(&rev_reg_def).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Failed to serialize rev_reg_def: {:?}, error: {:?}", rev_reg_def, err),
         )
     })?;
@@ -212,11 +212,11 @@ pub async fn publish_local_revocations(wallet_handle: WalletHandle, pool_handle:
                       rev_reg_id);
                 Ok(())
             },
-            Err(err) => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::RevDeltaFailedToClear,
+            Err(err) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaFailedToClear,
                                                     format!("Failed to clear revocation delta storage for rev_reg_id: {}, error: {}", rev_reg_id, err.to_string())))
         }
     } else {
-        Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::RevDeltaNotFound,
+        Err(AriesVcxError::from_msg(AriesVcxErrorKind::RevDeltaNotFound,
                                     format!("Failed to publish revocation delta for revocation registry {}, no delta found. Possibly already published?", rev_reg_id)))
     }
 }

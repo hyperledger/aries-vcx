@@ -72,14 +72,14 @@ pub fn get_config_value(key: &str) -> VcxResult<String> {
 
     SETTINGS
         .read()
-        .or(Err(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidConfiguration,
+        .or(Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidConfiguration,
             "Cannot read settings",
         )))?
         .get(key)
         .map(|v| v.to_string())
-        .ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidConfiguration,
+        .ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidConfiguration,
             format!("Cannot read \"{}\" from settings", key),
         ))
 }
@@ -88,8 +88,8 @@ pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     trace!("set_config_value >>> key: {}, value: {}", key, value);
     SETTINGS
         .write()
-        .or(Err(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::UnknownError,
+        .or(Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownError,
             "Cannot write settings",
         )))?
         .insert(key.to_string(), value.to_string());
@@ -174,7 +174,7 @@ pub mod unit_tests {
         // Fails with invalid key
         assert_eq!(
             get_config_value(&key).unwrap_err().kind(),
-            ErrorKindAriesVcx::InvalidConfiguration
+            AriesVcxErrorKind::InvalidConfiguration
         );
 
         set_config_value(&key, &value1).unwrap();

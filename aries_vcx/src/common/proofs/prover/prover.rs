@@ -32,8 +32,8 @@ pub async fn generate_indy_proof(
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
     let proof_request: ProofRequestData = serde_json::from_str(proof_req_data_json).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize proof request: {}", err),
         )
     })?;

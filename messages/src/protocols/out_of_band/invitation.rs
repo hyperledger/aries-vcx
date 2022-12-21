@@ -39,8 +39,8 @@ impl OutOfBandInvitation {
 
     pub fn from_string(oob_data: &str) -> MessagesResult<OutOfBandInvitation> {
         serde_json::from_str(oob_data).map_err(|err| {
-            ErrorMessages::from_msg(
-                ErrorKindMessages::InvalidJson,
+            MessagesError::from_msg(
+                MessagesErrorKind::InvalidJson,
                 format!("Cannot deserialize out of band message: {:?}", err),
             )
         })

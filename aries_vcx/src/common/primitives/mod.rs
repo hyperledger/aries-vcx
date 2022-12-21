@@ -8,7 +8,7 @@ pub mod revocation_registry_delta;
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::errors::error::ErrorKindAriesVcx;
+    use crate::errors::error::AriesVcxErrorKind;
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;
@@ -38,7 +38,7 @@ pub mod integration_tests {
         )
         .await;
 
-        assert_eq!(rc.unwrap_err().kind(), ErrorKindAriesVcx::LibindyInvalidStructure);
+        assert_eq!(rc.unwrap_err().kind(), AriesVcxErrorKind::LibindyInvalidStructure);
         }).await;
     }
 

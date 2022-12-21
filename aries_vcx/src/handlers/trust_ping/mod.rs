@@ -1,4 +1,4 @@
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 use messages::protocols::trust_ping::ping::Ping;
 use messages::protocols::trust_ping::ping_response::PingResponse;
@@ -32,8 +32,8 @@ impl TrustPingSender {
 
     pub async fn send_ping(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.ping_sent {
-            return Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NotReady,
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Ping message has already been sent",
             ));
         }
@@ -44,10 +44,10 @@ impl TrustPingSender {
 
     pub fn handle_ping_response(&mut self, ping: &PingResponse) -> VcxResult<()> {
         if !ping.to_a2a_message().thread_id_matches(&self.get_thread_id()) {
-            return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Thread ID mismatch"));
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Thread ID mismatch"));
         }
         if !self.ping.response_requested {
-            return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Message was not expected"));
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Message was not expected"));
         } else {
             self.response_received = true
         }

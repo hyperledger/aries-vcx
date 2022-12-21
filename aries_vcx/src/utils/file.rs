@@ -14,7 +14,7 @@ where
         DirBuilder::new()
             .recursive(true)
             .create(parent_path)
-            .map_err(|err| ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, format!("Can't create the file: {}", err)))?;
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, format!("Can't create the file: {}", err)))?;
     }
 
     let mut file = OpenOptions::new()
@@ -22,25 +22,25 @@ where
         .truncate(true)
         .create(true)
         .open(path)
-        .map_err(|err| ErrorAriesVcx::from_msg(ErrorKindAriesVcx::UnknownError, format!("Can't open the file: {}", err)))?;
+        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, format!("Can't open the file: {}", err)))?;
 
     file.write_all(content.as_bytes()).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::UnknownError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownError,
             format!("Can't write content: \"{}\" to the file: {}", content, err),
         )
     })?;
 
     file.flush().map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::UnknownError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownError,
             format!("Can't write content: \"{}\" to the file: {}", content, err),
         )
     })?;
 
     file.sync_data().map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::UnknownError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownError,
             format!("Can't write content: \"{}\" to the file: {}", content, err),
         )
     })

@@ -169,8 +169,8 @@ impl Holder {
                 .handle_revocation_notification(notification, send_message).await?;
             Ok(())
         } else {
-            Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidState,
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 format!("Unexpected revocation notification, credential is not revokable"),
             ))
         }

@@ -5,7 +5,7 @@ pub static SUCCESS_ERR_CODE: u32 = 0;
 pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum ErrorKindLibvcx {
+pub enum LibvcxErrorKind {
     // Common
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
@@ -197,14 +197,13 @@ pub enum ErrorKindLibvcx {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct ErrorLibvcx {
+pub struct LibvcxError {
     pub msg: String,
-    pub kind: ErrorKindLibvcx,
+    pub kind: LibvcxErrorKind,
 }
 
-
-impl ErrorLibvcx {
-    pub fn from_msg<D>(kind: ErrorKindLibvcx, msg: D) -> Self
+impl LibvcxError {
+    pub fn from_msg<D>(kind: LibvcxErrorKind, msg: D) -> Self
         where
             D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
@@ -223,13 +222,13 @@ impl ErrorLibvcx {
         self.to_string()
     }
 
-    pub fn kind(&self) -> ErrorKindLibvcx {
+    pub fn kind(&self) -> LibvcxErrorKind {
         self.kind
     }
 }
 
 
-impl fmt::Display for ErrorLibvcx {
+impl fmt::Display for LibvcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code: u32 = self.kind.into();
         // todo: how can we get the enum variant error annotation?
@@ -243,4 +242,4 @@ impl fmt::Display for ErrorLibvcx {
     }
 }
 
-pub type LibvcxResult<T> = Result<T, ErrorLibvcx>;
+pub type LibvcxResult<T> = Result<T, LibvcxError>;

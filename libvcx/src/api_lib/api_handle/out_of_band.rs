@@ -11,7 +11,7 @@ use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_lib::api_handle::mediated_connection::CONNECTION_MAP;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::get_main_profile;
 
@@ -34,22 +34,22 @@ pub struct OOBConfig {
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> LibvcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP
         .add(oob)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateOutOfBand,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand,
                                                e.to_string())))
 }
 
 fn store_out_of_band_sender(oob: OutOfBandSender) -> LibvcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP
         .add(oob)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateOutOfBand,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand,
                                                e.to_string())))
 }
 
 pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
     trace!("create_out_of_band >>> config: {}", config);
     let config: OOBConfig = serde_json::from_str(config).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize out of band message config: {:?}", err),
         )
     })?;
@@ -72,8 +72,8 @@ pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
 pub fn create_out_of_band_msg_from_msg(msg: &str) -> LibvcxResult<u32> {
     trace!("create_out_of_band_msg_from_msg >>> msg: {}", msg);
     let msg: A2AMessage = serde_json::from_str(msg).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
@@ -84,8 +84,8 @@ pub fn append_message(handle: u32, msg: &str) -> LibvcxResult<()> {
     trace!("append_message >>> handle: {}, msg: {}", handle, msg);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let msg = serde_json::from_str(msg).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
@@ -97,8 +97,8 @@ pub fn append_service(handle: u32, service: &str) -> LibvcxResult<()> {
     trace!("append_service >>> handle: {}, service: {}", handle, service);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
     let service = serde_json::from_str(service).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
@@ -123,8 +123,8 @@ pub fn extract_a2a_message(handle: u32) -> LibvcxResult<String> {
     OUT_OF_BAND_RECEIVER_MAP.get(handle, |oob| {
         if let Some(msg) = oob.extract_a2a_message()? {
             let msg = serde_json::to_string(&msg).map_err(|err| {
-                ErrorLibvcx::from_msg(
-                    ErrorKindLibvcx::SerializationError,
+                LibvcxError::from_msg(
+                    LibvcxErrorKind::SerializationError,
                     format!("Cannot serialize message {:?}, err: {:?}", msg, err),
                 )
             })?;
@@ -139,8 +139,8 @@ pub fn to_a2a_message(handle: u32) -> LibvcxResult<String> {
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         let msg = oob.to_a2a_message();
         Ok(serde_json::to_string(&msg).map_err(|err| {
-            ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::SerializationError,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::SerializationError,
                 format!("Cannot serialize message {:?}, err: {:?}", msg, err),
             )
         })?)
@@ -167,7 +167,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
             Ok((handle, true))
         } else {
-            Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::UnknownError, format!("Can't find handel for found connection. Instance was probably released in the meantime.")))
+            Err(LibvcxError::from_msg(LibvcxErrorKind::UnknownError, format!("Can't find handel for found connection. Instance was probably released in the meantime.")))
         }
     } else {
         Ok((0, false))
@@ -216,13 +216,13 @@ pub fn from_string_receiver(oob_data: &str) -> LibvcxResult<u32> {
 pub fn release_sender(handle: u32) -> LibvcxResult<()> {
     OUT_OF_BAND_SENDER_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidHandle, e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
     OUT_OF_BAND_RECEIVER_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidHandle, e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
 }
 
 #[cfg(test)]

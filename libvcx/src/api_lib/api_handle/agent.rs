@@ -1,7 +1,7 @@
 use aries_vcx::handlers::connection::public_agent::PublicAgent;
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::get_main_profile;
 lazy_static! {
@@ -15,7 +15,7 @@ pub async fn is_valid_handle(handle: u32) -> bool {
 fn store_public_agent(agent: PublicAgent) -> LibvcxResult<u32> {
     PUBLIC_AGENT_MAP
         .add(agent)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreatePublicAgent,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreatePublicAgent,
                                                e.to_string())))
 }
 
@@ -43,8 +43,8 @@ pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>
         .download_connection_requests(&get_main_agency_client().unwrap(), uids.map(|v| v.clone()))
         .await?;
     let requests = serde_json::to_string(&requests).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::SerializationError,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::SerializationError,
             format!(
                 "Failed to serialize dowloaded connection requests {:?}, err: {:?}",
                 requests, err
@@ -59,8 +59,8 @@ pub async fn download_message(handle: u32, uid: &str) -> LibvcxResult<String> {
     let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
     let msg = agent.download_message(&get_main_agency_client().unwrap(), uid).await?;
     serde_json::to_string(&msg).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::SerializationError,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::SerializationError,
             format!("Failed to serialize dowloaded message {:?}, err: {:?}", msg, err),
         )
     })
@@ -70,8 +70,8 @@ pub fn get_service(handle: u32) -> LibvcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
         let service = agent.service(&get_main_agency_client().unwrap())?;
         serde_json::to_string(&service).map_err(|err| {
-            ErrorLibvcx::from_msg(
-                ErrorKindLibvcx::SerializationError,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::SerializationError,
                 format!("Failed to serialize agent service {:?}, err: {:?}", service, err),
             )
         })
@@ -90,6 +90,6 @@ pub fn from_string(agent_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PUBLIC_AGENT_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidHandle,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle,
                                                e.to_string())))
 }

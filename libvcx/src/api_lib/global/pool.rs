@@ -4,7 +4,7 @@ use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -21,11 +21,11 @@ pub fn get_main_pool_handle() -> LibvcxResult<i32> {
     }
     POOL_HANDLE
         .read()
-        .or(Err(ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::NoPoolOpen,
+        .or(Err(LibvcxError::from_msg(
+            LibvcxErrorKind::NoPoolOpen,
             "There is no pool opened",
         )))?
-        .ok_or(ErrorLibvcx::from_msg(ErrorKindLibvcx::NoPoolOpen, "There is no pool opened"))
+        .ok_or(LibvcxError::from_msg(LibvcxErrorKind::NoPoolOpen, "There is no pool opened"))
 }
 
 pub fn is_main_pool_open() -> bool {

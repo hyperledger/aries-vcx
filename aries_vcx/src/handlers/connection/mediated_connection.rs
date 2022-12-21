@@ -286,7 +286,7 @@ impl MediatedConnection {
         trace!("MediatedConnection::process_invite >>> invitation: {:?}", invitation);
         self.connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -327,7 +327,7 @@ impl MediatedConnection {
                 )
             }
             SmConnection::Invitee(_) => {
-                return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
         self.connection_sm = connection_sm;
@@ -343,11 +343,11 @@ impl MediatedConnection {
                     let send_message = self.send_message_closure_connection(profile);
                     sm_inviter.handle_send_response(send_message).await?
                 } else {
-                    return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Invalid action"));
+                    return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
                 }
             }
             SmConnection::Invitee(_) => {
-                return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
         self.connection_sm = SmConnection::Inviter(connection_sm);
@@ -427,8 +427,8 @@ impl MediatedConnection {
     }
 
     pub async fn handle_message(&mut self, message: A2AMessage, profile: &Arc<dyn Profile>) -> VcxResult<()> {
-        let did_doc = self.their_did_doc().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::NotReady,
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             format!(
                 "Can't answer message {:?} because counterparty did doc is not available",
                 message
@@ -504,8 +504,8 @@ impl MediatedConnection {
                 self.update_state_with_message(profile, agency_client.clone(), Some(message))
                     .await?;
                 self.cloud_agent_info()
-                    .ok_or(ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::NoAgentInformation,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::NoAgentInformation,
                         "Missing cloud agent info",
                     ))?
                     .update_message_status(agency_client, self.pairwise_info(), uid)
@@ -580,8 +580,8 @@ impl MediatedConnection {
 
                 Ok((connection, can_autohop))
             }
-            SmConnection::Invitee(_) => Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NotReady,
+            SmConnection::Invitee(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Invalid operation, called \
                 _step_inviter on Invitee connection.",
             )),
@@ -620,8 +620,8 @@ impl MediatedConnection {
                 };
                 Ok((connection, can_autohop))
             }
-            SmConnection::Inviter(_) => Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NotReady,
+            SmConnection::Inviter(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Invalid operation, called \
                 _step_invitee on Inviter connection.",
             )),
@@ -641,8 +641,8 @@ impl MediatedConnection {
 
     pub async fn connect(&mut self, profile: &Arc<dyn Profile>, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
-        let cloud_agent_info = self.cloud_agent_info.clone().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::NoAgentInformation,
+        let cloud_agent_info = self.cloud_agent_info.clone().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NoAgentInformation,
             "Missing cloud agent info",
         ))?;
         self.connection_sm = match &self.connection_sm {
@@ -669,8 +669,8 @@ impl MediatedConnection {
     pub async fn update_message_status(&self, uid: &str, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("MediatedConnection::update_message_status >>> uid: {:?}", uid);
         self.cloud_agent_info()
-            .ok_or(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NoAgentInformation,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
             .update_message_status(agency_client, self.pairwise_info(), uid.to_string())
@@ -682,8 +682,8 @@ impl MediatedConnection {
             SmConnection::Inviter(sm_inviter) => {
                 let messages = self
                     .cloud_agent_info()
-                    .ok_or(ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::NoAgentInformation,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::NoAgentInformation,
                         "Missing cloud agent info",
                     ))?
                     .get_messages_noauth(agency_client, sm_inviter.pairwise_info(), None)
@@ -693,8 +693,8 @@ impl MediatedConnection {
             SmConnection::Invitee(sm_invitee) => {
                 let messages = self
                     .cloud_agent_info()
-                    .ok_or(ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::NoAgentInformation,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::NoAgentInformation,
                         "Missing cloud agent info",
                     ))?
                     .get_messages_noauth(agency_client, sm_invitee.pairwise_info(), None)
@@ -709,16 +709,16 @@ impl MediatedConnection {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => Ok(self
                 .cloud_agent_info()
-                .ok_or(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::NoAgentInformation,
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NoAgentInformation,
                     "Missing cloud agent info",
                 ))?
                 .get_messages(agency_client, &expected_sender_vk, sm_inviter.pairwise_info())
                 .await?),
             SmConnection::Invitee(sm_invitee) => Ok(self
                 .cloud_agent_info()
-                .ok_or(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::NoAgentInformation,
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NoAgentInformation,
                     "Missing cloud agent info",
                 ))?
                 .get_messages(agency_client, &expected_sender_vk, sm_invitee.pairwise_info())
@@ -728,8 +728,8 @@ impl MediatedConnection {
 
     async fn get_expected_sender_vk(&self) -> VcxResult<String> {
         self.remote_vk().map_err(|_err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NotReady,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Verkey of Connection counterparty \
                 is not known, hence it would be impossible to authenticate message downloaded by id.",
             )
@@ -740,8 +740,8 @@ impl MediatedConnection {
         trace!("MediatedConnection: get_message_by_id >>> msg_id: {}", msg_id);
         let expected_sender_vk = self.get_expected_sender_vk().await?;
         self.cloud_agent_info()
-            .ok_or(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NoAgentInformation,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
             .get_message_by_id(agency_client, msg_id, &expected_sender_vk, self.pairwise_info())
@@ -750,8 +750,8 @@ impl MediatedConnection {
 
     pub async fn send_message_closure(&self, profile: &Arc<dyn Profile>) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::NotReady,
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
@@ -812,15 +812,15 @@ impl MediatedConnection {
             Ok(a2a_msg) => match a2a_msg {
                 A2AMessage::OutOfBandInvitation(oob) => oob,
                 a => {
-                    return Err(ErrorAriesVcx::from_msg(
-                        ErrorKindAriesVcx::SerializationError,
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::SerializationError,
                         format!("Received invalid message type: {:?}", a),
                     ));
                 }
             },
             Err(err) => {
-                return Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::SerializationError,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::SerializationError,
                     format!("Failed to deserialize message, err: {:?}", err),
                 ));
             }
@@ -832,8 +832,8 @@ impl MediatedConnection {
     pub async fn delete(&self, agency_client: &AgencyClient) -> VcxResult<()> {
         trace!("Connection: delete >>> {:?}", self.source_id());
         self.cloud_agent_info()
-            .ok_or(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::NoAgentInformation,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
             .destroy(agency_client, self.pairwise_info())
@@ -851,8 +851,8 @@ impl MediatedConnection {
             query,
             comment
         );
-        let did_doc = self.their_did_doc().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::NotReady,
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
         send_discovery_query(&profile.inject_wallet(), query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
@@ -862,8 +862,8 @@ impl MediatedConnection {
     pub async fn get_connection_info(&self, agency_client: &AgencyClient) -> VcxResult<String> {
         trace!("MediatedConnection::get_connection_info >>>");
 
-        let agent_info = self.cloud_agent_info().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::NoAgentInformation,
+        let agent_info = self.cloud_agent_info().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NoAgentInformation,
             "Missing cloud agent info",
         ))?;
         let pairwise_info = self.pairwise_info();
@@ -894,8 +894,8 @@ impl MediatedConnection {
         };
 
         let connection_info_json = serde_json::to_string(&connection_info).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidState,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 format!("Cannot serialize ConnectionInfo: {:?}", err),
             )
         })?;
@@ -915,8 +915,8 @@ impl MediatedConnection {
             | ConnectionState::Inviter(InviterState::Invited) => {
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
-                        .ok_or(ErrorAriesVcx::from_msg(
-                            ErrorKindAriesVcx::NoAgentInformation,
+                        .ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::NoAgentInformation,
                             "Missing cloud agent info",
                         ))?
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
@@ -932,8 +932,8 @@ impl MediatedConnection {
                 let expected_sender_vk = self.remote_vk()?;
                 let msgs = futures::stream::iter(
                     self.cloud_agent_info()
-                        .ok_or(ErrorAriesVcx::from_msg(
-                            ErrorKindAriesVcx::NoAgentInformation,
+                        .ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::NoAgentInformation,
                             "Missing cloud agent info",
                         ))?
                         .download_encrypted_messages(agency_client, uids, status_codes, self.pairwise_info())
@@ -950,8 +950,8 @@ impl MediatedConnection {
 
     pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::SerializationError,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
                 format!("Cannot serialize Connection: {:?}", err),
             )
         })
@@ -959,8 +959,8 @@ impl MediatedConnection {
 
     pub fn from_string(connection_data: &str) -> VcxResult<Self> {
         serde_json::from_str(connection_data).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize Connection: {:?}", err),
             )
         })

@@ -7,7 +7,7 @@ use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::errors::error;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};
@@ -21,9 +21,9 @@ pub extern "C" fn vcx_public_agent_create(
 ) -> u32 {
     info!("vcx_public_agent_create >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(source_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(institution_did, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(institution_did, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_public_agent_create(command_handle: {}, institution_did: {}) source_id: {}",
@@ -67,10 +67,10 @@ pub extern "C" fn vcx_public_agent_download_connection_requests(
 ) -> u32 {
     info!("vcx_public_agent_download_connection_requests >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let uids = if !uids.is_null() {
-        check_useful_c_str!(uids, ErrorKindLibvcx::InvalidOption);
+        check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         Some(v.to_owned())
@@ -121,8 +121,8 @@ pub extern "C" fn vcx_public_agent_download_message(
 ) -> u32 {
     info!("vcx_public_agent_download_message >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(uid, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(uid, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_public_agent_download_message(command_handle: {}, agent_handle: {}, uids: {:?})",
@@ -166,7 +166,7 @@ pub extern "C" fn vcx_public_agent_get_service(
 ) -> u32 {
     info!("vcx_public_agent_get_service >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_public_agent_get_service(command_handle: {}, agent_handle: {})",
@@ -209,7 +209,7 @@ pub extern "C" fn vcx_public_agent_serialize(
 ) -> u32 {
     info!("vcx_public_agent_serialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_public_agent_serialize(command_handle: {}, agent_handle: {})",
@@ -252,8 +252,8 @@ pub extern "C" fn vcx_public_agent_deserialize(
 ) -> u32 {
     info!("vcx_public_agent_deserialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(agent_json, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(agent_json, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_public_agent_deserialize(command_handle: {}, agent_json: {})",

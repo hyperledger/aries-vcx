@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use messages::concepts::problem_report::ProblemReport;
@@ -24,8 +24,8 @@ impl PresentationRequestSentState {
         thread_id: &str,
     ) -> VcxResult<()> {
         if !settings::indy_mocks_enabled() && !presentation.from_thread(thread_id) {
-            return Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!(
                     "Cannot handle proof presentation: thread id does not match: {:?}",
                     presentation.thread
@@ -41,8 +41,8 @@ impl PresentationRequestSentState {
         .await?;
 
         if !valid {
-            return Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidProof,
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidProof,
                 "Presentation verification failed",
             ));
         }

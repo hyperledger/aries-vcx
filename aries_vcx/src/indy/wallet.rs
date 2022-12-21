@@ -9,7 +9,7 @@ use vdrtools::{
     WalletHandle,
 };
 
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::{
     credentials::holder,
@@ -75,8 +75,8 @@ pub struct RestoreWalletConfigs {
 impl RestoreWalletConfigs {
     pub fn from_str(data: &str) -> VcxResult<RestoreWalletConfigs> {
         serde_json::from_str(data).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize RestoreWalletConfigs: {:?}", err),
             )
         })
@@ -125,12 +125,12 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
 }
 
 
-fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, ErrorAriesVcx> {
+fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, AriesVcxError> {
     match method {
         "RAW" => Ok(KeyDerivationMethod::RAW),
         "ARGON2I_MOD" => Ok(KeyDerivationMethod::ARGON2I_MOD),
         "ARGON2I_INT" => Ok(KeyDerivationMethod::ARGON2I_INT),
-        _ => Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::InvalidOption, format!("Unknown derivation method {}", method)))
+        _ => Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, format!("Unknown derivation method {}", method)))
     }
 }
 
@@ -182,8 +182,8 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResul
         },
 
         Err(err) => {
-            Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::WalletCreate,
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::WalletCreate,
                 format!(
                     "could not create wallet {}: {}",
                     wallet_config.wallet_name,
@@ -235,8 +235,8 @@ pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
         Ok(_) => Ok(()),
 
         Err(err) if err.kind() == IndyErrorKind::WalletAccessFailed => {
-            Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::WalletAccessFailed,
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::WalletAccessFailed,
                 format!(
                     "Can not open wallet \"{}\". Invalid key has been provided.",
                     &wallet_config.wallet_name
@@ -245,8 +245,8 @@ pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
         },
 
         Err(err) if err.kind() == IndyErrorKind::WalletNotFound => {
-            Err(ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::WalletNotFound,
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::WalletNotFound,
                 format!(
                     "Wallet \"{}\" not found or unavailable",
                     &wallet_config.wallet_name,
@@ -637,7 +637,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::errors::error::ErrorKindAriesVcx;
+    use crate::errors::error::AriesVcxErrorKind;
     use crate::indy::wallet::add_wallet_record;
     use crate::utils::devsetup::SetupLibraryWallet;
 
@@ -650,7 +650,7 @@ mod test {
             let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
                 .await
                 .unwrap_err();
-            assert_eq!(err.kind(), ErrorKindAriesVcx::DuplicationWalletRecord);
+            assert_eq!(err.kind(), AriesVcxErrorKind::DuplicationWalletRecord);
         }).await;
     }
 }

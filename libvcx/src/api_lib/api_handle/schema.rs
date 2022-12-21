@@ -7,7 +7,7 @@ use aries_vcx::common::primitives::credential_schema::Schema;
 use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, indy_handles_to_profile};
 
 lazy_static! {
@@ -35,8 +35,8 @@ pub async fn create_and_publish_schema(
     );
 
     let data: Vec<String> = serde_json::from_str(&data).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::SerializationError,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::SerializationError,
             format!("Cannot deserialize schema data to vec: {:?}", err),
         )
     })?;
@@ -50,7 +50,7 @@ pub async fn create_and_publish_schema(
 
     SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateSchema,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
                                                e.to_string())))
 }
 
@@ -77,8 +77,8 @@ pub async fn prepare_schema_for_endorser(
     );
 
     let data: Vec<String> = serde_json::from_str(&data).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::SerializationError,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::SerializationError,
             format!("Cannot deserialize schema data to vec: {:?}", err),
         )
     })?;
@@ -97,7 +97,7 @@ pub async fn prepare_schema_for_endorser(
 
     let schema_handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateSchema,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
                                                e.to_string())))?;
 
     Ok((schema_handle, schema_request))
@@ -120,7 +120,7 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
 
     let handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::CreateSchema,
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
                                                e.to_string())))?;
 
     Ok((handle, schema_json))
@@ -150,7 +150,7 @@ pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     SCHEMA_MAP
         .release(handle)
-        .or_else(|e| Err(ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidSchemaHandle, e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle, e.to_string())))
 }
 
 pub fn release_all() {
@@ -315,7 +315,7 @@ pub mod tests {
         )
             .await
             .unwrap_err();
-        assert_eq!(err.kind(), ErrorKindLibvcx::SerializationError)
+        assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
     #[cfg(feature = "pool_tests")]
@@ -374,7 +374,7 @@ pub mod tests {
                 .await
                 .unwrap_err();
 
-            assert_eq!(err.kind(), ErrorKindLibvcx::DuplicationSchema);
+            assert_eq!(err.kind(), LibvcxErrorKind::DuplicationSchema);
         }).await;
     }
 
@@ -403,11 +403,11 @@ pub mod tests {
 
         release_all();
 
-        assert_eq!(release(h1).unwrap_err().kind(), ErrorKindLibvcx::InvalidSchemaHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), ErrorKindLibvcx::InvalidSchemaHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), ErrorKindLibvcx::InvalidSchemaHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), ErrorKindLibvcx::InvalidSchemaHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), ErrorKindLibvcx::InvalidSchemaHandle);
+        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
     }
 
     #[test]
@@ -415,7 +415,7 @@ pub mod tests {
     fn test_handle_errors() {
         let _setup = SetupEmpty::init();
 
-        assert_eq!(to_string(13435178).unwrap_err().kind(), ErrorKindLibvcx::InvalidHandle);
+        assert_eq!(to_string(13435178).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
     }
 
     #[cfg(feature = "pool_tests")]

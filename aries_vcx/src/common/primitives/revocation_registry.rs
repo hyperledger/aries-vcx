@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::errors::error::{ErrorAriesVcx, ErrorKindAriesVcx, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::REV_REG_ID;
 
@@ -47,7 +47,7 @@ impl RevocationRegistry {
             &format!("tag{}", tag),
         )
         .await
-        .map_err(|err| err.map(ErrorKindAriesVcx::CreateRevRegDef, "Cannot create Revocation Registry"))?;
+        .map_err(|err| err.map(AriesVcxErrorKind::CreateRevRegDef, "Cannot create Revocation Registry"))?;
         Ok(RevocationRegistry {
             cred_def_id: cred_def_id.to_string(),
             issuer_did: issuer_did.to_string(),
@@ -104,7 +104,7 @@ impl RevocationRegistry {
             .await
             .map_err(|err| {
                 err.map(
-                    ErrorKindAriesVcx::InvalidState,
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot publish revocation registry definition",
                 )
             })?;
@@ -121,7 +121,7 @@ impl RevocationRegistry {
         let ledger = Arc::clone(profile).inject_ledger();
         ledger.publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
-            .map_err(|err| err.map(ErrorKindAriesVcx::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+            .map_err(|err| err.map(AriesVcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
         Ok(())
     }
@@ -161,8 +161,8 @@ impl RevocationRegistry {
 
     pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::SerializationError,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
                 format!("Cannot serialize revocation registry: {:?}", err),
             )
         })
@@ -170,8 +170,8 @@ impl RevocationRegistry {
 
     pub fn from_string(rev_reg_data: &str) -> VcxResult<Self> {
         serde_json::from_str(rev_reg_data).map_err(|err| {
-            ErrorAriesVcx::from_msg(
-                ErrorKindAriesVcx::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize revocation registry: {:?}", err),
             )
         })
@@ -244,8 +244,8 @@ pub async fn generate_rev_reg(
         anoncreds.issuer_create_and_store_revoc_reg( issuer_did, cred_def_id, tails_dir, max_creds, tag).await?;
 
     let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json).map_err(|err| {
-        ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!(
                 "Failed to deserialize rev_reg_def: {:?}, error: {:?}",
                 rev_reg_def_json, err

@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx, LibvcxResult};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 static RT: Lazy<Runtime> = Lazy::new(|| {
     tokio::runtime::Builder::new_multi_thread()
@@ -28,8 +28,8 @@ pub struct ThreadpoolConfig {
 
 pub fn init_threadpool(config: &str) -> LibvcxResult<()> {
     let config: ThreadpoolConfig = serde_json::from_str(config).map_err(|err| {
-        ErrorLibvcx::from_msg(
-            ErrorKindLibvcx::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("Failed to deserialize threadpool config {:?}, err: {:?}", config, err),
         )
     })?;

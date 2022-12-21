@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::agency_client::AgencyClient;
 use crate::configuration::AgencyClientConfig;
-use crate::errors::error::{ErrorAgencyClient, ErrorKindAgencyClient, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::connect::{Connect, ConnectResponse};
 use crate::messages::create_agent::{CreateAgent, CreateAgentResponse};
@@ -36,8 +36,8 @@ impl AgencyClient {
         } = match response.remove(0) {
             Client2AgencyMessage::ConnectResponse(resp) => resp,
             _ => {
-                return Err(ErrorAgencyClient::from_msg(
-                    ErrorKindAgencyClient::InvalidHttpResponse,
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
                     "Message does not match any variant of ConnectResponse",
                 ))
             }
@@ -62,8 +62,8 @@ impl AgencyClient {
         let _response: SignUpResponse = match response.remove(0) {
             Client2AgencyMessage::SignUpResponse(resp) => resp,
             _ => {
-                return Err(ErrorAgencyClient::from_msg(
-                    ErrorKindAgencyClient::InvalidHttpResponse,
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
                     "Message does not match any variant of SignUpResponse",
                 ))
             }
@@ -81,8 +81,8 @@ impl AgencyClient {
         let response: CreateAgentResponse = match response.remove(0) {
             Client2AgencyMessage::CreateAgentResponse(resp) => resp,
             _ => {
-                return Err(ErrorAgencyClient::from_msg(
-                    ErrorKindAgencyClient::InvalidHttpResponse,
+                return Err(AgencyClientError::from_msg(
+                    AgencyClientErrorKind::InvalidHttpResponse,
                     "Message does not match any variant of CreateAgentResponse",
                 ))
             }

@@ -50,7 +50,7 @@ impl OutOfBandSender {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => {
-                return Err(ErrorAriesVcx::from_msg(ErrorKindAriesVcx::ActionNotSupported, format!("DidExchange protocol is not implemented")))
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::ActionNotSupported, format!("DidExchange protocol is not implemented")))
             }
         };
         match self.oob.handshake_protocols {
@@ -72,8 +72,8 @@ impl OutOfBandSender {
             a2a_msg @ A2AMessage::CredentialOffer(_) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
-                return Err(ErrorAriesVcx::from_msg(
-                    ErrorKindAriesVcx::InvalidMessageFormat,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidMessageFormat,
                     format!("Appended message type {:?} is not allowed.", msg),
                 ));
             }

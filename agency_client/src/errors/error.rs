@@ -6,7 +6,7 @@ pub mod prelude {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]
-pub enum ErrorKindAgencyClient {
+pub enum AgencyClientErrorKind {
     // Common
     #[error("Object is in invalid state for requested operation")]
     InvalidState,
@@ -48,12 +48,12 @@ pub enum ErrorKindAgencyClient {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub struct ErrorAgencyClient {
+pub struct AgencyClientError {
     msg: String,
-    kind: ErrorKindAgencyClient,
+    kind: AgencyClientErrorKind,
 }
 
-impl fmt::Display for ErrorAgencyClient {
+impl fmt::Display for AgencyClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "Error: {}\n", self.msg)?;
         let mut current = self.source();
@@ -65,20 +65,20 @@ impl fmt::Display for ErrorAgencyClient {
     }
 }
 
-impl ErrorAgencyClient {
-    pub fn from_msg<D>(kind: ErrorKindAgencyClient, msg: D) -> ErrorAgencyClient
+impl AgencyClientError {
+    pub fn from_msg<D>(kind: AgencyClientErrorKind, msg: D) -> AgencyClientError
     where
         D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
-        ErrorAgencyClient {
+        AgencyClientError {
             msg: msg.to_string(),
             kind,
         }
     }
 
-    pub fn kind(&self) -> ErrorKindAgencyClient {
+    pub fn kind(&self) -> AgencyClientErrorKind {
         self.kind
     }
 }
 
-pub type AgencyClientResult<T> = Result<T, ErrorAgencyClient>;
+pub type AgencyClientResult<T> = Result<T, AgencyClientError>;

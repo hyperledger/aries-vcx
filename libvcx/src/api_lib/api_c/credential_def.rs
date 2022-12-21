@@ -7,7 +7,7 @@ use aries_vcx::global::settings;
 use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::api_handle::{credential_def, vcx_settings};
-use crate::api_lib::errors::error::{ErrorLibvcx, ErrorKindLibvcx};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
@@ -25,13 +25,13 @@ pub extern "C" fn vcx_credentialdef_create_v2(
 ) -> u32 {
     info!("vcx_credentialdef_create_v2 >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(source_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(schema_id, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(tag, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tag, LibvcxErrorKind::InvalidOption);
 
     let issuer_did: String = if !issuer_did.is_null() {
-        check_useful_c_str!(issuer_did, ErrorKindLibvcx::InvalidOption);
+        check_useful_c_str!(issuer_did, LibvcxErrorKind::InvalidOption);
         issuer_did.to_owned()
     } else {
         match vcx_settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
@@ -71,10 +71,10 @@ pub extern "C" fn vcx_credentialdef_publish(
 ) -> u32 {
     info!("vcx_credentialdef_publish >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
                                      format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
@@ -123,7 +123,7 @@ pub extern "C" fn vcx_credentialdef_serialize(
 ) -> u32 {
     info!("vcx_credentialdef_serialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -134,7 +134,7 @@ pub extern "C" fn vcx_credentialdef_serialize(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
                                      format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
@@ -177,8 +177,8 @@ pub extern "C" fn vcx_credentialdef_deserialize(
 ) -> u32 {
     info!("vcx_credentialdef_deserialize >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
-    check_useful_c_str!(credentialdef_data, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(credentialdef_data, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_credentialdef_deserialize(command_handle: {}, credentialdef_data: {})",
@@ -232,7 +232,7 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
 ) -> u32 {
     info!("vcx_credentialdef_get_cred_def_id >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(cred_def_handle).unwrap_or_default();
     trace!(
@@ -242,7 +242,7 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
         source_id
     );
     if !credential_def::is_valid_handle(cred_def_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
                                      format!("Invalid creddef handle {}", cred_def_handle)).into();
     }
 
@@ -322,7 +322,7 @@ pub extern "C" fn vcx_credentialdef_update_state(
 ) -> u32 {
     info!("vcx_credentialdef_update_state >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -333,7 +333,7 @@ pub extern "C" fn vcx_credentialdef_update_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
                                      format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
@@ -386,7 +386,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
 ) -> u32 {
     info!("vcx_credentialdef_get_state >>>");
 
-    check_useful_c_callback!(cb, ErrorKindLibvcx::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -397,7 +397,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return ErrorLibvcx::from_msg(ErrorKindLibvcx::InvalidCredDefHandle,
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
                                      format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
@@ -578,7 +578,7 @@ mod tests {
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_credentialdef_release(unknown_handle),
-            u32::from(ErrorKindLibvcx::InvalidCredDefHandle)
+            u32::from(LibvcxErrorKind::InvalidCredDefHandle)
         );
     }
 

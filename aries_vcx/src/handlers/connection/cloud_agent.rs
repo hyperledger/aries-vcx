@@ -200,8 +200,8 @@ impl CloudAgentInfo {
         let mut messages = self
             .download_encrypted_messages(agency_client, Some(vec![msg_id.to_string()]), None, pairwise_info)
             .await?;
-        let message = messages.pop().ok_or(ErrorAriesVcx::from_msg(
-            ErrorKindAriesVcx::InvalidMessages,
+        let message = messages.pop().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessages,
             format!("Message not found for id: {:?}", msg_id),
         ))?;
         let message = self

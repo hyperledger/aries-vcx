@@ -41,14 +41,14 @@ macro_rules! check_useful_c_str {
         let $x = match CStringUtils::c_str_to_string($x) {
             Ok(Some(val)) => val,
             _ => {
-                let err = ErrorLibvcx::from_msg($e, "Invalid pointer has been passed");
+                let err = LibvcxError::from_msg($e, "Invalid pointer has been passed");
                 set_current_error_vcx(&err);
                 return err.into();
             }
         };
 
         if $x.is_empty() {
-            let err = ErrorLibvcx::from_msg($e, "Empty string has been passed");
+            let err = LibvcxError::from_msg($e, "Empty string has been passed");
             set_current_error_vcx(&err);
             return err.into();
         }
@@ -60,7 +60,7 @@ macro_rules! check_useful_opt_c_str {
         let $x = match CStringUtils::c_str_to_string($x) {
             Ok(opt_val) => opt_val,
             Err(_) => {
-                let err = ErrorLibvcx::from_msg($e, "Invalid pointer has been passed");
+                let err = LibvcxError::from_msg($e, "Invalid pointer has been passed");
                 set_current_error_vcx(&err);
                 return err.into();
             }
@@ -71,12 +71,12 @@ macro_rules! check_useful_opt_c_str {
 macro_rules! check_useful_c_byte_array {
     ($ptr:ident, $len:expr, $err1:expr, $err2:expr) => {
         if $ptr.is_null() {
-            let err = ErrorLibvcx::from_msg($err1, "Invalid pointer has been passed");
+            let err = LibvcxError::from_msg($err1, "Invalid pointer has been passed");
             set_current_error_vcx(&err);
             return err.into();
         }
         if $len <= 0 {
-            let err = ErrorLibvcx::from_msg($err2, "Array length must be greater than 0");
+            let err = LibvcxError::from_msg($err2, "Array length must be greater than 0");
             set_current_error_vcx(&err);
             return err.into();
         }
