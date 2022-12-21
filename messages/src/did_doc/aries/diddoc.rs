@@ -306,7 +306,6 @@ impl AriesDidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::model::*;
     use crate::concepts::aries_service::AriesService;
     use crate::did_doc::aries::diddoc::AriesDidDoc;
     use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
@@ -329,10 +328,6 @@ pub mod test_utils {
 
     pub fn _key_3() -> String {
         String::from("3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU")
-    }
-
-    pub fn _key_4() -> String {
-        String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
     }
 
     pub fn _did() -> String {
