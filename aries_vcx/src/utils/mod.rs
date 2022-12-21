@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 use vdrtools::types::validation::Validatable;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use messages::a2a::A2AMessage;
@@ -74,7 +74,7 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
 pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
-    did_doc: DidDoc,
+    did_doc: AriesDidDoc,
     message: A2AMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
@@ -92,7 +92,7 @@ pub async fn send_message(
 
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
-    did_doc: &DidDoc,
+    did_doc: &AriesDidDoc,
     message: &A2AMessage,
 ) -> VcxResult<()> {
     trace!(

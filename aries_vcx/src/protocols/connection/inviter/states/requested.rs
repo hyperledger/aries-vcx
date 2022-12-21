@@ -1,4 +1,4 @@
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
 use crate::protocols::connection::inviter::states::initial::InitialState;
@@ -7,7 +7,7 @@ use crate::protocols::connection::inviter::states::responded::RespondedState;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
     pub signed_response: SignedResponse,
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
     pub thread_id: String,
 }
 

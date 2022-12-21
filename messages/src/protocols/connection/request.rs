@@ -1,4 +1,4 @@
-use crate::did_doc::aries::diddoc::DidDoc;
+use crate::did_doc::aries::diddoc::AriesDidDoc;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -27,7 +27,7 @@ pub struct ConnectionData {
     #[serde(rename = "DID")]
     pub did: String,
     #[serde(rename = "DIDDoc")]
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
 }
 
 impl Request {

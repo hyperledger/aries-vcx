@@ -1,4 +1,4 @@
-use crate::did_doc::aries::diddoc::DidDoc;
+use crate::did_doc::aries::diddoc::AriesDidDoc;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
@@ -27,7 +27,7 @@ pub struct ConnectionData {
     #[serde(rename = "DID")]
     pub did: String,
     #[serde(rename = "DIDDoc")]
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
 }
 
 please_ack!(Response);

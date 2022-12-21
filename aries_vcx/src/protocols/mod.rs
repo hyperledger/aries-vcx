@@ -1,6 +1,6 @@
 use futures::future::BoxFuture;
 use messages::a2a::A2AMessage;
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 
 use crate::errors::error::VcxResult;
 
@@ -13,4 +13,4 @@ pub mod common;
 pub mod revocation_notification;
 
 pub type SendClosure = Box<dyn FnOnce(A2AMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
-pub type SendClosureConnection = Box<dyn FnOnce(A2AMessage, String, DidDoc) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
+pub type SendClosureConnection = Box<dyn FnOnce(A2AMessage, String, AriesDidDoc) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;

@@ -1,11 +1,11 @@
 use std::clone::Clone;
 
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
     pub protocols: Option<Vec<ProtocolDescriptor>>,
     pub thread_id: Option<String>,
 }

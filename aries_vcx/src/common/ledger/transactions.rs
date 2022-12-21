@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 use bs58;
 
 use serde_json::Value;
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 use messages::did_doc::aries::service::AriesService;
 use messages::did_doc::service_didsov::EndpointDidSov;
 use messages::did_doc::service_oob::ServiceOob;
@@ -91,8 +91,8 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -> VcxResult<DidDoc> {
-    let mut did_doc: DidDoc = DidDoc::default();
+pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -> VcxResult<AriesDidDoc> {
+    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         Invitation::Public(invitation) => {
             did_doc.set_id(invitation.did.to_string());
@@ -284,7 +284,7 @@ mod test {
 
     #[tokio::test]
     async fn test_did_doc_from_invitation_works() {
-        let mut did_doc = DidDoc::default();
+        let mut did_doc = AriesDidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
@@ -299,7 +299,7 @@ mod test {
 
     #[tokio::test]
     async fn test_did_doc_from_oob_invitation_works() {
-        let mut did_doc = DidDoc::default();
+        let mut did_doc = AriesDidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(vec![_key_2()]);

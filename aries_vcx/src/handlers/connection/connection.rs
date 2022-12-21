@@ -14,7 +14,7 @@ use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {
@@ -49,7 +49,7 @@ impl Connection {
         })
     }
 
-    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: DidDoc) -> VcxResult<Self> {
+    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: AriesDidDoc) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>>");
         Ok(Self {
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
@@ -103,7 +103,7 @@ impl Connection {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
             SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
@@ -315,7 +315,7 @@ impl Connection {
     fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
         let wallet = profile.inject_wallet();
-        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
+        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: AriesDidDoc| {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
@@ -338,7 +338,7 @@ pub mod test_utils {
 
     pub(super) fn _send_message(sender: Sender<A2AMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
-            move |message: A2AMessage, _sender_vk: String, _did_doc: DidDoc| {
+            move |message: A2AMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
                 Box::pin(async move {
                     sender.send(message).await.map_err(|err| {
                         AriesVcxError::from_msg(AriesVcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
@@ -371,7 +371,7 @@ mod unit_tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -383,7 +383,7 @@ mod unit_tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Public(_public_invitation());
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -396,7 +396,7 @@ mod unit_tests {
         let _setup = SetupMocks::init();
 
         let invite = _public_invitation_random_id();
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
@@ -411,7 +411,7 @@ mod unit_tests {
         assert_ne!(connection.get_thread_id(), invite.id.0);
 
         let invite = _pairwise_invitation_random_id();
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))

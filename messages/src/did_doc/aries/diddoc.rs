@@ -5,7 +5,7 @@ use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 use crate::utils::validation::validate_verkey;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct DidDoc {
+pub struct AriesDidDoc {
     #[serde(rename = "@context")]
     pub context: String,
     #[serde(default)]
@@ -19,9 +19,9 @@ pub struct DidDoc {
 }
 
 
-impl Default for DidDoc {
-    fn default() -> DidDoc {
-        DidDoc {
+impl Default for AriesDidDoc {
+    fn default() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: String::new(),
             public_key: vec![],
@@ -31,7 +31,7 @@ impl Default for DidDoc {
     }
 }
 
-impl DidDoc {
+impl AriesDidDoc {
     pub fn set_id(&mut self, id: String) {
         self.id = id;
     }
@@ -49,7 +49,7 @@ impl DidDoc {
         recipient_keys.iter().for_each(|key_in_base58| {
             key_id += 1;
 
-            let key_reference = DidDoc::build_key_reference(&self.id, &key_id.to_string());
+            let key_reference = AriesDidDoc::build_key_reference(&self.id, &key_id.to_string());
 
             self.public_key.push(Ed25519PublicKey {
                 id: key_reference.clone(),
@@ -190,7 +190,7 @@ impl DidDoc {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
             Err(_) => {
-                let key_ref = DidDoc::parse_key_reference(key_value_or_reference)?;
+                let key_ref = AriesDidDoc::parse_key_reference(key_value_or_reference)?;
                 self.find_key_by_reference(&key_ref)
             }
         }?;
@@ -251,7 +251,7 @@ impl DidDoc {
                 if auth_key.public_key == key {
                     return true;
                 }
-                match DidDoc::parse_key_reference(&auth_key.public_key) {
+                match AriesDidDoc::parse_key_reference(&auth_key.public_key) {
                     Ok(auth_public_key_ref) => auth_public_key_ref.key_id == key,
                     Err(_) => false,
                 }
@@ -286,7 +286,7 @@ impl DidDoc {
     }
 
     fn parse_key_reference(key_reference: &str) -> MessagesResult<DdoKeyReference> {
-        let pars: Vec<&str> = DidDoc::key_parts(key_reference);
+        let pars: Vec<&str> = AriesDidDoc::key_parts(key_reference);
         match pars.len() {
             0 => Err(MessagesError::from_msg(
                 MessagesErrorKind::InvalidJson,
@@ -308,7 +308,7 @@ impl DidDoc {
 pub mod test_utils {
     use crate::did_doc::model::*;
     use crate::did_doc::aries::service::AriesService;
-    use crate::did_doc::aries::diddoc::DidDoc;
+    use crate::did_doc::aries::diddoc::AriesDidDoc;
     use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 
     pub fn _key_1() -> String {
@@ -356,7 +356,7 @@ pub mod test_utils {
     }
 
     pub fn _key_reference_1() -> String {
-        DidDoc::build_key_reference(&_did(), "1")
+        AriesDidDoc::build_key_reference(&_did(), "1")
     }
 
     pub fn _key_reference_full_1_typed() -> DdoKeyReference {
@@ -367,19 +367,19 @@ pub mod test_utils {
     }
 
     pub fn _key_reference_2() -> String {
-        DidDoc::build_key_reference(&_did(), "2")
+        AriesDidDoc::build_key_reference(&_did(), "2")
     }
 
     pub fn _key_reference_3() -> String {
-        DidDoc::build_key_reference(&_did(), "3")
+        AriesDidDoc::build_key_reference(&_did(), "3")
     }
 
     pub fn _label() -> String {
         String::from("test")
     }
 
-    pub fn _did_doc_vcx_legacy() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_vcx_legacy() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -401,8 +401,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_inlined_recipient_keys() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_inlined_recipient_keys() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -424,8 +424,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_recipient_keys_by_value() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_recipient_keys_by_value() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![
@@ -461,8 +461,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_empty_routing() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_empty_routing() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -489,11 +489,11 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::did_doc::aries::diddoc::test_utils::*;
-    use crate::did_doc::aries::diddoc::DidDoc;
+    use crate::did_doc::aries::diddoc::AriesDidDoc;
 
     #[test]
     fn test_did_doc_build_works() {
-        let mut did_doc: DidDoc = DidDoc::default();
+        let mut did_doc: AriesDidDoc = AriesDidDoc::default();
         did_doc.set_id(_did());
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
@@ -519,7 +519,7 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_resolve_recipient_key_by_reference_works() {
-        let ddo: DidDoc = serde_json::from_value(json!({
+        let ddo: AriesDidDoc = serde_json::from_value(json!({
             "@context": "https://w3id.org/did/v1",
             "id": "testid",
             "publicKey": [
@@ -616,14 +616,14 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_build_key_reference_works() {
-        assert_eq!(_key_reference_1(), DidDoc::build_key_reference(&_did(), "1"));
+        assert_eq!(_key_reference_1(), AriesDidDoc::build_key_reference(&_did(), "1"));
     }
 
     #[test]
     fn test_did_doc_parse_key_reference_works() {
         assert_eq!(
             _key_reference_full_1_typed(),
-            DidDoc::parse_key_reference(&_key_reference_1()).unwrap()
+            AriesDidDoc::parse_key_reference(&_key_reference_1()).unwrap()
         );
     }
 }

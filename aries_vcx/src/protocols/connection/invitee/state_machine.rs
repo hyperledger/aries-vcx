@@ -20,7 +20,7 @@ use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
 use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::SignedResponse;
-use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
@@ -68,7 +68,7 @@ impl From<InviteeFullState> for InviteeState {
 }
 
 impl SmConnectionInvitee {
-    pub fn new(source_id: &str, pairwise_info: PairwiseInfo, did_doc: DidDoc) -> Self {
+    pub fn new(source_id: &str, pairwise_info: PairwiseInfo, did_doc: AriesDidDoc) -> Self {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             thread_id: String::new(),
@@ -116,7 +116,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
             InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
@@ -126,7 +126,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+    pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
             InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
@@ -165,7 +165,7 @@ impl SmConnectionInvitee {
 
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .map(|did_doc: DidDoc| did_doc.id)
+            .map(|did_doc: AriesDidDoc| did_doc.id)
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Remote Connection DID is not set",
@@ -404,7 +404,7 @@ pub mod unit_tests {
         use super::*;
 
         fn _send_message() -> SendClosureConnection {
-            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { Ok(()) }))
+            Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async { Ok(()) }))
         }
 
         pub async fn invitee_sm() -> SmConnectionInvitee {
