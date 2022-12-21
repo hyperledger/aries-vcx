@@ -4,7 +4,7 @@ use bs58;
 use serde_json::Value;
 use messages::did_doc::aries::diddoc::AriesDidDoc;
 use messages::concepts::aries_service::AriesService;
-use messages::did_doc::service_didsov::EndpointDidSov;
+use crate::common::ledger::service_didsov::EndpointDidSov;
 use messages::protocols::out_of_band::service_oob::ServiceOob;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::invite::Invitation;

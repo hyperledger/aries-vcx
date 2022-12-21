@@ -18,7 +18,7 @@ mod integration_tests {
     use std::sync::Arc;
     use std::thread;
     use std::time::Duration;
-    use messages::did_doc::service_didsov::EndpointDidSov;
+    use aries_vcx::common::ledger::service_didsov::EndpointDidSov;
 
     #[tokio::test]
     async fn test_open_close_pool() {

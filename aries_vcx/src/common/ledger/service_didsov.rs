@@ -1,4 +1,5 @@
 pub const SERVICE_SUFFIX: &str = "indy";
+
 pub const SERVICE_TYPE: &str = "IndyAgent";
 
 // Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
@@ -25,7 +26,6 @@ impl EndpointDidSov {
         self.routing_keys = routing_keys;
         self
     }
-
 }
 
 impl Default for EndpointDidSov {
@@ -37,12 +37,11 @@ impl Default for EndpointDidSov {
     }
 }
 
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::service_didsov::EndpointDidSov;
-    use crate::did_doc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use messages::did_doc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use crate::common::ledger::service_didsov::EndpointDidSov;
 
     #[test]
     fn test_service_comparison() {
