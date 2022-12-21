@@ -14,7 +14,7 @@ mod integration_tests {
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::did_doc::service_oob::ServiceOob;
+    use messages::protocols::out_of_band::service_oob::ServiceOob;
     use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use aries_vcx::common::ledger::transactions::{get_service, write_endpoint_legacy};
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::messages::did_doc::aries::service::AriesService;
+use aries_vcx::messages::concepts::aries_service::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 
 use crate::api_lib::global::profile::get_main_profile;

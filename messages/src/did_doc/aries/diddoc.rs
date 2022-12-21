@@ -1,5 +1,5 @@
 use url::Url;
-use crate::did_doc::aries::service::AriesService;
+use crate::concepts::aries_service::AriesService;
 use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 use crate::utils::validation::validate_verkey;
@@ -307,7 +307,7 @@ impl AriesDidDoc {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use crate::did_doc::model::*;
-    use crate::did_doc::aries::service::AriesService;
+    use crate::concepts::aries_service::AriesService;
     use crate::did_doc::aries::diddoc::AriesDidDoc;
     use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 

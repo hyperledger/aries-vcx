@@ -7,3 +7,4 @@ pub mod mime_type;
 pub mod timing;
 #[macro_use]
 pub mod ack;
+pub mod aries_service;

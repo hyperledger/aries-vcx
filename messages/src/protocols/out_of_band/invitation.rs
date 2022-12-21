@@ -3,7 +3,7 @@ use crate::errors::error::prelude::*;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::Attachments;
-use crate::did_doc::service_oob::ServiceOob;
+use crate::protocols::out_of_band::service_oob::ServiceOob;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::timing::Timing;
 use crate::protocols::out_of_band::GoalCode;
@@ -50,7 +50,7 @@ impl OutOfBandInvitation {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
 
-    use crate::did_doc::aries::service::AriesService;
+    use crate::concepts::aries_service::AriesService;
     use super::*;
     use crate::did_doc::aries::diddoc::test_utils::*;
 

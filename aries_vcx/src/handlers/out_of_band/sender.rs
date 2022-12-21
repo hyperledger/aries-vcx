@@ -6,7 +6,7 @@ use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 
-use messages::did_doc::service_oob::ServiceOob;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
@@ -102,7 +102,7 @@ impl OutOfBandSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::did_doc::aries::service::AriesService;
+    use messages::concepts::aries_service::AriesService;
     use messages::protocols::connection::did::Did;
     use messages::protocols::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;

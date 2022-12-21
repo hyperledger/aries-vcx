@@ -19,7 +19,7 @@ use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
-use messages::did_doc::service_oob::ServiceOob;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {

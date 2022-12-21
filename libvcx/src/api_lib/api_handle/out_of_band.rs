@@ -4,7 +4,7 @@ use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::did_doc::service_oob::ServiceOob;
+use aries_vcx::messages::protocols::out_of_band::service_oob::ServiceOob;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
@@ -227,7 +227,7 @@ pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::messages::did_doc::aries::service::AriesService;
+    use aries_vcx::messages::concepts::aries_service::AriesService;
 
     use super::*;
 
