@@ -41,8 +41,8 @@ impl Default for EndpointDidSov {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::service_aries_public::EndpointDidSov;
-    use crate::did_doc::test_utils::{_routing_keys, _service_endpoint};
+    use crate::did_doc::service_didsov::EndpointDidSov;
+    use crate::did_doc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
 
     #[test]
     fn test_service_comparison() {

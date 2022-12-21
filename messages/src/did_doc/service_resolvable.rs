@@ -1,4 +1,4 @@
-use crate::did_doc::service_aries::AriesService;
+use crate::did_doc::aries::service::AriesService;
 use crate::protocols::connection::did::Did;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

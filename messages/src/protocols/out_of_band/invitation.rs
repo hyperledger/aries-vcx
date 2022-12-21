@@ -50,9 +50,9 @@ impl OutOfBandInvitation {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
 
-    use crate::did_doc::service_aries::AriesService;
+    use crate::did_doc::aries::service::AriesService;
     use super::*;
-    use crate::did_doc::test_utils::*;
+    use crate::did_doc::aries::diddoc::test_utils::*;
 
 
     pub fn _oob_invitation() -> OutOfBandInvitation {

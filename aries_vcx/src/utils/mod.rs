@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 use vdrtools::types::validation::Validatable;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use messages::a2a::A2AMessage;

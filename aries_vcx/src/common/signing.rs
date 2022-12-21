@@ -108,7 +108,7 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::did_doc::test_utils::*;
+    use messages::did_doc::aries::diddoc::test_utils::*;
     use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
     use crate::indy::utils::test_setup::with_wallet;
     use crate::utils::devsetup::SetupEmpty;

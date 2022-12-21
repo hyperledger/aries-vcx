@@ -1,4 +1,4 @@
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
 use crate::protocols::connection::inviter::states::initial::InitialState;

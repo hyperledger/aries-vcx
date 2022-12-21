@@ -10,7 +10,7 @@ use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 use messages::protocols::connection::invite::Invitation;
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_request::CredentialRequest;

@@ -1,6 +1,6 @@
 use futures::future::BoxFuture;
 use messages::a2a::A2AMessage;
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 
 use crate::errors::error::VcxResult;
 

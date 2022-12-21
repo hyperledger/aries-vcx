@@ -14,7 +14,7 @@ use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {

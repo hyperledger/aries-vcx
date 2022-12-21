@@ -2,9 +2,9 @@ use std::{collections::HashMap, sync::Arc};
 use bs58;
 
 use serde_json::Value;
-use messages::did_doc::DidDoc;
-use messages::did_doc::service_aries::AriesService;
-use messages::did_doc::service_aries_public::EndpointDidSov;
+use messages::did_doc::aries::diddoc::DidDoc;
+use messages::did_doc::aries::service::AriesService;
+use messages::did_doc::service_didsov::EndpointDidSov;
 use messages::did_doc::service_resolvable::ServiceResolvable;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::invite::Invitation;
@@ -276,7 +276,7 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 mod test {
     use messages::a2a::MessageId;
     use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
-    use messages::did_doc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
+    use messages::did_doc::aries::diddoc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
     use messages::protocols::out_of_band::invitation::test_utils::_oob_invitation;
     use crate::common::test_utils::mock_profile;
 

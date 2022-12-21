@@ -1,4 +1,4 @@
-use serde::ser::{Serialize, Serializer};
+use serde::{Serialize, Serializer};
 
 pub const CONTEXT: &str = "https://w3id.org/did/v1";
 pub const KEY_TYPE: &str = "Ed25519VerificationKey2018";
@@ -44,8 +44,8 @@ impl Serialize for DdoKeyReference {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_test {
-    use crate::did_doc::model::DdoKeyReference;
-    use crate::did_doc::test_utils::_did;
+    use crate::did_doc::w3c::model::DdoKeyReference;
+    use crate::did_doc::aries::diddoc::test_utils::_did;
 
     #[test]
     fn test_key_reference_serialization() {

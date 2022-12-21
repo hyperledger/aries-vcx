@@ -227,7 +227,7 @@ pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
 
 #[cfg(test)]
 pub mod tests {
-    use aries_vcx::messages::did_doc::service_aries::AriesService;
+    use aries_vcx::messages::did_doc::aries::service::AriesService;
 
     use super::*;
 

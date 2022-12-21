@@ -20,7 +20,7 @@ use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
 use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::SignedResponse;
-use messages::did_doc::DidDoc;
+use messages::did_doc::aries::diddoc::DidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
@@ -396,7 +396,7 @@ pub mod unit_tests {
     pub mod invitee {
 
         use messages::protocols::connection::response::{Response, SignedResponse};
-        use messages::did_doc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
+        use messages::did_doc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
 
         use crate::common::signing::sign_connection_response;
         use crate::common::test_utils::mock_profile;
