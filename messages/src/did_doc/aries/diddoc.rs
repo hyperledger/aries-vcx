@@ -4,7 +4,8 @@ use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed255
 use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 use crate::utils::validation::validate_verkey;
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct AriesDidDoc {
     #[serde(rename = "@context")]
     pub context: String,

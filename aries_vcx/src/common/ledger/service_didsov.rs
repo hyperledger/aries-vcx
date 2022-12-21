@@ -3,7 +3,8 @@ pub const SERVICE_SUFFIX: &str = "indy";
 pub const SERVICE_TYPE: &str = "IndyAgent";
 
 // https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct EndpointDidSov {
     pub endpoint: String,
     #[serde(default)]
@@ -13,7 +14,8 @@ pub struct EndpointDidSov {
     pub types: Option<Vec<DidSovServiceType>>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[cfg_attr(test, derive(PartialEq))]
 pub enum DidSovServiceType {
     #[serde(rename = "endpoint")] // AIP 1.0
     Endpoint,
