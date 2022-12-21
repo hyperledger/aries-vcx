@@ -19,7 +19,7 @@ use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::did_doc::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -50,7 +50,7 @@ impl OutOfBandReceiver {
             for connection in connections {
                 match connection.bootstrap_did_doc().await {
                     Some(did_doc) => {
-                        if let ServiceResolvable::Did(did) = service {
+                        if let ServiceOob::Did(did) = service {
                             if did.to_string() == did_doc.id {
                                 return Ok(Some(connection));
                             }

@@ -4,7 +4,7 @@ use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
+use aries_vcx::messages::did_doc::service_oob::ServiceOob;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
@@ -102,18 +102,18 @@ pub fn append_service(handle: u32, service: &str) -> LibvcxResult<()> {
             format!("Cannot deserialize supplied message: {:?}", err),
         )
     })?;
-    oob = oob.clone().append_service(&ServiceResolvable::AriesService(service));
+    oob = oob.clone().append_service(&ServiceOob::AriesService(service));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
 pub fn append_service_did(handle: u32, did: &str) -> LibvcxResult<()> {
     trace!("append_service_did >>> handle: {}, did: {}", handle, did);
     let mut oob = OUT_OF_BAND_SENDER_MAP.get_cloned(handle)?;
-    oob = oob.clone().append_service(&ServiceResolvable::Did(Did::new(did)?));
+    oob = oob.clone().append_service(&ServiceOob::Did(Did::new(did)?));
     OUT_OF_BAND_SENDER_MAP.insert(handle, oob)
 }
 
-pub fn get_services(handle: u32) -> LibvcxResult<Vec<ServiceResolvable>> {
+pub fn get_services(handle: u32) -> LibvcxResult<Vec<ServiceOob>> {
     trace!("get_services >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| Ok(oob.get_services()))
 }
@@ -240,7 +240,7 @@ pub mod tests {
             .to_string();
         let oob_handle = create_out_of_band(&config).await.unwrap();
         assert!(oob_handle > 0);
-        let service = ServiceResolvable::AriesService(
+        let service = ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint("http://example.org/agent".into())
                 .set_routing_keys(vec!["12345".into()])
@@ -252,7 +252,7 @@ pub mod tests {
         assert_eq!(resolved_services.len(), 2);
         assert_eq!(service, resolved_services[0]);
         assert_eq!(
-            ServiceResolvable::Did(Did::new(did).unwrap()),
+            ServiceOob::Did(Did::new(did).unwrap()),
             resolved_services[1]
         );
     }

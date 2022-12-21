@@ -5,7 +5,7 @@ use serde_json::Value;
 use messages::did_doc::aries::diddoc::DidDoc;
 use messages::did_doc::aries::service::AriesService;
 use messages::did_doc::service_didsov::EndpointDidSov;
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::did_doc::service_oob::ServiceOob;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::invite::Invitation;
 
@@ -68,10 +68,10 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceResolvable) -> VcxResult<AriesService> {
+pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceOob) -> VcxResult<AriesService> {
     match service {
-        ServiceResolvable::AriesService(service) => Ok(service.clone()),
-        ServiceResolvable::Did(did) => get_service(profile, did).await,
+        ServiceOob::AriesService(service) => Ok(service.clone()),
+        ServiceOob::Did(did) => get_service(profile, did).await,
     }
 }
 

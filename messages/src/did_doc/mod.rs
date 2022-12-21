@@ -7,6 +7,6 @@ use crate::utils::validation::validate_verkey;
 use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 
 pub mod service_didsov;
-pub mod service_resolvable;
+pub mod service_oob;
 pub mod aries;
 pub mod w3c;

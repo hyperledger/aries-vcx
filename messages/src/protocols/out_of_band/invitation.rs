@@ -3,7 +3,7 @@ use crate::errors::error::prelude::*;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::Attachments;
-use crate::did_doc::service_resolvable::ServiceResolvable;
+use crate::did_doc::service_oob::ServiceOob;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::timing::Timing;
 use crate::protocols::out_of_band::GoalCode;
@@ -22,7 +22,7 @@ pub struct OutOfBandInvitation {
     pub accept: Option<Vec<MimeType>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<MessageType>>, // TODO: Make a separate type
-    pub services: Vec<ServiceResolvable>,
+    pub services: Vec<ServiceOob>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~timing")]
@@ -70,8 +70,8 @@ pub mod test_utils {
         }
 
     }
-    fn _create_service() -> ServiceResolvable {
-        ServiceResolvable::AriesService(
+    fn _create_service() -> ServiceOob {
+        ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint(_service_endpoint())
                 .set_routing_keys(_routing_keys())
