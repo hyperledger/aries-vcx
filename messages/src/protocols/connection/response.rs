@@ -166,7 +166,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::aries::diddoc::test_utils::*;
+    use diddoc::aries::diddoc::test_utils::*;
     use crate::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;

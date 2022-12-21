@@ -44,8 +44,8 @@ impl Serialize for DdoKeyReference {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_test {
-    use crate::did_doc::w3c::model::DdoKeyReference;
-    use crate::did_doc::aries::diddoc::test_utils::_did;
+    use crate::aries::diddoc::test_utils::_did;
+    use crate::w3c::model::DdoKeyReference;
 
     #[test]
     fn test_key_reference_serialization() {
