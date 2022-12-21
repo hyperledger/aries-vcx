@@ -1,5 +1,3 @@
-use url::Url;
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DidDocService {
     pub id: String,

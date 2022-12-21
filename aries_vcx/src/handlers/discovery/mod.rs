@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use messages::did_doc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use crate::errors::error::VcxResult;
 
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};

@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use messages::did_doc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::protocols::SendClosureConnection;

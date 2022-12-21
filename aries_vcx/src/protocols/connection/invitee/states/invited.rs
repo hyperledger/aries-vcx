@@ -1,6 +1,6 @@
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::did_doc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

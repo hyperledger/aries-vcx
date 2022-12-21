@@ -1,4 +1,4 @@
-use crate::did_doc::aries::diddoc::AriesDidDoc;
+use diddoc::aries::diddoc::AriesDidDoc;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
@@ -60,7 +60,7 @@ impl Request {
 
 #[cfg(feature = "test_utils")]
 pub mod unit_tests {
-    use crate::did_doc::aries::diddoc::test_utils::*;
+    use diddoc::aries::diddoc::test_utils::*;
 
     use super::*;
 

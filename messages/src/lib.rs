@@ -16,8 +16,9 @@ pub mod a2a;
 #[macro_use]
 pub mod concepts;
 
+pub extern crate diddoc;
+
 pub mod status;
-pub mod did_doc;
 pub mod actors;
 pub mod utils;
 pub mod protocols;

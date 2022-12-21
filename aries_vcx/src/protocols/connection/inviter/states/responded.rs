@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use messages::did_doc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;

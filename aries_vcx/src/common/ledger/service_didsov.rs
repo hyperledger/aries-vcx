@@ -56,7 +56,7 @@ impl Default for EndpointDidSov {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::did_doc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
+    use messages::diddoc::aries::diddoc::test_utils::{_routing_keys, _service_endpoint};
     use crate::common::ledger::service_didsov::EndpointDidSov;
 
     #[test]

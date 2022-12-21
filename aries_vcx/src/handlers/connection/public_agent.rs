@@ -7,7 +7,7 @@ use crate::core::profile::profile::Profile;
 
 use agency_client::agency_client::AgencyClient;
 
-use messages::concepts::aries_service::AriesService;
+use messages::diddoc::aries::service::AriesService;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::common::ledger::transactions::write_endpoint_legacy;

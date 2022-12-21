@@ -1,4 +1,4 @@
-use crate::did_doc::aries::diddoc::AriesDidDoc;
+use diddoc::aries::diddoc::AriesDidDoc;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
@@ -104,7 +104,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::aries::diddoc::test_utils::_did_doc_inlined_recipient_keys;
+    use diddoc::aries::diddoc::test_utils::_did_doc_inlined_recipient_keys;
 
     use super::*;
 

@@ -4,12 +4,12 @@ use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
-use messages::did_doc::aries::diddoc::AriesDidDoc;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
@@ -197,7 +197,7 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::did_doc::aries::diddoc::test_utils::*;
+    use messages::diddoc::aries::diddoc::test_utils::*;
     use messages::concepts::ack::test_utils::_ack;
     use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;

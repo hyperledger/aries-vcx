@@ -1,11 +1,10 @@
 use url::Url;
-use crate::concepts::aries_service::AriesService;
-use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
-use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
-use crate::utils::validation::validate_verkey;
+use crate::aries::service::AriesService;
+use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+use crate::errors::error::{DiddocError, DiddocErrorKind, DiddocResult};
+use shared_vcx::validation::verkey::validate_verkey;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct AriesDidDoc {
     #[serde(rename = "@context")]
     pub context: String,
@@ -94,10 +93,10 @@ impl AriesDidDoc {
         });
     }
 
-    pub fn validate(&self) -> MessagesResult<()> {
+    pub fn validate(&self) -> DiddocResult<()> {
         if self.context != CONTEXT {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported @context value: {:?}",
                     self.context
@@ -106,16 +105,16 @@ impl AriesDidDoc {
         }
 
         if self.id.is_empty() {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 "DIDDoc validation failed: id is empty",
             ));
         }
 
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
-                MessagesError::from_msg(
-                    MessagesErrorKind::InvalidUrl,
+                DiddocError::from_msg(
+                    DiddocErrorKind::InvalidUrl,
                     format!(
                         "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
                         service.service_endpoint, err
@@ -126,7 +125,7 @@ impl AriesDidDoc {
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
                 let public_key = self.get_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;
-                Ok::<_, MessagesError>(())
+                Ok::<_, DiddocError>(())
             })?;
 
             service.routing_keys.iter().try_for_each(|routing_key_entry| {
@@ -135,14 +134,14 @@ impl AriesDidDoc {
                 // 'authentication' verification method of the DDO
                 // That represents assumption that 'routing_key_entry' is always key value and not key reference
                 validate_verkey(routing_key_entry)?;
-                Ok::<_, MessagesError>(())
+                Ok::<_, DiddocError>(())
             })?;
         }
 
         Ok(())
     }
 
-    pub fn recipient_keys(&self) -> MessagesResult<Vec<String>> {
+    pub fn recipient_keys(&self) -> DiddocResult<Vec<String>> {
         let service: AriesService = match self.service.get(0).cloned() {
             Some(service) => service,
             None => return Ok(Vec::new()),
@@ -173,9 +172,9 @@ impl AriesDidDoc {
         }
     }
 
-    pub fn get_service(&self) -> MessagesResult<AriesService> {
-        let service: &AriesService = self.service.get(0).ok_or(MessagesError::from_msg(
-            MessagesErrorKind::InvalidState,
+    pub fn get_service(&self) -> DiddocResult<AriesService> {
+        let service: &AriesService = self.service.get(0).ok_or(DiddocError::from_msg(
+            DiddocErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
         ))?;
         let recipient_keys = self.recipient_keys()?;
@@ -187,7 +186,7 @@ impl AriesDidDoc {
         })
     }
 
-    fn get_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
+    fn get_key(&self, key_value_or_reference: &str) -> DiddocResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
             Err(_) => {
@@ -199,10 +198,10 @@ impl AriesDidDoc {
         Ok(public_key)
     }
 
-    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> MessagesResult<()> {
+    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> DiddocResult<()> {
         if public_key.type_ != KEY_TYPE {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported PublicKey type: {:?}",
                     public_key.type_
@@ -213,7 +212,7 @@ impl AriesDidDoc {
         Ok(())
     }
 
-    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> MessagesResult<Ed25519PublicKey> {
+    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> DiddocResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
@@ -221,26 +220,26 @@ impl AriesDidDoc {
                 None => ddo_keys.id == key_ref.key_id,
                 Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id),
             })
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn find_key_by_value(&self, key: String) -> MessagesResult<Ed25519PublicKey> {
+    fn find_key_by_value(&self, key: String) -> DiddocResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key value: {}", key),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn is_authentication_key(&self, key: &str) -> MessagesResult<()> {
+    fn is_authentication_key(&self, key: &str) -> DiddocResult<()> {
         if self.authentication.is_empty() {
             // todo: remove this, was probably to support legacy implementations
             return Ok(());
@@ -257,8 +256,8 @@ impl AriesDidDoc {
                     Err(_) => false,
                 }
             })
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
                     key
@@ -266,8 +265,8 @@ impl AriesDidDoc {
             ))?;
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported Authentication type: {:?}",
                     authentication_key.type_
@@ -286,11 +285,11 @@ impl AriesDidDoc {
         key.split('#').collect()
     }
 
-    fn parse_key_reference(key_reference: &str) -> MessagesResult<DdoKeyReference> {
+    fn parse_key_reference(key_reference: &str) -> DiddocResult<DdoKeyReference> {
         let pars: Vec<&str> = AriesDidDoc::key_parts(key_reference);
         match pars.len() {
-            0 => Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            0 => Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
             )),
             1 => Ok(DdoKeyReference {
@@ -307,9 +306,9 @@ impl AriesDidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::concepts::aries_service::AriesService;
-    use crate::did_doc::aries::diddoc::AriesDidDoc;
-    use crate::did_doc::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+    use crate::aries::diddoc::AriesDidDoc;
+    use crate::aries::service::AriesService;
+    use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -484,8 +483,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::aries::diddoc::test_utils::*;
-    use crate::did_doc::aries::diddoc::AriesDidDoc;
+    use crate::aries::diddoc::AriesDidDoc;
+    use crate::aries::diddoc::test_utils::*;
 
     #[test]
     fn test_did_doc_build_works() {
