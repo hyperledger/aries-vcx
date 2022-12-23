@@ -18,6 +18,7 @@ use credx::{
     types::{
         Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue, MasterSecret,
         PresentationRequest, RevocationRegistryDefinition, RevocationRegistryDelta, Schema, SchemaId,
+        PresentCredentials, CredentialRequestMetadata
     },
     ursa::{bn::BigNumber, errors::UrsaCryptoError},
 };
