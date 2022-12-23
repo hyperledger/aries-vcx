@@ -115,7 +115,7 @@ async fn _try_get_cred_def_from_ledger(
     match ledger.get_cred_def(cred_def_id, Some(issuer_did)).await {
         Ok(cred_def) => Ok(Some(cred_def)),
         // todo - handle generic indy error, not just libindy
-        Err(err) if err.kind() == AriesVcxErrorKind::LibndyError(309) => Ok(None),
+        Err(err) if err.kind() == AriesVcxErrorKind::VdrToolsError(309) => Ok(None),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
             format!(

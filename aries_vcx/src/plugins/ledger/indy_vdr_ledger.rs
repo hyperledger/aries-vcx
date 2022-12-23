@@ -533,38 +533,6 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
     Ok(result.try_get("data")?.to_owned())
 }
 
-impl From<VdrError> for AriesVcxError {
-    fn from(err: VdrError) -> Self {
-        match err.kind() {
-            indy_vdr::common::error::VdrErrorKind::Config => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidConfiguration, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::Connection => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::FileSystem(_) => AriesVcxError::from_msg(AriesVcxErrorKind::IOError, err),
-            indy_vdr::common::error::VdrErrorKind::Input => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err),
-            indy_vdr::common::error::VdrErrorKind::Resource => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unavailable => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Unexpected => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::Incompatible => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            indy_vdr::common::error::VdrErrorKind::PoolNoConsensus => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::PoolRequestFailed(_) => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err)
-            }
-            indy_vdr::common::error::VdrErrorKind::PoolTimeout => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-        }
-    }
-}
-
-impl From<ValidationError> for AriesVcxError {
-    fn from(err: ValidationError) -> Self {
-        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err)
-    }
-}
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {

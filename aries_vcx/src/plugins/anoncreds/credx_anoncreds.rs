@@ -25,10 +25,6 @@ use credx::{
     types::{CredentialDefinition, CredentialOffer},
     ursa::cl::MasterSecret as UrsaMasterSecret,
 };
-use credx::{
-    Error as CredxError,
-    types::{CredentialRequestMetadata, PresentCredentials},
-};
 use indy_credx as credx;
 use serde_json::Value;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
@@ -747,50 +743,6 @@ fn unimplemented_method_err(method_name: &str) -> AriesVcxError {
         AriesVcxErrorKind::UnimplementedFeature,
         format!("method '{}' is not yet implemented in AriesVCX", method_name),
     )
-}
-
-impl From<CredxError> for AriesVcxError {
-    fn from(err: CredxError) -> Self {
-        match err.kind() {
-            credx::ErrorKind::Input => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err),
-            credx::ErrorKind::IOError => AriesVcxError::from_msg(AriesVcxErrorKind::IOError, err),
-            credx::ErrorKind::InvalidState => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err),
-            credx::ErrorKind::Unexpected => AriesVcxError::from_msg(AriesVcxErrorKind::UnknownError, err),
-            credx::ErrorKind::CredentialRevoked => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err),
-            credx::ErrorKind::InvalidUserRevocId => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err),
-            credx::ErrorKind::ProofRejected => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err),
-            credx::ErrorKind::RevocationRegistryFull => AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err),
-        }
-    }
-}
-
-impl From<UrsaCryptoError> for AriesVcxError {
-    fn from(err: UrsaCryptoError) -> Self {
-        match err.kind() {
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidState => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidStructure => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidParam(_) => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::IOError => AriesVcxError::from_msg(AriesVcxErrorKind::IOError, err),
-            credx::ursa::errors::UrsaCryptoErrorKind::ProofRejected => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::RevocationAccumulatorIsFull => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidRevocationAccumulatorIndex => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::CredentialRevoked => {
-                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err)
-            }
-        }
-    }
 }
 
 #[cfg(test)]

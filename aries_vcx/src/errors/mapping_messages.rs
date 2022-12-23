@@ -19,7 +19,7 @@ impl From<MessagesErrorKind> for AriesVcxErrorKind {
             MessagesErrorKind::InvalidVerkey => AriesVcxErrorKind::InvalidVerkey,
             MessagesErrorKind::InvalidUrl => AriesVcxErrorKind::InvalidUrl,
             MessagesErrorKind::NotBase58 => AriesVcxErrorKind::NotBase58,
-            _ => AriesVcxErrorKind::UnknownLibndyError,
+            MessagesErrorKind::SerializationError => AriesVcxErrorKind::SerializationError,
         }
     }
 }

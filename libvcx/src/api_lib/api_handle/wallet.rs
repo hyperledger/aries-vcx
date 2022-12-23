@@ -31,10 +31,7 @@ pub async fn replace_did_keys_start(did: &str) -> LibvcxResult<String> {
 }
 
 pub async fn rotate_verkey_apply(did: &str, temp_vk: &str) -> LibvcxResult<()> {
-    let profile = match get_main_profile() {
-        Ok(profile) => profile,
-        Err(err) => return Err(err)
-    };
+    let profile = get_main_profile()?;
     map_ariesvcx_result(aries_vcx::common::keys::rotate_verkey_apply(&profile, &did, &temp_vk).await)
 }
 

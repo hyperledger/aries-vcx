@@ -73,7 +73,7 @@ impl BaseLedger for MockLedger {
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibndyError(309), format!("Mocked error")))
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::VdrToolsError(309), format!("Mocked error")))
         };
         Ok(CRED_DEF_JSON.to_string())
     }

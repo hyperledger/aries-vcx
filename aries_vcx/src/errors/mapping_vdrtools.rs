@@ -81,7 +81,7 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             InvalidVDRNamespace |
             IncompatibleLedger => {
                 let err_code = types::ErrorCode::from(indy) as u32;
-                AriesVcxErrorKind::LibndyError(err_code)
+                AriesVcxErrorKind::VdrToolsError(err_code)
             }
         }
     }

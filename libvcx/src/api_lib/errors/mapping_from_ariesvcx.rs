@@ -76,9 +76,7 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::ParsingError => LibvcxErrorKind::ParsingError,
             AriesVcxErrorKind::InvalidHttpResponse => LibvcxErrorKind::InvalidHttpResponse,
             AriesVcxErrorKind::InvalidMessages => LibvcxErrorKind::InvalidMessages,
-            AriesVcxErrorKind::Common(num) => LibvcxErrorKind::Common(num),
-            AriesVcxErrorKind::LibndyError(num) => LibvcxErrorKind::LibndyError(num),
-            AriesVcxErrorKind::UnknownLibndyError => LibvcxErrorKind::UnknownLibndyError,
+            AriesVcxErrorKind::VdrToolsError(num) => LibvcxErrorKind::LibndyError(num),
             AriesVcxErrorKind::NoAgentInformation => LibvcxErrorKind::NoAgentInformation,
             AriesVcxErrorKind::InvalidMessageFormat => LibvcxErrorKind::InvalidMessageFormat,
         }

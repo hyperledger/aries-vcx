@@ -752,7 +752,7 @@ pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u
 #[allow(dead_code)]
 pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
-        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::LibndyError(309), format!("Mocked error")))
+        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::VdrToolsError(309), format!("Mocked error")))
     }
 
     let req = libindy_build_get_cred_def_request(issuer_did, cred_def_id).await?;
@@ -766,7 +766,7 @@ pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cre
 pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
     match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
         Ok(_) => Ok(true),
-        Err(err) if err.kind() == AriesVcxErrorKind::LibndyError(309) => Ok(false),
+        Err(err) if err.kind() == AriesVcxErrorKind::VdrToolsError(309) => Ok(false),
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidLedgerResponse,
             format!(
