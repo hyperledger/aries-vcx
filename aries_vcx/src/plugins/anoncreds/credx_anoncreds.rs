@@ -18,7 +18,8 @@ use async_trait::async_trait;
 use credx::{
     types::{
         Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue, MasterSecret,
-        PresentationRequest, RevocationRegistryDefinition, RevocationRegistryDelta, Schema, SchemaId,
+        Presentation, PresentationRequest, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
+        RevocationRegistryId, Schema, SchemaId,
     },
     ursa::{bn::BigNumber, errors::UrsaCryptoError},
 };
@@ -157,7 +158,36 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             rev_reg_defs_json,
             rev_regs_json,
         );
-        Err(unimplemented_method_err("credx verifier_verify_proof"))
+
+        let presentation: Presentation = serde_json::from_str(proof_json)?;
+        let pres_req: PresentationRequest = serde_json::from_str(proof_req_json)?;
+
+        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
+            serde_json::from_str(credential_defs_json)?;
+
+        let rev_reg_defs: Option<HashMap<RevocationRegistryId, RevocationRegistryDefinition>> =
+            serde_json::from_str(rev_reg_defs_json)?;
+
+        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>> =
+            serde_json::from_str(rev_regs_json)?;
+        let rev_regs: Option<HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>>> =
+            rev_regs.as_ref().map(|regs| {
+                let mut new_regs: HashMap<RevocationRegistryId, HashMap<u64, &RevocationRegistry>> = HashMap::new();
+                for (k, v) in regs {
+                    new_regs.insert(k.clone(), hashmap_as_ref(v));
+                }
+                new_regs
+            });
+
+        Ok(credx::verifier::verify_presentation(
+            &presentation,
+            &pres_req,
+            &hashmap_as_ref(&schemas),
+            &hashmap_as_ref(&cred_defs),
+            rev_reg_defs.as_ref().map(|regs| hashmap_as_ref(regs)).as_ref(),
+            rev_regs.as_ref(),
+        )?)
     }
 
     async fn issuer_create_and_store_revoc_reg(
@@ -320,9 +350,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         // create self_attested by iterating thru self_attested_value
         let self_attested = if let Some(self_attested_value) = self_attested_attributes {
             let mut self_attested_map: HashMap<String, String> = HashMap::new();
-            let self_attested_obj =  self_attested_value.try_as_object()?.clone();
+            let self_attested_obj = self_attested_value.try_as_object()?.clone();
             let self_attested_iter = self_attested_obj.iter();
-            for (k,v) in self_attested_iter {
+            for (k, v) in self_attested_iter {
                 self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
             }
 
@@ -331,7 +361,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             } else {
                 Some(self_attested_map)
             }
-        } else { None };
+        } else {
+            None
+        };
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
@@ -749,6 +781,20 @@ fn unimplemented_method_err(method_name: &str) -> VcxError {
     )
 }
 
+fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
+where
+    T: std::hash::Hash,
+    T: std::cmp::Eq,
+    T: std::clone::Clone,
+{
+    let mut new_map: HashMap<T, &U> = HashMap::new();
+    for (k, v) in map.iter() {
+        new_map.insert(k.clone(), v);
+    }
+
+    new_map
+}
+
 impl From<CredxError> for VcxError {
     fn from(err: CredxError) -> Self {
         match err.kind() {
@@ -797,9 +843,9 @@ impl From<UrsaCryptoError> for VcxError {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::{
+        common::test_utils::mock_profile,
         error::{VcxErrorKind, VcxResult},
         plugins::anoncreds::base_anoncreds::BaseAnonCreds,
-        common::test_utils::mock_profile,
     };
 
     use super::IndyCredxAnonCreds;
@@ -815,7 +861,6 @@ mod unit_tests {
         let profile = mock_profile();
         let anoncreds: Box<dyn BaseAnonCreds> = Box::new(IndyCredxAnonCreds::new(profile));
 
-        assert_unimplemented(anoncreds.verifier_verify_proof("", "", "", "", "", "").await);
         assert_unimplemented(anoncreds.issuer_create_and_store_revoc_reg("", "", "", 0, "").await);
         assert_unimplemented(
             anoncreds
