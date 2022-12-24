@@ -29,7 +29,7 @@ pub struct VerifierSM {
     state: VerifierFullState,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum VerifierState {
     Initial,
     PresentationProposalReceived,
@@ -66,7 +66,7 @@ impl Default for VerifierFullState {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RevocationStatus {
     Revoked,
     NonRevoked,
@@ -133,7 +133,7 @@ impl VerifierSM {
                 };
                 (
                     VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                        proposal.clone(),
+                        proposal,
                     )),
                     thread_id,
                 )
@@ -148,7 +148,7 @@ impl VerifierSM {
                     self.thread_id.clone(),
                 )
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive presentation proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
@@ -169,7 +169,7 @@ impl VerifierSM {
             VerifierFullState::PresentationRequestSent(state) => {
                 VerifierFullState::Finished((state, problem_report).into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive presentation request reject in state {}", s);
                 s
             }
@@ -194,7 +194,7 @@ impl VerifierSM {
                     thread_id,
                 )
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to reject presentation proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
@@ -234,7 +234,7 @@ impl VerifierSM {
                     },
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to verify presentation in state {}", s);
                 s
             }
@@ -249,7 +249,7 @@ impl VerifierSM {
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 VerifierFullState::Finished(state)
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send presentation ack in state {}", s);
                 s
             }
@@ -466,7 +466,7 @@ impl VerifierSM {
         match self.state {
             VerifierFullState::Finished(ref state) => state.presentation.clone().ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                format!("State machine is final state, but presentation is not available"),
+                "State machine is final state, but presentation is not available".to_string(),
             )),
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,

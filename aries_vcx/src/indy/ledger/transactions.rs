@@ -347,7 +347,7 @@ pub async fn set_endorser(
         .ledger_controller
         .append_request_endorser(request.into(), endorser.into())?;
 
-    multisign_request(wallet_handle, &submitter_did, &request).await
+    multisign_request(wallet_handle, submitter_did, &request).await
 }
 
 pub async fn endorse_transaction(
@@ -361,9 +361,9 @@ pub async fn endorse_transaction(
         return Ok(());
     }
 
-    _verify_transaction_can_be_endorsed(transaction_json, &endorser_did)?;
+    _verify_transaction_can_be_endorsed(transaction_json, endorser_did)?;
 
-    let transaction = multisign_request(wallet_handle, &endorser_did, transaction_json).await?;
+    let transaction = multisign_request(wallet_handle, endorser_did, transaction_json).await?;
     let response = libindy_submit_request(pool_handle, &transaction).await?;
 
     match parse_response(&response)? {
@@ -471,7 +471,7 @@ pub async fn sign_and_submit_to_ledger(
     if settings::indy_mocks_enabled() {
         return Ok(SUBMIT_SCHEMA_RESPONSE.to_string());
     }
-    let response = libindy_sign_and_submit_request(wallet_handle, pool_handle, &submitter_did, req).await?;
+    let response = libindy_sign_and_submit_request(wallet_handle, pool_handle, submitter_did, req).await?;
     debug!("sign_and_submit_to_ledger >>> response: {}", &response);
     Ok(response)
 }
@@ -592,7 +592,7 @@ pub async fn build_schema_request(submitter_did: &str, schema: &str) -> VcxResul
         return Ok(SCHEMA_TXN.to_string());
     }
 
-    let request = libindy_build_schema_request(&submitter_did, schema).await?;
+    let request = libindy_build_schema_request(submitter_did, schema).await?;
 
     let request = append_txn_author_agreement_to_request(&request).await?;
 
@@ -705,7 +705,7 @@ pub async fn get_cred_def(
     if settings::indy_mocks_enabled() {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::VdrToolsError(309),
-            format!("Mocked error"),
+            "Mocked error".to_string(),
         ));
     }
 

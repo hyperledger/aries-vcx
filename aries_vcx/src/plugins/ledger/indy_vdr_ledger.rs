@@ -15,7 +15,7 @@ use vdr::ledger::RequestBuilder;
 use vdr::pool::{PoolBuilder, PoolTransactions};
 use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
 use vdr::utils::did::DidValue;
-use vdr::utils::{Qualifiable, ValidationError};
+use vdr::utils::{Qualifiable};
 
 use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
@@ -364,7 +364,7 @@ impl BaseLedger for IndyVdrLedger {
     }
 
     async fn add_attr(&self, target_did: &str, attrib_json: &str) -> VcxResult<String> {
-        let request = self._build_attrib_request(target_did, target_did, Some(&attrib_json))?;
+        let request = self._build_attrib_request(target_did, target_did, Some(attrib_json))?;
         let request = _append_txn_author_agreement_to_request(request).await?;
 
         self._sign_and_submit_request(target_did, request).await
@@ -412,7 +412,7 @@ impl BaseLedger for IndyVdrLedger {
 
         if let Some(accum_from) = response_value
             .get("accum_from")
-            .and_then(|val| (!val.is_null()).then(|| val))
+            .and_then(|val| (!val.is_null()).then_some(val))
         {
             let prev_accum = accum_from.try_get("value")?.try_get("accum")?;
             // to check - should this be 'prevAccum'?
@@ -524,7 +524,7 @@ async fn _append_txn_author_agreement_to_request(request: PreparedRequest) -> Vc
         };
         request.set_txn_author_agreement_acceptance(&acceptance)?;
 
-        return Ok(request);
+        Ok(request)
     } else {
         Ok(request)
     }

@@ -35,7 +35,7 @@ pub enum HolderFullState {
     Finished(FinishedHolderState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HolderState {
     Initial,
     ProposalSent,
@@ -79,7 +79,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
 }
 
 fn build_credential_ack(thread_id: &str) -> Ack {
-    CredentialAck::create().set_thread_id(&thread_id).set_out_time()
+    CredentialAck::create().set_thread_id(thread_id).set_out_time()
 }
 
 impl HolderSM {
@@ -227,7 +227,7 @@ impl HolderSM {
                 send_message(proposal.to_a2a_message()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send credential proposal in state {}", s);
                 s
             }
@@ -242,7 +242,7 @@ impl HolderSM {
         )?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
             }
@@ -274,7 +274,7 @@ impl HolderSM {
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send credential request in state {}", s);
                 s
             }
@@ -289,7 +289,7 @@ impl HolderSM {
                 send_message(problem_report.to_a2a_message()).await?;
                 HolderFullState::Finished(problem_report.into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to decline credential offer in state {}", s);
                 s
             }
@@ -324,7 +324,7 @@ impl HolderSM {
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
             }
@@ -337,7 +337,7 @@ impl HolderSM {
             HolderFullState::ProposalSent(_) | HolderFullState::RequestSent(_) => {
                 HolderFullState::Finished(problem_report.into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive problem report in state {}", s);
                 s
             }

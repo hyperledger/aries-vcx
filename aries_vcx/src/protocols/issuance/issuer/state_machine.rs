@@ -39,7 +39,7 @@ pub enum IssuerFullState {
     Finished(FinishedState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum IssuerState {
     Initial,
     OfferSet,
@@ -97,8 +97,8 @@ fn build_credential_offer(
     comment: Option<String>,
 ) -> VcxResult<CredentialOffer> {
     Ok(CredentialOffer::create()
-        .set_id(&thread_id)
-        .set_offers_attach(&credential_offer)?
+        .set_id(thread_id)
+        .set_offers_attach(credential_offer)?
         .set_credential_preview_data(credential_preview)
         .set_comment(comment)
         .set_out_time())
@@ -388,7 +388,7 @@ impl IssuerSM {
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
@@ -420,7 +420,7 @@ impl IssuerSM {
         )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential request in state {}", s);
                 s
             }
@@ -469,7 +469,7 @@ impl IssuerSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
         let state = match self.state {
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
             }
@@ -485,7 +485,7 @@ impl IssuerSM {
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
             }

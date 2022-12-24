@@ -122,7 +122,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     });
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
-    if requested_attributes == None && requested_predicates == None {
+    if requested_attributes.is_none() && requested_predicates.is_none() {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidAttributesStructure,
             "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",

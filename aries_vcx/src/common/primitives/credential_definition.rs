@@ -65,7 +65,7 @@ enum_number!(PublicEntityStateType
     Published = 1,
 });
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 pub struct CredentialDef {
     #[serde(alias = "cred_def_id")]
     id: String,
@@ -203,7 +203,6 @@ impl CredentialDef {
     pub fn to_string(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err)
             .map_err(|err: AriesVcxError| err.extend("Cannot serialize CredentialDefinition"))
     }
 

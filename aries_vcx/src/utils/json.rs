@@ -98,28 +98,28 @@ impl AsTypeOrDeserializationError for &Value {
     fn try_as_str(&self) -> Result<&str, AriesVcxError> {
         self.as_str().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as string", self.to_string()),
+            format!("Could not deserialize '{}' value as string", self),
         ))
     }
 
     fn try_as_object(&self) -> Result<&Map<String, Value>, AriesVcxError> {
         self.as_object().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as object", self.to_string()),
+            format!("Could not deserialize '{}' value as object", self),
         ))
     }
 
     fn try_as_bool(&self) -> Result<bool, AriesVcxError> {
         self.as_bool().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as bool", self.to_string()),
+            format!("Could not deserialize '{}' value as bool", self),
         ))
     }
 
     fn try_as_array(&self) -> Result<&Vec<Value>, AriesVcxError> {
         self.as_array().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("Could not deserialize '{}' value as bool", self.to_string()),
+            format!("Could not deserialize '{}' value as bool", self),
         ))
     }
 }

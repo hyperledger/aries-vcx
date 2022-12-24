@@ -60,7 +60,7 @@ struct ConnectionInfo {
     their: Option<SideConnectionInfo>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ConnectionState {
     Inviter(InviterState),
     Invitee(InviteeState),
@@ -77,7 +77,7 @@ struct SideConnectionInfo {
     protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Actor {
     Inviter,
     Invitee,
@@ -381,8 +381,8 @@ impl MediatedConnection {
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                let res = self.update_state_with_message(&profile, agency_client, None).await;
-                res
+                
+                self.update_state_with_message(&profile, agency_client, None).await
             } else {
                 Ok(())
             }
@@ -857,7 +857,7 @@ impl MediatedConnection {
         );
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
-            format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
+            "Can't send handshake-reuse to the counterparty, because their did doc is not available".to_string(),
         ))?;
         send_discovery_query(
             &profile.inject_wallet(),

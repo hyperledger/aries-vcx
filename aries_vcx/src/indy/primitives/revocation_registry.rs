@@ -167,7 +167,7 @@ pub async fn publish_local_revocations(
     rev_reg_id: &str,
 ) -> VcxResult<()> {
     if let Some(delta) = get_rev_reg_delta(wallet_handle, rev_reg_id).await {
-        publish_rev_reg_delta(wallet_handle, pool_handle, &submitter_did, rev_reg_id, &delta).await?;
+        publish_rev_reg_delta(wallet_handle, pool_handle, submitter_did, rev_reg_id, &delta).await?;
 
         info!(
             "publish_local_revocations >>> rev_reg_delta published for rev_reg_id {}",
@@ -187,7 +187,7 @@ pub async fn publish_local_revocations(
                 format!(
                     "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
                     rev_reg_id,
-                    err.to_string()
+                    err
                 ),
             )),
         }

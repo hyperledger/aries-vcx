@@ -10,6 +10,6 @@ impl From<SenderConfigBuilderError> for AriesVcxError {
 
 impl From<serde_json::Error> for AriesVcxError {
     fn from(_err: serde_json::Error) -> Self {
-        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Invalid json"))
+        AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, "Invalid json".to_string())
     }
 }

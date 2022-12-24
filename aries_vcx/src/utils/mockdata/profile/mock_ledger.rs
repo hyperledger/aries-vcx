@@ -75,7 +75,7 @@ impl BaseLedger for MockLedger {
         if rc == 309 {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::VdrToolsError(309),
-                format!("Mocked error"),
+                "Mocked error".to_string(),
             ));
         };
         Ok(CRED_DEF_JSON.to_string())

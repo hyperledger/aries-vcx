@@ -34,7 +34,7 @@ pub struct ProverSM {
     state: ProverFullState,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ProverState {
     Initial,
     PresentationProposalSent,
@@ -73,7 +73,7 @@ impl fmt::Display for ProverFullState {
 
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     Ok(Presentation::create()
-        .set_thread_id(&thread_id)
+        .set_thread_id(thread_id)
         .set_presentations_attach(presentation_attachment)?
         .set_out_time())
 }
@@ -117,7 +117,7 @@ impl ProverSM {
                 send_message(proposal.to_a2a_message()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send presentation proposal in state {}", s);
                 s
             }
@@ -137,7 +137,7 @@ impl ProverSM {
                     Self::_handle_reject_presentation_request(send_message, &reason, &self.thread_id).await?;
                 ProverFullState::Finished(FinishedState::declined(problem_report))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to decline presentation request in state {}", s);
                 s
             }
@@ -159,7 +159,7 @@ impl ProverSM {
                 Self::_handle_presentation_proposal(send_message, presentation_preview, &self.thread_id).await?;
                 ProverFullState::Finished(state.into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send handle presentation proposal in state {}", s);
                 s
             }
@@ -193,7 +193,7 @@ impl ProverSM {
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send generate presentation in state {}", s);
                 s
             }
@@ -207,7 +207,7 @@ impl ProverSM {
                 let presentation = presentation.set_thread_id(&self.thread_id);
                 ProverFullState::PresentationPrepared((state, presentation).into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send set presentation in state {}", s);
                 s
             }
@@ -217,8 +217,8 @@ impl ProverSM {
 
     pub fn receive_presentation_ack(self, ack: PresentationAck) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state.clone(), ack).into()),
-            s @ _ => {
+            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
+            s => {
                 warn!("Unable to process presentation ack in state {}", s);
                 s
             }
@@ -236,7 +236,7 @@ impl ProverSM {
                 send_message(state.problem_report.to_a2a_message()).await?;
                 ProverFullState::Finished((state).into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send send presentation in state {}", s);
                 s
             }

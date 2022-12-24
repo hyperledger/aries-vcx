@@ -52,7 +52,7 @@ impl OutOfBandSender {
             HandshakeProtocol::DidExchangeV1 => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::ActionNotSupported,
-                    format!("DidExchange protocol is not implemented"),
+                    "DidExchange protocol is not implemented".to_string(),
                 ))
             }
         };

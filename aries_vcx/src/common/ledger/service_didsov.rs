@@ -4,7 +4,7 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 
 // https://sovrin-foundation.github.io/sovrin/spec/did-method-spec-template.html
 #[derive(Debug, Deserialize, Serialize, Clone)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 #[serde(rename_all = "camelCase")]
 pub struct EndpointDidSov {
     pub endpoint: String,
@@ -15,7 +15,7 @@ pub struct EndpointDidSov {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum DidSovServiceType {
     #[serde(rename = "endpoint")] // AIP 1.0
     Endpoint,

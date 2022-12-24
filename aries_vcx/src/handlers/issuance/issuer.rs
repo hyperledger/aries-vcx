@@ -61,11 +61,11 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
                 credential_preview = credential_preview.add_value(
-                    &key.as_str().ok_or(AriesVcxError::from_msg(
+                    key.as_str().ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidOption,
                         "Credential value names are currently only allowed to be strings",
                     ))?,
-                    &value.as_str().ok_or(AriesVcxError::from_msg(
+                    value.as_str().ok_or(AriesVcxError::from_msg(
                         AriesVcxErrorKind::InvalidOption,
                         "Credential values are currently only allowed to be strings",
                     ))?,

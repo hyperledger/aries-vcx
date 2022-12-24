@@ -17,10 +17,10 @@ pub fn validate_did(did: &str) -> VcxResult<String> {
                 format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
             )),
             Err(err) => {
-                return Err(AriesVcxError::from_msg(
+                Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::NotBase58,
                     format!("DID is not valid base58, details: {}", err),
-                ));
+                ))
             }
         }
     }

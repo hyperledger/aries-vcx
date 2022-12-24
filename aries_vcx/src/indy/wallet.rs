@@ -178,7 +178,7 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResul
             format!(
                 "could not create wallet {}: {}",
                 wallet_config.wallet_name,
-                err.to_string(),
+                err,
             ),
         )),
     }

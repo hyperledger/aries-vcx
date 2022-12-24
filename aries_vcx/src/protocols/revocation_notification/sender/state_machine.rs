@@ -41,10 +41,10 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_notification()),
             SenderFullState::Finished(state) => Ok(state.get_notification()),
             _ => {
-                return Err(AriesVcxError::from_msg(
+                Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
                     "Revocation notification not yet known in this state",
-                ));
+                ))
             }
         }
     }
@@ -54,10 +54,10 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_thread_id()),
             SenderFullState::Finished(state) => Ok(state.get_thread_id()),
             _ => {
-                return Err(AriesVcxError::from_msg(
+                Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
                     "Thread ID not yet known in this state",
-                ));
+                ))
             }
         }
     }

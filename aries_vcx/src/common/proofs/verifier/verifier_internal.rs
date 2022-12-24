@@ -8,7 +8,7 @@ use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::openssl::encode;
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoVerifier {
     pub schema_id: String,
     pub cred_def_id: String,

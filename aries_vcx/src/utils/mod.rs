@@ -98,7 +98,7 @@ pub async fn send_message_anonymously(
         message,
         &did_doc
     );
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, &message, None, &did_doc).await?;
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, message, None, did_doc).await?;
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())

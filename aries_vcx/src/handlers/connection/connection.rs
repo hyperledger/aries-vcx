@@ -33,7 +33,7 @@ pub enum SmConnectionState {
     Invitee(InviteeFullState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ConnectionState {
     Inviter(InviterState),
     Invitee(InviteeState),
