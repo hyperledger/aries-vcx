@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
-use crate::utils::error::INVALID_ATTRIBUTES_STRUCTURE;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();
@@ -17,12 +16,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         let attrib_value: &str = match array_type.get(0).and_then(serde_json::Value::as_str) {
                             Some(x) => x,
                             None => {
-                                warn!(
-                                    "Cannot encode attribute: {}",
-                                    INVALID_ATTRIBUTES_STRUCTURE.message
-                                );
-                                return Err(VcxError::from_msg(
-                                    VcxErrorKind::InvalidAttributesStructure,
+                                return Err(AriesVcxError::from_msg(
+                                    AriesVcxErrorKind::InvalidAttributesStructure,
                                     "Attribute value not found",
                                 ));
                             }
@@ -31,12 +26,9 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         warn!("Old attribute format detected. See vcx_issuer_create_credential api for additional information.");
                         attrib_value
                     }
-
-                    // anything else is an error
                     _ => {
-                        warn!("Invalid Json for Attribute data");
-                        return Err(VcxError::from_msg(
-                            VcxErrorKind::InvalidJson,
+                        return Err(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
                             "Invalid Json for Attribute data",
                         ));
                     }
@@ -52,8 +44,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
             }
             serde_json::to_string_pretty(&dictionary).map_err(|err| {
                 warn!("Invalid Json for Attribute data");
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidJson,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidJson,
                     format!("Invalid Json for Attribute data: {}", err),
                 )
             })
@@ -63,16 +55,16 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
             match serde_json::from_str::<Vec<serde_json::Value>>(attributes) {
                 Ok(mut attributes) => {
                     for cred_value in attributes.iter_mut() {
-                        let name = cred_value.get("name").ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidAttributesStructure,
+                        let name = cred_value.get("name").ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidAttributesStructure,
                             format!("No 'name' field in cred_value: {:?}", cred_value),
                         ))?;
-                        let value = cred_value.get("value").ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidAttributesStructure,
+                        let value = cred_value.get("value").ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidAttributesStructure,
                             format!("No 'value' field in cred_value: {:?}", cred_value),
                         ))?;
-                        let encoded = encode(value.as_str().ok_or(VcxError::from_msg(
-                            VcxErrorKind::InvalidAttributesStructure,
+                        let encoded = encode(value.as_str().ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidAttributesStructure,
                             format!("Failed to convert value {:?} to string", value),
                         ))?)?;
                         let attrib_values = json!({
@@ -81,8 +73,8 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         });
                         let name = name
                             .as_str()
-                            .ok_or(VcxError::from_msg(
-                                VcxErrorKind::InvalidAttributesStructure,
+                            .ok_or(AriesVcxError::from_msg(
+                                AriesVcxErrorKind::InvalidAttributesStructure,
                                 format!("Failed to convert attribute name {:?} to string", cred_value),
                             ))?
                             .to_string();
@@ -90,15 +82,15 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                     }
                     serde_json::to_string_pretty(&dictionary).map_err(|err| {
                         warn!("Invalid Json for Attribute data");
-                        VcxError::from_msg(
-                            VcxErrorKind::InvalidJson,
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidJson,
                             format!("Invalid Json for Attribute data: {}", err),
                         )
                     })
                 }
                 Err(err) => {
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::InvalidAttributesStructure,
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidAttributesStructure,
                         format!("Attribute value not found: {:?}", err),
                     ))
                 }

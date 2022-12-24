@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use messages::did_doc::DidDoc;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::protocols::SendClosureConnection;
 use crate::common::signing::sign_connection_response;
@@ -155,19 +155,19 @@ impl SmConnectionInviter {
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id)
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Remote Connection DID is not set",
             ))
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        let did_did = self.their_did_doc().ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        let did_did = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Counterparty diddoc is not available.",
         ))?;
-        did_did.recipient_keys()?.get(0).ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        did_did.recipient_keys()?.get(0).ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Can't resolve recipient key from the counterparty diddoc.",
         )).map(|s| s.to_string())
     }
@@ -323,8 +323,8 @@ impl SmConnectionInviter {
                         .set_out_time()
                 ).await
             }
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Building connection ack in current state is not allowed",
             )),
         }

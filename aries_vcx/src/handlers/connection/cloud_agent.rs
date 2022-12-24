@@ -7,7 +7,7 @@ use agency_client::messages::update_message::UIDsByConn;
 use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 use crate::agency_client::MessageStatusCode;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::a2a::A2AMessage;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
@@ -44,8 +44,7 @@ pub async fn create_agent_keys(
 
     let (agent_did, agent_verkey) = agency_client
         .create_connection_agent(pw_did, pw_verkey)
-        .await
-        .map_err(|err| err.extend("Cannot create pairwise keys"))?;
+        .await?;
 
     trace!(
         "create_agent_keys <<< agent_did: {}, agent_verkey: {}",
@@ -201,8 +200,8 @@ impl CloudAgentInfo {
         let mut messages = self
             .download_encrypted_messages(agency_client, Some(vec![msg_id.to_string()]), None, pairwise_info)
             .await?;
-        let message = messages.pop().ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidMessages,
+        let message = messages.pop().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidMessages,
             format!("Message not found for id: {:?}", msg_id),
         ))?;
         let message = self

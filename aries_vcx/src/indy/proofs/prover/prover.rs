@@ -2,7 +2,7 @@ use vdrtools::{Locator, SearchHandle};
 use vdrtools::{WalletHandle};
 use serde_json::{Map, Value};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
@@ -55,8 +55,8 @@ async fn fetch_credentials(search_handle: SearchHandle, requested_attributes: Ma
                 .await
                 .map_err(|_| {
                     error!("Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?");
-                    VcxError::from_msg(
-                        VcxErrorKind::InvalidConfiguration,
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidConfiguration,
                         "Invalid Json Parsing of Object Returned from Libindy. Did Libindy change its structure?",
                     )
                 })?
@@ -100,8 +100,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
 
     // this may be too redundant since Prover::search_credentials will validate the proof reqeuest already.
     let proof_request_json: Map<String, Value> = serde_json::from_str(proof_req).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidProofRequest,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidProofRequest,
             format!("Cannot deserialize ProofRequest: {:?}", err),
         )
     })?;
@@ -126,8 +126,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
     if requested_attributes == None && requested_predicates == None {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidAttributesStructure,
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidAttributesStructure,
             "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
         ));
     }

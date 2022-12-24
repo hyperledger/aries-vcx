@@ -3,7 +3,7 @@
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::error::VcxErrorKind;
+    use crate::errors::error::AriesVcxErrorKind;
     use crate::utils::constants::TAILS_DIR;
     use crate::utils::devsetup::{SetupProfile, init_holder_setup_in_indy_context};
     use crate::utils::get_temp_dir_path;
@@ -15,7 +15,7 @@ pub mod integration_tests {
         let proof_req = "{";
         let anoncreds = Arc::clone(&setup.profile).inject_anoncreds();
         let result = anoncreds.prover_get_credentials_for_proof_req(&proof_req).await;
-        assert_eq!(result.unwrap_err().kind(), VcxErrorKind::InvalidProofRequest);
+        assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::InvalidProofRequest);
         }).await;
     }
 
@@ -45,7 +45,7 @@ pub mod integration_tests {
         let result_malformed_json = anoncreds.prover_get_credentials_for_proof_req("{}")
             .await
             .unwrap_err();
-        assert_eq!(result_malformed_json.kind(), VcxErrorKind::InvalidAttributesStructure);
+        assert_eq!(result_malformed_json.kind(), AriesVcxErrorKind::InvalidAttributesStructure);
         }).await;
     }
 

@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use aries_vcx::{
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
-    error::VcxResult,
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     vdrtools::{PoolHandle, WalletHandle}, utils::mockdata::profile::mock_profile::MockProfile, global::settings::indy_mocks_enabled,
 };
+use crate::api_lib::errors::error::LibvcxResult;
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};
 
@@ -25,7 +25,7 @@ fn mock_profile() -> Arc<dyn Profile> {
     Arc::new(MockProfile {})
 }
 
-pub fn get_main_profile() -> VcxResult<Arc<dyn Profile>> {
+pub fn get_main_profile() -> LibvcxResult<Arc<dyn Profile>> {
     if indy_mocks_enabled() {
         return Ok(mock_profile());
     }
@@ -35,7 +35,7 @@ pub fn get_main_profile() -> VcxResult<Arc<dyn Profile>> {
     ))
 }
 
-// constructs an indy profile under the condition where a pool_handle is NOT required 
+// constructs an indy profile under the condition where a pool_handle is NOT required
 // - e.g. where only a Wallet is used (no ledger interactions). Should be used sparingly.
 pub fn get_main_profile_optional_pool() -> Arc<dyn Profile> {
     if indy_mocks_enabled() {

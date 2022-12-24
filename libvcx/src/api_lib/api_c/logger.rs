@@ -1,10 +1,9 @@
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
-use aries_vcx::utils::error::SUCCESS;
-
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, SUCCESS_ERR_CODE};
+use crate::api_lib::errors::error;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::logger::{
     CVoid, EnabledCB, FlushCB,
     LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE,
@@ -26,14 +25,14 @@ use crate::api_lib::utils::logger::{
 pub extern "C" fn vcx_set_default_logger(pattern: *const c_char) -> u32 {
     info!("vcx_set_default_logger >>>");
 
-    check_useful_opt_c_str!(pattern, VcxErrorKind::InvalidConfiguration);
+    check_useful_opt_c_str!(pattern, LibvcxErrorKind::InvalidConfiguration);
 
     trace!("vcx_set_default_logger(pattern: {:?})", pattern);
 
     match LibvcxDefaultLogger::init(pattern.clone()) {
         Ok(()) => {
             info!("Logger Successfully Initialized with pattern {:?}", &pattern);
-            SUCCESS.code_num
+            SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);
@@ -71,13 +70,13 @@ pub extern "C" fn vcx_set_logger(
         log,
         flush
     );
-    check_useful_c_callback!(log, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(log, LibvcxErrorKind::InvalidOption);
 
     let res = LibvcxLogger::init(context, enabled, log, flush);
     match res {
         Ok(()) => {
             debug!("Logger Successfully Initialized");
-            SUCCESS.code_num
+            SUCCESS_ERR_CODE
         }
         Err(err) => {
             set_current_error_vcx(&err);
@@ -126,7 +125,6 @@ pub extern "C" fn vcx_get_logger(
         *flush_cb_p = flush_cb;
     }
 
-    let res = SUCCESS.code_num;
-    trace!("vcx_get_logger: <<< res: {:?}", res);
-    res
+    trace!("vcx_get_logger <<<");
+    SUCCESS_ERR_CODE
 }

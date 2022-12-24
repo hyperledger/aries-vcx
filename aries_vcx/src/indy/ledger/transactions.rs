@@ -6,7 +6,7 @@ use vdrtools::{
 use vdrtools::{PoolHandle, WalletHandle};
 
 use crate::common::ledger::transactions::{Response, Request};
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::utils;
@@ -141,8 +141,8 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
         serde_json::from_str::<serde_json::Value>(
             &get_author_agreement_response,
         ).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidLedgerResponse,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidLedgerResponse,
                 format!("{:?}", err))
         })?;
 
@@ -162,8 +162,8 @@ pub async fn libindy_get_txn_author_agreement(pool_handle: PoolHandle) -> VcxRes
     let get_acceptance_mechanism_response =
         serde_json::from_str::<serde_json::Value>(&get_acceptance_mechanism_response)
         .map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidLedgerResponse,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidLedgerResponse,
                 format!("{:?}", err))
         })?;
 
@@ -189,7 +189,7 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
                 author_agreement.acceptance_mechanism_type,
                 author_agreement.time_of_acceptance,
             )
-            .map_err(VcxError::from)
+            .map_err(AriesVcxError::from)
     } else {
         Ok(request_json.to_string())
     }
@@ -304,7 +304,7 @@ pub async fn get_nym(pool_handle: PoolHandle, did: &str) -> VcxResult<String> {
 
 fn parse_response(response: &str) -> VcxResult<Response> {
     serde_json::from_str::<Response>(response)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
+        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
 }
 
 pub async fn libindy_get_schema(
@@ -408,8 +408,8 @@ pub async fn endorse_transaction(wallet_handle: WalletHandle, pool_handle: PoolH
 
     match parse_response(&response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(
-            VcxErrorKind::PostMessageFailed,
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::PostMessageFailed,
             format!("{:?}", res.reason),
         )),
     }
@@ -417,16 +417,16 @@ pub async fn endorse_transaction(wallet_handle: WalletHandle, pool_handle: PoolH
 
 fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> VcxResult<()> {
     let transaction: Request = serde_json::from_str(transaction_json)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("{:?}", err)))?;
+        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("{:?}", err)))?;
 
-    let transaction_endorser = transaction.endorser.ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidJson,
+    let transaction_endorser = transaction.endorser.ok_or(AriesVcxError::from_msg(
+        AriesVcxErrorKind::InvalidJson,
         "Transaction cannot be endorsed: endorser DID is not set.",
     ))?;
 
     if transaction_endorser != _did {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!(
                 "Transaction cannot be endorsed: transaction endorser DID `{}` and sender DID `{}` are different",
                 transaction_endorser, _did
@@ -442,8 +442,8 @@ fn _verify_transaction_can_be_endorsed(transaction_json: &str, _did: &str) -> Vc
             .map(|signatures| signatures.contains_key(identifier))
             .unwrap_or(false)
     {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             "Transaction cannot be endorsed: the author must sign the transaction.".to_string(),
         ));
     }
@@ -752,7 +752,7 @@ pub async fn get_rev_reg(pool_handle: PoolHandle, rev_reg_id: &str, timestamp: u
 #[allow(dead_code)]
 pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<(String, String)> {
     if settings::indy_mocks_enabled() {
-        return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
+        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::VdrToolsError(309), format!("Mocked error")))
     }
 
     let req = libindy_build_get_cred_def_request(issuer_did, cred_def_id).await?;
@@ -766,9 +766,9 @@ pub async fn get_cred_def(pool_handle: PoolHandle, issuer_did: Option<&str>, cre
 pub async fn is_cred_def_on_ledger(pool_handle: PoolHandle, issuer_did: Option<&str>, cred_def_id: &str) -> VcxResult<bool> {
     match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
         Ok(_) => Ok(true),
-        Err(err) if err.kind() == VcxErrorKind::LibndyError(309) => Ok(false),
-        Err(err) => Err(VcxError::from_msg(
-            VcxErrorKind::InvalidLedgerResponse,
+        Err(err) if err.kind() == AriesVcxErrorKind::VdrToolsError(309) => Ok(false),
+        Err(err) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
             format!(
                 "Failed to check presence of credential definition id {} on the ledger\nError: {}",
                 cred_def_id, err
@@ -825,12 +825,12 @@ pub fn _check_schema_response(response: &str) -> VcxResult<()> {
     // TODO: saved backwardcampatibilyty but actually we can better handle response
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(reject) => Err(VcxError::from_msg(
-            VcxErrorKind::DuplicationSchema,
+        Response::Reject(reject) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::DuplicationSchema,
             format!("{:?}", reject),
         )),
-        Response::ReqNACK(reqnack) => Err(VcxError::from_msg(
-            VcxErrorKind::UnknownSchemaRejection,
+        Response::ReqNACK(reqnack) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnknownSchemaRejection,
             format!("{:?}", reqnack),
         )),
     }
@@ -842,8 +842,8 @@ pub(in crate::indy) fn check_response(response: &str) -> VcxResult<()> {
     }
     match parse_response(response)? {
         Response::Reply(_) => Ok(()),
-        Response::Reject(res) | Response::ReqNACK(res) => Err(VcxError::from_msg(
-            VcxErrorKind::InvalidLedgerResponse,
+        Response::Reject(res) | Response::ReqNACK(res) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidLedgerResponse,
             format!("{:?}", res),
         )),
     }

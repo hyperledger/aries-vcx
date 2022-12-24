@@ -1,14 +1,14 @@
 use serde_json;
 
-use crate::api_lib::global::profile::get_main_profile;
-use aries_vcx::error::{VcxError, VcxErrorKind, VcxResult};
-use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
+use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::utils::error;
 
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::object_cache::ObjectCache;
+use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::global::profile::get_main_profile;
 
 lazy_static! {
     static ref PROOF_MAP: ObjectCache<Verifier> = ObjectCache::<Verifier>::new("proofs-cache");
@@ -27,7 +27,7 @@ pub async fn create_proof(
     requested_predicates: String,
     revocation_details: String,
     name: String,
-) -> VcxResult<u32> {
+) -> LibvcxResult<u32> {
     let profile = get_main_profile()?;
     let presentation_request = PresentationRequestData::create(&profile, &name)
         .await?
@@ -35,16 +35,14 @@ pub async fn create_proof(
         .set_requested_predicates_as_string(requested_predicates)?
         .set_not_revoked_interval(revocation_details)?;
     let verifier = Verifier::create_from_request(source_id, &presentation_request)?;
-    PROOF_MAP
-        .add(verifier)
-        .or(Err(VcxError::from(VcxErrorKind::CreateProof)))
+    PROOF_MAP.add(verifier)
 }
 
 pub async fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
-pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> VcxResult<u32> {
+pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     trace!(
         "proof::update_state >>> handle: {}, message: {:?}, connection_handle: {}",
@@ -60,8 +58,8 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
 
     if let Some(message) = message {
         let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidOption,
                 format!(
                     "Cannot updated state with message: Message deserialization failed: {:?}",
                     err
@@ -95,43 +93,44 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(state)
 }
 
-pub async fn get_state(handle: u32) -> VcxResult<u32> {
+pub async fn get_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
 }
 
-pub async fn get_proof_state(handle: u32) -> VcxResult<u32> {
+pub async fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
 }
 
-pub fn release(handle: u32) -> VcxResult<()> {
+pub fn release(handle: u32) -> LibvcxResult<()> {
     PROOF_MAP
         .release(handle)
-        .or(Err(VcxError::from(VcxErrorKind::InvalidProofHandle)))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
+                                               e.to_string())))
 }
 
 pub fn release_all() {
     PROOF_MAP.drain().ok();
 }
 
-pub async fn to_string(handle: u32) -> VcxResult<String> {
+pub async fn to_string(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         serde_json::to_string(&Proofs::V3(proof.clone())).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidState,
                 format!("cannot serialize Proof proofect: {:?}", err),
             )
         })
     })
 }
 
-pub fn get_source_id(handle: u32) -> VcxResult<String> {
+pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_source_id()))
 }
 
-pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
+pub async fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     let proof: Proofs = serde_json::from_str(proof_data).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
             format!("cannot deserialize Proofs proofect: {:?}", err),
         )
     })?;
@@ -141,32 +140,32 @@ pub async fn from_string(proof_data: &str) -> VcxResult<u32> {
     }
 }
 
-pub async fn send_proof_request(handle: u32, connection_handle: u32) -> VcxResult<u32> {
+pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
     PROOF_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS.code_num)
+    Ok(error::SUCCESS_ERR_CODE)
 }
 
-pub async fn mark_presentation_request_msg_sent(handle: u32) -> VcxResult<()> {
+pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof.mark_presentation_request_msg_sent()?;
     PROOF_MAP.insert(handle, proof)
 }
 
-pub async fn get_presentation_request_msg(handle: u32) -> VcxResult<String> {
+pub async fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         proof.get_presentation_request_msg().map_err(|err| err.into())
     })
 }
 
-pub async fn get_presentation_msg(handle: u32) -> VcxResult<String> {
+pub async fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_presentation_msg().map_err(|err| err.into()))
 }
 
-pub async fn get_thread_id(handle: u32) -> VcxResult<String> {
+pub async fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
 }
 
@@ -184,6 +183,7 @@ pub mod tests {
 
     use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
+    use crate::api_lib::errors::error;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
 
     use super::*;
@@ -196,8 +196,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap()
+            .await
+            .unwrap()
     }
 
     #[tokio::test]
@@ -226,8 +226,8 @@ pub mod tests {
             revocation_details.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -275,7 +275,7 @@ pub mod tests {
         let handle_proof = create_default_proof().await;
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
         assert_eq!(
             get_state(handle_proof).await.unwrap(),
@@ -316,8 +316,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
 
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
@@ -342,8 +342,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
@@ -367,8 +367,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
@@ -423,8 +423,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
 
         let proof_str = get_presentation_msg(handle_proof).await.unwrap();
@@ -448,8 +448,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let h2 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -457,8 +457,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let h3 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -466,8 +466,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let h4 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -475,8 +475,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         let h5 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -484,14 +484,14 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), VcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
     }
 
     #[tokio::test]
@@ -505,15 +505,15 @@ pub mod tests {
         let _request = get_presentation_request_msg(handle_proof).await.unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
-        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::error::AgencyClientResult::Err(
-            aries_vcx::agency_client::error::AgencyClientError::from_msg(
-                aries_vcx::agency_client::error::AgencyClientErrorKind::IOError,
+        HttpClientMockResponse::set_next_response(aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
+            aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
+                aries_vcx::agency_client::errors::error::AgencyClientErrorKind::IOError,
                 "Sending message timeout.",
             ),
         ));
         assert_eq!(
             send_proof_request(handle_proof, handle_conn).await.unwrap_err().kind(),
-            VcxErrorKind::IOError
+            LibvcxErrorKind::IOError
         );
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
@@ -541,8 +541,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-        .await
-        .unwrap();
+            .await
+            .unwrap();
         assert_eq!(
             proof::get_state(handle_proof).await.unwrap(),
             VerifierState::Finished as u32
@@ -562,7 +562,7 @@ pub mod tests {
 
         assert_eq!(
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
-            VcxErrorKind::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(get_proof_state(handle_proof).await.unwrap(), 0);
         assert_eq!(
@@ -571,21 +571,21 @@ pub mod tests {
                 empty.to_string(),
                 "{}".to_string(),
                 r#"{"support_revocation":false}"#.to_string(),
-                "my name".to_string()
+                "my name".to_string(),
             )
-            .await
-            .unwrap_err()
-            .kind(),
-            VcxErrorKind::InvalidJson
+                .await
+                .unwrap_err()
+                .kind(),
+            LibvcxErrorKind::InvalidJson
         );
         assert_eq!(
             to_string(bad_handle).await.unwrap_err().kind(),
-            VcxErrorKind::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(
             get_source_id(bad_handle).unwrap_err().kind(),
-            VcxErrorKind::InvalidHandle
+            LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(from_string(empty).await.unwrap_err().kind(), VcxErrorKind::InvalidJson);
+        assert_eq!(from_string(empty).await.unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
     }
 }

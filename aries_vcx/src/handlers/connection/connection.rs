@@ -6,7 +6,7 @@ use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
@@ -123,7 +123,7 @@ impl Connection {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
@@ -165,7 +165,7 @@ impl Connection {
                 )
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
         Ok(Self { connection_sm, ..self })
@@ -179,7 +179,7 @@ impl Connection {
     ) -> VcxResult<Self> {
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
@@ -201,7 +201,7 @@ impl Connection {
                 SmConnection::Inviter(sm_inviter.clone().handle_confirmation_message(&message).await?)
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
         Ok(Self { connection_sm, ..self })
@@ -220,11 +220,11 @@ impl Connection {
                     let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                     SmConnection::Inviter(sm_inviter.handle_send_response(send_message).await?)
                 } else {
-                    return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                    return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
                 }
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
         Ok(Self { connection_sm, ..self })
@@ -240,8 +240,8 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotReady,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
                     "Inviter cannot send connection request",
                 ));
             }
@@ -267,7 +267,7 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Inviter cannot send ack"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Inviter cannot send ack"));
             }
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
@@ -286,8 +286,8 @@ impl Connection {
                 SmConnection::Inviter(sm_inviter.clone().create_invitation(routing_keys, service_endpoint)?)
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotReady,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
                     "Invitee cannot create invite",
                 ));
             }
@@ -301,8 +301,8 @@ impl Connection {
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
@@ -341,7 +341,7 @@ pub mod test_utils {
             move |message: A2AMessage, _sender_vk: String, _did_doc: DidDoc| {
                 Box::pin(async move {
                     sender.send(message).await.map_err(|err| {
-                        VcxError::from_msg(VcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
+                        AriesVcxError::from_msg(AriesVcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
                     })
                 })
             },

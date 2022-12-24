@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 use crate::common::proofs::proof_request::ProofRequestData;
@@ -32,8 +32,8 @@ pub async fn generate_indy_proof(
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
     let proof_request: ProofRequestData = serde_json::from_str(proof_req_data_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize proof request: {}", err),
         )
     })?;

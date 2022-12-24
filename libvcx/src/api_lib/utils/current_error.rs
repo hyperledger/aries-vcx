@@ -1,13 +1,13 @@
+use std::{fmt, ptr};
 use std::cell::RefCell;
 use std::error::Error;
 use std::ffi::CString;
-use std::ptr;
 
-use aries_vcx::agency_client::error::AgencyClientError;
+use futures::future::err;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;
-use aries_vcx::error::VcxError;
+use crate::api_lib::errors::error::LibvcxError;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
@@ -19,7 +19,7 @@ pub fn reset_current_error() {
     })
 }
 
-pub fn set_current_error_agency(err: &AgencyClientError) {
+pub fn set_current_error_vcx(err: &LibvcxError) {
     CURRENT_ERROR_C_JSON
         .try_with(|error| {
             let error_json = json!({
@@ -29,24 +29,7 @@ pub fn set_current_error_agency(err: &AgencyClientError) {
                 // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
                 // "backtrace": err.backtrace()
             })
-            .to_string();
-            error.replace(Some(CStringUtils::string_to_cstring(error_json)));
-        })
-        .map_err(|err| error!("Thread local variable access failed with: {:?}", err))
-        .ok();
-}
-
-pub fn set_current_error_vcx(err: &VcxError) {
-    CURRENT_ERROR_C_JSON
-        .try_with(|error| {
-            let error_json = json!({
-                "error": err.kind().to_string(),
-                "message": err.to_string(),
-                "cause": err.find_root_cause(),
-                // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
-                // "backtrace": err.backtrace()
-            })
-            .to_string();
+                .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));
         })
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err))
@@ -59,7 +42,7 @@ pub fn set_current_error(err: &dyn Error) {
             let error_json = json!({
                 "message": err.to_string()
             })
-            .to_string();
+                .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));
         })
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err))

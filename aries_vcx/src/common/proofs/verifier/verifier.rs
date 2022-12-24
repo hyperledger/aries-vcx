@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 use crate::common::proofs::verifier::verifier_internal::{
     build_cred_defs_json_verifier, build_rev_reg_defs_json, build_rev_reg_json, build_schemas_json_verifier,
@@ -200,7 +200,7 @@ pub mod unit_tests {
                 .await
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::LibndyError(405)
+            AriesVcxErrorKind::VdrToolsError(405)
         );  // AnoncredsProofRejected
 
         let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
@@ -301,7 +301,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                VcxErrorKind::InvalidProof
+                AriesVcxErrorKind::InvalidProof
             );
         }
         {
@@ -314,7 +314,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                VcxErrorKind::InvalidProof
+                AriesVcxErrorKind::InvalidProof
             );
         }
         }).await;

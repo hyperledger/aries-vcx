@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxResult, VcxErrorKind};
+use crate::errors::error::{AriesVcxError, VcxResult, AriesVcxErrorKind};
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
 use crate::utils::serialization::ObjectWithVersion;
@@ -49,8 +49,8 @@ impl Schema {
         }
 
         let data_str = serde_json::to_string(data)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
-        
+        .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
+
         let anoncreds = Arc::clone(profile).inject_anoncreds();
         let (schema_id, schema_json) = anoncreds.issuer_create_schema(&submitter_did, name, version, &data_str).await?;
 
@@ -70,7 +70,7 @@ impl Schema {
         let ledger = Arc::clone(profile).inject_ledger();
         let schema_json = ledger.get_schema(schema_id, None).await?;
         let schema_data: SchemaData = serde_json::from_str(&schema_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
+            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
 
         Ok(Self {
             source_id: source_id.to_string(),
@@ -112,14 +112,14 @@ impl Schema {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
             .map_err(|err| err)
-            .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
+            .map_err(|err: AriesVcxError| err.extend("Cannot serialize Schema"))
     }
 
     pub fn from_str(data: &str) -> VcxResult<Schema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
             .map_err(|err| err)
-            .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
+            .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
     }
 
     pub async fn update_state(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<u32> {

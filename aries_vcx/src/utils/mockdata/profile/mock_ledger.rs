@@ -1,17 +1,17 @@
 use async_trait::async_trait;
 
 use crate::{
-    error::{VcxError, VcxErrorKind, VcxResult},
+    common::primitives::revocation_registry::RevocationRegistryDefinition,
     indy::utils::LibindyMock,
     plugins::ledger::base_ledger::BaseLedger,
     utils::{
         self,
         constants::{
-            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
+            CRED_DEF_JSON, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
         },
     },
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
 };
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -27,8 +27,8 @@ impl BaseLedger for MockLedger {
 
     async fn submit_request(&self, request_json: &str) -> VcxResult<String> {
         // not needed yet
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnimplementedFeature,
             "unimplemented mock method",
         ))
     }
@@ -47,8 +47,8 @@ impl BaseLedger for MockLedger {
 
     async fn get_nym(&self, did: &str) -> VcxResult<String> {
         // not needed yet
-        Err(VcxError::from_msg(
-            VcxErrorKind::UnimplementedFeature,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::UnimplementedFeature,
             "unimplemented mock method",
         ))
     }
@@ -73,7 +73,7 @@ impl BaseLedger for MockLedger {
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
-            return Err(VcxError::from(VcxErrorKind::LibndyError(309)));
+            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::VdrToolsError(309), format!("Mocked error")))
         };
         Ok(CRED_DEF_JSON.to_string())
     }
@@ -146,10 +146,8 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::{
-        error::{VcxErrorKind, VcxResult},
-        plugins::ledger::base_ledger::BaseLedger,
-    };
+    use crate::plugins::ledger::base_ledger::BaseLedger;
+    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
 
     use super::MockLedger;
 
@@ -158,7 +156,7 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
         }
 
         let ledger: Box<dyn BaseLedger> = Box::new(MockLedger);

@@ -1,6 +1,6 @@
 use vdrtools::{Locator, SearchHandle, AnoncredsHelpers};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 pub(super) async fn blob_storage_open_reader(base_dir: &str) -> VcxResult<i32> {
     let tails_config = json!(

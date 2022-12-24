@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'anoncreds' related functionality. The APIs, including
 /// input and output types are based off the indy Anoncreds API:
@@ -36,13 +36,13 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         config_json: &str,
     ) -> VcxResult<(String, String)>;
 
-    
+
     async fn issuer_create_credential_offer(
-        &self, 
+        &self,
         cred_def_id: &str,
     ) -> VcxResult<String>;
-    
-    
+
+
     async fn issuer_create_credential(
         &self,
         cred_offer_json: &str,
@@ -105,7 +105,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         version: &str,
         attrs: &str,
     ) -> VcxResult<(String, String)>;
-    
+
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn revoke_credential_local(
         &self,
@@ -113,7 +113,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         rev_reg_id: &str,
         cred_rev_id: &str,
     ) -> VcxResult<()>;
-    
+
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;
 

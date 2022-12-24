@@ -35,7 +35,6 @@ pub mod utils;
 #[macro_use]
 pub mod handlers;
 
-pub mod error;
 pub mod global;
 pub mod indy;
 pub mod protocols;
@@ -43,6 +42,7 @@ pub mod protocols;
 pub mod core;
 pub mod plugins;
 pub mod common;
+pub mod errors;
 
 #[cfg(test)]
 pub mod test {

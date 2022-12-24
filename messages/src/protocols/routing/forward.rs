@@ -1,4 +1,4 @@
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::a2a::MessageId;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Default)]
@@ -13,7 +13,7 @@ pub struct Forward {
 impl Forward {
     pub fn new(to: String, msg: Vec<u8>) -> MessagesResult<Forward> {
         let msg = serde_json::from_slice(msg.as_slice())
-            .map_err(|err| MessagesError::from_msg(MesssagesErrorKind::InvalidState, err))?;
+            .map_err(|err| MessagesError::from_msg(MessagesErrorKind::InvalidState, err))?;
 
         Ok(Forward {
             id: MessageId::new(),

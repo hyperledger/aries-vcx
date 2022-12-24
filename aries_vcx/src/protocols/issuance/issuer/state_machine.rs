@@ -6,7 +6,7 @@ use messages::concepts::ack::Ack;
 use messages::concepts::problem_report::ProblemReport;
 use crate::core::profile::profile::Profile;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::common::credentials::encoding::encode_attributes;
 use crate::common::credentials::is_cred_revoked;
 use messages::a2a::{A2AMessage, MessageId};
@@ -142,20 +142,20 @@ impl IssuerSM {
     }
 
     pub fn get_rev_id(&self) -> VcxResult<String> {
-        let err = VcxError::from_msg(VcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
+        let err = AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No revocation info found - is this credential revokable?");
         let rev_id = match &self.state {
             IssuerFullState::CredentialSent(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
             IssuerFullState::Finished(state) => state.revocation_info_v1.as_ref().ok_or(err)?.cred_rev_id.clone(),
             _ => None
         };
-        rev_id.ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Revocation info does not contain rev id"))
+        rev_id.ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Revocation info does not contain rev id"))
     }
 
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         let rev_registry = match &self.state {
             IssuerFullState::Initial(_state) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "No revocation info available in the initial state",
                 ));
             }
@@ -170,8 +170,8 @@ impl IssuerSM {
                 state
                     .revocation_info_v1
                     .clone()
-                    .ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "No revocation info found - is this credential revokable?",
                     ))?
                     .rev_reg_id
@@ -180,15 +180,15 @@ impl IssuerSM {
                 state
                     .revocation_info_v1
                     .clone()
-                    .ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "No revocation info found - is this credential revokable?",
                     ))?
                     .rev_reg_id
             }
         };
-        rev_registry.ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidState,
+        rev_registry.ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidState,
             "No revocation registry id found on revocation info - is this credential revokable?",
         ))
     }
@@ -213,7 +213,7 @@ impl IssuerSM {
             let rev_id = self.get_rev_id()?;
             is_cred_revoked(profile, &rev_reg_id, &rev_id).await
         } else {
-            Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Unable to check revocation status - this credential is not revokable"))
+            Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Unable to check revocation status - this credential is not revokable"))
         }
     }
 
@@ -290,8 +290,8 @@ impl IssuerSM {
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
             IssuerFullState::ProposalReceived(state) => Ok(state.credential_proposal.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Proposal is only available in ProposalReceived state",
             )),
         }
@@ -321,8 +321,8 @@ impl IssuerSM {
                 ))
             }
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     format!("Can not set_offer in current state {}.", state),
                 ));
             }
@@ -334,8 +334,8 @@ impl IssuerSM {
         match &self.state {
             IssuerFullState::OfferSet(state) => Ok(state.offer.clone()),
             IssuerFullState::OfferSent(state) => Ok(state.offer.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 format!("Can not get_credential_offer in current state {}.", self.state),
             )),
         }
@@ -351,8 +351,8 @@ impl IssuerSM {
             IssuerFullState::OfferSet(state) => IssuerFullState::OfferSent(state.into()),
             IssuerFullState::OfferSent(state) => IssuerFullState::OfferSent(state),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     format!("Can not mark_as_offer_sent in current state {}.", state),
                 ))
             }
@@ -388,7 +388,7 @@ impl IssuerSM {
                 send_message(cred_offer_msg).await?;
                 self.mark_credential_offer_msg_sent()?
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            _ => { return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action")); }
         })
     }
 
@@ -429,7 +429,7 @@ impl IssuerSM {
                     }
                 }
             }
-            _ => { return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action")); }
+            _ => { return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action")); }
         };
         Ok(Self { state, ..self })
     }
@@ -471,8 +471,8 @@ impl IssuerSM {
             CredentialIssuanceAction::CredentialProposal(proposal) => self.receive_proposal(proposal)?,
             CredentialIssuanceAction::CredentialRequest(request) => self.receive_request(request)?,
             CredentialIssuanceAction::CredentialSend() => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.send_credential(profile, send_message).await?
@@ -518,8 +518,8 @@ async fn _create_credential(
     let offer = offer.offers_attach.content()?;
     trace!("Issuer::_create_credential >>> request: {:?}, rev_reg_id: {:?}, tails_file: {:?}, offer: {}, cred_data: {}, thread_id: {}", request, rev_reg_id, tails_file, offer, cred_data, thread_id);
     if !request.from_thread(thread_id) {
-        return Err(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        return Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!(
                 "Cannot handle credential request: thread id does not match: {:?}",
                 request.thread
@@ -1254,11 +1254,11 @@ pub mod unit_tests {
             let _setup = SetupMocks::init();
 
             assert_eq!(
-                VcxErrorKind::InvalidState,
+                AriesVcxErrorKind::InvalidState,
                 _issuer_sm().get_rev_reg_id().unwrap_err().kind()
             );
             assert_eq!(
-                VcxErrorKind::InvalidState,
+                AriesVcxErrorKind::InvalidState,
                 _issuer_sm()
                     .to_proposal_received_state()
                     .get_rev_reg_id()

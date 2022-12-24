@@ -1,4 +1,4 @@
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::concepts::thread::Thread;
@@ -55,7 +55,7 @@ impl PresentationRequest {
     pub fn to_json(&self) -> MessagesResult<String> {
         serde_json::to_string(self).map_err(|err| {
             MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Cannot serialize PresentationRequest: {}", err),
             )
         })

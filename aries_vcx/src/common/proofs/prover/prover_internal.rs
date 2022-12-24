@@ -2,7 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde_json::Value;
 
-use crate::{error::prelude::*, common::proofs::{proof_request_internal::NonRevokedInterval, proof_request::ProofRequestData}, core::profile::profile::Profile};
+use crate::{common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval}, core::profile::profile::Profile};
+use crate::errors::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -33,11 +34,11 @@ pub async fn build_schemas_json_prover(
         if rtn.get(&cred_info.schema_id).is_none() {
             let schema_json = ledger.get_schema( &cred_info.schema_id, None)
                 .await
-                .map_err(|err| err.map(VcxErrorKind::InvalidSchema, "Cannot get schema"))?;
+                .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
             let schema_json = serde_json::from_str(&schema_json).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidSchema,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidSchema,
                     format!("Cannot deserialize schema: {}", err),
                 )
             })?;
@@ -65,14 +66,14 @@ pub async fn build_cred_defs_json_prover(
                 .await
                 .map_err(|err| {
                     err.map(
-                        VcxErrorKind::InvalidProofCredentialData,
+                        AriesVcxErrorKind::InvalidProofCredentialData,
                         "Cannot get credential definition",
                     )
                 })?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
-                VcxError::from_msg(
-                    VcxErrorKind::InvalidProofCredentialData,
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidProofCredentialData,
                     format!("Cannot deserialize credential definition: {}", err),
                 )
             })?;
@@ -92,8 +93,8 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
     let mut rtn = Vec::new();
 
     let credentials: Value = serde_json::from_str(credentials).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize credentials: {}", err),
         )
     })?;
@@ -130,8 +131,8 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     revealed: revealed,
                 });
             } else {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidProofCredentialData,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidProofCredentialData,
                     "Cannot get identifiers",
                 ));
             }
@@ -148,8 +149,8 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
         // Handle case for predicates
         Ok(attr.non_revoked.clone().or(proof_req.non_revoked.clone().or(None)))
     } else {
-        Err(VcxError::from_msg(
-            VcxErrorKind::InvalidProofCredentialData,
+        Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidProofCredentialData,
             format!("Attribute not found for: {}", attr_name),
         ))
     }
@@ -191,8 +192,8 @@ pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_ident
                 .await?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
-                    VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidJson,
                         format!("Cannot deserialize RevocationState: {}", err),
                     )
                 })?;
@@ -255,8 +256,8 @@ pub fn build_requested_credentials_json(
 
     // handle if the attribute is not revealed
     let self_attested_attrs: Value = serde_json::from_str(self_attested_attrs).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Cannot deserialize self attested attributes: {}", err),
         )
     })?;
@@ -270,7 +271,7 @@ pub fn build_requested_credentials_json(
 pub mod pool_tests {
 
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
-    use crate::utils::devsetup::{SetupProfile};
+    use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;
     use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
@@ -316,7 +317,7 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
+    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
 
     use super::*;
 
@@ -393,7 +394,7 @@ pub mod unit_tests {
                 .await
                 .unwrap_err()
                 .kind();
-            assert_eq!(err_kind, VcxErrorKind::InvalidProofCredentialData);
+            assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
         }).await;
     }
 
@@ -413,13 +414,13 @@ pub mod unit_tests {
                 timestamp: None,
                 revealed: None,
             }];
-            
+
             assert_eq!(
                 build_schemas_json_prover(&profile, &credential_ids)
                     .await
                     .unwrap_err()
                     .kind(),
-                VcxErrorKind::InvalidSchema
+                AriesVcxErrorKind::InvalidSchema
             );
         }).await;
     }
@@ -570,7 +571,7 @@ pub mod unit_tests {
             credential_def_identifiers("", &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidJson
+            AriesVcxErrorKind::InvalidJson
         );
 
         // No Creds
@@ -593,7 +594,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // Optional Revocation
@@ -670,7 +671,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // Schema Id is null
@@ -679,7 +680,7 @@ pub mod unit_tests {
             credential_def_identifiers(&selected_credentials.to_string(), &proof_req_no_interval())
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
     }
 
@@ -796,7 +797,7 @@ pub mod unit_tests {
         // Attribute not found in proof req
         assert_eq!(
             _get_revocation_interval("not here", &proof_req).unwrap_err().kind(),
-            VcxErrorKind::InvalidProofCredentialData
+            AriesVcxErrorKind::InvalidProofCredentialData
         );
 
         // attribute interval overrides proof request interval

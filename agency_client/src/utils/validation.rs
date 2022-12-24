@@ -1,8 +1,7 @@
 use regex::Regex;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
-
 use bs58;
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -51,7 +50,7 @@ pub fn validate_verkey(verkey: &str) -> AgencyClientResult<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::error::AgencyClientErrorKind;
+    use crate::errors::error::AgencyClientErrorKind;
 
     use super::*;
 

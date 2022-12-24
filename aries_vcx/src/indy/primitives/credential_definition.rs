@@ -1,7 +1,7 @@
 use vdrtools::{Locator, DidValue};
 
 use vdrtools::{PoolHandle, WalletHandle};
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::utils::parse_and_validate;
 use crate::global::settings;
 use crate::indy::ledger::transactions::{

@@ -2,7 +2,7 @@ use messages::concepts::ack::please_ack::AckOn;
 use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
 use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::protocols::revocation_notification::sender::states::finished::FinishedState;
 use crate::protocols::revocation_notification::sender::states::initial::InitialState;
@@ -41,8 +41,8 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_notification()),
             SenderFullState::Finished(state) => Ok(state.get_notification()),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Revocation notification not yet known in this state",
                 ));
             }
@@ -54,8 +54,8 @@ impl RevocationNotificationSenderSM {
             SenderFullState::NotificationSent(state) => Ok(state.get_thread_id()),
             SenderFullState::Finished(state) => Ok(state.get_thread_id()),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Thread ID not yet known in this state",
                 ));
             }
@@ -84,7 +84,7 @@ impl RevocationNotificationSenderSM {
                 }
             }
             _ => {
-                return Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Ack already received"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Ack already received"));
             }
         };
         Ok(Self { state, ..self })
@@ -97,8 +97,8 @@ impl RevocationNotificationSenderSM {
                 SenderFullState::Finished(FinishedState::new(state.get_notification(), Some(ack)))
             }
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Ack not expected in this state",
                 ));
             }

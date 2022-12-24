@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 
-use crate::{error::prelude::{AgencyClientResult, AgencyClientError, AgencyClientErrorKind}, testing::mocking::agency_mocks_enabled};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::testing::mocking::agency_mocks_enabled;
 
 #[async_trait]
-pub trait BaseAgencyClientWallet : std::fmt::Debug + Send + Sync {
+pub trait BaseAgencyClientWallet: std::fmt::Debug + Send + Sync {
     async fn pack_message(
         &self,
         sender_vk: Option<&str>,

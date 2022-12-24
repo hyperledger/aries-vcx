@@ -1,16 +1,13 @@
 use vdrtools::WalletHandle;
 use serde_json;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::indy::wallet::{add_wallet_record, delete_wallet_record, get_wallet_record, update_wallet_record_value};
 
 static WALLET_RECORD_TYPE: &str = "cache";
 static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
 
 
-// consider moving these methods out of indy dir to generic methods, as this aggregates calls
-
-///
 /// Returns stored revocation registry delta record
 ///
 /// # Arguments
@@ -18,6 +15,7 @@ static RECORD_ID_PREFIX: &str = "rev_reg_delta:";
 ///
 /// # Returns
 /// Revocation registry delta json as a string
+/// todo: return VcxResult<Option<String>>, don't swallow errors
 pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) -> Option<String> {
     debug!("get_rev_reg_delta >> Getting revocation registry delta for rev_reg_id {}", rev_reg_id);
 
@@ -58,8 +56,6 @@ pub async fn get_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) ->
     }
 }
 
-///
-///
 /// Rewrites or creates revocation registry delta record
 ///
 /// # Arguments
@@ -82,14 +78,12 @@ pub async fn set_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str, ca
                 Err(err) => Err(err),
             }
         }
-        Err(_) => Err(VcxError::from(VcxErrorKind::SerializationError)),
+        Err(_) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::SerializationError,
+                                              format!("Expected cache argument to be valid json. Found instead: {}", cache))),
     }
 }
 
-///
-///
 /// Clears the stored revocation registry delta record
-/// Errors are silently ignored.
 ///
 /// # Arguments
 /// `rev_reg_id`: revocation registry id.
@@ -103,6 +97,6 @@ pub async fn clear_rev_reg_delta(wallet_handle: WalletHandle, rev_reg_id: &str) 
         info!("clear_rev_reg_delta >> Cleared stored revocation delta for revocation registry {}, wallet record: ${}", rev_reg_id, wallet_id);
         Ok(last_delta)
     } else {
-        Err(VcxError::from(VcxErrorKind::IOError))
+        Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, format!("Couldn't fetch delta for rev_reg_id {} before deletion, deletion skipped", rev_reg_id)))
     }
 }

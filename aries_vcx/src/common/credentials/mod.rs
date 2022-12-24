@@ -2,10 +2,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use time::get_time;
 
-use crate::{
-    core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult},
-};
+use crate::core::profile::profile::Profile;
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 use super::primitives::revocation_registry_delta::RevocationRegistryDelta;
 
@@ -25,13 +23,13 @@ pub async fn get_cred_rev_id(profile: &Arc<dyn Profile>, cred_id: &str) -> VcxRe
     let anoncreds = Arc::clone(profile).inject_anoncreds();
     let cred_json = anoncreds.prover_get_credential(cred_id).await?;
     let prover_cred = serde_json::from_str::<ProverCredential>(&cred_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!("Failed to deserialize anoncreds credential: {}", err),
         )
     })?;
-    prover_cred.cred_rev_id.ok_or(VcxError::from_msg(
-        VcxErrorKind::InvalidRevocationDetails,
+    prover_cred.cred_rev_id.ok_or(AriesVcxError::from_msg(
+        AriesVcxErrorKind::InvalidRevocationDetails,
         "Credenial revocation id missing on credential - is this credential revokable?",
     ))
 }
@@ -49,15 +47,15 @@ mod integration_tests {
     use super::*;
 
     use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::{SetupProfile, init_holder_setup_in_indy_context};
+    use crate::utils::devsetup::{init_holder_setup_in_indy_context, SetupProfile};
     use crate::common::test_utils::create_and_store_credential;
 
     #[tokio::test]
     async fn test_prover_get_credential() {
         SetupProfile::run_indy(|setup| async move {
-        
+
         let holder_setup = init_holder_setup_in_indy_context(&setup).await;
-        
+
         let res = create_and_store_credential(&setup.profile, &holder_setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
         let schema_id = res.0;
         let cred_def_id = res.2;

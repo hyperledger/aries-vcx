@@ -6,7 +6,7 @@ use crate::did_doc::model::{
     Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
 };
 use crate::utils::validation::validate_verkey;
-use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
+use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 
 pub mod model;
 pub mod service_aries_public;
@@ -104,7 +104,7 @@ impl DidDoc {
     pub fn validate(&self) -> MessagesResult<()> {
         if self.context != CONTEXT {
             return Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported @context value: {:?}",
                     self.context
@@ -114,7 +114,7 @@ impl DidDoc {
 
         if self.id.is_empty() {
             return Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 "DIDDoc validation failed: id is empty",
             ));
         }
@@ -122,7 +122,7 @@ impl DidDoc {
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
                 MessagesError::from_msg(
-                    MesssagesErrorKind::InvalidUrl,
+                    MessagesErrorKind::InvalidUrl,
                     format!(
                         "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
                         service.service_endpoint, err
@@ -182,7 +182,7 @@ impl DidDoc {
 
     pub fn get_service(&self) -> MessagesResult<AriesService> {
         let service: &AriesService = self.service.get(0).ok_or(MessagesError::from_msg(
-            MesssagesErrorKind::InvalidState,
+            MessagesErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
         ))?;
         let recipient_keys = self.recipient_keys()?;
@@ -194,9 +194,6 @@ impl DidDoc {
         })
     }
 
-    /**
-
-     **/
     fn get_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
@@ -212,7 +209,7 @@ impl DidDoc {
     fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> MessagesResult<()> {
         if public_key.type_ != KEY_TYPE {
             return Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported PublicKey type: {:?}",
                     public_key.type_
@@ -232,7 +229,7 @@ impl DidDoc {
                 Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id),
             })
             .ok_or(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
             ))?;
         Ok(public_key.clone())
@@ -244,7 +241,7 @@ impl DidDoc {
             .iter()
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
             .ok_or(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key value: {}", key),
             ))?;
         Ok(public_key.clone())
@@ -268,7 +265,7 @@ impl DidDoc {
                 }
             })
             .ok_or(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
                     key
@@ -277,7 +274,7 @@ impl DidDoc {
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
             return Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported Authentication type: {:?}",
                     authentication_key.type_
@@ -300,7 +297,7 @@ impl DidDoc {
         let pars: Vec<&str> = DidDoc::key_parts(key_reference);
         match pars.len() {
             0 => Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
             )),
             1 => Ok(DdoKeyReference {

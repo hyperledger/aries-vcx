@@ -1,4 +1,4 @@
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 use messages::a2a::message_family::MessageFamilies;
@@ -50,7 +50,7 @@ impl OutOfBandSender {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => {
-                return Err(VcxError::from(VcxErrorKind::ActionNotSupported));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::ActionNotSupported, format!("DidExchange protocol is not implemented")))
             }
         };
         match self.oob.handshake_protocols {
@@ -72,8 +72,8 @@ impl OutOfBandSender {
             a2a_msg @ A2AMessage::CredentialOffer(_) => (AttachmentId::CredentialOffer, json!(&a2a_msg).to_string()),
             _ => {
                 error!("Appended message type {:?} is not allowed.", msg);
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidMessageFormat,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidMessageFormat,
                     format!("Appended message type {:?} is not allowed.", msg),
                 ));
             }

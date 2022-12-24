@@ -1,4 +1,4 @@
-use crate::utils::error::MessagesResult;
+use crate::errors::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::protocols::issuance::CredentialPreviewData;

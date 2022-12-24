@@ -5,7 +5,7 @@ use futures::TryFutureExt;
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
 use messages::did_doc::DidDoc;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
@@ -70,8 +70,8 @@ impl EncryptionEnvelope {
         let recipient_keys = did_doc.recipient_keys()?;
         let routing_keys = did_doc.routing_keys();
 
-        let mut to = recipient_keys.get(0).map(String::from).ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidConnectionHandle,
+        let mut to = recipient_keys.get(0).map(String::from).ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidState,
             format!("Recipient Key not found in DIDDoc: {:?}", did_doc),
         ))?;
 
@@ -106,8 +106,8 @@ impl EncryptionEnvelope {
         let unpacked_msg = wallet.unpack_message(&payload).await?;
 
         let msg_value: serde_json::Value = serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize message: {}", err),
             )
         })?;
@@ -116,8 +116,8 @@ impl EncryptionEnvelope {
 
         let msg_string = msg_value["message"]
             .as_str()
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 "Cannot find `message` field",
             ))?
             .to_string();
@@ -138,8 +138,8 @@ impl EncryptionEnvelope {
             Self::_unpack_a2a_message(wallet, payload).await?
         };
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
@@ -171,13 +171,13 @@ impl EncryptionEnvelope {
                             "auth_unpack  sender_vk != expected_vk.... sender_vk: {}, expected_vk: {}",
                             sender_vk, expected_vk
                         );
-                        return Err(VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
+                        return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Message did not pass authentication check. Expected sender verkey was {}, but actually was {}", expected_vk, sender_vk)));
                     }
                 }
                 None => {
                     error!("auth_unpack  message was authcrypted");
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidJson,
                         "Can't authenticate message because it was anoncrypted.",
                     ));
                 }
@@ -185,8 +185,8 @@ impl EncryptionEnvelope {
             a2a_message
         };
         let a2a_message = serde_json::from_str(&message).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize A2A message: {}", err),
             )
         })?;
@@ -216,7 +216,7 @@ pub mod unit_tests {
 
         let res =
             EncryptionEnvelope::create(&profile.inject_wallet(), &message, Some(&trustee_key), &DidDoc::default()).await;
-        assert_eq!(res.unwrap_err().kind(), VcxErrorKind::InvalidLibindyParam);
+        assert_eq!(res.unwrap_err().kind(), AriesVcxErrorKind::InvalidLibindyParam);
         }).await;
     }
 

@@ -3,14 +3,14 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::CommandHandle;
-use aries_vcx::utils::error;
 
-use crate::api_lib::api_handle::credential_def;
+use crate::api_lib::api_c::types::CommandHandle;
+use crate::api_lib::api_handle::{credential_def, vcx_settings};
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::errors::error;
 use crate::api_lib::utils::cstring::CStringUtils;
-use crate::api_lib::utils::error::set_current_error_vcx;
+use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};
 
 #[no_mangle]
@@ -25,29 +25,28 @@ pub extern "C" fn vcx_credentialdef_create_v2(
 ) -> u32 {
     info!("vcx_credentialdef_create_v2 >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(schema_id, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(tag, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(schema_id, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(tag, LibvcxErrorKind::InvalidOption);
 
     let issuer_did: String = if !issuer_did.is_null() {
-        check_useful_c_str!(issuer_did, VcxErrorKind::InvalidOption);
+        check_useful_c_str!(issuer_did, LibvcxErrorKind::InvalidOption);
         issuer_did.to_owned()
     } else {
-        match settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
-            Ok(err) => err,
+        match vcx_settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
+            Ok(did) => did,
             Err(err) => return err.into(),
         }
     };
 
     trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, issuer_did: {}, tag: {}, support_revocation: {:?})", command_handle, source_id, schema_id, issuer_did, tag, support_revocation);
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let (rc, handle) = match credential_def::create(source_id, schema_id, issuer_did, tag, support_revocation).await
         {
             Ok(handle) => {
-                trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS.message, handle, credential_def::get_source_id(handle).unwrap_or_default());
-                (error::SUCCESS.code_num, handle)
+                trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, handle, credential_def::get_source_id(handle).unwrap_or_default());
+                (error::SUCCESS_ERR_CODE, handle)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -60,7 +59,7 @@ pub extern "C" fn vcx_credentialdef_create_v2(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -72,10 +71,11 @@ pub extern "C" fn vcx_credentialdef_publish(
 ) -> u32 {
     info!("vcx_credentialdef_publish >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
+                                     format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
@@ -89,8 +89,8 @@ pub extern "C" fn vcx_credentialdef_publish(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential_def::publish(credentialdef_handle).await {
             Ok(_) => {
-                trace!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS.message, credentialdef_handle, source_id);
-                cb(command_handle, error::SUCCESS.code_num);
+                trace!("vcx_credentialdef_publish_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, credentialdef_handle, source_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -101,7 +101,7 @@ pub extern "C" fn vcx_credentialdef_publish(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 /// Takes the credentialdef object and returns a json string of all its attributes
@@ -123,7 +123,7 @@ pub extern "C" fn vcx_credentialdef_serialize(
 ) -> u32 {
     info!("vcx_credentialdef_serialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -134,15 +134,16 @@ pub extern "C" fn vcx_credentialdef_serialize(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
+                                     format!("Invalid creddef handle {}", credentialdef_handle)).into();
     };
 
     execute(move || {
         match credential_def::to_string(credentialdef_handle) {
             Ok(err) => {
-                trace!("vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, credentialdef_handle, error::SUCCESS.message, err, source_id);
+                trace!("vcx_credentialdef_serialize_cb(command_handle: {}, credentialdef_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, credentialdef_handle, error::SUCCESS_ERR_CODE, err, source_id);
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -154,7 +155,7 @@ pub extern "C" fn vcx_credentialdef_serialize(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 /// Takes a json string representing a credentialdef object and recreates an object matching the json
@@ -176,8 +177,8 @@ pub extern "C" fn vcx_credentialdef_deserialize(
 ) -> u32 {
     info!("vcx_credentialdef_deserialize >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
-    check_useful_c_str!(credentialdef_data, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
+    check_useful_c_str!(credentialdef_data, LibvcxErrorKind::InvalidOption);
 
     trace!(
         "vcx_credentialdef_deserialize(command_handle: {}, credentialdef_data: {})",
@@ -191,11 +192,11 @@ pub extern "C" fn vcx_credentialdef_deserialize(
                 trace!(
                     "vcx_credentialdef_deserialize_cb(command_handle: {}, rc: {}, handle: {}), source_id: {}",
                     command_handle,
-                    error::SUCCESS.message,
+                    error::SUCCESS_ERR_CODE,
                     err,
                     credential_def::get_source_id(err).unwrap_or_default()
                 );
-                (error::SUCCESS.code_num, err)
+                (error::SUCCESS_ERR_CODE, err)
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -211,7 +212,7 @@ pub extern "C" fn vcx_credentialdef_deserialize(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 /// Retrieves credential definition's id
@@ -231,7 +232,7 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
 ) -> u32 {
     info!("vcx_credentialdef_get_cred_def_id >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(cred_def_handle).unwrap_or_default();
     trace!(
@@ -241,15 +242,16 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
         source_id
     );
     if !credential_def::is_valid_handle(cred_def_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
+                                     format!("Invalid creddef handle {}", cred_def_handle)).into();
     }
 
     execute(move || {
         match credential_def::get_cred_def_id(cred_def_handle) {
             Ok(err) => {
-                trace!("vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: {}) source_id: {}", command_handle, cred_def_handle, error::SUCCESS.message, err, source_id);
+                trace!("vcx_credentialdef_get_cred_def_id(command_handle: {}, cred_def_handle: {}, rc: {}, cred_def_id: {}) source_id: {}", command_handle, cred_def_handle, error::SUCCESS_ERR_CODE, err, source_id);
                 let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, error::SUCCESS.code_num, msg.as_ptr());
+                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -261,7 +263,7 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 /// Releases the credentialdef object by de-allocating memory
@@ -281,10 +283,10 @@ pub extern "C" fn vcx_credentialdef_release(credentialdef_handle: u32) -> u32 {
             trace!(
                 "vcx_credentialdef_release(credentialdef_handle: {}, rc: {}), source_id: {}",
                 credentialdef_handle,
-                error::SUCCESS.message,
+                error::SUCCESS_ERR_CODE,
                 source_id
             );
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         }
 
         Err(err) => {
@@ -320,7 +322,7 @@ pub extern "C" fn vcx_credentialdef_update_state(
 ) -> u32 {
     info!("vcx_credentialdef_update_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -331,7 +333,8 @@ pub extern "C" fn vcx_credentialdef_update_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
+                                     format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -340,10 +343,10 @@ pub extern "C" fn vcx_credentialdef_update_state(
                 trace!(
                     "vcx_credentialdef_update_state(command_handle: {}, rc: {}, state: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    error::SUCCESS_ERR_CODE,
                     state
                 );
-                cb(command_handle, error::SUCCESS.code_num, state);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -358,7 +361,7 @@ pub extern "C" fn vcx_credentialdef_update_state(
         Ok(())
     }));
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 /// Get the current state of the credential definition object
@@ -383,7 +386,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
 ) -> u32 {
     info!("vcx_credentialdef_get_state >>>");
 
-    check_useful_c_callback!(cb, VcxErrorKind::InvalidOption);
+    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
     trace!(
@@ -394,7 +397,8 @@ pub extern "C" fn vcx_credentialdef_get_state(
     );
 
     if !credential_def::is_valid_handle(credentialdef_handle) {
-        return VcxError::from(VcxErrorKind::InvalidCredDefHandle).into();
+        return LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle,
+                                     format!("Invalid creddef handle {}", credentialdef_handle)).into();
     }
 
     execute(move || {
@@ -403,10 +407,10 @@ pub extern "C" fn vcx_credentialdef_get_state(
                 trace!(
                     "vcx_credentialdef_get_state(command_handle: {}, rc: {}, state: {})",
                     command_handle,
-                    error::SUCCESS.message,
+                    error::SUCCESS_ERR_CODE,
                     state
                 );
-                cb(command_handle, error::SUCCESS.code_num, state);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -421,7 +425,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
         Ok(())
     });
 
-    error::SUCCESS.code_num
+    error::SUCCESS_ERR_CODE
 }
 
 #[cfg(feature = "general_test")]
@@ -432,6 +436,7 @@ mod tests {
     use aries_vcx::utils::constants::SCHEMA_ID;
     use aries_vcx::utils::devsetup::{SetupLibraryWallet, SetupMocks};
 
+    use crate::api_lib::errors::error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
 
@@ -451,9 +456,9 @@ mod tests {
                 CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
@@ -471,9 +476,9 @@ mod tests {
                     ptr::null(),
                     CString::new("tag").unwrap().into_raw(),
                     true,
-                    Some(cb.get_callback())
+                    Some(cb.get_callback()),
                 ),
-                error::SUCCESS.code_num
+                error::SUCCESS_ERR_CODE
             );
             assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
         }).await;
@@ -493,16 +498,16 @@ mod tests {
                 ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_credentialdef_serialize(cb.command_handle, handle, Some(cb.get_callback())),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
         let cred = cb.receive(TimeoutUtils::some_medium()).unwrap();
         assert!(cred.is_some());
@@ -520,9 +525,9 @@ mod tests {
             vcx_credentialdef_deserialize(
                 cb.command_handle,
                 CString::new(original).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
 
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
@@ -541,9 +546,9 @@ mod tests {
             vcx_credentialdef_deserialize(
                 cb.command_handle,
                 CString::new(original).unwrap().into_raw(),
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
 
         let handle = cb.receive(TimeoutUtils::some_short()).unwrap();
@@ -564,16 +569,16 @@ mod tests {
                 ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
 
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let unknown_handle = handle + 1;
         assert_eq!(
             vcx_credentialdef_release(unknown_handle),
-            error::INVALID_CREDENTIAL_DEF_HANDLE.code_num
+            u32::from(LibvcxErrorKind::InvalidCredDefHandle)
         );
     }
 
@@ -591,59 +596,16 @@ mod tests {
                 CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
-                Some(cb.get_callback())
+                Some(cb.get_callback()),
             ),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
         let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
             vcx_credentialdef_get_cred_def_id(cb.command_handle, handle, Some(cb.get_callback())),
-            error::SUCCESS.code_num
+            error::SUCCESS_ERR_CODE
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
-    }
-
-    // TODO: Update to not use prepare_credentialdef_for_endorser if possible
-    #[test]
-    #[cfg(feature = "to_restore")]
-    #[cfg(feature = "general_test")]
-    fn test_vcx_cred_def_get_state() {
-        let _setup = SetupMocks::init();
-
-        let (handle, _, _, _) = credential_def::prepare_credentialdef_for_endorser(
-            "testid".to_string(),
-            "Test Credential Def".to_string(),
-            "6vkhW3L28AophhA68SSzRS".to_string(),
-            SCHEMA_ID.to_string(),
-            "tag".to_string(),
-            "{}".to_string(),
-            "V4SGRU86Z58d6TV7PBUe6f".to_string(),
-        )
-        .unwrap();
-        {
-            let cb = return_types_u32::Return_U32_U32::new().unwrap();
-            let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(
-                cb.receive(TimeoutUtils::some_medium()).unwrap(),
-                PublicEntityStateType::Built as u32
-            )
-        }
-        {
-            let cb = return_types_u32::Return_U32_U32::new().unwrap();
-            let _rc = vcx_credentialdef_update_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(
-                cb.receive(TimeoutUtils::some_medium()).unwrap(),
-                PublicEntityStateType::Published as u32
-            );
-        }
-        {
-            let cb = return_types_u32::Return_U32_U32::new().unwrap();
-            let _rc = vcx_credentialdef_get_state(cb.command_handle, handle, Some(cb.get_callback()));
-            assert_eq!(
-                cb.receive(TimeoutUtils::some_medium()).unwrap(),
-                PublicEntityStateType::Published as u32
-            )
-        }
     }
 }

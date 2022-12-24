@@ -5,7 +5,7 @@ use reqwest;
 use reqwest::header::{CONTENT_TYPE, USER_AGENT};
 use reqwest::Client;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::testing::mocking;
 use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 

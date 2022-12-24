@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::holder::state_machine::parse_cred_def_id_from_cred_offer;
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
@@ -41,14 +41,14 @@ impl OfferReceivedState {
 
     pub async fn is_revokable(&self, profile: &Arc<dyn Profile>) -> VcxResult<bool> {
         let offer = self.offer.offers_attach.content().map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Failed to get credential offer attachment content: {}", err),
             )
         })?;
         let cred_def_id = parse_cred_def_id_from_cred_offer(&offer).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!(
                     "Failed to parse credential definition id from credential offer: {}",
                     err

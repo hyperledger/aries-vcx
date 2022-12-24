@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::protocols::connection::invitee::states::complete::CompleteState;
@@ -166,19 +166,19 @@ impl SmConnectionInvitee {
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
             .map(|did_doc: DidDoc| did_doc.id)
-            .ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Remote Connection DID is not set",
             ))
     }
 
     pub fn remote_vk(&self) -> VcxResult<String> {
-        let did_did = self.their_did_doc().ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        let did_did = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Counterparty diddoc is not available.",
         ))?;
-        did_did.recipient_keys()?.get(0).ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        did_did.recipient_keys()?.get(0).ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Can't resolve recipient key from the counterparty diddoc.",
         )).map(|s| s.to_string())
     }
@@ -223,8 +223,8 @@ impl SmConnectionInvitee {
                 };
                 Ok((request, thread_id))
             }
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Building connection request in current state is not allowed",
             )),
         }
@@ -233,8 +233,8 @@ impl SmConnectionInvitee {
     fn build_connection_ack_msg(&self) -> VcxResult<Ack> {
         match &self.state {
             InviteeFullState::Responded(_) => Ok(Ack::create().set_out_time().set_thread_id(&self.thread_id)),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Building connection ack in current state is not allowed",
             )),
         }
@@ -248,8 +248,8 @@ impl SmConnectionInvitee {
                 InviteeFullState::Invited((state.clone(), invitation, state.did_doc.unwrap()).into())
             }
             s => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     format!("Cannot handle inviation: not in Initial state, current state: {:?}", s),
                 ));
             }
@@ -270,7 +270,7 @@ impl SmConnectionInvitee {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
                 let ddo = self.their_did_doc()
-                    .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Missing did doc"))?;
+                    .ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Missing did doc"))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(request.to_a2a_message(), self.pairwise_info.pw_vk.clone(), ddo.clone()).await?;
                 (
@@ -301,16 +301,16 @@ impl SmConnectionInvitee {
                     .recipient_keys()?
                     .get(0)
                     .cloned()
-                    .ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    .ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Cannot handle response: remote verkey not found",
                     ))?;
 
                 match decode_signed_connection_response(wallet, response.clone(), &remote_vk).await {
                     Ok(response) => {
                         if !response.from_thread(&state.request.get_thread_id()) {
-                            return Err(VcxError::from_msg(
-                                VcxErrorKind::InvalidJson,
+                            return Err(AriesVcxError::from_msg(
+                                AriesVcxErrorKind::InvalidJson,
                                 format!(
                                     "Cannot handle response: thread id does not match: {:?}",
                                     response.thread

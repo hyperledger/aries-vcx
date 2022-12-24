@@ -5,7 +5,7 @@ use std::sync::Arc;
 use agency_client::agency_client::AgencyClient;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation::Presentation;
@@ -138,8 +138,8 @@ impl Prover {
             .request_presentations_attach
             .content()?;
         let proof_request_data: serde_json::Value = serde_json::from_str(&data).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize {:?} into PresentationRequestData: {:?}", data, err),
             )
         })?;
@@ -183,19 +183,19 @@ impl Prover {
             (Some(reason), None) => self.prover_sm.clone().decline_presentation_request(reason, send_message).await?,
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
-                    VcxError::from_msg(
-                        VcxErrorKind::InvalidJson,
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidJson,
                         format!("Cannot serialize Presentation Preview: {:?}", err),
                     )
                 })?;
                 self.prover_sm.clone().negotiate_presentation(presentation_preview, send_message).await?
             }
-            (None, None) => { return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            (None, None) => { return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidOption,
                 "Either `reason` or `proposal` parameter must be specified.",
             )); },
-            (Some(_), Some(_)) => { return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidOption,
+            (Some(_), Some(_)) => { return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidOption,
                 "Only one of `reason` or `proposal` parameters must be specified.",
             )); },
         };
@@ -227,7 +227,7 @@ impl Prover {
 pub mod test_utils {
     use agency_client::agency_client::AgencyClient;
 
-    use crate::error::prelude::*;
+    use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 
@@ -269,7 +269,7 @@ mod tests {
                 .await
                 .unwrap_err()
                 .kind(),
-            VcxErrorKind::InvalidJson
+            AriesVcxErrorKind::InvalidJson
         );
         }).await;
     }

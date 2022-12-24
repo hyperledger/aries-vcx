@@ -3,7 +3,7 @@ use std::fmt::Display;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::common::proofs::proof_request::PresentationRequestData;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::concepts::problem_report::ProblemReport;
@@ -122,8 +122,8 @@ impl VerifierSM {
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
                 let thread_id = match proposal.thread {
-                    Some(ref thread) => thread.thid.clone().ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    Some(ref thread) => thread.thid.clone().ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Received proposal with invalid thid",
                     ))?,
                     None => proposal.id.0.clone(),
@@ -170,7 +170,7 @@ impl VerifierSM {
                 let thread_id = match state.presentation_proposal.thread {
                     Some(thread) => thread
                         .thid
-                        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
+                        .ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Thread id undefined"))?,
                     None => state.presentation_proposal.id.0,
                 };
                 let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
@@ -201,7 +201,7 @@ impl VerifierSM {
                     Ok(()) => VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
                     Err(err) => {
                         match err.kind() {
-                            VcxErrorKind::InvalidProof =>
+                            AriesVcxErrorKind::InvalidProof =>
                                 VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
                             _ => {
                                 let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
@@ -285,8 +285,8 @@ impl VerifierSM {
                 VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(presentation_request))
             }
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot set presentation request in this state",
                 ));
             }
@@ -310,8 +310,8 @@ impl VerifierSM {
             }
             VerifierFullState::PresentationRequestSent(state) => VerifierFullState::PresentationRequestSent(state),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Can not mark_presentation_request_msg_sent in current state.",
                 ))
             }
@@ -333,22 +333,22 @@ impl VerifierSM {
         let verifier_sm = match message {
             VerifierMessages::PresentationProposalReceived(proposal) => self.receive_presentation_proposal(proposal)?,
             VerifierMessages::RejectPresentationProposal(reason) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.reject_presentation_proposal(reason, send_message).await?
             }
             VerifierMessages::VerifyPresentation(presentation) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.verify_presentation(profile, presentation, send_message).await?
             }
             VerifierMessages::SendPresentationAck() => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.send_presentation_ack(send_message).await?
@@ -418,20 +418,20 @@ impl VerifierSM {
 
     pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
         match self.state {
-            VerifierFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation request not set yet",
             )),
             VerifierFullState::PresentationRequestSet(ref state) => Ok(state.presentation_request.clone()),
             VerifierFullState::PresentationProposalReceived(ref state) => state.presentation_request.clone().ok_or(
-                VcxError::from_msg(VcxErrorKind::InvalidState, "No presentation request set"),
+                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No presentation request set"),
             ),
             VerifierFullState::PresentationRequestSent(ref state) => Ok(state.presentation_request.clone()),
             VerifierFullState::Finished(ref state) => Ok(state
                 .presentation_request
                 .as_ref()
-                .ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "No presentation request set",
                 ))?
                 .clone()),
@@ -443,9 +443,9 @@ impl VerifierSM {
             VerifierFullState::Finished(ref state) => state
                 .presentation
                 .clone()
-                .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle)),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+                .ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, format!("State machine is final state, but presentation is not available"))),
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation not received yet",
             )),
         }
@@ -454,8 +454,8 @@ impl VerifierSM {
     pub fn presentation_proposal(&self) -> VcxResult<PresentationProposal> {
         match self.state {
             VerifierFullState::PresentationProposalReceived(ref state) => Ok(state.presentation_proposal.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation proposal not received yet",
             )),
         }

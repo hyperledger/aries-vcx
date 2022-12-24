@@ -1,7 +1,7 @@
 use openssl::bn::BigNum;
 use openssl::sha::sha256;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 pub fn encode(s: &str) -> VcxResult<String> {
     match s.parse::<u32>() {
@@ -9,12 +9,12 @@ pub fn encode(s: &str) -> VcxResult<String> {
         Err(_) => {
             let hash = sha256(s.as_bytes());
             let bignum = BigNum::from_slice(&hash).map_err(|err| {
-                VcxError::from_msg(VcxErrorKind::EncodeError, format!("Cannot encode string: {}", err))
+                AriesVcxError::from_msg(AriesVcxErrorKind::EncodeError, format!("Cannot encode string: {}", err))
             })?;
 
             let encoded = bignum
                 .to_dec_str()
-                .map_err(|err| VcxError::from_msg(VcxErrorKind::EncodeError, format!("Cannot encode string: {}", err)))?
+                .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::EncodeError, format!("Cannot encode string: {}", err)))?
                 .to_string();
 
             Ok(encoded)

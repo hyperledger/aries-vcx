@@ -3,11 +3,10 @@ use vdrtools::Locator;
 use vdrtools::PoolHandle;
 use vdrtools::types::errors::IndyErrorKind;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::global::settings;
 
-// TODO: remove async
-pub async fn set_protocol_version() -> VcxResult<()> {
+pub fn set_protocol_version() -> VcxResult<()> {
     Locator::instance()
         .pool_controller
         .set_protocol_version(settings::get_protocol_version())?;
@@ -15,8 +14,7 @@ pub async fn set_protocol_version() -> VcxResult<()> {
     Ok(())
 }
 
-// TODO: remove async
-pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
+pub fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult<()> {
     let res = Locator::instance()
         .pool_controller
         .create(
@@ -29,16 +27,14 @@ pub async fn create_pool_ledger_config(pool_name: &str, path: &str) -> VcxResult
     match res {
         Ok(_) => Ok(()),
         Err(indy) if indy.kind() == IndyErrorKind::PoolConfigAlreadyExists => Ok(()),
-
         Err(indy) if indy.kind() == IndyErrorKind::IOError =>
-            Err(VcxErrorKind::InvalidGenesisTxnPath.into()),
-
-        Err(_) => Err(VcxErrorKind::CreatePoolConfig.into()),
+            Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidGenesisTxnPath, indy.to_string())),
+        Err(indy) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::CreatePoolConfig, indy.to_string())),
     }
 }
 
 pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> VcxResult<i32> {
-    set_protocol_version().await?;
+    set_protocol_version()?;
 
     let handle = Locator::instance()
         .pool_controller
@@ -53,20 +49,7 @@ pub async fn open_pool_ledger(pool_name: &str, config: Option<PoolConfig>) -> Vc
 
     match handle {
         Ok(handle) => Ok(handle),
-
-        Err(indy) if indy.kind() == IndyErrorKind::PoolNotCreated =>
-            Err(VcxErrorKind::PoolLedgerConnect.into()),
-
-        Err(indy) if indy.kind() == IndyErrorKind::PoolTimeout =>
-            Err(VcxErrorKind::PoolLedgerConnect.into()),
-
-        Err(indy) if indy.kind() == IndyErrorKind::PoolIncompatibleProtocolVersion =>
-            Err(VcxErrorKind::PoolLedgerConnect.into()),
-
-        Err(indy) if indy.kind() == IndyErrorKind::InvalidState =>
-            Err(VcxErrorKind::PoolLedgerConnect.into()),
-
-        Err(err) => Err(err.into()),
+        Err(err) => Err(AriesVcxError::from_msg(AriesVcxErrorKind::PoolLedgerConnect, err.to_string())),
     }
 }
 
@@ -106,14 +89,13 @@ pub mod test_utils {
     pub async fn create_test_ledger_config() {
         create_tmp_genesis_txn_file();
         create_pool_ledger_config(POOL, get_temp_dir_path(GENESIS_PATH).to_str().unwrap())
-            .await
             .unwrap();
     }
 
     pub async fn delete_named_test_pool(pool_handle: PoolHandle, pool_name: &str) {
         close(pool_handle).await.ok();
         delete(pool_name).await.unwrap();
-    } 
+    }
 
     pub async fn delete_test_pool(pool_handle: PoolHandle) {
         close(pool_handle).await.unwrap();

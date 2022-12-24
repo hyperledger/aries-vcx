@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::utils::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Did(String);
@@ -11,7 +11,7 @@ impl Did {
             Ok(Self(did.to_string()))
         } else {
             Err(MessagesError::from_msg(
-                MesssagesErrorKind::InvalidDid,
+                MessagesErrorKind::InvalidDid,
                 format!("{} is not a valid DID", did),
             ))
         }

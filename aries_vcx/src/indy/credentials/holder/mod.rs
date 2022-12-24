@@ -9,7 +9,7 @@ use vdrtools::{
 };
 
 use vdrtools::WalletHandle;
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::global::settings;
 use crate::utils;
 

@@ -112,6 +112,9 @@ export enum VCXCode {
   CREATE_OUT_OF_BAND = 1112,
   CREATE_AGENT = 1113,
   REV_DELTA_FAILED_TO_CLEAR = 1114,
+  INVALID_INPUT = 1115,
+  PARSING_ERROR = 1116,
+  UNIMPLEMENTED_FEATURE = 1117,
 }
 export enum ConnectionStateType {
   Initial = 0,

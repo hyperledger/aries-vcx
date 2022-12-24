@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 
-use crate::{
-    error::VcxResult,
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
-};
+use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
+use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'ledger' related functionality.
 #[async_trait]

@@ -21,3 +21,4 @@ pub mod did_doc;
 pub mod actors;
 pub mod utils;
 pub mod protocols;
+pub mod errors;

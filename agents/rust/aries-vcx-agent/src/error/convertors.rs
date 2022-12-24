@@ -1,13 +1,13 @@
 use std::convert::From;
 
-use aries_vcx::error::{VcxError, VcxErrorKind};
+use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
 
 use crate::error::*;
 
-impl From<VcxError> for AgentError {
-    fn from(err: VcxError) -> AgentError {
+impl From<AriesVcxError> for AgentError {
+    fn from(err: AriesVcxError) -> AgentError {
         let kind = match err.kind() {
-            VcxErrorKind::CredDefAlreadyCreated => AgentErrorKind::CredDefAlreadyCreated,
+            AriesVcxErrorKind::CredDefAlreadyCreated => AgentErrorKind::CredDefAlreadyCreated,
             _ => AgentErrorKind::GenericAriesVcxError,
         };
         error!("AriesVCX Error: {}", err.to_string());
