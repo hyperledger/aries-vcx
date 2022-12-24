@@ -2,6 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::common::signing::decode_signed_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::plugins::wallet::base_wallet::BaseWallet;
@@ -12,15 +13,14 @@ use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
-use crate::common::signing::decode_signed_connection_response;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
 use messages::concepts::ack::Ack;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
 use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::SignedResponse;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
@@ -177,10 +177,14 @@ impl SmConnectionInvitee {
             AriesVcxErrorKind::NotReady,
             "Counterparty diddoc is not available.",
         ))?;
-        did_did.recipient_keys()?.get(0).ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::NotReady,
-            "Can't resolve recipient key from the counterparty diddoc.",
-        )).map(|s| s.to_string())
+        did_did
+            .recipient_keys()?
+            .get(0)
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Can't resolve recipient key from the counterparty diddoc.",
+            ))
+            .map(|s| s.to_string())
     }
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
@@ -269,8 +273,10 @@ impl SmConnectionInvitee {
     ) -> VcxResult<Self> {
         let (state, thread_id) = match self.state {
             InviteeFullState::Invited(ref state) => {
-                let ddo = self.their_did_doc()
-                    .ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Missing did doc"))?;
+                let ddo = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Missing did doc",
+                ))?;
                 let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
                 send_message(request.to_a2a_message(), self.pairwise_info.pw_vk.clone(), ddo.clone()).await?;
                 (
@@ -296,15 +302,16 @@ impl SmConnectionInvitee {
         verify_thread_id(&self.get_thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
         let state = match self.state {
             InviteeFullState::Requested(state) => {
-                let remote_vk: String = state
-                    .did_doc
-                    .recipient_keys()?
-                    .get(0)
-                    .cloned()
-                    .ok_or(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidState,
-                        "Cannot handle response: remote verkey not found",
-                    ))?;
+                let remote_vk: String =
+                    state
+                        .did_doc
+                        .recipient_keys()?
+                        .get(0)
+                        .cloned()
+                        .ok_or(AriesVcxError::from_msg(
+                            AriesVcxErrorKind::InvalidState,
+                            "Cannot handle response: remote verkey not found",
+                        ))?;
 
                 match decode_signed_connection_response(wallet, response.clone(), &remote_vk).await {
                     Ok(response) => {
@@ -395,8 +402,8 @@ pub mod unit_tests {
 
     pub mod invitee {
 
-        use messages::protocols::connection::response::{Response, SignedResponse};
         use messages::diddoc::aries::diddoc::test_utils::{_did_doc_inlined_recipient_keys, _service_endpoint};
+        use messages::protocols::connection::response::{Response, SignedResponse};
 
         use crate::common::signing::sign_connection_response;
         use crate::common::test_utils::mock_profile;
@@ -578,7 +585,11 @@ pub mod unit_tests {
                     .unwrap();
                 assert_match!(InviteeState::Requested, invitee.get_state());
                 assert!(invitee
-                    .handle_connection_response(&mock_profile().inject_wallet(), _response_1(&mock_profile().inject_wallet(), &key).await, _send_message())
+                    .handle_connection_response(
+                        &mock_profile().inject_wallet(),
+                        _response_1(&mock_profile().inject_wallet(), &key).await,
+                        _send_message()
+                    )
                     .await
                     .is_err());
             }

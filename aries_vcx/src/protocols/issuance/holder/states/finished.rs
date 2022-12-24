@@ -44,10 +44,10 @@ impl FinishedHolderState {
     }
 
     pub fn get_attachment(&self) -> VcxResult<String> {
-        let credential = self
-            .credential
-            .as_ref()
-            .ok_or(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No credential found"))?;
+        let credential = self.credential.as_ref().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidState,
+            "No credential found",
+        ))?;
         credential.credentials_attach.content().map_err(|err| err.into())
     }
 
@@ -131,7 +131,7 @@ impl FinishedHolderState {
     pub fn get_cred_id(&self) -> VcxResult<String> {
         self.cred_id.clone().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("The field 'cred_id' not found on FinishedHolderState")
+            format!("The field 'cred_id' not found on FinishedHolderState"),
         ))
     }
 

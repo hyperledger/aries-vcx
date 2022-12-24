@@ -5,8 +5,8 @@ use libc::c_char;
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::disclosed_proof;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};
@@ -1025,7 +1025,7 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
             reason.as_deref(),
             proposal.as_deref(),
         )
-            .await
+        .await
         {
             Ok(_) => {
                 trace!(

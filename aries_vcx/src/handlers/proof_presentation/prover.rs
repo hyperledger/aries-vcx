@@ -7,14 +7,14 @@ use agency_client::agency_client::AgencyClient;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::protocols::proof_presentation::prover::messages::ProverMessages;
+use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
+use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
 use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposalData};
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use crate::protocols::proof_presentation::prover::messages::ProverMessages;
-use crate::protocols::proof_presentation::prover::state_machine::{ProverSM, ProverState};
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Prover {
@@ -53,7 +53,9 @@ impl Prover {
         trace!("Prover::retrieve_credentials >>>");
         let presentation_request = self.presentation_request_data()?;
         let anoncreds = Arc::clone(profile).inject_anoncreds();
-        anoncreds.prover_get_credentials_for_proof_req(&presentation_request).await
+        anoncreds
+            .prover_get_credentials_for_proof_req(&presentation_request)
+            .await
     }
 
     pub async fn generate_presentation(
@@ -67,7 +69,11 @@ impl Prover {
             credentials,
             self_attested_attrs
         );
-        self.prover_sm = self.prover_sm.clone().generate_presentation(profile, credentials, self_attested_attrs).await?;
+        self.prover_sm = self
+            .prover_sm
+            .clone()
+            .generate_presentation(profile, credentials, self_attested_attrs)
+            .await?;
         Ok(())
     }
 
@@ -89,7 +95,11 @@ impl Prover {
         send_message: SendClosure,
     ) -> VcxResult<()> {
         trace!("Prover::send_proposal >>>");
-        self.prover_sm = self.prover_sm.clone().send_presentation_proposal(proposal_data, send_message).await?;
+        self.prover_sm = self
+            .prover_sm
+            .clone()
+            .send_presentation_proposal(proposal_data, send_message)
+            .await?;
         Ok(())
     }
 
@@ -160,11 +170,7 @@ impl Prover {
         message: ProverMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.prover_sm = self
-            .prover_sm
-            .clone()
-            .step(profile, message, send_message)
-            .await?;
+        self.prover_sm = self.prover_sm.clone().step(profile, message, send_message).await?;
         Ok(())
     }
 
@@ -180,7 +186,12 @@ impl Prover {
             proposal
         );
         self.prover_sm = match (reason, proposal) {
-            (Some(reason), None) => self.prover_sm.clone().decline_presentation_request(reason, send_message).await?,
+            (Some(reason), None) => {
+                self.prover_sm
+                    .clone()
+                    .decline_presentation_request(reason, send_message)
+                    .await?
+            }
             (None, Some(proposal)) => {
                 let presentation_preview: PresentationPreview = serde_json::from_str(&proposal).map_err(|err| {
                     AriesVcxError::from_msg(
@@ -188,16 +199,23 @@ impl Prover {
                         format!("Cannot serialize Presentation Preview: {:?}", err),
                     )
                 })?;
-                self.prover_sm.clone().negotiate_presentation(presentation_preview, send_message).await?
+                self.prover_sm
+                    .clone()
+                    .negotiate_presentation(presentation_preview, send_message)
+                    .await?
             }
-            (None, None) => { return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidOption,
-                "Either `reason` or `proposal` parameter must be specified.",
-            )); },
-            (Some(_), Some(_)) => { return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidOption,
-                "Only one of `reason` or `proposal` parameters must be specified.",
-            )); },
+            (None, None) => {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidOption,
+                    "Either `reason` or `proposal` parameter must be specified.",
+                ));
+            }
+            (Some(_), Some(_)) => {
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidOption,
+                    "Only one of `reason` or `proposal` parameters must be specified.",
+                ));
+            }
         };
         Ok(())
     }
@@ -252,25 +270,22 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod tests {
+    use crate::{common::test_utils::indy_handles_to_profile, utils::devsetup::*};
     use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-    use crate::{utils::devsetup::*, common::test_utils::indy_handles_to_profile};
 
     use super::*;
 
     #[tokio::test]
     async fn test_retrieve_credentials_fails_with_no_proof_req() {
         SetupLibraryWallet::run(|setup| async move {
-        let profile = indy_handles_to_profile(setup.wallet_handle, 0);
-        let proof_req = PresentationRequest::create();
-        let proof = Prover::create_from_request("1", proof_req).unwrap();
-        assert_eq!(
-            proof
-                .retrieve_credentials(&profile)
-                .await
-                .unwrap_err()
-                .kind(),
-            AriesVcxErrorKind::InvalidJson
-        );
-        }).await;
+            let profile = indy_handles_to_profile(setup.wallet_handle, 0);
+            let proof_req = PresentationRequest::create();
+            let proof = Prover::create_from_request("1", proof_req).unwrap();
+            assert_eq!(
+                proof.retrieve_credentials(&profile).await.unwrap_err().kind(),
+                AriesVcxErrorKind::InvalidJson
+            );
+        })
+        .await;
     }
 }

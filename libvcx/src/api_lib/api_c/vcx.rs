@@ -3,12 +3,12 @@ use std::ffi::CString;
 use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
-use aries_vcx::{indy, utils};
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 use aries_vcx::global::settings;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
 use aries_vcx::utils::version_constants;
+use aries_vcx::{indy, utils};
 
 use crate::api_lib;
 use crate::api_lib::api_c::types::CommandHandle;
@@ -16,8 +16,8 @@ use crate::api_lib::api_handle::ledger::{ledger_get_txn_author_agreement, ledger
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::api_handle::vcx_settings;
 use crate::api_lib::api_handle::vcx_settings::{settings_init_issuer_config, vcxcore_enable_mocks};
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
 use crate::api_lib::global::pool::{close_main_pool, is_main_pool_open, open_main_pool};
 use crate::api_lib::global::profile::get_main_profile;
@@ -363,7 +363,7 @@ pub extern "C" fn vcx_update_webhook_url(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -406,7 +406,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -615,7 +615,7 @@ pub mod test_utils {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW
         })
-            .to_string();
+        .to_string();
 
         info!("_vcx_create_and_open_wallet >>>");
 
@@ -646,7 +646,7 @@ pub mod test_utils {
             "retrieveValue": true,
             "retrieveTags": false
         })
-            .to_string();
+        .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         let cb = return_types_u32::Return_U32::new().unwrap();
@@ -689,8 +689,8 @@ mod tests {
     use aries_vcx::indy;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::ledger::pool::{
-        PoolConfig,
         test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
+        PoolConfig,
     };
     use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::devsetup::{
@@ -706,8 +706,11 @@ mod tests {
         _vcx_init_threadpool_c_closure, _vcx_open_main_pool_c_closure, _vcx_open_main_wallet_c_closure, _vcx_open_pool,
         _vcx_open_wallet,
     };
-    use crate::api_lib::api_handle::{credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema, vcx_settings};
     use crate::api_lib::api_handle::wallet::wallet_import;
+    use crate::api_lib::api_handle::{
+        credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema,
+        vcx_settings,
+    };
     use crate::api_lib::errors::error;
     use crate::api_lib::errors::error::{LibvcxErrorKind, LibvcxResult};
     #[cfg(feature = "pool_tests")]
@@ -740,10 +743,7 @@ mod tests {
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, u32::from(LibvcxErrorKind::PoolLedgerConnect));
-        assert_eq!(
-            get_main_pool_handle().unwrap_err().kind(),
-            LibvcxErrorKind::NoPoolOpen
-        );
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
 
         delete_named_test_pool(0, &pool_name).await;
         reset_main_pool_handle();
@@ -762,10 +762,7 @@ mod tests {
         };
         let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(err, u32::from(LibvcxErrorKind::InvalidGenesisTxnPath));
-        assert_eq!(
-            get_main_pool_handle().unwrap_err().kind(),
-            LibvcxErrorKind::NoPoolOpen
-        );
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
     }
 
     #[cfg(feature = "pool_tests")]
@@ -789,7 +786,8 @@ mod tests {
                 assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
 
                 return true; // skip_cleanup in TestSetupCreateWallet
-            }).await;
+            })
+            .await;
         }
     }
 
@@ -816,7 +814,7 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-            .to_string();
+        .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         _vcx_open_main_wallet_c_closure(&content).unwrap();
@@ -859,7 +857,7 @@ mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW,
         })
-            .to_string();
+        .to_string();
 
         _vcx_init_threadpool_c_closure("{}").unwrap();
         let err = _vcx_open_main_wallet_c_closure(&content).unwrap_err();
@@ -886,9 +884,11 @@ mod tests {
         let c_message = CStringUtils::c_str_to_string(vcx_error_c_message(1021))
             .unwrap()
             .unwrap();
-        assert_eq!(c_message, "Attributes provided to Credential Offer are not correct, possibly malformed");
+        assert_eq!(
+            c_message,
+            "Attributes provided to Credential Offer are not correct, possibly malformed"
+        );
     }
-
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
@@ -919,7 +919,10 @@ mod tests {
     #[cfg(feature = "general_test")]
     fn test_init_no_config_path() {
         let _setup = SetupEmpty::init();
-        assert_eq!(vcx_init_threadpool(ptr::null()), u32::from(LibvcxErrorKind::InvalidOption))
+        assert_eq!(
+            vcx_init_threadpool(ptr::null()),
+            u32::from(LibvcxErrorKind::InvalidOption)
+        )
     }
 
     #[test]
@@ -945,8 +948,8 @@ mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof(
             "1".to_string(),
@@ -955,8 +958,8 @@ mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let schema = schema::create_and_publish_schema(
             "5",
             "VsKV7grR1BUE29mG2Fm2kX".to_string(),
@@ -964,8 +967,8 @@ mod tests {
             "0.1".to_string(),
             data.to_string(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let disclosed_proof =
             disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION)
                 .unwrap();

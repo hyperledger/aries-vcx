@@ -25,8 +25,8 @@ pub mod messages;
 pub mod testing;
 pub mod wallet;
 
-mod internal;
 pub mod errors;
+mod internal;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageStatusCode {

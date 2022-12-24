@@ -4,9 +4,9 @@ use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
 use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
 use aries_vcx::messages::a2a::A2AMessage;
-use aries_vcx::messages::protocols::out_of_band::service_oob::ServiceOob;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
+use aries_vcx::messages::protocols::out_of_band::service_oob::ServiceOob;
 use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_lib::api_handle::mediated_connection::CONNECTION_MAP;
@@ -34,15 +34,13 @@ pub struct OOBConfig {
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> LibvcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP
         .add(oob)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand,
-                                               e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string())))
 }
 
 fn store_out_of_band_sender(oob: OutOfBandSender) -> LibvcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP
         .add(oob)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand,
-                                               e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string())))
 }
 
 pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
@@ -167,7 +165,10 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
             Ok((handle, true))
         } else {
-            Err(LibvcxError::from_msg(LibvcxErrorKind::UnknownError, format!("Can't find handel for found connection. Instance was probably released in the meantime.")))
+            Err(LibvcxError::from_msg(
+                LibvcxErrorKind::UnknownError,
+                format!("Can't find handel for found connection. Instance was probably released in the meantime."),
+            ))
         }
     } else {
         Ok((0, false))
@@ -237,7 +238,7 @@ pub mod tests {
             "goal_code": GoalCode::IssueVC,
             "goal": "foobar"
         })
-            .to_string();
+        .to_string();
         let oob_handle = create_out_of_band(&config).await.unwrap();
         assert!(oob_handle > 0);
         let service = ServiceOob::AriesService(
@@ -251,10 +252,7 @@ pub mod tests {
         let resolved_services = get_services(oob_handle).unwrap();
         assert_eq!(resolved_services.len(), 2);
         assert_eq!(service, resolved_services[0]);
-        assert_eq!(
-            ServiceOob::Did(Did::new(did).unwrap()),
-            resolved_services[1]
-        );
+        assert_eq!(ServiceOob::Did(Did::new(did).unwrap()), resolved_services[1]);
     }
 
     #[tokio::test]

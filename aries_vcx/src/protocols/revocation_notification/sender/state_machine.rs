@@ -84,7 +84,10 @@ impl RevocationNotificationSenderSM {
                 }
             }
             _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Ack already received"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Ack already received",
+                ));
             }
         };
         Ok(Self { state, ..self })

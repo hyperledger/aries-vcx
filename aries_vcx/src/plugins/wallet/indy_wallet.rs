@@ -5,11 +5,11 @@ use futures::executor::block_on;
 use serde_json::Value;
 use vdrtools::{SearchHandle, WalletHandle};
 
+use crate::errors::error::{AriesVcxError, VcxResult};
 use crate::{
     indy::{self},
     utils::{async_fn_iterator::AsyncFnIterator, json::TryGetIndex},
 };
-use crate::errors::error::{AriesVcxError, VcxResult};
 
 use super::base_wallet::BaseWallet;
 

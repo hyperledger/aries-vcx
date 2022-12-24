@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use messages::status::Status;
 use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::status::Status;
 use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::common::proofs::proof_request::PresentationRequestData;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::state_machine::{VerifierSM, VerifierState};
 use crate::protocols::SendClosure;
@@ -85,9 +85,18 @@ impl Verifier {
         Ok(())
     }
 
-    pub async fn verify_presentation(&mut self, profile: &Arc<dyn Profile>, presentation: Presentation, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn verify_presentation(
+        &mut self,
+        profile: &Arc<dyn Profile>,
+        presentation: Presentation,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
         trace!("Verifier::verify_presentation >>>");
-        self.verifier_sm = self.verifier_sm.clone().verify_presentation(profile, presentation, send_message).await?;
+        self.verifier_sm = self
+            .verifier_sm
+            .clone()
+            .verify_presentation(profile, presentation, send_message)
+            .await?;
         Ok(())
     }
 
@@ -157,11 +166,7 @@ impl Verifier {
         message: VerifierMessages,
         send_message: Option<SendClosure>,
     ) -> VcxResult<()> {
-        self.verifier_sm = self
-            .verifier_sm
-            .clone()
-            .step(profile, message, send_message)
-            .await?;
+        self.verifier_sm = self.verifier_sm.clone().step(profile, message, send_message).await?;
         Ok(())
     }
 
@@ -179,7 +184,11 @@ impl Verifier {
         reason: &'a str,
     ) -> VcxResult<()> {
         trace!("Verifier::decline_presentation_proposal >>> reason: {:?}", reason);
-        self.verifier_sm = self.verifier_sm.clone().reject_presentation_proposal(reason.to_string(), send_message).await?;
+        self.verifier_sm = self
+            .verifier_sm
+            .clone()
+            .reject_presentation_proposal(reason.to_string(), send_message)
+            .await?;
         Ok(())
     }
 

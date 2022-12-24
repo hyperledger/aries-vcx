@@ -15,8 +15,7 @@ pub async fn is_valid_handle(handle: u32) -> bool {
 fn store_public_agent(agent: PublicAgent) -> LibvcxResult<u32> {
     PUBLIC_AGENT_MAP
         .add(agent)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreatePublicAgent,
-                                               e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreatePublicAgent, e.to_string())))
 }
 
 pub async fn create_public_agent(source_id: &str, institution_did: &str) -> LibvcxResult<u32> {
@@ -26,13 +25,7 @@ pub async fn create_public_agent(source_id: &str, institution_did: &str) -> Libv
         institution_did
     );
     let profile = get_main_profile()?;
-    let agent = PublicAgent::create(
-        &profile,
-        &get_main_agency_client().unwrap(),
-        source_id,
-        institution_did,
-    )
-        .await?;
+    let agent = PublicAgent::create(&profile, &get_main_agency_client().unwrap(), source_id, institution_did).await?;
     store_public_agent(agent)
 }
 
@@ -90,6 +83,5 @@ pub fn from_string(agent_data: &str) -> LibvcxResult<u32> {
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PUBLIC_AGENT_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle,
-                                               e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
 }

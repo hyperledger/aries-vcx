@@ -50,6 +50,7 @@ macro_rules! map (
 pub mod author_agreement;
 #[rustfmt::skip]
 pub mod constants;
+pub mod async_fn_iterator;
 pub mod file;
 pub mod json;
 pub mod mockdata;
@@ -58,7 +59,6 @@ pub mod provision;
 pub mod qualifier;
 pub mod random;
 pub mod uuid;
-pub mod async_fn_iterator;
 
 #[macro_use]
 pub mod test_logger;
@@ -80,12 +80,8 @@ pub async fn send_message(
     message: A2AMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet,
-        &message,
-        Some(&sender_verkey),
-        &did_doc)
-        .await?;
+    let EncryptionEnvelope(envelope) =
+        EncryptionEnvelope::create(&wallet, &message, Some(&sender_verkey), &did_doc).await?;
 
     // TODO: Extract from agency client
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
@@ -102,22 +98,16 @@ pub async fn send_message_anonymously(
         message,
         &did_doc
     );
-    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(
-        &wallet,
-        &message,
-        None,
-        &did_doc)
-        .await?;
+    let EncryptionEnvelope(envelope) = EncryptionEnvelope::create(&wallet, &message, None, &did_doc).await?;
 
     agency_client::httpclient::post_message(envelope, &did_doc.get_endpoint()).await?;
     Ok(())
 }
 
-
 pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-    where
-        T: Validatable,
-        T: serde::Deserialize<'a>,
+where
+    T: Validatable,
+    T: serde::Deserialize<'a>,
 {
     let data = serde_json::from_str::<T>(s)?;
 

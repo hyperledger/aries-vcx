@@ -4,6 +4,6 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate shared_vcx;
 
-pub mod w3c;
 pub mod aries;
 pub mod errors;
+pub mod w3c;

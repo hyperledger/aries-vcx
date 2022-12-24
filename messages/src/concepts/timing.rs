@@ -101,7 +101,6 @@ pub mod unit_tests {
     use std::thread;
     use std::time::Duration;
 
-
     use super::*;
 
     #[test]

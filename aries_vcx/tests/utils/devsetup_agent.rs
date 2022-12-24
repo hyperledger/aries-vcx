@@ -4,7 +4,7 @@ pub mod test_utils {
     use std::sync::Arc;
 
     use aries_vcx::core::profile::indy_profile::IndySdkProfile;
-    use aries_vcx::core::profile::modular_wallet_profile::{ModularWalletProfile, LedgerPoolConfig};
+    use aries_vcx::core::profile::modular_wallet_profile::{LedgerPoolConfig, ModularWalletProfile};
     use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::handlers::revocation_notification::receiver::RevocationNotificationReceiver;
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
@@ -23,9 +23,14 @@ pub mod test_utils {
     use agency_client::MessageStatusCode;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
+    use aries_vcx::common::ledger::transactions::into_did_doc;
+    use aries_vcx::common::primitives::credential_definition::CredentialDef;
+    use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
+    use aries_vcx::common::primitives::credential_schema::Schema;
+    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
-    use aries_vcx::handlers::connection::mediated_connection::{MediatedConnection, ConnectionState};
+    use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
     use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
@@ -33,10 +38,9 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
-    use aries_vcx::indy::wallet::{open_wallet, close_wallet};
+    use aries_vcx::indy::wallet::{close_wallet, open_wallet};
     use aries_vcx::indy::wallet::{
-        create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig,
-        WalletConfig,
+        create_wallet_with_master_secret, delete_wallet, wallet_configure_issuer, IssuerConfig, WalletConfig,
     };
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::protocols::connection::invite::{Invitation, PublicInvitation};
@@ -51,11 +55,6 @@ pub mod test_utils {
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::provision::provision_cloud_agent;
-    use aries_vcx::common::ledger::transactions::into_did_doc;
-    use aries_vcx::common::primitives::credential_definition::CredentialDef;
-    use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
-    use aries_vcx::common::primitives::credential_schema::Schema;
-    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
     use vdrtools::{PoolHandle, WalletHandle};
 
     #[derive(Debug)]
@@ -163,20 +162,16 @@ pub mod test_utils {
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
             init_issuer_config(&config_issuer).unwrap();
             let mut agency_client = AgencyClient::new();
-            let config_agency = provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
-                .await
-                .unwrap();
+            let config_agency =
+                provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
+                    .await
+                    .unwrap();
             let connection = MediatedConnection::create("faber", &profile, &agency_client, true)
                 .await
                 .unwrap();
-            let agent = PublicAgent::create(
-                &profile,
-                &agency_client,
-                "faber",
-                &config_issuer.institution_did,
-            )
-            .await
-            .unwrap();
+            let agent = PublicAgent::create(&profile, &agency_client, "faber", &config_issuer.institution_did)
+                .await
+                .unwrap();
             let rev_not_sender = RevocationNotificationSender::build();
 
             let faber = Faber {
@@ -205,12 +200,19 @@ pub mod test_utils {
             let name: String = aries_vcx::utils::random::generate_random_schema_name();
             let version: String = String::from("1.0");
 
-            self.schema = Schema::create(&self.profile, "", &self.config_issuer.institution_did, &name, &version, &data)
-                .await
-                .unwrap()
-                .publish(&self.profile, None)
-                .await
-                .unwrap();
+            self.schema = Schema::create(
+                &self.profile,
+                "",
+                &self.config_issuer.institution_did,
+                &name,
+                &version,
+                &data,
+            )
+            .await
+            .unwrap()
+            .publish(&self.profile, None)
+            .await
+            .unwrap();
         }
 
         pub async fn create_nonrevocable_credential_definition(&mut self) {
@@ -221,17 +223,12 @@ pub mod test_utils {
                 .build()
                 .unwrap();
 
-            self.cred_def = CredentialDef::create(
-                &self.profile,
-                String::from("test_cred_def"),
-                config,
-                false,
-            )
-            .await
-            .unwrap()
-            .publish_cred_def(&self.profile)
-            .await
-            .unwrap();
+            self.cred_def = CredentialDef::create(&self.profile, String::from("test_cred_def"), config, false)
+                .await
+                .unwrap()
+                .publish_cred_def(&self.profile)
+                .await
+                .unwrap();
         }
 
         pub async fn create_presentation_request(&self) -> Verifier {
@@ -251,7 +248,10 @@ pub mod test_utils {
         }
 
         pub async fn create_invite(&mut self) -> String {
-            self.connection.connect(&self.profile, &self.agency_client).await.unwrap();
+            self.connection
+                .connect(&self.profile, &self.agency_client)
+                .await
+                .unwrap();
             self.connection
                 .find_message_and_update_state(&self.profile, &self.agency_client)
                 .await
@@ -299,7 +299,10 @@ pub mod test_utils {
         }
 
         pub async fn discovery_features(&mut self) {
-            self.connection.send_discovery_query(&self.profile, None, None).await.unwrap();
+            self.connection
+                .send_discovery_query(&self.profile, None, None)
+                .await
+                .unwrap();
         }
 
         pub async fn connection_info(&mut self) -> serde_json::Value {
@@ -368,11 +371,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.verifier
-                .update_state(
-                    &self.profile,
-                    &self.agency_client,
-                    &self.connection,
-                )
+                .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
 
@@ -385,11 +384,7 @@ pub mod test_utils {
 
         pub async fn update_proof_state(&mut self, expected_state: VerifierState, expected_status: Status) {
             self.verifier
-                .update_state(
-                    &self.profile,
-                    &self.agency_client,
-                    &self.connection,
-                )
+                .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(expected_state, self.verifier.get_state());
@@ -404,7 +399,8 @@ pub mod test_utils {
                 .build()
                 .unwrap();
             let send_message = self.connection.send_message_closure(&self.profile).await.unwrap();
-            self.rev_not_sender = self.rev_not_sender
+            self.rev_not_sender = self
+                .rev_not_sender
                 .clone()
                 .send_revocation_notification(config, send_message)
                 .await
@@ -412,7 +408,8 @@ pub mod test_utils {
         }
 
         pub async fn handle_revocation_notification_ack(&mut self, ack: RevocationAck) {
-            self.rev_not_sender = self.rev_not_sender
+            self.rev_not_sender = self
+                .rev_not_sender
                 .clone()
                 .handle_revocation_notification_ack(ack)
                 .await
@@ -429,7 +426,7 @@ pub mod test_utils {
         pub rev_not_receiver: Option<RevocationNotificationReceiver>,
         pub prover: Prover,
         pub agency_client: AgencyClient,
-        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>
+        pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
     }
 
     pub async fn create_test_alice_instance(setup: &SetupPool) -> Alice {
@@ -464,7 +461,9 @@ pub mod test_utils {
             (wallet_handle, config_wallet)
         }
 
-        pub async fn setup_modular_profile(ledger_pool_config: LedgerPoolConfig) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        pub async fn setup_modular_profile(
+            ledger_pool_config: LedgerPoolConfig,
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -472,17 +471,29 @@ pub mod test_utils {
             let profile = Arc::new(ModularWalletProfile::new(wallet, ledger_pool_config).unwrap());
 
             // set up anoncreds link/master secret
-            Arc::clone(&profile).inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+            Arc::clone(&profile)
+                .inject_anoncreds()
+                .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+                .await
+                .unwrap();
 
-            (profile, Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))))
+            (
+                profile,
+                Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))),
+            )
         }
 
-        pub async fn setup_indy_profile(pool_handle: PoolHandle) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
+        pub async fn setup_indy_profile(
+            pool_handle: PoolHandle,
+        ) -> (Arc<dyn Profile>, Arc<dyn Fn() -> BoxFuture<'static, ()>>) {
             let (wallet_handle, config_wallet) = Alice::setup_indy_wallet().await;
 
             let indy_profile = IndySdkProfile::new(wallet_handle, pool_handle);
 
-            (Arc::new(indy_profile), Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))))
+            (
+                Arc::new(indy_profile),
+                Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))),
+            )
         }
 
         pub async fn setup(profile: Arc<dyn Profile>, teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>) -> Alice {
@@ -493,9 +504,10 @@ pub mod test_utils {
                 agent_seed: None,
             };
             let mut agency_client = AgencyClient::new();
-            let config_agency = provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
-                .await
-                .unwrap();
+            let config_agency =
+                provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
+                    .await
+                    .unwrap();
             let connection = MediatedConnection::create("tmp_empoty", &profile, &agency_client, true)
                 .await
                 .unwrap();
@@ -508,7 +520,7 @@ pub mod test_utils {
                 credential: Holder::default(),
                 prover: Prover::default(),
                 rev_not_receiver: None,
-                teardown
+                teardown,
             };
             alice
         }
@@ -524,7 +536,10 @@ pub mod test_utils {
                 .connect(&self.profile, &self.agency_client)
                 .await
                 .unwrap();
-            self.connection.connect(&self.profile, &self.agency_client).await.unwrap();
+            self.connection
+                .connect(&self.profile, &self.agency_client)
+                .await
+                .unwrap();
             self.connection
                 .find_message_and_update_state(&self.profile, &self.agency_client)
                 .await
@@ -565,10 +580,12 @@ pub mod test_utils {
                 .download_messages(&self.agency_client, Some(vec![MessageStatusCode::Received]), None)
                 .await
                 .unwrap();
-            filter_messages(messages, message_type).await.ok_or(AriesVcxError::from_msg(
-                AriesVcxErrorKind::UnknownError,
-                format!("Failed to download a message"),
-            ))
+            filter_messages(messages, message_type)
+                .await
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::UnknownError,
+                    format!("Failed to download a message"),
+                ))
         }
 
         pub async fn accept_offer(&mut self) {
@@ -606,11 +623,7 @@ pub mod test_utils {
 
         pub async fn accept_credential(&mut self) {
             self.credential
-                .update_state(
-                    &self.profile,
-                    &self.agency_client,
-                    &self.connection,
-                )
+                .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(HolderState::Finished, self.credential.get_state());
@@ -685,19 +698,13 @@ pub mod test_utils {
             let credentials = self.get_credentials_for_presentation().await;
 
             self.prover
-                .generate_presentation(
-                    &self.profile,
-                    credentials.to_string(),
-                    String::from("{}"),
-                )
+                .generate_presentation(&self.profile, credentials.to_string(), String::from("{}"))
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationPrepared, self.prover.get_state());
 
             self.prover
-                .send_presentation(
-                    self.connection.send_message_closure(&self.profile).await.unwrap(),
-                )
+                .send_presentation(self.connection.send_message_closure(&self.profile).await.unwrap())
                 .await
                 .unwrap();
             assert_eq!(ProverState::PresentationSent, self.prover.get_state());
@@ -705,11 +712,7 @@ pub mod test_utils {
 
         pub async fn ensure_presentation_verified(&mut self) {
             self.prover
-                .update_state(
-                    &self.profile,
-                    &self.agency_client,
-                    &self.connection,
-                )
+                .update_state(&self.profile, &self.agency_client, &self.connection)
                 .await
                 .unwrap();
             assert_eq!(
@@ -723,16 +726,22 @@ pub mod test_utils {
             let cred_rev_id = self.credential.get_cred_rev_id(&self.profile).await.unwrap();
             let send_message = self.connection.send_message_closure(&self.profile).await.unwrap();
             let rev_not_receiver = RevocationNotificationReceiver::build(rev_reg_id, cred_rev_id)
-                .handle_revocation_notification(rev_not, send_message).await.unwrap();
+                .handle_revocation_notification(rev_not, send_message)
+                .await
+                .unwrap();
             self.rev_not_receiver = Some(rev_not_receiver);
         }
     }
 
     async fn teardown_indy_wallet(wallet_handle: WalletHandle, config_wallet: WalletConfig) {
         info!("Closing test indy wallet: {:?}", config_wallet);
-        close_wallet(wallet_handle).await.unwrap_or_else(|_| error!("Failed to close wallet while teardowning: {:?}", config_wallet));
+        close_wallet(wallet_handle)
+            .await
+            .unwrap_or_else(|_| error!("Failed to close wallet while teardowning: {:?}", config_wallet));
         info!("Deleting test indy wallet: {:?}", config_wallet);
-        delete_wallet(&config_wallet).await.unwrap_or_else(|_| error!("Failed to delete wallet while teardowning: {:?}", config_wallet));
+        delete_wallet(&config_wallet)
+            .await
+            .unwrap_or_else(|_| error!("Failed to delete wallet while teardowning: {:?}", config_wallet));
     }
 
     impl Drop for Faber {

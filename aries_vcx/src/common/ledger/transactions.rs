@@ -1,20 +1,16 @@
-use std::{collections::HashMap, sync::Arc};
 use bs58;
+use std::{collections::HashMap, sync::Arc};
 
-use serde_json::Value;
+use crate::common::ledger::service_didsov::EndpointDidSov;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::diddoc::aries::service::AriesService;
-use crate::common::ledger::service_didsov::EndpointDidSov;
-use messages::protocols::out_of_band::service_oob::ServiceOob;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::invite::Invitation;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
+use serde_json::Value;
 
-use crate::{
-    common::keys::get_verkey_from_ledger,
-    core::profile::profile::Profile,
-    global::settings,
-};
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+use crate::{common::keys::get_verkey_from_ledger, core::profile::profile::Profile, global::settings};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -118,11 +114,10 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
                     error!("Failed to obtain service definition from the ledger: {}", err);
                     AriesService::default()
                 });
-            let recipient_keys = normalize_keys_as_naked(service.recipient_keys)
-                .unwrap_or_else(|err| {
-                    error!("Is not did valid: {}", err);
-                    Vec::new()
-                });
+            let recipient_keys = normalize_keys_as_naked(service.recipient_keys).unwrap_or_else(|err| {
+                error!("Is not did valid: {}", err);
+                Vec::new()
+            });
             (service.service_endpoint, recipient_keys, service.routing_keys)
         }
     };
@@ -238,7 +233,9 @@ pub async fn write_endpoint(profile: &Arc<dyn Profile>, did: &str, service: &End
 pub async fn clear_attr(profile: &Arc<dyn Profile>, did: &str, attr_name: &str) -> VcxResult<String> {
     let ledger = Arc::clone(profile).inject_ledger();
 
-    ledger.add_attr(did, &json!({ attr_name: Value::Null }).to_string()).await
+    ledger
+        .add_attr(did, &json!({ attr_name: Value::Null }).to_string())
+        .await
 }
 
 pub(self) fn check_response(response: &str) -> VcxResult<()> {
@@ -255,13 +252,12 @@ pub(self) fn check_response(response: &str) -> VcxResult<()> {
 }
 
 fn parse_response(response: &str) -> VcxResult<Response> {
-    serde_json::from_str::<Response>(response)
-        .map_err(|err|
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize transaction response: {:?}", err),
-            )
+    serde_json::from_str::<Response>(response).map_err(|err| {
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
+            format!("Cannot deserialize transaction response: {:?}", err),
         )
+    })
 }
 
 fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
@@ -274,11 +270,13 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod test {
-    use messages::a2a::MessageId;
-    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
-    use messages::diddoc::aries::diddoc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
-    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
     use crate::common::test_utils::mock_profile;
+    use messages::a2a::MessageId;
+    use messages::diddoc::aries::diddoc::test_utils::{
+        _key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint,
+    };
+    use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
+    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 
     use super::*;
 
@@ -297,7 +295,6 @@ mod test {
         );
     }
 
-
     #[tokio::test]
     async fn test_did_doc_from_invitation_with_didkey_encoding_works() {
         let recipient_keys = vec![_key_2()];
@@ -314,10 +311,9 @@ mod test {
             AriesService::create()
                 .set_service_endpoint(_service_endpoint())
                 .set_routing_keys(_routing_keys())
-                .set_recipient_keys(routing_keys_did_key)
+                .set_recipient_keys(routing_keys_did_key),
         );
         invitation.services.push(aries_service);
-
 
         assert_eq!(
             did_doc,
@@ -391,6 +387,9 @@ mod test {
     async fn test_did_naked_with_previously_known_keys_rfc_0360() {
         let did_pub_with_key_rfc_0360 = vec!["did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string()];
         let did_pub_rfc_0360 = vec!["8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string()];
-        assert_eq!(normalize_keys_as_naked(did_pub_with_key_rfc_0360).unwrap(), did_pub_rfc_0360);
+        assert_eq!(
+            normalize_keys_as_naked(did_pub_with_key_rfc_0360).unwrap(),
+            did_pub_rfc_0360
+        );
     }
 }

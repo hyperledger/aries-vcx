@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::MessageStatusCode;
 use crate::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
+use crate::MessageStatusCode;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(untagged)]
@@ -41,7 +41,10 @@ impl DownloadedMessageEncrypted {
         }
     }
 
-    pub async fn decrypt_noauth(self, wallet: Arc<dyn BaseAgencyClientWallet>) -> AgencyClientResult<DownloadedMessage> {
+    pub async fn decrypt_noauth(
+        self,
+        wallet: Arc<dyn BaseAgencyClientWallet>,
+    ) -> AgencyClientResult<DownloadedMessage> {
         let decrypted_payload = self._noauth_decrypt_v3_message(wallet).await?;
         Ok(DownloadedMessage {
             status_code: self.status_code.clone(),

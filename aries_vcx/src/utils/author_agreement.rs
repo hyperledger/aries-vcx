@@ -31,7 +31,8 @@ pub fn set_txn_author_agreement(
         time_of_acceptance,
     };
 
-    let meta = serde_json::to_string(&meta).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, err))?;
+    let meta =
+        serde_json::to_string(&meta).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidOption, err))?;
 
     settings::set_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT, &meta)?;
 
@@ -42,8 +43,8 @@ pub fn get_txn_author_agreement() -> VcxResult<Option<TxnAuthorAgreementAcceptan
     trace!("get_txn_author_agreement >>>");
     match settings::get_config_value(settings::CONFIG_TXN_AUTHOR_AGREEMENT) {
         Ok(value) => {
-            let meta: TxnAuthorAgreementAcceptanceData =
-                serde_json::from_str(&value).map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err))?;
+            let meta: TxnAuthorAgreementAcceptanceData = serde_json::from_str(&value)
+                .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, err))?;
             Ok(Some(meta))
         }
         Err(_) => Ok(None),

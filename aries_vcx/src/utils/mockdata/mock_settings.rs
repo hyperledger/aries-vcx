@@ -77,6 +77,6 @@ pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
     let config = MOCK_SETTINGS_RESULT_BOOL.read().unwrap();
     config.get(MOCKED_VALIDATE_INDY_PROOF).map(|result| match result {
         Ok(val) => Ok(*val),
-        Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string()))
+        Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string())),
     })
 }

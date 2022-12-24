@@ -137,14 +137,13 @@ pub mod test_utils {
 mod unit_tests {
     use serde_json::Value;
 
+    use crate::common::test_utils::mock_profile;
     use crate::utils;
     use crate::utils::constants::{REQUESTED_ATTRS, REQUESTED_PREDICATES};
     use crate::utils::devsetup::SetupDefaults;
     use crate::utils::mockdata::mockdata_proof;
-    use crate::common::test_utils::mock_profile;
 
     use super::*;
-
 
     fn _expected_req_attrs() -> HashMap<String, AttrInfo> {
         let mut check_req_attrs: HashMap<String, AttrInfo> = HashMap::new();

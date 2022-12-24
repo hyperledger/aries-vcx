@@ -5,8 +5,8 @@ use libc::c_char;
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::issuer_credential;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};
@@ -243,7 +243,7 @@ pub extern "C" fn vcx_issuer_build_credential_offer_msg_v2(
             &credential_data,
             comment.as_deref(),
         )
-            .await
+        .await
         {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();

@@ -15,16 +15,24 @@ where
     }
 
     pub fn serialize(&self) -> VcxResult<String> {
-        ::serde_json::to_string(self)
-            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Cannot serialize object: {}", err)))
+        ::serde_json::to_string(self).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot serialize object: {}", err),
+            )
+        })
     }
 
     pub fn deserialize(data: &str) -> VcxResult<ObjectWithVersion<T>>
     where
         T: ::serde::de::DeserializeOwned,
     {
-        ::serde_json::from_str(data)
-            .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, format!("Cannot deserialize object: {}", err)))
+        ::serde_json::from_str(data).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize object: {}", err),
+            )
+        })
     }
 }
 

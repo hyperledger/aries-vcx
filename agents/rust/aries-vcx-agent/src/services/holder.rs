@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::protocols::issuance::credential::Credential;
@@ -33,10 +33,7 @@ pub struct ServiceCredentialsHolder {
 }
 
 impl ServiceCredentialsHolder {
-    pub fn new(
-        profile: Arc<dyn Profile>,
-        service_connections: Arc<ServiceConnections>,
-    ) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
         Self {
             profile,
             service_connections,
@@ -67,23 +64,15 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.insert(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, connection_id),
-        )
+        self.creds_holder
+            .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
     }
 
-    pub fn create_from_offer(
-        &self,
-        connection_id: &str,
-        offer: CredentialOffer,
-    ) -> AgentResult<String> {
+    pub fn create_from_offer(&self, connection_id: &str, offer: CredentialOffer) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let holder = Holder::create_from_offer("", offer)?;
-        self.creds_holder.insert(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, connection_id),
-        )
+        self.creds_holder
+            .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
     }
 
     pub async fn send_credential_request(
@@ -105,17 +94,11 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.insert(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, &connection_id),
-        )
+        self.creds_holder
+            .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
 
-    pub async fn process_credential(
-        &self,
-        thread_id: &str,
-        credential: Credential,
-    ) -> AgentResult<String> {
+    pub async fn process_credential(&self, thread_id: &str, credential: Credential) -> AgentResult<String> {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
@@ -126,10 +109,8 @@ impl ServiceCredentialsHolder {
                 connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_holder.insert(
-            &holder.get_thread_id()?,
-            HolderWrapper::new(holder, &connection_id),
-        )
+        self.creds_holder
+            .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<HolderState> {
@@ -144,15 +125,11 @@ impl ServiceCredentialsHolder {
     }
 
     pub async fn get_rev_reg_id(&self, thread_id: &str) -> AgentResult<String> {
-        self.get_holder(thread_id)?
-            .get_rev_reg_id()
-            .map_err(|err| err.into())
+        self.get_holder(thread_id)?.get_rev_reg_id().map_err(|err| err.into())
     }
 
     pub async fn get_tails_hash(&self, thread_id: &str) -> AgentResult<String> {
-        self.get_holder(thread_id)?
-            .get_tails_hash()
-            .map_err(|err| err.into())
+        self.get_holder(thread_id)?.get_tails_hash().map_err(|err| err.into())
     }
 
     pub async fn get_tails_location(&self, thread_id: &str) -> AgentResult<String> {

@@ -1,5 +1,5 @@
-use diddoc::aries::service::AriesService;
 use crate::protocols::connection::did::Did;
+use diddoc::aries::service::AriesService;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]

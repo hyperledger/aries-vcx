@@ -1,8 +1,8 @@
-use diddoc::aries::diddoc::AriesDidDoc;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
 use crate::timing_optional;
+use diddoc::aries::diddoc::AriesDidDoc;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Request {

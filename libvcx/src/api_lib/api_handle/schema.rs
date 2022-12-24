@@ -52,8 +52,7 @@ pub async fn create_and_publish_schema(
 
     SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
-                                               e.to_string())))
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -86,21 +85,17 @@ pub async fn prepare_schema_for_endorser(
     })?;
     let profile = get_main_profile()?;
     let schema = Schema::create(&profile, source_id, &issuer_did, &name, &version, &data).await?;
-    let schema_json = schema
-        .get_schema_json(&profile)
-        .await?;
+    let schema_json = schema.get_schema_json(&profile).await?;
     let schema_id = schema.get_schema_id();
     let ledger = Arc::clone(&profile).inject_ledger();
     let schema_request = ledger.build_schema_request(&issuer_did, &schema_json).await?;
-    let schema_request =
-        ledger.set_endorser(&issuer_did, &schema_request, &endorser).await?;
+    let schema_request = ledger.set_endorser(&issuer_did, &schema_request, &endorser).await?;
 
     debug!("prepared schema for endorser with id: {}", schema_id);
 
     let schema_handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
-                                               e.to_string())))?;
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
 
     Ok((schema_handle, schema_request))
 }
@@ -112,18 +107,12 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
         schema_id
     );
     let profile = get_main_profile()?;
-    let schema = Schema::create_from_ledger_json(
-        &profile,
-        &source_id,
-        &schema_id,
-    )
-        .await?;
+    let schema = Schema::create_from_ledger_json(&profile, &source_id, &schema_id).await?;
     let schema_json = schema.to_string()?;
 
     let handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema,
-                                               e.to_string())))?;
+        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
 
     Ok((handle, schema_json))
 }
@@ -150,9 +139,12 @@ pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    SCHEMA_MAP
-        .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle, e.to_string())))
+    SCHEMA_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidSchemaHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -245,8 +237,8 @@ pub mod tests {
             schema_version,
             data.clone(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
 
         let schema_id = get_schema_id(handle).unwrap();
         let create_schema_json = to_string(handle).unwrap();
@@ -289,8 +281,8 @@ pub mod tests {
             data,
             "V4SGRU86Z58d6TV7PBUe6f".to_string(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
@@ -317,8 +309,8 @@ pub mod tests {
             "1.0".to_string(),
             "".to_string(),
         )
-            .await
-            .unwrap_err();
+        .await
+        .unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
@@ -328,12 +320,9 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let profile = get_main_profile().unwrap();
 
-            let (schema_id, _) = create_and_write_test_schema(
-                &profile,
-                &setup.setup.institution_did,
-                constants::DEFAULT_SCHEMA_ATTRS,
-            )
-                .await;
+            let (schema_id, _) =
+                create_and_write_test_schema(&profile, &setup.setup.institution_did, constants::DEFAULT_SCHEMA_ATTRS)
+                    .await;
 
             let (schema_handle, schema_attrs) = get_schema_attrs("id".to_string(), schema_id.clone()).await.unwrap();
 
@@ -343,7 +332,8 @@ pub mod tests {
                 &schema_id,
                 constants::DEFAULT_SCHEMA_ATTRS,
             );
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -355,7 +345,8 @@ pub mod tests {
             let _source_id = get_source_id(handle).unwrap();
             let _schema_id = get_schema_id(handle).unwrap();
             let _schema_json = to_string(handle).unwrap();
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -371,15 +362,16 @@ pub mod tests {
                 schema_version.clone(),
                 data.clone(),
             )
-                .await
-                .unwrap();
+            .await
+            .unwrap();
 
             let err = create_and_publish_schema("id_2", did, schema_name, schema_version, data)
                 .await
                 .unwrap_err();
 
             assert_eq!(err.kind(), LibvcxErrorKind::DuplicationSchema);
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -430,12 +422,9 @@ pub mod tests {
 
             let profile = get_main_profile().unwrap();
 
-            let (endorser_did, _) = add_new_did(
-                &profile,
-                &setup.setup.institution_did,
-                Some("ENDORSER"),
-            )
-                .await.unwrap();
+            let (endorser_did, _) = add_new_did(&profile, &setup.setup.institution_did, Some("ENDORSER"))
+                .await
+                .unwrap();
 
             let (schema_handle, schema_request) = prepare_schema_for_endorser(
                 "test_vcx_schema_update_state_with_ledger",
@@ -445,35 +434,24 @@ pub mod tests {
                 data,
                 endorser_did.clone(),
             )
-                .await
-                .unwrap();
+            .await
+            .unwrap();
             assert_eq!(0, get_state(schema_handle).unwrap());
-            assert_eq!(
-                0,
-                update_state(schema_handle)
-                    .await
-                    .unwrap()
-            );
+            assert_eq!(0, update_state(schema_handle).await.unwrap());
 
             let ledger = profile.inject_ledger();
 
-            ledger.endorse_transaction(
-                &endorser_did,
-                &schema_request,
-            )
+            ledger
+                .endorse_transaction(&endorser_did, &schema_request)
                 .await
                 .unwrap();
 
             std::thread::sleep(std::time::Duration::from_millis(1000));
 
-            assert_eq!(
-                1,
-                update_state(schema_handle)
-                    .await
-                    .unwrap()
-            );
+            assert_eq!(1, update_state(schema_handle).await.unwrap());
             assert_eq!(1, get_state(schema_handle).unwrap());
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -482,7 +460,8 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let handle = create_schema_real().await;
             assert_eq!(1, get_state(handle).unwrap());
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -494,7 +473,8 @@ pub mod tests {
                 schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
                     .await
                     .unwrap();
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -512,7 +492,8 @@ pub mod tests {
             let j: serde_json::Value = serde_json::from_str(&schema_json).unwrap();
             let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
             assert_eq!(j["version"], "1.0");
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -527,10 +508,12 @@ pub mod tests {
             let _schema_json_1 = schema::to_string(schema_handle).unwrap();
             let schema_id = schema::get_schema_id(schema_handle).unwrap();
 
-            let (_schema_handle, schema_json_2) = schema::get_schema_attrs("source_id".into(), schema_id).await.unwrap();
+            let (_schema_handle, schema_json_2) =
+                schema::get_schema_attrs("source_id".into(), schema_id).await.unwrap();
             let j: serde_json::Value = serde_json::from_str(&schema_json_2).unwrap();
             let _schema: Schema = serde_json::from_value(j["data"].clone()).unwrap();
             assert_eq!(j["version"], "1.0");
-        }).await;
+        })
+        .await;
     }
 }

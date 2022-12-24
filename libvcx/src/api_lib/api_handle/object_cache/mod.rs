@@ -3,21 +3,21 @@ use std::ops::Deref;
 use std::ops::DerefMut;
 use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
 use rand::Rng;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 pub struct ObjectCache<T>
-    where
-        T: Clone,
+where
+    T: Clone,
 {
     pub cache_name: String,
     pub store: RwLock<HashMap<u32, Mutex<T>>>,
 }
 
 impl<T> ObjectCache<T>
-    where
-        T: Clone,
+where
+    T: Clone,
 {
     pub fn new(cache_name: &str) -> ObjectCache<T> {
         ObjectCache {
@@ -67,8 +67,8 @@ impl<T> ObjectCache<T>
     }
 
     pub fn get<F, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
-        where
-            F: Fn(&T) -> LibvcxResult<R>,
+    where
+        F: Fn(&T) -> LibvcxResult<R>,
     {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
@@ -110,8 +110,8 @@ impl<T> ObjectCache<T>
     }
 
     pub async fn get_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
-        where
-                for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
+    where
+        for<'r> F: Fn(&'r T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
     {
         let store = self._lock_store_read()?;
         match store.get(&handle) {
@@ -133,8 +133,8 @@ impl<T> ObjectCache<T>
     }
 
     pub fn get_mut<F, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
-        where
-            F: Fn(&mut T) -> LibvcxResult<R>,
+    where
+        F: Fn(&mut T) -> LibvcxResult<R>,
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
@@ -156,8 +156,8 @@ impl<T> ObjectCache<T>
     }
 
     pub async fn get_mut_async<'up, F: 'up, R>(&self, handle: u32, closure: F) -> LibvcxResult<R>
-        where
-                for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
+    where
+        for<'r> F: Fn(&'r mut T, [&'r &'up (); 0]) -> BoxFuture<'r, LibvcxResult<R>>,
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
@@ -277,7 +277,7 @@ mod tests {
             obj.make_ascii_uppercase();
             Ok(())
         })
-            .unwrap();
+        .unwrap();
 
         let string: String = test.get(handle, |obj| Ok(obj.clone())).unwrap();
 

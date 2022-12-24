@@ -66,16 +66,16 @@ pub mod integration_tests {
     #[tokio::test]
     async fn test_create_rev_reg_delta_from_ledger() {
         SetupProfile::run_indy(|setup| async move {
+            let attrs = r#"["address1","address2","city","state","zip"]"#;
+            let (_, _, _, _, rev_reg_id, _, _) =
+                create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
 
-        let attrs = r#"["address1","address2","city","state","zip"]"#;
-        let (_, _, _, _, rev_reg_id, _, _) =
-            create_and_store_credential_def(&setup.profile, &setup.institution_did, attrs).await;
-
-        assert!(
-            RevocationRegistryDelta::create_from_ledger(&setup.profile, &rev_reg_id, None, None)
-                .await
-                .is_ok()
-        );
-        }).await;
+            assert!(
+                RevocationRegistryDelta::create_from_ledger(&setup.profile, &rev_reg_id, None, None)
+                    .await
+                    .is_ok()
+            );
+        })
+        .await;
     }
 }

@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 use thiserror;
 
@@ -38,7 +38,9 @@ pub enum AriesVcxErrorKind {
     // Credential Definition error
     #[error("Can't create, Credential Def already on ledger")]
     CredDefAlreadyCreated,
-    #[error("No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[error(
+        "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
     RevDeltaNotFound,
     #[error("Failed to clean stored revocation delta")]
     RevDeltaFailedToClear,
@@ -184,7 +186,9 @@ impl AriesVcxError {
     pub fn find_root_cause(&self) -> String {
         let mut current = self.source();
         while let Some(cause) = current {
-            if cause.source().is_none() { return cause.to_string() }
+            if cause.source().is_none() {
+                return cause.to_string();
+            }
             current = cause.source();
         }
         self.to_string()
@@ -222,7 +226,5 @@ where
 {
     AriesVcxError::from_msg(kind, msg)
 }
-
-
 
 pub type VcxResult<T> = Result<T, AriesVcxError>;

@@ -1,7 +1,9 @@
 use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::errors::error::VcxResult;
 use aries_vcx::indy;
-use aries_vcx::indy::wallet::{close_search_wallet, fetch_next_records_wallet, import, IssuerConfig, open_search_wallet, RestoreWalletConfigs};
+use aries_vcx::indy::wallet::{
+    close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
+};
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::vdrtools::SearchHandle;
 
@@ -86,7 +88,11 @@ pub async fn wallet_delete_wallet_record(xtype: &str, id: &str) -> LibvcxResult<
     map_ariesvcx_result(wallet.delete_wallet_record(xtype, id).await)
 }
 
-pub async fn wallet_open_search_wallet(xtype: &str, query_json: &str, options_json: &str) -> LibvcxResult<SearchHandle> {
+pub async fn wallet_open_search_wallet(
+    xtype: &str,
+    query_json: &str,
+    options_json: &str,
+) -> LibvcxResult<SearchHandle> {
     // TODO - future - use profile wallet to stop binding to indy
     let wallet_handle = get_main_wallet_handle();
     map_ariesvcx_result(open_search_wallet(wallet_handle, &xtype, &query_json, &options_json).await)
@@ -96,7 +102,10 @@ pub async fn wallet_close_search_wallet(wallet_search_handle: SearchHandle) -> L
     map_ariesvcx_result(close_search_wallet(wallet_search_handle).await)
 }
 
-pub async fn wallet_fetch_next_records_wallet(wallet_search_handle: SearchHandle, count: usize) -> LibvcxResult<String> {
+pub async fn wallet_fetch_next_records_wallet(
+    wallet_search_handle: SearchHandle,
+    count: usize,
+) -> LibvcxResult<String> {
     // TODO - future - use profile wallet to stop binding to indy
     let wallet_handle = get_main_wallet_handle();
     map_ariesvcx_result(fetch_next_records_wallet(wallet_handle, wallet_search_handle, count).await)
@@ -105,8 +114,3 @@ pub async fn wallet_fetch_next_records_wallet(wallet_search_handle: SearchHandle
 pub async fn wallet_import(config: &RestoreWalletConfigs) -> LibvcxResult<()> {
     map_ariesvcx_result(import(&config).await)
 }
-
-
-
-
-

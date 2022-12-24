@@ -12,9 +12,9 @@ use crate::protocols::connection::inviter::state_machine::{InviterFullState, Inv
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {
@@ -267,7 +267,10 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Inviter cannot send ack"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Inviter cannot send ack",
+                ));
             }
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
@@ -341,7 +344,10 @@ pub mod test_utils {
             move |message: A2AMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
                 Box::pin(async move {
                     sender.send(message).await.map_err(|err| {
-                        AriesVcxError::from_msg(AriesVcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::IOError,
+                            format!("Failed to send message: {:?}", err),
+                        )
                     })
                 })
             },
@@ -353,8 +359,8 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::common::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupMocks, SetupInstitutionWallet};
-    use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
+    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
+    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
 
     use async_channel::bounded;
     use messages::protocols::basic_message::message::BasicMessage;
@@ -520,10 +526,7 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
-        let invitee = invitee
-            .send_ack(&profile, _send_message(sender.clone()))
-            .await
-            .unwrap();
+        let invitee = invitee.send_ack(&profile, _send_message(sender.clone())).await.unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
 
         // Inviter receives an ack

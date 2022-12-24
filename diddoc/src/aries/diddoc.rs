@@ -1,8 +1,10 @@
-use url::Url;
 use crate::aries::service::AriesService;
-use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 use crate::errors::error::{DiddocError, DiddocErrorKind, DiddocResult};
+use crate::w3c::model::{
+    Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
+};
 use shared_vcx::validation::verkey::validate_verkey;
+use url::Url;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct AriesDidDoc {
@@ -17,7 +19,6 @@ pub struct AriesDidDoc {
     pub authentication: Vec<Authentication>,
     pub service: Vec<AriesService>,
 }
-
 
 impl Default for AriesDidDoc {
     fn default() -> AriesDidDoc {
@@ -149,10 +150,7 @@ impl AriesDidDoc {
         let recipient_keys = service
             .recipient_keys
             .iter()
-            .map(|key_entry|
-                self.get_key(key_entry)
-                    .map(|key_record| key_record.public_key_base_58)
-            )
+            .map(|key_entry| self.get_key(key_entry).map(|key_record| key_record.public_key_base_58))
             .collect();
         recipient_keys
     }
@@ -308,7 +306,9 @@ impl AriesDidDoc {
 pub mod test_utils {
     use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::service::AriesService;
-    use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+    use crate::w3c::model::{
+        Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
+    };
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -483,8 +483,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::aries::diddoc::AriesDidDoc;
     use crate::aries::diddoc::test_utils::*;
+    use crate::aries::diddoc::AriesDidDoc;
 
     #[test]
     fn test_did_doc_build_works() {
@@ -547,7 +547,7 @@ mod unit_tests {
                 }
             ]
         }))
-            .unwrap();
+        .unwrap();
         assert_eq!(_recipient_keys(), ddo.recipient_keys().unwrap());
     }
 

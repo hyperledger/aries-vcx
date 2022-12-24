@@ -1,7 +1,7 @@
+use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
-use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationPreparationFailedState {

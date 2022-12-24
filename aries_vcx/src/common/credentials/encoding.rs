@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::utils::openssl::encode;
+use std::collections::HashMap;
 
 pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
     let mut dictionary = HashMap::new();
@@ -104,7 +104,7 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
 pub mod unit_tests {
     use serde_json::Value;
 
-    use crate::{utils::devsetup::*, common::credentials::encoding::encode_attributes};
+    use crate::{common::credentials::encoding::encode_attributes, utils::devsetup::*};
 
     #[test]
     fn test_encode_with_several_attributes_success() {

@@ -93,7 +93,10 @@ impl LibvcxDefaultLogger {
                 .parse_filters(pattern.as_deref().unwrap_or("warn"))
                 .try_init()
                 .map_err(|err| {
-                    AriesVcxError::from_msg(AriesVcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::LoggingError,
+                        format!("Cannot init logger: {:?}", err),
+                    )
                 })?;
         }
         Ok(())

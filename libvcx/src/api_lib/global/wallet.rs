@@ -1,11 +1,11 @@
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::{INVALID_WALLET_HANDLE, WalletHandle};
 use aries_vcx::indy;
 use aries_vcx::indy::wallet::WalletConfig;
+use aries_vcx::vdrtools::{WalletHandle, INVALID_WALLET_HANDLE};
 
-use crate::api_lib::global::profile::{indy_handles_to_profile};
 use crate::api_lib::errors::error::LibvcxResult;
 use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
+use crate::api_lib::global::profile::indy_handles_to_profile;
 
 pub static mut WALLET_HANDLE: WalletHandle = INVALID_WALLET_HANDLE;
 
@@ -54,7 +54,9 @@ pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
     let profile = indy_handles_to_profile(wallet_handle, -1);
 
     // If MS is already in wallet then just continue
-    profile.inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+    profile
+        .inject_anoncreds()
+        .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
         .await
         .ok();
 
@@ -65,15 +67,11 @@ pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use aries_vcx::global::settings;
-    use aries_vcx::indy::wallet::{WalletConfig};
+    use aries_vcx::indy::wallet::WalletConfig;
     use aries_vcx::utils::devsetup::TempFile;
 
     use crate::api_lib::global::profile::indy_wallet_handle_to_wallet;
-    use crate::api_lib::global::wallet::{
-        close_main_wallet,
-        create_and_open_as_main_wallet,
-        export_main_wallet,
-    };
+    use crate::api_lib::global::wallet::{close_main_wallet, create_and_open_as_main_wallet, export_main_wallet};
 
     fn _record() -> (&'static str, &'static str, &'static str) {
         ("type1", "id1", "value1")

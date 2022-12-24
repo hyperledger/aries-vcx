@@ -84,18 +84,32 @@ mod test {
     #[tokio::test]
     async fn test_rotate_verkey_fails() {
         SetupProfile::run_indy(|setup| async move {
-        enable_pool_mocks();
+            enable_pool_mocks();
 
-        PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
-        PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
+            PoolMocks::set_next_pool_response(mockdata_pool::RESPONSE_REQNACK);
+            PoolMocks::set_next_pool_response(mockdata_pool::NYM_REQUEST_VALID);
 
-        let local_verkey_1 = setup.profile.inject_wallet().key_for_local_did(&setup.institution_did).await.unwrap();
-        assert_eq!(
-            rotate_verkey(&setup.profile, &setup.institution_did).await.unwrap_err().kind(),
-            AriesVcxErrorKind::InvalidLedgerResponse
-        );
-        let local_verkey_2 =  setup.profile.inject_wallet().key_for_local_did(&setup.institution_did).await.unwrap();
-        assert_eq!(local_verkey_1, local_verkey_2);
-        }).await;
+            let local_verkey_1 = setup
+                .profile
+                .inject_wallet()
+                .key_for_local_did(&setup.institution_did)
+                .await
+                .unwrap();
+            assert_eq!(
+                rotate_verkey(&setup.profile, &setup.institution_did)
+                    .await
+                    .unwrap_err()
+                    .kind(),
+                AriesVcxErrorKind::InvalidLedgerResponse
+            );
+            let local_verkey_2 = setup
+                .profile
+                .inject_wallet()
+                .key_for_local_did(&setup.institution_did)
+                .await
+                .unwrap();
+            assert_eq!(local_verkey_1, local_verkey_2);
+        })
+        .await;
     }
 }

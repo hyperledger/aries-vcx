@@ -1,7 +1,7 @@
 use regex::Regex;
 
-use bs58;
 use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
+use bs58;
 
 lazy_static! {
     pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
@@ -32,11 +32,10 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::errors::error::SharedVcxErrorKind;
     use super::*;
+    use crate::errors::error::SharedVcxErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -68,4 +67,3 @@ mod tests {
         }
     }
 }
-

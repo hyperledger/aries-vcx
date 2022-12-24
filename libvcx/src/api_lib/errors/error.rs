@@ -1,5 +1,5 @@
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 
 pub static SUCCESS_ERR_CODE: u32 = 0;
 pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
@@ -49,7 +49,9 @@ pub enum LibvcxErrorKind {
     CredDefAlreadyCreated,
     #[error("Invalid Credential Definition handle")]
     InvalidCredDefHandle,
-    #[error("No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?")]
+    #[error(
+        "No revocation delta found in storage for this revocation registry. Were any credentials locally revoked?"
+    )]
     RevDeltaNotFound,
     #[error("Failed to clean stored revocation delta")]
     RevDeltaFailedToClear,
@@ -204,8 +206,8 @@ pub struct LibvcxError {
 
 impl LibvcxError {
     pub fn from_msg<D>(kind: LibvcxErrorKind, msg: D) -> Self
-        where
-            D: fmt::Display + fmt::Debug + Send + Sync + 'static,
+    where
+        D: fmt::Display + fmt::Debug + Send + Sync + 'static,
     {
         Self {
             msg: msg.to_string(),
@@ -216,7 +218,9 @@ impl LibvcxError {
     pub fn find_root_cause(&self) -> String {
         let mut current = self.source();
         while let Some(cause) = current {
-            if cause.source().is_none() { return cause.to_string() }
+            if cause.source().is_none() {
+                return cause.to_string();
+            }
             current = cause.source();
         }
         self.to_string()
@@ -227,12 +231,15 @@ impl LibvcxError {
     }
 }
 
-
 impl fmt::Display for LibvcxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let code: u32 = self.kind.into();
         // todo: how can we get the enum variant error annotation?
-        writeln!(f, "Error num: {}, Error kind: {:?}, Error message: {}\n", code, self.kind, self.msg)?;
+        writeln!(
+            f,
+            "Error num: {}, Error kind: {:?}, Error message: {}\n",
+            code, self.kind, self.msg
+        )?;
         let mut source = self.source();
         while let Some(cause) = source {
             writeln!(f, "Caused by:\n\t{}", cause)?;

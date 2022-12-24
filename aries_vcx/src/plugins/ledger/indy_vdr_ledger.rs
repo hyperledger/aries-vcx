@@ -17,6 +17,7 @@ use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
 use vdr::utils::did::DidValue;
 use vdr::utils::{Qualifiable, ValidationError};
 
+use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::VcxResult;
@@ -24,7 +25,6 @@ use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::global::settings;
 use crate::utils::author_agreement::get_txn_author_agreement;
 use crate::utils::json::{AsTypeOrDeserializationError, TryGetIndex};
-use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 
 use super::base_ledger::BaseLedger;
 
@@ -84,7 +84,10 @@ impl IndyVdrLedger {
             .as_ref()
             .ok_or(
                 // should not happen - strictly for unit testing
-                AriesVcxError::from_msg(AriesVcxErrorKind::NoPoolOpen, "IndyVdrLedgerPool runner was not provided"),
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NoPoolOpen,
+                    "IndyVdrLedgerPool runner was not provided",
+                ),
             )?
             .send_request(
                 request,
@@ -538,11 +541,11 @@ fn _get_response_json_data_field(response_json: &str) -> VcxResult<Value> {
 mod unit_tests {
     use std::sync::Arc;
 
+    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
     use crate::{
         common::{primitives::revocation_registry::RevocationRegistryDefinition, test_utils::mock_profile},
         plugins::ledger::{base_ledger::BaseLedger, indy_vdr_ledger::IndyVdrLedgerPool},
     };
-    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
 
     use super::IndyVdrLedger;
 

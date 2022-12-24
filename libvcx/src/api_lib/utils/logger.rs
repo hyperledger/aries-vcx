@@ -3,17 +3,14 @@ use std::ffi::CString;
 use std::io::Write;
 use std::ptr;
 
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use chrono::{
     format::{DelayedFormat, StrftimeItems},
     Local,
 };
-use env_logger::{
-    Builder as EnvLoggerBuilder,
-    fmt::Formatter,
-};
+use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 use libc::{c_char, c_void};
 use log::{Level, LevelFilter, Metadata, Record};
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 use crate::api_lib::utils::cstring::CStringUtils;
 
@@ -349,7 +346,7 @@ mod tests {
             custom_log,
             Some(custom_flush),
         )
-            .unwrap();
+        .unwrap();
         error!("error level message"); // first call of log function
         unsafe {
             assert_eq!(COUNT, 2) // second-time log function was called inside libindy

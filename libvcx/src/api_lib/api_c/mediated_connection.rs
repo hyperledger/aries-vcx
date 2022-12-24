@@ -333,7 +333,10 @@ pub extern "C" fn vcx_connection_create_with_invite(
 }
 
 #[no_mangle]
-#[deprecated(since = "0.45.0", note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2.")]
+#[deprecated(
+    since = "0.45.0",
+    note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2."
+)]
 pub extern "C" fn vcx_connection_create_with_connection_request(
     command_handle: CommandHandle,
     source_id: *const c_char,
@@ -383,7 +386,13 @@ pub extern "C" fn vcx_connection_create_with_connection_request_v2(
     check_useful_c_str!(pw_info, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(request, LibvcxErrorKind::InvalidOption);
 
-    trace!("vcx_connection_create_with_connection_request_v2(command_handle: {}, pw_info: {}, request: {}) source_id: {}", command_handle, pw_info, request, source_id);
+    trace!(
+        "vcx_connection_create_with_connection_request_v2(command_handle: {}, pw_info: {}, request: {}) source_id: {}",
+        command_handle,
+        pw_info,
+        request,
+        source_id
+    );
 
     let pw_info: PairwiseInfo = match serde_json::from_str(&pw_info) {
         Ok(pw_info) => pw_info,
@@ -1573,8 +1582,13 @@ pub extern "C" fn vcx_connection_messages_download(
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(_err) => return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle,
-                                                  format!("Invalid connection handle {}", connection_handle)).into(),
+        Err(_err) => {
+            return LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidConnectionHandle,
+                format!("Invalid connection handle {}", connection_handle),
+            )
+            .into()
+        }
     };
 
     let uids = if !uids.is_null() {
@@ -1659,8 +1673,8 @@ mod tests {
         build_test_connection_inviter_invited, build_test_connection_inviter_null,
         build_test_connection_inviter_requested,
     };
-    use crate::api_lib::errors::error::{LibvcxErrorKind, SUCCESS_ERR_CODE};
     use crate::api_lib::errors::error;
+    use crate::api_lib::errors::error::{LibvcxErrorKind, SUCCESS_ERR_CODE};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
     use crate::api_lib::VcxStateType;
@@ -1916,7 +1930,9 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         assert_eq!(
-            mediated_connection::get_source_id(connection_handle).unwrap_err().kind(),
+            mediated_connection::get_source_id(connection_handle)
+                .unwrap_err()
+                .kind(),
             LibvcxErrorKind::InvalidHandle
         );
     }

@@ -4,11 +4,16 @@ pub mod test_utils {
     use std::thread;
     use std::time::Duration;
 
-    use aries_vcx::core::profile::profile::Profile;
     use aries_vcx::common::test_utils::create_and_store_credential_def;
+    use aries_vcx::core::profile::profile::Profile;
     use serde_json::{json, Value};
 
-    use aries_vcx::handlers::connection::mediated_connection::{MediatedConnection, ConnectionState};
+    use aries_vcx::common::ledger::transactions::into_did_doc;
+    use aries_vcx::common::primitives::credential_definition::CredentialDef;
+    use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
+    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
+    use aries_vcx::common::proofs::proof_request_internal::AttrInfo;
+    use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::test_utils::get_credential_proposal_messages;
@@ -16,11 +21,13 @@ pub mod test_utils {
     use aries_vcx::handlers::proof_presentation::prover::test_utils::get_proof_request_messages;
     use aries_vcx::handlers::proof_presentation::prover::Prover;
     use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+    use aries_vcx::messages::concepts::mime_type::MimeType;
     use aries_vcx::messages::protocols::connection::invite::Invitation;
     use aries_vcx::messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
     use aries_vcx::messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-    use aries_vcx::messages::concepts::mime_type::MimeType;
-    use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{Attribute, PresentationProposalData};
+    use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::{
+        Attribute, PresentationProposalData,
+    };
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
@@ -31,11 +38,6 @@ pub mod test_utils {
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};
     use aries_vcx::utils::filters::{filter_credential_offers_by_comment, filter_proof_requests_by_name};
     use aries_vcx::utils::get_temp_dir_path;
-    use aries_vcx::common::ledger::transactions::into_did_doc;
-    use aries_vcx::common::primitives::credential_definition::CredentialDef;
-    use aries_vcx::common::primitives::revocation_registry::RevocationRegistry;
-    use aries_vcx::common::proofs::proof_request::PresentationRequestData;
-    use aries_vcx::common::proofs::proof_request_internal::AttrInfo;
 
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::test_macros::ProofStateType;
@@ -250,10 +252,7 @@ pub mod test_utils {
         let mut holder = Holder::create("TEST_CREDENTIAL").unwrap();
         assert_eq!(HolderState::Initial, holder.get_state());
         holder
-            .send_proposal(
-                proposal,
-                connection.send_message_closure(&alice.profile).await.unwrap(),
-            )
+            .send_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
@@ -286,10 +285,7 @@ pub mod test_utils {
             .add_credential_preview_data(&state, "TX", MimeType::Plain)
             .add_credential_preview_data(&zip, "42000", MimeType::Plain);
         holder
-            .send_proposal(
-                proposal,
-                connection.send_message_closure(&alice.profile).await.unwrap(),
-            )
+            .send_proposal(proposal, connection.send_message_closure(&alice.profile).await.unwrap())
             .await
             .unwrap();
         assert_eq!(HolderState::ProposalSent, holder.get_state());
@@ -542,7 +538,11 @@ pub mod test_utils {
         verifier
     }
 
-    pub async fn receive_proof_proposal_rejection(alice: &mut Alice, prover: &mut Prover, connection: &MediatedConnection) {
+    pub async fn receive_proof_proposal_rejection(
+        alice: &mut Alice,
+        prover: &mut Prover,
+        connection: &MediatedConnection,
+    ) {
         assert_eq!(prover.get_state(), ProverState::PresentationProposalSent);
         prover
             .update_state(&alice.profile, &alice.agency_client, connection)
@@ -597,7 +597,11 @@ pub mod test_utils {
         verifier.get_presentation_request().unwrap()
     }
 
-    pub async fn create_proof(alice: &mut Alice, connection: &MediatedConnection, request_name: Option<&str>) -> Prover {
+    pub async fn create_proof(
+        alice: &mut Alice,
+        connection: &MediatedConnection,
+        request_name: Option<&str>,
+    ) -> Prover {
         info!("create_proof >>> getting proof request messages");
         let requests = {
             let _requests = get_proof_request_messages(&alice.agency_client, connection)
@@ -643,9 +647,7 @@ pub mod test_utils {
         if ProverState::PresentationPrepared == prover.get_state() {
             info!("generate_and_send_proof :: proof generated, sending proof");
             prover
-                .send_presentation(
-                    connection.send_message_closure(&alice.profile).await.unwrap(),
-                )
+                .send_presentation(connection.send_message_closure(&alice.profile).await.unwrap())
                 .await
                 .unwrap();
             info!("generate_and_send_proof :: proof sent");
@@ -1043,7 +1045,10 @@ pub mod test_utils {
         (consumer_to_institution, institution_to_consumer)
     }
 
-    pub async fn create_connected_connections(alice: &mut Alice, faber: &mut Faber) -> (MediatedConnection, MediatedConnection) {
+    pub async fn create_connected_connections(
+        alice: &mut Alice,
+        faber: &mut Faber,
+    ) -> (MediatedConnection, MediatedConnection) {
         debug!("Institution is going to create connection.");
         let mut institution_to_consumer =
             MediatedConnection::create("consumer", &faber.profile, &faber.agency_client, true)

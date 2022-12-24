@@ -95,7 +95,11 @@ mod unit_tests {
         let service1 = EndpointDidSov::create()
             .set_service_endpoint(_service_endpoint())
             .set_routing_keys(Some(_routing_keys()))
-            .set_types(Some(vec![DidSovServiceType::Endpoint, DidSovServiceType::DidCommunication, DidSovServiceType::DIDComm]));
+            .set_types(Some(vec![
+                DidSovServiceType::Endpoint,
+                DidSovServiceType::DidCommunication,
+                DidSovServiceType::DIDComm,
+            ]));
 
         let expected = json!({
             "endpoint": "http://localhost:8080",
@@ -119,14 +123,20 @@ mod unit_tests {
                 "3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU"
             ],
             "types": ["endpoint", "did-communication", "DIDComm", "foobar"]
-        }).to_string();
+        })
+        .to_string();
 
         let deserialized: EndpointDidSov = serde_json::from_str(&data).unwrap();
         assert_eq!(deserialized.endpoint, _service_endpoint());
         assert_eq!(deserialized.routing_keys, Some(_routing_keys()));
-        assert_eq!(deserialized.types, Some(vec![DidSovServiceType::Endpoint,
-                                                      DidSovServiceType::DidCommunication,
-                                                      DidSovServiceType::DIDComm,
-                                                      DidSovServiceType::Unknown]));
+        assert_eq!(
+            deserialized.types,
+            Some(vec![
+                DidSovServiceType::Endpoint,
+                DidSovServiceType::DidCommunication,
+                DidSovServiceType::DIDComm,
+                DidSovServiceType::Unknown
+            ])
+        );
     }
 }

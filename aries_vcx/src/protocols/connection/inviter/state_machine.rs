@@ -2,25 +2,25 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use messages::diddoc::aries::diddoc::AriesDidDoc;
+use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
-use crate::protocols::SendClosureConnection;
-use crate::common::signing::sign_connection_response;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
-use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::{Response, SignedResponse};
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::invited::InvitedState;
 use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
-use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::protocols::SendClosureConnection;
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
+use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::{Response, SignedResponse};
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -166,10 +166,14 @@ impl SmConnectionInviter {
             AriesVcxErrorKind::NotReady,
             "Counterparty diddoc is not available.",
         ))?;
-        did_did.recipient_keys()?.get(0).ok_or(AriesVcxError::from_msg(
-            AriesVcxErrorKind::NotReady,
-            "Can't resolve recipient key from the counterparty diddoc.",
-        )).map(|s| s.to_string())
+        did_did
+            .recipient_keys()?
+            .get(0)
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Can't resolve recipient key from the counterparty diddoc.",
+            ))
+            .map(|s| s.to_string())
     }
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
@@ -210,7 +214,7 @@ impl SmConnectionInviter {
         new_pairwise_info: &PairwiseInfo,
         new_routing_keys: Vec<String>,
         new_service_endpoint: String,
-        send_message: SendClosureConnection
+        send_message: SendClosureConnection,
     ) -> VcxResult<Self> {
         let thread_id = request.get_thread_id();
         if !matches!(self.state, InviterFullState::Initial(_)) {
@@ -227,7 +231,9 @@ impl SmConnectionInviter {
                             .set_out_time();
                         let sender_vk = self.pairwise_info().pw_vk.clone();
                         let did_doc = request.connection.did_doc.clone();
-                        send_message(problem_report.to_a2a_message(), sender_vk, did_doc).await.ok();
+                        send_message(problem_report.to_a2a_message(), sender_vk, did_doc)
+                            .await
+                            .ok();
                         return Ok(Self {
                             state: InviterFullState::Initial((problem_report).into()),
                             ..self
@@ -265,11 +271,15 @@ impl SmConnectionInviter {
         Ok(Self { state, ..self })
     }
 
-    pub async fn handle_send_response(self, send_message: SendClosureConnection) -> VcxResult<Self>
-    {
+    pub async fn handle_send_response(self, send_message: SendClosureConnection) -> VcxResult<Self> {
         let state = match self.state {
             InviterFullState::Requested(state) => {
-                send_message(state.signed_response.to_a2a_message(), self.pairwise_info.pw_vk.clone(), state.did_doc.clone()).await?;
+                send_message(
+                    state.signed_response.to_a2a_message(),
+                    self.pairwise_info.pw_vk.clone(),
+                    state.did_doc.clone(),
+                )
+                .await?;
                 InviterFullState::Responded(state.into())
             }
             _ => self.state,
@@ -320,8 +330,9 @@ impl SmConnectionInviter {
                         .set_keys(new_recipient_keys, new_routing_keys)
                         .ask_for_ack()
                         .set_thread_id(&request.get_thread_id())
-                        .set_out_time()
-                ).await
+                        .set_out_time(),
+                )
+                .await
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -385,19 +396,13 @@ pub mod unit_tests {
                     )
                     .await
                     .unwrap();
-                self = self
-                    .handle_send_response(_send_message())
-                    .await
-                    .unwrap();
+                self = self.handle_send_response(_send_message()).await.unwrap();
                 self
             }
 
             async fn to_inviter_responded_state(mut self) -> SmConnectionInviter {
                 self = self.to_inviter_requested_state().await;
-                self = self
-                    .handle_send_response(_send_message())
-                    .await
-                    .unwrap();
+                self = self.handle_send_response(_send_message()).await.unwrap();
                 self
             }
 
@@ -557,10 +562,7 @@ pub mod unit_tests {
                     )
                     .await
                     .unwrap();
-                did_exchange_sm = did_exchange_sm
-                    .handle_send_response(_send_message())
-                    .await
-                    .unwrap();
+                did_exchange_sm = did_exchange_sm.handle_send_response(_send_message()).await.unwrap();
                 assert_match!(InviterFullState::Responded(_), did_exchange_sm.state);
             }
 

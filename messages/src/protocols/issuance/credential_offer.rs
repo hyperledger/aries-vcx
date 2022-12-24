@@ -1,10 +1,10 @@
-use crate::errors::error::MessagesResult;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::{AttachmentId, Attachments};
-use crate::protocols::issuance::CredentialPreviewData;
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
+use crate::errors::error::MessagesResult;
+use crate::protocols::issuance::CredentialPreviewData;
 use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]

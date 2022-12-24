@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use crate::plugins::{ledger::base_ledger::BaseLedger, wallet::base_wallet::BaseWallet, anoncreds::base_anoncreds::BaseAnonCreds};
+use crate::plugins::{
+    anoncreds::base_anoncreds::BaseAnonCreds, ledger::base_ledger::BaseLedger, wallet::base_wallet::BaseWallet,
+};
 
-pub trait Profile : std::fmt::Debug + Send + Sync {
-
+pub trait Profile: std::fmt::Debug + Send + Sync {
     fn inject_ledger(self: Arc<Self>) -> Arc<dyn BaseLedger>;
 
     fn inject_anoncreds(self: Arc<Self>) -> Arc<dyn BaseAnonCreds>;

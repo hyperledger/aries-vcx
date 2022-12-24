@@ -8,8 +8,8 @@ use aries_vcx::global::settings;
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::{schema, vcx_settings};
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::pool::get_main_pool_handle;
 use crate::api_lib::global::wallet::get_main_wallet_handle;
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -192,8 +192,11 @@ pub extern "C" fn vcx_schema_serialize(
     );
 
     if !schema::is_valid_handle(schema_handle) {
-        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
-                                     format!("Invalid schema handle {}", schema_handle)).into();
+        return LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidSchemaHandle,
+            format!("Invalid schema handle {}", schema_handle),
+        )
+        .into();
     };
 
     execute(move || {
@@ -339,8 +342,11 @@ pub extern "C" fn vcx_schema_get_schema_id(
         schema_handle
     );
     if !schema::is_valid_handle(schema_handle) {
-        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
-                                     format!("Invalid schema handle {}", schema_handle)).into();
+        return LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidSchemaHandle,
+            format!("Invalid schema handle {}", schema_handle),
+        )
+        .into();
     }
 
     execute(move || {
@@ -563,9 +569,7 @@ mod tests {
 
     use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
     use aries_vcx::utils;
-    use aries_vcx::utils::constants::{
-        DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION,
-    };
+    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ID, SCHEMA_ID, SCHEMA_WITH_VERSION};
     use aries_vcx::utils::devsetup::SetupMocks;
 
     use crate::api_lib::api_handle::schema::prepare_schema_for_endorser;
@@ -737,8 +741,8 @@ mod tests {
             "[\"name\",\"gender\"]".to_string(),
             "V4SGRU86Z58d6TV7PBUe6f".to_string(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));

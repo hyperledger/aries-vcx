@@ -78,7 +78,10 @@ impl RevocationNotificationReceiverSM {
                 }
             }
             _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Ack already received"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Ack already received",
+                ));
             }
         };
         Ok(Self { state, ..self })
@@ -97,7 +100,10 @@ impl RevocationNotificationReceiverSM {
                 ReceiverFullState::Finished(FinishedState::new(self.get_notification()?))
             }
             _ => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Ack already sent"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
+                    "Ack already sent",
+                ));
             }
         };
         Ok(Self { state, ..self })
@@ -165,7 +171,9 @@ pub mod test_utils {
     }
 
     pub fn _send_message_but_fail() -> SendClosure {
-        Box::new(|_: A2AMessage| Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) }))
+        Box::new(|_: A2AMessage| {
+            Box::pin(async { Err(AriesVcxError::from_msg(AriesVcxErrorKind::IOError, "Mocked error")) })
+        })
     }
 }
 

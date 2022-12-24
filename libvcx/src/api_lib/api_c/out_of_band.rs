@@ -5,8 +5,8 @@ use libc::c_char;
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::out_of_band;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async};

@@ -20,6 +20,19 @@ env:
   DOCKER_REPO_LOCAL_ANDROID: android-test
 
 jobs:
+  verify-code-formatting:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify code formatting"
+        run: |
+          cargo fmt --check
+
   workflow-setup:
     runs-on: ubuntu-20.04
     outputs:

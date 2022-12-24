@@ -4,9 +4,9 @@ use once_cell::sync::Lazy;
 use std::future::Future;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 static RT: Lazy<Runtime> = Lazy::new(|| {
     tokio::runtime::Builder::new_multi_thread()
@@ -47,9 +47,7 @@ pub fn execute<F>(closure: F)
 where
     F: FnOnce() -> Result<(), ()> + Send + 'static,
 {
-    execute_on_tokio(async move {
-        closure()
-    });
+    execute_on_tokio(async move { closure() });
 }
 
 pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {

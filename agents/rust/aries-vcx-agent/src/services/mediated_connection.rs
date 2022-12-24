@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
+use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
@@ -10,7 +11,6 @@ use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
-use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgencyClientConfig},
     handlers::connection::mediated_connection::{ConnectionState, MediatedConnection},
@@ -60,15 +60,9 @@ impl ServiceMediatedConnections {
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let ddo = into_did_doc(&self.profile, &invite).await?;
-        let connection = MediatedConnection::create_with_invite(
-            "",
-            &self.profile,
-            &self.agency_client()?,
-            invite,
-            ddo,
-            true,
-        )
-        .await?;
+        let connection =
+            MediatedConnection::create_with_invite("", &self.profile, &self.agency_client()?, invite, ddo, true)
+                .await?;
         self.mediated_connections
             .insert(&connection.get_thread_id(), connection)
     }

@@ -35,7 +35,11 @@ impl Attachments {
         Ok(())
     }
 
-    pub fn add_base64_encoded_json_attachment(&mut self, id: AttachmentId, json: serde_json::Value) -> MessagesResult<()> {
+    pub fn add_base64_encoded_json_attachment(
+        &mut self,
+        id: AttachmentId,
+        json: serde_json::Value,
+    ) -> MessagesResult<()> {
         self.add_json_attachment(id, json, AttachmentEncoding::Base64) // TODO: AttachmentEncoding::Json does not seem to work
     }
 
@@ -133,9 +137,8 @@ pub enum AttachmentData {
 impl AttachmentData {
     pub fn get_bytes(&self) -> MessagesResult<Vec<u8>> {
         match self {
-            AttachmentData::Base64(s) => {
-                base64::decode(s).map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment"))
-            }
+            AttachmentData::Base64(s) => base64::decode(s)
+                .map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment")),
             AttachmentData::Json(json) => serde_json::to_vec(&json)
                 .map_err(|_| MessagesError::from_msg(MessagesErrorKind::IOError, "Wrong bytes in attachment")),
         }

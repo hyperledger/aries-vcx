@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
+use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
 use aries_vcx::messages::a2a::A2AMessage;
@@ -10,7 +11,6 @@ use aries_vcx::messages::concepts::ack::Ack;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
-use aries_vcx::common::ledger::transactions::into_did_doc;
 
 pub type ServiceEndpoint = String;
 
@@ -91,11 +91,7 @@ impl ServiceConnections {
     }
 
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
-        let invitee = self
-            .connections
-            .get(thread_id)?
-            .send_ack(&self.profile, None)
-            .await?;
+        let invitee = self.connections.get(thread_id)?.send_ack(&self.profile, None).await?;
         self.connections.insert(thread_id, invitee)?;
         Ok(())
     }
@@ -124,12 +120,11 @@ impl ServiceConnections {
             let connection = m.lock().unwrap();
             match connection.remote_vk() {
                 Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),
-                _ => None
+                _ => None,
             }
         };
         self.connections.find_by(f)
     }
-
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
         self.connections.contains_key(thread_id)

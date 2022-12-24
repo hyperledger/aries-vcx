@@ -4,10 +4,10 @@ use crate::errors::error::{DiddocError, DiddocErrorKind};
 
 impl From<SharedVcxErrorKind> for DiddocErrorKind {
     fn from(error: SharedVcxErrorKind) -> Self {
-        match error{
+        match error {
             SharedVcxErrorKind::InvalidDid => DiddocErrorKind::InvalidDid,
             SharedVcxErrorKind::InvalidVerkey => DiddocErrorKind::InvalidVerkey,
-            SharedVcxErrorKind::NotBase58 => DiddocErrorKind::NotBase58
+            SharedVcxErrorKind::NotBase58 => DiddocErrorKind::NotBase58,
         }
     }
 }

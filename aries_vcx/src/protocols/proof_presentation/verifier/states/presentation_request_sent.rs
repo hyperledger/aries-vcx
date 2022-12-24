@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
+use crate::common::proofs::verifier::verifier::validate_indy_proof;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::common::proofs::verifier::verifier::validate_indy_proof;
+use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
+use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use messages::status::Status;
-use crate::protocols::proof_presentation::verifier::state_machine::RevocationStatus;
-use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PresentationRequestSentState {

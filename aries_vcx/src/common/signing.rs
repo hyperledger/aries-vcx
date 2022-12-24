@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use time;
 use base64;
+use time;
 
+use crate::errors::error::prelude::*;
 use crate::{global::settings, plugins::wallet::base_wallet::BaseWallet};
 use messages::protocols::connection::response::{ConnectionData, ConnectionSignature, Response, SignedResponse};
-use crate::errors::error::prelude::*;
 
 async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &str) -> VcxResult<(Vec<u8>, Vec<u8>)> {
     let now: u64 = time::get_time().sec as u64;
@@ -17,7 +17,11 @@ async fn get_signature_data(wallet: &Arc<dyn BaseWallet>, data: String, key: &st
     Ok((signature, sig_data))
 }
 
-pub async fn sign_connection_response(wallet: &Arc<dyn BaseWallet>, key: &str, response: Response) -> VcxResult<SignedResponse> {
+pub async fn sign_connection_response(
+    wallet: &Arc<dyn BaseWallet>,
+    key: &str,
+    response: Response,
+) -> VcxResult<SignedResponse> {
     let connection_data = response.get_connection_data();
     let (signature, sig_data) = get_signature_data(wallet, connection_data, key).await?;
 
@@ -42,7 +46,11 @@ pub async fn sign_connection_response(wallet: &Arc<dyn BaseWallet>, key: &str, r
     Ok(signed_response)
 }
 
-pub async fn decode_signed_connection_response(wallet: &Arc<dyn BaseWallet>, response: SignedResponse, their_vk: &str) -> VcxResult<Response> {
+pub async fn decode_signed_connection_response(
+    wallet: &Arc<dyn BaseWallet>,
+    response: SignedResponse,
+    their_vk: &str,
+) -> VcxResult<Response> {
     let signature =
         base64::decode_config(&response.connection_sig.signature.as_bytes(), base64::URL_SAFE).map_err(|err| {
             AriesVcxError::from_msg(
@@ -93,7 +101,8 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
     }
 
     String::from_utf8(
-        wallet.unpack_message(&msg)
+        wallet
+            .unpack_message(&msg)
             .await
             .map_err(|_| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessagePack, "Failed to unpack message"))?,
     )
@@ -108,11 +117,11 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::diddoc::aries::diddoc::test_utils::*;
-    use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
+    use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile};
     use crate::indy::utils::test_setup::with_wallet;
     use crate::utils::devsetup::SetupEmpty;
-    use crate::common::test_utils::{create_trustee_key, indy_handles_to_profile};
+    use messages::diddoc::aries::diddoc::test_utils::*;
+    use messages::protocols::connection::response::test_utils::{_did, _response, _thread_id};
 
     use super::*;
 
@@ -132,22 +141,37 @@ pub mod unit_tests {
     async fn test_response_encode_works() {
         SetupEmpty::init();
         with_wallet(|wallet_handle| async move {
-        let profile = indy_handles_to_profile(wallet_handle, 0);
-        let trustee_key = create_trustee_key(&profile).await;
-        let signed_response: SignedResponse = sign_connection_response(&profile.inject_wallet(), &trustee_key, _response()).await.unwrap();
-        assert_eq!(_response(), decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key).await.unwrap());
-        }).await;
+            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let trustee_key = create_trustee_key(&profile).await;
+            let signed_response: SignedResponse =
+                sign_connection_response(&profile.inject_wallet(), &trustee_key, _response())
+                    .await
+                    .unwrap();
+            assert_eq!(
+                _response(),
+                decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key)
+                    .await
+                    .unwrap()
+            );
+        })
+        .await;
     }
 
     #[tokio::test]
     async fn test_decode_returns_error_if_signer_differs() {
         SetupEmpty::init();
         with_wallet(|wallet_handle| async move {
-        let profile = indy_handles_to_profile(wallet_handle, 0);
-        let trustee_key = create_trustee_key(&profile).await;
-        let mut signed_response: SignedResponse = sign_connection_response(&profile.inject_wallet(), &trustee_key, _response()).await.unwrap();
-        signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
-        decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key).await.unwrap_err();
-        }).await;
+            let profile = indy_handles_to_profile(wallet_handle, 0);
+            let trustee_key = create_trustee_key(&profile).await;
+            let mut signed_response: SignedResponse =
+                sign_connection_response(&profile.inject_wallet(), &trustee_key, _response())
+                    .await
+                    .unwrap();
+            signed_response.connection_sig.signer = String::from("AAAAAAAAAAAAAAAAXkaJdrQejfztN4XqdsiV4ct3LXKL");
+            decode_signed_connection_response(&profile.inject_wallet(), signed_response, &trustee_key)
+                .await
+                .unwrap_err();
+        })
+        .await;
     }
 }

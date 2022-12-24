@@ -1,7 +1,7 @@
+use crate::utils::uuid;
 use messages::a2a::MessageId;
 use messages::protocols::trust_ping::ping::Ping;
 use messages::protocols::trust_ping::ping_response::PingResponse;
-use crate::utils::uuid;
 
 pub fn build_ping(request_response: bool, comment: Option<String>) -> Ping {
     Ping::create(MessageId(uuid::uuid()))
