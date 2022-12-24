@@ -9,7 +9,6 @@ use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::global::settings;
-use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::constants::*;

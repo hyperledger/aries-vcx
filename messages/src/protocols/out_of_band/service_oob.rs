@@ -1,9 +1,9 @@
-use crate::did_doc::service_aries::AriesService;
+use diddoc::aries::service::AriesService;
 use crate::protocols::connection::did::Did;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
-pub enum ServiceResolvable {
+pub enum ServiceOob {
     AriesService(AriesService),
     Did(Did),
 }

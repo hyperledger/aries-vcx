@@ -1,9 +1,7 @@
-use std::{fmt, sync};
+use std::fmt;
 use std::error::Error;
 
 use thiserror;
-
-use messages;
 
 pub mod prelude {
     pub use super::{err_msg, AriesVcxError, AriesVcxErrorKind, VcxResult};

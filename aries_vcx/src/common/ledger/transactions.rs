@@ -2,10 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 use bs58;
 
 use serde_json::Value;
-use messages::did_doc::DidDoc;
-use messages::did_doc::service_aries::AriesService;
-use messages::did_doc::service_aries_public::EndpointDidSov;
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::diddoc::aries::service::AriesService;
+use crate::common::ledger::service_didsov::EndpointDidSov;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::invite::Invitation;
 
@@ -68,10 +68,10 @@ pub struct ReplyDataV1 {
 const DID_KEY_PREFIX: &str = "did:key:";
 const ED25519_MULTIBASE_CODEC: [u8; 2] = [0xed, 0x01];
 
-pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceResolvable) -> VcxResult<AriesService> {
+pub async fn resolve_service(profile: &Arc<dyn Profile>, service: &ServiceOob) -> VcxResult<AriesService> {
     match service {
-        ServiceResolvable::AriesService(service) => Ok(service.clone()),
-        ServiceResolvable::Did(did) => get_service(profile, did).await,
+        ServiceOob::AriesService(service) => Ok(service.clone()),
+        ServiceOob::Did(did) => get_service(profile, did).await,
     }
 }
 
@@ -91,8 +91,8 @@ pub async fn add_new_did(
     Ok((did, verkey))
 }
 
-pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -> VcxResult<DidDoc> {
-    let mut did_doc: DidDoc = DidDoc::default();
+pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -> VcxResult<AriesDidDoc> {
+    let mut did_doc: AriesDidDoc = AriesDidDoc::default();
     let (service_endpoint, recipient_keys, routing_keys) = match invitation {
         Invitation::Public(invitation) => {
             did_doc.set_id(invitation.did.to_string());
@@ -276,15 +276,15 @@ fn get_data_from_response(resp: &str) -> VcxResult<serde_json::Value> {
 mod test {
     use messages::a2a::MessageId;
     use messages::protocols::connection::invite::test_utils::_pairwise_invitation;
-    use messages::did_doc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
-    use messages::protocols::out_of_band::invitation::test_utils::_oob_invitation;
+    use messages::diddoc::aries::diddoc::test_utils::{_key_1, _key_1_did_key, _key_2, _key_2_did_key, _recipient_keys, _routing_keys, _service_endpoint};
+    use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
     use crate::common::test_utils::mock_profile;
 
     use super::*;
 
     #[tokio::test]
     async fn test_did_doc_from_invitation_works() {
-        let mut did_doc = DidDoc::default();
+        let mut did_doc = AriesDidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
@@ -297,16 +297,31 @@ mod test {
         );
     }
 
+
     #[tokio::test]
-    async fn test_did_doc_from_oob_invitation_works() {
-        let mut did_doc = DidDoc::default();
+    async fn test_did_doc_from_invitation_with_didkey_encoding_works() {
+        let recipient_keys = vec![_key_2()];
+        let routing_keys_did_key = vec![_key_2_did_key()];
+
+        let mut did_doc = AriesDidDoc::default();
         did_doc.set_id(MessageId::id().0);
         did_doc.set_service_endpoint(_service_endpoint());
-        did_doc.set_recipient_keys(vec![_key_2()]);
+        did_doc.set_recipient_keys(recipient_keys);
         did_doc.set_routing_keys(_routing_keys());
+
+        let mut invitation = OutOfBandInvitation::default();
+        let aries_service = ServiceOob::AriesService(
+            AriesService::create()
+                .set_service_endpoint(_service_endpoint())
+                .set_routing_keys(_routing_keys())
+                .set_recipient_keys(routing_keys_did_key)
+        );
+        invitation.services.push(aries_service);
+
+
         assert_eq!(
             did_doc,
-            into_did_doc(&mock_profile(), &Invitation::OutOfBand(_oob_invitation()))
+            into_did_doc(&mock_profile(), &Invitation::OutOfBand(invitation))
                 .await
                 .unwrap()
         );

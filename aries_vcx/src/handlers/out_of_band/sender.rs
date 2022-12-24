@@ -6,7 +6,7 @@ use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandSender {
@@ -33,12 +33,12 @@ impl OutOfBandSender {
         self
     }
 
-    pub fn append_service(mut self, service: &ServiceResolvable) -> Self {
+    pub fn append_service(mut self, service: &ServiceOob) -> Self {
         self.oob.services.push(service.clone());
         self
     }
 
-    pub fn get_services(&self) -> Vec<ServiceResolvable> {
+    pub fn get_services(&self) -> Vec<ServiceOob> {
         self.oob.services.clone()
     }
 
@@ -102,7 +102,7 @@ impl OutOfBandSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use messages::did_doc::service_aries::AriesService;
+    use messages::diddoc::aries::service::AriesService;
     use messages::protocols::connection::did::Did;
     use messages::protocols::issuance::credential_offer::CredentialOffer;
     use crate::utils::devsetup::SetupMocks;
@@ -116,8 +116,8 @@ mod unit_tests {
             .set_goal_code(&GoalCode::IssueVC)
     }
 
-    fn _create_service() -> ServiceResolvable {
-        ServiceResolvable::AriesService(
+    fn _create_service() -> ServiceOob {
+        ServiceOob::AriesService(
             AriesService::create()
                 .set_service_endpoint("http://example.org/agent".into())
                 .set_routing_keys(vec!["12345".into()])
@@ -141,7 +141,7 @@ mod unit_tests {
     fn test_append_did_service_object_to_oob_services() {
         let _setup = SetupMocks::init();
 
-        let service = ServiceResolvable::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
+        let service = ServiceOob::Did(Did::new("V4SGRU86Z58d6TV7PBUe6f").unwrap());
         let oob = _create_oob().append_service(&service);
         let resolved_service = oob.get_services();
 

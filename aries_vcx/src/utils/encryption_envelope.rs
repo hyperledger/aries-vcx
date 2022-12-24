@@ -4,12 +4,12 @@ use futures::TryFutureExt;
 
 use agency_client::testing::mocking::AgencyMockDecrypted;
 
-use messages::did_doc::DidDoc;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::utils::constants;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 use messages::a2a::A2AMessage;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::routing::forward::Forward;
 
 #[derive(Debug)]
@@ -20,7 +20,7 @@ impl EncryptionEnvelope {
         wallet: &Arc<dyn BaseWallet>,
         message: &A2AMessage,
         pw_verkey: Option<&str>,
-        did_doc: &DidDoc,
+        did_doc: &AriesDidDoc,
     ) -> VcxResult<EncryptionEnvelope> {
         trace!(
             "EncryptionEnvelope::create >>> message: {:?}, pw_verkey: {:?}, did_doc: {:?}",
@@ -45,7 +45,7 @@ impl EncryptionEnvelope {
         wallet: &Arc<dyn BaseWallet>,
         message: &A2AMessage,
         pw_verkey: Option<&str>,
-        did_doc: &DidDoc,
+        did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
         let message = match message {
             A2AMessage::Generic(message_) => message_.to_string(),
@@ -65,7 +65,7 @@ impl EncryptionEnvelope {
     async fn wrap_into_forward_messages(
         wallet: &Arc<dyn BaseWallet>,
         mut message: Vec<u8>,
-        did_doc: &DidDoc,
+        did_doc: &AriesDidDoc,
     ) -> VcxResult<Vec<u8>> {
         let recipient_keys = did_doc.recipient_keys()?;
         let routing_keys = did_doc.routing_keys();
@@ -197,7 +197,7 @@ impl EncryptionEnvelope {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use messages::did_doc::test_utils::*;
+    use messages::diddoc::aries::diddoc::test_utils::*;
     use messages::concepts::ack::test_utils::_ack;
     use crate::indy::utils::test_setup;
     use crate::utils::devsetup::SetupEmpty;
@@ -215,7 +215,7 @@ pub mod unit_tests {
         let message = A2AMessage::Ack(_ack());
 
         let res =
-            EncryptionEnvelope::create(&profile.inject_wallet(), &message, Some(&trustee_key), &DidDoc::default()).await;
+            EncryptionEnvelope::create(&profile.inject_wallet(), &message, Some(&trustee_key), &AriesDidDoc::default()).await;
         assert_eq!(res.unwrap_err().kind(), AriesVcxErrorKind::InvalidLibindyParam);
         }).await;
     }
@@ -256,7 +256,7 @@ pub mod unit_tests {
         let key_1 = create_key(&profile).await;
         let key_2 = create_key(&profile).await;
 
-        let mut did_doc = DidDoc::default();
+        let mut did_doc = AriesDidDoc::default();
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
         did_doc.set_routing_keys(vec![key_1.clone(), key_2.clone()]);
@@ -312,7 +312,7 @@ pub mod unit_tests {
                 let sender_profile = indy_handles_to_profile(sender_wallet, 0);
                 let sender_key = test_setup::create_key(sender_wallet).await;
 
-                let mut did_doc = DidDoc::default();
+                let mut did_doc = AriesDidDoc::default();
                 did_doc.set_recipient_keys(vec![recipient_key]);
 
                 let ack = A2AMessage::Ack(_ack());
@@ -340,7 +340,7 @@ pub mod unit_tests {
                 let sender_key_1 = test_setup::create_key(sender_wallet).await;
                 let sender_key_2 = test_setup::create_key(sender_wallet).await;
 
-                let mut did_doc = DidDoc::default();
+                let mut did_doc = AriesDidDoc::default();
 
                 did_doc.set_recipient_keys(vec![recipient_key]);
 

@@ -1,9 +1,8 @@
-use std::{fmt, ptr};
+use std::ptr;
 use std::cell::RefCell;
 use std::error::Error;
 use std::ffi::CString;
 
-use futures::future::err;
 use libc::c_char;
 
 use crate::api_lib::utils::cstring::CStringUtils;

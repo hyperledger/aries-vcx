@@ -12,10 +12,7 @@ extern crate serde_derive;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-use errors::error::prelude::*;
-
 mod utils;
-use utils::validation;
 
 #[macro_use]
 pub mod agency_client;

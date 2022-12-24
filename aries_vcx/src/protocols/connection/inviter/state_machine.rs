@@ -2,7 +2,7 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use messages::did_doc::DidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::protocols::SendClosureConnection;
@@ -101,7 +101,7 @@ impl SmConnectionInviter {
         &self.state
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
             InviterFullState::Initial(_) => None,
             InviterFullState::Invited(ref _state) => None,
@@ -154,7 +154,7 @@ impl SmConnectionInviter {
 
     pub fn remote_did(&self) -> VcxResult<String> {
         self.their_did_doc()
-            .map(|did_doc: DidDoc| did_doc.id)
+            .map(|did_doc: AriesDidDoc| did_doc.id)
             .ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
                 "Remote Connection DID is not set",
@@ -353,7 +353,7 @@ pub mod unit_tests {
         use super::*;
 
         fn _send_message() -> SendClosureConnection {
-            Box::new(|_: A2AMessage, _: String, _: DidDoc| Box::pin(async { VcxResult::Ok(()) }))
+            Box::new(|_: A2AMessage, _: String, _: AriesDidDoc| Box::pin(async { VcxResult::Ok(()) }))
         }
 
         pub async fn inviter_sm() -> SmConnectionInviter {
@@ -572,7 +572,7 @@ pub mod unit_tests {
                 let mut did_exchange_sm = inviter_sm().await.to_inviter_invited_state();
 
                 let mut request = _request();
-                request.connection.did_doc = DidDoc::default();
+                request.connection.did_doc = AriesDidDoc::default();
 
                 let new_pairwise_info = PairwiseInfo {
                     pw_did: "AC3Gx1RoAz8iYVcfY47gjJ".to_string(),

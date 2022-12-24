@@ -107,7 +107,7 @@ a2a_message!(PublicInvitation, ConnectionInvitationPublic);
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::*;
+    use diddoc::aries::diddoc::test_utils::*;
 
     use super::*;
 
@@ -156,7 +156,7 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
+    use diddoc::aries::diddoc::test_utils::*;
     use crate::protocols::connection::invite::test_utils::{_pairwise_invitation, _public_invitation};
 
     use super::*;

@@ -89,7 +89,6 @@ version = "0.50.0"
 dependencies = [
  "android_logger",
  "async-trait",
- "bs58 0.4.0",
  "env_logger 0.9.3",
  "lazy_static",
  "log",
@@ -98,6 +97,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "shared_vcx",
  "thiserror",
  "tokio",
  "url",
@@ -1001,6 +1001,18 @@ checksum = "8f0314b72bed045f3a68671b3c86328386762c93f82d98c65c3cb5e5f573dd68"
 dependencies = [
  "derive_builder_core 0.11.2",
  "syn",
+]
+
+[[package]]
+name = "diddoc"
+version = "0.50.0"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "shared_vcx",
+ "thiserror",
+ "url",
 ]
 
 [[package]]
@@ -2148,8 +2160,8 @@ name = "messages"
 version = "0.50.0"
 dependencies = [
  "base64 0.10.1",
- "bs58 0.4.0",
  "chrono",
+ "diddoc",
  "lazy_static",
  "regex",
  "serde",
@@ -3180,6 +3192,16 @@ checksum = "bdf0c33fae925bdc080598b84bc15c55e7b9a4a43b3c704da051f977469691c9"
 dependencies = [
  "digest 0.10.6",
  "keccak",
+]
+
+[[package]]
+name = "shared_vcx"
+version = "0.50.0"
+dependencies = [
+ "bs58 0.4.0",
+ "lazy_static",
+ "regex",
+ "thiserror",
 ]
 
 [[package]]

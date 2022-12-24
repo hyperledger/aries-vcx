@@ -1,6 +1,5 @@
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilderError;
-use std::sync;
 
 impl From<SenderConfigBuilderError> for AriesVcxError {
     fn from(err: SenderConfigBuilderError) -> AriesVcxError {

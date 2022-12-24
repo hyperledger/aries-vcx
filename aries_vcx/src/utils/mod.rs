@@ -2,12 +2,14 @@ use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use messages::did_doc::DidDoc;
 use vdrtools::types::validation::Validatable;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+
 use messages::a2a::A2AMessage;
-use crate::utils::encryption_envelope::EncryptionEnvelope;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::plugins::wallet::base_wallet::BaseWallet;
+use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
 pub mod version_constants;
@@ -74,7 +76,7 @@ pub fn get_temp_dir_path(filename: &str) -> PathBuf {
 pub async fn send_message(
     wallet: Arc<dyn BaseWallet>,
     sender_verkey: String,
-    did_doc: DidDoc,
+    did_doc: AriesDidDoc,
     message: A2AMessage,
 ) -> VcxResult<()> {
     trace!("send_message >>> message: {:?}, did_doc: {:?}", message, &did_doc);
@@ -92,7 +94,7 @@ pub async fn send_message(
 
 pub async fn send_message_anonymously(
     wallet: Arc<dyn BaseWallet>,
-    did_doc: &DidDoc,
+    did_doc: &AriesDidDoc,
     message: &A2AMessage,
 ) -> VcxResult<()> {
     trace!(
@@ -113,9 +115,9 @@ pub async fn send_message_anonymously(
 
 
 pub fn parse_and_validate<'a, T>(s: &'a str) -> VcxResult<T>
-where
-    T: Validatable,
-    T: serde::Deserialize<'a>,
+    where
+        T: Validatable,
+        T: serde::Deserialize<'a>,
 {
     let data = serde_json::from_str::<T>(s)?;
 

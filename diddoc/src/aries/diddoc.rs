@@ -1,20 +1,11 @@
 use url::Url;
+use crate::aries::service::AriesService;
+use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
+use crate::errors::error::{DiddocError, DiddocErrorKind, DiddocResult};
+use shared_vcx::validation::verkey::validate_verkey;
 
-use service_aries::AriesService;
-
-use crate::did_doc::model::{
-    Authentication, DdoKeyReference, Ed25519PublicKey, CONTEXT, KEY_AUTHENTICATION_TYPE, KEY_TYPE,
-};
-use crate::utils::validation::validate_verkey;
-use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
-
-pub mod model;
-pub mod service_aries_public;
-pub mod service_aries;
-pub mod service_resolvable;
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct DidDoc {
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct AriesDidDoc {
     #[serde(rename = "@context")]
     pub context: String,
     #[serde(default)]
@@ -27,9 +18,10 @@ pub struct DidDoc {
     pub service: Vec<AriesService>,
 }
 
-impl Default for DidDoc {
-    fn default() -> DidDoc {
-        DidDoc {
+
+impl Default for AriesDidDoc {
+    fn default() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: String::new(),
             public_key: vec![],
@@ -39,7 +31,7 @@ impl Default for DidDoc {
     }
 }
 
-impl DidDoc {
+impl AriesDidDoc {
     pub fn set_id(&mut self, id: String) {
         self.id = id;
     }
@@ -57,7 +49,7 @@ impl DidDoc {
         recipient_keys.iter().for_each(|key_in_base58| {
             key_id += 1;
 
-            let key_reference = DidDoc::build_key_reference(&self.id, &key_id.to_string());
+            let key_reference = AriesDidDoc::build_key_reference(&self.id, &key_id.to_string());
 
             self.public_key.push(Ed25519PublicKey {
                 id: key_reference.clone(),
@@ -101,10 +93,10 @@ impl DidDoc {
         });
     }
 
-    pub fn validate(&self) -> MessagesResult<()> {
+    pub fn validate(&self) -> DiddocResult<()> {
         if self.context != CONTEXT {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported @context value: {:?}",
                     self.context
@@ -113,16 +105,16 @@ impl DidDoc {
         }
 
         if self.id.is_empty() {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 "DIDDoc validation failed: id is empty",
             ));
         }
 
         for service in self.service.iter() {
             Url::parse(&service.service_endpoint).map_err(|err| {
-                MessagesError::from_msg(
-                    MessagesErrorKind::InvalidUrl,
+                DiddocError::from_msg(
+                    DiddocErrorKind::InvalidUrl,
                     format!(
                         "DIDDoc validation failed: Endpoint {} is not valid url, err: {:?}",
                         service.service_endpoint, err
@@ -133,7 +125,7 @@ impl DidDoc {
             service.recipient_keys.iter().try_for_each(|recipient_key_entry| {
                 let public_key = self.get_key(recipient_key_entry)?;
                 self.is_authentication_key(&public_key.id)?;
-                Ok::<_, MessagesError>(())
+                Ok::<_, DiddocError>(())
             })?;
 
             service.routing_keys.iter().try_for_each(|routing_key_entry| {
@@ -142,14 +134,14 @@ impl DidDoc {
                 // 'authentication' verification method of the DDO
                 // That represents assumption that 'routing_key_entry' is always key value and not key reference
                 validate_verkey(routing_key_entry)?;
-                Ok::<_, MessagesError>(())
+                Ok::<_, DiddocError>(())
             })?;
         }
 
         Ok(())
     }
 
-    pub fn recipient_keys(&self) -> MessagesResult<Vec<String>> {
+    pub fn recipient_keys(&self) -> DiddocResult<Vec<String>> {
         let service: AriesService = match self.service.get(0).cloned() {
             Some(service) => service,
             None => return Ok(Vec::new()),
@@ -180,9 +172,9 @@ impl DidDoc {
         }
     }
 
-    pub fn get_service(&self) -> MessagesResult<AriesService> {
-        let service: &AriesService = self.service.get(0).ok_or(MessagesError::from_msg(
-            MessagesErrorKind::InvalidState,
+    pub fn get_service(&self) -> DiddocResult<AriesService> {
+        let service: &AriesService = self.service.get(0).ok_or(DiddocError::from_msg(
+            DiddocErrorKind::InvalidState,
             format!("No service found on did doc: {:?}", self),
         ))?;
         let recipient_keys = self.recipient_keys()?;
@@ -194,11 +186,11 @@ impl DidDoc {
         })
     }
 
-    fn get_key(&self, key_value_or_reference: &str) -> MessagesResult<Ed25519PublicKey> {
+    fn get_key(&self, key_value_or_reference: &str) -> DiddocResult<Ed25519PublicKey> {
         let public_key = match validate_verkey(key_value_or_reference) {
             Ok(key) => self.find_key_by_value(key),
             Err(_) => {
-                let key_ref = DidDoc::parse_key_reference(key_value_or_reference)?;
+                let key_ref = AriesDidDoc::parse_key_reference(key_value_or_reference)?;
                 self.find_key_by_reference(&key_ref)
             }
         }?;
@@ -206,10 +198,10 @@ impl DidDoc {
         Ok(public_key)
     }
 
-    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> MessagesResult<()> {
+    fn _validate_ed25519_key(public_key: &Ed25519PublicKey) -> DiddocResult<()> {
         if public_key.type_ != KEY_TYPE {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported PublicKey type: {:?}",
                     public_key.type_
@@ -220,7 +212,7 @@ impl DidDoc {
         Ok(())
     }
 
-    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> MessagesResult<Ed25519PublicKey> {
+    fn find_key_by_reference(&self, key_ref: &DdoKeyReference) -> DiddocResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
@@ -228,26 +220,26 @@ impl DidDoc {
                 None => ddo_keys.id == key_ref.key_id,
                 Some(did) => ddo_keys.id == key_ref.key_id || ddo_keys.id == format!("{}#{}", did, key_ref.key_id),
             })
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key reference: {:?}", key_ref),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn find_key_by_value(&self, key: String) -> MessagesResult<Ed25519PublicKey> {
+    fn find_key_by_value(&self, key: String) -> DiddocResult<Ed25519PublicKey> {
         let public_key = self
             .public_key
             .iter()
             .find(|ddo_keys| ddo_keys.public_key_base_58 == key)
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("Failed to find entry in public_key by key value: {}", key),
             ))?;
         Ok(public_key.clone())
     }
 
-    fn is_authentication_key(&self, key: &str) -> MessagesResult<()> {
+    fn is_authentication_key(&self, key: &str) -> DiddocResult<()> {
         if self.authentication.is_empty() {
             // todo: remove this, was probably to support legacy implementations
             return Ok(());
@@ -259,13 +251,13 @@ impl DidDoc {
                 if auth_key.public_key == key {
                     return true;
                 }
-                match DidDoc::parse_key_reference(&auth_key.public_key) {
+                match AriesDidDoc::parse_key_reference(&auth_key.public_key) {
                     Ok(auth_public_key_ref) => auth_public_key_ref.key_id == key,
                     Err(_) => false,
                 }
             })
-            .ok_or(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            .ok_or(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Cannot find Authentication record key: {:?}",
                     key
@@ -273,8 +265,8 @@ impl DidDoc {
             ))?;
 
         if authentication_key.type_ != KEY_AUTHENTICATION_TYPE && authentication_key.type_ != KEY_TYPE {
-            return Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            return Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!(
                     "DIDDoc validation failed: Unsupported Authentication type: {:?}",
                     authentication_key.type_
@@ -293,11 +285,11 @@ impl DidDoc {
         key.split('#').collect()
     }
 
-    fn parse_key_reference(key_reference: &str) -> MessagesResult<DdoKeyReference> {
-        let pars: Vec<&str> = DidDoc::key_parts(key_reference);
+    fn parse_key_reference(key_reference: &str) -> DiddocResult<DdoKeyReference> {
+        let pars: Vec<&str> = AriesDidDoc::key_parts(key_reference);
         match pars.len() {
-            0 => Err(MessagesError::from_msg(
-                MessagesErrorKind::InvalidJson,
+            0 => Err(DiddocError::from_msg(
+                DiddocErrorKind::InvalidJson,
                 format!("DIDDoc validation failed: Invalid key reference: {:?}", key_reference),
             )),
             1 => Ok(DdoKeyReference {
@@ -314,9 +306,9 @@ impl DidDoc {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::model::*;
-    use crate::did_doc::service_aries::AriesService;
-    use crate::did_doc::DidDoc;
+    use crate::aries::diddoc::AriesDidDoc;
+    use crate::aries::service::AriesService;
+    use crate::w3c::model::{Authentication, CONTEXT, DdoKeyReference, Ed25519PublicKey, KEY_AUTHENTICATION_TYPE, KEY_TYPE};
 
     pub fn _key_1() -> String {
         String::from("GJ1SzoWzavQYfNL9XkaJdrQejfztN4XqdsiV4ct3LXKL")
@@ -336,10 +328,6 @@ pub mod test_utils {
 
     pub fn _key_3() -> String {
         String::from("3LYuxJBJkngDbvJj4zjx13DBUdZ2P96eNybwd2n9L9AU")
-    }
-
-    pub fn _key_4() -> String {
-        String::from("did:key:z6Mkw7FfEGiwh6YQbCLTNbJWAYR8boGNMt7PCjh35GLNxmMo")
     }
 
     pub fn _did() -> String {
@@ -363,7 +351,7 @@ pub mod test_utils {
     }
 
     pub fn _key_reference_1() -> String {
-        DidDoc::build_key_reference(&_did(), "1")
+        AriesDidDoc::build_key_reference(&_did(), "1")
     }
 
     pub fn _key_reference_full_1_typed() -> DdoKeyReference {
@@ -374,19 +362,19 @@ pub mod test_utils {
     }
 
     pub fn _key_reference_2() -> String {
-        DidDoc::build_key_reference(&_did(), "2")
+        AriesDidDoc::build_key_reference(&_did(), "2")
     }
 
     pub fn _key_reference_3() -> String {
-        DidDoc::build_key_reference(&_did(), "3")
+        AriesDidDoc::build_key_reference(&_did(), "3")
     }
 
     pub fn _label() -> String {
         String::from("test")
     }
 
-    pub fn _did_doc_vcx_legacy() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_vcx_legacy() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -408,8 +396,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_inlined_recipient_keys() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_inlined_recipient_keys() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -431,8 +419,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_recipient_keys_by_value() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_recipient_keys_by_value() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![
@@ -468,8 +456,8 @@ pub mod test_utils {
         }
     }
 
-    pub fn _did_doc_empty_routing() -> DidDoc {
-        DidDoc {
+    pub fn _did_doc_empty_routing() -> AriesDidDoc {
+        AriesDidDoc {
             context: String::from(CONTEXT),
             id: _did(),
             public_key: vec![Ed25519PublicKey {
@@ -495,12 +483,12 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::test_utils::*;
-    use crate::did_doc::DidDoc;
+    use crate::aries::diddoc::AriesDidDoc;
+    use crate::aries::diddoc::test_utils::*;
 
     #[test]
     fn test_did_doc_build_works() {
-        let mut did_doc: DidDoc = DidDoc::default();
+        let mut did_doc: AriesDidDoc = AriesDidDoc::default();
         did_doc.set_id(_did());
         did_doc.set_service_endpoint(_service_endpoint());
         did_doc.set_recipient_keys(_recipient_keys());
@@ -526,7 +514,7 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_resolve_recipient_key_by_reference_works() {
-        let ddo: DidDoc = serde_json::from_value(json!({
+        let ddo: AriesDidDoc = serde_json::from_value(json!({
             "@context": "https://w3id.org/did/v1",
             "id": "testid",
             "publicKey": [
@@ -623,14 +611,14 @@ mod unit_tests {
 
     #[test]
     fn test_did_doc_build_key_reference_works() {
-        assert_eq!(_key_reference_1(), DidDoc::build_key_reference(&_did(), "1"));
+        assert_eq!(_key_reference_1(), AriesDidDoc::build_key_reference(&_did(), "1"));
     }
 
     #[test]
     fn test_did_doc_parse_key_reference_works() {
         assert_eq!(
             _key_reference_full_1_typed(),
-            DidDoc::parse_key_reference(&_key_reference_1()).unwrap()
+            AriesDidDoc::parse_key_reference(&_key_reference_1()).unwrap()
         );
     }
 }

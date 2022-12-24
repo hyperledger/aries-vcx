@@ -32,7 +32,7 @@ use messages::a2a::A2AMessage;
 use messages::protocols::basic_message::message::BasicMessage;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::did_doc::DidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
@@ -105,7 +105,7 @@ impl MediatedConnection {
         profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
         invitation: Invitation,
-        did_doc: DidDoc,
+        did_doc: AriesDidDoc,
         autohop_enabled: bool,
     ) -> VcxResult<Self> {
         trace!(
@@ -254,14 +254,14 @@ impl MediatedConnection {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
             SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
         }
     }
 
-    pub async fn bootstrap_did_doc(&self) -> Option<DidDoc> {
+    pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc().await,
@@ -764,7 +764,7 @@ impl MediatedConnection {
     fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
         let wallet = profile.inject_wallet();
-        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
+        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: AriesDidDoc| {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
@@ -1101,7 +1101,7 @@ mod tests {
             &mock_profile(),
             &agency_client,
             Invitation::Pairwise(_pairwise_invitation()),
-            DidDoc::default(),
+            AriesDidDoc::default(),
             true,
         )
         .await
@@ -1119,7 +1119,7 @@ mod tests {
             &mock_profile(),
             &agency_client,
             Invitation::Public(_public_invitation()),
-            DidDoc::default(),
+            AriesDidDoc::default(),
             true,
         )
         .await
@@ -1139,7 +1139,7 @@ mod tests {
             &mock_profile(),
             &agency_client,
             Invitation::Public(pub_inv.clone()),
-            DidDoc::default(),
+            AriesDidDoc::default(),
             true,
         )
         .await
@@ -1157,7 +1157,7 @@ mod tests {
             &mock_profile(),
             &agency_client,
             Invitation::Pairwise(pw_inv.clone()),
-            DidDoc::default(),
+            AriesDidDoc::default(),
             true,
         )
         .await

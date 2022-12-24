@@ -6,7 +6,6 @@
 #[macro_use]
 extern crate aries_vcx;
 
-#[macro_use]
 extern crate num_traits;
 
 #[macro_use]

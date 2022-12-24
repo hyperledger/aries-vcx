@@ -10,7 +10,7 @@ use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 use messages::protocols::connection::invite::Invitation;
-use messages::did_doc::DidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_request::CredentialRequest;
@@ -19,7 +19,7 @@ use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
 use messages::protocols::proof_presentation::presentation::Presentation;
 use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 
-use messages::did_doc::service_resolvable::ServiceResolvable;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct OutOfBandReceiver {
@@ -50,7 +50,7 @@ impl OutOfBandReceiver {
             for connection in connections {
                 match connection.bootstrap_did_doc().await {
                     Some(did_doc) => {
-                        if let ServiceResolvable::Did(did) = service {
+                        if let ServiceOob::Did(did) = service {
                             if did.to_string() == did_doc.id {
                                 return Ok(Some(connection));
                             }
@@ -139,7 +139,7 @@ impl OutOfBandReceiver {
         &self,
         profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
-        did_doc: DidDoc,
+        did_doc: AriesDidDoc,
         autohop_enabled: bool,
     ) -> VcxResult<MediatedConnection> {
         trace!(

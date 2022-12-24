@@ -1,4 +1,5 @@
 pub const SERVICE_SUFFIX: &str = "indy";
+
 pub const SERVICE_TYPE: &str = "IndyAgent";
 
 // Service object as defined https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband/README.md#the-services-item
@@ -63,8 +64,8 @@ impl PartialEq for AriesService {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::did_doc::service_aries::AriesService;
-    use crate::did_doc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
+    use crate::aries::service::AriesService;
+    use crate::aries::diddoc::test_utils::{_recipient_keys, _routing_keys, _routing_keys_1, _service_endpoint};
 
     #[test]
     fn test_service_comparison() {
