@@ -80,6 +80,71 @@ jobs:
           echo "::set-output name=DOCKER_IMG_CACHED_LIBVCX::$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX"
           echo "::set-output name=DOCKER_IMG_CACHED_ANDROID::$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID"
 
+  clippy-aries-vcx:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify clippy warnings"
+        run: |
+            cd aries_vcx && cargo clippy --check
+
+  clippy-shared-vcx:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify clippy warnings"
+        run: |
+          cd shared_vcx && cargo clippy --check
+
+  clippy-messages:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify clippy warnings"
+        run: |
+          cd messages && cargo clippy --check
+
+  clippy-diddoc:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify clippy warnings"
+        run: |
+          cd diddoc && cargo clippy --check
+
+  clippy-agency-client:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.64.0
+          components: rustfmt, clippy
+      - name: "Verify clippy warnings"
+        run: |
+          cd agency_client && cargo clippy --check
+
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
 
