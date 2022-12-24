@@ -15,7 +15,7 @@ pub fn map_indy_error<T, C: PrimInt>(rtn: T, error_code: C) -> Result<T, u32> {
 pub fn map_indy_error_code<C: PrimInt>(error_code: C) -> u32 {
     let error_code = match error_code.to_u32() {
         Some(n) => n,
-        None => return LibvcxErrorKind::UnknownError.into()
+        None => return LibvcxErrorKind::UnknownError.into(),
     };
 
     if error_code >= LibvcxErrorKind::UnknownError.into() {

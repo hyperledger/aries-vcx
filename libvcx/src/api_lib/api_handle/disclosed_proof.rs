@@ -56,8 +56,12 @@ pub async fn create_proof_with_msgid(
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle,
-                                               e.to_string())))
+        .or_else(|e| {
+            Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidDisclosedProofHandle,
+                e.to_string(),
+            ))
+        })
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
@@ -128,9 +132,12 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle,
-                                               e.to_string())))
+    HANDLE_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidDisclosedProofHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -176,11 +183,7 @@ pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs:
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
     proof
-        .generate_presentation(
-            &profile,
-            credentials.to_string(),
-            self_attested_attrs.to_string(),
-        )
+        .generate_presentation(&profile, credentials.to_string(), self_attested_attrs.to_string())
         .await?;
     HANDLE_MAP.insert(handle, proof)?;
     Ok(error::SUCCESS_ERR_CODE)
@@ -208,10 +211,7 @@ pub async fn decline_presentation_request(
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {
     let proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool not open
-    proof
-        .retrieve_credentials(&profile)
-        .await
-        .map_err(|err| err.into())
+    proof.retrieve_credentials(&profile).await.map_err(|err| err.into())
 }
 
 pub fn get_proof_request_data(handle: u32) -> LibvcxResult<String> {
@@ -259,8 +259,12 @@ async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult
             }
         }
     };
-    serde_json::to_string_pretty(&presentation_request)
-        .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Cannot serialize message: {}", err)))
+    serde_json::to_string_pretty(&presentation_request).map_err(|err| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidJson,
+            format!("Cannot serialize message: {}", err),
+        )
+    })
 }
 
 pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<String> {
@@ -282,10 +286,12 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
-    HANDLE_MAP
-        .get(handle, |proof| Ok(proof.get_source_id()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
-                                               e.to_string())))
+    HANDLE_MAP.get(handle, |proof| Ok(proof.get_source_id())).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidProofHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {
@@ -332,7 +338,10 @@ mod tests {
     async fn test_create_fails() {
         let _setup = SetupMocks::init();
 
-        assert_eq!(create_proof("1", "{}").unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(
+            create_proof("1", "{}").unwrap_err().kind(),
+            LibvcxErrorKind::InvalidJson
+        );
     }
 
     #[tokio::test]

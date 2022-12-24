@@ -4,7 +4,10 @@ use aries_vcx::agency_client::MessageStatusCode;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 
-pub async fn agency_update_messages(status_code: MessageStatusCode, uids_by_conns: Vec<UIDsByConn>) -> LibvcxResult<()> {
+pub async fn agency_update_messages(
+    status_code: MessageStatusCode,
+    uids_by_conns: Vec<UIDsByConn>,
+) -> LibvcxResult<()> {
     let client = get_main_agency_client()?;
     client.update_messages(status_code, uids_by_conns).await.map_err(|err| {
         LibvcxError::from_msg(

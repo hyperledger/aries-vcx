@@ -1,5 +1,5 @@
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
 impl From<LibvcxError> for u32 {
     fn from(error: LibvcxError) -> u32 {
@@ -9,81 +9,81 @@ impl From<LibvcxError> for u32 {
 
 lazy_static! {
     static ref ERROR_KINDS: Vec<(LibvcxErrorKind, u32)> = vec![
-            (LibvcxErrorKind::InvalidState, 1081),
-            (LibvcxErrorKind::InvalidConfiguration, 1004),
-            (LibvcxErrorKind::InvalidHandle, 1048),
-            (LibvcxErrorKind::InvalidJson, 1016),
-            (LibvcxErrorKind::InvalidOption, 1007),
-            (LibvcxErrorKind::InvalidMessagePack, 1019),
-            (LibvcxErrorKind::NotReady, 1005),
-            (LibvcxErrorKind::InvalidRevocationDetails, 1091),
-            (LibvcxErrorKind::IOError, 1074),
-            (LibvcxErrorKind::LibindyInvalidStructure, 1080),
-            (LibvcxErrorKind::InvalidLibindyParam, 1067),
-            (LibvcxErrorKind::AlreadyInitialized, 1044),
-            (LibvcxErrorKind::CreateConnection, 1061),
-            (LibvcxErrorKind::InvalidConnectionHandle, 1003),
-            (LibvcxErrorKind::CreateCredDef, 1034),
-            (LibvcxErrorKind::CredDefAlreadyCreated, 1039),
-            (LibvcxErrorKind::InvalidCredDefHandle, 1037),
-            (LibvcxErrorKind::InvalidRevocationEntry, 1092),
-            (LibvcxErrorKind::CreateRevRegDef, 1095),
-            (LibvcxErrorKind::InvalidCredentialHandle, 1053),
-            (LibvcxErrorKind::InvalidIssuerCredentialHandle, 1015),
-            (LibvcxErrorKind::InvalidProofHandle, 1017),
-            (LibvcxErrorKind::InvalidDisclosedProofHandle, 1049),
-            (LibvcxErrorKind::InvalidProof, 1023),
-            (LibvcxErrorKind::InvalidSchema, 1031),
-            (LibvcxErrorKind::InvalidProofCredentialData, 1027),
-            (LibvcxErrorKind::InvalidRevocationTimestamp, 1093),
-            (LibvcxErrorKind::CreateSchema, 1041),
-            (LibvcxErrorKind::InvalidSchemaHandle, 1042),
-            (LibvcxErrorKind::InvalidSchemaSeqNo, 1040),
-            (LibvcxErrorKind::DuplicationSchema, 1088),
-            (LibvcxErrorKind::UnknownSchemaRejection, 1094),
-            (LibvcxErrorKind::WalletCreate, 1058),
-            (LibvcxErrorKind::WalletAccessFailed, 1075),
-            (LibvcxErrorKind::InvalidWalletHandle, 1057),
-            (LibvcxErrorKind::DuplicationWallet, 1051),
-            (LibvcxErrorKind::WalletNotFound, 1079),
-            (LibvcxErrorKind::WalletRecordNotFound, 1073),
-            (LibvcxErrorKind::PoolLedgerConnect, 1025),
-            (LibvcxErrorKind::InvalidGenesisTxnPath, 1024),
-            (LibvcxErrorKind::CreatePoolConfig, 1026),
-            (LibvcxErrorKind::DuplicationWalletRecord, 1072),
-            (LibvcxErrorKind::WalletAlreadyOpen, 1052),
-            (LibvcxErrorKind::DuplicationMasterSecret, 1084),
-            (LibvcxErrorKind::DuplicationDid, 1083),
-            (LibvcxErrorKind::InvalidLedgerResponse, 1082),
-            (LibvcxErrorKind::InvalidAttributesStructure, 1021),
-            (LibvcxErrorKind::InvalidProofRequest, 1086),
-            (LibvcxErrorKind::NoPoolOpen, 1030),
-            (LibvcxErrorKind::PostMessageFailed, 1010),
-            (LibvcxErrorKind::LoggingError, 1090),
-            (LibvcxErrorKind::EncodeError, 1022),
-            (LibvcxErrorKind::UnknownError, 1001),
-            (LibvcxErrorKind::InvalidDid, 1008),
-            (LibvcxErrorKind::InvalidVerkey, 1009),
-            (LibvcxErrorKind::InvalidNonce, 1011),
-            (LibvcxErrorKind::InvalidUrl, 1013),
-            (LibvcxErrorKind::SerializationError, 1050),
-            (LibvcxErrorKind::NotBase58, 1014),
-            (LibvcxErrorKind::InvalidHttpResponse, 1033),
-            (LibvcxErrorKind::InvalidMessages, 1020),
-            (LibvcxErrorKind::UnknownLibndyError, 1035),
-            (LibvcxErrorKind::ActionNotSupported, 1103),
-            (LibvcxErrorKind::NoAgentInformation, 1106),
-            (LibvcxErrorKind::RevRegDefNotFound, 1107),
-            (LibvcxErrorKind::RevDeltaNotFound, 1108),
-            (LibvcxErrorKind::RevDeltaFailedToClear, 1114),
-            (LibvcxErrorKind::PoisonedLock, 1109),
-            (LibvcxErrorKind::InvalidMessageFormat, 1111),
-            (LibvcxErrorKind::CreatePublicAgent, 1110),
-            (LibvcxErrorKind::CreateOutOfBand, 1112),
-            (LibvcxErrorKind::InvalidInput, 1115),
-            (LibvcxErrorKind::ParsingError, 1116),
-            (LibvcxErrorKind::UnimplementedFeature, 1117)
-        ];
+        (LibvcxErrorKind::InvalidState, 1081),
+        (LibvcxErrorKind::InvalidConfiguration, 1004),
+        (LibvcxErrorKind::InvalidHandle, 1048),
+        (LibvcxErrorKind::InvalidJson, 1016),
+        (LibvcxErrorKind::InvalidOption, 1007),
+        (LibvcxErrorKind::InvalidMessagePack, 1019),
+        (LibvcxErrorKind::NotReady, 1005),
+        (LibvcxErrorKind::InvalidRevocationDetails, 1091),
+        (LibvcxErrorKind::IOError, 1074),
+        (LibvcxErrorKind::LibindyInvalidStructure, 1080),
+        (LibvcxErrorKind::InvalidLibindyParam, 1067),
+        (LibvcxErrorKind::AlreadyInitialized, 1044),
+        (LibvcxErrorKind::CreateConnection, 1061),
+        (LibvcxErrorKind::InvalidConnectionHandle, 1003),
+        (LibvcxErrorKind::CreateCredDef, 1034),
+        (LibvcxErrorKind::CredDefAlreadyCreated, 1039),
+        (LibvcxErrorKind::InvalidCredDefHandle, 1037),
+        (LibvcxErrorKind::InvalidRevocationEntry, 1092),
+        (LibvcxErrorKind::CreateRevRegDef, 1095),
+        (LibvcxErrorKind::InvalidCredentialHandle, 1053),
+        (LibvcxErrorKind::InvalidIssuerCredentialHandle, 1015),
+        (LibvcxErrorKind::InvalidProofHandle, 1017),
+        (LibvcxErrorKind::InvalidDisclosedProofHandle, 1049),
+        (LibvcxErrorKind::InvalidProof, 1023),
+        (LibvcxErrorKind::InvalidSchema, 1031),
+        (LibvcxErrorKind::InvalidProofCredentialData, 1027),
+        (LibvcxErrorKind::InvalidRevocationTimestamp, 1093),
+        (LibvcxErrorKind::CreateSchema, 1041),
+        (LibvcxErrorKind::InvalidSchemaHandle, 1042),
+        (LibvcxErrorKind::InvalidSchemaSeqNo, 1040),
+        (LibvcxErrorKind::DuplicationSchema, 1088),
+        (LibvcxErrorKind::UnknownSchemaRejection, 1094),
+        (LibvcxErrorKind::WalletCreate, 1058),
+        (LibvcxErrorKind::WalletAccessFailed, 1075),
+        (LibvcxErrorKind::InvalidWalletHandle, 1057),
+        (LibvcxErrorKind::DuplicationWallet, 1051),
+        (LibvcxErrorKind::WalletNotFound, 1079),
+        (LibvcxErrorKind::WalletRecordNotFound, 1073),
+        (LibvcxErrorKind::PoolLedgerConnect, 1025),
+        (LibvcxErrorKind::InvalidGenesisTxnPath, 1024),
+        (LibvcxErrorKind::CreatePoolConfig, 1026),
+        (LibvcxErrorKind::DuplicationWalletRecord, 1072),
+        (LibvcxErrorKind::WalletAlreadyOpen, 1052),
+        (LibvcxErrorKind::DuplicationMasterSecret, 1084),
+        (LibvcxErrorKind::DuplicationDid, 1083),
+        (LibvcxErrorKind::InvalidLedgerResponse, 1082),
+        (LibvcxErrorKind::InvalidAttributesStructure, 1021),
+        (LibvcxErrorKind::InvalidProofRequest, 1086),
+        (LibvcxErrorKind::NoPoolOpen, 1030),
+        (LibvcxErrorKind::PostMessageFailed, 1010),
+        (LibvcxErrorKind::LoggingError, 1090),
+        (LibvcxErrorKind::EncodeError, 1022),
+        (LibvcxErrorKind::UnknownError, 1001),
+        (LibvcxErrorKind::InvalidDid, 1008),
+        (LibvcxErrorKind::InvalidVerkey, 1009),
+        (LibvcxErrorKind::InvalidNonce, 1011),
+        (LibvcxErrorKind::InvalidUrl, 1013),
+        (LibvcxErrorKind::SerializationError, 1050),
+        (LibvcxErrorKind::NotBase58, 1014),
+        (LibvcxErrorKind::InvalidHttpResponse, 1033),
+        (LibvcxErrorKind::InvalidMessages, 1020),
+        (LibvcxErrorKind::UnknownLibndyError, 1035),
+        (LibvcxErrorKind::ActionNotSupported, 1103),
+        (LibvcxErrorKind::NoAgentInformation, 1106),
+        (LibvcxErrorKind::RevRegDefNotFound, 1107),
+        (LibvcxErrorKind::RevDeltaNotFound, 1108),
+        (LibvcxErrorKind::RevDeltaFailedToClear, 1114),
+        (LibvcxErrorKind::PoisonedLock, 1109),
+        (LibvcxErrorKind::InvalidMessageFormat, 1111),
+        (LibvcxErrorKind::CreatePublicAgent, 1110),
+        (LibvcxErrorKind::CreateOutOfBand, 1112),
+        (LibvcxErrorKind::InvalidInput, 1115),
+        (LibvcxErrorKind::ParsingError, 1116),
+        (LibvcxErrorKind::UnimplementedFeature, 1117)
+    ];
 }
 
 // note: iterating few tens of values in case of error should not have much impact, but it surely
@@ -94,12 +94,10 @@ impl From<LibvcxErrorKind> for u32 {
         match kind {
             LibvcxErrorKind::Common(code) => code,
             LibvcxErrorKind::LibndyError(code) => code,
-            _ => {
-                match ERROR_KINDS.iter().find(|(k, _)| *k == kind) {
-                    Some((_, num)) => *num,
-                    None => 1001
-                }
-            }
+            _ => match ERROR_KINDS.iter().find(|(k, _)| *k == kind) {
+                Some((_, num)) => *num,
+                None => 1001,
+            },
         }
     }
 }
@@ -108,16 +106,15 @@ impl From<u32> for LibvcxErrorKind {
     fn from(code: u32) -> LibvcxErrorKind {
         match ERROR_KINDS.iter().find(|(_, n)| *n == code) {
             Some((kind, _)) => *kind,
-            None => LibvcxErrorKind::UnknownError
+            None => LibvcxErrorKind::UnknownError,
         }
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use serde_json;
     use crate::api_lib::errors::error::LibvcxErrorKind;
+    use serde_json;
 
     #[test]
     #[cfg(feature = "general_test")]
@@ -200,7 +197,6 @@ mod tests {
         assert_eq!(u32::from(LibvcxErrorKind::UnimplementedFeature), 1117);
     }
 
-
     #[test]
     #[cfg(feature = "general_test")]
     fn it_should_map_error_codes_to_error_kinds() {
@@ -224,9 +220,15 @@ mod tests {
         assert_eq!(LibvcxErrorKind::from(1092), LibvcxErrorKind::InvalidRevocationEntry);
         assert_eq!(LibvcxErrorKind::from(1095), LibvcxErrorKind::CreateRevRegDef);
         assert_eq!(LibvcxErrorKind::from(1053), LibvcxErrorKind::InvalidCredentialHandle);
-        assert_eq!(LibvcxErrorKind::from(1015), LibvcxErrorKind::InvalidIssuerCredentialHandle);
+        assert_eq!(
+            LibvcxErrorKind::from(1015),
+            LibvcxErrorKind::InvalidIssuerCredentialHandle
+        );
         assert_eq!(LibvcxErrorKind::from(1017), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(LibvcxErrorKind::from(1049), LibvcxErrorKind::InvalidDisclosedProofHandle);
+        assert_eq!(
+            LibvcxErrorKind::from(1049),
+            LibvcxErrorKind::InvalidDisclosedProofHandle
+        );
         assert_eq!(LibvcxErrorKind::from(1023), LibvcxErrorKind::InvalidProof);
         assert_eq!(LibvcxErrorKind::from(1031), LibvcxErrorKind::InvalidSchema);
         assert_eq!(LibvcxErrorKind::from(1027), LibvcxErrorKind::InvalidProofCredentialData);

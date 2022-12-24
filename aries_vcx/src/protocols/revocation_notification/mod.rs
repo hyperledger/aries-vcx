@@ -5,10 +5,12 @@ pub mod sender;
 pub mod test_utils {
     use messages::a2a::A2AMessage;
     use messages::concepts::ack::please_ack::AckOn;
-    use messages::protocols::revocation_notification::revocation_notification::{RevocationFormat, RevocationNotification};
+    use messages::protocols::revocation_notification::revocation_notification::{
+        RevocationFormat, RevocationNotification,
+    };
 
-    use crate::{protocols::SendClosure, utils::constants::REV_REG_ID};
     use crate::errors::error::VcxResult;
+    use crate::{protocols::SendClosure, utils::constants::REV_REG_ID};
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))

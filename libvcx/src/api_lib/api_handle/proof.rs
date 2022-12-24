@@ -68,22 +68,14 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
         })?;
         trace!("proof::update_state >>> updating using message {:?}", message);
         proof
-            .handle_message(
-                &profile,
-                message.into(),
-                Some(send_message),
-            )
+            .handle_message(&profile, message.into(), Some(send_message))
             .await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         trace!("proof::update_state >>> found messages: {:?}", messages);
         if let Some((uid, message)) = proof.find_message_to_handle(messages) {
             proof
-                .handle_message(
-                    &profile,
-                    message.into(),
-                    Some(send_message),
-                )
+                .handle_message(&profile, message.into(), Some(send_message))
                 .await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         };
@@ -102,10 +94,12 @@ pub async fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    PROOF_MAP
-        .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle,
-                                               e.to_string())))
+    PROOF_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidProofHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -196,8 +190,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap()
+        .await
+        .unwrap()
     }
 
     #[tokio::test]
@@ -226,8 +220,8 @@ pub mod tests {
             revocation_details.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
     }
 
     #[tokio::test]
@@ -316,8 +310,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
 
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
@@ -342,8 +336,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
@@ -367,8 +361,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
     }
 
@@ -423,8 +417,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
 
         let proof_str = get_presentation_msg(handle_proof).await.unwrap();
@@ -448,8 +442,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h2 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -457,8 +451,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h3 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -466,8 +460,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h4 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -475,8 +469,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h5 = create_proof(
             "1".to_string(),
             REQUESTED_ATTRS.to_owned(),
@@ -484,8 +478,8 @@ pub mod tests {
             r#"{"support_revocation":false}"#.to_string(),
             "Optional".to_owned(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
         assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
@@ -541,8 +535,8 @@ pub mod tests {
             Some(mockdata_proof::ARIES_PROOF_PRESENTATION),
             handle_conn,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         assert_eq!(
             proof::get_state(handle_proof).await.unwrap(),
             VerifierState::Finished as u32
@@ -573,9 +567,9 @@ pub mod tests {
                 r#"{"support_revocation":false}"#.to_string(),
                 "my name".to_string(),
             )
-                .await
-                .unwrap_err()
-                .kind(),
+            .await
+            .unwrap_err()
+            .kind(),
             LibvcxErrorKind::InvalidJson
         );
         assert_eq!(
@@ -586,6 +580,9 @@ pub mod tests {
             get_source_id(bad_handle).unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(from_string(empty).await.unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
+        assert_eq!(
+            from_string(empty).await.unwrap_err().kind(),
+            LibvcxErrorKind::InvalidJson
+        );
     }
 }

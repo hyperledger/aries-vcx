@@ -3,14 +3,14 @@ use std::sync::Arc;
 
 use agency_client::agency_client::AgencyClient;
 
+use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::common::ledger::transactions::resolve_service;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
-use messages::protocols::connection::invite::Invitation;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::invite::Invitation;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_request::CredentialRequest;

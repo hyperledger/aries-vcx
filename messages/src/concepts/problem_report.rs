@@ -142,8 +142,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::protocols::connection::response::test_utils::_thread_id;
     use crate::concepts::problem_report::test_utils::{_code, _comment, _problem_report};
+    use crate::protocols::connection::response::test_utils::_thread_id;
 
     use super::*;
 

@@ -1,11 +1,11 @@
 use crate::agency_client::AgencyClient;
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::httpclient;
 use crate::messages::a2a_message::Client2AgencyMessage;
 use crate::messages::forward::ForwardV2;
 use crate::testing::mocking::AgencyMockDecrypted;
 use core::u8;
 use serde_json::Value;
-use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 impl AgencyClient {
     pub async fn post_to_agency(&self, body_content: Vec<u8>) -> AgencyClientResult<Vec<u8>> {
@@ -149,7 +149,9 @@ impl AgencyClient {
             )
         })?;
 
-        self.get_wallet().pack_message(None, &receiver_keys, message.as_bytes()).await
+        self.get_wallet()
+            .pack_message(None, &receiver_keys, message.as_bytes())
+            .await
     }
 
     pub async fn prepare_message_for_connection_agent(
@@ -177,7 +179,10 @@ impl AgencyClient {
             )
         })?;
 
-        let message = self.get_wallet().pack_message(Some(pw_vk), &receiver_keys, message.as_bytes()).await?;
+        let message = self
+            .get_wallet()
+            .pack_message(Some(pw_vk), &receiver_keys, message.as_bytes())
+            .await?;
 
         let message = ForwardV2::new(agent_did.to_owned(), message)?;
 

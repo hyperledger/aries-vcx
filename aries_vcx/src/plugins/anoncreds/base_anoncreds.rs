@@ -7,7 +7,6 @@ use crate::errors::error::VcxResult;
 /// see: <https://github.com/hyperledger/indy-sdk/blob/main/libindy/src/api/anoncreds.rs>
 #[async_trait]
 pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
-
     async fn verifier_verify_proof(
         &self,
         proof_request_json: &str,
@@ -24,7 +23,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         cred_def_id: &str,
         tails_dir: &str,
         max_creds: u32,
-        tag: &str
+        tag: &str,
     ) -> VcxResult<(String, String, String)>;
 
     async fn issuer_create_and_store_credential_def(
@@ -36,12 +35,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
         config_json: &str,
     ) -> VcxResult<(String, String)>;
 
-
-    async fn issuer_create_credential_offer(
-        &self,
-        cred_def_id: &str,
-    ) -> VcxResult<String>;
-
+    async fn issuer_create_credential_offer(&self, cred_def_id: &str) -> VcxResult<String>;
 
     async fn issuer_create_credential(
         &self,
@@ -107,12 +101,7 @@ pub trait BaseAnonCreds: std::fmt::Debug + Send + Sync {
     ) -> VcxResult<(String, String)>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
-    async fn revoke_credential_local(
-        &self,
-        tails_dir: &str,
-        rev_reg_id: &str,
-        cred_rev_id: &str,
-    ) -> VcxResult<()>;
+    async fn revoke_credential_local(&self, tails_dir: &str, rev_reg_id: &str, cred_rev_id: &str) -> VcxResult<()>;
 
     // TODO - FUTURE - think about moving this to somewhere else, as it aggregates other calls (not PURE Anoncreds)
     async fn publish_local_revocations(&self, submitter_did: &str, rev_reg_id: &str) -> VcxResult<()>;

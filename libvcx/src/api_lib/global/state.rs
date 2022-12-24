@@ -1,10 +1,10 @@
-use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::pool;
-use aries_vcx::indy::wallet::{delete_wallet, WalletConfig};
 use crate::api_lib::api_handle::vcx_settings;
 use crate::api_lib::global::agency_client::reset_main_agency_client;
 use crate::api_lib::global::pool::{close_main_pool, reset_main_pool_handle};
 use crate::api_lib::global::wallet::close_main_wallet;
+use aries_vcx::global::settings;
+use aries_vcx::indy::ledger::pool;
+use aries_vcx::indy::wallet::{delete_wallet, WalletConfig};
 
 pub fn state_vcx_shutdown(delete: bool) {
     info!("vcx_shutdown >>>");
@@ -29,8 +29,8 @@ pub fn state_vcx_shutdown(delete: bool) {
     crate::api_lib::api_handle::credential::release_all();
 
     if delete {
-        let pool_name =
-            vcx_settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
+        let pool_name = vcx_settings::get_config_value(settings::CONFIG_POOL_NAME)
+            .unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
         let wallet_name = vcx_settings::get_config_value(settings::CONFIG_WALLET_NAME)
             .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
         let wallet_type = vcx_settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();

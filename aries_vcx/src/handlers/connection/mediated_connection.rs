@@ -29,10 +29,10 @@ use crate::utils::send_message;
 use crate::utils::serialization::SerializableObjectWithState;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::basic_message::message::BasicMessage;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone, PartialEq)]
@@ -140,9 +140,7 @@ impl MediatedConnection {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new(&request.id.0, pairwise_info)),
             autohop_enabled: true,
         };
-        connection
-            .process_request(profile, agency_client, request)
-            .await?;
+        connection.process_request(profile, agency_client, request).await?;
         Ok(connection)
     }
 
@@ -454,7 +452,13 @@ impl MediatedConnection {
                     handshake_reuse.get_thread_id()
                 );
                 let msg = build_handshake_reuse_accepted_msg(&handshake_reuse)?;
-                send_message(profile.inject_wallet(), pw_vk.to_string(), did_doc.clone(), msg.to_a2a_message()).await?;
+                send_message(
+                    profile.inject_wallet(),
+                    pw_vk.to_string(),
+                    did_doc.clone(),
+                    msg.to_a2a_message(),
+                )
+                .await?;
             }
             A2AMessage::Query(query) => {
                 let supported_protocols = ProtocolRegistry::init().get_protocols_for_query(query.query.as_deref());
@@ -518,7 +522,10 @@ impl MediatedConnection {
             }
         }
 
-        trace!("MediatedConnection::update_state >>> after update_state {:?}", self.get_state());
+        trace!(
+            "MediatedConnection::update_state >>> after update_state {:?}",
+            self.get_state()
+        );
         Ok(())
     }
 
@@ -561,11 +568,7 @@ impl MediatedConnection {
                     None => {
                         if let InviterFullState::Requested(_) = sm_inviter.state_object() {
                             let send_message = self.send_message_closure_connection(profile);
-                            (
-                                sm_inviter.handle_send_response(send_message).await?,
-                                None,
-                                false,
-                            )
+                            (sm_inviter.handle_send_response(send_message).await?, None, false)
                         } else {
                             (sm_inviter.clone(), None, false)
                         }
@@ -601,7 +604,12 @@ impl MediatedConnection {
                         }
                         A2AMessage::ConnectionResponse(response) => {
                             let send_message = self.send_message_closure_connection(profile);
-                            (sm_invitee.handle_connection_response(&profile.inject_wallet(), response, send_message).await?, true)
+                            (
+                                sm_invitee
+                                    .handle_connection_response(&profile.inject_wallet(), response, send_message)
+                                    .await?,
+                                true,
+                            )
                         }
                         A2AMessage::ConnectionProblemReport(problem_report) => {
                             (sm_invitee.handle_problem_report(problem_report)?, false)
@@ -650,18 +658,16 @@ impl MediatedConnection {
                 cloud_agent_info.routing_keys(agency_client)?,
                 cloud_agent_info.service_endpoint(agency_client)?,
             )?),
-            SmConnection::Invitee(sm_invitee) => {
-                SmConnection::Invitee(
-                    sm_invitee
-                        .clone()
-                        .send_connection_request(
-                            cloud_agent_info.routing_keys(agency_client)?,
-                            cloud_agent_info.service_endpoint(agency_client)?,
-                            self.send_message_closure_connection(profile)
-                        )
-                        .await?
-                )
-            }
+            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
+                sm_invitee
+                    .clone()
+                    .send_connection_request(
+                        cloud_agent_info.routing_keys(agency_client)?,
+                        cloud_agent_info.service_endpoint(agency_client)?,
+                        self.send_message_closure_connection(profile),
+                    )
+                    .await?,
+            ),
         };
         Ok(())
     }
@@ -799,9 +805,7 @@ impl MediatedConnection {
         comment: Option<String>,
     ) -> VcxResult<TrustPingSender> {
         let mut trust_ping = TrustPingSender::build(true, comment);
-        trust_ping
-            .send_ping(self.send_message_closure(profile).await?)
-            .await?;
+        trust_ping.send_ping(self.send_message_closure(profile).await?).await?;
         Ok(trust_ping)
     }
 
@@ -855,7 +859,14 @@ impl MediatedConnection {
             AriesVcxErrorKind::NotReady,
             format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
         ))?;
-        send_discovery_query(&profile.inject_wallet(), query, comment, &did_doc, &self.pairwise_info().pw_vk).await?;
+        send_discovery_query(
+            &profile.inject_wallet(),
+            query,
+            comment,
+            &did_doc,
+            &self.pairwise_info().pw_vk,
+        )
+        .await?;
         Ok(())
     }
 
@@ -1074,13 +1085,13 @@ mod tests {
 
     use agency_client::testing::mocking::enable_agency_mocks;
 
+    use crate::common::test_utils::mock_profile;
     use crate::handlers::connection::public_agent::test_utils::_pw_info;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
     use crate::utils::mockdata::mockdata_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
         CONNECTION_SM_INVITER_COMPLETED,
     };
-    use crate::common::test_utils::mock_profile;
     use messages::protocols::connection::invite::test_utils::{
         _pairwise_invitation, _pairwise_invitation_random_id, _public_invitation, _public_invitation_random_id,
     };
@@ -1175,9 +1186,10 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
-            .await
-            .unwrap();
+        let connection =
+            MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
+                .await
+                .unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Inviter(InviterState::Requested)
@@ -1190,9 +1202,10 @@ mod tests {
         let _setup = SetupMocks::init();
         let agency_client = AgencyClient::new();
         enable_agency_mocks();
-        let connection = MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
-            .await
-            .unwrap();
+        let connection =
+            MediatedConnection::create_with_request(&mock_profile(), _request(), _pw_info(), &agency_client)
+                .await
+                .unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Inviter(InviterState::Requested)

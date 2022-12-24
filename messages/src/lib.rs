@@ -18,8 +18,8 @@ pub mod concepts;
 
 pub extern crate diddoc;
 
-pub mod status;
 pub mod actors;
-pub mod utils;
-pub mod protocols;
 pub mod errors;
+pub mod protocols;
+pub mod status;
+pub mod utils;

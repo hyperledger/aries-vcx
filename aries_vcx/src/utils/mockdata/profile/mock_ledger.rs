@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     common::primitives::revocation_registry::RevocationRegistryDefinition,
     indy::utils::LibindyMock,
@@ -7,11 +8,10 @@ use crate::{
     utils::{
         self,
         constants::{
-            CRED_DEF_JSON, rev_def_json, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
+            rev_def_json, CRED_DEF_JSON, REV_REG_DELTA_JSON, REV_REG_ID, REV_REG_JSON, SCHEMA_JSON, SCHEMA_TXN,
         },
     },
 };
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -73,7 +73,10 @@ impl BaseLedger for MockLedger {
         // ideally we can migrate away from it
         let rc = LibindyMock::get_result();
         if rc == 309 {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::VdrToolsError(309), format!("Mocked error")))
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::VdrToolsError(309),
+                format!("Mocked error"),
+            ));
         };
         Ok(CRED_DEF_JSON.to_string())
     }
@@ -146,8 +149,8 @@ impl BaseLedger for MockLedger {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::plugins::ledger::base_ledger::BaseLedger;
     use crate::errors::error::{AriesVcxErrorKind, VcxResult};
+    use crate::plugins::ledger::base_ledger::BaseLedger;
 
     use super::MockLedger;
 

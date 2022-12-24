@@ -1,5 +1,5 @@
-use bs58;
 use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
+use bs58;
 
 pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
     let check_verkey = String::from(verkey);
@@ -18,8 +18,8 @@ pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::errors::error::SharedVcxErrorKind;
     use super::*;
+    use crate::errors::error::SharedVcxErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

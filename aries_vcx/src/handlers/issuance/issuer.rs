@@ -11,15 +11,15 @@ use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use crate::handlers::revocation_notification::sender::RevocationNotificationSender;
+use crate::protocols::issuance::actions::CredentialIssuanceAction;
+use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
 use crate::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
+use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
+use messages::concepts::mime_type::MimeType;
 use messages::protocols::issuance::credential_offer::OfferInfo;
 use messages::protocols::issuance::credential_proposal::CredentialProposal;
 use messages::protocols::issuance::CredentialPreviewData;
-use messages::concepts::mime_type::MimeType;
-use crate::protocols::issuance::actions::CredentialIssuanceAction;
-use crate::protocols::issuance::issuer::state_machine::{IssuerSM, IssuerState, RevocationInfoV1};
-use crate::protocols::SendClosure;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Issuer {
@@ -60,24 +60,17 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
                     AriesVcxErrorKind::InvalidAttributesStructure,
                     format!("No 'value' field in cred_value: {:?}", cred_value),
                 ))?;
-                credential_preview =
-                    credential_preview.add_value(
-                        &key.as_str()
-                            .ok_or(
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::InvalidOption,
-                                    "Credential value names are currently only allowed to be strings",
-                                )
-                            )?,
-                        &value.as_str()
-                            .ok_or(
-                                AriesVcxError::from_msg(
-                                    AriesVcxErrorKind::InvalidOption,
-                                    "Credential values are currently only allowed to be strings",
-                                )
-                            )?,
-                        MimeType::Plain
-                    );
+                credential_preview = credential_preview.add_value(
+                    &key.as_str().ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidOption,
+                        "Credential value names are currently only allowed to be strings",
+                    ))?,
+                    &value.as_str().ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidOption,
+                        "Credential values are currently only allowed to be strings",
+                    ))?,
+                    MimeType::Plain,
+                );
             }
         }
         serde_json::Value::Object(values_map) => {
@@ -126,7 +119,9 @@ impl Issuer {
     ) -> VcxResult<()> {
         let anoncreds = Arc::clone(profile).inject_anoncreds();
         let credential_preview = _build_credential_preview(&offer_info.credential_json)?;
-        let libindy_cred_offer = anoncreds.issuer_create_credential_offer(&offer_info.cred_def_id).await?;
+        let libindy_cred_offer = anoncreds
+            .issuer_create_credential_offer(&offer_info.cred_def_id)
+            .await?;
         self.issuer_sm = self.issuer_sm.clone().build_credential_offer_msg(
             &libindy_cred_offer,
             credential_preview,
@@ -166,7 +161,12 @@ impl Issuer {
         Ok(())
     }
 
-    pub async fn send_revocation_notification(&mut self, ack_on: Vec<AckOn>, comment: Option<String>, send_message: SendClosure) -> VcxResult<()> {
+    pub async fn send_revocation_notification(
+        &mut self,
+        ack_on: Vec<AckOn>,
+        comment: Option<String>,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
         // TODO: Check if actually revoked
         if self.issuer_sm.is_revokable() {
             // TODO: Store to allow checking not. status (sent, acked)
@@ -177,12 +177,16 @@ impl Issuer {
                 .ack_on(ack_on)
                 .build()?;
             RevocationNotificationSender::build()
-                .send_revocation_notification(config, send_message).await?;
+                .send_revocation_notification(config, send_message)
+                .await?;
             Ok(())
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                format!("Can't send revocation notification in state {:?}, credential is not revokable", self.issuer_sm.get_state()),
+                format!(
+                    "Can't send revocation notification in state {:?}, credential is not revokable",
+                    self.issuer_sm.get_state()
+                ),
             ))
         }
     }
@@ -214,7 +218,9 @@ impl Issuer {
             revocation_info.tails_file,
         ) {
             let anoncreds = Arc::clone(profile).inject_anoncreds();
-            anoncreds.revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id).await?;
+            anoncreds
+                .revoke_credential_local(&tails_file, &rev_reg_id, &cred_rev_id)
+                .await?;
         } else {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
@@ -316,13 +322,13 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::common::test_utils::mock_profile;
+    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
+    use crate::utils::devsetup::SetupMocks;
     use messages::concepts::ack::test_utils::_ack;
     use messages::protocols::issuance::credential_offer::test_utils::{_offer_info, _offer_info_unrevokable};
     use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
     use messages::protocols::issuance::credential_request::test_utils::_credential_request;
-    use crate::protocols::issuance::issuer::state_machine::unit_tests::_send_message;
-    use crate::utils::devsetup::SetupMocks;
-    use crate::common::test_utils::mock_profile;
 
     use super::*;
 
@@ -414,7 +420,8 @@ pub mod unit_tests {
         let input = json!([
             {"name":"name", "value": "Alice"},
             {"name": "age", "value": "123"}
-        ]).to_string();
+        ])
+        .to_string();
         let preview = _build_credential_preview(&input).unwrap();
         verify_preview(preview);
     }
@@ -440,9 +447,7 @@ pub mod unit_tests {
         assert_eq!(send_result.is_err(), true);
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
-        let send_result = issuer
-            .send_credential(&mock_profile(), _send_message().unwrap())
-            .await;
+        let send_result = issuer.send_credential(&mock_profile(), _send_message().unwrap()).await;
         assert_eq!(send_result.is_err(), false);
         assert_eq!(IssuerState::CredentialSent, issuer.get_state());
     }
@@ -464,10 +469,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer
@@ -480,10 +482,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialAck(_ack())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 
@@ -504,10 +503,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialProposal(_credential_proposal())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::ProposalReceived, issuer.get_state());
 
         issuer
@@ -521,10 +517,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialRequest(_credential_request())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::RequestReceived, issuer.get_state());
 
         issuer
@@ -537,10 +530,7 @@ pub mod unit_tests {
             "key_1".to_string() => A2AMessage::CredentialAck(_ack())
         );
         let (_, msg) = issuer.find_message_to_handle(messages).unwrap();
-        issuer
-            .step(&mock_profile(), msg.into(), _send_message())
-            .await
-            .unwrap();
+        issuer.step(&mock_profile(), msg.into(), _send_message()).await.unwrap();
         assert_eq!(IssuerState::Finished, issuer.get_state());
     }
 

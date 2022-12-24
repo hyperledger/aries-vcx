@@ -4,10 +4,10 @@ use crate::errors::error::{AgencyClientError, AgencyClientErrorKind};
 
 impl From<SharedVcxErrorKind> for AgencyClientErrorKind {
     fn from(error: SharedVcxErrorKind) -> Self {
-        match error{
+        match error {
             SharedVcxErrorKind::InvalidDid => AgencyClientErrorKind::InvalidDid,
             SharedVcxErrorKind::InvalidVerkey => AgencyClientErrorKind::InvalidVerkey,
-            SharedVcxErrorKind::NotBase58 => AgencyClientErrorKind::NotBase58
+            SharedVcxErrorKind::NotBase58 => AgencyClientErrorKind::NotBase58,
         }
     }
 }

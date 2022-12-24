@@ -14,7 +14,9 @@ pub fn encode(s: &str) -> VcxResult<String> {
 
             let encoded = bignum
                 .to_dec_str()
-                .map_err(|err| AriesVcxError::from_msg(AriesVcxErrorKind::EncodeError, format!("Cannot encode string: {}", err)))?
+                .map_err(|err| {
+                    AriesVcxError::from_msg(AriesVcxErrorKind::EncodeError, format!("Cannot encode string: {}", err))
+                })?
                 .to_string();
 
             Ok(encoded)

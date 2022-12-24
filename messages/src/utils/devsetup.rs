@@ -3,7 +3,6 @@ use std::sync::Once;
 #[cfg(feature = "test_utils")]
 use chrono::{DateTime, Duration, Utc};
 
-
 lazy_static! {
     static ref TEST_LOGGING_INIT: Once = Once::new();
 }

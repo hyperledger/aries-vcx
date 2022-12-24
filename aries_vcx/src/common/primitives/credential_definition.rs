@@ -278,82 +278,82 @@ pub async fn generate_cred_def(
 pub mod integration_tests {
     use std::sync::Arc;
 
-    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
-    use crate::utils::devsetup::SetupProfile;
     use crate::common::primitives::credential_definition::generate_cred_def;
     use crate::common::primitives::revocation_registry::generate_rev_reg;
     use crate::common::test_utils::create_and_write_test_schema;
+    use crate::utils::constants::DEFAULT_SCHEMA_ATTRS;
+    use crate::utils::devsetup::SetupProfile;
 
     #[tokio::test]
     async fn test_create_cred_def_real() {
         SetupProfile::run_indy(|setup| async move {
+            let (schema_id, _) =
+                create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
 
-        let (schema_id, _) =
-            create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
 
-        let ledger = Arc::clone(&setup.profile).inject_ledger();
-        let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
-
-        let (_, cred_def_json) = generate_cred_def(
-            &setup.profile,
-            &setup.institution_did,
-            &schema_json,
-            "tag_1",
-            None,
-            Some(true),
-        )
-        .await
-        .unwrap();
-
-        ledger
-            .publish_cred_def(&cred_def_json, &setup.institution_did)
+            let (_, cred_def_json) = generate_cred_def(
+                &setup.profile,
+                &setup.institution_did,
+                &schema_json,
+                "tag_1",
+                None,
+                Some(true),
+            )
             .await
             .unwrap();
-        }).await;
+
+            ledger
+                .publish_cred_def(&cred_def_json, &setup.institution_did)
+                .await
+                .unwrap();
+        })
+        .await;
     }
 
     #[tokio::test]
     async fn test_create_rev_reg_def() {
         SetupProfile::run_indy(|setup| async move {
+            let (schema_id, _) =
+                create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
+            let ledger = Arc::clone(&setup.profile).inject_ledger();
+            let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
 
-        let (schema_id, _) =
-            create_and_write_test_schema(&setup.profile, &setup.institution_did, DEFAULT_SCHEMA_ATTRS).await;
-        let ledger = Arc::clone(&setup.profile).inject_ledger();
-        let schema_json = ledger.get_schema(&schema_id, None).await.unwrap();
-
-        let (cred_def_id, cred_def_json) = generate_cred_def(
-            &setup.profile,
-            &setup.institution_did,
-            &schema_json,
-            "tag_1",
-            None,
-            Some(true),
-        )
-        .await
-        .unwrap();
-        ledger
-            .publish_cred_def(&cred_def_json, &setup.institution_did)
+            let (cred_def_id, cred_def_json) = generate_cred_def(
+                &setup.profile,
+                &setup.institution_did,
+                &schema_json,
+                "tag_1",
+                None,
+                Some(true),
+            )
             .await
             .unwrap();
+            ledger
+                .publish_cred_def(&cred_def_json, &setup.institution_did)
+                .await
+                .unwrap();
 
-        let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
-            &setup.profile,
-            &setup.institution_did,
-            &cred_def_id,
-            "tails.txt",
-            2,
-            "tag1",
-        )
-        .await
-        .unwrap();
-        ledger
-            .publish_rev_reg_def(&rev_reg_def_json, &setup.institution_did)
+            let (rev_reg_def_id, rev_reg_def_json, rev_reg_entry_json) = generate_rev_reg(
+                &setup.profile,
+                &setup.institution_did,
+                &cred_def_id,
+                "tails.txt",
+                2,
+                "tag1",
+            )
             .await
             .unwrap();
-        ledger
-            .publish_rev_reg_delta(&rev_reg_def_id, &rev_reg_entry_json, &setup.institution_did)
-            .await
-            .unwrap();
-        }).await;
+            ledger
+                .publish_rev_reg_def(&rev_reg_def_json, &setup.institution_did)
+                .await
+                .unwrap();
+            ledger
+                .publish_rev_reg_delta(&rev_reg_def_id, &rev_reg_entry_json, &setup.institution_did)
+                .await
+                .unwrap();
+        })
+        .await;
     }
 }

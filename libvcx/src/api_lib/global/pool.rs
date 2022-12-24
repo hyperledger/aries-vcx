@@ -1,10 +1,10 @@
 use std::sync::RwLock;
 
-use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use aries_vcx::global::settings;
+use aries_vcx::indy::ledger::pool::PoolConfig;
+use aries_vcx::indy::ledger::pool::{close, create_pool_ledger_config, open_pool_ledger};
+use aries_vcx::vdrtools::INVALID_POOL_HANDLE;
 
 lazy_static! {
     static ref POOL_HANDLE: RwLock<Option<i32>> = RwLock::new(None);
@@ -25,7 +25,10 @@ pub fn get_main_pool_handle() -> LibvcxResult<i32> {
             LibvcxErrorKind::NoPoolOpen,
             "There is no pool opened",
         )))?
-        .ok_or(LibvcxError::from_msg(LibvcxErrorKind::NoPoolOpen, "There is no pool opened"))
+        .ok_or(LibvcxError::from_msg(
+            LibvcxErrorKind::NoPoolOpen,
+            "There is no pool opened",
+        ))
 }
 
 pub fn is_main_pool_open() -> bool {
@@ -39,7 +42,10 @@ pub fn reset_main_pool_handle() {
 pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
     if is_main_pool_open() {
         error!("vcx_open_main_pool :: Pool connection is already open.");
-        return Err(LibvcxError::from_msg(LibvcxErrorKind::AlreadyInitialized, "Pool connection is already open."));
+        return Err(LibvcxError::from_msg(
+            LibvcxErrorKind::AlreadyInitialized,
+            "Pool connection is already open.",
+        ));
     }
 
     let pool_name = config

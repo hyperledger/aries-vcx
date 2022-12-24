@@ -5,9 +5,9 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::messages::diddoc::aries::service::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 
-use crate::api_lib::global::profile::get_main_profile;
 use crate::api_lib::errors::error::LibvcxResult;
 use crate::api_lib::errors::mapping_from_ariesvcx::map_ariesvcx_result;
+use crate::api_lib::global::profile::get_main_profile;
 
 pub async fn endorse_transaction(issuer_did: &str, transaction: &str) -> LibvcxResult<()> {
     let profile = get_main_profile()?;
@@ -36,8 +36,7 @@ pub async fn ledger_write_endpoint_legacy(
     recipient_keys: Vec<String>,
     routing_keys: Vec<String>,
     endpoint: String,
-)
-    -> LibvcxResult<AriesService> {
+) -> LibvcxResult<AriesService> {
     let service = AriesService::create()
         .set_service_endpoint(endpoint)
         .set_recipient_keys(recipient_keys)
@@ -65,9 +64,11 @@ pub fn ledger_set_txn_author_agreement(
     acc_mech_type: String,
     time_of_acceptance: u64,
 ) -> LibvcxResult<()> {
-    map_ariesvcx_result(
-        aries_vcx::utils::author_agreement::set_txn_author_agreement(
-            text, version, hash, acc_mech_type, time_of_acceptance,
-        )
-    )
+    map_ariesvcx_result(aries_vcx::utils::author_agreement::set_txn_author_agreement(
+        text,
+        version,
+        hash,
+        acc_mech_type,
+        time_of_acceptance,
+    ))
 }

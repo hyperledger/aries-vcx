@@ -32,7 +32,10 @@ impl BaseAgencyClientWallet for StubAgencyClientWallet {
             trace!("pack_message >>> mocks enabled, returning message");
             return Ok(msg.to_vec());
         }
-        Err(AgencyClientError::from_msg(AgencyClientErrorKind::UnknownError, "Error - using a stub method: StubAgencyClientWallet::pack_message"))
+        Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::UnknownError,
+            "Error - using a stub method: StubAgencyClientWallet::pack_message",
+        ))
     }
 
     async fn unpack_message(&self, msg: &[u8]) -> AgencyClientResult<Vec<u8>> {
@@ -40,6 +43,9 @@ impl BaseAgencyClientWallet for StubAgencyClientWallet {
             trace!("pack_message >>> mocks enabled, returning message");
             return Ok(msg.to_vec());
         }
-        Err(AgencyClientError::from_msg(AgencyClientErrorKind::UnknownError, "Error - using a stub method: StubAgencyClientWallet::unpack_message"))
+        Err(AgencyClientError::from_msg(
+            AgencyClientErrorKind::UnknownError,
+            "Error - using a stub method: StubAgencyClientWallet::unpack_message",
+        ))
     }
 }

@@ -43,15 +43,11 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .step(&profile, message.into(), Some(send_message))
-            .await?;
+        credential.step(&profile, message.into(), Some(send_message)).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
-            credential
-                .step(&profile, msg.into(), Some(send_message))
-                .await?;
+            credential.step(&profile, msg.into(), Some(send_message)).await?;
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
@@ -71,9 +67,12 @@ pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    ISSUER_CREDENTIAL_MAP
-        .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string())))
+    ISSUER_CREDENTIAL_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidIssuerCredentialHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -142,11 +141,7 @@ pub async fn build_credential_offer_msg_v2(
     };
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     credential
-        .build_credential_offer_msg(
-            &profile,
-            offer_info.clone(),
-            comment.map(|s| s.to_string()),
-        )
+        .build_credential_offer_msg(&profile, offer_info.clone(), comment.map(|s| s.to_string()))
         .await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)
 }

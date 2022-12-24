@@ -2,8 +2,11 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde_json::Value;
 
-use crate::{common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval}, core::profile::profile::Profile};
 use crate::errors::error::prelude::*;
+use crate::{
+    common::proofs::{proof_request::ProofRequestData, proof_request_internal::NonRevokedInterval},
+    core::profile::profile::Profile,
+};
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct CredInfoProver {
@@ -16,7 +19,7 @@ pub struct CredInfoProver {
     pub revocation_interval: Option<NonRevokedInterval>,
     pub tails_file: Option<String>,
     pub timestamp: Option<u64>,
-    pub revealed: Option<bool>
+    pub revealed: Option<bool>,
 }
 
 pub async fn build_schemas_json_prover(
@@ -32,7 +35,8 @@ pub async fn build_schemas_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.schema_id).is_none() {
-            let schema_json = ledger.get_schema( &cred_info.schema_id, None)
+            let schema_json = ledger
+                .get_schema(&cred_info.schema_id, None)
                 .await
                 .map_err(|err| err.map(AriesVcxErrorKind::InvalidSchema, "Cannot get schema"))?;
 
@@ -62,14 +66,12 @@ pub async fn build_cred_defs_json_prover(
 
     for cred_info in credentials_identifiers {
         if rtn.get(&cred_info.cred_def_id).is_none() {
-            let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None)
-                .await
-                .map_err(|err| {
-                    err.map(
-                        AriesVcxErrorKind::InvalidProofCredentialData,
-                        "Cannot get credential definition",
-                    )
-                })?;
+            let credential_def = ledger.get_cred_def(&cred_info.cred_def_id, None).await.map_err(|err| {
+                err.map(
+                    AriesVcxErrorKind::InvalidProofCredentialData,
+                    "Cannot get credential definition",
+                )
+            })?;
 
             let credential_def = serde_json::from_str(&credential_def).map_err(|err| {
                 AriesVcxError::from_msg(
@@ -156,7 +158,10 @@ fn _get_revocation_interval(attr_name: &str, proof_req: &ProofRequestData) -> Vc
     }
 }
 
-pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_identifiers: &mut Vec<CredInfoProver>) -> VcxResult<String> {
+pub async fn build_rev_states_json(
+    profile: &Arc<dyn Profile>,
+    credentials_identifiers: &mut Vec<CredInfoProver>,
+) -> VcxResult<String> {
     trace!(
         "build_rev_states_json >> credentials_identifiers: {:?}",
         credentials_identifiers
@@ -180,16 +185,18 @@ pub async fn build_rev_states_json(profile: &Arc<dyn Profile>, credentials_ident
 
                 let rev_reg_def_json = ledger.get_rev_reg_def_json(rev_reg_id).await?;
 
-                let (rev_reg_id, rev_reg_delta_json, timestamp) = ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
+                let (rev_reg_id, rev_reg_delta_json, timestamp) =
+                    ledger.get_rev_reg_delta_json(rev_reg_id, from, to).await?;
 
-                let rev_state_json = anoncreds.create_revocation_state(
-                    tails_file,
-                    &rev_reg_def_json,
-                    &rev_reg_delta_json,
-                    timestamp,
-                    cred_rev_id,
-                )
-                .await?;
+                let rev_state_json = anoncreds
+                    .create_revocation_state(
+                        tails_file,
+                        &rev_reg_def_json,
+                        &rev_reg_delta_json,
+                        timestamp,
+                        cred_rev_id,
+                    )
+                    .await?;
 
                 let rev_state_json: Value = serde_json::from_str(&rev_state_json).map_err(|err| {
                     AriesVcxError::from_msg(
@@ -238,8 +245,7 @@ pub fn build_requested_credentials_json(
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
             if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
-                let insert_val =
-                    json!({"cred_id": cred_info.referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
+                let insert_val = json!({"cred_id": cred_info.referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
         }
@@ -270,45 +276,50 @@ pub fn build_requested_credentials_json(
 #[cfg(test)]
 pub mod pool_tests {
 
+    use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
     use crate::utils::constants::{CRED_DEF_ID, CRED_REV_ID, LICENCE_CRED_ID, SCHEMA_ID, TAILS_DIR};
     use crate::utils::devsetup::SetupProfile;
     use crate::utils::get_temp_dir_path;
-    use crate::common::proofs::prover::prover_internal::{build_rev_states_json, CredInfoProver};
 
     #[tokio::test]
     async fn test_build_rev_states_json_empty() {
         SetupProfile::run(|_setup| async move {
+            // empty vector
+            assert_eq!(
+                build_rev_states_json(&_setup.profile, Vec::new().as_mut())
+                    .await
+                    .unwrap(),
+                "{}".to_string()
+            );
 
-        // empty vector
-        assert_eq!(
-            build_rev_states_json(&_setup.profile, Vec::new().as_mut()).await.unwrap(),
-            "{}".to_string()
-        );
-
-        // no rev_reg_id
-        let cred1 = CredInfoProver {
-            requested_attr: "height_1".to_string(),
-            referent: LICENCE_CRED_ID.to_string(),
-            schema_id: SCHEMA_ID.to_string(),
-            cred_def_id: CRED_DEF_ID.to_string(),
-            rev_reg_id: None,
-            cred_rev_id: Some(CRED_REV_ID.to_string()),
-            tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
-            revocation_interval: None,
-            timestamp: None,
-            revealed: None,
-        };
-        assert_eq!(
-            build_rev_states_json(&_setup.profile, vec![cred1].as_mut()).await.unwrap(),
-            "{}".to_string()
-        );
-        }).await;
+            // no rev_reg_id
+            let cred1 = CredInfoProver {
+                requested_attr: "height_1".to_string(),
+                referent: LICENCE_CRED_ID.to_string(),
+                schema_id: SCHEMA_ID.to_string(),
+                cred_def_id: CRED_DEF_ID.to_string(),
+                rev_reg_id: None,
+                cred_rev_id: Some(CRED_REV_ID.to_string()),
+                tails_file: Some(get_temp_dir_path(TAILS_DIR).to_str().unwrap().to_string()),
+                revocation_interval: None,
+                timestamp: None,
+                revealed: None,
+            };
+            assert_eq!(
+                build_rev_states_json(&_setup.profile, vec![cred1].as_mut())
+                    .await
+                    .unwrap(),
+                "{}".to_string()
+            );
+        })
+        .await;
     }
 }
 
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
     use crate::utils::devsetup::*;
     use crate::utils::{
         constants::{
@@ -317,10 +328,8 @@ pub mod unit_tests {
         },
         get_temp_dir_path,
     };
-    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
 
     use super::*;
-
 
     fn proof_req_no_interval() -> ProofRequestData {
         let proof_req = json!({
@@ -395,7 +404,8 @@ pub mod unit_tests {
                 .unwrap_err()
                 .kind();
             assert_eq!(err_kind, AriesVcxErrorKind::InvalidProofCredentialData);
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -422,7 +432,8 @@ pub mod unit_tests {
                     .kind(),
                 AriesVcxErrorKind::InvalidSchema
             );
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -767,7 +778,9 @@ pub mod unit_tests {
             revealed: None,
         };
         let mut cred_info = vec![cred1];
-        let states = build_rev_states_json(&mock_profile(), cred_info.as_mut()).await.unwrap();
+        let states = build_rev_states_json(&mock_profile(), cred_info.as_mut())
+            .await
+            .unwrap();
         let rev_state_json: Value = serde_json::from_str(REV_STATE_JSON).unwrap();
         let expected = json!({REV_REG_ID: {"1": rev_state_json}}).to_string();
         assert_eq!(states, expected);

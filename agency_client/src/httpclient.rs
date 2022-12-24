@@ -74,15 +74,21 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
             } else {
                 Err(AgencyClientError::from_msg(
                     AgencyClientErrorKind::PostMessageFailed,
-                    format!("POST {} failed due to non-success HTTP status: {}, response body: {}",
-                            url, response_status, payload)))
+                    format!(
+                        "POST {} failed due to non-success HTTP status: {}, response body: {}",
+                        url, response_status, payload
+                    ),
+                ))
             }
         }
         Err(error) => Err(AgencyClientError::from_msg(
             AgencyClientErrorKind::PostMessageFailed,
-            format!("POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
+            format!(
+                "POST {} failed because response could not be decoded as utf-8, HTTP status: {}, \
                      content-length header: {:?}, error: {:?}",
-                    url, response_status, content_length, error))),
+                url, response_status, content_length, error
+            ),
+        )),
     }
 }
 
@@ -94,10 +100,12 @@ fn set_ssl_cert_location() {
 
     match env::var(ssl_cert_file) {
         Ok(val) => info!("{}:: {:?}", ssl_cert_file, val),
-        Err(e) => error!("couldn't find var in env {}:: {}. \
+        Err(e) => error!(
+            "couldn't find var in env {}:: {}. \
                           This needs to be set on Android to make https calls.\n\
                           See https://github.com/seanmonstar/reqwest/issues/70 for more info",
-                         ssl_cert_file, e),
+            ssl_cert_file, e
+        ),
     }
     info!("::SSL_CERT_FILE has been set");
 }

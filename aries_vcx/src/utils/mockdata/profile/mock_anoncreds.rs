@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     global::settings,
     indy::utils::LibindyMock,
@@ -10,7 +11,6 @@ use crate::{
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockAnoncreds;
@@ -67,7 +67,10 @@ impl BaseAnonCreds for MockAnoncreds {
     async fn issuer_create_credential_offer(&self, _cred_def_id: &str) -> VcxResult<String> {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "Mocked error result of issuer_create_credential_offer"));
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Mocked error result of issuer_create_credential_offer",
+            ));
         };
         Ok(LIBINDY_CRED_OFFER.to_string())
     }
@@ -199,11 +202,10 @@ impl BaseAnonCreds for MockAnoncreds {
 #[cfg(feature = "general_test")]
 mod unit_tests {
 
-    use crate::{
-        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
-        utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
-    };
     use crate::errors::error::{AriesVcxErrorKind, VcxResult};
+    use crate::{
+        plugins::anoncreds::base_anoncreds::BaseAnonCreds, utils::mockdata::profile::mock_anoncreds::MockAnoncreds,
+    };
 
     #[tokio::test]
     async fn test_unimplemented_methods() {

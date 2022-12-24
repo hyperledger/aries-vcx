@@ -48,38 +48,38 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             DIDAlreadyExists => AriesVcxErrorKind::DuplicationDid,
 
             // 702
-            PaymentInsufficientFunds |
-            InvalidState |
-            ProofRejected |
-            RevocationRegistryFull |
-            LedgerItemNotFound |
-            InvalidPoolHandle |
-            UnknownWalletStorageType |
-            InvalidUserRevocId |
-            CredentialRevoked |
-            NoConsensus |
-            InvalidTransaction |
-            PoolNotCreated |
-            PoolTerminated |
-            PoolTimeout |
-            PoolIncompatibleProtocolVersion |
-            UnknownCrypto |
-            WalletStorageTypeAlreadyRegistered |
-            WalletAccessFailed |
-            WalletEncodingError |
-            WalletStorageError |
-            WalletEncryptionError |
-            WalletQueryError |
-            UnknownPaymentMethodType |
-            IncompatiblePaymentMethods |
-            PaymentSourceDoesNotExist |
-            PaymentOperationNotSupported |
-            PaymentExtraFunds |
-            TransactionNotAllowed |
-            QueryAccountDoesNotExist |
-            InvalidVDRHandle |
-            InvalidVDRNamespace |
-            IncompatibleLedger => {
+            PaymentInsufficientFunds
+            | InvalidState
+            | ProofRejected
+            | RevocationRegistryFull
+            | LedgerItemNotFound
+            | InvalidPoolHandle
+            | UnknownWalletStorageType
+            | InvalidUserRevocId
+            | CredentialRevoked
+            | NoConsensus
+            | InvalidTransaction
+            | PoolNotCreated
+            | PoolTerminated
+            | PoolTimeout
+            | PoolIncompatibleProtocolVersion
+            | UnknownCrypto
+            | WalletStorageTypeAlreadyRegistered
+            | WalletAccessFailed
+            | WalletEncodingError
+            | WalletStorageError
+            | WalletEncryptionError
+            | WalletQueryError
+            | UnknownPaymentMethodType
+            | IncompatiblePaymentMethods
+            | PaymentSourceDoesNotExist
+            | PaymentOperationNotSupported
+            | PaymentExtraFunds
+            | TransactionNotAllowed
+            | QueryAccountDoesNotExist
+            | InvalidVDRHandle
+            | InvalidVDRNamespace
+            | IncompatibleLedger => {
                 let err_code = types::ErrorCode::from(indy) as u32;
                 AriesVcxErrorKind::VdrToolsError(err_code)
             }

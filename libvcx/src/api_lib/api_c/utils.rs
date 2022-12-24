@@ -6,22 +6,28 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::global::settings;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::constants::*;
 
 use crate::api_lib::api_c::types::CommandHandle;
-use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
-use crate::api_lib::api_handle::ledger::{endorse_transaction, get_ledger_txn, get_verkey_from_ledger, ledger_get_service, ledger_write_endpoint_legacy, rotate_verkey};
+use crate::api_lib::api_handle::ledger::{
+    endorse_transaction, get_ledger_txn, get_verkey_from_ledger, ledger_get_service, ledger_write_endpoint_legacy,
+    rotate_verkey,
+};
 use crate::api_lib::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
 use crate::api_lib::api_handle::mediator::provision_cloud_agent;
 use crate::api_lib::api_handle::utils::agency_update_messages;
-use crate::api_lib::api_handle::wallet::{key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did, wallet_unpack_message_to_string};
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::api_handle::wallet::{
+    key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did,
+    wallet_unpack_message_to_string,
+};
+use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::{get_main_profile, get_main_wallet};
 use crate::api_lib::utils::cstring::CStringUtils;
@@ -111,7 +117,7 @@ pub extern "C" fn vcx_provision_cloud_agent(
             }
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -203,7 +209,9 @@ pub extern "C" fn vcx_v2_messages_download(
 
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
-        Err(_err) => return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, "Invalid connection handle").into(),
+        Err(_err) => {
+            return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, "Invalid connection handle").into()
+        }
     };
 
     let uids = if !uids.is_null() {
@@ -265,7 +273,7 @@ pub extern "C" fn vcx_v2_messages_download(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -360,7 +368,7 @@ pub extern "C" fn vcx_messages_update_status(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -589,7 +597,9 @@ pub extern "C" fn vcx_get_verkey_from_wallet(
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
-                    command_handle, error::SUCCESS_ERR_CODE, verkey
+                    command_handle,
+                    error::SUCCESS_ERR_CODE,
+                    verkey
                 );
                 let verkey = CStringUtils::string_to_cstring(verkey);
                 cb(command_handle, error::SUCCESS_ERR_CODE, verkey.as_ptr());
@@ -630,7 +640,9 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
             Ok(verkey) => {
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
-                    command_handle, error::SUCCESS_ERR_CODE, verkey
+                    command_handle,
+                    error::SUCCESS_ERR_CODE,
+                    verkey
                 );
                 let verkey = CStringUtils::string_to_cstring(verkey);
                 cb(command_handle, error::SUCCESS_ERR_CODE, verkey.as_ptr());
@@ -660,8 +672,10 @@ pub extern "C" fn vcx_get_ledger_txn(
 
     check_useful_opt_c_str!(submitter_did, LibvcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    trace!( "vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})",
-        command_handle, submitter_did
+    trace!(
+        "vcx_get_ledger_txn(command_handle: {}, submitter_did: {:?})",
+        command_handle,
+        submitter_did
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -669,7 +683,9 @@ pub extern "C" fn vcx_get_ledger_txn(
             Ok(txn) => {
                 trace!(
                     "vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
-                    command_handle, error::SUCCESS_ERR_CODE, txn
+                    command_handle,
+                    error::SUCCESS_ERR_CODE,
+                    txn
                 );
                 let txn = CStringUtils::string_to_cstring(txn);
                 cb(command_handle, error::SUCCESS_ERR_CODE, txn.as_ptr());
@@ -695,12 +711,14 @@ pub extern "C" fn vcx_unpack(
     info!("vcx_unpack >>>");
 
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_byte_array!(payload, payload_len, LibvcxErrorKind::InvalidOption, LibvcxErrorKind::InvalidOption);
-
-    trace!(
-        "vcx_unpack(command_handle: {}, payload: ...)",
-        command_handle,
+    check_useful_c_byte_array!(
+        payload,
+        payload_len,
+        LibvcxErrorKind::InvalidOption,
+        LibvcxErrorKind::InvalidOption
     );
+
+    trace!("vcx_unpack(command_handle: {}, payload: ...)", command_handle,);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
@@ -715,10 +733,7 @@ pub extern "C" fn vcx_unpack(
                     cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
                 }
                 Err(err) => {
-                    error!(
-                        "vcx_unpack(command_handle: {}, rc: {})",
-                        command_handle, err
-                    );
+                    error!("vcx_unpack(command_handle: {}, rc: {})", command_handle, err);
 
                     cb(command_handle, err.into(), ptr::null_mut());
                 }
@@ -726,7 +741,7 @@ pub extern "C" fn vcx_unpack(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -749,7 +764,8 @@ pub extern "C" fn vcx_create_pairwise_info(
                 Ok(pw_info) => {
                     trace!(
                         "vcx_create_pairwise_info(command_handle: {}, rc: {})",
-                        command_handle, error::SUCCESS_ERR_CODE
+                        command_handle,
+                        error::SUCCESS_ERR_CODE
                     );
                     let pw_info = CStringUtils::string_to_cstring(json!(pw_info).to_string());
                     cb(command_handle, error::SUCCESS_ERR_CODE, pw_info.as_ptr());
@@ -766,7 +782,7 @@ pub extern "C" fn vcx_create_pairwise_info(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -789,19 +805,13 @@ pub extern "C" fn vcx_create_service(
     check_useful_c_str!(recipient_keys, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(routing_keys, LibvcxErrorKind::InvalidOption);
 
-    trace!(
-        "vcx_create_service(command_handle: {})",
-        command_handle,
-    );
+    trace!("vcx_create_service(command_handle: {})", command_handle,);
 
     let recipient_keys: Vec<String> = match serde_json::from_str(&recipient_keys) {
         Ok(recipient_keys) => recipient_keys,
         Err(err) => {
             set_current_error(&err);
-            error!(
-                "vcx_create_service >>> Cannot deserialize recipient_keys: {:?}",
-                err
-            );
+            error!("vcx_create_service >>> Cannot deserialize recipient_keys: {:?}", err);
             return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
@@ -810,10 +820,7 @@ pub extern "C" fn vcx_create_service(
         Ok(recipient_keys) => recipient_keys,
         Err(err) => {
             set_current_error(&err);
-            error!(
-                "vcx_create_service >>> Cannot deserialize routing keys: {:?}",
-                err
-            );
+            error!("vcx_create_service >>> Cannot deserialize routing keys: {:?}", err);
             return LibvcxErrorKind::InvalidConfiguration.into();
         }
     };
@@ -831,10 +838,7 @@ pub extern "C" fn vcx_create_service(
                     cb(command_handle, error::SUCCESS_ERR_CODE, service.as_ptr());
                 }
                 Err(err) => {
-                    error!(
-                        "vcx_create_service(command_handle: {}, rc: {})",
-                        command_handle, err
-                    );
+                    error!("vcx_create_service(command_handle: {}, rc: {})", command_handle, err);
 
                     cb(command_handle, err.into(), ptr::null_mut());
                 }
@@ -842,7 +846,7 @@ pub extern "C" fn vcx_create_service(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -859,19 +863,13 @@ pub extern "C" fn vcx_get_service_from_ledger(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(target_did, LibvcxErrorKind::InvalidOption);
 
-    trace!(
-        "vcx_get_service_from_ledger(command_handle: {})",
-        command_handle,
-    );
+    trace!("vcx_get_service_from_ledger(command_handle: {})", command_handle,);
 
     let institution_did = match Did::new(&target_did) {
         Ok(did) => did,
         Err(err) => {
             error!("Error parsing value {} as DID, err: {}", target_did, err.to_string());
-            return LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidDid,
-                err.to_string(),
-            ).into();
+            return LibvcxError::from_msg(LibvcxErrorKind::InvalidDid, err.to_string()).into();
         }
     };
 
@@ -899,7 +897,7 @@ pub extern "C" fn vcx_get_service_from_ledger(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     error::SUCCESS_ERR_CODE
@@ -957,7 +955,7 @@ mod tests {
             "agency_did":"Ab8TvZa3Q19VNkQVzAWVL7",
             "agency_verkey":"5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf"
         })
-            .to_string();
+        .to_string();
 
         let err = _vcx_agent_provision_async_c_closure(&config).unwrap_err();
         assert_eq!(err, u32::from(LibvcxErrorKind::InvalidConfiguration));

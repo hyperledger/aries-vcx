@@ -3,7 +3,6 @@
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 
-
 pub extern crate agency_client;
 
 // TODO: remove reexports
@@ -39,10 +38,10 @@ pub mod global;
 pub mod indy;
 pub mod protocols;
 
-pub mod core;
-pub mod plugins;
 pub mod common;
+pub mod core;
 pub mod errors;
+pub mod plugins;
 
 #[cfg(test)]
 pub mod test {

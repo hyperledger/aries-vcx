@@ -5,8 +5,8 @@ use libc::c_char;
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::proof;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::execute_async;
@@ -143,7 +143,7 @@ pub extern "C" fn vcx_proof_create(
             revocation_interval,
             name,
         )
-            .await
+        .await
         {
             Ok(err) => {
                 trace!(
@@ -804,9 +804,9 @@ mod tests {
     use crate::api_lib::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
     use crate::api_lib::api_handle::proof;
     use crate::api_lib::errors::error;
-    use crate::api_lib::ProofStateType;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
+    use crate::api_lib::ProofStateType;
 
     use super::*;
 
@@ -1013,7 +1013,10 @@ mod tests {
         assert_eq!(state, ProofStateType::ProofInvalid as u32);
 
         vcx_proof_release(proof_handle);
-        assert_eq!(vcx_proof_release(proof_handle), u32::from(LibvcxErrorKind::InvalidProofHandle));
+        assert_eq!(
+            vcx_proof_release(proof_handle),
+            u32::from(LibvcxErrorKind::InvalidProofHandle)
+        );
     }
 
     #[tokio::test]

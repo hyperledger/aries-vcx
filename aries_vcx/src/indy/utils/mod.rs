@@ -46,32 +46,24 @@ pub mod test_setup {
 
     pub async fn with_wallet<F>(f: impl FnOnce(vdrtools::WalletHandle) -> F)
     where
-        F: std::future::Future<Output=()>,
+        F: std::future::Future<Output = ()>,
     {
-        let wallet_config = indy::wallet::WalletConfig{
+        let wallet_config = indy::wallet::WalletConfig {
             wallet_name: crate::utils::random::generate_random_name(),
             wallet_key: WALLET_KEY.into(),
             wallet_key_derivation: WALLET_KEY_DERIVATION.into(),
-            .. Default::default()
+            ..Default::default()
         };
 
-        indy::wallet::create_indy_wallet(&wallet_config)
-            .await
-            .unwrap();
+        indy::wallet::create_indy_wallet(&wallet_config).await.unwrap();
 
-        let wallet_handle = indy::wallet::open_wallet(&wallet_config)
-            .await
-            .unwrap();
+        let wallet_handle = indy::wallet::open_wallet(&wallet_config).await.unwrap();
 
         f(wallet_handle).await;
 
-        indy::wallet::close_wallet(wallet_handle)
-            .await
-            .unwrap();
+        indy::wallet::close_wallet(wallet_handle).await.unwrap();
 
-        indy::wallet::delete_wallet(&wallet_config)
-            .await
-            .unwrap();
+        indy::wallet::delete_wallet(&wallet_config).await.unwrap();
     }
 
     pub async fn create_trustee_key(wallet_handle: vdrtools::WalletHandle) -> String {
@@ -83,8 +75,6 @@ pub mod test_setup {
     pub async fn create_key(wallet_handle: vdrtools::WalletHandle) -> String {
         let seed: String = crate::utils::random::generate_random_seed();
 
-        indy::signing::create_key(wallet_handle, Some(&seed))
-            .await
-            .unwrap()
+        indy::signing::create_key(wallet_handle, Some(&seed)).await.unwrap()
     }
 }

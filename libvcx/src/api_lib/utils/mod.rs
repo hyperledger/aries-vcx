@@ -10,6 +10,6 @@ pub mod logger;
 pub mod return_types_u32;
 pub mod timeout;
 
+pub mod current_error;
 #[cfg(feature = "test_utils")]
 pub mod devsetup;
-pub mod current_error;

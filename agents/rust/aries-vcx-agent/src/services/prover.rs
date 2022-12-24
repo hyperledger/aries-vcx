@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::protocols::proof_presentation::presentation_ack::PresentationAck;
@@ -36,10 +36,7 @@ pub struct ServiceProver {
 }
 
 impl ServiceProver {
-    pub fn new(
-        profile: Arc<dyn Profile>,
-        service_connections: Arc<ServiceConnections>,
-    ) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
         Self {
             profile,
             service_connections,
@@ -59,8 +56,7 @@ impl ServiceProver {
 
     async fn get_credentials_for_presentation(&self, prover: &Prover, tails_dir: Option<&str>) -> AgentResult<String> {
         let credentials = prover.retrieve_credentials(&self.profile).await?;
-        let credentials: HashMap<String, Value> =
-            serde_json::from_str(&credentials).unwrap();
+        let credentials: HashMap<String, Value> = serde_json::from_str(&credentials).unwrap();
 
         let mut res_credentials = json!({});
 
@@ -77,17 +73,11 @@ impl ServiceProver {
         Ok(res_credentials.to_string())
     }
 
-    pub fn create_from_request(
-        &self,
-        connection_id: &str,
-        request: PresentationRequest,
-    ) -> AgentResult<String> {
+    pub fn create_from_request(&self, connection_id: &str, request: PresentationRequest) -> AgentResult<String> {
         self.service_connections.get_by_id(connection_id)?;
         let prover = Prover::create_from_request("", request)?;
-        self.provers.insert(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, connection_id),
-        )
+        self.provers
+            .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
 
     pub async fn send_proof_proposal(
@@ -98,15 +88,10 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
         prover
-            .send_proposal(
-                proposal,
-                connection.send_message_closure(&self.profile, None).await?,
-            )
+            .send_proposal(proposal, connection.send_message_closure(&self.profile, None).await?)
             .await?;
-        self.provers.insert(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, connection_id),
-        )
+        self.provers
+            .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
 
     pub fn is_secondary_proof_requested(&self, thread_id: &str) -> AgentResult<bool> {
@@ -124,35 +109,24 @@ impl ServiceProver {
         let connection = self.service_connections.get_by_id(&connection_id)?;
         let credentials = self.get_credentials_for_presentation(&prover, tails_dir).await?;
         prover
-            .generate_presentation(
-                &self.profile,
-                credentials,
-                "{}".to_string(),
-            )
+            .generate_presentation(&self.profile, credentials, "{}".to_string())
             .await?;
         prover
-            .send_presentation(
-                connection.send_message_closure(&self.profile, None).await?,
-            )
+            .send_presentation(connection.send_message_closure(&self.profile, None).await?)
             .await?;
-        self.provers.insert(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, &connection_id),
-        )?;
+        self.provers
+            .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
         Ok(())
     }
 
-    pub fn process_presentation_ack(
-        &self,
-        thread_id: &str,
-        ack: PresentationAck,
-    ) -> AgentResult<String> {
-        let ProverWrapper { mut prover, connection_id } = self.provers.get(thread_id)?;
+    pub fn process_presentation_ack(&self, thread_id: &str, ack: PresentationAck) -> AgentResult<String> {
+        let ProverWrapper {
+            mut prover,
+            connection_id,
+        } = self.provers.get(thread_id)?;
         prover.process_presentation_ack(ack)?;
-        self.provers.insert(
-            &prover.get_thread_id()?,
-            ProverWrapper::new(prover, &connection_id),
-        )
+        self.provers
+            .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))
     }
 
     pub fn get_state(&self, thread_id: &str) -> AgentResult<ProverState> {

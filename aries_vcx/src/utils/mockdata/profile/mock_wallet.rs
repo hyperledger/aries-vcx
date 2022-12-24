@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     indy::utils::mocks::did_mocks::DidMocks,
     plugins::wallet::base_wallet::BaseWallet,
     utils::{self, async_fn_iterator::AsyncFnIterator},
 };
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 #[derive(Debug)]
 pub(crate) struct MockWallet;

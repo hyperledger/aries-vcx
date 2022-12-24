@@ -128,9 +128,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
             )
         })?;
-        credential
-            .step(&profile, message.into(), Some(send_message))
-            .await?;
+        credential.step(&profile, message.into(), Some(send_message)).await?;
     } else {
         let messages = mediated_connection::get_messages(connection_handle).await?;
         if let Some((uid, msg)) = credential.find_message_to_handle(messages) {
@@ -182,10 +180,7 @@ pub fn get_rev_reg_id(handle: u32) -> LibvcxResult<String> {
 pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     let credential = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
-    credential
-        .is_revokable(&profile)
-        .await
-        .map_err(|err| err.into())
+    credential.is_revokable(&profile).await.map_err(|err| err.into())
 }
 
 pub async fn delete_credential(handle: u32) -> LibvcxResult<u32> {
@@ -220,9 +215,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let my_pw_did = mediated_connection::get_pw_did(connection_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let profile = get_main_profile()?;
-    credential
-        .send_request(&profile, my_pw_did, send_message)
-        .await?;
+    credential.send_request(&profile, my_pw_did, send_message).await?;
     HANDLE_MAP.insert(handle, credential)?;
     Ok(error::SUCCESS_ERR_CODE)
 }
@@ -281,9 +274,12 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle,
-                                               e.to_string())))
+    HANDLE_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidCredentialHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -308,8 +304,12 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |credential| Ok(credential.get_source_id()))
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle,
-                                               e.to_string())))
+        .or_else(|e| {
+            Err(LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidCredentialHandle,
+                e.to_string(),
+            ))
+        })
 }
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {
@@ -355,8 +355,7 @@ pub mod tests {
     use aries_vcx::utils::devsetup::{SetupDefaults, SetupMocks};
     use aries_vcx::utils::mockdata::mockdata_credex;
     use aries_vcx::utils::mockdata::mockdata_credex::{
-        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT,
-        ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
+        ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
     use crate::api_lib::api_handle::credential::{

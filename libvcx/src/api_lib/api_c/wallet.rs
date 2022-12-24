@@ -8,12 +8,17 @@ use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
 use crate::api_lib;
-use crate::api_lib::api_handle::wallet::{wallet_add_wallet_record, wallet_add_wallet_record_tags, wallet_close_search_wallet, wallet_configure_issuer, wallet_delete_wallet_record, wallet_delete_wallet_record_tags, wallet_fetch_next_records_wallet, wallet_get_wallet_record, wallet_import, wallet_open_search_wallet, wallet_update_wallet_record_tags, wallet_update_wallet_record_value};
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
+use crate::api_lib::api_handle::wallet::{
+    wallet_add_wallet_record, wallet_add_wallet_record_tags, wallet_close_search_wallet, wallet_configure_issuer,
+    wallet_delete_wallet_record, wallet_delete_wallet_record_tags, wallet_fetch_next_records_wallet,
+    wallet_get_wallet_record, wallet_import, wallet_open_search_wallet, wallet_update_wallet_record_tags,
+    wallet_update_wallet_record_value,
+};
 use crate::api_lib::errors::error;
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::profile::get_main_wallet;
-use crate::api_lib::global::wallet::{export_main_wallet, get_main_wallet_handle};
 use crate::api_lib::global::wallet::open_as_main_wallet;
+use crate::api_lib::global::wallet::{export_main_wallet, get_main_wallet_handle};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
@@ -1114,7 +1119,7 @@ pub mod tests {
             "wallet_key": settings::DEFAULT_WALLET_KEY,
             "wallet_key_derivation": settings::WALLET_KDF_RAW
         })
-            .to_string();
+        .to_string();
         let cb = return_types_u32::Return_U32::new().unwrap();
         let err = vcx_create_wallet(
             cb.command_handle,
@@ -1208,7 +1213,7 @@ pub mod tests {
             "retrieveValue": true,
             "retrieveTags": false
         })
-            .to_string();
+        .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
@@ -1299,7 +1304,7 @@ pub mod tests {
             "retrieveValue": true,
             "retrieveTags": false
         })
-            .to_string();
+        .to_string();
         let options = CStringUtils::string_to_cstring(options);
 
         // Assert no record to update
@@ -1396,7 +1401,7 @@ pub mod tests {
             settings::CONFIG_WALLET_BACKUP_KEY: backup_key,
             settings::CONFIG_WALLET_KEY_DERIVATION: settings::WALLET_KDF_RAW,
         })
-            .to_string();
+        .to_string();
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         let cstr_config = CString::new(import_config).unwrap();

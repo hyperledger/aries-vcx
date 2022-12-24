@@ -1,9 +1,9 @@
-pub mod signing;
+pub mod anoncreds;
 pub mod credentials;
-pub mod proofs;
+pub mod keys;
 pub mod ledger;
 pub mod primitives;
-pub mod anoncreds;
-pub mod keys;
+pub mod proofs;
+pub mod signing;
 #[cfg(feature = "test_utils")]
 pub mod test_utils;

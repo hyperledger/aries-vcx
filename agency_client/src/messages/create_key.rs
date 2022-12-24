@@ -1,8 +1,8 @@
-use shared_vcx::validation::did::validate_did;
-use shared_vcx::validation::verkey::validate_verkey;
 use crate::errors::error::AgencyClientResult;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::messages::message_type::MessageType;
+use shared_vcx::validation::did::validate_did;
+use shared_vcx::validation::verkey::validate_verkey;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]

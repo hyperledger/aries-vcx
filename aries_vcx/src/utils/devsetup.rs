@@ -1,6 +1,6 @@
 use std::fs;
-use std::sync::{Once, Arc};
 use std::future::Future;
+use std::sync::{Arc, Once};
 
 use chrono::{DateTime, Duration, Utc};
 
@@ -20,7 +20,7 @@ use crate::global::settings::{disable_indy_mocks, enable_indy_mocks, set_test_co
 use crate::indy::ledger::pool::test_utils::{
     create_test_ledger_config, create_tmp_genesis_txn_file, delete_test_pool, open_test_pool,
 };
-use crate::indy::ledger::pool::{PoolConfig};
+use crate::indy::ledger::pool::PoolConfig;
 use crate::indy::utils::mocks::did_mocks::DidMocks;
 use crate::indy::utils::mocks::pool_mocks::PoolMocks;
 use crate::indy::wallet::open_wallet;
@@ -174,7 +174,7 @@ impl SetupLibraryWallet {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -183,13 +183,9 @@ impl SetupLibraryWallet {
 
         f(init).await;
 
-        close_wallet(handle)
-            .await
-            .unwrap();
+        close_wallet(handle).await.unwrap();
 
-        delete_wallet(&config)
-            .await
-            .unwrap();
+        delete_wallet(&config).await.unwrap();
 
         reset_global_state();
     }
@@ -224,10 +220,9 @@ impl TestSetupCreateWallet {
         self
     }
 
-
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=bool>,
+        F: Future<Output = bool>,
     {
         let init = Self::init().await;
 
@@ -243,7 +238,6 @@ impl TestSetupCreateWallet {
 
         reset_global_state();
     }
-
 }
 
 impl SetupPoolConfig {
@@ -310,7 +304,7 @@ impl SetupWalletPoolAgency {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -318,8 +312,7 @@ impl SetupWalletPoolAgency {
 
         f(init).await;
 
-        delete_test_pool(pool_handle)
-            .await;
+        delete_test_pool(pool_handle).await;
 
         reset_global_state();
     }
@@ -347,7 +340,7 @@ impl SetupWalletPool {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -355,8 +348,7 @@ impl SetupWalletPool {
 
         f(init).await;
 
-        delete_test_pool(pool_handle)
-            .await;
+        delete_test_pool(pool_handle).await;
 
         reset_global_state();
     }
@@ -373,7 +365,7 @@ impl SetupProfile {
             SetupProfile::init_modular().await
         } else {
             info!("SetupProfile >> using indy profile");
-        SetupProfile::init_indy().await
+            SetupProfile::init_indy().await
         }
     }
 
@@ -418,7 +410,11 @@ impl SetupProfile {
         let profile: Arc<dyn Profile> =
             Arc::new(ModularWalletProfile::new(Arc::new(wallet), LedgerPoolConfig { genesis_file_path }).unwrap());
 
-        Arc::clone(&profile).inject_anoncreds().prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS).await.unwrap();
+        Arc::clone(&profile)
+            .inject_anoncreds()
+            .prover_create_link_secret(settings::DEFAULT_LINK_SECRET_ALIAS)
+            .await
+            .unwrap();
 
         async fn modular_teardown() {
             // nothing to do
@@ -433,7 +429,7 @@ impl SetupProfile {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -450,7 +446,7 @@ impl SetupProfile {
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use run()
     pub async fn run_indy<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init_indy().await;
 
@@ -510,7 +506,7 @@ impl SetupPool {
 
     pub async fn run<F>(f: impl FnOnce(Self) -> F)
     where
-        F: Future<Output=()>,
+        F: Future<Output = ()>,
     {
         let init = Self::init().await;
 
@@ -518,13 +514,11 @@ impl SetupPool {
 
         f(init).await;
 
-        delete_test_pool(handle)
-            .await;
+        delete_test_pool(handle).await;
 
         reset_global_state();
     }
 }
-
 
 #[macro_export]
 macro_rules! assert_match {

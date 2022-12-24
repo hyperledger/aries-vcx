@@ -1,10 +1,10 @@
 use crate::errors::error::prelude::*;
-use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
-use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 use messages::a2a::message_family::MessageFamilies;
 use messages::a2a::message_type::MessageType;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
+use messages::protocols::out_of_band::invitation::OutOfBandInvitation;
+use messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use messages::protocols::out_of_band::service_oob::ServiceOob;
 
@@ -50,7 +50,10 @@ impl OutOfBandSender {
         let new_protocol = match protocol {
             HandshakeProtocol::ConnectionV1 => MessageType::build(MessageFamilies::Connections, ""),
             HandshakeProtocol::DidExchangeV1 => {
-                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::ActionNotSupported, format!("DidExchange protocol is not implemented")))
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::ActionNotSupported,
+                    format!("DidExchange protocol is not implemented"),
+                ))
             }
         };
         match self.oob.handshake_protocols {
@@ -102,10 +105,10 @@ impl OutOfBandSender {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
+    use crate::utils::devsetup::SetupMocks;
     use messages::diddoc::aries::service::AriesService;
     use messages::protocols::connection::did::Did;
     use messages::protocols::issuance::credential_offer::CredentialOffer;
-    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 

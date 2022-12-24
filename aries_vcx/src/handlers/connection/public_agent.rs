@@ -7,14 +7,14 @@ use crate::core::profile::profile::Profile;
 
 use agency_client::agency_client::AgencyClient;
 
-use messages::diddoc::aries::service::AriesService;
+use crate::common::ledger::transactions::write_endpoint_legacy;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::cloud_agent::CloudAgentInfo;
-use crate::common::ledger::transactions::write_endpoint_legacy;
+use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use messages::a2a::A2AMessage;
+use messages::diddoc::aries::service::AriesService;
 use messages::protocols::connection::did::Did;
 use messages::protocols::connection::request::Request;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublicAgent {

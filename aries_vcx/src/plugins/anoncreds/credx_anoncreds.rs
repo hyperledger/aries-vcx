@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     core::profile::profile::Profile,
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
@@ -16,9 +17,9 @@ use crate::{
 use async_trait::async_trait;
 use credx::{
     types::{
-        Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue, MasterSecret,
-        PresentationRequest, RevocationRegistryDefinition, RevocationRegistryDelta, Schema, SchemaId,
-        PresentCredentials, CredentialRequestMetadata
+        Credential as CredxCredential, CredentialDefinitionId, CredentialRequestMetadata, CredentialRevocationState,
+        DidValue, MasterSecret, PresentCredentials, PresentationRequest, RevocationRegistryDefinition,
+        RevocationRegistryDelta, Schema, SchemaId,
     },
     ursa::{bn::BigNumber, errors::UrsaCryptoError},
 };
@@ -28,7 +29,6 @@ use credx::{
 };
 use indy_credx as credx;
 use serde_json::Value;
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
 use super::base_anoncreds::BaseAnonCreds;
 
@@ -317,9 +317,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         // create self_attested by iterating thru self_attested_value
         let self_attested = if let Some(self_attested_value) = self_attested_attributes {
             let mut self_attested_map: HashMap<String, String> = HashMap::new();
-            let self_attested_obj =  self_attested_value.try_as_object()?.clone();
+            let self_attested_obj = self_attested_value.try_as_object()?.clone();
             let self_attested_iter = self_attested_obj.iter();
-            for (k,v) in self_attested_iter {
+            for (k, v) in self_attested_iter {
                 self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
             }
 
@@ -328,7 +328,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             } else {
                 Some(self_attested_map)
             }
-        } else { None };
+        } else {
+            None
+        };
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
@@ -382,8 +384,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxResult<String> {
-        let proof_req_v: Value =
-            serde_json::from_str(proof_req).map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidProofRequest, e))?;
+        let proof_req_v: Value = serde_json::from_str(proof_req)
+            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidProofRequest, e))?;
 
         let requested_attributes = (&proof_req_v).get("requested_attributes");
         let requested_attributes = if let Some(requested_attributes) = requested_attributes {
@@ -749,11 +751,8 @@ fn unimplemented_method_err(method_name: &str) -> AriesVcxError {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::{
-        common::test_utils::mock_profile,
-        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
-    };
     use crate::errors::error::{AriesVcxErrorKind, VcxResult};
+    use crate::{common::test_utils::mock_profile, plugins::anoncreds::base_anoncreds::BaseAnonCreds};
 
     use super::IndyCredxAnonCreds;
 

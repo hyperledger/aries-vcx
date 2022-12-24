@@ -8,10 +8,10 @@ use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 
 use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
-use messages::a2a::A2AMessage;
+use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
-use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
+use messages::a2a::A2AMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CloudAgentInfo {
@@ -42,9 +42,7 @@ pub async fn create_agent_keys(
         pw_verkey
     );
 
-    let (agent_did, agent_verkey) = agency_client
-        .create_connection_agent(pw_did, pw_verkey)
-        .await?;
+    let (agent_did, agent_verkey) = agency_client.create_connection_agent(pw_did, pw_verkey).await?;
 
     trace!(
         "create_agent_keys <<< agent_did: {}, agent_verkey: {}",
@@ -220,8 +218,7 @@ impl CloudAgentInfo {
         for message in messages {
             a2a_messages.insert(
                 message.uid.clone(),
-                self.decrypt_decode_message(wallet, message, expected_sender_vk)
-                    .await?,
+                self.decrypt_decode_message(wallet, message, expected_sender_vk).await?,
             );
         }
         Ok(a2a_messages)
@@ -256,6 +253,10 @@ impl CloudAgentInfo {
         wallet: &Arc<dyn BaseAgencyClientWallet>,
         message: &DownloadedMessageEncrypted,
     ) -> VcxResult<A2AMessage> {
-        Ok(EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?).await?.0)
+        Ok(
+            EncryptionEnvelope::anon_unpack(&wallet.to_base_wallet(), message.payload()?)
+                .await?
+                .0,
+        )
     }
 }

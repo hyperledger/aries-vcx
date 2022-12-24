@@ -77,7 +77,11 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(mut self, wallet: Arc<dyn BaseAgencyClientWallet>, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
+    pub fn configure(
+        mut self,
+        wallet: Arc<dyn BaseAgencyClientWallet>,
+        config: &AgencyClientConfig,
+    ) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
         validate_did(&config.agency_did)?;
@@ -92,9 +96,8 @@ impl AgencyClient {
                 AgencyClientErrorKind::InvalidUrl,
                 format!("Endpoint {} is not valid url", &config.agency_endpoint),
             )),
-            _ => Ok(())
+            _ => Ok(()),
         }?;
-
 
         self.set_agency_url(&config.agency_endpoint);
         self.set_agency_did(&config.agency_did);

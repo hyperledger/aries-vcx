@@ -1,9 +1,9 @@
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-use messages::protocols::trust_ping::ping::Ping;
-use messages::protocols::trust_ping::ping_response::PingResponse;
 use crate::protocols::trustping::build_ping;
 use crate::protocols::SendClosure;
+use messages::protocols::trust_ping::ping::Ping;
+use messages::protocols::trust_ping::ping_response::PingResponse;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TrustPingSender {
@@ -44,10 +44,16 @@ impl TrustPingSender {
 
     pub fn handle_ping_response(&mut self, ping: &PingResponse) -> VcxResult<()> {
         if !ping.to_a2a_message().thread_id_matches(&self.get_thread_id()) {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Thread ID mismatch"));
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Thread ID mismatch",
+            ));
         }
         if !self.ping.response_requested {
-            return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Message was not expected"));
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Message was not expected",
+            ));
         } else {
             self.response_received = true
         }
@@ -60,10 +66,10 @@ impl TrustPingSender {
 mod unit_tests {
     use crate::errors::error::VcxResult;
     use crate::handlers::trust_ping::TrustPingSender;
-    use messages::a2a::A2AMessage;
     use crate::protocols::trustping::build_ping_response;
     use crate::protocols::SendClosure;
     use crate::utils::devsetup::SetupMocks;
+    use messages::a2a::A2AMessage;
 
     pub fn _send_message() -> SendClosure {
         Box::new(|_: A2AMessage| Box::pin(async { VcxResult::Ok(()) }))

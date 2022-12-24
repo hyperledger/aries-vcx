@@ -9,10 +9,10 @@ use std::time::Duration;
 
 use libc::c_char;
 
-use aries_vcx::vdrtools::CommandHandle;
+use crate::api_lib::errors::error;
 use crate::api_lib::errors::mapping_ffi_tests::map_indy_error;
 use aries_vcx::indy::utils::next_command_handle;
-use crate::api_lib::errors::error;
+use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib::utils::callback::POISON_MSG;
 use crate::api_lib::utils::callback_u32 as callback;

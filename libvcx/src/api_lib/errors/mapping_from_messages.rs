@@ -1,6 +1,6 @@
+use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use aries_vcx::messages::errors::error::MessagesError;
 use aries_vcx::messages::errors::error::MessagesErrorKind;
-use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
 impl From<MessagesError> for LibvcxError {
     fn from(msg_err: MessagesError) -> LibvcxError {
@@ -19,7 +19,7 @@ impl From<MessagesErrorKind> for LibvcxErrorKind {
             MessagesErrorKind::InvalidVerkey => LibvcxErrorKind::InvalidVerkey,
             MessagesErrorKind::InvalidUrl => LibvcxErrorKind::InvalidUrl,
             MessagesErrorKind::NotBase58 => LibvcxErrorKind::NotBase58,
-            MessagesErrorKind::SerializationError => LibvcxErrorKind::SerializationError
+            MessagesErrorKind::SerializationError => LibvcxErrorKind::SerializationError,
         }
     }
 }

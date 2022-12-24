@@ -1,8 +1,8 @@
-use crate::errors::error::prelude::*;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
+use crate::errors::error::prelude::*;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -82,7 +82,8 @@ pub mod test_utils {
             "requested_predicates": {},
             "non_revoked": null,
             "ver": null
-        }).to_string()
+        })
+        .to_string()
     }
 
     fn _attachment() -> Attachments {
@@ -121,7 +122,6 @@ pub mod test_utils {
 pub mod unit_tests {
     use crate::protocols::proof_presentation::presentation_request::test_utils::*;
     use crate::utils::devsetup::was_in_past;
-
 
     use super::*;
 

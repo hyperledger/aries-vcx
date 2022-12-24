@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
-use crate::{
-    plugins::{
-        anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
-        ledger::{
-            base_ledger::BaseLedger,
-            indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},
-        },
-        wallet::base_wallet::BaseWallet,
-    },
-};
 use crate::errors::error::VcxResult;
+use crate::plugins::{
+    anoncreds::{base_anoncreds::BaseAnonCreds, credx_anoncreds::IndyCredxAnonCreds},
+    ledger::{
+        base_ledger::BaseLedger,
+        indy_vdr_ledger::{IndyVdrLedger, IndyVdrLedgerPool},
+    },
+    wallet::base_wallet::BaseWallet,
+};
 
 use super::profile::Profile;
 

@@ -5,7 +5,6 @@ use vdrtools::WalletHandle;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 
-
 pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxResult<Vec<u8>> {
     if settings::indy_mocks_enabled() {
         return Ok(Vec::from(msg));
@@ -13,11 +12,8 @@ pub async fn sign(wallet_handle: WalletHandle, my_vk: &str, msg: &[u8]) -> VcxRe
 
     let res = Locator::instance()
         .crypto_controller
-        .crypto_sign(
-            wallet_handle,
-            my_vk,
-            msg,
-        ).await?;
+        .crypto_sign(wallet_handle, my_vk, msg)
+        .await?;
 
     Ok(res)
 }
@@ -47,12 +43,7 @@ pub async fn pack_message(
 
     // parse json array of keys
     let receiver_list = serde_json::from_str::<Vec<String>>(receiver_keys)
-        .map_err(|_| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                "Invalid RecipientKeys has been passed",
-            )
-        })
+        .map_err(|_| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, "Invalid RecipientKeys has been passed"))
         .and_then(|list| {
             // break early and error out if no receivers keys are provided
             if list.is_empty() {
@@ -63,8 +54,7 @@ pub async fn pack_message(
             } else {
                 Ok(list)
             }
-        })
-        ?;
+        })?;
 
     let res = Locator::instance()
         .crypto_controller
@@ -73,7 +63,8 @@ pub async fn pack_message(
             receiver_list,
             sender_vk.map(ToOwned::to_owned),
             wallet_handle,
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }
@@ -85,10 +76,7 @@ pub async fn unpack_message(wallet_handle: WalletHandle, msg: &[u8]) -> VcxResul
 
     let res = Locator::instance()
         .crypto_controller
-        .unpack_msg(
-            serde_json::from_slice(msg)?,
-            wallet_handle,
-        )
+        .unpack_msg(serde_json::from_slice(msg)?, wallet_handle)
         .await?;
 
     Ok(res)
@@ -102,11 +90,12 @@ pub async fn create_key(wallet_handle: WalletHandle, seed: Option<&str>) -> VcxR
         .crypto_controller
         .create_key(
             wallet_handle,
-            &KeyInfo{
+            &KeyInfo {
                 seed: seed.map(ToOwned::to_owned),
                 crypto_type: None,
             },
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }

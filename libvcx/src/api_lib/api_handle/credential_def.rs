@@ -69,9 +69,12 @@ pub fn get_cred_def_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    CREDENTIALDEF_MAP
-        .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle, e.to_string())))
+    CREDENTIALDEF_MAP.release(handle).or_else(|e| {
+        Err(LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidCredDefHandle,
+            e.to_string(),
+        ))
+    })
 }
 
 pub fn release_all() {
@@ -133,8 +136,8 @@ pub mod tests {
             "tag_1".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
 
         publish(cred_def_handle).await.unwrap();
         (schema_handle, cred_def_handle)
@@ -152,8 +155,12 @@ pub mod tests {
     async fn create_revocable_cred_def_and_check_tails_location() {
         SetupGlobalsWalletPoolAgency::run(|setup| async move {
             let profile = get_main_profile().unwrap();
-            let (schema_id, _) =
-                create_and_write_test_schema(&profile, &setup.setup.institution_did, utils::constants::DEFAULT_SCHEMA_ATTRS).await;
+            let (schema_id, _) = create_and_write_test_schema(
+                &profile,
+                &setup.setup.institution_did,
+                utils::constants::DEFAULT_SCHEMA_ATTRS,
+            )
+            .await;
             let issuer_did = settings::get_config_value(settings::CONFIG_INSTITUTION_DID).unwrap();
 
             let revocation_details = RevocationDetailsBuilder::default()
@@ -181,7 +188,8 @@ pub mod tests {
             revocation_registry::publish(handle_rev_reg, tails_url).await.unwrap();
             let rev_reg_def = revocation_registry::get_rev_reg_def(handle_rev_reg).unwrap();
             assert_eq!(rev_reg_def.value.tails_location, tails_url);
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "pool_tests")]
@@ -193,7 +201,8 @@ pub mod tests {
             let _source_id = get_source_id(handle).unwrap();
             let _cred_def_id = get_cred_def_id(handle).unwrap();
             let _schema_json = to_string(handle).unwrap();
-        }).await;
+        })
+        .await;
     }
 
     #[cfg(feature = "general_test")]
@@ -225,10 +234,7 @@ pub mod tests {
         let credentialdef2: CredentialDef = CredentialDef::from_string(&new_credentialdef_data).unwrap();
 
         assert_eq!(credentialdef1, credentialdef2);
-        assert_eq!(
-            from_string("{}").unwrap_err().kind(),
-            LibvcxErrorKind::CreateCredDef
-        );
+        assert_eq!(from_string("{}").unwrap_err().kind(), LibvcxErrorKind::CreateCredDef);
     }
 
     #[tokio::test]
@@ -244,8 +250,8 @@ pub mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h2 = create(
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
@@ -253,8 +259,8 @@ pub mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h3 = create(
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
@@ -262,8 +268,8 @@ pub mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h4 = create(
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
@@ -271,8 +277,8 @@ pub mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         let h5 = create(
             "SourceId".to_string(),
             SCHEMA_ID.to_string(),
@@ -280,8 +286,8 @@ pub mod tests {
             "tag".to_string(),
             false,
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);

@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
+use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::protocols::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
-use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 
 use super::connection::ServiceConnections;
 
@@ -35,10 +35,7 @@ pub struct ServiceVerifier {
 }
 
 impl ServiceVerifier {
-    pub fn new(
-        profile: Arc<dyn Profile>,
-        service_connections: Arc<ServiceConnections>,
-    ) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
         Self {
             profile,
             service_connections,
@@ -73,13 +70,20 @@ impl ServiceVerifier {
     }
 
     pub async fn verify_presentation(&self, thread_id: &str, presentation: Presentation) -> AgentResult<()> {
-        let VerifierWrapper { mut verifier, connection_id } = self.verifiers.get(thread_id)?;
+        let VerifierWrapper {
+            mut verifier,
+            connection_id,
+        } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        verifier.verify_presentation(&self.profile, presentation, connection.send_message_closure(&self.profile, None).await?).await?;
-        self.verifiers.insert(
-            thread_id,
-            VerifierWrapper::new(verifier, &connection_id),
-        )?;
+        verifier
+            .verify_presentation(
+                &self.profile,
+                presentation,
+                connection.send_message_closure(&self.profile, None).await?,
+            )
+            .await?;
+        self.verifiers
+            .insert(thread_id, VerifierWrapper::new(verifier, &connection_id))?;
         Ok(())
     }
 
