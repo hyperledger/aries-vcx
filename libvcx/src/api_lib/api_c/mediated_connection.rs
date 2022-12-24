@@ -4,8 +4,8 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::vdrtools::CommandHandle;
 
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::mediated_connection;
 use crate::api_lib::api_handle::mediated_connection::*;
 use crate::api_lib::api_handle::wallet::{wallet_sign, wallet_verify};

@@ -8,7 +8,9 @@ use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use crate::api_lib::global::pool::get_main_pool_handle;
 use crate::api_lib::global::profile::{get_main_profile, indy_handles_to_profile};
+use crate::api_lib::global::wallet::get_main_wallet_handle;
 
 lazy_static! {
     static ref SCHEMA_MAP: ObjectCache<Schema> = ObjectCache::<Schema>::new("schemas-cache");
@@ -157,7 +159,9 @@ pub fn release_all() {
     SCHEMA_MAP.drain().ok();
 }
 
-pub async fn update_state(wallet_handle: WalletHandle, pool_handle: PoolHandle, schema_handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
+    let wallet_handle = get_main_wallet_handle();
+    let pool_handle = get_main_pool_handle()?.into();
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
     let profile = indy_handles_to_profile(wallet_handle, pool_handle);
     let res = schema.update_state(&profile).await?;
@@ -446,7 +450,7 @@ pub mod tests {
             assert_eq!(0, get_state(schema_handle).unwrap());
             assert_eq!(
                 0,
-                update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle)
+                update_state(schema_handle)
                     .await
                     .unwrap()
             );
@@ -464,7 +468,7 @@ pub mod tests {
 
             assert_eq!(
                 1,
-                update_state(get_main_wallet_handle(), setup.setup.pool_handle, schema_handle)
+                update_state(schema_handle)
                     .await
                     .unwrap()
             );

@@ -8,15 +8,13 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
-use aries_vcx::common::ledger::transactions::{get_service, write_endpoint_legacy};
-use aries_vcx::common::signing::unpack_message_to_string;
 use aries_vcx::global::settings;
 use aries_vcx::messages::did_doc::service_aries::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use aries_vcx::utils::constants::*;
-use aries_vcx::vdrtools::CommandHandle;
 
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
 use crate::api_lib::api_handle::ledger::{endorse_transaction, get_ledger_txn, get_verkey_from_ledger, ledger_get_service, ledger_write_endpoint_legacy, rotate_verkey};
 use crate::api_lib::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};

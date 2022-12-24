@@ -3,8 +3,7 @@ use std::ptr;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-use aries_vcx::vdrtools::CommandHandle;
-
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::agent;
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};

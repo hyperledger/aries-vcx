@@ -5,8 +5,8 @@ use libc::c_char;
 use serde_json;
 
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::CommandHandle;
 
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::{schema, vcx_settings};
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
@@ -463,26 +463,16 @@ pub extern "C" fn vcx_schema_update_state(
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
     let source_id = schema::get_source_id(schema_handle).unwrap_or_default();
-    let pool_handle = match get_main_pool_handle() {
-        Ok(handle) => handle,
-        Err(err) => return err.into(),
-    };
 
     trace!(
-        "vcx_schema_update_state(command_handle: {}, schema_handle: {}, pool_handle: {}) source_id: {}",
+        "vcx_schema_update_state(command_handle: {}, schema_handle: {}) source_id: {}",
         command_handle,
         schema_handle,
-        pool_handle,
         source_id
     );
 
-    if !schema::is_valid_handle(schema_handle) {
-        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
-                                     format!("Invalid schema handle {}", schema_handle)).into();
-    };
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match schema::update_state(get_main_wallet_handle(), pool_handle, schema_handle).await {
+        match schema::update_state(schema_handle).await {
             Ok(state) => {
                 trace!(
                     "vcx_schema_update_state(command_handle: {}, rc: {}, state: {})",
@@ -539,11 +529,6 @@ pub extern "C" fn vcx_schema_get_state(
         schema_handle,
         source_id
     );
-
-    if !schema::is_valid_handle(schema_handle) {
-        return LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle,
-                                     format!("Invalid schema handle {}", schema_handle)).into();
-    };
 
     execute(move || {
         match schema::get_state(schema_handle) {

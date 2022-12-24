@@ -37,6 +37,11 @@ pub fn reset_main_pool_handle() {
 }
 
 pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
+    if is_main_pool_open() {
+        error!("vcx_open_main_pool :: Pool connection is already open.");
+        return Err(LibvcxError::from_msg(LibvcxErrorKind::AlreadyInitialized, "Pool connection is already open."));
+    }
+
     let pool_name = config
         .pool_name
         .clone()

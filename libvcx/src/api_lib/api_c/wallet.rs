@@ -4,7 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::indy;
-use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
 use crate::api_lib;

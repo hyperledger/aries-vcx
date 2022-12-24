@@ -5,26 +5,23 @@ use libc::c_char;
 
 use aries_vcx::{indy, utils};
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
-use aries_vcx::errors::error::AriesVcxErrorKind;
 use aries_vcx::global::settings;
-use aries_vcx::global::settings::{enable_indy_mocks, init_issuer_config};
-use aries_vcx::indy::ledger::pool;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
 use aries_vcx::utils::version_constants;
-use aries_vcx::vdrtools::CommandHandle;
 
 use crate::api_lib;
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
 use crate::api_lib::api_handle::vcx_settings;
-use crate::api_lib::api_handle::vcx_settings::settings_init_issuer_config;
+use crate::api_lib::api_handle::vcx_settings::{settings_init_issuer_config, vcxcore_enable_mocks};
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
 use crate::api_lib::global::pool::{close_main_pool, is_main_pool_open, open_main_pool};
 use crate::api_lib::global::profile::get_main_profile;
+use crate::api_lib::global::state::state_vcx_shutdown;
 use crate::api_lib::global::wallet::close_main_wallet;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{get_current_error_c_json, set_current_error, set_current_error_vcx};
@@ -41,11 +38,10 @@ use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};
 #[no_mangle]
 pub extern "C" fn vcx_enable_mocks() -> u32 {
     info!("vcx_enable_mocks >>>");
-    match enable_indy_mocks() {
+    match vcxcore_enable_mocks() {
         Ok(_) => {}
         Err(_) => return LibvcxErrorKind::UnknownError.into(),
     };
-    enable_agency_mocks();
     return error::SUCCESS_ERR_CODE;
 }
 
@@ -249,10 +245,6 @@ pub extern "C" fn vcx_open_main_pool(
 ) -> u32 {
     info!("vcx_open_main_pool >>>");
     check_useful_c_str!(pool_config, LibvcxErrorKind::InvalidOption);
-    if is_main_pool_open() {
-        error!("vcx_open_main_pool :: Pool connection is already open.");
-        return LibvcxError::from_msg(LibvcxErrorKind::AlreadyInitialized, "Pool connection is already open.").into();
-    }
 
     let pool_config = match serde_json::from_str::<PoolConfig>(&pool_config) {
         Ok(pool_config) => pool_config,
@@ -304,65 +296,7 @@ pub extern "C" fn vcx_version() -> *const c_char {
 pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
-
-    match futures::executor::block_on(api_lib::global::wallet::close_main_wallet()) {
-        Ok(()) => {}
-        Err(_) => {}
-    };
-
-    match futures::executor::block_on(close_main_pool()) {
-        Ok(()) => {}
-        Err(_) => {}
-    };
-
-    crate::api_lib::api_handle::schema::release_all();
-    crate::api_lib::api_handle::mediated_connection::release_all();
-    crate::api_lib::api_handle::issuer_credential::release_all();
-    crate::api_lib::api_handle::credential_def::release_all();
-    crate::api_lib::api_handle::proof::release_all();
-    crate::api_lib::api_handle::disclosed_proof::release_all();
-    crate::api_lib::api_handle::credential::release_all();
-
-    if delete {
-        let pool_name =
-            vcx_settings::get_config_value(settings::CONFIG_POOL_NAME).unwrap_or(settings::DEFAULT_POOL_NAME.to_string());
-        let wallet_name = vcx_settings::get_config_value(settings::CONFIG_WALLET_NAME)
-            .unwrap_or(settings::DEFAULT_WALLET_NAME.to_string());
-        let wallet_type = vcx_settings::get_config_value(settings::CONFIG_WALLET_TYPE).ok();
-        let wallet_key = vcx_settings::get_config_value(settings::CONFIG_WALLET_KEY)
-            .unwrap_or(settings::UNINITIALIZED_WALLET_KEY.into());
-        let wallet_key_derivation = vcx_settings::get_config_value(settings::CONFIG_WALLET_KEY_DERIVATION)
-            .unwrap_or(settings::WALLET_KDF_DEFAULT.into());
-
-        let _res = futures::executor::block_on(close_main_wallet());
-
-        let wallet_config = WalletConfig {
-            wallet_name,
-            wallet_key,
-            wallet_key_derivation,
-            wallet_type,
-            storage_config: None,
-            storage_credentials: None,
-            rekey: None,
-            rekey_derivation_method: None,
-        };
-
-        match futures::executor::block_on(indy::wallet::delete_wallet(&wallet_config)) {
-            Ok(()) => (),
-            Err(_) => (),
-        };
-
-        match futures::executor::block_on(pool::delete(&pool_name)) {
-            Ok(()) => (),
-            Err(_) => (),
-        };
-    }
-
-    settings::reset_config_values();
-    api_lib::global::agency_client::reset_main_agency_client();
-    crate::api_lib::global::pool::reset_main_pool_handle();
-    trace!("vcx_shutdown(delete: {})", delete);
-
+    state_vcx_shutdown(delete);
     error::SUCCESS_ERR_CODE
 }
 

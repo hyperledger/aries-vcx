@@ -4,8 +4,8 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use aries_vcx::global::settings;
-use aries_vcx::vdrtools::CommandHandle;
 
+use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::{revocation_registry, revocation_registry::RevocationRegistryConfig, vcx_settings};
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::errors::error;
