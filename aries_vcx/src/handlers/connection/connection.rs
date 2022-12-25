@@ -129,7 +129,7 @@ impl Connection {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_request(
@@ -168,7 +168,7 @@ impl Connection {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_response(
@@ -191,7 +191,7 @@ impl Connection {
                 )
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_ack(self, message: A2AMessage) -> VcxResult<Self> {
@@ -204,7 +204,7 @@ impl Connection {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     // ----------------------------- MSG SENDING ------------------------------------
@@ -227,7 +227,7 @@ impl Connection {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_request(
@@ -256,7 +256,7 @@ impl Connection {
                     .await?,
             ),
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_ack(
@@ -279,7 +279,7 @@ impl Connection {
                     .await?,
             ),
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn create_invite(self, service_endpoint: String, routing_keys: Vec<String>) -> VcxResult<Self> {
@@ -295,7 +295,7 @@ impl Connection {
                 ));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_message_closure(

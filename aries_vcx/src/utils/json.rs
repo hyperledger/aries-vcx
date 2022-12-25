@@ -16,7 +16,7 @@ pub(crate) trait TryGetIndex {
 impl<'a> TryGetIndex for &'a Value {
     type Val = &'a Value;
     fn try_get(&self, index: &str) -> Result<&'a Value, AriesVcxError> {
-        self.get(index).ok_or(AriesVcxError::from_msg(
+        self.get(index).ok_or_else(|| AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
             format!("Could not index '{}' in Value payload: {:?}", index, self),
         ))

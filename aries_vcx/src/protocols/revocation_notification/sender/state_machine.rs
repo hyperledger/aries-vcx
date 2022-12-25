@@ -90,7 +90,7 @@ impl RevocationNotificationSenderSM {
                 ));
             }
         };
-        Ok(Self { state, ..self })
+        Ok(Self { state })
     }
 
     pub fn handle_ack(self, ack: RevocationAck) -> VcxResult<Self> {
@@ -106,7 +106,7 @@ impl RevocationNotificationSenderSM {
                 ));
             }
         };
-        Ok(Self { state, ..self })
+        Ok(Self { state })
     }
 }
 

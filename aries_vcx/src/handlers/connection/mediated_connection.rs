@@ -381,7 +381,7 @@ impl MediatedConnection {
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                
+
                 self.update_state_with_message(&profile, agency_client, None).await
             } else {
                 Ok(())
@@ -399,12 +399,9 @@ impl MediatedConnection {
             return Ok(());
         }
         let messages = self.get_messages_noauth(agency_client).await?;
-        match self.find_message_to_handle(messages) {
-            Some((uid, message)) => {
-                self.handle_message(message, profile).await?;
-                self.update_message_status(&uid, agency_client).await?;
-            }
-            None => {}
+        if let Some((uid, message)) = self.find_message_to_handle(messages) {
+            self.handle_message(message, profile).await?;
+            self.update_message_status(&uid, agency_client).await?;
         };
         Ok(())
     }
@@ -1053,14 +1050,14 @@ impl<'de> Deserialize<'de> for MediatedConnection {
     }
 }
 
-impl Into<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String)> for MediatedConnection {
-    fn into(self) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
+impl From<MediatedConnection> for (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
+    fn from(s: MediatedConnection) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
         (
-            self.state_object(),
-            self.pairwise_info().to_owned(),
-            self.cloud_agent_info(),
-            self.source_id(),
-            self.get_thread_id(),
+            s.state_object(),
+            s.pairwise_info().to_owned(),
+            s.cloud_agent_info(),
+            s.source_id(),
+            s.get_thread_id(),
         )
     }
 }

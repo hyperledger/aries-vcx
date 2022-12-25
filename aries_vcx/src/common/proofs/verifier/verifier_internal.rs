@@ -97,7 +97,7 @@ pub fn validate_proof_revealed_attributes(proof_json: &str) -> VcxResult<()> {
 
 pub async fn build_cred_defs_json_verifier(
     profile: &Arc<dyn Profile>,
-    credential_data: &Vec<CredInfoVerifier>,
+    credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building credential_def_json for proof validation");
     let ledger = Arc::clone(profile).inject_ledger();
@@ -124,7 +124,7 @@ pub async fn build_cred_defs_json_verifier(
 
 pub async fn build_schemas_json_verifier(
     profile: &Arc<dyn Profile>,
-    credential_data: &Vec<CredInfoVerifier>,
+    credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building schemas json for proof validation");
 
@@ -153,7 +153,7 @@ pub async fn build_schemas_json_verifier(
 
 pub async fn build_rev_reg_defs_json(
     profile: &Arc<dyn Profile>,
-    credential_data: &Vec<CredInfoVerifier>,
+    credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building rev_reg_def_json for proof validation");
 
@@ -181,7 +181,7 @@ pub async fn build_rev_reg_defs_json(
 
 pub async fn build_rev_reg_json(
     profile: &Arc<dyn Profile>,
-    credential_data: &Vec<CredInfoVerifier>,
+    credential_data: &[CredInfoVerifier],
 ) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 

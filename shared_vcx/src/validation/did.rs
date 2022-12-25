@@ -23,10 +23,10 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
                 format!("Invalid DID length, expected 16 bytes, decoded {} bytes", x.len()),
             )),
             Err(err) => {
-                return Err(SharedVcxError::from_msg(
+                Err(SharedVcxError::from_msg(
                     SharedVcxErrorKind::NotBase58,
                     format!("DID is not valid base58, details: {}", err),
-                ));
+                ))
             }
         }
     }

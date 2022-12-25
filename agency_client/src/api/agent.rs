@@ -61,7 +61,7 @@ impl AgencyClient {
 
         match response.remove(0) {
             Client2AgencyMessage::CreateKeyResponse(res) => Ok((res.for_did, res.for_verkey)),
-            res @ _ => Err(AgencyClientError::from_msg(
+            res => Err(AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidHttpResponse,
                 format!(
                     "Expected to response of Client2AgencyMessage::CreateKeyResponse, but received: {:?}",

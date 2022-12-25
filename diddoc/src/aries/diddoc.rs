@@ -61,7 +61,7 @@ impl AriesDidDoc {
 
             self.authentication.push(Authentication {
                 type_: String::from(KEY_AUTHENTICATION_TYPE),
-                public_key: key_reference.clone(),
+                public_key: key_reference,
             });
 
             self.service.get_mut(0).map(|service| {
@@ -160,7 +160,7 @@ impl AriesDidDoc {
             Some(service) => service,
             None => return Vec::new(),
         };
-        service.routing_keys.iter().cloned().collect()
+        service.routing_keys.to_vec()
     }
 
     pub fn get_endpoint(&self) -> String {

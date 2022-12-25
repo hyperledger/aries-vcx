@@ -235,11 +235,8 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
-                IssuerFullState::Initial(_) => match message {
-                    A2AMessage::CredentialProposal(credential_proposal) => {
-                        return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
-                    }
-                    _ => {}
+                IssuerFullState::Initial(_) => if let A2AMessage::CredentialProposal(credential_proposal) = message {
+                    return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
                 },
                 IssuerFullState::OfferSent(_) => match message {
                     A2AMessage::CredentialRequest(credential) => {
@@ -528,10 +525,7 @@ impl IssuerSM {
     }
 
     pub fn is_terminal_state(&self) -> bool {
-        match self.state {
-            IssuerFullState::Finished(_) => true,
-            _ => false,
-        }
+        matches!(self.state, IssuerFullState::Finished(_))
     }
 
     pub fn thread_id(&self) -> VcxResult<String> {

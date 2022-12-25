@@ -2,9 +2,18 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::concepts::ack::Ack;
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::issuance::credential::Credential;
+use messages::protocols::issuance::credential_ack::CredentialAck;
+use messages::protocols::issuance::credential_offer::CredentialOffer;
+use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
+use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages::status::Status;
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
+use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
 use crate::protocols::common::build_problem_report_msg;
@@ -16,15 +25,6 @@ use crate::protocols::issuance::holder::states::proposal_sent::ProposalSentState
 use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::ack::Ack;
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::issuance::credential::Credential;
-use messages::protocols::issuance::credential_ack::CredentialAck;
-use messages::protocols::issuance::credential_offer::CredentialOffer;
-use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
-use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
@@ -135,13 +135,10 @@ impl HolderSM {
         );
         for (uid, message) in messages {
             match self.state {
-                HolderFullState::ProposalSent(_) => match message {
-                    A2AMessage::CredentialOffer(offer) => {
-                        if offer.from_thread(&self.thread_id) {
-                            return Some((uid, A2AMessage::CredentialOffer(offer)));
-                        }
+                HolderFullState::ProposalSent(_) => if let A2AMessage::CredentialOffer(offer) = message {
+                    if offer.from_thread(&self.thread_id) {
+                        return Some((uid, A2AMessage::CredentialOffer(offer)));
                     }
-                    _ => {}
                 },
                 HolderFullState::RequestSent(_) => match message {
                     A2AMessage::Credential(credential) => {
@@ -353,10 +350,7 @@ impl HolderSM {
     }
 
     pub fn is_terminal_state(&self) -> bool {
-        match self.state {
-            HolderFullState::Finished(_) => true,
-            _ => false,
-        }
+        matches!(self.state, HolderFullState::Finished(_))
     }
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
@@ -624,15 +618,16 @@ async fn _make_credential_request(
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::common::test_utils::mock_profile;
-    use crate::test::source_id;
-    use crate::utils::constants;
-    use crate::utils::devsetup::SetupMocks;
     use messages::protocols::issuance::credential::test_utils::_credential;
     use messages::protocols::issuance::credential_offer::test_utils::_credential_offer;
     use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
     use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
     use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
+
+    use crate::common::test_utils::mock_profile;
+    use crate::test::source_id;
+    use crate::utils::constants;
+    use crate::utils::devsetup::SetupMocks;
 
     use super::*;
 
@@ -694,9 +689,10 @@ mod test {
     }
 
     mod build_messages {
-        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
-        use crate::utils::devsetup::{was_in_past, SetupMocks};
         use messages::a2a::MessageId;
+
+        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
+        use crate::utils::devsetup::{SetupMocks, was_in_past};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -708,9 +704,9 @@ mod test {
             assert_eq!(msg.thread.unwrap().thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100)
+                chrono::Duration::milliseconds(100),
             )
-            .unwrap());
+                .unwrap());
         }
 
         #[tokio::test]
@@ -724,9 +720,9 @@ mod test {
             assert_eq!(msg.thread.thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100)
+                chrono::Duration::milliseconds(100),
             )
-            .unwrap());
+                .unwrap());
         }
     }
 

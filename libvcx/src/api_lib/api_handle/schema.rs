@@ -108,7 +108,7 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
     );
     let profile = get_main_profile()?;
     let schema = Schema::create_from_ledger_json(&profile, &source_id, &schema_id).await?;
-    let schema_json = schema.to_string()?;
+    let schema_json = schema.to_string_versioned()?;
 
     let handle = SCHEMA_MAP
         .add(schema)
@@ -122,7 +122,7 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| s.to_string().map_err(|err| err.into()))
+    SCHEMA_MAP.get(handle, |s| s.to_string_versioned().map_err(|err| err.into()))
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
@@ -134,7 +134,7 @@ pub fn get_schema_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
-    let schema: Schema = Schema::from_str(schema_data)?;
+    let schema: Schema = Schema::from_string_versioned(schema_data)?;
     SCHEMA_MAP.add(schema)
 }
 
@@ -218,7 +218,7 @@ pub mod tests {
     }
 
     fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
-        let schema: Schema = Schema::from_str(schema_json).unwrap();
+        let schema: Schema = Schema::from_string_versioned(schema_json).unwrap();
         assert_eq!(schema.schema_id, schema_id.to_string());
         assert_eq!(schema.data.clone().sort(), vec!(data).sort());
         assert!(schema_handle > 0);

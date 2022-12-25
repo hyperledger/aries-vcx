@@ -63,17 +63,6 @@ pub struct RestoreWalletConfigs {
     pub wallet_key_derivation: Option<String>,
 }
 
-impl RestoreWalletConfigs {
-    pub fn from_str(data: &str) -> VcxResult<RestoreWalletConfigs> {
-        serde_json::from_str(data).map_err(|err| {
-            AriesVcxError::from_msg(
-                AriesVcxErrorKind::InvalidJson,
-                format!("Cannot deserialize RestoreWalletConfigs: {:?}", err),
-            )
-        })
-    }
-}
-
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
 

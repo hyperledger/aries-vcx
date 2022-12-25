@@ -3,19 +3,10 @@ use std::sync::Arc;
 use crate::errors::error::VcxResult;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PairwiseInfo {
     pub pw_did: String,
     pub pw_vk: String,
-}
-
-impl Default for PairwiseInfo {
-    fn default() -> PairwiseInfo {
-        PairwiseInfo {
-            pw_did: String::new(),
-            pw_vk: String::new(),
-        }
-    }
 }
 
 impl PairwiseInfo {

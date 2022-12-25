@@ -103,17 +103,11 @@ impl SmConnectionInvitee {
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        match self.state {
-            InviteeFullState::Initial(_) => true,
-            _ => false,
-        }
+        matches!(self.state, InviteeFullState::Initial(_))
     }
 
     pub fn is_in_final_state(&self) -> bool {
-        match self.state {
-            InviteeFullState::Completed(_) => true,
-            _ => false,
-        }
+        matches!(self.state, InviteeFullState::Completed(_))
     }
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
@@ -189,10 +183,8 @@ impl SmConnectionInvitee {
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
-            InviteeFullState::Requested(_) => match message {
-                A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_) => true,
-                _ => false,
-            },
+            InviteeFullState::Requested(_) =>
+                matches!(message, A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_)),
             _ => false,
         }
     }

@@ -133,9 +133,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         Some(attrs) => attrs.clone(),
         None => Map::new(),
     };
-    match requested_predicates {
-        Some(attrs) => fetch_attrs.extend(attrs),
-        None => (),
+    if let Some(attrs) =  requested_predicates {
+        fetch_attrs.extend(attrs)
     }
     if !fetch_attrs.is_empty() {
         let search_handle = Locator::instance()
