@@ -96,10 +96,7 @@ jobs:
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Verify clippy warnings"
         run: |
-          cd aries_vcx && cargo clippy -- -Aclippy::or_fun_call \
-          -Aclippy::module_inception -Aclippy::derive_partial_eq_without_eq \
-          -Aclippy::new_without_default -Aclippy::inherent_to_string \
-          -Aclippy::large_enum_variant
+          cd aries_vcx && cargo clippy
 
   clippy-libvcx:
     runs-on: ubuntu-20.04
@@ -117,12 +114,7 @@ jobs:
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Verify clippy warnings"
         run: |
-          cd libvcx && cargo clippy -- -Aclippy::or_fun_call \
-          -Aclippy::module_inception -Aclippy::derive_partial_eq_without_eq \
-          -Aclippy::new_without_default -Aclippy::inherent_to_string \
-          -Aclippy::large_enum_variant -Aclippy::missing_safety_doc \
-          -Aclippy::type_complexity -Aclippy::await_holding_lock \
-          -Aclippy::len_without_is_empty -Aclippy::not_unsafe_ptr_arg_deref
+          cd libvcx && cargo clippy
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
