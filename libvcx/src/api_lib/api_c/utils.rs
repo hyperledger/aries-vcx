@@ -10,7 +10,7 @@ use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::global::settings;
 use aries_vcx::messages::protocols::connection::did::Did;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+
 use aries_vcx::utils::constants::*;
 
 use crate::api_lib::api_c::types::CommandHandle;
@@ -28,8 +28,8 @@ use crate::api_lib::api_handle::wallet::{
 use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
-use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::profile::{get_main_profile, get_main_wallet};
+
+
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;

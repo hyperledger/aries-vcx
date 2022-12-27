@@ -4,25 +4,25 @@ use futures::future::{BoxFuture, FutureExt};
 use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
-use aries_vcx::global::settings;
-use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet::{IssuerConfig, WalletConfig};
-use aries_vcx::utils::version_constants;
-use aries_vcx::{indy, utils};
 
-use crate::api_lib;
+use aries_vcx::indy::ledger::pool::PoolConfig;
+use aries_vcx::indy::wallet::{IssuerConfig};
+use aries_vcx::utils::version_constants;
+
+
+
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
 use crate::api_lib::api_handle::utils::agency_update_agent_webhook;
-use crate::api_lib::api_handle::vcx_settings;
+
 use crate::api_lib::api_handle::vcx_settings::{settings_init_issuer_config, vcxcore_enable_mocks};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
-use crate::api_lib::global::pool::{close_main_pool, is_main_pool_open, open_main_pool};
-use crate::api_lib::global::profile::get_main_profile;
+use crate::api_lib::global::pool::{open_main_pool};
+
 use crate::api_lib::global::state::state_vcx_shutdown;
-use crate::api_lib::global::wallet::close_main_wallet;
+
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{get_current_error_c_json, set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::{execute, execute_async, init_threadpool};

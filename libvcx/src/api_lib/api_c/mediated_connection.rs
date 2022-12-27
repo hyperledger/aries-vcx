@@ -11,7 +11,7 @@ use crate::api_lib::api_handle::mediated_connection::*;
 use crate::api_lib::api_handle::wallet::{wallet_sign, wallet_verify};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
-use crate::api_lib::global::profile::get_main_wallet;
+
 use crate::api_lib::utils;
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};

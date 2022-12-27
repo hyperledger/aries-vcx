@@ -1,4 +1,4 @@
-use std::sync::Arc;
+
 
 use aries_vcx::common::ledger::transactions::{get_service, write_endpoint_legacy};
 use aries_vcx::core::profile::profile::Profile;

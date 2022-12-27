@@ -4,7 +4,7 @@ use std::sync::Arc;
 use serde_json;
 
 use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
+
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
