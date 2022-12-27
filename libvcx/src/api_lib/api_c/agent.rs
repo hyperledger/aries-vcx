@@ -72,7 +72,7 @@ pub extern "C" fn vcx_public_agent_download_connection_requests(
         check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };

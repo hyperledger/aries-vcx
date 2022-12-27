@@ -227,7 +227,7 @@ pub extern "C" fn vcx_issuer_build_credential_offer_msg_v2(
     check_useful_c_str!(credential_data, LibvcxErrorKind::InvalidOption);
     let comment = if !comment.is_null() {
         check_useful_opt_c_str!(comment, LibvcxErrorKind::InvalidOption);
-        comment.to_owned()
+        comment
     } else {
         None
     };

@@ -141,7 +141,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
                     error::SUCCESS_ERR_CODE,
                     conf
                 );
-                let conf = CStringUtils::string_to_cstring(conf.to_string());
+                let conf = CStringUtils::string_to_cstring(conf);
                 cb(command_handle, 0, conf.as_ptr());
             }
         }

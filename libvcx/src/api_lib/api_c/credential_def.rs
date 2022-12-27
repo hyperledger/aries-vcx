@@ -32,7 +32,7 @@ pub extern "C" fn vcx_credentialdef_create_v2(
 
     let issuer_did: String = if !issuer_did.is_null() {
         check_useful_c_str!(issuer_did, LibvcxErrorKind::InvalidOption);
-        issuer_did.to_owned()
+        issuer_did
     } else {
         match vcx_settings::get_config_value(settings::CONFIG_INSTITUTION_DID) {
             Ok(did) => did,

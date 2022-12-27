@@ -188,7 +188,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(conn_handles, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = conn_handles.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        v.to_owned()
+        v
     } else {
         return LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, "List of connection handles can't be null").into();
     };
@@ -202,7 +202,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(message_statuses, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = message_statuses.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };
@@ -218,7 +218,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };

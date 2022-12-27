@@ -456,7 +456,7 @@ pub extern "C" fn vcx_connection_connect(
 
     let _options = if !connection_options.is_null() {
         check_useful_opt_c_str!(connection_options, LibvcxErrorKind::InvalidOption);
-        connection_options.to_owned()
+        connection_options
     } else {
         None
     };
@@ -1575,7 +1575,7 @@ pub extern "C" fn vcx_connection_messages_download(
         check_useful_c_str!(message_statuses, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = message_statuses.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };
@@ -1595,7 +1595,7 @@ pub extern "C" fn vcx_connection_messages_download(
         check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };
@@ -1673,7 +1673,6 @@ mod tests {
         build_test_connection_inviter_invited, build_test_connection_inviter_null,
         build_test_connection_inviter_requested,
     };
-    use crate::api_lib::errors::error;
     use crate::api_lib::errors::error::{LibvcxErrorKind, SUCCESS_ERR_CODE};
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;

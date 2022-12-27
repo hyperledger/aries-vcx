@@ -138,7 +138,7 @@ where
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
-            Some(m) => match m.lock() {
+            Some(m) => match m.get_mut() {
                 Ok(mut obj) => closure(obj.deref_mut()),
                 Err(_) => Err(LibvcxError::from_msg(
                     LibvcxErrorKind::Common(10),
@@ -161,7 +161,7 @@ where
     {
         let mut store = self._lock_store_write()?;
         match store.get_mut(&handle) {
-            Some(m) => match m.lock() {
+            Some(m) => match m.get_mut() {
                 Ok(mut obj) => closure(obj.deref_mut(), []).await,
                 Err(_) => Err(LibvcxError::from_msg(
                     LibvcxErrorKind::Common(10),
@@ -198,9 +198,8 @@ where
     pub fn insert(&self, handle: u32, obj: T) -> LibvcxResult<()> {
         let mut store = self._lock_store_write()?;
 
-        match store.insert(handle, Mutex::new(obj)) {
-            _ => Ok(()),
-        }
+        store.insert(handle, Mutex::new(obj));
+        Ok(())
     }
 
     pub fn release(&self, handle: u32) -> LibvcxResult<()> {
@@ -219,7 +218,8 @@ where
 
     pub fn drain(&self) -> LibvcxResult<()> {
         let mut store = self._lock_store_write()?;
-        Ok(store.clear())
+        store.clear();
+        Ok(())
     }
 
     pub fn len(&self) -> LibvcxResult<usize> {

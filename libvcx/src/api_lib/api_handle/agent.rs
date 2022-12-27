@@ -14,8 +14,7 @@ pub async fn is_valid_handle(handle: u32) -> bool {
 
 fn store_public_agent(agent: PublicAgent) -> LibvcxResult<u32> {
     PUBLIC_AGENT_MAP
-        .add(agent)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreatePublicAgent, e.to_string())))
+        .add(agent).map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreatePublicAgent, e.to_string()))
 }
 
 pub async fn create_public_agent(source_id: &str, institution_did: &str) -> LibvcxResult<u32> {
@@ -33,7 +32,7 @@ pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>
     trace!("download_connection_requests >>> handle: {}, uids: {:?}", handle, uids);
     let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
     let requests = agent
-        .download_connection_requests(&get_main_agency_client().unwrap(), uids.map(|v| v.clone()))
+        .download_connection_requests(&get_main_agency_client().unwrap(), uids.cloned())
         .await?;
     let requests = serde_json::to_string(&requests).map_err(|err| {
         LibvcxError::from_msg(
@@ -77,11 +76,10 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(agent_data: &str) -> LibvcxResult<u32> {
     let agent = PublicAgent::from_string(agent_data)?;
-    PUBLIC_AGENT_MAP.add(agent).map_err(|err| err.into())
+    PUBLIC_AGENT_MAP.add(agent)
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PUBLIC_AGENT_MAP
-        .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
+        .release(handle).map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string()))
 }

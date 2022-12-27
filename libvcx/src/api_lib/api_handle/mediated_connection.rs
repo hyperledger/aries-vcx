@@ -19,6 +19,7 @@ use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::agency_client::get_main_agency_client;
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
+
 lazy_static! {
     pub static ref CONNECTION_MAP: ObjectCache<MediatedConnection> =
         ObjectCache::<MediatedConnection>::new("connections-cache");
@@ -47,8 +48,7 @@ pub fn get_agent_did(handle: u32) -> LibvcxResult<String> {
                 LibvcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
-            .agent_did
-            .to_string())
+            .agent_did)
     })
 }
 
@@ -60,8 +60,7 @@ pub fn get_agent_verkey(handle: u32) -> LibvcxResult<String> {
                 LibvcxErrorKind::NoAgentInformation,
                 "Missing cloud agent info",
             ))?
-            .agent_vk
-            .clone())
+            .agent_vk)
     })
 }
 
@@ -101,7 +100,7 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
 pub fn store_connection(connection: MediatedConnection) -> LibvcxResult<u32> {
     CONNECTION_MAP
         .add(connection)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateConnection, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateConnection, e.to_string()))
 }
 
 pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
@@ -112,13 +111,13 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
         &get_main_agency_client().unwrap(),
         true,
     )
-    .await?;
+        .await?;
     store_connection(connection)
 }
 
 pub async fn create_connection_with_invite(source_id: &str, details: &str) -> LibvcxResult<u32> {
     debug!("create connection {} with invite {}", source_id, details);
-    if let Some(invitation) = serde_json::from_str::<InvitationV3>(details).ok() {
+    if let Ok(invitation) = serde_json::from_str::<InvitationV3>(details) {
         let profile = get_main_profile()?;
         let ddo = into_did_doc(&profile, &invitation).await?;
         let connection = MediatedConnection::create_with_invite(
@@ -129,14 +128,13 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
             ddo,
             true,
         )
-        .await?;
+            .await?;
         store_connection(connection)
     } else {
         Err(LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
             "Used invite has invalid structure",
         ))
-        // TODO: Specific error type
     }
 }
 
@@ -155,7 +153,7 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResu
         agent.pairwise_info(),
         &get_main_agency_client().unwrap(),
     )
-    .await?;
+        .await?;
     store_connection(connection)
 }
 
@@ -289,12 +287,11 @@ pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    CONNECTION_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
+    CONNECTION_MAP.release(handle).map_err(|e|
+        LibvcxError::from_msg(
             LibvcxErrorKind::InvalidConnectionHandle,
             e.to_string(),
         ))
-    })
 }
 
 pub fn release_all() {
@@ -316,12 +313,11 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
                     "Invitation is not available for the connection.",
                 ))
         })
-        .or_else(|e| {
-            Err(LibvcxError::from_msg(
+        .map_err(|e|
+            LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidConnectionHandle,
                 e.to_string(),
             ))
-        })
 }
 
 pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessage>> {

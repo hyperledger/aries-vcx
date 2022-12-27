@@ -794,7 +794,6 @@ mod tests {
     use std::ptr;
     use std::str;
 
-    use aries_vcx::errors::error::AriesVcxErrorKind;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::constants::*;
     use aries_vcx::utils::devsetup::*;

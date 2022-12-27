@@ -52,7 +52,7 @@ pub async fn create_and_publish_schema(
 
     SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -95,7 +95,7 @@ pub async fn prepare_schema_for_endorser(
 
     let schema_handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
 
     Ok((schema_handle, schema_request))
 }
@@ -112,7 +112,7 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
 
     let handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
 
     Ok((handle, schema_json))
 }
@@ -126,11 +126,11 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_source_id().to_string()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_source_id()))
 }
 
 pub fn get_schema_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id().to_string()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id()))
 }
 
 pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
@@ -139,12 +139,11 @@ pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    SCHEMA_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
+     SCHEMA_MAP.release(handle).map_err(|e|
+        LibvcxError::from_msg(
             LibvcxErrorKind::InvalidSchemaHandle,
             e.to_string(),
         ))
-    })
 }
 
 pub fn release_all() {
@@ -153,7 +152,7 @@ pub fn release_all() {
 
 pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
     let wallet_handle = get_main_wallet_handle();
-    let pool_handle = get_main_pool_handle()?.into();
+    let pool_handle = get_main_pool_handle()?;
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
     let profile = indy_handles_to_profile(wallet_handle, pool_handle);
     let res = schema.update_state(&profile).await?;

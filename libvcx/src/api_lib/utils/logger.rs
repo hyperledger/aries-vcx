@@ -227,7 +227,7 @@ impl LibvcxDefaultLogger {
                 EnvLoggerBuilder::new()
                     .format(formatter)
                     .filter(None, LevelFilter::Off)
-                    .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or("warn"))
+                    .parse_filters(pattern.as_deref().unwrap_or("warn"))
                     .try_init()
                     .map_err(|err| {
                         LibvcxError::from_msg(LibvcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
@@ -240,10 +240,8 @@ impl LibvcxDefaultLogger {
 
     extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {
         let level = get_level(level);
-        let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
-
+        let target =  CStringUtils::c_str_to_str(target).unwrap().unwrap();
         let metadata: Metadata = Metadata::builder().level(level).target(target).build();
-
         log::logger().enabled(&metadata)
     }
 

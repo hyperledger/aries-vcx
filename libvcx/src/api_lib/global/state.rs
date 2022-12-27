@@ -10,15 +10,8 @@ pub fn state_vcx_shutdown(delete: bool) {
     info!("vcx_shutdown >>>");
     trace!("vcx_shutdown(delete: {})", delete);
 
-    match futures::executor::block_on(close_main_wallet()) {
-        Ok(()) => {}
-        Err(_) => {}
-    };
-
-    match futures::executor::block_on(close_main_pool()) {
-        Ok(()) => {}
-        Err(_) => {}
-    };
+    if let Ok(()) = futures::executor::block_on(close_main_wallet()) {}
+    if let Ok(()) = futures::executor::block_on(close_main_pool()) {}
 
     crate::api_lib::api_handle::schema::release_all();
     crate::api_lib::api_handle::mediated_connection::release_all();
@@ -52,15 +45,8 @@ pub fn state_vcx_shutdown(delete: bool) {
             rekey_derivation_method: None,
         };
 
-        match futures::executor::block_on(delete_wallet(&wallet_config)) {
-            Ok(()) => (),
-            Err(_) => (),
-        };
-
-        match futures::executor::block_on(pool::delete(&pool_name)) {
-            Ok(()) => (),
-            Err(_) => (),
-        };
+        if let Ok(()) = futures::executor::block_on(delete_wallet(&wallet_config)) {}
+        if let Ok(()) = futures::executor::block_on(pool::delete(&pool_name)) {}
     }
 
     settings::reset_config_values();

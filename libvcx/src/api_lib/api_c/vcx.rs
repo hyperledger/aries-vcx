@@ -42,7 +42,7 @@ pub extern "C" fn vcx_enable_mocks() -> u32 {
         Ok(_) => {}
         Err(_) => return LibvcxErrorKind::UnknownError.into(),
     };
-    return error::SUCCESS_ERR_CODE;
+    error::SUCCESS_ERR_CODE
 }
 
 /// Initializes threadpool.
@@ -480,6 +480,7 @@ pub extern "C" fn vcx_get_current_error(error_json_p: *mut *const c_char) {
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
     use aries_vcx::agency_client::testing::mocking::enable_agency_mocks;
+    use aries_vcx::global::settings;
 
     use crate::api_lib::api_c::vcx::vcx_open_main_pool;
     use crate::api_lib::api_c::wallet::{
@@ -693,9 +694,12 @@ mod tests {
         PoolConfig,
     };
     use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
+    use aries_vcx::utils::constants::GENESIS_PATH;
     use aries_vcx::utils::devsetup::{
         SetupDefaults, SetupEmpty, SetupMocks, SetupPoolConfig, TempFile, TestSetupCreateWallet,
     };
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+    use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
 
     use crate::api_lib;
@@ -716,7 +720,7 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
     use crate::api_lib::global::pool::reset_main_pool_handle;
-    use crate::api_lib::global::wallet::get_main_wallet_handle;
+    use crate::api_lib::global::wallet::{close_main_wallet, get_main_wallet_handle};
     use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use crate::api_lib::utils::current_error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
@@ -731,7 +735,7 @@ mod tests {
         let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
 
         // Write invalid genesis.txn
-        let _genesis_transactions = TempFile::create_with_data(utils::constants::GENESIS_PATH, "{}");
+        let _genesis_transactions = TempFile::create_with_data(GENESIS_PATH, "{}");
 
         // FIXME: actually use result
         let _ = settings::set_config_value(settings::CONFIG_GENESIS_PATH, &_genesis_transactions.path);
@@ -970,10 +974,10 @@ mod tests {
         .await
         .unwrap();
         let disclosed_proof =
-            disclosed_proof::create_proof("id", utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION)
+            disclosed_proof::create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION)
                 .unwrap();
         let credential =
-            credential::credential_create_with_offer("name", utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER)
+            credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER)
                 .unwrap();
 
         vcx_shutdown(true);
