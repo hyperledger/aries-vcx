@@ -275,12 +275,9 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle).map_err(|e|
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidCredentialHandle,
-            e.to_string(),
-        )
-    )
+    HANDLE_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -305,11 +302,7 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |credential| Ok(credential.get_source_id()))
-        .map_err(|e|
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidCredentialHandle,
-                e.to_string(),
-            ))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle, e.to_string()))
 }
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {

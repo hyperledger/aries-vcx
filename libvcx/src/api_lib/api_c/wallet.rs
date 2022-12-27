@@ -3,7 +3,6 @@ use std::ptr::null;
 use futures::future::BoxFuture;
 use libc::c_char;
 
-
 use aries_vcx::indy::wallet::{RestoreWalletConfigs, WalletConfig};
 use aries_vcx::vdrtools::{CommandHandle, SearchHandle, WalletHandle};
 
@@ -17,8 +16,8 @@ use crate::api_lib::api_handle::wallet::{
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
+use crate::api_lib::global::wallet::export_main_wallet;
 use crate::api_lib::global::wallet::open_as_main_wallet;
-use crate::api_lib::global::wallet::{export_main_wallet};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;

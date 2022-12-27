@@ -67,11 +67,9 @@ pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.release(handle).map_err(|e|
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidIssuerCredentialHandle,
-            e.to_string(),
-        ))
+    ISSUER_CREDENTIAL_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string()))
 }
 
 pub fn release_all() {

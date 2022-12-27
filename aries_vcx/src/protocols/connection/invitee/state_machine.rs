@@ -183,8 +183,10 @@ impl SmConnectionInvitee {
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
-            InviteeFullState::Requested(_) =>
-                matches!(message, A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_)),
+            InviteeFullState::Requested(_) => matches!(
+                message,
+                A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_)
+            ),
             _ => false,
         }
     }

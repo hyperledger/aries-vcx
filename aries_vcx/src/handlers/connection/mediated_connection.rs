@@ -381,7 +381,6 @@ impl MediatedConnection {
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-
                 self.update_state_with_message(&profile, agency_client, None).await
             } else {
                 Ok(())

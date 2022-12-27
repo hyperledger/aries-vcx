@@ -235,9 +235,11 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
-                IssuerFullState::Initial(_) => if let A2AMessage::CredentialProposal(credential_proposal) = message {
-                    return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
-                },
+                IssuerFullState::Initial(_) => {
+                    if let A2AMessage::CredentialProposal(credential_proposal) = message {
+                        return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
+                    }
+                }
                 IssuerFullState::OfferSent(_) => match message {
                     A2AMessage::CredentialRequest(credential) => {
                         if credential.from_thread(&self.thread_id) {

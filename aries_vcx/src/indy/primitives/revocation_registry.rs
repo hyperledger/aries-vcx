@@ -186,8 +186,7 @@ pub async fn publish_local_revocations(
                 AriesVcxErrorKind::RevDeltaFailedToClear,
                 format!(
                     "Failed to clear revocation delta storage for rev_reg_id: {}, error: {}",
-                    rev_reg_id,
-                    err
+                    rev_reg_id, err
                 ),
             )),
         }

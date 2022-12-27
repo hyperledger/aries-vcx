@@ -132,9 +132,7 @@ impl VerifierSM {
                     None => proposal.id.0.clone(),
                 };
                 (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                        proposal,
-                    )),
+                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
                     thread_id,
                 )
             }

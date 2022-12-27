@@ -1,6 +1,5 @@
 use libc::c_char;
 
-
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, SUCCESS_ERR_CODE};
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;

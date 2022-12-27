@@ -179,10 +179,7 @@ pub async fn build_rev_reg_defs_json(
     Ok(rev_reg_defs_json.to_string())
 }
 
-pub async fn build_rev_reg_json(
-    profile: &Arc<dyn Profile>,
-    credential_data: &[CredInfoVerifier],
-) -> VcxResult<String> {
+pub async fn build_rev_reg_json(profile: &Arc<dyn Profile>, credential_data: &[CredInfoVerifier]) -> VcxResult<String> {
     debug!("building rev_reg_json for proof validation");
 
     let ledger = Arc::clone(profile).inject_ledger();

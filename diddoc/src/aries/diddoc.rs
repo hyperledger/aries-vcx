@@ -483,9 +483,9 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use serde_json::json;
     use crate::aries::diddoc::test_utils::*;
     use crate::aries::diddoc::AriesDidDoc;
+    use serde_json::json;
 
     #[test]
     fn test_did_doc_build_works() {

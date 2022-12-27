@@ -55,11 +55,7 @@ pub async fn create_proof_with_msgid(
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .map_err(|e|
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidDisclosedProofHandle,
-                e.to_string(),
-            ))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
@@ -130,11 +126,9 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle).map_err(|e|
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidDisclosedProofHandle,
-            e.to_string(),
-        ))
+    HANDLE_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -283,12 +277,9 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
-    HANDLE_MAP.get(handle, |proof| Ok(proof.get_source_id()))
-        .map_err(|e|
-            LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidProofHandle,
-                e.to_string(),
-            ))
+    HANDLE_MAP
+        .get(handle, |proof| Ok(proof.get_source_id()))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle, e.to_string()))
 }
 
 pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {

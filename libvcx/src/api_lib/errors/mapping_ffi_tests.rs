@@ -1,6 +1,5 @@
 // extern crate num_traits;
 
-
 use crate::api_lib::errors::error::LibvcxErrorKind;
 use num_traits::PrimInt;
 

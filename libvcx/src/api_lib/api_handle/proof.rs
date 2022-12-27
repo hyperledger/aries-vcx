@@ -94,11 +94,9 @@ pub async fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    PROOF_MAP.release(handle).map_err(|e|
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidProofHandle,
-            e.to_string(),
-        ))
+    PROOF_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle, e.to_string()))
 }
 
 pub fn release_all() {

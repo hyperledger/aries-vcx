@@ -240,7 +240,7 @@ impl LibvcxDefaultLogger {
 
     extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {
         let level = get_level(level);
-        let target =  CStringUtils::c_str_to_str(target).unwrap().unwrap();
+        let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
         let metadata: Metadata = Metadata::builder().level(level).target(target).build();
         log::logger().enabled(&metadata)
     }

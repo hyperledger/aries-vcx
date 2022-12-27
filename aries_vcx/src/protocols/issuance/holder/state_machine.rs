@@ -135,11 +135,13 @@ impl HolderSM {
         );
         for (uid, message) in messages {
             match self.state {
-                HolderFullState::ProposalSent(_) => if let A2AMessage::CredentialOffer(offer) = message {
-                    if offer.from_thread(&self.thread_id) {
-                        return Some((uid, A2AMessage::CredentialOffer(offer)));
+                HolderFullState::ProposalSent(_) => {
+                    if let A2AMessage::CredentialOffer(offer) = message {
+                        if offer.from_thread(&self.thread_id) {
+                            return Some((uid, A2AMessage::CredentialOffer(offer)));
+                        }
                     }
-                },
+                }
                 HolderFullState::RequestSent(_) => match message {
                     A2AMessage::Credential(credential) => {
                         if credential.from_thread(&self.thread_id) {
@@ -692,7 +694,7 @@ mod test {
         use messages::a2a::MessageId;
 
         use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -706,7 +708,7 @@ mod test {
                 &msg.timing.unwrap().out_time.unwrap(),
                 chrono::Duration::milliseconds(100),
             )
-                .unwrap());
+            .unwrap());
         }
 
         #[tokio::test]
@@ -722,7 +724,7 @@ mod test {
                 &msg.timing.unwrap().out_time.unwrap(),
                 chrono::Duration::milliseconds(100),
             )
-                .unwrap());
+            .unwrap());
         }
     }
 

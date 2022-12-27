@@ -15,7 +15,7 @@ use vdr::ledger::RequestBuilder;
 use vdr::pool::{PoolBuilder, PoolTransactions};
 use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
 use vdr::utils::did::DidValue;
-use vdr::utils::{Qualifiable};
+use vdr::utils::Qualifiable;
 
 use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
 use crate::core::profile::modular_wallet_profile::LedgerPoolConfig;

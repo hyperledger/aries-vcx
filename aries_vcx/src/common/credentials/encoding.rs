@@ -88,12 +88,10 @@ pub fn encode_attributes(attributes: &str) -> VcxResult<String> {
                         )
                     })
                 }
-                Err(err) => {
-                    Err(AriesVcxError::from_msg(
-                        AriesVcxErrorKind::InvalidAttributesStructure,
-                        format!("Attribute value not found: {:?}", err),
-                    ))
-                }
+                Err(err) => Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidAttributesStructure,
+                    format!("Attribute value not found: {:?}", err),
+                )),
             }
         }
     }

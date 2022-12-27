@@ -214,7 +214,7 @@ impl AriesVcxError {
     {
         AriesVcxError {
             msg: msg.to_string(),
-            kind
+            kind,
         }
     }
 }

@@ -6,10 +6,8 @@ use libc::c_char;
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 
 use aries_vcx::indy::ledger::pool::PoolConfig;
-use aries_vcx::indy::wallet::{IssuerConfig};
+use aries_vcx::indy::wallet::IssuerConfig;
 use aries_vcx::utils::version_constants;
-
-
 
 use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
@@ -19,7 +17,7 @@ use crate::api_lib::api_handle::vcx_settings::{settings_init_issuer_config, vcxc
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_lib::global::agency_client::create_agency_client_for_main_wallet;
-use crate::api_lib::global::pool::{open_main_pool};
+use crate::api_lib::global::pool::open_main_pool;
 
 use crate::api_lib::global::state::state_vcx_shutdown;
 
@@ -720,8 +718,8 @@ mod tests {
     #[cfg(feature = "pool_tests")]
     use crate::api_lib::global::pool::get_main_pool_handle;
     use crate::api_lib::global::pool::reset_main_pool_handle;
-    use crate::api_lib::global::wallet::{close_main_wallet, get_main_wallet_handle};
     use crate::api_lib::global::wallet::test_utils::_create_main_wallet_and_its_backup;
+    use crate::api_lib::global::wallet::{close_main_wallet, get_main_wallet_handle};
     use crate::api_lib::utils::current_error::reset_current_error;
     use crate::api_lib::utils::return_types_u32;
     use crate::api_lib::utils::timeout::TimeoutUtils;
@@ -973,12 +971,8 @@ mod tests {
         )
         .await
         .unwrap();
-        let disclosed_proof =
-            disclosed_proof::create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION)
-                .unwrap();
-        let credential =
-            credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER)
-                .unwrap();
+        let disclosed_proof = disclosed_proof::create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let credential = credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);
         assert_eq!(

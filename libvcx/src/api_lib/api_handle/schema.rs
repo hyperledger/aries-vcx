@@ -5,7 +5,6 @@ use serde_json;
 
 use aries_vcx::common::primitives::credential_schema::Schema;
 
-
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::pool::get_main_pool_handle;
@@ -139,11 +138,9 @@ pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-     SCHEMA_MAP.release(handle).map_err(|e|
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidSchemaHandle,
-            e.to_string(),
-        ))
+    SCHEMA_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle, e.to_string()))
 }
 
 pub fn release_all() {

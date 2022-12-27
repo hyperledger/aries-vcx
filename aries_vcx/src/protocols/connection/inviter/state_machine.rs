@@ -2,8 +2,8 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use messages::a2a::{A2AMessage, MessageId};
 use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::{A2AMessage, MessageId};
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
 use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
@@ -173,10 +173,14 @@ impl SmConnectionInviter {
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
-            InviterFullState::Invited(_) =>
-                matches!(message, A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_)),
-            InviterFullState::Responded(_) =>
-                matches!(message, A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_)),
+            InviterFullState::Invited(_) => matches!(
+                message,
+                A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_)
+            ),
+            InviterFullState::Responded(_) => matches!(
+                message,
+                A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_)
+            ),
             _ => false,
         }
     }
@@ -267,7 +271,7 @@ impl SmConnectionInviter {
                     self.pairwise_info.pw_vk.clone(),
                     state.did_doc.clone(),
                 )
-                    .await?;
+                .await?;
                 InviterFullState::Responded(state.into())
             }
             _ => self.state,
@@ -320,7 +324,7 @@ impl SmConnectionInviter {
                         .set_thread_id(&request.get_thread_id())
                         .set_out_time(),
                 )
-                    .await
+                .await
             }
             _ => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -441,7 +445,7 @@ pub mod unit_tests {
                     &msg.timing.unwrap().out_time.unwrap(),
                     chrono::Duration::milliseconds(100),
                 )
-                    .unwrap());
+                .unwrap());
             }
         }
 

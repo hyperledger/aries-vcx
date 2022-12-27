@@ -164,11 +164,7 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResul
 
         Err(err) => Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::WalletCreate,
-            format!(
-                "could not create wallet {}: {}",
-                wallet_config.wallet_name,
-                err,
-            ),
+            format!("could not create wallet {}: {}", wallet_config.wallet_name, err,),
         )),
     }
 }

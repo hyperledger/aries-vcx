@@ -29,7 +29,6 @@ use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
-
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
