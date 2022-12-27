@@ -91,7 +91,7 @@ jobs:
           components: rustfmt, clippy
       - name: "Verify clippy warnings"
         run: |
-            cd aries_vcx && cargo clippy -- -Aclippy::or_fun_call \
+          cd aries_vcx && cargo clippy -- -Aclippy::or_fun_call \
           -Aclippy::module_inception -Aclippy::derive_partial_eq_without_eq \
           -Aclippy::new_without_default -Aclippy::inherent_to_string \
           -Aclippy::large_enum_variant
