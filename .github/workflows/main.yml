@@ -89,6 +89,11 @@ jobs:
         with:
           toolchain: 1.64.0
           components: rustfmt, clippy
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Verify clippy warnings"
         run: |
           cd aries_vcx && cargo clippy -- -Aclippy::or_fun_call \
@@ -105,6 +110,11 @@ jobs:
         with:
           toolchain: 1.64.0
           components: rustfmt, clippy
+      - name: "Install dependencies"
+        shell: bash
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Verify clippy warnings"
         run: |
           cd libvcx && cargo clippy -- -Aclippy::or_fun_call \
