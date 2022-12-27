@@ -91,9 +91,12 @@ jobs:
           components: rustfmt, clippy
       - name: "Verify clippy warnings"
         run: |
-            cd aries_vcx && cargo clippy --check
+            cd aries_vcx && cargo clippy -- -Aclippy::or_fun_call \
+          -Aclippy::module_inception -Aclippy::derive_partial_eq_without_eq \
+          -Aclippy::new_without_default -Aclippy::inherent_to_string \
+          -Aclippy::large_enum_variant
 
-  clippy-shared-vcx:
+  clippy-libvcx:
     runs-on: ubuntu-20.04
     steps:
       - name: "Git checkout"
@@ -104,46 +107,12 @@ jobs:
           components: rustfmt, clippy
       - name: "Verify clippy warnings"
         run: |
-          cd shared_vcx && cargo clippy --check
-
-  clippy-messages:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-          components: rustfmt, clippy
-      - name: "Verify clippy warnings"
-        run: |
-          cd messages && cargo clippy --check
-
-  clippy-diddoc:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-          components: rustfmt, clippy
-      - name: "Verify clippy warnings"
-        run: |
-          cd diddoc && cargo clippy --check
-
-  clippy-agency-client:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: "Git checkout"
-        uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.64.0
-          components: rustfmt, clippy
-      - name: "Verify clippy warnings"
-        run: |
-          cd agency_client && cargo clippy --check
+          cd libvcx && cargo clippy -- -Aclippy::or_fun_call \
+          -Aclippy::module_inception -Aclippy::derive_partial_eq_without_eq \
+          -Aclippy::new_without_default -Aclippy::inherent_to_string \
+          -Aclippy::large_enum_variant -Aclippy::missing_safety_doc \
+          -Aclippy::type_complexity -Aclippy::await_holding_lock \
+          -Aclippy::len_without_is_empty -Aclippy::not_unsafe_ptr_arg_deref
 
   ##########################################################################################
   ##############################   DOCKER BUILD   ##########################################
