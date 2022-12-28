@@ -30,8 +30,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 
+#[cfg(feature = "libvcx_c")]
 #[macro_use]
 extern crate cfg_if;
 
 #[macro_use]
-pub mod api_lib;
+pub mod api_vcx;
+
+#[cfg(feature = "libvcx_c")]
+pub mod api_c;
+pub mod errors;
