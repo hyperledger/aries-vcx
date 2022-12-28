@@ -48,7 +48,7 @@ pub async fn close_main_wallet() -> LibvcxResult<()> {
 }
 
 pub async fn create_main_wallet(config: &WalletConfig) -> LibvcxResult<()> {
-    let wallet_handle = create_and_open_as_main_wallet(&config).await?;
+    let wallet_handle = create_and_open_as_main_wallet(config).await?;
     trace!("Created wallet with handle {:?}", wallet_handle);
 
     let profile = indy_handles_to_profile(wallet_handle, -1);

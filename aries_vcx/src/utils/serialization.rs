@@ -6,7 +6,7 @@ pub struct ObjectWithVersion<'a, T> {
     pub data: T,
 }
 
-impl<'a, 'de, T> ObjectWithVersion<'a, T>
+impl<'a, T> ObjectWithVersion<'a, T>
 where
     T: ::serde::Serialize + ::serde::de::DeserializeOwned,
 {

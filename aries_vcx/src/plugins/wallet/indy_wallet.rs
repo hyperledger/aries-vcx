@@ -127,7 +127,7 @@ impl IndyWalletRecordIterator {
         let item: Option<VcxResult<String>> = records
             .as_array()
             .and_then(|arr| arr.first())
-            .and_then(|item| Some(serde_json::to_string(item).map_err(AriesVcxError::from)));
+            .map(|item| serde_json::to_string(item).map_err(AriesVcxError::from));
 
         item.transpose()
     }

@@ -57,12 +57,12 @@ pub async fn libindy_replace_keys_apply(wallet_handle: WalletHandle, did: &str) 
         return Ok(());
     }
 
-    let res = Locator::instance()
+    Locator::instance()
         .did_controller
         .replace_keys_apply(wallet_handle, DidValue(did.into()))
         .await?;
 
-    Ok(res)
+    Ok(())
 }
 
 pub async fn get_verkey_from_wallet(wallet_handle: WalletHandle, did: &str) -> VcxResult<String> {

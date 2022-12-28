@@ -122,7 +122,7 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
     });
 
     // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
-    if requested_attributes == None && requested_predicates == None {
+    if requested_attributes.is_none() && requested_predicates.is_none() {
         return Err(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidAttributesStructure,
             "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
@@ -133,9 +133,8 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         Some(attrs) => attrs.clone(),
         None => Map::new(),
     };
-    match requested_predicates {
-        Some(attrs) => fetch_attrs.extend(attrs),
-        None => (),
+    if let Some(attrs) = requested_predicates {
+        fetch_attrs.extend(attrs)
     }
     if !fetch_attrs.is_empty() {
         let search_handle = Locator::instance()

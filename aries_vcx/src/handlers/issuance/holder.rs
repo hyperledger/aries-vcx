@@ -178,7 +178,7 @@ impl Holder {
         } else {
             Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidState,
-                format!("Unexpected revocation notification, credential is not revokable"),
+                "Unexpected revocation notification, credential is not revokable".to_string(),
             ))
         }
     }

@@ -21,7 +21,7 @@ use credx::{
         DidValue, MasterSecret, PresentCredentials, PresentationRequest, RevocationRegistryDefinition,
         RevocationRegistryDelta, Schema, SchemaId,
     },
-    ursa::{bn::BigNumber, errors::UrsaCryptoError},
+    ursa::bn::BigNumber,
 };
 use credx::{
     types::{CredentialDefinition, CredentialOffer},
@@ -122,7 +122,7 @@ impl IndyCredxAnonCreds {
                     arr.push(wql_attr_query);
                     json!({ "$and": arr })
                 }
-                Value::Object(obj) => json!({ "$and": vec![wql_attr_query, Value::Object(obj.to_owned())] }),
+                Value::Object(obj) => json!({ "$and": vec![wql_attr_query, Value::Object(obj)] }),
                 _ => wql_attr_query,
             }
         } else {
@@ -226,7 +226,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
 
         let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let self_attested_attributes = (&requested_credentials).get("self_attested_attributes");
+        let self_attested_attributes = requested_credentials.get("self_attested_attributes");
 
         let rev_states: Option<Value> = if let Some(revoc_states_json) = revoc_states_json {
             Some(serde_json::from_str(revoc_states_json)?)
@@ -262,7 +262,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 // mapping made for this credential already, add reft and its revealed status
                 req_attr_refts_revealed.push((reft.to_string(), revealed));
             } else {
-                let credential = self._get_credential(&cred_id).await?;
+                let credential = self._get_credential(cred_id).await?;
 
                 let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
@@ -288,7 +288,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 // mapping made for this credential already, add reft
                 req_preds_refts.push(reft.to_string());
             } else {
-                let credential = self._get_credential(&cred_id).await?;
+                let credential = self._get_credential(cred_id).await?;
 
                 let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
@@ -303,7 +303,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         for (_cred_id, (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts)) in
             proof_details_by_cred_id.iter()
         {
-            let mut add_cred = present_credentials.add_credential(&credential, *timestamp, rev_state.as_ref());
+            let mut add_cred = present_credentials.add_credential(credential, *timestamp, rev_state.as_ref());
 
             for (referent, revealed) in req_attr_refts_revealed {
                 add_cred.add_requested_attribute(referent, *revealed);
@@ -323,7 +323,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
             }
 
-            if self_attested_map.len() == 0 {
+            if self_attested_map.is_empty() {
                 None
             } else {
                 Some(self_attested_map)
@@ -387,13 +387,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let proof_req_v: Value = serde_json::from_str(proof_req)
             .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidProofRequest, e))?;
 
-        let requested_attributes = (&proof_req_v).get("requested_attributes");
+        let requested_attributes = proof_req_v.get("requested_attributes");
         let requested_attributes = if let Some(requested_attributes) = requested_attributes {
             Some(requested_attributes.try_as_object()?.clone())
         } else {
             None
         };
-        let requested_predicates = (&proof_req_v).get("requested_predicates");
+        let requested_predicates = proof_req_v.get("requested_predicates");
         let requested_predicates = if let Some(requested_predicates) = requested_predicates {
             Some(requested_predicates.try_as_object()?.clone())
         } else {
@@ -401,7 +401,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
-        if requested_attributes == None && requested_predicates == None {
+        if requested_attributes.is_none() && requested_predicates.is_none() {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::InvalidAttributesStructure,
                 "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
@@ -475,7 +475,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &prover_did,
             &cred_def,
             &link_secret,
-            &link_secret_id,
+            link_secret_id,
             &credential_offer,
         )?;
 
@@ -632,7 +632,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         version: &str,
         attrs: &str,
     ) -> VcxResult<(String, String)> {
-        let origin_did = DidValue::new(&issuer_did, None);
+        let origin_did = DidValue::new(issuer_did, None);
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
@@ -699,7 +699,7 @@ fn get_rev_state(
 
 fn _normalize_attr_name(name: &str) -> String {
     // "name": string, // attribute name, (case insensitive and ignore spaces)
-    name.replace(" ", "").to_lowercase()
+    name.replace(' ', "").to_lowercase()
 }
 
 fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxResult<Value> {

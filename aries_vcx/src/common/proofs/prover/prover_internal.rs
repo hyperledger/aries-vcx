@@ -8,7 +8,7 @@ use crate::{
     core::profile::profile::Profile,
 };
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredInfoProver {
     pub requested_attr: String,
     pub referent: String,
@@ -130,7 +130,7 @@ pub fn credential_def_identifiers(credentials: &str, proof_req: &ProofRequestDat
                     rev_reg_id,
                     cred_rev_id,
                     tails_file,
-                    revealed: revealed,
+                    revealed,
                 });
             } else {
                 return Err(AriesVcxError::from_msg(
@@ -175,7 +175,7 @@ pub async fn build_rev_states_json(
         if let (Some(rev_reg_id), Some(cred_rev_id), Some(tails_file)) =
             (&cred_info.rev_reg_id, &cred_info.cred_rev_id, &cred_info.tails_file)
         {
-            if rtn.get(&rev_reg_id).is_none() {
+            if rtn.get(rev_reg_id).is_none() {
                 // Does this make sense in case cred_info's for same rev_reg_ids have different revocation intervals
                 let (from, to) = if let Some(ref interval) = cred_info.revocation_interval {
                     (interval.from, interval.to)
@@ -244,7 +244,7 @@ pub fn build_requested_credentials_json(
     // do same for predicates and self_attested
     if let Value::Object(ref mut map) = rtn["requested_attributes"] {
         for cred_info in credentials_identifiers {
-            if let Some(_) = proof_req.requested_attributes.get(&cred_info.requested_attr) {
+            if proof_req.requested_attributes.get(&cred_info.requested_attr).is_some() {
                 let insert_val = json!({"cred_id": cred_info.referent, "revealed": cred_info.revealed.unwrap_or(true), "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }
@@ -253,7 +253,7 @@ pub fn build_requested_credentials_json(
 
     if let Value::Object(ref mut map) = rtn["requested_predicates"] {
         for cred_info in credentials_identifiers {
-            if let Some(_) = proof_req.requested_predicates.get(&cred_info.requested_attr) {
+            if proof_req.requested_predicates.get(&cred_info.requested_attr).is_some() {
                 let insert_val = json!({"cred_id": cred_info.referent, "timestamp": cred_info.timestamp});
                 map.insert(cred_info.requested_attr.to_owned(), insert_val);
             }

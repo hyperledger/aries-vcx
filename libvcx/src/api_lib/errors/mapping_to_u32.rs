@@ -1,4 +1,3 @@
-use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
 
 impl From<LibvcxError> for u32 {

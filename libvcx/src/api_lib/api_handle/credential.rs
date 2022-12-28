@@ -13,6 +13,7 @@ use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use crate::api_lib::global::profile::{get_main_profile, get_main_profile_optional_pool};
+
 lazy_static! {
     static ref HANDLE_MAP: ObjectCache<Holder> = ObjectCache::<Holder>::new("credentials-cache");
 }
@@ -93,7 +94,7 @@ pub async fn credential_create_with_msgid(
         secret!(&msg_id)
     );
 
-    let offer = get_credential_offer_msg(connection_handle, &msg_id).await?;
+    let offer = get_credential_offer_msg(connection_handle, msg_id).await?;
     trace!(
         "credential_create_with_msgid ::: for msg_id {} found offer {}",
         msg_id,
@@ -102,7 +103,7 @@ pub async fn credential_create_with_msgid(
 
     let credential = create_credential(source_id, &offer)?.ok_or(LibvcxError::from_msg(
         LibvcxErrorKind::InvalidCredentialHandle,
-        format!("Connection can not be used for Proprietary Issuance protocol"),
+        "Connection can not be used for Proprietary Issuance protocol",
     ))?;
 
     let handle = HANDLE_MAP.add(credential)?;
@@ -122,7 +123,7 @@ pub async fn update_state(credential_handle: u32, message: Option<&str>, connect
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
+        let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
@@ -244,12 +245,12 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         Err(err) => Err(err),
     }?;
 
-    return serde_json::to_string(&credential_offer).map_err(|err| {
+    serde_json::to_string(&credential_offer).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidState,
             format!("Cannot serialize Offers: {:?}", err),
         )
-    });
+    })
 }
 
 pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u32) -> LibvcxResult<String> {
@@ -274,12 +275,9 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidCredentialHandle,
-            e.to_string(),
-        ))
-    })
+    HANDLE_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -304,12 +302,7 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP
         .get(handle, |credential| Ok(credential.get_source_id()))
-        .or_else(|e| {
-            Err(LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidCredentialHandle,
-                e.to_string(),
-            ))
-        })
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidCredentialHandle, e.to_string()))
 }
 
 pub fn from_string(credential_data: &str) -> LibvcxResult<u32> {

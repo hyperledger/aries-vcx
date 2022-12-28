@@ -102,7 +102,7 @@ pub async fn unpack_message_to_string(wallet: &Arc<dyn BaseWallet>, msg: &[u8]) 
 
     String::from_utf8(
         wallet
-            .unpack_message(&msg)
+            .unpack_message(msg)
             .await
             .map_err(|_| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessagePack, "Failed to unpack message"))?,
     )

@@ -31,7 +31,7 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::create_from_a2a_msg >>> msg: {:?}", msg);
         match msg {
             A2AMessage::OutOfBandInvitation(oob) => Ok(OutOfBandReceiver { oob: oob.clone() }),
-            m @ _ => Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessageFormat,
+            m => Err(AriesVcxError::from_msg(AriesVcxErrorKind::InvalidMessageFormat,
                                                  format!("Expected OutOfBandInvitation message to create OutOfBandReceiver, but received message of unknown type: {:?}", m))),
         }
     }
@@ -55,7 +55,7 @@ impl OutOfBandReceiver {
                                 return Ok(Some(connection));
                             }
                         };
-                        if did_doc.get_service()? == resolve_service(profile, &service).await? {
+                        if did_doc.get_service()? == resolve_service(profile, service).await? {
                             return Ok(Some(connection));
                         };
                     }

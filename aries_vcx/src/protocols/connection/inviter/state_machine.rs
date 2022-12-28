@@ -2,6 +2,15 @@ use std::clone::Clone;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use messages::a2a::protocol_registry::ProtocolRegistry;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
+use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
+use messages::protocols::connection::request::Request;
+use messages::protocols::connection::response::{Response, SignedResponse};
+use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+
 use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
@@ -13,14 +22,6 @@ use crate::protocols::connection::inviter::states::requested::RequestedState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
-use messages::a2a::protocol_registry::ProtocolRegistry;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::{Invitation, PairwiseInvitation};
-use messages::protocols::connection::problem_report::{ProblemCode, ProblemReport};
-use messages::protocols::connection::request::Request;
-use messages::protocols::connection::response::{Response, SignedResponse};
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
 #[derive(Clone)]
 pub struct SmConnectionInviter {
@@ -39,7 +40,7 @@ pub enum InviterFullState {
     Completed(CompleteState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum InviterState {
     Initial,
     Invited,
@@ -139,17 +140,11 @@ impl SmConnectionInviter {
     }
 
     pub fn is_in_null_state(&self) -> bool {
-        match self.state {
-            InviterFullState::Initial(_) => true,
-            _ => false,
-        }
+        matches!(self.state, InviterFullState::Initial(_))
     }
 
     pub fn is_in_final_state(&self) -> bool {
-        match self.state {
-            InviterFullState::Completed(_) => true,
-            _ => false,
-        }
+        matches!(self.state, InviterFullState::Completed(_))
     }
 
     pub fn remote_did(&self) -> VcxResult<String> {
@@ -178,14 +173,14 @@ impl SmConnectionInviter {
 
     pub fn can_progress_state(&self, message: &A2AMessage) -> bool {
         match self.state {
-            InviterFullState::Invited(_) => match message {
-                A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_) => true,
-                _ => false,
-            },
-            InviterFullState::Responded(_) => match message {
-                A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_) => true,
-                _ => false,
-            },
+            InviterFullState::Invited(_) => matches!(
+                message,
+                A2AMessage::ConnectionRequest(_) | A2AMessage::ConnectionProblemReport(_)
+            ),
+            InviterFullState::Responded(_) => matches!(
+                message,
+                A2AMessage::Ack(_) | A2AMessage::Ping(_) | A2AMessage::ConnectionProblemReport(_)
+            ),
             _ => false,
         }
     }
@@ -222,24 +217,21 @@ impl SmConnectionInviter {
         };
         let state = match self.state {
             InviterFullState::Invited(_) | InviterFullState::Initial(_) => {
-                match request.connection.did_doc.validate() {
-                    Err(err) => {
-                        let problem_report = ProblemReport::create()
-                            .set_problem_code(ProblemCode::RequestProcessingError)
-                            .set_explain(err.to_string())
-                            .set_thread_id(&thread_id)
-                            .set_out_time();
-                        let sender_vk = self.pairwise_info().pw_vk.clone();
-                        let did_doc = request.connection.did_doc.clone();
-                        send_message(problem_report.to_a2a_message(), sender_vk, did_doc)
-                            .await
-                            .ok();
-                        return Ok(Self {
-                            state: InviterFullState::Initial((problem_report).into()),
-                            ..self
-                        });
-                    }
-                    Ok(_) => {}
+                if let Err(err) = request.connection.did_doc.validate() {
+                    let problem_report = ProblemReport::create()
+                        .set_problem_code(ProblemCode::RequestProcessingError)
+                        .set_explain(err.to_string())
+                        .set_thread_id(&thread_id)
+                        .set_out_time();
+                    let sender_vk = self.pairwise_info().pw_vk.clone();
+                    let did_doc = request.connection.did_doc.clone();
+                    send_message(problem_report.to_a2a_message(), sender_vk, did_doc)
+                        .await
+                        .ok();
+                    return Ok(Self {
+                        state: InviterFullState::Initial((problem_report).into()),
+                        ..self
+                    });
                 };
                 let signed_response = self
                     .build_response(
@@ -724,7 +716,6 @@ pub mod unit_tests {
         }
 
         mod find_message_to_handle {
-
             use crate::utils::devsetup::SetupIndyMocks;
 
             use super::*;

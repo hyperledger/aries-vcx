@@ -39,7 +39,7 @@ pub enum IssuerFullState {
     Finished(FinishedState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum IssuerState {
     Initial,
     OfferSet,
@@ -97,8 +97,8 @@ fn build_credential_offer(
     comment: Option<String>,
 ) -> VcxResult<CredentialOffer> {
     Ok(CredentialOffer::create()
-        .set_id(&thread_id)
-        .set_offers_attach(&credential_offer)?
+        .set_id(thread_id)
+        .set_offers_attach(credential_offer)?
         .set_credential_preview_data(credential_preview)
         .set_comment(comment)
         .set_out_time())
@@ -235,12 +235,11 @@ impl IssuerSM {
 
         for (uid, message) in messages {
             match self.state {
-                IssuerFullState::Initial(_) => match message {
-                    A2AMessage::CredentialProposal(credential_proposal) => {
+                IssuerFullState::Initial(_) => {
+                    if let A2AMessage::CredentialProposal(credential_proposal) = message {
                         return Some((uid, A2AMessage::CredentialProposal(credential_proposal)));
                     }
-                    _ => {}
-                },
+                }
                 IssuerFullState::OfferSent(_) => match message {
                     A2AMessage::CredentialRequest(credential) => {
                         if credential.from_thread(&self.thread_id) {
@@ -388,7 +387,7 @@ impl IssuerSM {
                 let state = IssuerFullState::ProposalReceived(ProposalReceivedState::new(proposal, None));
                 (state, self.thread_id.clone())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
@@ -420,7 +419,7 @@ impl IssuerSM {
         )?;
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::RequestReceived((state_data, request).into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential request in state {}", s);
                 s
             }
@@ -469,7 +468,7 @@ impl IssuerSM {
         verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialAck(ack))?;
         let state = match self.state {
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished(state_data.into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
             }
@@ -485,7 +484,7 @@ impl IssuerSM {
         let state = match self.state {
             IssuerFullState::OfferSent(state_data) => IssuerFullState::Finished((state_data, problem_report).into()),
             IssuerFullState::CredentialSent(state_data) => IssuerFullState::Finished((state_data).into()),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential ack in state {}", s);
                 s
             }
@@ -528,10 +527,7 @@ impl IssuerSM {
     }
 
     pub fn is_terminal_state(&self) -> bool {
-        match self.state {
-            IssuerFullState::Finished(_) => true,
-            _ => false,
-        }
+        matches!(self.state, IssuerFullState::Finished(_))
     }
 
     pub fn thread_id(&self) -> VcxResult<String> {

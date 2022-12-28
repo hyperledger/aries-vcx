@@ -10,8 +10,7 @@ use crate::api_lib::api_c::types::CommandHandle;
 use crate::api_lib::api_handle::{schema, vcx_settings};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
-use crate::api_lib::global::pool::get_main_pool_handle;
-use crate::api_lib::global::wallet::get_main_wallet_handle;
+
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::set_current_error_vcx;
 use crate::api_lib::utils::runtime::{execute, execute_async};

@@ -13,19 +13,10 @@ use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use messages::a2a::A2AMessage;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CloudAgentInfo {
     pub agent_did: String,
     pub agent_vk: String,
-}
-
-impl Default for CloudAgentInfo {
-    fn default() -> CloudAgentInfo {
-        CloudAgentInfo {
-            agent_did: String::new(),
-            agent_vk: String::new(),
-        }
-    }
 }
 
 pub async fn create_agent_keys(

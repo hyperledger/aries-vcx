@@ -27,7 +27,7 @@ pub enum AckOn {
 
 #[macro_export]
 macro_rules! please_ack (($type:ident) => (
-    use crate::concepts::ack::please_ack::AckOn;
+    use $crate::concepts::ack::please_ack::AckOn;
     impl $type {
         pub fn ask_for_ack(mut self) -> $type {
             self.please_ack = Some(PleaseAck::default());

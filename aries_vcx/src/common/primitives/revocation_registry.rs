@@ -7,7 +7,7 @@ use crate::utils::constants::REV_REG_ID;
 
 use super::credential_definition::PublicEntityStateType;
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: String,
@@ -195,7 +195,7 @@ impl RevocationRegistry {
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinitionValue {
     pub issuance_type: String,
@@ -205,7 +205,7 @@ pub struct RevocationRegistryDefinitionValue {
     pub tails_location: String,
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinition {
     pub id: String,

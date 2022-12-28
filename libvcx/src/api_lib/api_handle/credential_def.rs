@@ -56,7 +56,7 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(data: &str) -> LibvcxResult<u32> {
     let cred_def: CredentialDef = CredentialDef::from_string(data)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateCredDef, e.to_string())))?;
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateCredDef, e.to_string()))?;
     CREDENTIALDEF_MAP.add(cred_def)
 }
 
@@ -69,12 +69,9 @@ pub fn get_cred_def_id(handle: u32) -> LibvcxResult<String> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    CREDENTIALDEF_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidCredDefHandle,
-            e.to_string(),
-        ))
-    })
+    CREDENTIALDEF_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidCredDefHandle, e.to_string()))
 }
 
 pub fn release_all() {

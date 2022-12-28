@@ -131,7 +131,7 @@ impl FinishedHolderState {
     pub fn get_cred_id(&self) -> VcxResult<String> {
         self.cred_id.clone().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
-            format!("The field 'cred_id' not found on FinishedHolderState"),
+            "The field 'cred_id' not found on FinishedHolderState".to_string(),
         ))
     }
 

@@ -34,13 +34,13 @@ pub struct OOBConfig {
 fn store_out_of_band_receiver(oob: OutOfBandReceiver) -> LibvcxResult<u32> {
     OUT_OF_BAND_RECEIVER_MAP
         .add(oob)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string()))
 }
 
 fn store_out_of_band_sender(oob: OutOfBandSender) -> LibvcxResult<u32> {
     OUT_OF_BAND_SENDER_MAP
         .add(oob)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string()))
 }
 
 pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
@@ -53,13 +53,13 @@ pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
     })?;
     let mut oob = OutOfBandSender::create();
     if let Some(label) = &config.label {
-        oob = oob.set_label(&label);
+        oob = oob.set_label(label);
     };
     if let Some(goal) = &config.goal {
-        oob = oob.set_goal(&goal);
+        oob = oob.set_goal(goal);
     };
     if let Some(goal_code) = &config.goal_code {
-        oob = oob.set_goal_code(&goal_code);
+        oob = oob.set_goal_code(goal_code);
     };
     for protocol in config.handshake_protocols {
         oob = oob.append_handshake_protocol(&protocol)?;
@@ -136,12 +136,12 @@ pub fn extract_a2a_message(handle: u32) -> LibvcxResult<String> {
 pub fn to_a2a_message(handle: u32) -> LibvcxResult<String> {
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| {
         let msg = oob.to_a2a_message();
-        Ok(serde_json::to_string(&msg).map_err(|err| {
+        serde_json::to_string(&msg).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::SerializationError,
                 format!("Cannot serialize message {:?}, err: {:?}", msg, err),
             )
-        })?)
+        })
     })
 }
 
@@ -167,7 +167,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         } else {
             Err(LibvcxError::from_msg(
                 LibvcxErrorKind::UnknownError,
-                format!("Can't find handel for found connection. Instance was probably released in the meantime."),
+                "Can't find handel for found connection. Instance was probably released in the meantime.",
             ))
         }
     } else {
@@ -206,24 +206,24 @@ pub fn to_string_receiver(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string_sender(oob_data: &str) -> LibvcxResult<u32> {
     let oob = OutOfBandSender::from_string(oob_data)?;
-    OUT_OF_BAND_SENDER_MAP.add(oob).map_err(|err| err.into())
+    OUT_OF_BAND_SENDER_MAP.add(oob)
 }
 
 pub fn from_string_receiver(oob_data: &str) -> LibvcxResult<u32> {
     let oob = OutOfBandReceiver::from_string(oob_data)?;
-    OUT_OF_BAND_RECEIVER_MAP.add(oob).map_err(|err| err.into())
+    OUT_OF_BAND_RECEIVER_MAP.add(oob)
 }
 
 pub fn release_sender(handle: u32) -> LibvcxResult<()> {
     OUT_OF_BAND_SENDER_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string()))
 }
 
 pub fn release_receiver(handle: u32) -> LibvcxResult<()> {
     OUT_OF_BAND_RECEIVER_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string()))
 }
 
 #[cfg(test)]

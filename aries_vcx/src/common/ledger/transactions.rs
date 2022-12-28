@@ -134,7 +134,7 @@ fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> 
             format!("Could not base58 decode a did:key fingerprint: {}", public_key_base58),
         )
     })?;
-    let mut did_key_bytes = ED25519_MULTIBASE_CODEC.to_vec().clone();
+    let mut did_key_bytes = ED25519_MULTIBASE_CODEC.to_vec();
     did_key_bytes.extend_from_slice(&public_key_bytes);
     let did_key_bytes_bs58 = bs58::encode(&did_key_bytes).into_string();
     let did_key = format!("{DID_KEY_PREFIX}z{did_key_bytes_bs58}");
@@ -144,19 +144,19 @@ fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> 
 fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
     let mut result = Vec::new();
     for key in keys_list {
-        if let Some(fingerprint) = key.strip_prefix(DID_KEY_PREFIX) {
-            let fingerprint = if fingerprint.chars().nth(0) == Some('z') {
-                &fingerprint[1..]
+        if let Some(stripped_didkey) = key.strip_prefix(DID_KEY_PREFIX) {
+            let stripped = if let Some(stripped) = stripped_didkey.strip_prefix('z') {
+                stripped
             } else {
                 Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidDid,
                     format!("z prefix is missing: {}", key),
                 ))?
             };
-            let decoded_value = bs58::decode(fingerprint).into_vec().map_err(|_| {
+            let decoded_value = bs58::decode(stripped).into_vec().map_err(|_| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidDid,
-                    format!("Could not base58 decode a did:key fingerprint: {}", fingerprint),
+                    format!("Could not decode base58: {} as portion of {}", stripped, key),
                 )
             })?;
             let verkey = if let Some(public_key_bytes) = decoded_value.strip_prefix(&ED25519_MULTIBASE_CODEC) {
@@ -164,7 +164,7 @@ fn normalize_keys_as_naked(keys_list: Vec<String>) -> VcxResult<Vec<String>> {
             } else {
                 Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidDid,
-                    format!("Only Ed25519-based did:keys are currently supported: {}", key),
+                    format!("Only Ed25519-based did:keys are currently supported, got key: {}", key),
                 ))
             }?;
             result.push(verkey);
@@ -195,9 +195,9 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<Ari
     parse_legacy_endpoint_attrib(profile, &did_raw).await
 }
 
-pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &String) -> VcxResult<AriesService> {
+pub async fn parse_legacy_endpoint_attrib(profile: &Arc<dyn Profile>, did_raw: &str) -> VcxResult<AriesService> {
     let ledger = Arc::clone(profile).inject_ledger();
-    let attr_resp = ledger.get_attr(&did_raw, "service").await?;
+    let attr_resp = ledger.get_attr(did_raw, "service").await?;
     let data = get_data_from_response(&attr_resp)?;
     let ser_service = match data["service"].as_str() {
         Some(ser_service) => ser_service.to_string(),

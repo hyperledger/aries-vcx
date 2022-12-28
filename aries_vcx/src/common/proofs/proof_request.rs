@@ -9,7 +9,7 @@ use crate::errors::error::prelude::*;
 
 use super::proof_request_internal::{AttrInfo, NonRevokedInterval, PredicateInfo};
 
-#[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Builder, Debug, PartialEq, Eq, Clone)]
 #[builder(setter(into), default)]
 pub struct ProofRequestData {
     pub nonce: String,

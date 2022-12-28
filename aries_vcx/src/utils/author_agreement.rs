@@ -3,7 +3,7 @@ use serde_json;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct TxnAuthorAgreementAcceptanceData {
     #[serde(skip_serializing_if = "Option::is_none")]

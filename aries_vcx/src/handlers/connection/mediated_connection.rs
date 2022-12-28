@@ -60,7 +60,7 @@ struct ConnectionInfo {
     their: Option<SideConnectionInfo>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ConnectionState {
     Inviter(InviterState),
     Invitee(InviteeState),
@@ -77,7 +77,7 @@ struct SideConnectionInfo {
     protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Actor {
     Inviter,
     Invitee,
@@ -381,8 +381,7 @@ impl MediatedConnection {
             };
             *self = new_connection_sm;
             if can_autohop && self.autohop_enabled {
-                let res = self.update_state_with_message(&profile, agency_client, None).await;
-                res
+                self.update_state_with_message(&profile, agency_client, None).await
             } else {
                 Ok(())
             }
@@ -399,12 +398,9 @@ impl MediatedConnection {
             return Ok(());
         }
         let messages = self.get_messages_noauth(agency_client).await?;
-        match self.find_message_to_handle(messages) {
-            Some((uid, message)) => {
-                self.handle_message(message, profile).await?;
-                self.update_message_status(&uid, agency_client).await?;
-            }
-            None => {}
+        if let Some((uid, message)) = self.find_message_to_handle(messages) {
+            self.handle_message(message, profile).await?;
+            self.update_message_status(&uid, agency_client).await?;
         };
         Ok(())
     }
@@ -857,7 +853,7 @@ impl MediatedConnection {
         );
         let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NotReady,
-            format!("Can't send handshake-reuse to the counterparty, because their did doc is not available"),
+            "Can't send handshake-reuse to the counterparty, because their did doc is not available".to_string(),
         ))?;
         send_discovery_query(
             &profile.inject_wallet(),
@@ -1053,14 +1049,14 @@ impl<'de> Deserialize<'de> for MediatedConnection {
     }
 }
 
-impl Into<(SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String)> for MediatedConnection {
-    fn into(self) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
+impl From<MediatedConnection> for (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
+    fn from(s: MediatedConnection) -> (SmConnectionState, PairwiseInfo, Option<CloudAgentInfo>, String, String) {
         (
-            self.state_object(),
-            self.pairwise_info().to_owned(),
-            self.cloud_agent_info(),
-            self.source_id(),
-            self.get_thread_id(),
+            s.state_object(),
+            s.pairwise_info().to_owned(),
+            s.cloud_agent_info(),
+            s.source_id(),
+            s.get_thread_id(),
         )
     }
 }

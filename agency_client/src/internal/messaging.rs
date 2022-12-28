@@ -72,8 +72,8 @@ impl AgencyClient {
         self.prepare_forward_message(message, agent_did).await
     }
 
-    pub async fn parse_message_from_response(&self, response: &Vec<u8>) -> AgencyClientResult<String> {
-        let unpacked_msg = self.get_wallet().unpack_message(&response[..]).await?;
+    pub async fn parse_message_from_response(&self, response: &[u8]) -> AgencyClientResult<String> {
+        let unpacked_msg = self.get_wallet().unpack_message(response).await?;
         let message: Value = ::serde_json::from_slice(unpacked_msg.as_slice()).map_err(|err| {
             AgencyClientError::from_msg(
                 AgencyClientErrorKind::InvalidJson,
@@ -119,7 +119,7 @@ impl AgencyClient {
         trace!("prepare_forward_message >>>");
         let agency_vk = self.get_agency_vk();
 
-        let message = ForwardV2::new(did.to_string(), message)?;
+        let message = Client2AgencyMessage::Forward(ForwardV2::new(did.to_string(), message)?);
 
         match message {
             Client2AgencyMessage::Forward(msg) => self.prepare_forward_message_for_agency_v2(&msg, &agency_vk).await,
@@ -184,7 +184,7 @@ impl AgencyClient {
             .pack_message(Some(pw_vk), &receiver_keys, message.as_bytes())
             .await?;
 
-        let message = ForwardV2::new(agent_did.to_owned(), message)?;
+        let message = Client2AgencyMessage::Forward(ForwardV2::new(agent_did.to_owned(), message)?);
 
         let to_did = self.get_agent_pwdid();
         self.prepare_message_for_agent(&message, &to_did).await

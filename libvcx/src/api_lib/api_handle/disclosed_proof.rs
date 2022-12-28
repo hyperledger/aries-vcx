@@ -3,7 +3,6 @@ use serde_json;
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
 use aries_vcx::global::settings::indy_mocks_enabled;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
-use aries_vcx::messages;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
@@ -41,7 +40,7 @@ pub async fn create_proof_with_msgid(
     connection_handle: u32,
     msg_id: &str,
 ) -> LibvcxResult<(u32, String)> {
-    let proof_request = get_proof_request(connection_handle, &msg_id).await?;
+    let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
     let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
 
@@ -56,12 +55,7 @@ pub async fn create_proof_with_msgid(
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     HANDLE_MAP
         .get(handle, |proof| Ok(proof.get_state().into()))
-        .or_else(|e| {
-            Err(LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidDisclosedProofHandle,
-                e.to_string(),
-            ))
-        })
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
 }
 
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
@@ -132,12 +126,9 @@ pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    HANDLE_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidDisclosedProofHandle,
-            e.to_string(),
-        ))
-    })
+    HANDLE_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidDisclosedProofHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -286,12 +277,9 @@ pub async fn get_proof_request_messages(connection_handle: u32) -> LibvcxResult<
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
-    HANDLE_MAP.get(handle, |proof| Ok(proof.get_source_id())).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidProofHandle,
-            e.to_string(),
-        ))
-    })
+    HANDLE_MAP
+        .get(handle, |proof| Ok(proof.get_source_id()))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidProofHandle, e.to_string()))
 }
 
 pub fn get_presentation_status(handle: u32) -> LibvcxResult<u32> {

@@ -4,7 +4,6 @@ use std::sync::Arc;
 use serde_json;
 
 use aries_vcx::common::primitives::credential_schema::Schema;
-use aries_vcx::vdrtools::{PoolHandle, WalletHandle};
 
 use crate::api_lib::api_handle::object_cache::ObjectCache;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -52,7 +51,7 @@ pub async fn create_and_publish_schema(
 
     SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))
 }
 
 pub async fn prepare_schema_for_endorser(
@@ -95,7 +94,7 @@ pub async fn prepare_schema_for_endorser(
 
     let schema_handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
 
     Ok((schema_handle, schema_request))
 }
@@ -108,11 +107,11 @@ pub async fn get_schema_attrs(source_id: String, schema_id: String) -> LibvcxRes
     );
     let profile = get_main_profile()?;
     let schema = Schema::create_from_ledger_json(&profile, &source_id, &schema_id).await?;
-    let schema_json = schema.to_string()?;
+    let schema_json = schema.to_string_versioned()?;
 
     let handle = SCHEMA_MAP
         .add(schema)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string())))?;
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateSchema, e.to_string()))?;
 
     Ok((handle, schema_json))
 }
@@ -122,29 +121,26 @@ pub fn is_valid_handle(handle: u32) -> bool {
 }
 
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| s.to_string().map_err(|err| err.into()))
+    SCHEMA_MAP.get(handle, |s| s.to_string_versioned().map_err(|err| err.into()))
 }
 
 pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_source_id().to_string()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_source_id()))
 }
 
 pub fn get_schema_id(handle: u32) -> LibvcxResult<String> {
-    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id().to_string()))
+    SCHEMA_MAP.get(handle, |s| Ok(s.get_schema_id()))
 }
 
 pub fn from_string(schema_data: &str) -> LibvcxResult<u32> {
-    let schema: Schema = Schema::from_str(schema_data)?;
+    let schema: Schema = Schema::from_string_versioned(schema_data)?;
     SCHEMA_MAP.add(schema)
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    SCHEMA_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidSchemaHandle,
-            e.to_string(),
-        ))
-    })
+    SCHEMA_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidSchemaHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -153,7 +149,7 @@ pub fn release_all() {
 
 pub async fn update_state(schema_handle: u32) -> LibvcxResult<u32> {
     let wallet_handle = get_main_wallet_handle();
-    let pool_handle = get_main_pool_handle()?.into();
+    let pool_handle = get_main_pool_handle()?;
     let mut schema = SCHEMA_MAP.get_cloned(schema_handle)?;
     let profile = indy_handles_to_profile(wallet_handle, pool_handle);
     let res = schema.update_state(&profile).await?;
@@ -218,7 +214,7 @@ pub mod tests {
     }
 
     fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
-        let schema: Schema = Schema::from_str(schema_json).unwrap();
+        let schema: Schema = Schema::from_string_versioned(schema_json).unwrap();
         assert_eq!(schema.schema_id, schema_id.to_string());
         assert_eq!(schema.data.clone().sort(), vec!(data).sort());
         assert!(schema_handle > 0);

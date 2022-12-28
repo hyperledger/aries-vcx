@@ -60,13 +60,13 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(rev_reg_data: &str) -> LibvcxResult<u32> {
     let rev_reg = RevocationRegistry::from_string(rev_reg_data)?;
-    REV_REG_MAP.add(rev_reg).map_err(|err| err.into())
+    REV_REG_MAP.add(rev_reg)
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
     REV_REG_MAP
         .release(handle)
-        .or_else(|e| Err(LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string())))
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidHandle, e.to_string()))
 }
 
 pub fn get_tails_hash(handle: u32) -> LibvcxResult<String> {

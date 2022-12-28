@@ -8,7 +8,7 @@ use crate::utils::serialization::ObjectWithVersion;
 
 use super::credential_definition::PublicEntityStateType;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaData {
     pub name: String,
     pub version: String,
@@ -16,7 +16,7 @@ pub struct SchemaData {
     pub attr_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
@@ -70,7 +70,7 @@ impl Schema {
 
         let anoncreds = Arc::clone(profile).inject_anoncreds();
         let (schema_id, schema_json) = anoncreds
-            .issuer_create_schema(&submitter_did, name, version, &data_str)
+            .issuer_create_schema(submitter_did, name, version, &data_str)
             .await?;
 
         Ok(Self {
@@ -102,7 +102,7 @@ impl Schema {
         Ok(Self {
             source_id: source_id.to_string(),
             schema_id: schema_id.to_string(),
-            schema_json: schema_json.to_string(),
+            schema_json,
             name: schema_data.name,
             version: schema_data.version,
             data: schema_data.attr_names,
@@ -126,10 +126,10 @@ impl Schema {
             .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
             .await?;
 
-        return Ok(Self {
+        Ok(Self {
             state: PublicEntityStateType::Published,
             ..self
-        });
+        })
     }
 
     pub fn get_source_id(&self) -> String {
@@ -140,17 +140,15 @@ impl Schema {
         self.schema_id.clone()
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
+    pub fn to_string_versioned(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err)
             .map_err(|err: AriesVcxError| err.extend("Cannot serialize Schema"))
     }
 
-    pub fn from_str(data: &str) -> VcxResult<Schema> {
+    pub fn from_string_versioned(data: &str) -> VcxResult<Schema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
-            .map_err(|err| err)
             .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
     }
 

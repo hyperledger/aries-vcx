@@ -37,7 +37,7 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     if let Some(message) = message {
-        let message: A2AMessage = serde_json::from_str(&message).map_err(|err| {
+        let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::InvalidOption,
                 format!("Cannot update state: Message deserialization failed: {:?}", err),
@@ -67,12 +67,9 @@ pub fn get_credential_status(handle: u32) -> LibvcxResult<u32> {
 }
 
 pub fn release(handle: u32) -> LibvcxResult<()> {
-    ISSUER_CREDENTIAL_MAP.release(handle).or_else(|e| {
-        Err(LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidIssuerCredentialHandle,
-            e.to_string(),
-        ))
-    })
+    ISSUER_CREDENTIAL_MAP
+        .release(handle)
+        .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::InvalidIssuerCredentialHandle, e.to_string()))
 }
 
 pub fn release_all() {
@@ -117,7 +114,7 @@ pub async fn build_credential_offer_msg_v2(
     if !credential_def::check_is_published(cred_def_handle)? {
         return Err(LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
-            format!("Cannot issue credential of specified credential definition has not been published on the ledger"),
+            "Cannot issue credential of specified credential definition has not been published on the ledger",
         ));
     };
     // todo: add check if rev reg was published

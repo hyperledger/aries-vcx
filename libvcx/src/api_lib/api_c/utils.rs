@@ -10,7 +10,7 @@ use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::global::settings;
 use aries_vcx::messages::protocols::connection::did::Did;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+
 use aries_vcx::utils::constants::*;
 
 use crate::api_lib::api_c::types::CommandHandle;
@@ -28,8 +28,7 @@ use crate::api_lib::api_handle::wallet::{
 use crate::api_lib::api_handle::{mediated_connection, vcx_settings};
 use crate::api_lib::errors::error;
 use crate::api_lib::errors::error::{LibvcxError, LibvcxErrorKind};
-use crate::api_lib::global::agency_client::get_main_agency_client;
-use crate::api_lib::global::profile::{get_main_profile, get_main_wallet};
+
 use crate::api_lib::utils::cstring::CStringUtils;
 use crate::api_lib::utils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_lib::utils::runtime::execute_async;
@@ -188,7 +187,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(conn_handles, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = conn_handles.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        v.to_owned()
+        v
     } else {
         return LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, "List of connection handles can't be null").into();
     };
@@ -202,7 +201,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(message_statuses, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = message_statuses.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };
@@ -218,7 +217,7 @@ pub extern "C" fn vcx_v2_messages_download(
         check_useful_c_str!(uids, LibvcxErrorKind::InvalidOption);
         let v: Vec<&str> = uids.split(',').collect();
         let v = v.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        Some(v.to_owned())
+        Some(v)
     } else {
         None
     };

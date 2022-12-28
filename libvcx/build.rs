@@ -23,7 +23,7 @@ fn main() {
 
         let files = vec!["libeay32md.dll", "libsodium.dll", "libzmq.dll", "ssleay32md.dll"];
         for f in files.iter() {
-            if let Ok(_) = fs::copy(&indy_dir.join(f), &dst.join(f)) {
+            if fs::copy(&indy_dir.join(f), &dst.join(f)).is_ok() {
                 println!("copy {} -> {}", &indy_dir.join(f).display(), &dst.join(f).display());
             }
         }
