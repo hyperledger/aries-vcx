@@ -4,7 +4,6 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::inherent_to_string)]
 #![allow(clippy::large_enum_variant)]
-
 #![crate_name = "agency_client"]
 
 #[macro_use]
