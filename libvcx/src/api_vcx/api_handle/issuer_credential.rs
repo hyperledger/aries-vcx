@@ -351,9 +351,7 @@ pub mod tests {
         build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        send_credential_offer_v2(handle_cred, handle_conn)
-            .await
-            .unwrap();
+        send_credential_offer_v2(handle_cred, handle_conn).await.unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message

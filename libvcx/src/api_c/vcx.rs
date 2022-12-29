@@ -946,14 +946,9 @@ mod tests {
 
         let data = r#"["name","male"]"#;
         let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
-        let credentialdef = credential_def::create(
-            "SID".to_string(),
-            "id".to_string(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
+        let credentialdef = credential_def::create("SID".to_string(), "id".to_string(), "tag".to_string(), false)
+            .await
+            .unwrap();
         let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
         let proof = proof::create_proof(
             "1".to_string(),
