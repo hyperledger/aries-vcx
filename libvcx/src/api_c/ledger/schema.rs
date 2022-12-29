@@ -5,7 +5,7 @@ use libc::c_char;
 use serde_json;
 
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::settings;
+
 use crate::api_vcx::api_handle::schema;
 use crate::errors::error;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind};

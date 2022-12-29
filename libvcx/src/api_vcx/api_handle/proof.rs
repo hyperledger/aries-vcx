@@ -7,7 +7,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {

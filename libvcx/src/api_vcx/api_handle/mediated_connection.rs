@@ -17,7 +17,7 @@ use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {

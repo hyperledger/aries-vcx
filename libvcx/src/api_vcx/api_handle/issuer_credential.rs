@@ -9,7 +9,7 @@ use crate::api_vcx::api_handle::credential_def;
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::api_vcx::api_handle::revocation_registry::REV_REG_MAP;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {

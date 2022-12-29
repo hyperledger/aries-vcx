@@ -11,7 +11,7 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {

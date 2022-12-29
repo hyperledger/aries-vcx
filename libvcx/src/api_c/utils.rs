@@ -24,7 +24,6 @@ use crate::api_vcx::api_handle::mediated_connection::{parse_connection_handles, 
 use crate::errors::error;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind};
 
-use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::{
     key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did,
     wallet_unpack_message_to_string,
