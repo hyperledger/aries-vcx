@@ -75,7 +75,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
   }: ICredentialDefCreateDataV2): Promise<CredentialDef> {
     const credentialDef = new CredentialDef(sourceId, { schemaId });
     const commandHandle = 0;
-    const issuerDid = null;
     try {
       await credentialDef._create((cb) =>
         rustAPI().vcx_credentialdef_create_v2(
