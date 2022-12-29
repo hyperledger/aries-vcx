@@ -965,14 +965,9 @@ mod tests {
         )
         .await
         .unwrap();
-        let schema = schema::create_and_publish_schema(
-            "5",
-            "name".to_string(),
-            "0.1".to_string(),
-            data.to_string(),
-        )
-        .await
-        .unwrap();
+        let schema = schema::create_and_publish_schema("5", "name".to_string(), "0.1".to_string(), data.to_string())
+            .await
+            .unwrap();
         let disclosed_proof = disclosed_proof::create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 

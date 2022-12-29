@@ -132,9 +132,7 @@ pub extern "C" fn vcx_schema_prepare_for_endorser(
            command_handle, source_id, schema_name, schema_data, endorser);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match schema::prepare_schema_for_endorser(&source_id, schema_name, version, schema_data, endorser)
-            .await
-        {
+        match schema::prepare_schema_for_endorser(&source_id, schema_name, version, schema_data, endorser).await {
             Ok((handle, transaction)) => {
                 trace!(target: "vcx", "vcx_schema_prepare_for_endorser(command_handle: {}, rc: {}, handle: {}, transaction: {}) source_id: {}",
                        command_handle, error::SUCCESS_ERR_CODE, handle, transaction, source_id);

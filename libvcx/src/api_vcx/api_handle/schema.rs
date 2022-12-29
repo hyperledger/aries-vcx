@@ -231,14 +231,9 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = create_and_publish_schema(
-            "test_create_schema_success",
-            schema_name,
-            schema_version,
-            data.clone(),
-        )
-        .await
-        .unwrap();
+        let handle = create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data.clone())
+            .await
+            .unwrap();
 
         let schema_id = get_schema_id(handle).unwrap();
         let create_schema_json = to_string(handle).unwrap();
@@ -301,14 +296,9 @@ pub mod tests {
     async fn test_create_schema_fails() {
         let _setup = SetupDefaults::init();
 
-        let err = create_and_publish_schema(
-            "1",
-            "name".to_string(),
-            "1.0".to_string(),
-            "".to_string(),
-        )
-        .await
-        .unwrap_err();
+        let err = create_and_publish_schema("1", "name".to_string(), "1.0".to_string(), "".to_string())
+            .await
+            .unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::SerializationError)
     }
 
@@ -353,14 +343,9 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (did, schema_name, schema_version, data) = prepare_schema_data();
 
-            create_and_publish_schema(
-                "id",
-                schema_name.clone(),
-                schema_version.clone(),
-                data.clone(),
-            )
-            .await
-            .unwrap();
+            create_and_publish_schema("id", schema_name.clone(), schema_version.clone(), data.clone())
+                .await
+                .unwrap();
 
             let err = create_and_publish_schema("id_2", schema_name, schema_version, data)
                 .await
@@ -378,10 +363,10 @@ pub mod tests {
 
         let (did, schema_name, version, data) = prepare_schema_data();
 
-        let h1 = create_and_publish_schema("1",  schema_name.clone(), version.clone(), data.clone())
+        let h1 = create_and_publish_schema("1", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h2 = create_and_publish_schema("2",  schema_name.clone(), version.clone(), data.clone())
+        let h2 = create_and_publish_schema("2", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
         let h3 = create_and_publish_schema("3", schema_name.clone(), version.clone(), data.clone())

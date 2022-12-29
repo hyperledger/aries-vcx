@@ -30,8 +30,7 @@ pub extern "C" fn vcx_credentialdef_create_v2(
 
     trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, tag: {}, support_revocation: {:?})", command_handle, source_id, schema_id, tag, support_revocation);
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let (rc, handle) = match credential_def::create(source_id, schema_id, tag, support_revocation).await
-        {
+        let (rc, handle) = match credential_def::create(source_id, schema_id, tag, support_revocation).await {
             Ok(handle) => {
                 trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, handle, credential_def::get_source_id(handle).unwrap_or_default());
                 (error::SUCCESS_ERR_CODE, handle)
