@@ -263,12 +263,9 @@ pub mod tests {
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(credential_handle, connection_handle)
-                .await
-                .unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(credential_handle, connection_handle)
+            .await
+            .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -329,12 +326,9 @@ pub mod tests {
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(credential_handle, connection_handle)
-                .await
-                .unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(credential_handle, connection_handle)
+            .await
+            .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
         update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
@@ -357,10 +351,9 @@ pub mod tests {
         build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(handle_cred, handle_conn)
+            .await
+            .unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message

@@ -727,7 +727,6 @@ mod tests {
         let did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
         let (handle, _) = prepare_schema_for_endorser(
             "testid",
-            did,
             "name".to_string(),
             "1.0".to_string(),
             "[\"name\",\"gender\"]".to_string(),

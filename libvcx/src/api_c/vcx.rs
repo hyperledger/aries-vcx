@@ -948,7 +948,6 @@ mod tests {
         let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create(
             "SID".to_string(),
-            "4fUDR9R7fjwELRvH9JT6HH".to_string(),
             "id".to_string(),
             "tag".to_string(),
             false,

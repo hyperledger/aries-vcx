@@ -213,7 +213,7 @@ pub mod tests {
 
     pub async fn create_schema_real() -> u32 {
         let (did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema("id", did, schema_name, schema_version, data)
+        create_and_publish_schema("id", schema_name, schema_version, data)
             .await
             .unwrap()
     }

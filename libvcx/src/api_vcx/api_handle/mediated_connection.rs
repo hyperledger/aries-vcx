@@ -726,12 +726,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_connection("test_process_acceptance_message").await.unwrap();
-        assert_eq!(
-            error::SUCCESS_ERR_CODE,
-            update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
-                .await
-                .unwrap()
-        );
+        update_state_with_message(handle, ARIES_CONNECTION_REQUEST).await.unwrap();
     }
 
     //     #[tokio::test]

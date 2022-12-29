@@ -263,10 +263,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
 
         let handle_proof = create_default_proof().await;
-        assert_eq!(
-            send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
             get_state(handle_proof).await.unwrap(),
             VerifierState::PresentationRequestSent as u32
@@ -508,7 +505,7 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
         // Retry sending proof request
-        assert_eq!(send_proof_request(handle_proof, handle_conn).await.unwrap(), 0);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
             get_state(handle_proof).await.unwrap(),
             VerifierState::PresentationRequestSent as u32
