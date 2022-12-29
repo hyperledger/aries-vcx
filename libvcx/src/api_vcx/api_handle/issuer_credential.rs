@@ -337,7 +337,7 @@ pub mod tests {
         );
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
-        issuer_credential::update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
+        update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
             .await
             .unwrap();
         assert_eq!(
@@ -364,7 +364,7 @@ pub mod tests {
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message
-        let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
+        let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }

@@ -673,9 +673,9 @@ pub extern "C" fn vcx_connection_update_state(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state(connection_handle).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
-                err
+                error::SUCCESS_ERR_CODE
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -728,9 +728,9 @@ pub extern "C" fn vcx_connection_update_state_with_message(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match update_state_with_message(connection_handle, &message).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
-                err
+                error::SUCCESS_ERR_CODE
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -783,9 +783,9 @@ pub extern "C" fn vcx_connection_handle_message(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let rc = match handle_message(connection_handle, &message).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, source_id);
-                err
+                error::SUCCESS_ERR_CODE
             }
             Err(err) => {
                 set_current_error_vcx(&err);

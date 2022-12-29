@@ -188,7 +188,7 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
         .map_err(|err| err.into())
 }
 
-pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<u32> {
+pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -203,11 +203,10 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     connection
         .update_state_with_message(&profile, get_main_agency_client().unwrap(), Some(message))
         .await?;
-    CONNECTION_MAP.insert(handle, connection)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    CONNECTION_MAP.insert(handle, connection)
 }
 
-pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
+pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -220,48 +219,37 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection.handle_message(message, &profile).await?;
-    CONNECTION_MAP.insert(handle, connection)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    CONNECTION_MAP.insert(handle, connection)
 }
 
-pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
+pub async fn update_state(handle: u32) -> LibvcxResult<()> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
-    let res = if connection.is_in_final_state() {
+    if connection.is_in_final_state() {
         info!(
             "connection::update_state >> connection {} is in final state, trying to respond to messages",
             handle
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-        match connection
+        connection
             .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
-            .await
-        {
-            Ok(_) => Ok(error::SUCCESS_ERR_CODE),
-            Err(err) => Err(err.into()),
-        }
+            .await?
     } else {
         info!(
             "connection::update_state >> connection {} is not in final state, trying to update state",
             handle
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-        match connection
+        connection
             .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
-            .await
-        {
-            Ok(_) => Ok(error::SUCCESS_ERR_CODE),
-            Err(err) => Err(err.into()),
-        }
+            .await?
     };
-    CONNECTION_MAP.insert(handle, connection)?;
-    res
+    CONNECTION_MAP.insert(handle, connection)
 }
 
-pub async fn delete_connection(handle: u32) -> LibvcxResult<u32> {
+pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.delete(&get_main_agency_client().unwrap()).await?;
-    release(handle)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    release(handle)
 }
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {

@@ -141,12 +141,11 @@ pub fn generate_proof_msg(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_proof(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof.send_presentation(send_message).await?;
-    HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, proof)
 }
 
 pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
@@ -156,7 +155,7 @@ pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
     ))
 }
 
-pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof
@@ -166,18 +165,16 @@ pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<u
             None,
         )
         .await?;
-    HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, proof)
 }
 
-pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<u32> {
+pub async fn generate_proof(handle: u32, credentials: &str, self_attested_attrs: &str) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile()?;
     proof
         .generate_presentation(&profile, credentials.to_string(), self_attested_attrs.to_string())
         .await?;
-    HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, proof)
 }
 
 pub async fn decline_presentation_request(
@@ -185,7 +182,7 @@ pub async fn decline_presentation_request(
     connection_handle: u32,
     reason: Option<&str>,
     proposal: Option<&str>,
-) -> LibvcxResult<u32> {
+) -> LibvcxResult<()> {
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof
@@ -195,8 +192,7 @@ pub async fn decline_presentation_request(
             proposal.map(|s| s.to_string()),
         )
         .await?;
-    HANDLE_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, proof)
 }
 
 pub async fn retrieve_credentials(handle: u32) -> LibvcxResult<String> {

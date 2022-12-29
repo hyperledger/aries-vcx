@@ -131,13 +131,12 @@ pub async fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     }
 }
 
-pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
-    PROOF_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    PROOF_MAP.insert(handle, proof)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {

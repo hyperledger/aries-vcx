@@ -683,14 +683,14 @@ pub extern "C" fn vcx_credential_send_request(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::send_credential_request(credential_handle, connection_handle).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!(
                     "vcx_credential_send_request_cb(command_hanndle: {}, rc: {}) source_id: {}",
                     command_handle,
-                    err.to_string(),
+                    error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, err);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -846,14 +846,14 @@ pub extern "C" fn vcx_credential_decline_offer(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::decline_offer(credential_handle, connection_handle, comment.as_deref()).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!(
                     "vcx_credential_decline_offer_cb(command_handle: {}, rc: {}) source_id: {}",
                     command_handle,
-                    err.to_string(),
+                    error::SUCCESS_ERR_CODE,
                     source_id
                 );
-                cb(command_handle, err);
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
