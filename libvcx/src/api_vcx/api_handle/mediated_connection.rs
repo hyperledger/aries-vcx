@@ -188,7 +188,7 @@ pub async fn send_handshake_reuse(handle: u32, oob_msg: &str) -> LibvcxResult<()
         .map_err(|err| err.into())
 }
 
-pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<()> {
+pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
         LibvcxError::from_msg(
@@ -203,7 +203,9 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     connection
         .update_state_with_message(&profile, get_main_agency_client().unwrap(), Some(message))
         .await?;
-    CONNECTION_MAP.insert(handle, connection)
+    let state: u32 = connection.get_state().into();
+    CONNECTION_MAP.insert(handle, connection)?;
+    Ok(state)
 }
 
 pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
@@ -222,7 +224,7 @@ pub async fn handle_message(handle: u32, message: &str) -> LibvcxResult<()> {
     CONNECTION_MAP.insert(handle, connection)
 }
 
-pub async fn update_state(handle: u32) -> LibvcxResult<()> {
+pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     if connection.is_in_final_state() {
         info!(
@@ -243,7 +245,9 @@ pub async fn update_state(handle: u32) -> LibvcxResult<()> {
             .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
             .await?
     };
-    CONNECTION_MAP.insert(handle, connection)
+    let state: u32 = connection.get_state().into();
+    CONNECTION_MAP.insert(handle, connection)?;
+    Ok(state)
 }
 
 pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {

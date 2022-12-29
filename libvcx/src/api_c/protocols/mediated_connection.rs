@@ -672,21 +672,17 @@ pub extern "C" fn vcx_connection_update_state(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let rc = match update_state(connection_handle).await {
-            Ok(_) => {
+        match update_state(connection_handle).await {
+            Ok(state) => {
                 trace!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
-                error::SUCCESS_ERR_CODE
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_connection_update_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, err, connection_handle, get_state(connection_handle), source_id);
-                err.into()
+                cb(command_handle, err.into(), 0);
             }
         };
-        let state = get_state(connection_handle);
-        warn!("vcx_connection_update_state >> return {}", state);
-        cb(command_handle, rc, state);
-
         Ok(())
     }));
 
@@ -727,21 +723,17 @@ pub extern "C" fn vcx_connection_update_state_with_message(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let rc = match update_state_with_message(connection_handle, &message).await {
-            Ok(_) => {
+        match update_state_with_message(connection_handle, &message).await {
+            Ok(state) => {
                 trace!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
-                error::SUCCESS_ERR_CODE
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_connection_update_state_with_message_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, err, connection_handle, get_state(connection_handle), source_id);
-                err.into()
+                cb(command_handle, err.into(), 0);
             }
         };
-
-        let state = get_state(connection_handle);
-        cb(command_handle, rc, state);
-
         Ok(())
     }));
 
@@ -782,19 +774,17 @@ pub extern "C" fn vcx_connection_handle_message(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let rc = match handle_message(connection_handle, &message).await {
-            Ok(_) => {
+        match handle_message(connection_handle, &message).await {
+            Ok(()) => {
                 trace!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, source_id);
-                error::SUCCESS_ERR_CODE
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_connection_handle_message_cb(command_handle: {}, rc: {}, connection_handle: {}), source_id: {:?}", command_handle, err, connection_handle, source_id);
-                err.into()
+                cb(command_handle, err.into());
             }
         };
-
-        cb(command_handle, rc);
         Ok(())
     }));
 
@@ -836,8 +826,8 @@ pub extern "C" fn vcx_connection_get_state(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         trace!("vcx_connection_get_state_cb(command_handle: {}, rc: {}, connection_handle: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, connection_handle, get_state(connection_handle), source_id);
-        cb(command_handle, error::SUCCESS_ERR_CODE, get_state(connection_handle));
-
+        let state = get_state(connection_handle);
+        cb(command_handle, error::SUCCESS_ERR_CODE, state);
         Ok(())
     }));
 

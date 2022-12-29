@@ -335,9 +335,9 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::update_state(credential_handle, None, connection_handle).await {
-            Ok(err) => {
-                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, connection_handle, error::SUCCESS_ERR_CODE, err, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, err);
+            Ok(state) => {
+                trace!("vcx_v2_issuer_credential_update_state_cb(command_handle: {}, credential_handle: {}, connection_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, connection_handle, error::SUCCESS_ERR_CODE, state, source_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -390,9 +390,9 @@ pub extern "C" fn vcx_v2_issuer_credential_update_state_with_message(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match issuer_credential::update_state(credential_handle, Some(&message), connection_handle).await {
-            Ok(err) => {
-                trace!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, error::SUCCESS_ERR_CODE, err, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, err);
+            Ok(state) => {
+                trace!("vcx_v2_issuer_credential_update_state_with_message_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, error::SUCCESS_ERR_CODE, state, source_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -443,9 +443,9 @@ pub extern "C" fn vcx_issuer_credential_get_state(
 
     execute(move || {
         match issuer_credential::get_state(credential_handle) {
-            Ok(err) => {
-                trace!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, error::SUCCESS_ERR_CODE, err, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, err);
+            Ok(state) => {
+                trace!("vcx_issuer_credential_get_state_cb(command_handle: {}, credential_handle: {}, rc: {}, state: {}) source_id: {}", command_handle, credential_handle, error::SUCCESS_ERR_CODE, state, source_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state);
             }
             Err(err) => {
                 set_current_error_vcx(&err);

@@ -209,7 +209,7 @@ pub extern "C" fn vcx_delete_credential(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::delete_credential(credential_handle).await {
-            Ok(_) => {
+            Ok(()) => {
                 trace!(
                     "vcx_delete_credential_cb(command_handle: {}, rc: {}), credential_handle: {}, source_id: {})",
                     command_handle,
@@ -683,7 +683,7 @@ pub extern "C" fn vcx_credential_send_request(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::send_credential_request(credential_handle, connection_handle).await {
-            Ok(_) => {
+            Ok(()) => {
                 trace!(
                     "vcx_credential_send_request_cb(command_hanndle: {}, rc: {}) source_id: {}",
                     command_handle,
@@ -846,7 +846,7 @@ pub extern "C" fn vcx_credential_decline_offer(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::decline_offer(credential_handle, connection_handle, comment.as_deref()).await {
-            Ok(_) => {
+            Ok(()) => {
                 trace!(
                     "vcx_credential_decline_offer_cb(command_handle: {}, rc: {}) source_id: {}",
                     command_handle,
@@ -901,7 +901,16 @@ pub extern "C" fn vcx_v2_credential_update_state(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::update_state(credential_handle, None, connection_handle).await {
-            Ok(_) => (),
+            Ok(state) => {
+                trace!(
+                    "vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
+                    command_handle,
+                    error::SUCCESS_ERR_CODE,
+                    state,
+                    source_id
+                );
+                cb(command_handle, error::SUCCESS_ERR_CODE, state)
+            }
             Err(err) => {
                 error!(
                     "vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
@@ -910,27 +919,6 @@ pub extern "C" fn vcx_v2_credential_update_state(
                 cb(command_handle, err.into(), 0)
             }
         }
-
-        match credential::get_state(credential_handle) {
-            Ok(s) => {
-                trace!(
-                    "vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
-                    command_handle,
-                    error::SUCCESS_ERR_CODE,
-                    s,
-                    source_id
-                );
-                cb(command_handle, error::SUCCESS_ERR_CODE, s)
-            }
-            Err(err) => {
-                error!(
-                    "vcx_v2_credential_update_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
-                    command_handle, err, 0, source_id
-                );
-                cb(command_handle, err.into(), 0)
-            }
-        };
-
         Ok(())
     }));
 
@@ -975,24 +963,15 @@ pub extern "C" fn vcx_v2_credential_update_state_with_message(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match credential::update_state(credential_handle, Some(&message), connection_handle).await {
-            Ok(_) => (),
+            Ok(state) => {
+                trace!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, state, source_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE, state)
+            }
             Err(err) => {
                 error!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0)
             }
         }
-
-        match credential::get_state(credential_handle) {
-            Ok(s) => {
-                trace!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, s, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, s)
-            }
-            Err(err) => {
-                error!("vcx_v2_credential_update_state_with_message_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}", command_handle, err, 0, source_id);
-                cb(command_handle, err.into(), 0)
-            }
-        };
-
         Ok(())
     }));
 
@@ -1033,15 +1012,15 @@ pub extern "C" fn vcx_credential_get_state(
 
     execute(move || {
         match credential::get_state(handle) {
-            Ok(s) => {
+            Ok(state) => {
                 trace!(
                     "vcx_credential_get_state_cb(command_handle: {}, rc: {}, state: {}), source_id: {:?}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    s,
+                    state,
                     source_id
                 );
-                cb(command_handle, error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error::SUCCESS_ERR_CODE, state)
             }
             Err(err) => {
                 error!(
@@ -1089,16 +1068,16 @@ pub extern "C" fn vcx_credential_serialize(
 
     execute(move || {
         match credential::to_string(handle) {
-            Ok(err) => {
+            Ok(serialized) => {
                 trace!(
                     "vcx_credential_serialize_cb(command_handle: {}, rc: {}, data: {}), source_id: {:?}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    err,
+                    serialized,
                     source_id
                 );
-                let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
+                let c_serialized = CStringUtils::string_to_cstring(serialized);
+                cb(command_handle, error::SUCCESS_ERR_CODE, c_serialized.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -1147,16 +1126,16 @@ pub extern "C" fn vcx_credential_deserialize(
 
     execute(move || {
         match credential::from_string(&credential_data) {
-            Ok(err) => {
+            Ok(handle) => {
                 trace!(
                     "vcx_credential_deserialize_cb(command_handle: {}, rc: {}, credential_handle: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    err,
-                    credential::get_source_id(err).unwrap_or_default()
+                    handle,
+                    credential::get_source_id(handle).unwrap_or_default()
                 );
 
-                cb(command_handle, error::SUCCESS_ERR_CODE, err);
+                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
