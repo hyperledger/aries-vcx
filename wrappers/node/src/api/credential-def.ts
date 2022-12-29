@@ -82,7 +82,6 @@ export class CredentialDef extends VCXBase<ICredentialDefData> {
           commandHandle,
           sourceId,
           schemaId,
-          issuerDid,
           tag,
           supportRevocation,
           cb,

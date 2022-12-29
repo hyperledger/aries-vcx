@@ -397,7 +397,6 @@ vcx_error_t vcx_credentialdef_create_v2(
         vcx_command_handle_t command_handle,
         const char *source_id,
         const char *schema_id,
-        const char *issuer_did,
         const char *tag,
         vcx_bool_t support_revocation,
         void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_credential_def_handle_t cred_def_handle)
