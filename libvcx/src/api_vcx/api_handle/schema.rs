@@ -4,9 +4,11 @@ use std::sync::Arc;
 use serde_json;
 
 use aries_vcx::common::primitives::credential_schema::Schema;
+use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 
 use crate::api_vcx::api_global::pool::get_main_pool_handle;
 use crate::api_vcx::api_global::profile::{get_main_profile, indy_handles_to_profile};
+use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -17,11 +19,12 @@ lazy_static! {
 
 pub async fn create_and_publish_schema(
     source_id: &str,
-    issuer_did: String,
     name: String,
     version: String,
     data: String,
 ) -> LibvcxResult<u32> {
+    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
+
     trace!(
         "create_new_schema >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}",
         source_id,
@@ -56,12 +59,13 @@ pub async fn create_and_publish_schema(
 
 pub async fn prepare_schema_for_endorser(
     source_id: &str,
-    issuer_did: String,
     name: String,
     version: String,
     data: String,
     endorser: String,
 ) -> LibvcxResult<(u32, String)> {
+    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
+
     trace!(
         "create_schema_for_endorser >>> source_id: {}, issuer_did: {}, name: {}, version: {}, data: {}, endorser: {}",
         source_id,
@@ -229,7 +233,6 @@ pub mod tests {
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         let handle = create_and_publish_schema(
             "test_create_schema_success",
-            did,
             schema_name,
             schema_version,
             data.clone(),
@@ -259,7 +262,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let (did, schema_name, schema_version, data) = prepare_schema_data();
-        create_and_publish_schema("test_create_schema_success", did, schema_name, schema_version, data)
+        create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data)
             .await
             .unwrap();
     }
@@ -272,7 +275,6 @@ pub mod tests {
         let (did, schema_name, schema_version, data) = prepare_schema_data();
         prepare_schema_for_endorser(
             "test_create_schema_success",
-            did,
             schema_name,
             schema_version,
             data,
@@ -301,7 +303,6 @@ pub mod tests {
 
         let err = create_and_publish_schema(
             "1",
-            "VsKV7grR1BUE29mG2Fm2kX".to_string(),
             "name".to_string(),
             "1.0".to_string(),
             "".to_string(),
@@ -354,7 +355,6 @@ pub mod tests {
 
             create_and_publish_schema(
                 "id",
-                did.clone(),
                 schema_name.clone(),
                 schema_version.clone(),
                 data.clone(),
@@ -362,7 +362,7 @@ pub mod tests {
             .await
             .unwrap();
 
-            let err = create_and_publish_schema("id_2", did, schema_name, schema_version, data)
+            let err = create_and_publish_schema("id_2", schema_name, schema_version, data)
                 .await
                 .unwrap_err();
 
@@ -378,19 +378,19 @@ pub mod tests {
 
         let (did, schema_name, version, data) = prepare_schema_data();
 
-        let h1 = create_and_publish_schema("1", did.clone(), schema_name.clone(), version.clone(), data.clone())
+        let h1 = create_and_publish_schema("1",  schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h2 = create_and_publish_schema("2", did.clone(), schema_name.clone(), version.clone(), data.clone())
+        let h2 = create_and_publish_schema("2",  schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h3 = create_and_publish_schema("3", did.clone(), schema_name.clone(), version.clone(), data.clone())
+        let h3 = create_and_publish_schema("3", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h4 = create_and_publish_schema("4", did.clone(), schema_name.clone(), version.clone(), data.clone())
+        let h4 = create_and_publish_schema("4", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h5 = create_and_publish_schema("5", did.clone(), schema_name.clone(), version.clone(), data.clone())
+        let h5 = create_and_publish_schema("5", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
 
@@ -425,7 +425,6 @@ pub mod tests {
 
             let (schema_handle, schema_request) = prepare_schema_for_endorser(
                 "test_vcx_schema_update_state_with_ledger",
-                did,
                 schema_name,
                 schema_version,
                 data,
@@ -467,7 +466,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let _schema_handle =
-                schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
+                schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await
                     .unwrap();
         })
@@ -480,7 +479,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let schema_handle =
-                schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
+                schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await
                     .unwrap();
 
@@ -499,7 +498,7 @@ pub mod tests {
         SetupGlobalsWalletPoolAgency::run(|_setup| async move {
             let (issuer_did, schema_name, schema_version, schema_data) = prepare_schema_data();
             let schema_handle =
-                schema::create_and_publish_schema("source_id", issuer_did, schema_name, schema_version, schema_data)
+                schema::create_and_publish_schema("source_id", schema_name, schema_version, schema_data)
                     .await
                     .unwrap();
             let _schema_json_1 = schema::to_string(schema_handle).unwrap();

@@ -370,7 +370,7 @@ jobs:
         uses: ./.github/actions/setup-testing-rust
       - name: "Run libvcx tests: pool_tests"
         run: |
-          RUST_TEST_THREADS=1 cargo test --features libvcx_c --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
+          RUST_TEST_THREADS=1 cargo test --manifest-path="libvcx/Cargo.toml" -F "pool_tests"
 
   test-node-wrapper:
     needs: workflow-setup
@@ -586,7 +586,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
       - name: "Build libvcx.so"
-        run: cargo build --release --features libvcx_c
+        run: cargo build --release
       - name: "Publish artifact libvcx.so"
         uses: actions/upload-artifact@v2
         with:
@@ -610,7 +610,7 @@ jobs:
           brew install zeromq
           brew install libsodium
       - name: "Build libvcx.dylib"
-        run: cargo build --release --features libvcx_c
+        run: cargo build --release
       - name: "Publish artifact libvcx.dylib"
         uses: actions/upload-artifact@v2
         with:

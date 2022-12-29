@@ -1,6 +1,5 @@
 use std::ptr;
 
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use futures::future::BoxFuture;
 use libc::c_char;
 
@@ -122,24 +121,18 @@ pub extern "C" fn vcx_revocation_registry_publish_revocations(
 
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
 
-    let issuer_did: String = match settings::get_config_value(CONFIG_INSTITUTION_DID) {
-        Ok(value) => value,
-        Err(err) => return err.into(),
-    };
     trace!(
-        "vcx_revocation_registry_publish_revocations(command_handle: {}, rev_reg_handle: {}, issuer_did: {})",
+        "vcx_revocation_registry_publish_revocations(command_handle: {}, rev_reg_handle: {})",
         command_handle,
         rev_reg_handle,
-        issuer_did
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match revocation_registry::publish_revocations(rev_reg_handle, &issuer_did).await {
+        match revocation_registry::publish_revocations(rev_reg_handle).await {
             Ok(()) => {
                 trace!(
-                    "vcx_revocation_registry_publish_revocations_cb(command_handle: {}, issuer_did: {}, rc: {})",
+                    "vcx_revocation_registry_publish_revocations_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    issuer_did,
                     error::SUCCESS_ERR_CODE
                 );
                 cb(command_handle, error::SUCCESS_ERR_CODE);
@@ -147,8 +140,8 @@ pub extern "C" fn vcx_revocation_registry_publish_revocations(
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!(
-                    "vcx_revocation_registry_publish_revocations_cb(command_handle: {}, issuer_did: {}, rc: {})",
-                    command_handle, issuer_did, err
+                    "vcx_revocation_registry_publish_revocations_cb(command_handle: {}, rc: {})",
+                    command_handle, err
                 );
                 cb(command_handle, err.into());
             }

@@ -967,7 +967,6 @@ mod tests {
         .unwrap();
         let schema = schema::create_and_publish_schema(
             "5",
-            "VsKV7grR1BUE29mG2Fm2kX".to_string(),
             "name".to_string(),
             "0.1".to_string(),
             data.to_string(),

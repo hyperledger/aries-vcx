@@ -27,6 +27,7 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
+// todo: move connection_handle as second arg.
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
@@ -153,12 +154,12 @@ pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<A2AMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
-pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    Ok(())
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {

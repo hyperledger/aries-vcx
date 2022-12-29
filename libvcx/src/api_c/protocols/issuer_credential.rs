@@ -141,20 +141,17 @@ pub extern "C" fn vcx_issuer_send_credential_offer_v2(
     trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, connection_handle: {}) source_id: {}", command_handle, credential_handle, connection_handle, source_id);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let err = match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle).await {
-            Ok(err) => {
+        match issuer_credential::send_credential_offer_v2(credential_handle, connection_handle).await {
+            Ok(_) => {
                 trace!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {}", command_handle, credential_handle, error::SUCCESS_ERR_CODE, source_id);
-                err
+                cb(command_handle, error::SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
                 error!("vcx_issuer_send_credential_offer_v2(command_handle: {}, credential_handle: {}, rc: {}) source_id: {})", command_handle, credential_handle, err, source_id);
-                err.into()
+                cb(command_handle, err.into());
             }
         };
-
-        cb(command_handle, err);
-
         Ok(())
     }));
 
