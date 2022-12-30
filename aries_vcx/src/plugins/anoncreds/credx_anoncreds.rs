@@ -267,8 +267,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             None
         };
 
-        let _schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
-        let _cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
+        let schemas: HashMap<SchemaId, Schema> = serde_json::from_str(schemas_json)?;
+        let cred_defs: HashMap<CredentialDefinitionId, CredentialDefinition> =
             serde_json::from_str(credential_defs_json)?;
 
         let mut present_credentials: PresentCredentials = PresentCredentials::new();
@@ -367,25 +367,13 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let link_secret = self.get_link_secret(link_secret_id).await?;
 
-        let mut schemas: HashMap<SchemaId, &Schema> = HashMap::new();
-
-        for (k, v) in _schemas.iter() {
-            schemas.insert(k.clone(), v);
-        }
-
-        let mut cred_defs: HashMap<CredentialDefinitionId, &CredentialDefinition> = HashMap::new();
-
-        for (k, v) in _cred_defs.iter() {
-            cred_defs.insert(k.clone(), v);
-        }
-
         let presentation = credx::prover::create_presentation(
             &pres_req,
             present_credentials,
             self_attested,
             &link_secret,
-            &schemas,
-            &cred_defs,
+            &hashmap_as_ref(&schemas),
+            &hashmap_as_ref(&cred_defs),
         )?;
 
         Ok(serde_json::to_string(&presentation)?)
@@ -781,6 +769,7 @@ fn unimplemented_method_err(method_name: &str) -> VcxError {
     )
 }
 
+// common transformation requirement in credx
 fn hashmap_as_ref<'a, T, U>(map: &'a HashMap<T, U>) -> HashMap<T, &'a U>
 where
     T: std::hash::Hash,
