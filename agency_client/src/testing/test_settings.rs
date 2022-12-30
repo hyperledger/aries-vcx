@@ -30,7 +30,7 @@ fn _set_test_config(key: &str, value: &str) {
     } else {
         AGENCY_SETTINGS
             .write()
-            .unwrap()
+            .expect("Could not write to AGENCY_SETTINGS")
             .insert(key.to_string(), value.to_string());
     }
 }

@@ -81,7 +81,7 @@ pub(crate) fn parse_message_type(message_type: &str) -> AgencyClientResult<(Stri
             (?P<version>.*)/
             (?P<type>.*)"
         )
-        .unwrap();
+        .expect("unexpected regex error occurred.");
     }
 
     RE.captures(message_type)
