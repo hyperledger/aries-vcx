@@ -289,7 +289,7 @@ build_libvcx(){
     pushd ${LIBVCX_DIR}
         rm -rf target/${TRIPLET}
         cargo clean
-        cargo build --features libvcx_c --release --target=${TRIPLET}
+        cargo build --release --target=${TRIPLET}
         rm -rf target/${TRIPLET}/release/deps
         rm -rf target/${TRIPLET}/release/build
         rm -rf target/release/deps

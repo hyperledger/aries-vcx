@@ -8,10 +8,11 @@ edition.workspace = true
 [lib]
 name = "vcx"
 path = "src/lib.rs"
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib", "cdylib", "lib"]
 doctest = false
 
 [features]
+default = [ "libvcx_c" ]
 test_utils = [ "aries-vcx/test_utils" ]
 pool_tests = [ "test_utils" ]
 general_test = [ "test_utils" ]

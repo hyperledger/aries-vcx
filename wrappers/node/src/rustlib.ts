@@ -508,7 +508,6 @@ export interface IFFIEntryPoint {
     commandId: number,
     sourceId: string,
     schemaId: string,
-    issuerDid: string | null,
     tag: string,
     support_revocation: boolean,
     cb: ICbRef,
@@ -1115,7 +1114,6 @@ export const FFIConfiguration: { [Key in keyof IFFIEntryPoint]: any } = {
     [
       FFI_COMMAND_HANDLE,
       FFI_SOURCE_ID,
-      FFI_STRING_DATA,
       FFI_STRING_DATA,
       FFI_STRING_DATA,
       FFI_BOOL,

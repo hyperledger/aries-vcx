@@ -8,7 +8,6 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use aries_vcx::messages::protocols::connection::did::Did;
 
 use aries_vcx::utils::constants::*;
@@ -25,7 +24,6 @@ use crate::api_vcx::api_handle::mediated_connection::{parse_connection_handles, 
 use crate::errors::error;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind};
 
-use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_global::wallet::{
     key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did,
     wallet_unpack_message_to_string,
@@ -414,24 +412,18 @@ pub extern "C" fn vcx_endorse_transaction(
 
     check_useful_c_str!(transaction, LibvcxErrorKind::InvalidOption);
     check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    let issuer_did: String = match get_config_value(CONFIG_INSTITUTION_DID) {
-        Ok(err) => err,
-        Err(err) => return err.into(),
-    };
     trace!(
-        "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, transaction: {})",
+        "vcx_endorse_transaction(command_handle: {}, transaction: {})",
         command_handle,
-        issuer_did,
         transaction
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match endorse_transaction(&issuer_did, &transaction).await {
+        match endorse_transaction(&transaction).await {
             Ok(()) => {
                 trace!(
-                    "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
+                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
                     command_handle,
-                    issuer_did,
                     error::SUCCESS_ERR_CODE
                 );
 
@@ -439,8 +431,8 @@ pub extern "C" fn vcx_endorse_transaction(
             }
             Err(err) => {
                 error!(
-                    "vcx_endorse_transaction(command_handle: {}, issuer_did: {}, rc: {})",
-                    command_handle, issuer_did, err
+                    "vcx_endorse_transaction(command_handle: {}, rc: {})",
+                    command_handle, err
                 );
 
                 cb(command_handle, err.into());

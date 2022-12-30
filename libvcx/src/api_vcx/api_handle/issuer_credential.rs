@@ -9,7 +9,7 @@ use crate::api_vcx::api_handle::credential_def;
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::api_vcx::api_handle::revocation_registry::REV_REG_MAP;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
@@ -27,6 +27,7 @@ pub fn issuer_credential_create(source_id: String) -> LibvcxResult<u32> {
     ISSUER_CREDENTIAL_MAP.add(Issuer::create(&source_id)?)
 }
 
+// todo: move connection_handle as second arg.
 pub async fn update_state(handle: u32, message: Option<&str>, connection_handle: u32) -> LibvcxResult<u32> {
     trace!("issuer_credential::update_state >>> ");
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
@@ -153,12 +154,12 @@ pub fn get_credential_offer_msg(handle: u32) -> LibvcxResult<A2AMessage> {
     ISSUER_CREDENTIAL_MAP.get(handle, |credential| Ok(credential.get_credential_offer_msg()?))
 }
 
-pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.send_credential_offer(send_message).await?;
     ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    Ok(())
 }
 
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
@@ -262,12 +263,9 @@ pub mod tests {
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 123, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(credential_handle, connection_handle)
-                .await
-                .unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(credential_handle, connection_handle)
+            .await
+            .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
     }
 
@@ -328,15 +326,12 @@ pub mod tests {
         build_credential_offer_msg_v2(credential_handle, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(credential_handle, connection_handle)
-                .await
-                .unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(credential_handle, connection_handle)
+            .await
+            .unwrap();
         assert_eq!(get_state(credential_handle).unwrap(), u32::from(IssuerState::OfferSent));
 
-        issuer_credential::update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
+        update_state(credential_handle, Some(ARIES_CREDENTIAL_REQUEST), connection_handle)
             .await
             .unwrap();
         assert_eq!(
@@ -356,14 +351,11 @@ pub mod tests {
         build_credential_offer_msg_v2(handle_cred, cred_def_handle, 1234, _cred_json(), None)
             .await
             .unwrap();
-        assert_eq!(
-            send_credential_offer_v2(handle_cred, handle_conn).await.unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_credential_offer_v2(handle_cred, handle_conn).await.unwrap();
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
 
         // try to update state with nonsense message
-        let result = issuer_credential::update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
+        let result = update_state(handle_cred, Some(ARIES_CONNECTION_ACK), handle_conn).await;
         assert!(result.is_ok()); // todo: maybe we should rather return error if update_state doesn't progress state
         assert_eq!(get_state(handle_cred).unwrap(), u32::from(IssuerState::OfferSent));
     }

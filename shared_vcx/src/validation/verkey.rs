@@ -19,7 +19,6 @@ pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::error::SharedVcxErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

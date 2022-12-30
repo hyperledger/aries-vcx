@@ -598,15 +598,15 @@ pub extern "C" fn vcx_v2_disclosed_proof_update_state(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match disclosed_proof::update_state(proof_handle, None, connection_handle).await {
-            Ok(s) => {
+            Ok(state) => {
                 trace!(
                     "vcx_v2_disclosed_proof_update_state_cb(command_handle: {}, rc: {}, state: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    s,
+                    state,
                     source_id
                 );
-                cb(command_handle, error::SUCCESS_ERR_CODE, s)
+                cb(command_handle, error::SUCCESS_ERR_CODE, state)
             }
             Err(err) => {
                 error!(
@@ -708,16 +708,16 @@ pub extern "C" fn vcx_disclosed_proof_serialize(
 
     execute(move || {
         match disclosed_proof::to_string(proof_handle) {
-            Ok(err) => {
+            Ok(serialized) => {
                 trace!(
                     "vcx_disclosed_proof_serialize_cb(command_handle: {}, rc: {}, data: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    err,
+                    serialized,
                     source_id
                 );
-                let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
+                let c_serialized = CStringUtils::string_to_cstring(serialized);
+                cb(command_handle, error::SUCCESS_ERR_CODE, c_serialized.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -766,16 +766,16 @@ pub extern "C" fn vcx_disclosed_proof_deserialize(
 
     execute(move || {
         match disclosed_proof::from_string(&proof_data) {
-            Ok(err) => {
+            Ok(handle) => {
                 trace!(
                     "vcx_disclosed_proof_deserialize_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    err,
-                    disclosed_proof::get_source_id(err).unwrap_or_default()
+                    handle,
+                    disclosed_proof::get_source_id(handle).unwrap_or_default()
                 );
 
-                cb(command_handle, 0, err);
+                cb(command_handle, 0, handle);
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -827,16 +827,16 @@ pub extern "C" fn vcx_disclosed_proof_retrieve_credentials(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match disclosed_proof::retrieve_credentials(proof_handle).await {
-            Ok(err) => {
+            Ok(credentials) => {
                 trace!(
                     "vcx_disclosed_proof_retrieve_credentials(command_handle: {}, rc: {}, data: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    err,
+                    credentials,
                     source_id
                 );
-                let msg = CStringUtils::string_to_cstring(err);
-                cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
+                let c_credentials = CStringUtils::string_to_cstring(credentials);
+                cb(command_handle, error::SUCCESS_ERR_CODE, c_credentials.as_ptr());
             }
             Err(err) => {
                 set_current_error_vcx(&err);
@@ -914,7 +914,7 @@ pub extern "C" fn vcx_disclosed_proof_generate_proof(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match disclosed_proof::generate_proof(proof_handle, &selected_credentials, &self_attested_attrs).await {
-            Ok(_) => {
+            Ok(()) => {
                 trace!(
                     "vcx_disclosed_proof_generate_proof(command_handle: {}, rc: {}) source_id: {}",
                     command_handle,
@@ -1027,7 +1027,7 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
         )
         .await
         {
-            Ok(_) => {
+            Ok(()) => {
                 trace!(
                     "vcx_disclosed_proof_decline_presentation_request(command_handle: {}, rc: {}) source_id: {}",
                     command_handle,
@@ -1071,16 +1071,16 @@ pub extern "C" fn vcx_disclosed_proof_get_thread_id(
 
     execute(move || {
         match disclosed_proof::get_thread_id(proof_handle) {
-            Ok(s) => {
+            Ok(thread_id) => {
                 trace!(
                     "vcx_disclosed_proof_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    s,
+                    thread_id,
                     source_id
                 );
-                let thread_id = CStringUtils::string_to_cstring(s);
-                cb(command_handle, error::SUCCESS_ERR_CODE, thread_id.as_ptr());
+                let c_thread_id = CStringUtils::string_to_cstring(thread_id);
+                cb(command_handle, error::SUCCESS_ERR_CODE, c_thread_id.as_ptr());
             }
             Err(err) => {
                 error!(

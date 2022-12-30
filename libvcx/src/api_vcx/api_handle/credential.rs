@@ -11,7 +11,7 @@ use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
@@ -184,14 +184,13 @@ pub async fn is_revokable(handle: u32) -> LibvcxResult<bool> {
     credential.is_revokable(&profile).await.map_err(|err| err.into())
 }
 
-pub async fn delete_credential(handle: u32) -> LibvcxResult<u32> {
+pub async fn delete_credential(handle: u32) -> LibvcxResult<()> {
     trace!("Credential::delete_credential >>> credential_handle: {}", handle);
     let credential = HANDLE_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
 
     credential.delete_credential(&profile).await?;
-    HANDLE_MAP.release(handle)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.release(handle)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
@@ -206,7 +205,7 @@ pub fn generate_credential_request_msg(_handle: u32, _my_pw_did: &str, _their_pw
     // TODO: implement
 }
 
-pub async fn send_credential_request(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_credential_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     trace!(
         "Credential::send_credential_request >>> credential_handle: {}, connection_handle: {}",
         handle,
@@ -217,8 +216,7 @@ pub async fn send_credential_request(handle: u32, connection_handle: u32) -> Lib
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     let profile = get_main_profile()?;
     credential.send_request(&profile, my_pw_did, send_message).await?;
-    HANDLE_MAP.insert(handle, credential)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, credential)
 }
 
 async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
@@ -334,12 +332,11 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     })
 }
 
-pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<u32> {
+pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<&str>) -> LibvcxResult<()> {
     let mut credential = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     credential.decline_offer(comment, send_message).await?;
-    HANDLE_MAP.insert(handle, credential)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    HANDLE_MAP.insert(handle, credential)
 }
 
 #[cfg(test)]
