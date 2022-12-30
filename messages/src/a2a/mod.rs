@@ -252,8 +252,15 @@ where
     T: Serialize,
 {
     let mut value = ::serde_json::to_value(msg)?;
+    let _value = value.clone();
     let type_ = ::serde_json::to_value(MessageType::build(family, name))?;
-    value.as_object_mut().unwrap().insert("@type".into(), type_);
+    value
+        .as_object_mut()
+        .ok_or(ser::Error::custom(format!(
+            "failed to interpret Value as an Object: {}",
+            _value
+        )))?
+        .insert("@type".into(), type_);
     Ok(value)
 }
 

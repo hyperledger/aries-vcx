@@ -4,7 +4,8 @@ use crate::errors::error::{SharedVcxError, SharedVcxErrorKind, SharedVcxResult};
 use bs58;
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").unwrap();
+    pub static ref REGEX: Regex =
+        Regex::new("did:([a-z0-9]+):([a-zA-Z0-9:.-_]*)").expect("unexpected regex error occurred.");
 }
 
 pub fn is_fully_qualified(entity: &str) -> bool {
