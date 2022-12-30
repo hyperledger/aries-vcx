@@ -147,13 +147,9 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResu
         )
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    let connection = MediatedConnection::create_with_request(
-        &profile,
-        request,
-        agent.pairwise_info(),
-        &get_main_agency_client()?,
-    )
-    .await?;
+    let connection =
+        MediatedConnection::create_with_request(&profile, request, agent.pairwise_info(), &get_main_agency_client()?)
+            .await?;
     store_connection(connection)
 }
 

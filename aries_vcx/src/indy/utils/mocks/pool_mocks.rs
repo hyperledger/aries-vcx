@@ -17,7 +17,11 @@ impl PoolMocks {
     pub fn set_next_pool_response(body: &str) {
         if pool_mocks_enabled() {
             trace!("Mocks enabled, setting next pool response");
-            POOL_MOCK_RESPONSES.lock().expect("Unable to access POOL_MOCK_RESPONSES").responses.push(body.into());
+            POOL_MOCK_RESPONSES
+                .lock()
+                .expect("Unable to access POOL_MOCK_RESPONSES")
+                .responses
+                .push(body.into());
         } else {
             warn!("Attempting to set mocked pool response when mocks are not enabled!");
         }

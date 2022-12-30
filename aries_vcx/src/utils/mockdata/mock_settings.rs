@@ -44,7 +44,9 @@ impl MockBuilder {
             "MockBuilder::set_mock_result_for_validate_indy_proof >>> result: {:?}",
             result
         );
-        let mut settings = MOCK_SETTINGS_RESULT_BOOL.write().expect("Unable to access MOCK_SETTINGS_RESULT_BOOL");
+        let mut settings = MOCK_SETTINGS_RESULT_BOOL
+            .write()
+            .expect("Unable to access MOCK_SETTINGS_RESULT_BOOL");
         settings.insert(String::from(MOCKED_VALIDATE_INDY_PROOF), result);
         self
     }
@@ -74,7 +76,9 @@ pub fn get_mock_creds_retrieved_for_proof_request() -> Option<String> {
 }
 
 pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
-    let config = MOCK_SETTINGS_RESULT_BOOL.read().expect("Unable to access MOCK_SETTINGS_RESULT_BOOL");
+    let config = MOCK_SETTINGS_RESULT_BOOL
+        .read()
+        .expect("Unable to access MOCK_SETTINGS_RESULT_BOOL");
     config.get(MOCKED_VALIDATE_INDY_PROOF).map(|result| match result {
         Ok(val) => Ok(*val),
         Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string())),
