@@ -25,12 +25,12 @@ pub struct LibindyMock {
 impl LibindyMock {
     pub fn set_next_result(rc: u32) {
         if settings::indy_mocks_enabled() {
-            LIBINDY_MOCK.lock().unwrap().results.push(rc);
+            LIBINDY_MOCK.lock().expect("Unabled to access LIBINDY_MOCK").results.push(rc);
         }
     }
 
     pub fn get_result() -> u32 {
-        LIBINDY_MOCK.lock().unwrap().results.pop().unwrap_or_default()
+        LIBINDY_MOCK.lock().expect("Unable to access LIBINDY_MOCK").results.pop().unwrap_or_default()
     }
 }
 

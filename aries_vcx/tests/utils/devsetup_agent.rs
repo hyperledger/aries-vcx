@@ -135,7 +135,7 @@ pub mod test_utils {
 
     impl Faber {
         pub async fn setup(pool_handle: PoolHandle) -> Faber {
-            settings::reset_config_values();
+            settings::reset_config_values().unwrap();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -444,7 +444,7 @@ pub mod test_utils {
 
     impl Alice {
         async fn setup_indy_wallet() -> (WalletHandle, WalletConfig) {
-            settings::reset_config_values();
+            settings::reset_config_values().unwrap();
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),

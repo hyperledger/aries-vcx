@@ -49,7 +49,7 @@ pub fn state_vcx_shutdown(delete: bool) {
         if let Ok(()) = futures::executor::block_on(pool::delete(&pool_name)) {}
     }
 
-    reset_config_values();
+    let _ = reset_config_values();
     reset_main_agency_client();
     reset_main_pool_handle();
 }
