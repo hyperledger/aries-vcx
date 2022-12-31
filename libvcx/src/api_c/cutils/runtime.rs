@@ -9,7 +9,7 @@ use futures::future::BoxFuture;
 use tokio::runtime::Runtime;
 
 static RT: Lazy<Runtime> = Lazy::new(|| {
-    tokio::runtime::Builder::new_multi_thread()
+    match tokio::runtime::Builder::new_multi_thread()
         .thread_name_fn(|| {
             static ATOMIC_ID: AtomicUsize = AtomicUsize::new(0);
             let id = ATOMIC_ID.fetch_add(1, Ordering::SeqCst);
@@ -18,7 +18,10 @@ static RT: Lazy<Runtime> = Lazy::new(|| {
         .on_thread_start(|| debug!("Starting tokio runtime worker thread for vcx ffi."))
         .enable_all()
         .build()
-        .unwrap()
+    {
+        Ok(runtime) => runtime,
+        Err(e) => panic!("Unexpected error constructing tokio runtime: {}", e),
+    }
 });
 
 #[derive(Deserialize)]

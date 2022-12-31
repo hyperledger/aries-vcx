@@ -406,7 +406,8 @@ pub extern "C" fn vcx_schema_get_attributes(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match schema::get_schema_attrs(source_id, schema_id).await {
             Ok((handle, data)) => {
-                let data: serde_json::Value = serde_json::from_str(&data).unwrap();
+                let data: serde_json::Value =
+                    serde_json::from_str(&data).expect(&format!("unexpected error deserializing data: {}", data));
                 let data = data["data"].clone();
                 trace!(
                     "vcx_schema_get_attributes_cb(command_handle: {}, rc: {}, handle: {}, attrs: {})",

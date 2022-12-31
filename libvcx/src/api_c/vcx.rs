@@ -273,7 +273,8 @@ pub extern "C" fn vcx_open_main_pool(
 
 lazy_static! {
     pub static ref VERSION_STRING: CString =
-        CString::new(format!("{}{}", version_constants::VERSION, version_constants::REVISION)).unwrap();
+        CString::new(format!("{}{}", version_constants::VERSION, version_constants::REVISION))
+            .expect("Unexpected error converting to CString");
 }
 
 #[no_mangle]
@@ -308,7 +309,9 @@ pub extern "C" fn vcx_shutdown(delete: bool) -> u32 {
 #[no_mangle]
 pub extern "C" fn vcx_error_c_message(error_code: u32) -> *const c_char {
     let kind_string = LibvcxErrorKind::from(error_code).to_string();
-    CString::new(kind_string).unwrap().into_raw()
+    CString::new(kind_string)
+        .expect("Unexpected error converting to CString")
+        .into_raw()
 }
 
 /// Update agency webhook url setting
