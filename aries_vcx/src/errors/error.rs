@@ -70,6 +70,8 @@ pub enum AriesVcxErrorKind {
     InvalidProofCredentialData,
     #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
+    #[error("The proof was rejected")]
+    ProofRejected,
 
     // Schema
     #[error("No Schema for that schema sequence number")]

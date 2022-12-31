@@ -41,6 +41,9 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             // 404
             MasterSecretDuplicateName => AriesVcxErrorKind::DuplicationMasterSecret,
 
+            // 405
+            ProofRejected => AriesVcxErrorKind::ProofRejected,
+
             // 407
             CredDefAlreadyExists => AriesVcxErrorKind::CredDefAlreadyCreated,
 
@@ -50,7 +53,6 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             // 702
             PaymentInsufficientFunds
             | InvalidState
-            | ProofRejected
             | RevocationRegistryFull
             | LedgerItemNotFound
             | InvalidPoolHandle

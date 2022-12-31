@@ -360,6 +360,8 @@ impl SetupProfile {
     }
 
     pub async fn init() -> SetupProfile {
+        init_test_logging();
+        set_test_configs();
         if SetupProfile::should_run_modular() {
             info!("SetupProfile >> using modular profile");
             SetupProfile::init_modular().await
@@ -372,8 +374,6 @@ impl SetupProfile {
     // FUTURE - ideally no tests should be using this method, they should be using the generic init
     // after modular profile Anoncreds/Ledger methods have all been implemented, all tests should use init()
     async fn init_indy() -> SetupProfile {
-        init_test_logging();
-        set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         settings::set_config_value(
@@ -399,8 +399,6 @@ impl SetupProfile {
     }
 
     async fn init_modular() -> SetupProfile {
-        init_test_logging();
-        set_test_configs();
         let (institution_did, wallet_handle) = setup_issuer_wallet().await;
 
         let genesis_file_path = create_tmp_genesis_txn_file();

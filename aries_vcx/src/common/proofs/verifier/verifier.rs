@@ -197,7 +197,7 @@ pub mod unit_tests {
                     .await
                     .unwrap_err()
                     .kind(),
-                AriesVcxErrorKind::VdrToolsError(405)
+                AriesVcxErrorKind::ProofRejected
             ); // AnoncredsProofRejected
 
             let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();

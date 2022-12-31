@@ -79,6 +79,7 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::VdrToolsError(num) => LibvcxErrorKind::LibndyError(num),
             AriesVcxErrorKind::NoAgentInformation => LibvcxErrorKind::NoAgentInformation,
             AriesVcxErrorKind::InvalidMessageFormat => LibvcxErrorKind::InvalidMessageFormat,
+            AriesVcxErrorKind::ProofRejected => LibvcxErrorKind::LibndyError(405), // AnoncredsProofRejected Vdrtools error code
         }
     }
 }
