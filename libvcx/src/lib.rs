@@ -15,7 +15,7 @@
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 #[macro_use]
-extern crate aries_vcx;
+pub extern crate aries_vcx;
 
 extern crate num_traits;
 
@@ -29,7 +29,7 @@ extern crate log;
 extern crate serde_derive;
 
 #[macro_use]
-extern crate serde_json;
+pub extern crate serde_json;
 
 #[cfg(feature = "libvcx_c")]
 #[macro_use]

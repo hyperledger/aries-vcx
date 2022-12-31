@@ -34,7 +34,6 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::error::SharedVcxErrorKind;
 
     #[test]
     #[cfg(feature = "general_test")]

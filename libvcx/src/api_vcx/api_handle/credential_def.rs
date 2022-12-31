@@ -1,8 +1,10 @@
 use aries_vcx::common::primitives::credential_definition::CredentialDef;
 use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
 use aries_vcx::common::primitives::credential_definition::PublicEntityStateType;
+use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_global::settings::get_config_value;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
@@ -11,13 +13,9 @@ lazy_static! {
         ObjectCache::<CredentialDef>::new("credential-defs-cache");
 }
 
-pub async fn create(
-    source_id: String,
-    schema_id: String,
-    issuer_did: String,
-    tag: String,
-    support_revocation: bool,
-) -> LibvcxResult<u32> {
+pub async fn create(source_id: String, schema_id: String, tag: String, support_revocation: bool) -> LibvcxResult<u32> {
+    let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
+
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)
@@ -127,15 +125,9 @@ pub mod tests {
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
         let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let cred_def_handle = create(
-            "1".to_string(),
-            schema_id,
-            issuer_did.clone(),
-            "tag_1".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
+        let cred_def_handle = create("1".to_string(), schema_id, "tag_1".to_string(), false)
+            .await
+            .unwrap();
 
         publish(cred_def_handle).await.unwrap();
         (schema_handle, cred_def_handle)
@@ -168,7 +160,7 @@ pub mod tests {
                 .build()
                 .unwrap();
             let _revocation_details = serde_json::to_string(&revocation_details).unwrap();
-            let handle_cred_def = create("1".to_string(), schema_id, issuer_did.clone(), "tag1".to_string(), true)
+            let handle_cred_def = create("1".to_string(), schema_id, "tag1".to_string(), true)
                 .await
                 .unwrap();
             publish(handle_cred_def).await.unwrap();
@@ -241,56 +233,14 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let issuer_did = String::from("4fUDR9R7fjwELRvH9JT6HH");
-        let h1 = create(
-            "SourceId".to_string(),
-            SCHEMA_ID.to_string(),
-            issuer_did.clone(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
-        let h2 = create(
-            "SourceId".to_string(),
-            SCHEMA_ID.to_string(),
-            issuer_did.clone(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
-        let h3 = create(
-            "SourceId".to_string(),
-            SCHEMA_ID.to_string(),
-            issuer_did.clone(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
-        let h4 = create(
-            "SourceId".to_string(),
-            SCHEMA_ID.to_string(),
-            issuer_did.clone(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
-        let h5 = create(
-            "SourceId".to_string(),
-            SCHEMA_ID.to_string(),
-            issuer_did.clone(),
-            "tag".to_string(),
-            false,
-        )
-        .await
-        .unwrap();
+        let h1 = create("SourceId".to_string(), SCHEMA_ID.to_string(), "tag".to_string(), false)
+            .await
+            .unwrap();
+        let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), "tag".to_string(), false)
+            .await
+            .unwrap();
         release_all();
         assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
         assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
     }
 }

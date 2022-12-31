@@ -537,7 +537,7 @@ pub extern "C" fn vcx_proof_send_request(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         let err = match proof::send_proof_request(proof_handle, connection_handle).await {
-            Ok(err) => {
+            Ok(_) => {
                 trace!(
                     "vcx_proof_send_request_cb(command_handle: {}, rc: {}, proof_handle: {}) source_id: {}",
                     command_handle,
@@ -545,7 +545,7 @@ pub extern "C" fn vcx_proof_send_request(
                     proof_handle,
                     source_id
                 );
-                err
+                error::SUCCESS_ERR_CODE
             }
             Err(err) => {
                 set_current_error_vcx(&err);

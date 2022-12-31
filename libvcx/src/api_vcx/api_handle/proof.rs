@@ -7,7 +7,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
-use crate::errors::error;
+
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 lazy_static! {
@@ -131,13 +131,12 @@ pub async fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     }
 }
 
-pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
-    PROOF_MAP.insert(handle, proof)?;
-    Ok(error::SUCCESS_ERR_CODE)
+    PROOF_MAP.insert(handle, proof)
 }
 
 pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
@@ -264,10 +263,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
 
         let handle_proof = create_default_proof().await;
-        assert_eq!(
-            send_proof_request(handle_proof, handle_conn).await.unwrap(),
-            error::SUCCESS_ERR_CODE
-        );
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
             get_state(handle_proof).await.unwrap(),
             VerifierState::PresentationRequestSent as u32
@@ -509,7 +505,7 @@ pub mod tests {
         assert_eq!(get_state(handle_proof).await.unwrap(), 1);
 
         // Retry sending proof request
-        assert_eq!(send_proof_request(handle_proof, handle_conn).await.unwrap(), 0);
+        send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
             get_state(handle_proof).await.unwrap(),
             VerifierState::PresentationRequestSent as u32

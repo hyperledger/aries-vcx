@@ -1,6 +1,5 @@
 use std::ptr;
 
-use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use futures::future::BoxFuture;
 use libc::c_char;
 
@@ -8,7 +7,7 @@ use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::set_current_error_vcx;
 use crate::api_c::cutils::runtime::{execute, execute_async};
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::settings;
+
 use crate::api_vcx::api_handle::credential_def;
 use crate::errors::error;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind};
@@ -18,7 +17,6 @@ pub extern "C" fn vcx_credentialdef_create_v2(
     command_handle: CommandHandle,
     source_id: *const c_char,
     schema_id: *const c_char,
-    issuer_did: *const c_char,
     tag: *const c_char,
     support_revocation: bool,
     cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, credentialdef_handle: u32)>,
@@ -30,20 +28,9 @@ pub extern "C" fn vcx_credentialdef_create_v2(
     check_useful_c_str!(schema_id, LibvcxErrorKind::InvalidOption);
     check_useful_c_str!(tag, LibvcxErrorKind::InvalidOption);
 
-    let issuer_did: String = if !issuer_did.is_null() {
-        check_useful_c_str!(issuer_did, LibvcxErrorKind::InvalidOption);
-        issuer_did
-    } else {
-        match settings::get_config_value(CONFIG_INSTITUTION_DID) {
-            Ok(did) => did,
-            Err(err) => return err.into(),
-        }
-    };
-
-    trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, issuer_did: {}, tag: {}, support_revocation: {:?})", command_handle, source_id, schema_id, issuer_did, tag, support_revocation);
+    trace!("vcx_credentialdef_create_v2(command_handle: {}, source_id: {}, schema_id: {}, tag: {}, support_revocation: {:?})", command_handle, source_id, schema_id, tag, support_revocation);
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let (rc, handle) = match credential_def::create(source_id, schema_id, issuer_did, tag, support_revocation).await
-        {
+        let (rc, handle) = match credential_def::create(source_id, schema_id, tag, support_revocation).await {
             Ok(handle) => {
                 trace!("vcx_credentialdef_create_v2_cb(command_handle: {}, rc: {}, credentialdef_handle: {}), source_id: {:?}", command_handle, error::SUCCESS_ERR_CODE, handle, credential_def::get_source_id(handle).unwrap_or_default());
                 (error::SUCCESS_ERR_CODE, handle)
@@ -468,7 +455,6 @@ mod tests {
                 cb.command_handle,
                 CString::new("Test Source ID").unwrap().into_raw(),
                 CString::new(SCHEMA_ID).unwrap().into_raw(),
-                CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
                 Some(cb.get_callback()),
@@ -488,7 +474,6 @@ mod tests {
                     cb.command_handle,
                     CString::new("Test Source ID").unwrap().into_raw(),
                     CString::new(SCHEMA_ID).unwrap().into_raw(),
-                    ptr::null(),
                     CString::new("tag").unwrap().into_raw(),
                     true,
                     Some(cb.get_callback()),
@@ -511,7 +496,6 @@ mod tests {
                 cb.command_handle,
                 CString::new("Test Source ID").unwrap().into_raw(),
                 CString::new(SCHEMA_ID).unwrap().into_raw(),
-                ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
                 Some(cb.get_callback()),
@@ -582,7 +566,6 @@ mod tests {
                 cb.command_handle,
                 CString::new("Test Source ID Release Test").unwrap().into_raw(),
                 CString::new(SCHEMA_ID).unwrap().into_raw(),
-                ptr::null(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
                 Some(cb.get_callback()),
@@ -609,7 +592,6 @@ mod tests {
                 cb.command_handle,
                 CString::new("Test Source ID").unwrap().into_raw(),
                 CString::new(SCHEMA_ID).unwrap().into_raw(),
-                CString::new("6vkhW3L28AophhA68SSzRS").unwrap().into_raw(),
                 CString::new("tag").unwrap().into_raw(),
                 true,
                 Some(cb.get_callback()),
