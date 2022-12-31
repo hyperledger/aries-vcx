@@ -10,13 +10,13 @@ pub mod integration_tests {
     #[tokio::test]
     async fn test_is_cred_def_on_ledger() {
         SetupWalletPool::run(|setup| async move {
-
-        assert_eq!(
-            is_cred_def_on_ledger(setup.pool_handle, None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7")
-                .await
-                .unwrap(),
-            false
-        );
-        }).await;
+            assert_eq!(
+                is_cred_def_on_ledger(setup.pool_handle, None, "V4SGRU86Z58d6TV7PBUe6f:3:CL:194:tag7")
+                    .await
+                    .unwrap(),
+                false
+            );
+        })
+        .await;
     }
 }

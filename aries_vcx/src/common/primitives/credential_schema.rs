@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxResult, VcxErrorKind};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::{DEFAULT_SERIALIZE_VERSION, SCHEMA_ID, SCHEMA_JSON};
 use crate::utils::serialization::ObjectWithVersion;
 
 use super::credential_definition::PublicEntityStateType;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct SchemaData {
     pub name: String,
     pub version: String,
@@ -16,7 +16,7 @@ pub struct SchemaData {
     pub attr_names: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct Schema {
     pub data: Vec<String>,
     pub version: String,
@@ -28,12 +28,25 @@ pub struct Schema {
     #[serde(default)]
     pub state: PublicEntityStateType,
     #[serde(default)]
-    schema_json: String // added in 0.45.0, #[serde(default)] use for backwards compatibility
+    schema_json: String, // added in 0.45.0, #[serde(default)] use for backwards compatibility
 }
 
 impl Schema {
-    pub async fn create(profile: &Arc<dyn Profile>, source_id: &str, submitter_did: &str, name: &str, version: &str, data: &Vec<String>) -> VcxResult<Self> {
-        trace!("Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}", submitter_did, name, version, data);
+    pub async fn create(
+        profile: &Arc<dyn Profile>,
+        source_id: &str,
+        submitter_did: &str,
+        name: &str,
+        version: &str,
+        data: &Vec<String>,
+    ) -> VcxResult<Self> {
+        trace!(
+            "Schema::create >>> submitter_did: {}, name: {}, version: {}, data: {:?}",
+            submitter_did,
+            name,
+            version,
+            data
+        );
 
         if settings::indy_mocks_enabled() {
             return Ok(Self {
@@ -48,11 +61,17 @@ impl Schema {
             });
         }
 
-        let data_str = serde_json::to_string(data)
-        .map_err(|err| VcxError::from_msg(VcxErrorKind::SerializationError, format!("Failed to serialize schema attributes, err: {}", err)))?;
-        
+        let data_str = serde_json::to_string(data).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Failed to serialize schema attributes, err: {}", err),
+            )
+        })?;
+
         let anoncreds = Arc::clone(profile).inject_anoncreds();
-        let (schema_id, schema_json) = anoncreds.issuer_create_schema(&submitter_did, name, version, &data_str).await?;
+        let (schema_id, schema_json) = anoncreds
+            .issuer_create_schema(submitter_did, name, version, &data_str)
+            .await?;
 
         Ok(Self {
             source_id: source_id.to_string(),
@@ -66,16 +85,24 @@ impl Schema {
         })
     }
 
-    pub async fn create_from_ledger_json(profile: &Arc<dyn Profile>, source_id: &str, schema_id: &str) -> VcxResult<Self> {
+    pub async fn create_from_ledger_json(
+        profile: &Arc<dyn Profile>,
+        source_id: &str,
+        schema_id: &str,
+    ) -> VcxResult<Self> {
         let ledger = Arc::clone(profile).inject_ledger();
         let schema_json = ledger.get_schema(schema_id, None).await?;
-        let schema_data: SchemaData = serde_json::from_str(&schema_json)
-            .map_err(|err| VcxError::from_msg(VcxErrorKind::InvalidJson, format!("Cannot deserialize schema: {}", err)))?;
+        let schema_data: SchemaData = serde_json::from_str(&schema_json).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize schema: {}", err),
+            )
+        })?;
 
         Ok(Self {
             source_id: source_id.to_string(),
             schema_id: schema_id.to_string(),
-            schema_json: schema_json.to_string(),
+            schema_json,
             name: schema_data.name,
             version: schema_data.version,
             data: schema_data.attr_names,
@@ -88,16 +115,21 @@ impl Schema {
         trace!("Schema::publish >>>");
 
         if settings::indy_mocks_enabled() {
-            return Ok(Self { state: PublicEntityStateType::Published, ..self });
+            return Ok(Self {
+                state: PublicEntityStateType::Published,
+                ..self
+            });
         }
 
         let ledger = Arc::clone(profile).inject_ledger();
-        ledger.publish_schema(&self.schema_json, &self.submitter_did, endorser_did).await?;
+        ledger
+            .publish_schema(&self.schema_json, &self.submitter_did, endorser_did)
+            .await?;
 
-        return Ok(Self {
+        Ok(Self {
             state: PublicEntityStateType::Published,
             ..self
-        });
+        })
     }
 
     pub fn get_source_id(&self) -> String {
@@ -108,18 +140,16 @@ impl Schema {
         self.schema_id.clone()
     }
 
-    pub fn to_string(&self) -> VcxResult<String> {
+    pub fn to_string_versioned(&self) -> VcxResult<String> {
         ObjectWithVersion::new(DEFAULT_SERIALIZE_VERSION, self.to_owned())
             .serialize()
-            .map_err(|err| err)
-            .map_err(|err: VcxError| err.extend("Cannot serialize Schema"))
+            .map_err(|err: AriesVcxError| err.extend("Cannot serialize Schema"))
     }
 
-    pub fn from_str(data: &str) -> VcxResult<Schema> {
+    pub fn from_string_versioned(data: &str) -> VcxResult<Schema> {
         ObjectWithVersion::deserialize(data)
             .map(|obj: ObjectWithVersion<Schema>| obj.data)
-            .map_err(|err| err)
-            .map_err(|err: VcxError| err.extend("Cannot deserialize Schema"))
+            .map_err(|err: AriesVcxError| err.extend("Cannot deserialize Schema"))
     }
 
     pub async fn update_state(&mut self, profile: &Arc<dyn Profile>) -> VcxResult<u32> {

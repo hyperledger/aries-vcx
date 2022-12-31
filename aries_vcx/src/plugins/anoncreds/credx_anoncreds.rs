@@ -4,9 +4,9 @@ use std::{
     sync::Arc,
 };
 
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     core::profile::profile::Profile,
-    error::{VcxError, VcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::AsyncFnIteratorCollect,
     utils::{
         constants::ATTRS,
@@ -17,19 +17,15 @@ use crate::{
 use async_trait::async_trait;
 use credx::{
     types::{
-        Credential as CredxCredential, CredentialDefinitionId, CredentialRevocationState, DidValue, MasterSecret,
-        Presentation, PresentationRequest, RevocationRegistry, RevocationRegistryDefinition, RevocationRegistryDelta,
-        RevocationRegistryId, Schema, SchemaId,
+        Credential as CredxCredential, CredentialDefinitionId, CredentialRequestMetadata, CredentialRevocationState,
+        DidValue, MasterSecret, PresentCredentials, Presentation, PresentationRequest, RevocationRegistry,
+        RevocationRegistryDefinition, RevocationRegistryDelta, RevocationRegistryId, Schema, SchemaId,
     },
-    ursa::{bn::BigNumber, errors::UrsaCryptoError},
+    ursa::bn::BigNumber,
 };
 use credx::{
     types::{CredentialDefinition, CredentialOffer},
     ursa::cl::MasterSecret as UrsaMasterSecret,
-};
-use credx::{
-    types::{CredentialRequestMetadata, PresentCredentials},
-    Error as CredxError,
 };
 use indy_credx as credx;
 use serde_json::Value;
@@ -126,7 +122,7 @@ impl IndyCredxAnonCreds {
                     arr.push(wql_attr_query);
                     json!({ "$and": arr })
                 }
-                Value::Object(obj) => json!({ "$and": vec![wql_attr_query, Value::Object(obj.to_owned())] }),
+                Value::Object(obj) => json!({ "$and": vec![wql_attr_query, Value::Object(obj)] }),
                 _ => wql_attr_query,
             }
         } else {
@@ -259,7 +255,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let requested_attributes = (&requested_credentials).try_get("requested_attributes")?;
 
         let requested_predicates = (&requested_credentials).try_get("requested_predicates")?;
-        let self_attested_attributes = (&requested_credentials).get("self_attested_attributes");
+        let self_attested_attributes = requested_credentials.get("self_attested_attributes");
 
         let rev_states: Option<Value> = if let Some(revoc_states_json) = revoc_states_json {
             Some(serde_json::from_str(revoc_states_json)?)
@@ -295,7 +291,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 // mapping made for this credential already, add reft and its revealed status
                 req_attr_refts_revealed.push((reft.to_string(), revealed));
             } else {
-                let credential = self._get_credential(&cred_id).await?;
+                let credential = self._get_credential(cred_id).await?;
 
                 let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
@@ -321,7 +317,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 // mapping made for this credential already, add reft
                 req_preds_refts.push(reft.to_string());
             } else {
-                let credential = self._get_credential(&cred_id).await?;
+                let credential = self._get_credential(cred_id).await?;
 
                 let (timestamp, rev_state) = get_rev_state(cred_id, &credential, detail, rev_states.as_ref())?;
 
@@ -336,7 +332,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         for (_cred_id, (credential, timestamp, rev_state, req_attr_refts_revealed, req_preds_refts)) in
             proof_details_by_cred_id.iter()
         {
-            let mut add_cred = present_credentials.add_credential(&credential, *timestamp, rev_state.as_ref());
+            let mut add_cred = present_credentials.add_credential(credential, *timestamp, rev_state.as_ref());
 
             for (referent, revealed) in req_attr_refts_revealed {
                 add_cred.add_requested_attribute(referent, *revealed);
@@ -356,7 +352,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 self_attested_map.insert(k.to_string(), v.try_as_str()?.to_string());
             }
 
-            if self_attested_map.len() == 0 {
+            if self_attested_map.is_empty() {
                 None
             } else {
                 Some(self_attested_map)
@@ -405,16 +401,16 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
     }
 
     async fn prover_get_credentials_for_proof_req(&self, proof_req: &str) -> VcxResult<String> {
-        let proof_req_v: Value =
-            serde_json::from_str(proof_req).map_err(|e| VcxError::from_msg(VcxErrorKind::InvalidProofRequest, e))?;
+        let proof_req_v: Value = serde_json::from_str(proof_req)
+            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::InvalidProofRequest, e))?;
 
-        let requested_attributes = (&proof_req_v).get("requested_attributes");
+        let requested_attributes = proof_req_v.get("requested_attributes");
         let requested_attributes = if let Some(requested_attributes) = requested_attributes {
             Some(requested_attributes.try_as_object()?.clone())
         } else {
             None
         };
-        let requested_predicates = (&proof_req_v).get("requested_predicates");
+        let requested_predicates = proof_req_v.get("requested_predicates");
         let requested_predicates = if let Some(requested_predicates) = requested_predicates {
             Some(requested_predicates.try_as_object()?.clone())
         } else {
@@ -422,9 +418,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         };
 
         // handle special case of "empty because json is bad" vs "empty because no attributes sepected"
-        if requested_attributes == None && requested_predicates == None {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::InvalidAttributesStructure,
+        if requested_attributes.is_none() && requested_predicates.is_none() {
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidAttributesStructure,
                 "Invalid Json Parsing of Requested Attributes Retrieved From Libindy",
             ));
         }
@@ -448,9 +444,9 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
                 .as_ref()
                 .and_then(|req_attrs| req_attrs.get(&reft))
                 .or_else(|| requested_predicates.as_ref().and_then(|req_preds| req_preds.get(&reft)))
-                .ok_or(VcxError::from_msg(
+                .ok_or(AriesVcxError::from_msg(
                     // should not happen
-                    VcxErrorKind::InvalidState,
+                    AriesVcxErrorKind::InvalidState,
                     format!("Unknown referent: {}", reft),
                 ))?;
 
@@ -496,7 +492,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             &prover_did,
             &cred_def,
             &link_secret,
-            &link_secret_id,
+            link_secret_id,
             &credential_offer,
         )?;
 
@@ -523,7 +519,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         let rev_reg_delta: RevocationRegistryDelta = serde_json::from_str(rev_reg_delta_json)?;
         let rev_reg_idx: u32 = cred_rev_id
             .parse()
-            .map_err(|e| VcxError::from_msg(VcxErrorKind::ParsingError, e))?;
+            .map_err(|e| AriesVcxError::from_msg(AriesVcxErrorKind::ParsingError, e))?;
 
         let rev_state = credx::prover::create_or_update_revocation_state(
             tails_reader,
@@ -566,15 +562,15 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
 
         let schema_id = &credential.schema_id;
         let (_schema_method, schema_issuer_did, schema_name, schema_version) =
-            schema_id.parts().ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidSchema,
+            schema_id.parts().ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidSchema,
                 "Could not process credential.schema_id as parts.",
             ))?;
 
         let cred_def_id = &credential.cred_def_id;
         let (_cred_def_method, issuer_did, _signature_type, _schema_id, _tag) =
-            cred_def_id.parts().ok_or(VcxError::from_msg(
-                VcxErrorKind::InvalidSchema,
+            cred_def_id.parts().ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidSchema,
                 "Could not process credential.cred_def_id as parts.",
             ))?;
 
@@ -624,8 +620,8 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .ok(); // ignore error, as we only care about whether it exists or not
 
         if existing_record.is_some() {
-            return Err(VcxError::from_msg(
-                VcxErrorKind::DuplicationMasterSecret,
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::DuplicationMasterSecret,
                 format!("Master secret id: {} already exists in wallet.", link_secret_id),
             ));
         }
@@ -653,7 +649,7 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         version: &str,
         attrs: &str,
     ) -> VcxResult<(String, String)> {
-        let origin_did = DidValue::new(&issuer_did, None);
+        let origin_did = DidValue::new(issuer_did, None);
         let attr_names = serde_json::from_str(attrs)?;
 
         let schema = credx::issuer::create_schema(&origin_did, name, version, attr_names, None)?;
@@ -693,16 +689,16 @@ fn get_rev_state(
         let rev_state = rev_states
             .as_ref()
             .and_then(|_rev_states| _rev_states.get(cred_rev_reg_id.to_string()));
-        let rev_state = rev_state.ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        let rev_state = rev_state.ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!(
                 "No revocation states provided for credential '{}' with rev_reg_id '{}'",
                 cred_id, cred_rev_reg_id
             ),
         ))?;
 
-        let rev_state = rev_state.get(timestamp.to_string()).ok_or(VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        let rev_state = rev_state.get(timestamp.to_string()).ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!(
                 "No revocation states provided for credential '{}' with rev_reg_id '{}' at timestamp '{}'",
                 cred_id, cred_rev_reg_id, timestamp
@@ -720,7 +716,7 @@ fn get_rev_state(
 
 fn _normalize_attr_name(name: &str) -> String {
     // "name": string, // attribute name, (case insensitive and ignore spaces)
-    name.replace(" ", "").to_lowercase()
+    name.replace(' ', "").to_lowercase()
 }
 
 fn _make_cred_info(credential_id: &str, cred: &CredxCredential) -> VcxResult<Value> {
@@ -762,9 +758,9 @@ fn _format_attribute_as_marker_tag_name(attribute_name: &str) -> String {
     format!("attr::{attribute_name}::marker")
 }
 
-fn unimplemented_method_err(method_name: &str) -> VcxError {
-    VcxError::from_msg(
-        VcxErrorKind::UnimplementedFeature,
+fn unimplemented_method_err(method_name: &str) -> AriesVcxError {
+    AriesVcxError::from_msg(
+        AriesVcxErrorKind::UnimplementedFeature,
         format!("method '{}' is not yet implemented in AriesVCX", method_name),
     )
 }
@@ -784,58 +780,11 @@ where
     new_map
 }
 
-impl From<CredxError> for VcxError {
-    fn from(err: CredxError) -> Self {
-        match err.kind() {
-            credx::ErrorKind::Input => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
-            credx::ErrorKind::IOError => VcxError::from_msg(VcxErrorKind::IOError, err),
-            credx::ErrorKind::InvalidState => VcxError::from_msg(VcxErrorKind::InvalidState, err),
-            credx::ErrorKind::Unexpected => VcxError::from_msg(VcxErrorKind::UnknownError, err),
-            credx::ErrorKind::CredentialRevoked => VcxError::from_msg(VcxErrorKind::InvalidState, err),
-            credx::ErrorKind::InvalidUserRevocId => VcxError::from_msg(VcxErrorKind::InvalidInput, err),
-            credx::ErrorKind::ProofRejected => VcxError::from_msg(VcxErrorKind::InvalidState, err),
-            credx::ErrorKind::RevocationRegistryFull => VcxError::from_msg(VcxErrorKind::InvalidState, err),
-        }
-    }
-}
-
-impl From<UrsaCryptoError> for VcxError {
-    fn from(err: UrsaCryptoError) -> Self {
-        match err.kind() {
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidState => {
-                VcxError::from_msg(VcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidStructure => {
-                VcxError::from_msg(VcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidParam(_) => {
-                VcxError::from_msg(VcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::IOError => VcxError::from_msg(VcxErrorKind::IOError, err),
-            credx::ursa::errors::UrsaCryptoErrorKind::ProofRejected => {
-                VcxError::from_msg(VcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::RevocationAccumulatorIsFull => {
-                VcxError::from_msg(VcxErrorKind::InvalidState, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::InvalidRevocationAccumulatorIndex => {
-                VcxError::from_msg(VcxErrorKind::InvalidInput, err)
-            }
-            credx::ursa::errors::UrsaCryptoErrorKind::CredentialRevoked => {
-                VcxError::from_msg(VcxErrorKind::InvalidState, err)
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 mod unit_tests {
-    use crate::{
-        common::test_utils::mock_profile,
-        error::{VcxErrorKind, VcxResult},
-        plugins::anoncreds::base_anoncreds::BaseAnonCreds,
-    };
+    use crate::errors::error::{AriesVcxErrorKind, VcxResult};
+    use crate::{common::test_utils::mock_profile, plugins::anoncreds::base_anoncreds::BaseAnonCreds};
 
     use super::IndyCredxAnonCreds;
 
@@ -844,7 +793,7 @@ mod unit_tests {
         // test used to assert which methods are unimplemented currently, can be removed after all methods implemented
 
         fn assert_unimplemented<T: std::fmt::Debug>(result: VcxResult<T>) {
-            assert_eq!(result.unwrap_err().kind(), VcxErrorKind::UnimplementedFeature)
+            assert_eq!(result.unwrap_err().kind(), AriesVcxErrorKind::UnimplementedFeature)
         }
 
         let profile = mock_profile();

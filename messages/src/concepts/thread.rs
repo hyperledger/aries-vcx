@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Default, Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Thread {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thid: Option<String>,
@@ -36,17 +36,6 @@ impl Thread {
 
     pub fn is_reply(&self, id: &str) -> bool {
         [self.thid.clone(), self.pthid.clone()].contains(&Some(id.to_string()))
-    }
-}
-
-impl Default for Thread {
-    fn default() -> Thread {
-        Thread {
-            thid: None,
-            pthid: None,
-            sender_order: 0,
-            received_orders: HashMap::new(),
-        }
     }
 }
 

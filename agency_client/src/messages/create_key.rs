@@ -1,7 +1,8 @@
-use crate::error::AgencyClientResult;
+use crate::errors::error::AgencyClientResult;
 use crate::messages::a2a_message::A2AMessageKinds;
 use crate::messages::message_type::MessageType;
-use crate::validation;
+use shared_vcx::validation::did::validate_did;
+use shared_vcx::validation::verkey::validate_verkey;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -42,14 +43,14 @@ impl CreateKeyBuilder {
 
     pub fn for_did(&mut self, did: &str) -> AgencyClientResult<&mut Self> {
         trace!("CreateKeyBuilder::for_did >>> did: {}", did);
-        validation::validate_did(did)?;
+        validate_did(did)?;
         self.for_did = did.to_string();
         Ok(self)
     }
 
     pub fn for_verkey(&mut self, verkey: &str) -> AgencyClientResult<&mut Self> {
         trace!("CreateKeyBuilder::for_verkey >>> verkey: {}", verkey);
-        validation::validate_verkey(verkey)?;
+        validate_verkey(verkey)?;
         self.for_verkey = verkey.to_string();
         Ok(self)
     }
@@ -67,7 +68,7 @@ impl CreateKeyBuilder {
 #[cfg(test)]
 mod tests {
     use crate::agency_client::AgencyClient;
-    use crate::error::AgencyClientErrorKind;
+    use crate::errors::error::AgencyClientErrorKind;
     use crate::testing::test_utils::SetupMocks;
 
     use super::*;

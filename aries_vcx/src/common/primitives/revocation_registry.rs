@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::utils::constants::REV_REG_ID;
 
 use super::credential_definition::PublicEntityStateType;
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq)]
 pub struct RevocationRegistry {
     cred_def_id: String,
     issuer_did: String,
@@ -47,7 +47,7 @@ impl RevocationRegistry {
             &format!("tag{}", tag),
         )
         .await
-        .map_err(|err| err.map(VcxErrorKind::CreateRevRegDef, "Cannot create Revocation Registry"))?;
+        .map_err(|err| err.map(AriesVcxErrorKind::CreateRevRegDef, "Cannot create Revocation Registry"))?;
         Ok(RevocationRegistry {
             cred_def_id: cred_def_id.to_string(),
             issuer_did: issuer_did.to_string(),
@@ -100,11 +100,12 @@ impl RevocationRegistry {
         );
         self.rev_reg_def.value.tails_location = String::from(tails_url);
         let ledger = Arc::clone(profile).inject_ledger();
-        ledger.publish_rev_reg_def( &self.rev_reg_def, issuer_did)
+        ledger
+            .publish_rev_reg_def(&self.rev_reg_def, issuer_did)
             .await
             .map_err(|err| {
                 err.map(
-                    VcxErrorKind::InvalidState,
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot publish revocation registry definition",
                 )
             })?;
@@ -119,9 +120,10 @@ impl RevocationRegistry {
             self.rev_reg_id
         );
         let ledger = Arc::clone(profile).inject_ledger();
-        ledger.publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
+        ledger
+            .publish_rev_reg_delta(&self.rev_reg_id, &self.rev_reg_entry, issuer_did)
             .await
-            .map_err(|err| err.map(VcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
+            .map_err(|err| err.map(AriesVcxErrorKind::InvalidRevocationEntry, "Cannot post RevocationEntry"))?;
         self.rev_reg_delta_state = PublicEntityStateType::Published;
         Ok(())
     }
@@ -161,8 +163,8 @@ impl RevocationRegistry {
 
     pub fn to_string(&self) -> VcxResult<String> {
         serde_json::to_string(&self).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::SerializationError,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
                 format!("Cannot serialize revocation registry: {:?}", err),
             )
         })
@@ -170,30 +172,30 @@ impl RevocationRegistry {
 
     pub fn from_string(rev_reg_data: &str) -> VcxResult<Self> {
         serde_json::from_str(rev_reg_data).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
                 format!("Cannot deserialize revocation registry: {:?}", err),
             )
         })
     }
 
-    pub async fn revoke_credential_local(
-        &self,
-        profile: &Arc<dyn Profile>,
-        cred_rev_id: &str,
-    ) -> VcxResult<()> {
+    pub async fn revoke_credential_local(&self, profile: &Arc<dyn Profile>, cred_rev_id: &str) -> VcxResult<()> {
         let anoncreds = Arc::clone(profile).inject_anoncreds();
-        anoncreds.revoke_credential_local( &self.tails_dir, &self.rev_reg_id, cred_rev_id).await
+        anoncreds
+            .revoke_credential_local(&self.tails_dir, &self.rev_reg_id, cred_rev_id)
+            .await
     }
 
     pub async fn publish_local_revocations(&self, profile: &Arc<dyn Profile>, submitter_did: &str) -> VcxResult<()> {
         let anoncreds = Arc::clone(profile).inject_anoncreds();
 
-        anoncreds.publish_local_revocations(submitter_did, &self.rev_reg_id).await
+        anoncreds
+            .publish_local_revocations(submitter_did, &self.rev_reg_id)
+            .await
     }
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinitionValue {
     pub issuance_type: String,
@@ -203,7 +205,7 @@ pub struct RevocationRegistryDefinitionValue {
     pub tails_location: String,
 }
 
-#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Default)]
+#[derive(Clone, Deserialize, Debug, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDefinition {
     pub id: String,
@@ -240,12 +242,13 @@ pub async fn generate_rev_reg(
 
     let anoncreds = Arc::clone(profile).inject_anoncreds();
 
-    let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) =
-        anoncreds.issuer_create_and_store_revoc_reg( issuer_did, cred_def_id, tails_dir, max_creds, tag).await?;
+    let (rev_reg_id, rev_reg_def_json, rev_reg_entry_json) = anoncreds
+        .issuer_create_and_store_revoc_reg(issuer_did, cred_def_id, tails_dir, max_creds, tag)
+        .await?;
 
     let rev_reg_def: RevocationRegistryDefinition = serde_json::from_str(&rev_reg_def_json).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::SerializationError,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::SerializationError,
             format!(
                 "Failed to deserialize rev_reg_def: {:?}, error: {:?}",
                 rev_reg_def_json, err
@@ -255,7 +258,6 @@ pub async fn generate_rev_reg(
 
     Ok((rev_reg_id, rev_reg_def, rev_reg_entry_json))
 }
-
 
 // consider impl revoke_credential_local in a generic (non-vdrtools) fashion
 // consider impl publish_local_revocations in a generic (non-vdrtools) fashion

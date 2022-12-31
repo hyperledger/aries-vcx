@@ -1,4 +1,3 @@
-use crate::did_doc::DidDoc;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
@@ -6,6 +5,7 @@ use crate::concepts::ack::please_ack::PleaseAck;
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
 use crate::timing_optional;
+use diddoc::aries::diddoc::AriesDidDoc;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct Response {
@@ -27,7 +27,7 @@ pub struct ConnectionData {
     #[serde(rename = "DID")]
     pub did: String,
     #[serde(rename = "DIDDoc")]
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
 }
 
 please_ack!(Response);
@@ -104,7 +104,7 @@ impl Default for ConnectionSignature {
 
 #[cfg(feature = "test_utils")]
 pub mod test_utils {
-    use crate::did_doc::test_utils::_did_doc_inlined_recipient_keys;
+    use diddoc::aries::diddoc::test_utils::_did_doc_inlined_recipient_keys;
 
     use super::*;
 
@@ -166,8 +166,8 @@ pub mod test_utils {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
-    use crate::did_doc::test_utils::*;
     use crate::protocols::connection::response::test_utils::{_did, _response, _thread_id};
+    use diddoc::aries::diddoc::test_utils::*;
 
     use super::*;
 

@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::{core::profile::indy_profile::IndySdkProfile, error::VcxResult, indy};
+use crate::errors::error::VcxResult;
+use crate::{core::profile::indy_profile::IndySdkProfile, indy};
 
 use super::base_anoncreds::BaseAnonCreds;
 

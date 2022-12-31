@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::error::*;
 use crate::services::connection::ServiceConnections;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
+use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
@@ -34,10 +34,7 @@ pub struct ServiceCredentialsIssuer {
 }
 
 impl ServiceCredentialsIssuer {
-    pub fn new(
-        profile: Arc<dyn Profile>,
-        service_connections: Arc<ServiceConnections>,
-    ) -> Self {
+    pub fn new(profile: Arc<dyn Profile>, service_connections: Arc<ServiceConnections>) -> Self {
         Self {
             profile,
             service_connections,
@@ -55,16 +52,10 @@ impl ServiceCredentialsIssuer {
         Ok(connection_id)
     }
 
-    pub async fn accept_proposal(
-        &self,
-        connection_id: &str,
-        proposal: &CredentialProposal,
-    ) -> AgentResult<String> {
+    pub async fn accept_proposal(&self, connection_id: &str, proposal: &CredentialProposal) -> AgentResult<String> {
         let issuer = Issuer::create_from_proposal("", proposal)?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, connection_id),
-        )
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, connection_id))
     }
 
     pub async fn send_credential_offer(
@@ -86,10 +77,8 @@ impl ServiceCredentialsIssuer {
         issuer
             .send_credential_offer(connection.send_message_closure(&self.profile, None).await?)
             .await?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
 
     pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
@@ -98,10 +87,8 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_request(request)?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())
     }
 
@@ -111,10 +98,8 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_ack(ack)?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())
     }
 
@@ -130,10 +115,8 @@ impl ServiceCredentialsIssuer {
                 connection.send_message_closure(&self.profile, None).await?,
             )
             .await?;
-        self.creds_issuer.insert(
-            &issuer.get_thread_id()?,
-            IssuerWrapper::new(issuer, &connection_id),
-        )?;
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())
     }
 
@@ -160,4 +143,3 @@ impl ServiceCredentialsIssuer {
         self.creds_issuer.contains_key(thread_id)
     }
 }
-

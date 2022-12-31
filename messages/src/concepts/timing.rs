@@ -1,6 +1,6 @@
 use chrono::{DateTime, SecondsFormat, TimeZone, Utc};
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[derive(Default, Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Timing {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub out_time: Option<String>,
@@ -72,18 +72,6 @@ impl Timing {
     }
 }
 
-impl Default for Timing {
-    fn default() -> Timing {
-        Timing {
-            out_time: None,
-            stale_time: None,
-            expires_time: None,
-            delay_milli: None,
-            wait_until_time: None,
-        }
-    }
-}
-
 #[macro_export]
 macro_rules! timing_optional (($type:ident) => (
     impl $type {
@@ -100,7 +88,6 @@ pub mod unit_tests {
 
     use std::thread;
     use std::time::Duration;
-
 
     use super::*;
 

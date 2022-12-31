@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use crate::error::*;
-use crate::storage::Storage;
 use crate::storage::object_cache::ObjectCache;
-use aries_vcx::core::profile::profile::Profile;
+use crate::storage::Storage;
 use aries_vcx::common::primitives::credential_schema::Schema;
+use aries_vcx::core::profile::profile::Profile;
 
 pub struct ServiceSchemas {
     profile: Arc<dyn Profile>,
@@ -21,21 +21,14 @@ impl ServiceSchemas {
         }
     }
 
-    pub async fn create_schema(
-        &self,
-        name: &str,
-        version: &str,
-        attributes: &Vec<String>,
-    ) -> AgentResult<String> {
+    pub async fn create_schema(&self, name: &str, version: &str, attributes: &Vec<String>) -> AgentResult<String> {
         let schema = Schema::create(&self.profile, "", &self.issuer_did, name, version, attributes).await?;
         self.schemas.insert(&schema.get_schema_id(), schema)
     }
 
     pub async fn publish_schema(&self, thread_id: &str) -> AgentResult<()> {
         let schema = self.schemas.get(thread_id)?;
-        let schema = schema
-            .publish(&self.profile, None)
-            .await?;
+        let schema = schema.publish(&self.profile, None).await?;
         self.schemas.insert(thread_id, schema)?;
         Ok(())
     }

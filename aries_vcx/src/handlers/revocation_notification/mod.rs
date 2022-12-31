@@ -7,7 +7,7 @@ pub mod test_utils {
     use messages::concepts::ack::Ack;
     use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 
-    use crate::error::prelude::*;
+    use crate::errors::error::prelude::*;
     use crate::handlers::connection::mediated_connection::MediatedConnection;
     use messages::a2a::A2AMessage;
 

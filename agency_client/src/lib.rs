@@ -1,3 +1,9 @@
+#![allow(clippy::or_fun_call)]
+#![allow(clippy::module_inception)]
+#![allow(clippy::derive_partial_eq_without_eq)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::inherent_to_string)]
+#![allow(clippy::large_enum_variant)]
 #![crate_name = "agency_client"]
 
 #[macro_use]
@@ -12,11 +18,7 @@ extern crate serde_derive;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
-pub mod error;
-use error::prelude::*;
-
 mod utils;
-use utils::validation;
 
 #[macro_use]
 pub mod agency_client;
@@ -29,6 +31,7 @@ pub mod messages;
 pub mod testing;
 pub mod wallet;
 
+pub mod errors;
 mod internal;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -37,7 +40,7 @@ pub enum MessageStatusCode {
     Reviewed,
 }
 
-impl std::string::ToString for MessageStatusCode {
+impl ToString for MessageStatusCode {
     fn to_string(&self) -> String {
         match self {
             MessageStatusCode::Received => "MS-103",

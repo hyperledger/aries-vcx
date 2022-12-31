@@ -2,16 +2,9 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
 use crate::common::proofs::proof_request::PresentationRequestData;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use crate::core::profile::profile::Profile;
+use crate::errors::error::prelude::*;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::verifier::messages::VerifierMessages;
 use crate::protocols::proof_presentation::verifier::states::finished::FinishedState;
@@ -21,6 +14,13 @@ use crate::protocols::proof_presentation::verifier::states::presentation_request
 use crate::protocols::proof_presentation::verifier::states::presentation_request_set::PresentationRequestSetState;
 use crate::protocols::proof_presentation::verifier::verify_thread_id;
 use crate::protocols::SendClosure;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct VerifierSM {
@@ -29,7 +29,7 @@ pub struct VerifierSM {
     state: VerifierFullState,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum VerifierState {
     Initial,
     PresentationProposalReceived,
@@ -66,7 +66,7 @@ impl Default for VerifierFullState {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RevocationStatus {
     Revoked,
     NonRevoked,
@@ -118,45 +118,56 @@ impl VerifierSM {
     }
 
     pub fn receive_presentation_proposal(self, proposal: PresentationProposal) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &VerifierMessages::PresentationProposalReceived(proposal.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &VerifierMessages::PresentationProposalReceived(proposal.clone()),
+        )?;
         let (state, thread_id) = match self.state {
             VerifierFullState::Initial(_) => {
                 let thread_id = match proposal.thread {
-                    Some(ref thread) => thread.thid.clone().ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    Some(ref thread) => thread.thid.clone().ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Received proposal with invalid thid",
                     ))?,
                     None => proposal.id.0.clone(),
                 };
                 (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                        proposal.clone(),
-                    )),
+                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
                     thread_id,
                 )
             }
             VerifierFullState::PresentationRequestSent(_) => {
-                verify_thread_id(&self.thread_id, &VerifierMessages::PresentationProposalReceived(proposal.clone()))?;
+                verify_thread_id(
+                    &self.thread_id,
+                    &VerifierMessages::PresentationProposalReceived(proposal.clone()),
+                )?;
                 (
-                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(
-                            proposal
-                    )),
-                    self.thread_id.clone()
+                    VerifierFullState::PresentationProposalReceived(PresentationProposalReceivedState::new(proposal)),
+                    self.thread_id.clone(),
                 )
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive presentation proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
         };
-        Ok(Self { state, thread_id, ..self })
+        Ok(Self {
+            state,
+            thread_id,
+            ..self
+        })
     }
 
     pub fn receive_presentation_request_reject(self, problem_report: ProblemReport) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &VerifierMessages::PresentationRejectReceived(problem_report.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &VerifierMessages::PresentationRejectReceived(problem_report.clone()),
+        )?;
         let state = match self.state {
-            VerifierFullState::PresentationRequestSent(state) => VerifierFullState::Finished((state, problem_report).into()),
-            s @ _ => {
+            VerifierFullState::PresentationRequestSent(state) => {
+                VerifierFullState::Finished((state, problem_report).into())
+            }
+            s => {
                 warn!("Unable to receive presentation request reject in state {}", s);
                 s
             }
@@ -168,9 +179,10 @@ impl VerifierSM {
         let (state, thread_id) = match self.state {
             VerifierFullState::PresentationProposalReceived(state) => {
                 let thread_id = match state.presentation_proposal.thread {
-                    Some(thread) => thread
-                        .thid
-                        .ok_or(VcxError::from_msg(VcxErrorKind::InvalidState, "Thread id undefined"))?,
+                    Some(thread) => thread.thid.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Thread id undefined",
+                    ))?,
                     None => state.presentation_proposal.id.0,
                 };
                 let problem_report = build_problem_report_msg(Some(reason.to_string()), &thread_id);
@@ -180,38 +192,47 @@ impl VerifierSM {
                     thread_id,
                 )
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to reject presentation proposal in state {}", s);
                 (s, self.thread_id.clone())
             }
         };
-        Ok(Self { state, thread_id, ..self })
+        Ok(Self {
+            state,
+            thread_id,
+            ..self
+        })
     }
 
-    pub async fn verify_presentation(self, profile: &Arc<dyn Profile>, presentation: Presentation, send_message: SendClosure) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &VerifierMessages::VerifyPresentation(presentation.clone()))?;
+    pub async fn verify_presentation(
+        self,
+        profile: &Arc<dyn Profile>,
+        presentation: Presentation,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
+        verify_thread_id(
+            &self.thread_id,
+            &VerifierMessages::VerifyPresentation(presentation.clone()),
+        )?;
         let state = match self.state {
             VerifierFullState::PresentationRequestSent(state) => {
-                let verification_result = state
-                    .verify_presentation(profile, &presentation, &self.thread_id)
-                    .await;
+                let verification_result = state.verify_presentation(profile, &presentation, &self.thread_id).await;
                 let ack = build_verification_ack(&self.thread_id);
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 match verification_result {
                     Ok(()) => VerifierFullState::Finished((state, presentation, RevocationStatus::NonRevoked).into()),
-                    Err(err) => {
-                        match err.kind() {
-                            VcxErrorKind::InvalidProof =>
-                                VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into()),
-                            _ => {
-                                let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                                VerifierFullState::Finished((state, problem_report).into())
-                            }
+                    Err(err) => match err.kind() {
+                        AriesVcxErrorKind::InvalidProof => {
+                            VerifierFullState::Finished((state, presentation, RevocationStatus::Revoked).into())
                         }
-                    }
+                        _ => {
+                            let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                            VerifierFullState::Finished((state, problem_report).into())
+                        }
+                    },
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to verify presentation in state {}", s);
                 s
             }
@@ -226,7 +247,7 @@ impl VerifierSM {
                 send_message(A2AMessage::PresentationAck(ack)).await?;
                 VerifierFullState::Finished(state)
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send presentation ack in state {}", s);
                 s
             }
@@ -285,8 +306,8 @@ impl VerifierSM {
                 VerifierFullState::PresentationRequestSet(PresentationRequestSetState::new(presentation_request))
             }
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot set presentation request in this state",
                 ));
             }
@@ -310,8 +331,8 @@ impl VerifierSM {
             }
             VerifierFullState::PresentationRequestSent(state) => VerifierFullState::PresentationRequestSent(state),
             _ => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Can not mark_presentation_request_msg_sent in current state.",
                 ))
             }
@@ -333,32 +354,33 @@ impl VerifierSM {
         let verifier_sm = match message {
             VerifierMessages::PresentationProposalReceived(proposal) => self.receive_presentation_proposal(proposal)?,
             VerifierMessages::RejectPresentationProposal(reason) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.reject_presentation_proposal(reason, send_message).await?
             }
             VerifierMessages::VerifyPresentation(presentation) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.verify_presentation(profile, presentation, send_message).await?
             }
             VerifierMessages::SendPresentationAck() => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.send_presentation_ack(send_message).await?
             }
             // TODO: Rename to PresentationRequestRejectReceived
-            VerifierMessages::PresentationRejectReceived(problem_report) => self.receive_presentation_request_reject(problem_report)?,
+            VerifierMessages::PresentationRejectReceived(problem_report) => {
+                self.receive_presentation_request_reject(problem_report)?
+            }
             // TODO: This code path is not used currently; would need to convert ProofRequest to
             // ProofRequestData
-           VerifierMessages::SetPresentationRequest(_) |
-                VerifierMessages::Unknown => self
+            VerifierMessages::SetPresentationRequest(_) | VerifierMessages::Unknown => self,
         };
         Ok(verifier_sm)
     }
@@ -418,20 +440,20 @@ impl VerifierSM {
 
     pub fn presentation_request(&self) -> VcxResult<PresentationRequest> {
         match self.state {
-            VerifierFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            VerifierFullState::Initial(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation request not set yet",
             )),
             VerifierFullState::PresentationRequestSet(ref state) => Ok(state.presentation_request.clone()),
             VerifierFullState::PresentationProposalReceived(ref state) => state.presentation_request.clone().ok_or(
-                VcxError::from_msg(VcxErrorKind::InvalidState, "No presentation request set"),
+                AriesVcxError::from_msg(AriesVcxErrorKind::InvalidState, "No presentation request set"),
             ),
             VerifierFullState::PresentationRequestSent(ref state) => Ok(state.presentation_request.clone()),
             VerifierFullState::Finished(ref state) => Ok(state
                 .presentation_request
                 .as_ref()
-                .ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                .ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "No presentation request set",
                 ))?
                 .clone()),
@@ -440,12 +462,12 @@ impl VerifierSM {
 
     pub fn presentation(&self) -> VcxResult<Presentation> {
         match self.state {
-            VerifierFullState::Finished(ref state) => state
-                .presentation
-                .clone()
-                .ok_or(VcxError::from(VcxErrorKind::InvalidProofHandle)),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            VerifierFullState::Finished(ref state) => state.presentation.clone().ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "State machine is final state, but presentation is not available".to_string(),
+            )),
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation not received yet",
             )),
         }
@@ -454,8 +476,8 @@ impl VerifierSM {
     pub fn presentation_proposal(&self) -> VcxResult<PresentationProposal> {
         match self.state {
             VerifierFullState::PresentationProposalReceived(ref state) => Ok(state.presentation_proposal.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Presentation proposal not received yet",
             )),
         }
@@ -465,14 +487,14 @@ impl VerifierSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
+    use crate::common::test_utils::mock_profile;
+    use crate::test::source_id;
+    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
     use messages::protocols::proof_presentation::presentation::test_utils::{_presentation, _presentation_1};
     use messages::protocols::proof_presentation::presentation_proposal::test_utils::_presentation_proposal;
     use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
     use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
-    use crate::test::source_id;
-    use crate::utils::devsetup::{SetupEmpty, SetupMocks};
-    use crate::common::proofs::proof_request::test_utils::_presentation_request_data;
-    use crate::common::test_utils::mock_profile;
 
     use super::*;
 
@@ -542,11 +564,11 @@ pub mod unit_tests {
     mod build_messages {
         use super::*;
 
-        use messages::a2a::MessageId;
         use crate::protocols::proof_presentation::verifier::state_machine::{
             build_starting_presentation_request, build_verification_ack,
         };
         use crate::utils::devsetup::{was_in_past, SetupMocks};
+        use messages::a2a::MessageId;
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -613,7 +635,6 @@ pub mod unit_tests {
     mod step {
         use crate::utils::devsetup::was_in_past;
         use crate::utils::mockdata::mock_settings::MockBuilder;
-
 
         use super::*;
 
@@ -891,10 +912,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(VerifierFullState::Finished(_), verifier_sm.state);
-            assert_eq!(
-                Status::Failed(_problem_report()),
-                verifier_sm.presentation_status()
-            );
+            assert_eq!(Status::Failed(_problem_report()), verifier_sm.presentation_status());
         }
 
         #[tokio::test]

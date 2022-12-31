@@ -1,10 +1,13 @@
 use std::sync::Arc;
+
 use url::Url;
 
+use shared_vcx::validation::did::validate_did;
+use shared_vcx::validation::verkey::validate_verkey;
+
 use crate::configuration::AgencyClientConfig;
-use crate::error::AgencyClientResult;
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 use crate::wallet::base_agency_client_wallet::{BaseAgencyClientWallet, StubAgencyClientWallet};
-use crate::{validation, AgencyClientError, AgencyClientErrorKind};
 
 #[derive(Clone, Debug)]
 pub struct AgencyClient {
@@ -18,20 +21,7 @@ pub struct AgencyClient {
     pub my_vk: String,
 }
 
-pub fn validate_mandotory_config_val<F, S, E>(
-    val: &str,
-    err: AgencyClientErrorKind,
-    closure: F,
-) -> AgencyClientResult<()>
-where
-    F: Fn(&str) -> Result<S, E>,
-{
-    closure(val).or(Err(AgencyClientError::from(err)))?;
-    Ok(())
-}
-
 impl AgencyClient {
-
     pub fn get_wallet(&self) -> Arc<dyn BaseAgencyClientWallet> {
         Arc::clone(&self.wallet)
     }
@@ -87,40 +77,27 @@ impl AgencyClient {
         self.my_vk = vk.to_string();
     }
 
-    pub fn configure(mut self, wallet: Arc<dyn BaseAgencyClientWallet>, config: &AgencyClientConfig) -> AgencyClientResult<Self> {
+    pub fn configure(
+        mut self,
+        wallet: Arc<dyn BaseAgencyClientWallet>,
+        config: &AgencyClientConfig,
+    ) -> AgencyClientResult<Self> {
         info!("AgencyClient::configure >>> config {:?}", config);
 
-        validate_mandotory_config_val(
-            &config.agency_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.agency_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(
-            &config.sdk_to_remote_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.sdk_to_remote_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(
-            &config.remote_to_sdk_did,
-            AgencyClientErrorKind::InvalidDid,
-            validation::validate_did,
-        )?;
-        validate_mandotory_config_val(
-            &config.remote_to_sdk_verkey,
-            AgencyClientErrorKind::InvalidVerkey,
-            validation::validate_verkey,
-        )?;
-        validate_mandotory_config_val(&config.agency_endpoint, AgencyClientErrorKind::InvalidUrl, Url::parse)?;
+        validate_did(&config.agency_did)?;
+        validate_verkey(&config.agency_verkey)?;
+        validate_did(&config.sdk_to_remote_did)?;
+        validate_verkey(&config.sdk_to_remote_verkey)?;
+        validate_did(&config.remote_to_sdk_did)?;
+        validate_verkey(&config.remote_to_sdk_verkey)?;
+
+        match Url::parse(&config.agency_endpoint) {
+            Err(_) => Err(AgencyClientError::from_msg(
+                AgencyClientErrorKind::InvalidUrl,
+                format!("Endpoint {} is not valid url", &config.agency_endpoint),
+            )),
+            _ => Ok(()),
+        }?;
 
         self.set_agency_url(&config.agency_endpoint);
         self.set_agency_did(&config.agency_did);

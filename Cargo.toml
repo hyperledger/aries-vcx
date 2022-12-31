@@ -4,6 +4,8 @@ members = [
     "libvcx",
     "agency_client",
     "messages",
+    "shared_vcx",
+    "diddoc",
     "agents/rust/aries-vcx-agent"
 ]
 

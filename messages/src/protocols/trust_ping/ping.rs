@@ -21,9 +21,10 @@ pub struct Ping {
 
 impl Ping {
     pub fn create(thread_id: MessageId) -> Ping {
-        let mut ping = Ping::default();
-        ping.id = thread_id;
-        ping
+        Ping {
+            id: thread_id,
+            ..Default::default()
+        }
     }
 
     pub fn set_comment(mut self, comment: Option<String>) -> Ping {

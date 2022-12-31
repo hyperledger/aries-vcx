@@ -2,11 +2,11 @@ pub mod prover;
 
 use vdrtools::Locator;
 
-use crate::error::VcxResult;
+use crate::errors::error::VcxResult;
 use crate::global::settings;
 use crate::indy;
-use crate::utils::parse_and_validate;
 use crate::utils::constants::REV_STATE_JSON;
+use crate::utils::parse_and_validate;
 
 pub async fn libindy_prover_create_revocation_state(
     tails_file_path: &str,
@@ -19,9 +19,7 @@ pub async fn libindy_prover_create_revocation_state(
         return Ok(REV_STATE_JSON.to_string());
     }
 
-    let blob_handle =
-        indy::anoncreds::blob_storage_open_reader(tails_file_path)
-        .await?;
+    let blob_handle = indy::anoncreds::blob_storage_open_reader(tails_file_path).await?;
 
     let res = Locator::instance()
         .prover_controller
@@ -31,7 +29,8 @@ pub async fn libindy_prover_create_revocation_state(
             parse_and_validate(rev_reg_delta_json)?,
             timestamp,
             cred_rev_id.into(),
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }
@@ -59,7 +58,8 @@ pub async fn libindy_prover_update_revocation_state(
             parse_and_validate(rev_reg_delta_json)?,
             100,
             cred_rev_id.into(),
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }

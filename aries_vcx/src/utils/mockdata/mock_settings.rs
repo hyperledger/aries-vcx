@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::error::{VcxError, VcxResult};
+use crate::errors::error::{AriesVcxError, VcxResult};
 
 static MOCKED_GENERATED_PROOF: &str = "mocked_proof";
 static MOCKED_RETRIEVED_CREDS: &str = "mocked_retrieved_creds";
@@ -77,6 +77,6 @@ pub fn get_mock_result_for_validate_indy_proof() -> Option<VcxResult<bool>> {
     let config = MOCK_SETTINGS_RESULT_BOOL.read().unwrap();
     config.get(MOCKED_VALIDATE_INDY_PROOF).map(|result| match result {
         Ok(val) => Ok(*val),
-        Err(err) => Err(VcxError::from(err.kind())),
+        Err(err) => Err(AriesVcxError::from_msg(err.kind(), err.to_string())),
     })
 }

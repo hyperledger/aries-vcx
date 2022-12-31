@@ -1,6 +1,6 @@
 use std::clone::Clone;
 
-use messages::did_doc::DidDoc;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
@@ -11,7 +11,7 @@ use crate::protocols::connection::inviter::states::initial::InitialState;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
     pub signed_response: SignedResponse,
-    pub did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
 }
 
 impl From<(RespondedState, ProblemReport)> for InitialState {

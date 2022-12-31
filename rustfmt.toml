@@ -1,2 +1,4 @@
 edition = "2021"
+use_small_heuristics="Default"
 max_width=120
+

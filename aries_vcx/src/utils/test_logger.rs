@@ -12,7 +12,7 @@ use std::io::Write;
 use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 
 use self::env_logger::fmt::Formatter;
 use self::env_logger::Builder as EnvLoggerBuilder;
@@ -93,7 +93,10 @@ impl LibvcxDefaultLogger {
                 .parse_filters(pattern.as_deref().unwrap_or("warn"))
                 .try_init()
                 .map_err(|err| {
-                    VcxError::from_msg(VcxErrorKind::LoggingError, format!("Cannot init logger: {:?}", err))
+                    AriesVcxError::from_msg(
+                        AriesVcxErrorKind::LoggingError,
+                        format!("Cannot init logger: {:?}", err),
+                    )
                 })?;
         }
         Ok(())

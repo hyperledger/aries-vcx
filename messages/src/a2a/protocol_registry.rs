@@ -1,9 +1,9 @@
 use regex::Regex;
 use strum::IntoEnumIterator;
 
+use crate::a2a::message_family::MessageFamilies;
 use crate::actors;
 use crate::actors::Actors;
-use crate::a2a::message_family::MessageFamilies;
 use crate::protocols::discovery::disclose::ProtocolDescriptor;
 
 pub struct ProtocolRegistry {
@@ -36,7 +36,7 @@ impl ProtocolRegistry {
         registry
     }
 
-    pub fn add_protocol(&mut self, actors: &Vec<Actors>, family: MessageFamilies) {
+    pub fn add_protocol(&mut self, actors: &[Actors], family: MessageFamilies) {
         match family.actors() {
             None => self.protocols.push(ProtocolDescriptor {
                 pid: family.id(),

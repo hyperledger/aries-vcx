@@ -1,4 +1,4 @@
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct InitialState {}
 
 impl InitialState {

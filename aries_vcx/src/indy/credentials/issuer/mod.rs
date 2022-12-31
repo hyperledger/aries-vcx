@@ -1,20 +1,14 @@
-use vdrtools::{
-    Locator,
-    CredentialOffer,
-    CredentialRequest,
-    CredentialValues,
-    RevocationRegistryId,
-};
+use vdrtools::{CredentialOffer, CredentialRequest, CredentialValues, Locator, RevocationRegistryId};
 
 use vdrtools::WalletHandle;
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
 use crate::indy::anoncreds;
 use crate::indy::utils::LibindyMock;
 use crate::utils;
-use crate::utils::parse_and_validate;
 use crate::utils::constants::LIBINDY_CRED_OFFER;
+use crate::utils::parse_and_validate;
 
 pub async fn libindy_issuer_create_credential_offer(
     wallet_handle: WalletHandle,
@@ -23,17 +17,17 @@ pub async fn libindy_issuer_create_credential_offer(
     if settings::indy_mocks_enabled() {
         let rc = LibindyMock::get_result();
         if rc != 0 {
-            return Err(VcxError::from(VcxErrorKind::InvalidState));
+            return Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Mocked error result of libindy_issuer_create_credential_offer",
+            ));
         };
         return Ok(LIBINDY_CRED_OFFER.to_string());
     }
 
     let res = Locator::instance()
         .issuer_controller
-        .create_credential_offer(
-            wallet_handle,
-            vdrtools::CredentialDefinitionId(cred_def_id.into()),
-        )
+        .create_credential_offer(wallet_handle, vdrtools::CredentialDefinitionId(cred_def_id.into()))
         .await?;
 
     Ok(res)
@@ -65,7 +59,8 @@ pub async fn libindy_issuer_create_credential(
             parse_and_validate::<CredentialValues>(cred_values_json)?,
             rev_reg_id.map(RevocationRegistryId),
             blob_handle,
-        ).await?;
+        )
+        .await?;
 
     Ok(res)
 }

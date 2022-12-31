@@ -1,7 +1,7 @@
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PleaseAck {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    on: Vec<AckOn>
+    on: Vec<AckOn>,
 }
 
 impl PleaseAck {
@@ -22,12 +22,12 @@ impl PleaseAck {
 #[serde(rename_all = "UPPERCASE")]
 pub enum AckOn {
     Receipt,
-    Outcome
+    Outcome,
 }
 
 #[macro_export]
 macro_rules! please_ack (($type:ident) => (
-    use crate::concepts::ack::please_ack::AckOn;
+    use $crate::concepts::ack::please_ack::AckOn;
     impl $type {
         pub fn ask_for_ack(mut self) -> $type {
             self.please_ack = Some(PleaseAck::default());

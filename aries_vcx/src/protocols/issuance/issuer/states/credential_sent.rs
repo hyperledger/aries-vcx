@@ -1,6 +1,6 @@
-use messages::status::Status;
 use crate::protocols::issuance::issuer::state_machine::RevocationInfoV1;
 use crate::protocols::issuance::issuer::states::finished::FinishedState;
+use messages::status::Status;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialSentState {

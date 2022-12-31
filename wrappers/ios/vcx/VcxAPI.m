@@ -835,7 +835,6 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
 
 - (void)vcxCredentialDefinitionCreateV2:(NSString *)sourceId
                                schemaId:(NSString *)schemaId
-                              issuerDid:(NSString *)issuerDid
                                     tag:(NSString *)tag
                       supportRevocation:(Boolean)supportRevocation
                              completion:(void (^)(NSError *, NSNumber *))completion {
@@ -843,14 +842,12 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char *sourceId_char = [sourceId cStringUsingEncoding:NSUTF8StringEncoding];
     const char *schemaId_char = [schemaId cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *issuerDid_char = [issuerDid cStringUsingEncoding:NSUTF8StringEncoding];
     const char *tag_char = [tag cStringUsingEncoding:NSUTF8StringEncoding];
 
     vcx_error_t ret = vcx_credentialdef_create_v2(
             handle,
             sourceId_char,
             schemaId_char,
-            issuerDid_char,
             tag_char,
             supportRevocation,
             &VcxWrapperCbResponseUnsignedInt

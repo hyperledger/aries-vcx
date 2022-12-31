@@ -3,14 +3,7 @@ use std::fmt;
 use std::sync::Arc;
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
-use messages::a2a::{A2AMessage, MessageId};
-use messages::concepts::problem_report::ProblemReport;
-use messages::protocols::proof_presentation::presentation::Presentation;
-use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
-use messages::protocols::proof_presentation::presentation_proposal::{PresentationPreview, PresentationProposal, PresentationProposalData};
-use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-use messages::status::Status;
+use crate::errors::error::prelude::*;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::proof_presentation::prover::messages::ProverMessages;
 use crate::protocols::proof_presentation::prover::states::finished::FinishedState;
@@ -22,6 +15,15 @@ use crate::protocols::proof_presentation::prover::states::presentation_request_r
 use crate::protocols::proof_presentation::prover::states::presentation_sent::PresentationSentState;
 use crate::protocols::proof_presentation::prover::verify_thread_id;
 use crate::protocols::SendClosure;
+use messages::a2a::{A2AMessage, MessageId};
+use messages::concepts::problem_report::ProblemReport;
+use messages::protocols::proof_presentation::presentation::Presentation;
+use messages::protocols::proof_presentation::presentation_ack::PresentationAck;
+use messages::protocols::proof_presentation::presentation_proposal::{
+    PresentationPreview, PresentationProposal, PresentationProposalData,
+};
+use messages::protocols::proof_presentation::presentation_request::PresentationRequest;
+use messages::status::Status;
 
 /// A state machine that tracks the evolution of states for a Prover during
 /// the Present Proof protocol.
@@ -32,7 +34,7 @@ pub struct ProverSM {
     state: ProverFullState,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ProverState {
     Initial,
     PresentationProposalSent,
@@ -71,7 +73,7 @@ impl fmt::Display for ProverFullState {
 
 fn build_presentation_msg(thread_id: &str, presentation_attachment: String) -> VcxResult<Presentation> {
     Ok(Presentation::create()
-        .set_thread_id(&thread_id)
+        .set_thread_id(thread_id)
         .set_presentations_attach(presentation_attachment)?
         .set_out_time())
 }
@@ -99,7 +101,11 @@ impl ProverSM {
         }
     }
 
-    pub async fn send_presentation_proposal(self, proposal_data: PresentationProposalData, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_presentation_proposal(
+        self,
+        proposal_data: PresentationProposalData,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::Initial(_) => {
                 let proposal = PresentationProposal::from(proposal_data).set_id(&self.thread_id);
@@ -111,7 +117,7 @@ impl ProverSM {
                 send_message(proposal.to_a2a_message()).await?;
                 ProverFullState::PresentationProposalSent(PresentationProposalSent::new(proposal))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send presentation proposal in state {}", s);
                 s
             }
@@ -131,7 +137,7 @@ impl ProverSM {
                     Self::_handle_reject_presentation_request(send_message, &reason, &self.thread_id).await?;
                 ProverFullState::Finished(FinishedState::declined(problem_report))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to decline presentation request in state {}", s);
                 s
             }
@@ -139,7 +145,11 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn negotiate_presentation(self, presentation_preview: PresentationPreview, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn negotiate_presentation(
+        self,
+        presentation_preview: PresentationPreview,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
                 Self::_handle_presentation_proposal(send_message, presentation_preview, &self.thread_id).await?;
@@ -149,7 +159,7 @@ impl ProverSM {
                 Self::_handle_presentation_proposal(send_message, presentation_preview, &self.thread_id).await?;
                 ProverFullState::Finished(state.into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send handle presentation proposal in state {}", s);
                 s
             }
@@ -157,22 +167,33 @@ impl ProverSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn generate_presentation(self,profile: &Arc<dyn Profile>, credentials: String, self_attested_attrs: String) -> VcxResult<Self> {
+    pub async fn generate_presentation(
+        self,
+        profile: &Arc<dyn Profile>,
+        credentials: String,
+        self_attested_attrs: String,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             ProverFullState::PresentationRequestReceived(state) => {
-                match state.build_presentation(profile, &credentials, &self_attested_attrs).await {
+                match state
+                    .build_presentation(profile, &credentials, &self_attested_attrs)
+                    .await
+                {
                     Ok(presentation) => {
                         let presentation = build_presentation_msg(&self.thread_id, presentation)?;
                         ProverFullState::PresentationPrepared((state, presentation).into())
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!("Failed bo build presentation, sending problem report: {:?}", problem_report);
+                        error!(
+                            "Failed bo build presentation, sending problem report: {:?}",
+                            problem_report
+                        );
                         ProverFullState::PresentationPreparationFailed((state, problem_report).into())
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send generate presentation in state {}", s);
                 s
             }
@@ -186,7 +207,7 @@ impl ProverSM {
                 let presentation = presentation.set_thread_id(&self.thread_id);
                 ProverFullState::PresentationPrepared((state, presentation).into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send set presentation in state {}", s);
                 s
             }
@@ -196,10 +217,8 @@ impl ProverSM {
 
     pub fn receive_presentation_ack(self, ack: PresentationAck) -> VcxResult<Self> {
         let state = match self.state {
-            ProverFullState::PresentationSent(state) => {
-                ProverFullState::Finished((state.clone(), ack).into())
-            }
-            s @ _ => {
+            ProverFullState::PresentationSent(state) => ProverFullState::Finished((state, ack).into()),
+            s => {
                 warn!("Unable to process presentation ack in state {}", s);
                 s
             }
@@ -217,7 +236,7 @@ impl ProverSM {
                 send_message(state.problem_report.to_a2a_message()).await?;
                 ProverFullState::Finished((state).into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send send presentation in state {}", s);
                 s
             }
@@ -272,8 +291,8 @@ impl ProverSM {
         let prover_sm = match &self.state {
             ProverFullState::Initial(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation_proposal(proposal_data, send_message).await?
@@ -286,7 +305,8 @@ impl ProverSM {
             ProverFullState::PresentationProposalSent(_) => {
                 match message {
                     ProverMessages::PresentationRequestReceived(request) => {
-                        let state = ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
+                        let state =
+                            ProverFullState::PresentationRequestReceived(PresentationRequestReceived::new(request));
                         ProverSM { state, ..self }
                     }
                     // TODO: Perhaps use a different message type?
@@ -302,28 +322,27 @@ impl ProverSM {
             }
             ProverFullState::PresentationRequestReceived(_) => match message {
                 ProverMessages::PresentationProposalSend(proposal_data) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation_proposal(proposal_data, send_message).await?
                 }
-                ProverMessages::SetPresentation(presentation) => {
-                    self.set_presentation(presentation)?
-                }
+                ProverMessages::SetPresentation(presentation) => self.set_presentation(presentation)?,
                 ProverMessages::PreparePresentation((credentials, self_attested_attrs)) => {
-                    self.generate_presentation(profile, credentials, self_attested_attrs).await?
-                },
+                    self.generate_presentation(profile, credentials, self_attested_attrs)
+                        .await?
+                }
                 ProverMessages::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.negotiate_presentation(preview, send_message).await?
@@ -335,22 +354,22 @@ impl ProverSM {
             },
             ProverFullState::PresentationPrepared(_) => match message {
                 ProverMessages::SendPresentation => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation(send_message).await?
                 }
                 ProverMessages::RejectPresentationRequest(reason) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.decline_presentation_request(reason, send_message).await?
                 }
                 ProverMessages::ProposePresentation(preview) => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.negotiate_presentation(preview, send_message).await?
@@ -362,8 +381,8 @@ impl ProverSM {
             },
             ProverFullState::PresentationPreparationFailed(_) => match message {
                 ProverMessages::SendPresentation => {
-                    let send_message = send_message.ok_or(VcxError::from_msg(
-                        VcxErrorKind::InvalidState,
+                    let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
                         "Attempted to call undefined send_message callback",
                     ))?;
                     self.send_presentation(send_message).await?
@@ -383,8 +402,8 @@ impl ProverSM {
                     ProverSM { state, ..self }
                 }
                 ProverMessages::RejectPresentationRequest(_) => {
-                    return Err(VcxError::from_msg(
-                        VcxErrorKind::ActionNotSupported,
+                    return Err(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::ActionNotSupported,
                         "Presentation is already sent",
                     ));
                 }
@@ -393,7 +412,7 @@ impl ProverSM {
                     self
                 }
             },
-            ProverFullState::Finished(_) => self
+            ProverFullState::Finished(_) => self,
         };
         Ok(prover_sm)
     }
@@ -465,12 +484,12 @@ impl ProverSM {
 
     pub fn presentation_request(&self) -> VcxResult<&PresentationRequest> {
         match self.state {
-            ProverFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation request is not available",
             )),
-            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationProposalSent(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation request is not available",
             )),
             ProverFullState::PresentationRequestReceived(ref state) => Ok(&state.presentation_request),
@@ -478,33 +497,33 @@ impl ProverSM {
             ProverFullState::PresentationPreparationFailed(ref state) => Ok(&state.presentation_request),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation_request),
             ProverFullState::Finished(ref state) => Ok(state.presentation_request.as_ref().ok_or(
-                VcxError::from_msg(VcxErrorKind::NotReady, "Presentation request is not available"),
+                AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Presentation request is not available"),
             )?),
         }
     }
 
     pub fn presentation(&self) -> VcxResult<&Presentation> {
         match self.state {
-            ProverFullState::Initial(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation is not created yet",
             )),
-            ProverFullState::PresentationProposalSent(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationProposalSent(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation is not created yet",
             )),
-            ProverFullState::PresentationRequestReceived(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationRequestReceived(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation is not created yet",
             )),
             ProverFullState::PresentationPrepared(ref state) => Ok(&state.presentation),
-            ProverFullState::PresentationPreparationFailed(_) => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::PresentationPreparationFailed(_) => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation is not created yet",
             )),
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation),
-            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Presentation is not available",
             ))?),
         }
@@ -514,15 +533,15 @@ impl ProverSM {
 #[cfg(test)]
 #[cfg(feature = "general_test")]
 pub mod unit_tests {
+    use crate::common::test_utils::mock_profile;
+    use crate::test::source_id;
+    use crate::utils::devsetup::SetupMocks;
     use messages::protocols::proof_presentation::presentation::test_utils::_presentation;
     use messages::protocols::proof_presentation::presentation_proposal::test_utils::{
         _presentation_preview, _presentation_proposal, _presentation_proposal_data,
     };
     use messages::protocols::proof_presentation::presentation_request::test_utils::_presentation_request;
     use messages::protocols::proof_presentation::test_utils::{_ack, _problem_report};
-    use crate::test::source_id;
-    use crate::utils::devsetup::SetupMocks;
-    use crate::common::test_utils::mock_profile;
 
     use super::*;
 
@@ -573,11 +592,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             self = self
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             self
@@ -593,11 +608,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             self = self
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             self = self
@@ -635,8 +646,8 @@ pub mod unit_tests {
     }
 
     mod build_messages {
-        use messages::a2a::MessageId;
         use crate::protocols::common::build_problem_report_msg;
+        use messages::a2a::MessageId;
 
         use crate::protocols::proof_presentation::prover::state_machine::build_presentation_msg;
         use crate::utils::devsetup::{was_in_past, SetupMocks};
@@ -662,7 +673,7 @@ pub mod unit_tests {
         async fn test_prover_build_problem_report() {
             let _setup = SetupMocks::init();
 
-            let msg = build_problem_report_msg( Some("foobar".into()), "12345");
+            let msg = build_problem_report_msg(Some("foobar".into()), "12345");
 
             assert_eq!(msg.id, MessageId::default());
             assert_eq!(msg.thread.unwrap().thid, Some("12345".into()));
@@ -874,11 +885,7 @@ pub mod unit_tests {
             let mut prover_sm = _prover_sm_from_request();
 
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             assert_match!(ProverFullState::PresentationRequestReceived(_), prover_sm.state);
@@ -910,11 +917,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
 
@@ -1004,11 +1007,7 @@ pub mod unit_tests {
             assert_match!(ProverFullState::PresentationPreparationFailed(_), prover_sm.state);
 
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
@@ -1070,11 +1069,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             prover_sm = prover_sm
@@ -1104,7 +1099,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap_err();
-            assert_eq!(VcxErrorKind::ActionNotSupported, err.kind());
+            assert_eq!(AriesVcxErrorKind::ActionNotSupported, err.kind());
         }
 
         #[tokio::test]
@@ -1122,11 +1117,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             prover_sm = prover_sm
@@ -1160,11 +1151,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
 
@@ -1179,11 +1166,7 @@ pub mod unit_tests {
             assert_match!(ProverFullState::PresentationSent(_), prover_sm.state);
 
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             assert_match!(ProverFullState::PresentationSent(_), prover_sm.state);
@@ -1204,11 +1187,7 @@ pub mod unit_tests {
                 .await
                 .unwrap();
             prover_sm = prover_sm
-                .step(
-                    &mock_profile(),
-                    ProverMessages::SendPresentation,
-                    _send_message(),
-                )
+                .step(&mock_profile(), ProverMessages::SendPresentation, _send_message())
                 .await
                 .unwrap();
             prover_sm = prover_sm

@@ -1,14 +1,11 @@
 use async_trait::async_trait;
 
-use crate::{
-    error::VcxResult,
-    common::primitives::revocation_registry::RevocationRegistryDefinition,
-};
+use crate::common::primitives::revocation_registry::RevocationRegistryDefinition;
+use crate::errors::error::VcxResult;
 
 /// Trait defining standard 'ledger' related functionality.
 #[async_trait]
 pub trait BaseLedger: Send + Sync {
-
     // returns request result as JSON
     async fn sign_and_submit_request(&self, submitter_did: &str, request_json: &str) -> VcxResult<String>;
 

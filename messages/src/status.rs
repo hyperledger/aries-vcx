@@ -14,7 +14,7 @@ impl Status {
             Status::Undefined => 0,
             Status::Success => 1,
             Status::Failed(_) => 2,
-            Status::Declined(_) => 3
+            Status::Declined(_) => 3,
         }
     }
 }

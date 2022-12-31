@@ -1,15 +1,15 @@
 use std::clone::Clone;
 
-use messages::did_doc::DidDoc;
-use messages::protocols::connection::response::Response;
-use messages::protocols::discovery::disclose::ProtocolDescriptor;
 use crate::protocols::connection::invitee::states::requested::RequestedState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::response::Response;
+use messages::protocols::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
-    pub did_doc: DidDoc,
-    pub bootstrap_did_doc: DidDoc,
+    pub did_doc: AriesDidDoc,
+    pub bootstrap_did_doc: AriesDidDoc,
     pub protocols: Option<Vec<ProtocolDescriptor>>,
 }
 

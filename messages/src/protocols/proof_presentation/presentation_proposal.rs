@@ -1,10 +1,10 @@
-use crate::utils::error::prelude::*;
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::a2a::{A2AMessage, MessageId};
 use crate::concepts::mime_type::MimeType;
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
+use crate::errors::error::prelude::*;
 use crate::timing_optional;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
@@ -132,7 +132,7 @@ impl PresentationProposalData {
     pub fn add_attribute_string(mut self, attr: &str) -> MessagesResult<Self> {
         let attr: Attribute = serde_json::from_str(attr).map_err(|err| {
             MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Cannot deserialize supplied attribute: {:?}", err),
             )
         })?;
@@ -153,7 +153,7 @@ impl PresentationProposalData {
     pub fn add_predicate_string(mut self, pred: &str) -> MessagesResult<Self> {
         let pred: Predicate = serde_json::from_str(pred).map_err(|err| {
             MessagesError::from_msg(
-                MesssagesErrorKind::InvalidJson,
+                MessagesErrorKind::InvalidJson,
                 format!("Cannot deserialize supplied predicate: {:?}", err),
             )
         })?;

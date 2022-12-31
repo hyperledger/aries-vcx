@@ -1,6 +1,7 @@
 pub mod handshake_reuse;
 pub mod handshake_reuse_accepted;
 pub mod invitation;
+pub mod service_oob;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum GoalCode {

@@ -2,6 +2,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::concepts::ack::Ack;
+use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
 use crate::protocols::basic_message::message::BasicMessage;
 use crate::protocols::connection::invite::{PairwiseInvitation, PublicInvitation};
 use crate::protocols::connection::problem_report::ProblemReport as ConnectionProblemReport;
@@ -9,20 +10,19 @@ use crate::protocols::connection::request::Request;
 use crate::protocols::connection::response::SignedResponse;
 use crate::protocols::discovery::disclose::Disclose;
 use crate::protocols::discovery::query::Query;
-use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
-use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
-use crate::concepts::problem_report::ProblemReport as CommonProblemReport;
-use crate::protocols::routing::forward::Forward;
 use crate::protocols::issuance::credential::Credential;
 use crate::protocols::issuance::credential_offer::CredentialOffer;
 use crate::protocols::issuance::credential_proposal::CredentialProposal;
 use crate::protocols::issuance::credential_request::CredentialRequest;
 use crate::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
-use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
 use crate::protocols::out_of_band::handshake_reuse_accepted::OutOfBandHandshakeReuseAccepted;
+use crate::protocols::out_of_band::invitation::OutOfBandInvitation;
 use crate::protocols::proof_presentation::presentation::Presentation;
 use crate::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use crate::protocols::proof_presentation::presentation_request::PresentationRequest;
+use crate::protocols::revocation_notification::revocation_ack::RevocationAck;
+use crate::protocols::revocation_notification::revocation_notification::RevocationNotification;
+use crate::protocols::routing::forward::Forward;
 use crate::protocols::trust_ping::ping::Ping;
 use crate::protocols::trust_ping::ping_response::PingResponse;
 
@@ -99,10 +99,9 @@ impl A2AMessage {
             Self::Credential(credential) => credential.from_thread(thread_id),
             Self::PresentationProposal(presentation_proposal) => presentation_proposal.from_thread(thread_id),
             Self::RevocationNotification(m) => m.from_thread(thread_id),
-            Self::PresentationAck(ack) |
-                Self::CredentialAck(ack) |
-                Self::RevocationAck(ack) |
-                Self::Ack(ack) => ack.from_thread(thread_id),
+            Self::PresentationAck(ack) | Self::CredentialAck(ack) | Self::RevocationAck(ack) | Self::Ack(ack) => {
+                ack.from_thread(thread_id)
+            }
             Self::Ping(ping) => ping.from_thread(thread_id),
             Self::PingResponse(ping) => ping.from_thread(thread_id),
             Self::ConnectionResponse(m) => m.from_thread(thread_id),
@@ -237,19 +236,13 @@ impl<'de> Deserialize<'de> for A2AMessage {
                     .map(A2AMessage::OutOfBandHandshakeReuseAccepted)
                     .map_err(de::Error::custom)
             }
-            (MessageFamilies::RevocationNotification, A2AMessage::REVOKE) => {
-                RevocationNotification::deserialize(value)
-                    .map(A2AMessage::RevocationNotification)
-                    .map_err(de::Error::custom)
-            }
-            (MessageFamilies::RevocationNotification, A2AMessage::ACK) => {
-                RevocationAck::deserialize(value)
-                    .map(A2AMessage::RevocationAck)
-                    .map_err(de::Error::custom)
-            }
-            (_, _) => {
-                Ok(A2AMessage::Generic(value))
-            }
+            (MessageFamilies::RevocationNotification, A2AMessage::REVOKE) => RevocationNotification::deserialize(value)
+                .map(A2AMessage::RevocationNotification)
+                .map_err(de::Error::custom),
+            (MessageFamilies::RevocationNotification, A2AMessage::ACK) => RevocationAck::deserialize(value)
+                .map(A2AMessage::RevocationAck)
+                .map_err(de::Error::custom),
+            (_, _) => Ok(A2AMessage::Generic(value)),
         }
     }
 }

@@ -6,15 +6,15 @@ use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::core::profile::profile::Profile;
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
 use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::{SendClosure, SendClosureConnection};
 use crate::utils::send_message;
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
-use messages::did_doc::DidDoc;
 
 #[derive(Clone, PartialEq)]
 pub struct Connection {
@@ -33,7 +33,7 @@ pub enum SmConnectionState {
     Invitee(InviteeFullState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ConnectionState {
     Inviter(InviterState),
     Invitee(InviteeState),
@@ -49,7 +49,7 @@ impl Connection {
         })
     }
 
-    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: DidDoc) -> VcxResult<Self> {
+    pub async fn create_invitee(profile: &Arc<dyn Profile>, did_doc: AriesDidDoc) -> VcxResult<Self> {
         trace!("Connection::create_with_invite >>>");
         Ok(Self {
             connection_sm: SmConnection::Invitee(SmConnectionInvitee::new(
@@ -103,7 +103,7 @@ impl Connection {
         }
     }
 
-    pub fn their_did_doc(&self) -> Option<DidDoc> {
+    pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.their_did_doc(),
             SmConnection::Invitee(sm_invitee) => sm_invitee.their_did_doc(),
@@ -123,13 +123,13 @@ impl Connection {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 SmConnection::Invitee(sm_invitee.clone().handle_invitation(invitation)?)
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_request(
@@ -165,10 +165,10 @@ impl Connection {
                 )
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_response(
@@ -179,7 +179,7 @@ impl Connection {
     ) -> VcxResult<Self> {
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
             SmConnection::Invitee(sm_invitee) => {
                 let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
@@ -191,7 +191,7 @@ impl Connection {
                 )
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn process_ack(self, message: A2AMessage) -> VcxResult<Self> {
@@ -201,10 +201,10 @@ impl Connection {
                 SmConnection::Inviter(sm_inviter.clone().handle_confirmation_message(&message).await?)
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     // ----------------------------- MSG SENDING ------------------------------------
@@ -220,14 +220,14 @@ impl Connection {
                     let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
                     SmConnection::Inviter(sm_inviter.handle_send_response(send_message).await?)
                 } else {
-                    return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                    return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
                 }
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Invalid action"));
+                return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_request(
@@ -240,8 +240,8 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotReady,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
                     "Inviter cannot send connection request",
                 ));
             }
@@ -256,7 +256,7 @@ impl Connection {
                     .await?,
             ),
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_ack(
@@ -267,7 +267,10 @@ impl Connection {
         trace!("Connection::send_request");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
-                return Err(VcxError::from_msg(VcxErrorKind::NotReady, "Inviter cannot send ack"));
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
+                    "Inviter cannot send ack",
+                ));
             }
             SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
                 sm_invitee
@@ -276,7 +279,7 @@ impl Connection {
                     .await?,
             ),
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn create_invite(self, service_endpoint: String, routing_keys: Vec<String>) -> VcxResult<Self> {
@@ -286,13 +289,13 @@ impl Connection {
                 SmConnection::Inviter(sm_inviter.clone().create_invitation(routing_keys, service_endpoint)?)
             }
             SmConnection::Invitee(_) => {
-                return Err(VcxError::from_msg(
-                    VcxErrorKind::NotReady,
+                return Err(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::NotReady,
                     "Invitee cannot create invite",
                 ));
             }
         };
-        Ok(Self { connection_sm, ..self })
+        Ok(Self { connection_sm })
     }
 
     pub async fn send_message_closure(
@@ -301,8 +304,8 @@ impl Connection {
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<SendClosure> {
         trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().ok_or(VcxError::from_msg(
-            VcxErrorKind::NotReady,
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
             "Cannot send message: Remote Connection information is not set",
         ))?;
         let sender_vk = self.pairwise_info().pw_vk.clone();
@@ -315,7 +318,7 @@ impl Connection {
     fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
         trace!("send_message_closure_connection >>>");
         let wallet = profile.inject_wallet();
-        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: DidDoc| {
+        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: AriesDidDoc| {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
@@ -338,10 +341,13 @@ pub mod test_utils {
 
     pub(super) fn _send_message(sender: Sender<A2AMessage>) -> Option<SendClosureConnection> {
         Some(Box::new(
-            move |message: A2AMessage, _sender_vk: String, _did_doc: DidDoc| {
+            move |message: A2AMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
                 Box::pin(async move {
                     sender.send(message).await.map_err(|err| {
-                        VcxError::from_msg(VcxErrorKind::IOError, format!("Failed to send message: {:?}", err))
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::IOError,
+                            format!("Failed to send message: {:?}", err),
+                        )
                     })
                 })
             },
@@ -353,8 +359,8 @@ pub mod test_utils {
 #[cfg(feature = "general_test")]
 mod unit_tests {
     use crate::common::ledger::transactions::into_did_doc;
-    use crate::utils::devsetup::{SetupMocks, SetupInstitutionWallet};
-    use crate::common::test_utils::{mock_profile, indy_handles_to_profile};
+    use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
+    use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
 
     use async_channel::bounded;
     use messages::protocols::basic_message::message::BasicMessage;
@@ -371,7 +377,7 @@ mod unit_tests {
     async fn test_create_with_pairwise_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Pairwise(_pairwise_invitation());
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -383,7 +389,7 @@ mod unit_tests {
     async fn test_create_with_public_invite() {
         let _setup = SetupMocks::init();
         let invite = Invitation::Public(_public_invitation());
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(invite)
@@ -396,7 +402,7 @@ mod unit_tests {
         let _setup = SetupMocks::init();
 
         let invite = _public_invitation_random_id();
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Public(invite.clone()))
@@ -411,7 +417,7 @@ mod unit_tests {
         assert_ne!(connection.get_thread_id(), invite.id.0);
 
         let invite = _pairwise_invitation_random_id();
-        let connection = Connection::create_invitee(&mock_profile(), DidDoc::default())
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
             .await
             .unwrap()
             .process_invite(Invitation::Pairwise(invite.clone()))
@@ -520,10 +526,7 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
-        let invitee = invitee
-            .send_ack(&profile, _send_message(sender.clone()))
-            .await
-            .unwrap();
+        let invitee = invitee.send_ack(&profile, _send_message(sender.clone())).await.unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
 
         // Inviter receives an ack

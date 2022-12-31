@@ -1,21 +1,12 @@
 use vdrtools::{
-    Locator,
-    types::domain::wallet::{
-        default_key_derivation_method,
-        KeyDerivationMethod,
-    },
+    types::domain::wallet::{default_key_derivation_method, KeyDerivationMethod},
     types::errors::IndyErrorKind,
-    SearchHandle,
-    WalletHandle,
+    Locator, SearchHandle, WalletHandle,
 };
 
-use crate::error::{VcxError, VcxErrorKind, VcxResult};
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::global::settings;
-use crate::indy::{
-    credentials::holder,
-    keys,
-};
-
+use crate::indy::{credentials::holder, keys};
 
 #[derive(Clone, Debug, Default, Builder, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), default)]
@@ -72,18 +63,6 @@ pub struct RestoreWalletConfigs {
     pub wallet_key_derivation: Option<String>,
 }
 
-impl RestoreWalletConfigs {
-    pub fn from_str(data: &str) -> VcxResult<RestoreWalletConfigs> {
-        serde_json::from_str(data).map_err(|err| {
-            VcxError::from_msg(
-                VcxErrorKind::InvalidJson,
-                format!("Cannot deserialize RestoreWalletConfigs: {:?}", err),
-            )
-        })
-    }
-}
-
-
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
 
@@ -124,13 +103,15 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
     Ok(handle)
 }
 
-
-fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, VcxError> {
+fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, AriesVcxError> {
     match method {
         "RAW" => Ok(KeyDerivationMethod::RAW),
         "ARGON2I_MOD" => Ok(KeyDerivationMethod::ARGON2I_MOD),
         "ARGON2I_INT" => Ok(KeyDerivationMethod::ARGON2I_INT),
-        _ => Err(VcxErrorKind::InvalidOption.into()),
+        _ => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidOption,
+            format!("Unknown derivation method {}", method),
+        )),
     }
 }
 
@@ -179,21 +160,14 @@ pub(crate) async fn create_indy_wallet(wallet_config: &WalletConfig) -> VcxResul
                 wallet_config.wallet_name
             );
             Ok(())
-        },
-
-        Err(err) => {
-            Err(VcxError::from_msg(
-                VcxErrorKind::WalletCreate,
-                format!(
-                    "could not create wallet {}: {}",
-                    wallet_config.wallet_name,
-                    err.to_string(),
-                ),
-            ))
         }
+
+        Err(err) => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::WalletCreate,
+            format!("could not create wallet {}: {}", wallet_config.wallet_name, err,),
+        )),
     }
 }
-
 
 pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     trace!("delete_wallet >>> wallet_name: {}", &wallet_config.wallet_name);
@@ -234,25 +208,18 @@ pub async fn delete_wallet(wallet_config: &WalletConfig) -> VcxResult<()> {
     match res {
         Ok(_) => Ok(()),
 
-        Err(err) if err.kind() == IndyErrorKind::WalletAccessFailed => {
-            Err(VcxError::from_msg(
-                VcxErrorKind::WalletAccessFailed,
-                format!(
-                    "Can not open wallet \"{}\". Invalid key has been provided.",
-                    &wallet_config.wallet_name
-                ),
-            ))
-        },
+        Err(err) if err.kind() == IndyErrorKind::WalletAccessFailed => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::WalletAccessFailed,
+            format!(
+                "Can not open wallet \"{}\". Invalid key has been provided.",
+                &wallet_config.wallet_name
+            ),
+        )),
 
-        Err(err) if err.kind() == IndyErrorKind::WalletNotFound => {
-            Err(VcxError::from_msg(
-                VcxErrorKind::WalletNotFound,
-                format!(
-                    "Wallet \"{}\" not found or unavailable",
-                    &wallet_config.wallet_name,
-                ),
-            ))
-        },
+        Err(err) if err.kind() == IndyErrorKind::WalletNotFound => Err(AriesVcxError::from_msg(
+            AriesVcxErrorKind::WalletNotFound,
+            format!("Wallet \"{}\" not found or unavailable", &wallet_config.wallet_name,),
+        )),
 
         Err(err) => Err(err.into()),
     }
@@ -270,7 +237,8 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
         .import(
             vdrtools::types::domain::wallet::Config {
                 id: restore_config.wallet_name.clone(),
-                .. Default::default() },
+                ..Default::default()
+            },
             vdrtools::types::domain::wallet::Credentials {
                 key: restore_config.wallet_key.clone(),
                 key_derivation_method: restore_config
@@ -285,13 +253,14 @@ pub async fn import(restore_config: &RestoreWalletConfigs) -> VcxResult<()> {
 
                 storage_credentials: None, // default value
             },
-            vdrtools::types::domain::wallet::ExportConfig{
+            vdrtools::types::domain::wallet::ExportConfig {
                 key: restore_config.backup_key.clone(),
                 path: restore_config.exported_wallet_path.clone(),
 
                 key_derivation_method: default_key_derivation_method(),
             },
-        ).await?;
+        )
+        .await?;
 
     Ok(())
 }
@@ -322,13 +291,19 @@ pub(crate) async fn add_wallet_record(
             xtype.into(),
             id.into(),
             value.into(),
-            tags.map(serde_json::from_str).transpose()?
-        ).await?;
+            tags.map(serde_json::from_str).transpose()?,
+        )
+        .await?;
 
     Ok(())
 }
 
-pub(crate) async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, id: &str, options: &str) -> VcxResult<String> {
+pub(crate) async fn get_wallet_record(
+    wallet_handle: WalletHandle,
+    xtype: &str,
+    id: &str,
+    options: &str,
+) -> VcxResult<String> {
     trace!(
         "get_record >>> xtype: {}, id: {}, options: {}",
         secret!(&xtype),
@@ -342,12 +317,8 @@ pub(crate) async fn get_wallet_record(wallet_handle: WalletHandle, xtype: &str, 
 
     let res = Locator::instance()
         .non_secret_controller
-        .get_record(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            options.into(),
-        ).await?;
+        .get_record(wallet_handle, xtype.into(), id.into(), options.into())
+        .await?;
 
     Ok(res)
 }
@@ -361,11 +332,8 @@ pub(crate) async fn delete_wallet_record(wallet_handle: WalletHandle, xtype: &st
 
     Locator::instance()
         .non_secret_controller
-        .delete_record(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-        ).await?;
+        .delete_record(wallet_handle, xtype.into(), id.into())
+        .await?;
 
     Ok(())
 }
@@ -389,17 +357,18 @@ pub(crate) async fn update_wallet_record_value(
 
     Locator::instance()
         .non_secret_controller
-        .update_record_value(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            value.into(),
-        ).await?;
+        .update_record_value(wallet_handle, xtype.into(), id.into(), value.into())
+        .await?;
 
     Ok(())
 }
 
-pub(crate) async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &str, id: &str, tags: &str) -> VcxResult<()> {
+pub(crate) async fn add_wallet_record_tags(
+    wallet_handle: WalletHandle,
+    xtype: &str,
+    id: &str,
+    tags: &str,
+) -> VcxResult<()> {
     trace!(
         "add_record_tags >>> xtype: {}, id: {}, tags: {:?}",
         secret!(&xtype),
@@ -413,12 +382,8 @@ pub(crate) async fn add_wallet_record_tags(wallet_handle: WalletHandle, xtype: &
 
     Locator::instance()
         .non_secret_controller
-        .add_record_tags(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            serde_json::from_str(tags)?,
-        ).await?;
+        .add_record_tags(wallet_handle, xtype.into(), id.into(), serde_json::from_str(tags)?)
+        .await?;
 
     Ok(())
 }
@@ -442,12 +407,8 @@ pub(crate) async fn update_wallet_record_tags(
 
     Locator::instance()
         .non_secret_controller
-        .update_record_tags(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            serde_json::from_str(tags)?,
-        ).await?;
+        .update_record_tags(wallet_handle, xtype.into(), id.into(), serde_json::from_str(tags)?)
+        .await?;
 
     Ok(())
 }
@@ -471,12 +432,8 @@ pub(crate) async fn delete_wallet_record_tags(
 
     Locator::instance()
         .non_secret_controller
-        .delete_record_tags(
-            wallet_handle,
-            xtype.into(),
-            id.into(),
-            tag_names.into(),
-        ).await?;
+        .delete_record_tags(wallet_handle, xtype.into(), id.into(), tag_names.into())
+        .await?;
 
     Ok(())
 }
@@ -501,12 +458,8 @@ pub async fn open_search_wallet(
 
     let res = Locator::instance()
         .non_secret_controller
-        .open_search(
-            wallet_handle,
-            xtype.into(),
-            query.into(),
-            options.into(),
-        ).await?;
+        .open_search(wallet_handle, xtype.into(), query.into(), options.into())
+        .await?;
 
     Ok(res)
 }
@@ -529,11 +482,8 @@ pub async fn fetch_next_records_wallet(
 
     let res = Locator::instance()
         .non_secret_controller
-        .fetch_search_next_records(
-            wallet_handle,
-            search_handle,
-            count,
-        ).await?;
+        .fetch_search_next_records(wallet_handle, search_handle, count)
+        .await?;
 
     Ok(res)
 }
@@ -557,8 +507,7 @@ pub async fn close_search_wallet(search_handle: SearchHandle) -> VcxResult<()> {
 // TODO - FUTURE - can this be moved externally - move to a generic setup util?
 pub async fn wallet_configure_issuer(wallet_handle: WalletHandle, enterprise_seed: &str) -> VcxResult<IssuerConfig> {
     let (institution_did, _institution_verkey) =
-        keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None)
-        .await?;
+        keys::create_and_store_my_did(wallet_handle, Some(enterprise_seed), None).await?;
 
     Ok(IssuerConfig { institution_did })
 }
@@ -573,10 +522,7 @@ pub async fn create_wallet_with_master_secret(config: &WalletConfig) -> VcxResul
         .await
         .ok();
 
-    Locator::instance()
-        .wallet_controller
-        .close(wallet_handle)
-        .await?;
+    Locator::instance().wallet_controller.close(wallet_handle).await?;
 
     Ok(())
 }
@@ -592,13 +538,14 @@ pub async fn export_wallet(wallet_handle: WalletHandle, path: &str, backup_key: 
         .wallet_controller
         .export(
             wallet_handle,
-            vdrtools::types::domain::wallet::ExportConfig{
+            vdrtools::types::domain::wallet::ExportConfig {
                 key: backup_key.into(),
                 path: path.into(),
 
                 key_derivation_method: default_key_derivation_method(),
             },
-        ).await?;
+        )
+        .await?;
 
     Ok(())
 }
@@ -609,11 +556,9 @@ pub async fn create_and_open_wallet(wallet_config: &WalletConfig) -> VcxResult<W
         return Ok(WalletHandle(1));
     }
 
-    create_indy_wallet(wallet_config)
-        .await?;
+    create_indy_wallet(wallet_config).await?;
 
-    let handle = open_wallet(wallet_config)
-        .await?;
+    let handle = open_wallet(wallet_config).await?;
 
     Ok(handle)
 }
@@ -626,10 +571,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
         return Ok(());
     }
 
-    Locator::instance()
-        .wallet_controller
-        .close(wallet_handle)
-        .await?;
+    Locator::instance().wallet_controller.close(wallet_handle).await?;
 
     Ok(())
 }
@@ -637,7 +579,7 @@ pub async fn close_wallet(wallet_handle: WalletHandle) -> VcxResult<()> {
 #[cfg(feature = "general_test")]
 #[cfg(test)]
 mod test {
-    use crate::error::VcxErrorKind;
+    use crate::errors::error::AriesVcxErrorKind;
     use crate::indy::wallet::add_wallet_record;
     use crate::utils::devsetup::SetupLibraryWallet;
 
@@ -650,7 +592,8 @@ mod test {
             let err = add_wallet_record(setup.wallet_handle, "record_type", "123", "Record Value", Some("{}"))
                 .await
                 .unwrap_err();
-            assert_eq!(err.kind(), VcxErrorKind::DuplicationWalletRecord);
-        }).await;
+            assert_eq!(err.kind(), AriesVcxErrorKind::DuplicationWalletRecord);
+        })
+        .await;
     }
 }

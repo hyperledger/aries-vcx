@@ -3,7 +3,7 @@ use std::sync::Arc;
 use agency_client::agency_client::AgencyClient;
 use agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 
-use crate::error::prelude::*;
+use crate::errors::error::prelude::*;
 use crate::plugins::wallet::agency_client_wallet::ToBaseAgencyClientWallet;
 use crate::plugins::wallet::base_wallet::BaseWallet;
 

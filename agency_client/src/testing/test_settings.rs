@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use crate::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
+use crate::errors::error::{AgencyClientError, AgencyClientErrorKind, AgencyClientResult};
 
 const CONFIG_AGENCY_TEST_MODE: &str = "enable_test_mode";
 

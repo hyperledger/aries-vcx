@@ -1,7 +1,7 @@
-use crate::utils::error::{MessagesError, MesssagesErrorKind, MessagesResult};
 use crate::a2a::message_family::MessageFamilies;
 use crate::a2a::message_type::MessageType;
 use crate::concepts::mime_type::MimeType;
+use crate::errors::error::{MessagesError, MessagesErrorKind, MessagesResult};
 
 pub mod credential;
 pub mod credential_ack;
@@ -22,8 +22,7 @@ impl CredentialPreviewData {
     }
 
     pub fn add_value(mut self, name: &str, value: &str, mime_type: MimeType) -> CredentialPreviewData {
-        let data_value =
-        CredentialValue {
+        let data_value = CredentialValue {
             name: name.to_string(),
             value: value.to_string(),
             _type: Some(mime_type),
@@ -35,7 +34,7 @@ impl CredentialPreviewData {
     pub fn to_string(&self) -> MessagesResult<String> {
         serde_json::to_string(&self.attributes).map_err(|err| {
             MessagesError::from_msg(
-                MesssagesErrorKind::SerializationError,
+                MessagesErrorKind::SerializationError,
                 format!("Failed serialize credential preview attributes\nError: {}", err),
             )
         })

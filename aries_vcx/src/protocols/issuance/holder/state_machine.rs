@@ -2,20 +2,20 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-use crate::core::profile::profile::Profile;
-
-use crate::error::prelude::*;
-use crate::global::settings;
-use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
 use messages::a2a::{A2AMessage, MessageId};
 use messages::concepts::ack::Ack;
+use messages::concepts::problem_report::ProblemReport;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::issuance::credential_ack::CredentialAck;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 use messages::protocols::issuance::credential_request::CredentialRequest;
-use messages::concepts::problem_report::ProblemReport;
 use messages::status::Status;
+
+use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
+use crate::core::profile::profile::Profile;
+use crate::errors::error::prelude::*;
+use crate::global::settings;
 use crate::protocols::common::build_problem_report_msg;
 use crate::protocols::issuance::actions::CredentialIssuanceAction;
 use crate::protocols::issuance::holder::states::finished::FinishedHolderState;
@@ -26,7 +26,6 @@ use crate::protocols::issuance::holder::states::request_sent::RequestSentState;
 use crate::protocols::issuance::verify_thread_id;
 use crate::protocols::SendClosure;
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum HolderFullState {
     Initial(InitialHolderState),
@@ -36,7 +35,7 @@ pub enum HolderFullState {
     Finished(FinishedHolderState),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HolderState {
     Initial,
     ProposalSent,
@@ -80,7 +79,7 @@ fn build_credential_request_msg(credential_request_attach: String, thread_id: &s
 }
 
 fn build_credential_ack(thread_id: &str) -> Ack {
-    CredentialAck::create().set_thread_id(&thread_id).set_out_time()
+    CredentialAck::create().set_thread_id(thread_id).set_out_time()
 }
 
 impl HolderSM {
@@ -121,8 +120,8 @@ impl HolderSM {
     pub fn get_proposal(&self) -> VcxResult<CredentialProposal> {
         match &self.state {
             HolderFullState::ProposalSent(state) => Ok(state.credential_proposal.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Proposal not available in this state",
             )),
         }
@@ -136,14 +135,13 @@ impl HolderSM {
         );
         for (uid, message) in messages {
             match self.state {
-                HolderFullState::ProposalSent(_) => match message {
-                    A2AMessage::CredentialOffer(offer) => {
+                HolderFullState::ProposalSent(_) => {
+                    if let A2AMessage::CredentialOffer(offer) = message {
                         if offer.from_thread(&self.thread_id) {
                             return Some((uid, A2AMessage::CredentialOffer(offer)));
                         }
                     }
-                    _ => {}
-                },
+                }
                 HolderFullState::RequestSent(_) => match message {
                     A2AMessage::Credential(credential) => {
                         if credential.from_thread(&self.thread_id) {
@@ -174,60 +172,61 @@ impl HolderSM {
         verify_thread_id(&thread_id, &cim)?;
         let holder_sm = match cim {
             CredentialIssuanceAction::CredentialProposalSend(proposal_data) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.send_proposal(proposal_data, send_message).await?
-            },
-            CredentialIssuanceAction::CredentialOffer(offer) => {
-                self.receive_offer(offer)?
-            },
+            }
+            CredentialIssuanceAction::CredentialOffer(offer) => self.receive_offer(offer)?,
             CredentialIssuanceAction::CredentialRequestSend(my_pw_did) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.send_request(profile, my_pw_did, send_message).await?
-            },
+            }
             CredentialIssuanceAction::CredentialOfferReject(comment) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.decline_offer(comment, send_message).await?
-            },
+            }
             CredentialIssuanceAction::Credential(credential) => {
-                let send_message = send_message.ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let send_message = send_message.ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Attempted to call undefined send_message callback",
                 ))?;
                 self.receive_credential(profile, credential, send_message).await?
             }
-            CredentialIssuanceAction::ProblemReport(problem_report) => {
-                self.receive_problem_report(problem_report)?
-            }
-            _ => self
+            CredentialIssuanceAction::ProblemReport(problem_report) => self.receive_problem_report(problem_report)?,
+            _ => self,
         };
         Ok(holder_sm)
     }
 
-    pub async fn send_proposal(self, proposal_data: CredentialProposalData, send_message: SendClosure) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()))?;
+    pub async fn send_proposal(
+        self,
+        proposal_data: CredentialProposalData,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
+        verify_thread_id(
+            &self.thread_id,
+            &CredentialIssuanceAction::CredentialProposalSend(proposal_data.clone()),
+        )?;
         let state = match self.state {
             HolderFullState::Initial(_) => {
-                let proposal = CredentialProposal::from(proposal_data)
-                    .set_id(&self.thread_id);
+                let proposal = CredentialProposal::from(proposal_data).set_id(&self.thread_id);
                 send_message(proposal.to_a2a_message()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
             HolderFullState::OfferReceived(_) => {
-                let proposal = CredentialProposal::from(proposal_data)
-                    .set_thread_id(&self.thread_id);
+                let proposal = CredentialProposal::from(proposal_data).set_thread_id(&self.thread_id);
                 send_message(proposal.to_a2a_message()).await?;
                 HolderFullState::ProposalSent(ProposalSentState::new(proposal))
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send credential proposal in state {}", s);
                 s
             }
@@ -236,10 +235,13 @@ impl HolderSM {
     }
 
     pub fn receive_offer(self, offer: CredentialOffer) -> VcxResult<Self> {
-        verify_thread_id(&self.thread_id, &CredentialIssuanceAction::CredentialOffer(offer.clone()))?;
+        verify_thread_id(
+            &self.thread_id,
+            &CredentialIssuanceAction::CredentialOffer(offer.clone()),
+        )?;
         let state = match self.state {
             HolderFullState::ProposalSent(_) => HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
             }
@@ -247,7 +249,12 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn send_request(self, profile: &Arc<dyn Profile>, my_pw_did: String, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn send_request(
+        self,
+        profile: &Arc<dyn Profile>,
+        my_pw_did: String,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
                 match _make_credential_request(profile, self.thread_id.clone(), my_pw_did, &state_data.offer).await {
@@ -257,13 +264,16 @@ impl HolderSM {
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!("Failed to create credential request, sending problem report: {:?}", problem_report);
+                        error!(
+                            "Failed to create credential request, sending problem report: {:?}",
+                            problem_report
+                        );
                         send_message(problem_report.to_a2a_message()).await?;
                         HolderFullState::Finished(problem_report.into())
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to send credential request in state {}", s);
                 s
             }
@@ -278,7 +288,7 @@ impl HolderSM {
                 send_message(problem_report.to_a2a_message()).await?;
                 HolderFullState::Finished(problem_report.into())
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to decline credential offer in state {}", s);
                 s
             }
@@ -286,15 +296,15 @@ impl HolderSM {
         Ok(Self { state, ..self })
     }
 
-    pub async fn receive_credential(self, profile: &Arc<dyn Profile>, credential: Credential, send_message: SendClosure) -> VcxResult<Self> {
+    pub async fn receive_credential(
+        self,
+        profile: &Arc<dyn Profile>,
+        credential: Credential,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
         let state = match self.state {
             HolderFullState::RequestSent(state_data) => {
-                match _store_credential(
-                    profile,
-                    &credential,
-                    &state_data.req_meta,
-                    &state_data.cred_def_json,
-                ).await {
+                match _store_credential(profile, &credential, &state_data.req_meta, &state_data.cred_def_json).await {
                     Ok((cred_id, rev_reg_def_json)) => {
                         if credential.please_ack.is_some() {
                             let ack = build_credential_ack(&self.thread_id);
@@ -304,13 +314,16 @@ impl HolderSM {
                     }
                     Err(err) => {
                         let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
-                        error!("Failed to process or save received credential, sending problem report: {:?}", problem_report);
+                        error!(
+                            "Failed to process or save received credential, sending problem report: {:?}",
+                            problem_report
+                        );
                         send_message(problem_report.to_a2a_message()).await?;
                         HolderFullState::Finished(problem_report.into())
                     }
                 }
             }
-            s @ _ => {
+            s => {
                 warn!("Unable to receive credential offer in state {}", s);
                 s
             }
@@ -320,9 +333,10 @@ impl HolderSM {
 
     pub fn receive_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            HolderFullState::ProposalSent(_) |
-                HolderFullState::RequestSent(_) => HolderFullState::Finished(problem_report.into()),
-            s @ _ => {
+            HolderFullState::ProposalSent(_) | HolderFullState::RequestSent(_) => {
+                HolderFullState::Finished(problem_report.into())
+            }
+            s => {
                 warn!("Unable to receive problem report in state {}", s);
                 s
             }
@@ -338,27 +352,24 @@ impl HolderSM {
     }
 
     pub fn is_terminal_state(&self) -> bool {
-        match self.state {
-            HolderFullState::Finished(_) => true,
-            _ => false,
-        }
+        matches!(self.state, HolderFullState::Finished(_))
     }
 
     pub fn get_credential(&self) -> VcxResult<(String, A2AMessage)> {
         match self.state {
             HolderFullState::Finished(ref state) => {
-                let cred_id = state.cred_id.clone().ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let cred_id = state.cred_id.clone().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: Credential Id not found",
                 ))?;
-                let credential = state.credential.clone().ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let credential = state.credential.clone().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: Credential not found",
                 ))?;
                 Ok((cred_id, credential.to_a2a_message()))
             }
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get credential: Credential Issuance is not finished yet",
             )),
         }
@@ -368,8 +379,8 @@ impl HolderSM {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_attributes(),
             HolderFullState::OfferReceived(ref state) => state.get_attributes(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get credential attributes: credential offer or credential must be receieved first",
             )),
         }
@@ -379,8 +390,8 @@ impl HolderSM {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_attachment(),
             HolderFullState::OfferReceived(ref state) => state.get_attachment(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get credential attachment: credential offer or credential must be receieved first",
             )),
         }
@@ -389,8 +400,8 @@ impl HolderSM {
     pub fn get_tails_location(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_tails_location(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get tails location: credential exchange not finished yet",
             )),
         }
@@ -399,8 +410,8 @@ impl HolderSM {
     pub fn get_tails_hash(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_tails_hash(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get tails hash: credential exchange not finished yet",
             )),
         }
@@ -409,8 +420,8 @@ impl HolderSM {
     pub fn get_rev_reg_id(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_rev_reg_id(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get rev reg id: credential exchange not finished yet",
             )),
         }
@@ -419,8 +430,8 @@ impl HolderSM {
     pub fn get_cred_id(&self) -> VcxResult<String> {
         match self.state {
             HolderFullState::Finished(ref state) => state.get_cred_id(),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot get credential id: credential exchange not finished yet",
             )),
         }
@@ -429,8 +440,8 @@ impl HolderSM {
     pub fn get_offer(&self) -> VcxResult<CredentialOffer> {
         match self.state {
             HolderFullState::OfferReceived(ref state) => Ok(state.offer.clone()),
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::InvalidState,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
                 "Credential offer can only be obtained from OfferReceived state",
             )),
         }
@@ -457,7 +468,10 @@ impl HolderSM {
             let rev_id = get_cred_rev_id(profile, &cred_id).await?;
             is_cred_revoked(profile, &rev_reg_id, &rev_id).await
         } else {
-            Err(VcxError::from_msg(VcxErrorKind::InvalidState, "Unable to check revocation status - this credential is not revokable"))
+            Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidState,
+                "Unable to check revocation status - this credential is not revokable",
+            ))
         }
     }
 
@@ -466,14 +480,14 @@ impl HolderSM {
 
         match self.state {
             HolderFullState::Finished(ref state) => {
-                let cred_id = state.cred_id.clone().ok_or(VcxError::from_msg(
-                    VcxErrorKind::InvalidState,
+                let cred_id = state.cred_id.clone().ok_or(AriesVcxError::from_msg(
+                    AriesVcxErrorKind::InvalidState,
                     "Cannot get credential: credential id not found",
                 ))?;
                 _delete_credential(profile, &cred_id).await
             }
-            _ => Err(VcxError::from_msg(
-                VcxErrorKind::NotReady,
+            _ => Err(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
                 "Cannot delete credential: credential issuance is not finished yet",
             )),
         }
@@ -487,15 +501,15 @@ pub fn parse_cred_def_id_from_cred_offer(cred_offer: &str) -> VcxResult<String> 
     );
 
     let parsed_offer: serde_json::Value = serde_json::from_str(cred_offer).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Invalid Credential Offer Json: {:?}", err),
         )
     })?;
 
     let cred_def_id = parsed_offer["cred_def_id"].as_str().ok_or_else(|| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             "Invalid Credential Offer Json: cred_def_id not found",
         )
     })?;
@@ -507,8 +521,8 @@ fn _parse_rev_reg_id_from_credential(credential: &str) -> VcxResult<Option<Strin
     trace!("Holder::_parse_rev_reg_id_from_credential >>>");
 
     let parsed_credential: serde_json::Value = serde_json::from_str(credential).map_err(|err| {
-        VcxError::from_msg(
-            VcxErrorKind::InvalidJson,
+        AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidJson,
             format!("Invalid Credential Json: {}, err: {:?}", credential, err),
         )
     })?;
@@ -544,14 +558,15 @@ async fn _store_credential(
         None
     };
 
-    let cred_id = anoncreds.prover_store_credential(
-        None,
-        req_meta,
-        &credential_json,
-        cred_def_json,
-        rev_reg_def_json.as_deref(),
-    )
-    .await?;
+    let cred_id = anoncreds
+        .prover_store_credential(
+            None,
+            req_meta,
+            &credential_json,
+            cred_def_json,
+            rev_reg_def_json.as_deref(),
+        )
+        .await?;
     Ok((cred_id, rev_reg_def_json))
 }
 
@@ -610,10 +625,11 @@ mod test {
     use messages::protocols::issuance::credential_proposal::test_utils::_credential_proposal;
     use messages::protocols::issuance::credential_request::test_utils::{_credential_request, _my_pw_did};
     use messages::protocols::issuance::test_utils::{_credential_ack, _problem_report};
+
+    use crate::common::test_utils::mock_profile;
     use crate::test::source_id;
     use crate::utils::constants;
     use crate::utils::devsetup::SetupMocks;
-    use crate::common::test_utils::mock_profile;
 
     use super::*;
 
@@ -676,10 +692,9 @@ mod test {
 
     mod build_messages {
         use messages::a2a::MessageId;
-        use crate::protocols::issuance::holder::state_machine::{
-            build_credential_ack, build_credential_request_msg,
-        };
-        use crate::utils::devsetup::{SetupMocks, was_in_past};
+
+        use crate::protocols::issuance::holder::state_machine::{build_credential_ack, build_credential_request_msg};
+        use crate::utils::devsetup::{was_in_past, SetupMocks};
 
         #[test]
         #[cfg(feature = "general_test")]
@@ -691,7 +706,7 @@ mod test {
             assert_eq!(msg.thread.unwrap().thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100)
+                chrono::Duration::milliseconds(100),
             )
             .unwrap());
         }
@@ -707,7 +722,7 @@ mod test {
             assert_eq!(msg.thread.thid.unwrap(), "12345");
             assert!(was_in_past(
                 &msg.timing.unwrap().out_time.unwrap(),
-                chrono::Duration::milliseconds(100)
+                chrono::Duration::milliseconds(100),
             )
             .unwrap());
         }
@@ -1117,11 +1132,11 @@ mod test {
             let _setup = SetupMocks::init();
 
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm().get_tails_location().map_err(|e| e.kind())
             );
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm()
                     .to_request_sent_state()
                     .await
@@ -1144,11 +1159,11 @@ mod test {
             let _setup = SetupMocks::init();
 
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm().get_tails_hash().map_err(|e| e.kind())
             );
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm()
                     .to_request_sent_state()
                     .await
@@ -1172,11 +1187,11 @@ mod test {
             let _setup = SetupMocks::init();
 
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm().get_rev_reg_id().map_err(|e| e.kind())
             );
             assert_eq!(
-                Err(VcxErrorKind::NotReady),
+                Err(AriesVcxErrorKind::NotReady),
                 _holder_sm()
                     .to_request_sent_state()
                     .await

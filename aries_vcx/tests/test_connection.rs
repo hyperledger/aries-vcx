@@ -10,18 +10,18 @@ pub mod utils;
 #[cfg(feature = "agency_pool_tests")]
 mod integration_tests {
     use aries_vcx::agency_client::MessageStatusCode;
+    use aries_vcx::common::ledger::transactions::into_did_doc;
     use aries_vcx::handlers::connection::mediated_connection::ConnectionState;
     use aries_vcx::handlers::out_of_band::receiver::OutOfBandReceiver;
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::messages::a2a::A2AMessage;
-    use aries_vcx::messages::did_doc::service_resolvable::ServiceResolvable;
     use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
-    use aries_vcx::common::ledger::transactions::into_did_doc;
+    use messages::protocols::out_of_band::service_oob::ServiceOob;
 
-    use crate::utils::devsetup_agent::test_utils::{Faber, create_test_alice_instance};
+    use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::{
         connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,
@@ -48,7 +48,8 @@ mod integration_tests {
                 .await
                 .unwrap();
             assert_eq!(consumer_msgs.len(), 1);
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -66,7 +67,7 @@ mod integration_tests {
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceResolvable::AriesService(service))
+                .append_service(&ServiceOob::AriesService(service))
                 .append_handshake_protocol(&HandshakeProtocol::ConnectionV1)
                 .unwrap()
                 .append_a2a_message(request_sender.to_a2a_message())
@@ -100,8 +101,10 @@ mod integration_tests {
             let conn_sender =
                 connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver).await;
 
-            let (conn_receiver_pw1, _conn_sender_pw1) = create_connected_connections(&mut consumer, &mut institution).await;
-            let (conn_receiver_pw2, _conn_sender_pw2) = create_connected_connections(&mut consumer, &mut institution).await;
+            let (conn_receiver_pw1, _conn_sender_pw1) =
+                create_connected_connections(&mut consumer, &mut institution).await;
+            let (conn_receiver_pw2, _conn_sender_pw2) =
+                create_connected_connections(&mut consumer, &mut institution).await;
 
             let conns = vec![&conn_receiver, &conn_receiver_pw1, &conn_receiver_pw2];
             let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
@@ -139,7 +142,8 @@ mod integration_tests {
                 .unwrap();
             assert_eq!(sender_msgs.len(), 2);
             assert_eq!(receiver_msgs.len(), 2);
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -156,7 +160,7 @@ mod integration_tests {
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceResolvable::AriesService(service));
+                .append_service(&ServiceOob::AriesService(service));
             let oob_msg = oob_sender.to_a2a_message();
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
@@ -173,7 +177,8 @@ mod integration_tests {
                 .await
                 .unwrap();
             assert_eq!(msgs.len(), 2);
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -190,7 +195,7 @@ mod integration_tests {
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceResolvable::AriesService(service));
+                .append_service(&ServiceOob::AriesService(service));
             let sender_oob_id = oob_sender.get_id();
             let oob_msg = oob_sender.to_a2a_message();
 
@@ -261,7 +266,8 @@ mod integration_tests {
                     .len(),
                 0
             );
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
@@ -272,13 +278,13 @@ mod integration_tests {
 
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
             let (_faber, _alice) = create_connected_connections(&mut consumer1, &mut institution).await;
-        }).await;
+        })
+        .await;
     }
 
     #[tokio::test]
     async fn aries_demo_handle_connection_related_messages() {
         SetupPool::run(|setup| async move {
-
             let mut faber = Faber::setup(setup.pool_handle).await;
             let mut alice = create_test_alice_instance(&setup).await;
 
@@ -310,7 +316,7 @@ mod integration_tests {
             let faber_connection_info = faber.connection_info().await;
             warn!("faber_connection_info: {}", faber_connection_info);
             assert!(faber_connection_info["their"]["protocols"].as_array().unwrap().len() > 0);
-
-        }).await;
+        })
+        .await;
     }
 }
