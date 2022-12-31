@@ -38,6 +38,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         "Issuer::_build_credential_preview >>> credential_json: {:?}",
         secret!(credential_json)
     );
+
     let cred_values: serde_json::Value = serde_json::from_str(credential_json).map_err(|err| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidJson,
@@ -48,6 +49,7 @@ fn _build_credential_preview(credential_json: &str) -> VcxResult<CredentialPrevi
         )
     })?;
 
+    // todo: should throw err if cred_values is not serde_json::Value::Array or serde_json::Value::Object
     let mut credential_preview = CredentialPreviewData::new();
     match cred_values {
         serde_json::Value::Array(cred_values) => {

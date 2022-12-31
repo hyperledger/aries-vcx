@@ -10,7 +10,7 @@ use aries_vcx::indy::wallet::IssuerConfig;
 use aries_vcx::utils::version_constants;
 
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::agency_client::agency_update_agent_webhook;
+use crate::api_vcx::api_global::agency_client::update_webhook_url;
 use crate::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
 
 use crate::api_vcx::api_global::agency_client::create_agency_client_for_main_wallet;
@@ -341,7 +341,7 @@ pub extern "C" fn vcx_update_webhook_url(
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match agency_update_agent_webhook(&notification_webhook_url[..]).await {
+            match update_webhook_url(&notification_webhook_url[..]).await {
                 Ok(()) => {
                     trace!(
                         "vcx_update_webhook_url_cb(command_handle: {}, rc: {})",
@@ -965,7 +965,8 @@ mod tests {
         let schema = schema::create_and_publish_schema("5", "name".to_string(), "0.1".to_string(), data.to_string())
             .await
             .unwrap();
-        let disclosed_proof = disclosed_proof::create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let disclosed_proof =
+            disclosed_proof::create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);

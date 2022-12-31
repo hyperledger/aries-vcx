@@ -8,7 +8,7 @@ lazy_static! {
     pub static ref PUBLIC_AGENT_MAP: ObjectCache<PublicAgent> = ObjectCache::<PublicAgent>::new("public-agent-cache");
 }
 
-pub async fn is_valid_handle(handle: u32) -> bool {
+pub fn is_valid_handle(handle: u32) -> bool {
     PUBLIC_AGENT_MAP.has_handle(handle)
 }
 
