@@ -97,7 +97,7 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     disable_indy_mocks().unwrap();
-    settings::reset_config_values();
+    settings::reset_config_values().unwrap();
 }
 
 impl SetupEmpty {

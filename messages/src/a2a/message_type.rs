@@ -91,7 +91,7 @@ pub fn parse_message_type_legacy(message_type: &str) -> Option<MessageType> {
             (?P<version>.*)/
             (?P<type>.*)"
         )
-        .unwrap();
+        .expect("unexpected regex error occurred.");
     }
 
     RE.captures(message_type).and_then(|cap| {
@@ -124,7 +124,7 @@ pub fn parse_message_type(message_type: &str) -> Option<MessageType> {
             (?P<type>.+)     # request
             "
         )
-        .unwrap();
+        .expect("unexpected regex error occurred.");
     }
 
     RE.captures(message_type).and_then(|cap| {

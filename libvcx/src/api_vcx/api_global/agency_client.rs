@@ -33,13 +33,13 @@ pub fn create_agency_client_for_main_wallet(config: &AgencyClientConfig) -> Libv
 
 pub fn reset_main_agency_client() {
     trace!("reset_agency_client >>>");
-    let mut agency_client = AGENCY_CLIENT.write().unwrap();
+    let mut agency_client = AGENCY_CLIENT.write().expect("Unable to access AGENCY_CLIENT");
     *agency_client = AgencyClient::new();
 }
 
 pub fn set_main_agency_client(new_agency_client: AgencyClient) {
     trace!("set_main_agency_client >>>");
-    let mut agency_client = AGENCY_CLIENT.write().unwrap();
+    let mut agency_client = AGENCY_CLIENT.write().expect("Unable to access AGENCY_CLIENT");
     *agency_client = new_agency_client;
 }
 

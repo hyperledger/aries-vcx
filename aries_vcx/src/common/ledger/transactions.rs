@@ -186,7 +186,7 @@ pub async fn get_service(profile: &Arc<dyn Profile>, did: &Did) -> VcxResult<Ari
     let data = get_data_from_response(&attr_resp)?;
     if data["endpoint"].is_object() {
         let endpoint: EndpointDidSov = serde_json::from_value(data["endpoint"].clone())?;
-        let recipient_keys = vec![get_verkey_from_ledger(profile, &did_raw).await.unwrap()];
+        let recipient_keys = vec![get_verkey_from_ledger(profile, &did_raw).await?];
         return Ok(AriesService::create()
             .set_recipient_keys(recipient_keys)
             .set_service_endpoint(endpoint.endpoint)

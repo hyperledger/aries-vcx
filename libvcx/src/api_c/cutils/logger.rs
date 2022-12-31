@@ -108,7 +108,7 @@ impl log::Log for LibvcxLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         if let Some(enabled_cb) = self.enabled {
             let level = metadata.level() as u32;
-            let target = CString::new(metadata.target()).unwrap();
+            let target = CString::new(metadata.target()).expect("Unexpected error converting to CString");
 
             enabled_cb(self.context, level, target.as_ptr())
         } else {
@@ -120,11 +120,15 @@ impl log::Log for LibvcxLogger {
         let log_cb = self.log;
 
         let level = record.level() as u32;
-        let target = CString::new(record.target()).unwrap();
-        let message = CString::new(record.args().to_string()).unwrap();
+        let target = CString::new(record.target()).expect("Unexpected error converting to CString");
+        let message = CString::new(record.args().to_string()).expect("Unexpected error converting to CString");
 
-        let module_path = record.module_path().map(|a| CString::new(a).unwrap());
-        let file = record.file().map(|a| CString::new(a).unwrap());
+        let module_path = record
+            .module_path()
+            .map(|a| CString::new(a).expect("Unexpected error converting to CString"));
+        let file = record
+            .file()
+            .map(|a| CString::new(a).expect("Unexpected error converting to CString"));
         let line = record.line().unwrap_or(0);
 
         log_cb(
@@ -235,7 +239,9 @@ impl LibvcxDefaultLogger {
 
     extern "C" fn enabled(_context: *const CVoid, level: u32, target: *const c_char) -> bool {
         let level = get_level(level);
-        let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
+        let target = CStringUtils::c_str_to_str(target)
+            .expect("unexpected error converting from CString")
+            .expect("unexpected error converting from CString");
         let metadata: Metadata = Metadata::builder().level(level).target(target).build();
         log::logger().enabled(&metadata)
     }
@@ -249,10 +255,14 @@ impl LibvcxDefaultLogger {
         file: *const c_char,
         line: u32,
     ) {
-        let target = CStringUtils::c_str_to_str(target).unwrap().unwrap();
-        let args = CStringUtils::c_str_to_str(args).unwrap().unwrap();
-        let module_path = CStringUtils::c_str_to_str(module_path).unwrap();
-        let file = CStringUtils::c_str_to_str(file).unwrap();
+        let target = CStringUtils::c_str_to_str(target)
+            .expect("unexpected error converting from CString")
+            .expect("unexpected error converting from CString");
+        let args = CStringUtils::c_str_to_str(args)
+            .expect("unexpected error converting from CString")
+            .expect("unexpected error converting from CString");
+        let module_path = CStringUtils::c_str_to_str(module_path).expect("unexpected error converting from CString");
+        let file = CStringUtils::c_str_to_str(file).expect("unexpected error converting from CString");
 
         let level = get_level(level);
 

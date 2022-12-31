@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 pub fn set_main_pool_handle(handle: Option<i32>) {
-    let mut h = POOL_HANDLE.write().unwrap();
+    let mut h = POOL_HANDLE.write().expect("Unable to access POOL_HANDLE");
     *h = handle;
 }
 

@@ -180,7 +180,7 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     let invitation = Invitation::OutOfBand(oob.oob.clone());
     let profile = get_main_profile()?;
     let ddo = into_did_doc(&profile, &invitation).await?;
-    oob.build_connection(&profile, &get_main_agency_client().unwrap(), ddo, false)
+    oob.build_connection(&profile, &get_main_agency_client()?, ddo, false)
         .await?
         .to_string()
         .map_err(|err| err.into())

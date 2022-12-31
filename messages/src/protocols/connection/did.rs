@@ -19,7 +19,8 @@ impl Did {
 
     fn validate(did: &str) -> bool {
         lazy_static! {
-            static ref REGEX_METHOD_NAME: Regex = Regex::new("^(did:sov:)?[1-9A-HJ-NP-Za-km-z]{21,22}$").unwrap();
+            static ref REGEX_METHOD_NAME: Regex =
+                Regex::new("^(did:sov:)?[1-9A-HJ-NP-Za-km-z]{21,22}$").expect("unexpected regex error occurred.");
         }
         REGEX_METHOD_NAME.is_match(did)
     }

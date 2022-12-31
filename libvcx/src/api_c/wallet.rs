@@ -132,7 +132,7 @@ pub extern "C" fn vcx_configure_issuer_wallet(
                 cb(command_handle, err.into(), null());
             }
             Ok(conf) => {
-                let conf = serde_json::to_string(&conf).unwrap();
+                let conf = serde_json::to_string(&conf).expect("Unexpected error serializing IssuerConfig");
                 trace!(
                     "vcx_configure_issuer_wallet_cb(command_handle: {}, rc: {}, conf: {})",
                     command_handle,

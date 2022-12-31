@@ -10,17 +10,16 @@ use crate::testing::mocking;
 use crate::testing::mocking::{AgencyMock, AgencyMockDecrypted, HttpClientMockResponse};
 
 lazy_static! {
-    static ref HTTP_CLIENT: Client = reqwest::ClientBuilder::new()
-        .timeout(Duration::from_secs(50))
-        .pool_idle_timeout(Some(Duration::from_secs(4)))
-        .build()
-        .map_err(|err| {
-            AgencyClientError::from_msg(
-                AgencyClientErrorKind::PostMessageFailed,
-                format!("Building reqwest client failed: {:?}", err),
-            )
-        })
-        .unwrap();
+    static ref HTTP_CLIENT: Client = {
+        match reqwest::ClientBuilder::new()
+            .timeout(Duration::from_secs(50))
+            .pool_idle_timeout(Some(Duration::from_secs(4)))
+            .build()
+        {
+            Ok(client) => client,
+            Err(e) => panic!("Building reqwest client failed: {:?}", e),
+        }
+    };
 }
 
 pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResult<Vec<u8>> {
@@ -95,8 +94,11 @@ pub async fn post_message(body_content: Vec<u8>, url: &str) -> AgencyClientResul
 fn set_ssl_cert_location() {
     let ssl_cert_file = "SSL_CERT_FILE";
 
+    let external_storage =
+        env::var("EXTERNAL_STORAGE").expect("the evironment variable 'EXTERNAL_STORAGE' has not been set correctly");
+
     // TODO: CHANGE ME, HARDCODING FOR TESTING ONLY
-    env::set_var(ssl_cert_file, env::var("EXTERNAL_STORAGE").unwrap() + "/cacert.pem");
+    env::set_var(ssl_cert_file, external_storage + "/cacert.pem");
 
     match env::var(ssl_cert_file) {
         Ok(val) => info!("{}:: {:?}", ssl_cert_file, val),

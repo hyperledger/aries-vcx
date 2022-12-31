@@ -9,6 +9,7 @@
 #![allow(clippy::await_holding_lock)]
 #![allow(clippy::len_without_is_empty)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![deny(clippy::unwrap_used)]
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 #![crate_name = "vcx"]
 //this is needed for some large json macro invocations

@@ -108,7 +108,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
     let connection = MediatedConnection::create(
         source_id,
         &get_main_profile_optional_pool(), // do not throw if pool is not open
-        &get_main_agency_client().unwrap(),
+        &get_main_agency_client()?,
         true,
     )
     .await?;
@@ -123,7 +123,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
         let connection = MediatedConnection::create_with_invite(
             source_id,
             &profile,
-            &get_main_agency_client().unwrap(),
+            &get_main_agency_client()?,
             invitation,
             ddo,
             true,
@@ -147,13 +147,9 @@ pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResu
         )
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    let connection = MediatedConnection::create_with_request(
-        &profile,
-        request,
-        agent.pairwise_info(),
-        &get_main_agency_client().unwrap(),
-    )
-    .await?;
+    let connection =
+        MediatedConnection::create_with_request(&profile, request, agent.pairwise_info(), &get_main_agency_client()?)
+            .await?;
     store_connection(connection)
 }
 
@@ -166,7 +162,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let connection =
-        MediatedConnection::create_with_request(&profile, request, pw_info, &get_main_agency_client().unwrap()).await?;
+        MediatedConnection::create_with_request(&profile, request, pw_info, &get_main_agency_client()?).await?;
     store_connection(connection)
 }
 
@@ -201,7 +197,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .update_state_with_message(&profile, get_main_agency_client().unwrap(), Some(message))
+        .update_state_with_message(&profile, get_main_agency_client()?, Some(message))
         .await?;
     let state: u32 = connection.get_state().into();
     CONNECTION_MAP.insert(handle, connection)?;
@@ -233,7 +229,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
+            .find_and_handle_message(&profile, &get_main_agency_client()?)
             .await?
     } else {
         info!(
@@ -242,7 +238,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
+            .find_message_and_update_state(&profile, &get_main_agency_client()?)
             .await?
     };
     let state: u32 = connection.get_state().into();
@@ -252,14 +248,14 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
 
 pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.delete(&get_main_agency_client().unwrap()).await?;
+    connection.delete(&get_main_agency_client()?).await?;
     release(handle)
 }
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.connect(&profile, &get_main_agency_client().unwrap()).await?;
+    connection.connect(&profile, &get_main_agency_client()?).await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
         InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -309,7 +305,7 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
 pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_messages(&get_main_agency_client().unwrap())
+        .get_messages(&get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -317,7 +313,7 @@ pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessag
 pub async fn update_message_status(handle: u32, uid: &str) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .update_message_status(uid, &get_main_agency_client().unwrap())
+        .update_message_status(uid, &get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -325,7 +321,7 @@ pub async fn update_message_status(handle: u32, uid: &str) -> LibvcxResult<()> {
 pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<A2AMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_message_by_id(msg_id, &get_main_agency_client().unwrap())
+        .get_message_by_id(msg_id, &get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -364,7 +360,7 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
 pub async fn get_connection_info(handle: u32) -> LibvcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_connection_info(&get_main_agency_client().unwrap())
+        .get_connection_info(&get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -431,7 +427,7 @@ pub async fn download_messages(
     }
     for connection in connections {
         let msgs = connection
-            .download_messages(&get_main_agency_client().unwrap(), status_codes.clone(), uids.clone())
+            .download_messages(&get_main_agency_client()?, status_codes.clone(), uids.clone())
             .await?;
         res.push(MessageByConnection {
             pairwise_did: connection.pairwise_info().pw_did.clone(),

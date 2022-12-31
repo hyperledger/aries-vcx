@@ -25,7 +25,7 @@ pub async fn create_public_agent(source_id: &str, institution_did: &str) -> Libv
         institution_did
     );
     let profile = get_main_profile()?;
-    let agent = PublicAgent::create(&profile, &get_main_agency_client().unwrap(), source_id, institution_did).await?;
+    let agent = PublicAgent::create(&profile, &get_main_agency_client()?, source_id, institution_did).await?;
     store_public_agent(agent)
 }
 
@@ -33,7 +33,7 @@ pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>
     trace!("download_connection_requests >>> handle: {}, uids: {:?}", handle, uids);
     let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
     let requests = agent
-        .download_connection_requests(&get_main_agency_client().unwrap(), uids.cloned())
+        .download_connection_requests(&get_main_agency_client()?, uids.cloned())
         .await?;
     let requests = serde_json::to_string(&requests).map_err(|err| {
         LibvcxError::from_msg(
@@ -50,7 +50,7 @@ pub async fn download_connection_requests(handle: u32, uids: Option<&Vec<String>
 pub async fn download_message(handle: u32, uid: &str) -> LibvcxResult<String> {
     trace!("download_message >>> handle: {}, uid: {:?}", handle, uid);
     let agent = PUBLIC_AGENT_MAP.get_cloned(handle)?;
-    let msg = agent.download_message(&get_main_agency_client().unwrap(), uid).await?;
+    let msg = agent.download_message(&get_main_agency_client()?, uid).await?;
     serde_json::to_string(&msg).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::SerializationError,
@@ -61,7 +61,7 @@ pub async fn download_message(handle: u32, uid: &str) -> LibvcxResult<String> {
 
 pub fn get_service(handle: u32) -> LibvcxResult<String> {
     PUBLIC_AGENT_MAP.get(handle, |agent| {
-        let service = agent.service(&get_main_agency_client().unwrap())?;
+        let service = agent.service(&get_main_agency_client()?)?;
         serde_json::to_string(&service).map_err(|err| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::SerializationError,
