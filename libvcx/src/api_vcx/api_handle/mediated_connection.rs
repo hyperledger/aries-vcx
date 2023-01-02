@@ -15,6 +15,7 @@ use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
+use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
@@ -80,6 +81,16 @@ pub fn get_their_pw_did(handle: u32) -> LibvcxResult<String> {
 pub fn get_their_pw_verkey(handle: u32) -> LibvcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection.remote_vk().map_err(|err| err.into())
+}
+
+pub async fn verify_signature(connection_handle: u32, data: &[u8], signature: &[u8]) -> LibvcxResult<bool> {
+    let vk = get_their_pw_verkey(connection_handle)?;
+    wallet_verify(&vk, data, signature).await
+}
+
+pub async fn sign_data(connection_handle: u32, data: &[u8]) -> LibvcxResult<Vec<u8>> {
+    let vk = get_pw_verkey(connection_handle)?;
+    wallet_sign(&vk, data).await
 }
 
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {

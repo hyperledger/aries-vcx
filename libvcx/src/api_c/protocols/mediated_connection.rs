@@ -1140,7 +1140,7 @@ pub extern "C" fn vcx_connection_sign_data(
             }
         };
 
-        match wallet_sign(&vk, &data_raw).await {
+        match mediated_connection::sign_data(connection_handle, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1225,19 +1225,7 @@ pub extern "C" fn vcx_connection_verify_signature(
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_their_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                    command_handle, err, false
-                );
-                cb(command_handle, err.into(), false);
-                return Ok(());
-            }
-        };
-
-        match wallet_verify(&vk, &data_raw, &signature_raw).await {
+        match mediated_connection::verify_signature(connection_handle, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
