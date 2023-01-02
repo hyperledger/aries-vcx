@@ -25,6 +25,8 @@ use crate::api_c::cutils::current_error::{get_current_error_c_json, set_current_
 use crate::api_c::cutils::runtime::{execute, execute_async, init_threadpool};
 use crate::api_vcx::api_global::VERSION_STRING;
 
+use crate::api_vcx::utils::version_constants;
+
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
 /// #Params
@@ -271,10 +273,14 @@ pub extern "C" fn vcx_open_main_pool(
     error::SUCCESS_ERR_CODE
 }
 
+lazy_static! {
+    pub static ref VERSION_STRING_CSRING: CString =
+        CString::new(VERSION_STRING.to_string()).expect("Unexpected error converting to CString");
+}
+
 #[no_mangle]
 pub extern "C" fn vcx_version() -> *const c_char {
-    let cstring = CString::new(VERSION_STRING.as_bytes()).expect("Unexpected error converting to CString");
-    cstring.as_ptr()
+    VERSION_STRING_CSRING.as_ptr()
 }
 
 /// Reset libvcx to a pre-configured state, releasing/deleting any handles and freeing memory
