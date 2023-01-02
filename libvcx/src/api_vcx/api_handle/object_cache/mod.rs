@@ -209,12 +209,6 @@ where
     }
 
     pub fn release(&self, handle: u32) -> LibvcxResult<()> {
-        info!(
-            "[ObjectCache: {}] release >> handle: {}, object count: {}",
-            self.cache_name,
-            handle,
-            self.len().unwrap()
-        );
         let mut store = self._lock_store_write()?;
         match store.remove(&handle) {
             Some(_) => Ok(()),

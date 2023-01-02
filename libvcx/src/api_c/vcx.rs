@@ -5,7 +5,6 @@ use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 
-use crate::api_vcx::utils::version_constants;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::IssuerConfig;
 
@@ -275,7 +274,7 @@ pub extern "C" fn vcx_open_main_pool(
 #[no_mangle]
 pub extern "C" fn vcx_version() -> *const c_char {
     let cstring = CString::new(VERSION_STRING.as_bytes()).expect("Unexpected error converting to CString");
-    return cstring.as_ptr();
+    cstring.as_ptr()
 }
 
 /// Reset libvcx to a pre-configured state, releasing/deleting any handles and freeing memory

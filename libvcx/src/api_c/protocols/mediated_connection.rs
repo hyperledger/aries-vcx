@@ -7,7 +7,6 @@ use crate::api_c::cutils;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::mediated_connection::*;
 use crate::errors::error;
@@ -1128,18 +1127,6 @@ pub extern "C" fn vcx_connection_sign_data(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
-                    command_handle, err
-                );
-                cb(command_handle, err.into(), ptr::null_mut(), 0);
-                return Ok(());
-            }
-        };
-
         match mediated_connection::sign_data(connection_handle, &data_raw).await {
             Ok(err) => {
                 trace!(

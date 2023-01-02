@@ -8,7 +8,6 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::messages::protocols::connection::did::Did;
 
 use aries_vcx::utils::constants::*;
 

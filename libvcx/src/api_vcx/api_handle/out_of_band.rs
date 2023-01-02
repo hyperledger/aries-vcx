@@ -239,7 +239,7 @@ pub mod tests {
             "goal": "foobar"
         })
         .to_string();
-        let oob_handle = create_out_of_band(&config).await.unwrap();
+        let oob_handle = create_out_of_band(&config).unwrap();
         assert!(oob_handle > 0);
         let service = ServiceOob::AriesService(
             AriesService::create()
