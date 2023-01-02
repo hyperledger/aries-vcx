@@ -5,9 +5,9 @@ use libc::c_char;
 
 use aries_vcx::agency_client::configuration::AgencyClientConfig;
 
+use crate::api_vcx::utils::version_constants;
 use aries_vcx::indy::ledger::pool::PoolConfig;
 use aries_vcx::indy::wallet::IssuerConfig;
-use aries_vcx::utils::version_constants;
 
 use crate::api_c::types::CommandHandle;
 use crate::api_vcx::api_global::agency_client::update_webhook_url;
@@ -24,6 +24,7 @@ use crate::api_vcx::api_global::state::state_vcx_shutdown;
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{get_current_error_c_json, set_current_error, set_current_error_vcx};
 use crate::api_c::cutils::runtime::{execute, execute_async, init_threadpool};
+use crate::api_vcx::api_global::VERSION_STRING;
 
 /// Only for Wrapper testing purposes, sets global library settings.
 ///
@@ -271,15 +272,10 @@ pub extern "C" fn vcx_open_main_pool(
     error::SUCCESS_ERR_CODE
 }
 
-lazy_static! {
-    pub static ref VERSION_STRING: CString =
-        CString::new(format!("{}{}", version_constants::VERSION, version_constants::REVISION))
-            .expect("Unexpected error converting to CString");
-}
-
 #[no_mangle]
 pub extern "C" fn vcx_version() -> *const c_char {
-    VERSION_STRING.as_ptr()
+    let cstring = CString::new(VERSION_STRING.as_bytes()).expect("Unexpected error converting to CString");
+    return cstring.as_ptr();
 }
 
 /// Reset libvcx to a pre-configured state, releasing/deleting any handles and freeing memory
