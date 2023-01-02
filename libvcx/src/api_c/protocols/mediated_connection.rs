@@ -332,45 +332,6 @@ pub extern "C" fn vcx_connection_create_with_invite(
 }
 
 #[no_mangle]
-#[deprecated(
-    since = "0.45.0",
-    note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2."
-)]
-pub extern "C" fn vcx_connection_create_with_connection_request(
-    command_handle: CommandHandle,
-    source_id: *const c_char,
-    agent_handle: u32,
-    request: *const c_char,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>,
-) -> u32 {
-    info!("vcx_connection_create_with_connection_request >>>");
-
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(request, LibvcxErrorKind::InvalidOption);
-
-    trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match create_with_request(&request, agent_handle).await {
-            Ok(handle) => {
-                trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, error::SUCCESS_ERR_CODE, handle, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
-                cb(command_handle, err.into(), 0);
-            }
-        };
-
-        Ok(())
-    }));
-
-    error::SUCCESS_ERR_CODE
-}
-
-#[no_mangle]
 pub extern "C" fn vcx_connection_create_with_connection_request_v2(
     command_handle: CommandHandle,
     source_id: *const c_char,
