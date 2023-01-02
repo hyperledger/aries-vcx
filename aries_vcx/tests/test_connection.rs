@@ -85,7 +85,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             conn_receiver
-                .connect(&consumer.profile, &consumer.agency_client)
+                .connect(&consumer.profile, &consumer.agency_client, None)
                 .await
                 .unwrap();
             conn_receiver

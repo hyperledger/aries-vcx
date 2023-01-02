@@ -1032,11 +1032,7 @@ pub mod test_utils {
         .await
         .unwrap();
         consumer_to_institution
-            .connect(&alice.profile, &alice.agency_client)
-            .await
-            .unwrap();
-        consumer_to_institution
-            .find_message_and_update_state(&alice.profile, &alice.agency_client)
+            .connect(&alice.profile, &alice.agency_client, None)
             .await
             .unwrap();
 
@@ -1055,7 +1051,7 @@ pub mod test_utils {
                 .await
                 .unwrap();
         institution_to_consumer
-            .connect(&faber.profile, &faber.agency_client)
+            .connect(&faber.profile, &faber.agency_client, None)
             .await
             .unwrap();
         let details = institution_to_consumer.get_invite_details().unwrap();
@@ -1074,7 +1070,7 @@ pub mod test_utils {
         .unwrap();
 
         consumer_to_institution
-            .connect(&alice.profile, &alice.agency_client)
+            .connect(&alice.profile, &alice.agency_client, None)
             .await
             .unwrap();
         consumer_to_institution

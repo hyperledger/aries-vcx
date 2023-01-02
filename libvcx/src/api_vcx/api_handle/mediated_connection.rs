@@ -250,7 +250,7 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.connect(&profile, &get_main_agency_client()?).await?;
+    connection.connect(&profile, &get_main_agency_client()?, None).await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
         InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),

@@ -249,7 +249,7 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(&self.profile, &self.agency_client)
+                .connect(&self.profile, &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
@@ -533,11 +533,11 @@ pub mod test_utils {
                     .await
                     .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client)
+                .connect(&self.profile, &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client)
+                .connect(&self.profile, &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection

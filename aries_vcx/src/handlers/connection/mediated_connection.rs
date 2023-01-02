@@ -643,7 +643,12 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn connect(&mut self, profile: &Arc<dyn Profile>, agency_client: &AgencyClient) -> VcxResult<()> {
+    pub async fn connect(
+        &mut self,
+        profile: &Arc<dyn Profile>,
+        agency_client: &AgencyClient,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<()> {
         trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
         let cloud_agent_info = self.cloud_agent_info.clone().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NoAgentInformation,
@@ -654,16 +659,19 @@ impl MediatedConnection {
                 cloud_agent_info.routing_keys(agency_client)?,
                 cloud_agent_info.service_endpoint(agency_client)?,
             )?),
-            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
-                sm_invitee
-                    .clone()
-                    .send_connection_request(
-                        cloud_agent_info.routing_keys(agency_client)?,
-                        cloud_agent_info.service_endpoint(agency_client)?,
-                        self.send_message_closure_connection(profile),
-                    )
-                    .await?,
-            ),
+            SmConnection::Invitee(sm_invitee) => {
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
+                SmConnection::Invitee(
+                    sm_invitee
+                        .clone()
+                        .send_connection_request(
+                            cloud_agent_info.routing_keys(agency_client)?,
+                            cloud_agent_info.service_endpoint(agency_client)?,
+                            send_message,
+                        )
+                        .await?,
+                )
+            }
         };
         Ok(())
     }
@@ -1151,7 +1159,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&mock_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client, None).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
@@ -1169,7 +1177,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&mock_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client, None).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
