@@ -131,7 +131,10 @@ pub mod tests {
             .await
             .unwrap();
         release(cred_def_handle).unwrap();
-        assert_eq!(to_string(cred_def_handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+        assert_eq!(
+            to_string(cred_def_handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        )
     }
 
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
