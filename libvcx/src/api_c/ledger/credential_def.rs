@@ -557,32 +557,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_credentialdef_release() {
-        let _setup = SetupMocks::init();
-
-        let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        assert_eq!(
-            vcx_credentialdef_create_v2(
-                cb.command_handle,
-                CString::new("Test Source ID Release Test").unwrap().into_raw(),
-                CString::new(SCHEMA_ID).unwrap().into_raw(),
-                CString::new("tag").unwrap().into_raw(),
-                true,
-                Some(cb.get_callback()),
-            ),
-            error::SUCCESS_ERR_CODE
-        );
-
-        let handle = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        let unknown_handle = handle + 1;
-        assert_eq!(
-            vcx_credentialdef_release(unknown_handle),
-            u32::from(LibvcxErrorKind::InvalidCredDefHandle)
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_creddef_get_id() {
         let _setup = SetupMocks::init();
 

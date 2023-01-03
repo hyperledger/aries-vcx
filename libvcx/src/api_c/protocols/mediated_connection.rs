@@ -1807,33 +1807,6 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
     }
 
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_vcx_connection_release() {
-        let _setup = SetupMocks::init();
-
-        let handle = build_test_connection_inviter_requested().await;
-
-        let rc = vcx_connection_release(handle);
-        assert_eq!(rc, SUCCESS_ERR_CODE);
-
-        let unknown_handle = handle + 1;
-        assert_eq!(
-            vcx_connection_release(unknown_handle),
-            u32::from(LibvcxErrorKind::InvalidConnectionHandle)
-        );
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        let rc = vcx_connection_connect(
-            0,
-            handle,
-            CString::new("{}").unwrap().into_raw(),
-            Some(cb.get_callback()),
-        );
-        assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, SUCCESS_ERR_CODE);
-    }
-
     #[test]
     #[cfg(feature = "general_test")]
     fn test_vcx_connection_deserialize_succeeds() {

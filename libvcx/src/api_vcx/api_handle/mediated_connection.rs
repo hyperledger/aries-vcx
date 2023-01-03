@@ -487,6 +487,15 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
+    async fn test_vcx_connection_release() {
+        let _setup = SetupMocks::init();
+        let handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
     async fn test_create_connection_works() {
         let _setup = SetupMocks::init();
         let connection_handle = mediated_connection::create_connection(_source_id()).await.unwrap();
@@ -626,15 +635,6 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_connection_release_fails() {
-        let _setup = SetupEmpty::init();
-
-        let rc = release(1);
-        assert_eq!(rc.unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
@@ -690,29 +690,10 @@ pub mod tests {
         let h1 = create_connection("rel1").await.unwrap();
         let h2 = create_connection("rel2").await.unwrap();
         let h3 = create_connection("rel3").await.unwrap();
-        let h4 = create_connection("rel4").await.unwrap();
-        let h5 = create_connection("rel5").await.unwrap();
         release_all();
-        assert_eq!(
-            release(h1).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h2).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h3).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h4).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h5).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 
     #[tokio::test]

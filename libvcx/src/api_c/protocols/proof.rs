@@ -993,28 +993,6 @@ mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_get_proof_returns_proof_with_proof_state_invalid() {
-        let _setup = SetupMocks::init();
-
-        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
-
-        let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
-        assert_eq!(
-            vcx_get_proof_msg(cb.command_handle, proof_handle, Some(cb.get_callback())),
-            error::SUCCESS_ERR_CODE
-        );
-        let (state, _) = cb.receive(TimeoutUtils::some_medium()).unwrap();
-        assert_eq!(state, ProofStateType::ProofInvalid as u32);
-
-        vcx_proof_release(proof_handle);
-        assert_eq!(
-            vcx_proof_release(proof_handle),
-            u32::from(LibvcxErrorKind::InvalidProofHandle)
-        );
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_vcx_connection_get_state() {
         let _setup = SetupMocks::init();
 

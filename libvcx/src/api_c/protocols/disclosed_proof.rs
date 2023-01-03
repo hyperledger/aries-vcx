@@ -1213,23 +1213,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_disclosed_proof_release() {
-        let _setup = SetupMocks::init();
-
-        let handle = _vcx_disclosed_proof_create_with_request_c_closure(ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
-        assert_eq!(
-            vcx_disclosed_proof_release(handle + 1),
-            u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
-        );
-        assert_eq!(vcx_disclosed_proof_release(handle), error::SUCCESS_ERR_CODE);
-        assert_eq!(
-            vcx_disclosed_proof_release(handle),
-            u32::from(LibvcxErrorKind::InvalidDisclosedProofHandle)
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_disclosed_proof_serialize_and_deserialize() {
         let _setup = SetupMocks::init();
 

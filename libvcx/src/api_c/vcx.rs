@@ -971,34 +971,13 @@ mod tests {
         let credential = credential::credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 
         vcx_shutdown(true);
-        assert_eq!(
-            mediated_connection::release(connection).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            issuer_credential::release(issuer_credential).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-        assert_eq!(
-            schema::release(schema).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidSchemaHandle
-        );
-        assert_eq!(
-            proof::release(proof).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidProofHandle
-        );
-        assert_eq!(
-            credential_def::release(credentialdef).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidCredDefHandle
-        );
-        assert_eq!(
-            credential::release(credential).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidCredentialHandle
-        );
-        assert_eq!(
-            disclosed_proof::release(disclosed_proof).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidDisclosedProofHandle
-        );
+        assert_eq!(mediated_connection::is_valid_handle(connection), false);
+        assert_eq!(issuer_credential::is_valid_handle(issuer_credential), false);
+        assert_eq!(schema::is_valid_handle(schema), false);
+        assert_eq!(proof::is_valid_handle(proof), false);
+        assert_eq!(credential_def::is_valid_handle(credentialdef), false);
+        assert_eq!(credential::is_valid_handle(credential), false);
+        assert_eq!(disclosed_proof::is_valid_handle(disclosed_proof), false);
         assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
     }
 

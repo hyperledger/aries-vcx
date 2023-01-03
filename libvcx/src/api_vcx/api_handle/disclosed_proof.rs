@@ -310,6 +310,15 @@ mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
+    async fn test_vcx_disclosed_proof_release() {
+        let _setup = SetupMocks::init();
+        let handle = create_with_proof_request("TEST_CREDENTIAL", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
     async fn test_create_proof() {
         let _setup = SetupMocks::init();
 
