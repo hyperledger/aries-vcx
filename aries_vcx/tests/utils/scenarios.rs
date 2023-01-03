@@ -6,6 +6,12 @@ pub mod test_utils {
 
     use aries_vcx::common::test_utils::create_and_store_credential_def;
     use aries_vcx::core::profile::profile::Profile;
+    use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind};
+    use aries_vcx::protocols::SendClosureConnection;
+    use async_channel::{bounded, Sender};
+    use messages::a2a::A2AMessage;
+    use messages::diddoc::aries::diddoc::AriesDidDoc;
+    use messages::protocols::connection::request::Request;
     use serde_json::{json, Value};
 
     use aries_vcx::common::ledger::transactions::into_did_doc;
@@ -41,6 +47,21 @@ pub mod test_utils {
 
     use crate::utils::devsetup_agent::test_utils::{Alice, Faber};
     use crate::utils::test_macros::ProofStateType;
+
+    pub fn _send_message(sender: Sender<A2AMessage>) -> Option<SendClosureConnection> {
+        Some(Box::new(
+            move |message: A2AMessage, _sender_vk: String, _did_doc: AriesDidDoc| {
+                Box::pin(async move {
+                    sender.send(message).await.map_err(|err| {
+                        AriesVcxError::from_msg(
+                            AriesVcxErrorKind::IOError,
+                            format!("Failed to send message: {:?}", err),
+                        )
+                    })
+                })
+            },
+        ))
+    }
 
     pub fn attr_names() -> (String, String, String, String, String) {
         let address1 = "Address1".to_string();
@@ -957,17 +978,12 @@ pub mod test_utils {
         alice: &mut Alice,
         faber: &mut Faber,
         consumer_to_institution: &mut MediatedConnection,
+        request: Request,
     ) -> MediatedConnection {
         thread::sleep(Duration::from_millis(100));
-        let mut conn_requests = faber
-            .agent
-            .download_connection_requests(&faber.agency_client, None)
-            .await
-            .unwrap();
-        assert_eq!(conn_requests.len(), 1);
         let mut institution_to_consumer = MediatedConnection::create_with_request(
             &faber.profile,
-            conn_requests.pop().unwrap(),
+            request,
             faber.agent.pairwise_info(),
             &faber.agency_client,
         )
@@ -1017,6 +1033,7 @@ pub mod test_utils {
         alice: &mut Alice,
         institution: &mut Faber,
     ) -> (MediatedConnection, MediatedConnection) {
+        let (sender, receiver) = bounded::<A2AMessage>(1);
         let public_invite_json = institution.create_public_invite().unwrap();
         let public_invite: Invitation = serde_json::from_str(&public_invite_json).unwrap();
         let ddo = into_did_doc(&alice.profile, &public_invite).await.unwrap();
@@ -1032,12 +1049,18 @@ pub mod test_utils {
         .await
         .unwrap();
         consumer_to_institution
-            .connect(&alice.profile, &alice.agency_client, None)
+            .connect(&alice.profile, &alice.agency_client, _send_message(sender))
             .await
             .unwrap();
 
+        let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
+            request
+        } else {
+            panic!("Received invalid message type")
+        };
+
         let institution_to_consumer =
-            connect_using_request_sent_to_public_agent(alice, institution, &mut consumer_to_institution).await;
+            connect_using_request_sent_to_public_agent(alice, institution, &mut consumer_to_institution, request).await;
         (consumer_to_institution, institution_to_consumer)
     }
 
@@ -1071,10 +1094,6 @@ pub mod test_utils {
 
         consumer_to_institution
             .connect(&alice.profile, &alice.agency_client, None)
-            .await
-            .unwrap();
-        consumer_to_institution
-            .find_message_and_update_state(&alice.profile, &alice.agency_client)
             .await
             .unwrap();
 

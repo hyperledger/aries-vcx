@@ -19,11 +19,12 @@ mod integration_tests {
     use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
+    use async_channel::bounded;
     use messages::protocols::out_of_band::service_oob::ServiceOob;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
     use crate::utils::scenarios::test_utils::{
-        connect_using_request_sent_to_public_agent, create_connected_connections,
+        _send_message, connect_using_request_sent_to_public_agent, create_connected_connections,
         create_connected_connections_via_public_invite, create_proof_request,
     };
 
@@ -59,6 +60,7 @@ mod integration_tests {
         SetupPool::run(|setup| async move {
             let mut institution = Faber::setup(setup.pool_handle).await;
             let mut consumer = create_test_alice_instance(&setup).await;
+            let (sender, receiver) = bounded::<A2AMessage>(1);
 
             let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
@@ -85,11 +87,7 @@ mod integration_tests {
                 .await
                 .unwrap();
             conn_receiver
-                .connect(&consumer.profile, &consumer.agency_client, None)
-                .await
-                .unwrap();
-            conn_receiver
-                .find_message_and_update_state(&consumer.profile, &consumer.agency_client)
+                .connect(&consumer.profile, &consumer.agency_client, _send_message(sender))
                 .await
                 .unwrap();
             assert_eq!(
@@ -98,8 +96,18 @@ mod integration_tests {
             );
             assert_eq!(oob_sender.oob.id.0, oob_receiver.oob.id.0);
 
-            let conn_sender =
-                connect_using_request_sent_to_public_agent(&mut consumer, &mut institution, &mut conn_receiver).await;
+            let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
+                request
+            } else {
+                panic!("Received invalid message type")
+            };
+            let conn_sender = connect_using_request_sent_to_public_agent(
+                &mut consumer,
+                &mut institution,
+                &mut conn_receiver,
+                request,
+            )
+            .await;
 
             let (conn_receiver_pw1, _conn_sender_pw1) =
                 create_connected_connections(&mut consumer, &mut institution).await;

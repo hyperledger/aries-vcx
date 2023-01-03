@@ -537,10 +537,6 @@ pub mod test_utils {
                 .await
                 .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client, None)
-                .await
-                .unwrap();
-            self.connection
                 .find_message_and_update_state(&self.profile, &self.agency_client)
                 .await
                 .unwrap();
