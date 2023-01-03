@@ -11,7 +11,6 @@ export * from './api/credential';
 export * from './api/disclosed-proof';
 export * from './api/utils';
 export * from './api/wallet';
-export * from './api/public-agent';
 export * from './api/out-of-band-sender';
 export * from './api/out-of-band-receiver';
 export * from './vcx';

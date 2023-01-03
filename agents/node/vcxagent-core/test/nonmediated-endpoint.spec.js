@@ -16,7 +16,7 @@ describe('test connecting via unmediated endpoint', () => {
   it('Establish connection via public nonmediated endpoint, exchange messages', async () => {
     let server
     try {
-      const port = 5421
+      const port = 5422
       const path = '/msg'
       const endpoint = `http://127.0.0.1:${port}${path}`
 

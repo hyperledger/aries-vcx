@@ -106,10 +106,6 @@ pub enum LibvcxErrorKind {
     #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
 
-    // Public agent
-    #[error("Could not create public agent")]
-    CreatePublicAgent,
-
     // Out of Band
     #[error("Could not create out of band message.")]
     CreateOutOfBand,

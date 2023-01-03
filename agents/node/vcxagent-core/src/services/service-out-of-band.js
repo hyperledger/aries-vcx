@@ -17,12 +17,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
     return oob
   }
 
-  async function createOobMessageWithService (message, label, service) {
-    const oobSender = await _createOobSender(message, label)
-    await oobSender.appendService(service)
-    return await oobSender.toMessage()
-  }
-
   async function createOobMessageWithDid (message, label, publicDid) {
     const oobSender = await _createOobSender(message, label)
     await oobSender.appendServiceDid(publicDid)
@@ -58,7 +52,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   }
 
   return {
-    createOobMessageWithService,
     createOobMessageWithDid,
     createConnectionFromOobMsg,
     connectionExists,
