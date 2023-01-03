@@ -984,7 +984,7 @@ pub mod test_utils {
         let mut institution_to_consumer = MediatedConnection::create_with_request(
             &faber.profile,
             request,
-            faber.agent.pairwise_info(),
+            faber.pairwise_info.clone(),
             &faber.agency_client,
         )
         .await

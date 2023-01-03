@@ -20,6 +20,7 @@ mod integration_tests {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use async_channel::bounded;
+    use messages::protocols::connection::did::Did;
     use messages::protocols::out_of_band::service_oob::ServiceOob;
 
     use crate::utils::devsetup_agent::test_utils::{create_test_alice_instance, Faber};
@@ -64,12 +65,12 @@ mod integration_tests {
 
             let request_sender = create_proof_request(&mut institution, REQUESTED_ATTRIBUTES, "[]", "{}", None).await;
 
-            let service = institution.agent.service(&institution.agency_client).unwrap();
+            let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::AriesService(service))
+                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()))
                 .append_handshake_protocol(&HandshakeProtocol::ConnectionV1)
                 .unwrap()
                 .append_a2a_message(request_sender.to_a2a_message())
@@ -163,12 +164,12 @@ mod integration_tests {
             let (consumer_to_institution, institution_to_consumer) =
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-            let service = institution.agent.service(&institution.agency_client).unwrap();
+            let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::AriesService(service));
+                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()));
             let oob_msg = oob_sender.to_a2a_message();
 
             let oob_receiver = OutOfBandReceiver::create_from_a2a_msg(&oob_msg).unwrap();
@@ -198,12 +199,12 @@ mod integration_tests {
             let (mut consumer_to_institution, mut institution_to_consumer) =
                 create_connected_connections_via_public_invite(&mut consumer, &mut institution).await;
 
-            let service = institution.agent.service(&institution.agency_client).unwrap();
+            let did = institution.config_issuer.institution_did.clone();
             let oob_sender = OutOfBandSender::create()
                 .set_label("test-label")
                 .set_goal_code(&GoalCode::P2PMessaging)
                 .set_goal("To exchange message")
-                .append_service(&ServiceOob::AriesService(service));
+                .append_service(&ServiceOob::Did(Did::new(&did).unwrap()));
             let sender_oob_id = oob_sender.get_id();
             let oob_msg = oob_sender.to_a2a_message();
 
