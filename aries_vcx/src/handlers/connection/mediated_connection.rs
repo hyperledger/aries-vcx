@@ -1090,7 +1090,6 @@ mod tests {
     use agency_client::testing::mocking::enable_agency_mocks;
 
     use crate::common::test_utils::mock_profile;
-    use crate::handlers::connection::public_agent::test_utils::_pw_info;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
     use crate::utils::mockdata::mockdata_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
@@ -1105,6 +1104,13 @@ mod tests {
     use messages::protocols::discovery::query::test_utils::_query;
 
     use super::*;
+
+    pub fn _pw_info() -> PairwiseInfo {
+        PairwiseInfo {
+            pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
+            pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
+        }
+    }
 
     #[tokio::test]
     async fn test_create_with_pairwise_invite() {
