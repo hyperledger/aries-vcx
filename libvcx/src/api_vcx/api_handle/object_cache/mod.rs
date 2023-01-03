@@ -211,15 +211,15 @@ where
     pub fn release(&self, handle: u32) -> LibvcxResult<()> {
         let mut store = self._lock_store_write()?;
         match store.remove(&handle) {
-            Some(_) => Ok(()),
-            None => Err(LibvcxError::from_msg(
-                LibvcxErrorKind::InvalidHandle,
-                format!(
-                    "[ObjectCache: {}] release >> Object not found for handle: {}",
+            Some(_) => {}
+            None => {
+                warn!(
+                    "[ObjectCache: {}] release >> Object not found for handle: {}. Perhaps already released?",
                     self.cache_name, handle
-                ),
-            )),
-        }
+                );
+            }
+        };
+        Ok(())
     }
 
     pub fn drain(&self) -> LibvcxResult<()> {
