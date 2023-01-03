@@ -15,7 +15,6 @@ lazy_static! {
 
 pub async fn create(source_id: String, schema_id: String, tag: String, support_revocation: bool) -> LibvcxResult<u32> {
     let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
-
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)

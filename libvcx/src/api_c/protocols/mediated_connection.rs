@@ -7,7 +7,6 @@ use crate::api_c::cutils;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::mediated_connection::*;
 use crate::errors::error;
@@ -1128,19 +1127,7 @@ pub extern "C" fn vcx_connection_sign_data(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
-                    command_handle, err
-                );
-                cb(command_handle, err.into(), ptr::null_mut(), 0);
-                return Ok(());
-            }
-        };
-
-        match wallet_sign(&vk, &data_raw).await {
+        match mediated_connection::sign_data(connection_handle, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1225,19 +1212,7 @@ pub extern "C" fn vcx_connection_verify_signature(
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_their_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                    command_handle, err, false
-                );
-                cb(command_handle, err.into(), false);
-                return Ok(());
-            }
-        };
-
-        match wallet_verify(&vk, &data_raw, &signature_raw).await {
+        match mediated_connection::verify_signature(connection_handle, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",

@@ -56,7 +56,7 @@ pub async fn agency_update_messages(
     })
 }
 
-pub async fn agency_update_agent_webhook(webhook_url: &str) -> LibvcxResult<()> {
+pub async fn update_webhook_url(webhook_url: &str) -> LibvcxResult<()> {
     let client = get_main_agency_client()?;
     client.update_agent_webhook(webhook_url).await?;
     Ok(())

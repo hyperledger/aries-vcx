@@ -47,9 +47,10 @@ pub async fn ledger_write_endpoint_legacy(
     Ok(service)
 }
 
-pub async fn ledger_get_service(did: &Did) -> LibvcxResult<AriesService> {
+pub async fn ledger_get_service(target_did: &str) -> LibvcxResult<AriesService> {
+    let target_did = Did::new(target_did)?;
     let profile = get_main_profile()?;
-    map_ariesvcx_result(get_service(&profile, did).await)
+    map_ariesvcx_result(get_service(&profile, &target_did).await)
 }
 
 pub async fn ledger_get_txn_author_agreement() -> LibvcxResult<String> {

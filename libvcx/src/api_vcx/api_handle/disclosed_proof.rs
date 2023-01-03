@@ -25,9 +25,12 @@ enum DisclosedProofs {
     V3(Prover),
 }
 
-pub fn create_proof(source_id: &str, proof_req: &str) -> LibvcxResult<u32> {
-    trace!("create_proof >>> source_id: {}, proof_req: {}", source_id, proof_req);
-    debug!("creating disclosed proof with id: {}", source_id);
+pub fn create_with_proof_request(source_id: &str, proof_req: &str) -> LibvcxResult<u32> {
+    trace!(
+        "create_with_proof_request >>> source_id: {}, proof_req: {}",
+        source_id,
+        proof_req
+    );
 
     let presentation_request: PresentationRequest = serde_json::from_str(proof_req).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_req, err)))?;
 
@@ -35,11 +38,7 @@ pub fn create_proof(source_id: &str, proof_req: &str) -> LibvcxResult<u32> {
     HANDLE_MAP.add(proof)
 }
 
-pub async fn create_proof_with_msgid(
-    source_id: &str,
-    connection_handle: u32,
-    msg_id: &str,
-) -> LibvcxResult<(u32, String)> {
+pub async fn create_with_msgid(source_id: &str, connection_handle: u32, msg_id: &str) -> LibvcxResult<(u32, String)> {
     let proof_request = get_proof_request(connection_handle, msg_id).await?;
 
     let presentation_request: PresentationRequest = serde_json::from_str(&proof_request).map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Strict `aries` protocol is enabled. Can not parse `aries` formatted Presentation Request: {}\nError: {}", proof_request, err)))?;
@@ -314,7 +313,7 @@ mod tests {
     async fn test_create_proof() {
         let _setup = SetupMocks::init();
 
-        assert!(create_proof("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
+        assert!(create_with_proof_request("1", ARIES_PROOF_REQUEST_PRESENTATION).unwrap() > 0);
     }
 
     #[tokio::test]
@@ -323,7 +322,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         assert_eq!(
-            create_proof("1", "{}").unwrap_err().kind(),
+            create_with_proof_request("1", "{}").unwrap_err().kind(),
             LibvcxErrorKind::InvalidJson
         );
     }
@@ -340,7 +339,7 @@ mod tests {
 
         let request = _get_proof_request_messages(connection_h).await;
 
-        let handle_proof = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        let handle_proof = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(
             ProverState::PresentationRequestReceived as u32,
             get_state(handle_proof).unwrap()
@@ -372,7 +371,7 @@ mod tests {
 
         let request = _get_proof_request_messages(connection_handle).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(
             ProverState::PresentationRequestReceived as u32,
             get_state(handle).unwrap()
@@ -408,7 +407,7 @@ mod tests {
 
         let request = _get_proof_request_messages(connection_h).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(
             ProverState::PresentationRequestReceived as u32,
             get_state(handle).unwrap()
@@ -423,7 +422,7 @@ mod tests {
     async fn get_state_test() {
         let _setup = SetupMocks::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         assert_eq!(
             ProverState::PresentationRequestReceived as u32,
             get_state(handle).unwrap()
@@ -435,7 +434,7 @@ mod tests {
     async fn to_string_test() {
         let _setup = SetupMocks::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         let serialized = to_string(handle).unwrap();
         let j: Value = serde_json::from_str(&serialized).unwrap();
@@ -469,7 +468,7 @@ mod tests {
     async fn test_deserialize_succeeds_with_self_attest_allowed() {
         let _setup = SetupDefaults::init();
 
-        let handle = create_proof("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let handle = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
 
         let serialized = to_string(handle).unwrap();
         from_string(&serialized).unwrap();
@@ -487,7 +486,7 @@ mod tests {
 
         let request = _get_proof_request_messages(connection_h).await;
 
-        let handle = create_proof("TEST_CREDENTIAL", &request).unwrap();
+        let handle = create_with_proof_request("TEST_CREDENTIAL", &request).unwrap();
         assert_eq!(
             ProverState::PresentationRequestReceived as u32,
             get_state(handle).unwrap()

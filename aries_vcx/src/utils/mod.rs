@@ -12,9 +12,6 @@ use crate::plugins::wallet::base_wallet::BaseWallet;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 
 #[macro_use]
-pub mod version_constants;
-
-#[macro_use]
 #[cfg(feature = "test_utils")]
 pub mod devsetup;
 

@@ -29,7 +29,7 @@ pub extern "C" fn vcx_out_of_band_sender_create(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match out_of_band::create_out_of_band(&config).await {
+        match out_of_band::create_out_of_band(&config) {
             Ok(handle) => {
                 trace!(
                     "vcx_out_of_band_sender_create_cb(command_handle: {}, rc: {}, handle: {})",

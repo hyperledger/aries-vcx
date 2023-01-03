@@ -8,7 +8,6 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
-use aries_vcx::messages::protocols::connection::did::Did;
 
 use aries_vcx::utils::constants::*;
 
@@ -858,17 +857,9 @@ pub extern "C" fn vcx_get_service_from_ledger(
 
     trace!("vcx_get_service_from_ledger(command_handle: {})", command_handle,);
 
-    let institution_did = match Did::new(&target_did) {
-        Ok(did) => did,
-        Err(err) => {
-            error!("Error parsing value {} as DID, err: {}", target_did, err.to_string());
-            return LibvcxError::from_msg(LibvcxErrorKind::InvalidDid, err.to_string()).into();
-        }
-    };
-
     execute_async::<BoxFuture<'static, Result<(), ()>>>(
         async move {
-            match ledger_get_service(&institution_did).await {
+            match ledger_get_service(&target_did).await {
                 Ok(service) => {
                     trace!(
                         "vcx_get_service_from_ledger_cb(command_handle: {}, rc: {})",

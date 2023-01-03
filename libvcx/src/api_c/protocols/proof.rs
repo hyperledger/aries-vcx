@@ -325,7 +325,7 @@ pub extern "C" fn vcx_proof_get_state(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::get_state(proof_handle).await {
+        match proof::get_state(proof_handle) {
             Ok(err) => {
                 trace!(
                     "vcx_proof_get_state_cb(command_handle: {}, rc: {}, proof_handle: {}, state: {}) source_id: {}",
@@ -383,7 +383,7 @@ pub extern "C" fn vcx_proof_serialize(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::to_string(proof_handle).await {
+        match proof::to_string(proof_handle) {
             Ok(err) => {
                 trace!(
                     "vcx_proof_serialize_cb(command_handle: {}, proof_handle: {}, rc: {}, state: {}) source_id: {}",
@@ -441,7 +441,7 @@ pub extern "C" fn vcx_proof_deserialize(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let (rc, handle) = match proof::from_string(&proof_data).await {
+        let (rc, handle) = match proof::from_string(&proof_data) {
             Ok(err) => {
                 trace!(
                     "vcx_proof_deserialize_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -597,7 +597,7 @@ pub extern "C" fn vcx_proof_get_request_msg(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::get_presentation_request_msg(proof_handle).await {
+        match proof::get_presentation_request_msg(proof_handle) {
             Ok(msg) => {
                 let msg = CStringUtils::string_to_cstring(msg);
                 trace!(
@@ -656,7 +656,7 @@ pub extern "C" fn vcx_get_proof_msg(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::get_presentation_msg(proof_handle).await {
+        match proof::get_presentation_msg(proof_handle) {
             Ok(proof_msg) => {
                 trace!(
                     "vcx_get_proof_cb(command_handle: {}, proof_handle: {}, rc: {}, proof: {}) source_id: {}",
@@ -670,7 +670,7 @@ pub extern "C" fn vcx_get_proof_msg(
                 cb(
                     command_handle,
                     error::SUCCESS_ERR_CODE,
-                    proof::get_proof_state(proof_handle).await.unwrap_or(0),
+                    proof::get_proof_state(proof_handle).unwrap_or(0),
                     msg.as_ptr(),
                 );
             }
@@ -683,7 +683,7 @@ pub extern "C" fn vcx_get_proof_msg(
                 cb(
                     command_handle,
                     err.into(),
-                    proof::get_proof_state(proof_handle).await.unwrap_or(0),
+                    proof::get_proof_state(proof_handle).unwrap_or(0),
                     ptr::null_mut(),
                 );
             }
@@ -713,7 +713,7 @@ pub extern "C" fn vcx_mark_presentation_request_msg_sent(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::mark_presentation_request_msg_sent(proof_handle).await {
+        match proof::mark_presentation_request_msg_sent(proof_handle) {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();
                 let offer_msg = CStringUtils::string_to_cstring(offer_msg);
@@ -758,7 +758,7 @@ pub extern "C" fn vcx_proof_get_thread_id(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match proof::get_thread_id(proof_handle).await {
+        match proof::get_thread_id(proof_handle) {
             Ok(s) => {
                 trace!(
                     "vcx_proof_get_thread_id_cb(commmand_handle: {}, rc: {}, thread_id: {}) source_id: {}",
@@ -937,7 +937,7 @@ mod tests {
 
         let proof_handle = create_proof_util().unwrap();
 
-        assert_eq!(proof::get_state(proof_handle).await.unwrap(), 1);
+        assert_eq!(proof::get_state(proof_handle).unwrap(), 1);
 
         let connection_handle = build_test_connection_inviter_requested().await;
 
@@ -954,7 +954,7 @@ mod tests {
         cb.receive(TimeoutUtils::some_medium()).unwrap();
 
         assert_eq!(
-            proof::get_state(proof_handle).await.unwrap(),
+            proof::get_state(proof_handle).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
 
@@ -973,10 +973,7 @@ mod tests {
         );
         let _state = cb.receive(TimeoutUtils::some_medium()).unwrap();
 
-        assert_eq!(
-            proof::get_state(proof_handle).await.unwrap(),
-            VerifierState::Finished as u32
-        );
+        assert_eq!(proof::get_state(proof_handle).unwrap(), VerifierState::Finished as u32);
     }
 
     #[test]
@@ -999,9 +996,7 @@ mod tests {
     async fn test_get_proof_returns_proof_with_proof_state_invalid() {
         let _setup = SetupMocks::init();
 
-        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED)
-            .await
-            .unwrap();
+        let proof_handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_REVOKED).unwrap();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(
@@ -1024,9 +1019,7 @@ mod tests {
         let _setup = SetupMocks::init();
 
         let cb = return_types_u32::Return_U32_U32::new().unwrap();
-        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT)
-            .await
-            .unwrap();
+        let handle = proof::from_string(mockdata_proof::SERIALIZIED_PROOF_PRESENTATION_REQUEST_SENT).unwrap();
 
         let rc = vcx_proof_get_state(cb.command_handle, handle, Some(cb.get_callback()));
         assert_eq!(rc, error::SUCCESS_ERR_CODE);

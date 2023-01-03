@@ -90,7 +90,7 @@ pub extern "C" fn vcx_disclosed_proof_create_with_request(
     );
 
     execute(move || {
-        match disclosed_proof::create_proof(&source_id, &proof_req) {
+        match disclosed_proof::create_with_proof_request(&source_id, &proof_req) {
             Ok(err) => {
                 trace!(
                     "vcx_disclosed_proof_create_with_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
@@ -156,7 +156,7 @@ pub extern "C" fn vcx_disclosed_proof_create_with_msgid(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match disclosed_proof::create_proof_with_msgid(&source_id, connection_handle, &msg_id).await {
+        match disclosed_proof::create_with_msgid(&source_id, connection_handle, &msg_id).await {
             Ok((handle, request)) => {
                 trace!("vcx_disclosed_proof_create_with_msgid_cb(command_handle: {}, rc: {}, handle: {}, proof_req: {}) source_id: {}", command_handle, error::SUCCESS_ERR_CODE, handle, request, source_id);
                 let msg = CStringUtils::string_to_cstring(request);
