@@ -1591,7 +1591,7 @@ mod tests {
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::mockdata::mockdata_connection::{
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION,
     };
 

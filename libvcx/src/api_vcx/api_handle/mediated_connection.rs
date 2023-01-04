@@ -444,7 +444,7 @@ pub mod tests {
     };
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_connection::{
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 

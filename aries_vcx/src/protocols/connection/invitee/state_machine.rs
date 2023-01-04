@@ -23,7 +23,7 @@ use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::SignedResponse;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
     source_id: String,
     thread_id: String,

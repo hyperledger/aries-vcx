@@ -212,8 +212,8 @@ pub mod tests {
     use aries_vcx::indy::utils::LibindyMock;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
 
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_vcx::api_handle::issuer_credential;

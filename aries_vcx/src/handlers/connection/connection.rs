@@ -16,12 +16,12 @@ use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Connection {
     connection_sm: SmConnection,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
@@ -322,6 +322,25 @@ impl Connection {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
+
+    // ------------------------- (DE)SERIALIZATION ----------------------------------
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Cannot serialize Connection: {:?}", err),
+            )
+        })
+    }
+
+    pub fn from_string(serialized: &str) -> VcxResult<Self> {
+        serde_json::from_str(serialized).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize Connection: {:?}", err),
+            )
+        })
+    }
 }
 
 #[cfg(feature = "test_utils")]
@@ -450,6 +469,41 @@ mod unit_tests {
     }
 
     #[tokio::test]
+    async fn test_inviter_deserialize_serialized() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_inviter(&mock_profile())
+            .await
+            .unwrap()
+            .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
+            .await
+            .unwrap();
+        let ser_conn = connection.to_string().unwrap();
+        assert_eq!(
+            ser_conn,
+            Connection::from_string(&ser_conn).unwrap().to_string().unwrap()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_invitee_deserialize_serialized() {
+        let _setup = SetupMocks::init();
+        let invite = _pairwise_invitation_random_id();
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(Invitation::Pairwise(invite.clone()))
+            .unwrap()
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
+            .await
+            .unwrap();
+        let ser_conn = connection.to_string().unwrap();
+        assert_eq!(
+            ser_conn,
+            Connection::from_string(&ser_conn).unwrap().to_string().unwrap()
+        );
+    }
+
+    #[tokio::test]
     async fn test_connection_e2e() {
         let setup = SetupInstitutionWallet::init().await;
         let profile = indy_handles_to_profile(setup.wallet_handle, 0);
@@ -479,6 +533,7 @@ mod unit_tests {
             .process_invite(Invitation::Pairwise(invite))
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
+        println!("INVITEE INVITED: {}", invitee.to_string().unwrap());
         let invitee = invitee
             .send_request(
                 &profile,
@@ -489,6 +544,7 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Requested));
+        println!("INVITEE REQUESTED: {}", invitee.to_string().unwrap());
 
         // Inviter receives requests and sends response
         let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
@@ -508,11 +564,13 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
+        println!("INVITER REQUESTED: {}", inviter.to_string().unwrap());
         let inviter = inviter
             .send_response(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
+        println!("INVITER RESPONDED: {}", inviter.to_string().unwrap());
 
         // Invitee receives response and sends ack
         let response = if let A2AMessage::ConnectionResponse(response) = receiver.recv().await.unwrap() {
@@ -526,13 +584,16 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
+        println!("INVITEE RESPONDED: {}", invitee.to_string().unwrap());
         let invitee = invitee.send_ack(&profile, _send_message(sender.clone())).await.unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
+        println!("INVITEE COMPLETED: {}", inviter.to_string().unwrap());
 
         // Inviter receives an ack
         let ack = receiver.recv().await.unwrap();
         let inviter = inviter.process_ack(ack).await.unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Completed));
+        println!("INVITER COMPLETED: {}", inviter.to_string().unwrap());
 
         // Invitee sends basic message
         let content = "Hello";
