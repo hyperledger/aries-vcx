@@ -508,8 +508,8 @@ mod unit_tests {
         );
     }
 
-    #[tokio::test]
-    async fn test_deserialize_and_serialize_should_produce_the_same_object() {
+    #[test]
+    fn test_deserialize_and_serialize_should_produce_the_same_object() {
         fn test_deserialize_and_serialize(sm_serialized: &str) {
             let original_object: serde_json::Value = serde_json::from_str(sm_serialized).unwrap();
             let connection = Connection::from_string(sm_serialized).unwrap();
