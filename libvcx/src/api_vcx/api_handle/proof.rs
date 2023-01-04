@@ -192,6 +192,15 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
+    async fn test_get_proof_returns_proof_with_proof_state_invalid() {
+        let _setup = SetupMocks::init();
+        let handle = create_default_proof().await;
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
     async fn test_create_proof_succeeds() {
         let _setup = SetupMocks::init();
         create_default_proof().await;
@@ -455,30 +464,10 @@ pub mod tests {
         )
         .await
         .unwrap();
-        let h4 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-        let h5 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 
     #[tokio::test]

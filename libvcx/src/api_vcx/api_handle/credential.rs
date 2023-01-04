@@ -365,6 +365,15 @@ pub mod tests {
         offer
     }
 
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_vcx_credential_release() {
+        let _setup = SetupDefaults::init();
+        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle);
+    }
+
     #[tokio::test]
     #[cfg(feature = "general_test")]
     async fn test_credential_create_with_offer() {

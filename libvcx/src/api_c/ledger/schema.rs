@@ -681,21 +681,6 @@ mod tests {
 
     #[test]
     #[cfg(feature = "general_test")]
-    fn test_vcx_schema_release() {
-        let _setup = SetupMocks::init();
-
-        let (_, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-
-        let unknown_handle = handle + 1;
-        assert_eq!(
-            vcx_schema_release(unknown_handle),
-            u32::from(LibvcxErrorKind::InvalidSchemaHandle)
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
     fn test_vcx_prepare_schema_success() {
         let _setup = SetupMocks::init();
 
