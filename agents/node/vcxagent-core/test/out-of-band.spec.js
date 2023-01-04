@@ -13,16 +13,12 @@ beforeAll(async () => {
 })
 
 describe('test out of band communication', () => {
-  it('Faber establishes connection with Alice via service OOB message ', async () => {
-    await createPairedAliceAndFaberViaOobMsg(false)
-  })
-
-  it('Faber establishes connection with Alice via DID OOB message ', async () => {
-    await createPairedAliceAndFaberViaOobMsg(true)
+  it('Faber establishes connection with Alice via DID OOB message', async () => {
+    await createPairedAliceAndFaberViaOobMsg()
   })
 
   it('Faber establishes connection with Alice via OOB message and they exchange messages', async () => {
-    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg(true)
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
 
     await alice.sendMessage('Hello Faber')
     const msgsFaber = await faber.downloadReceivedMessagesV2()
@@ -46,7 +42,7 @@ describe('test out of band communication', () => {
   })
 
   it('Alice reuses a connection already established by Faber', async () => {
-    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg(true)
+    const { alice, faber } = await createPairedAliceAndFaberViaOobMsg()
     const msg = await faber.createOobMessageWithDid()
     const reused = await alice.createOrReuseConnectionUsingOobMsg(msg)
     expect(reused).toBe(true)

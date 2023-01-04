@@ -27,7 +27,6 @@ module.exports.createFaber = async function createFaber () {
   const vcxAgent = await createVcxAgent(faberAgentConfig)
   const institutionDid = vcxAgent.getInstitutionDid()
   await vcxAgent.agentInitVcx()
-  const agent = await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, institutionDid)
   await vcxAgent.agentShutdownVcx()
 
   async function createInvite () {
@@ -49,10 +48,8 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentInitVcx()
 
     const institutionDid = vcxAgent.getInstitutionDid()
-    logger.info(`Faber creating public agent ${agentId}`)
-    await vcxAgent.servicePublicAgents.publicAgentCreate(agentId, institutionDid)
     logger.info(`Faber creating public invitation for did ${institutionDid}`)
-    const publicInvitation = await generatePublicInvite(institutionDid, 'Faber')
+    const publicInvitation = generatePublicInvite(institutionDid, 'Faber')
     logger.info(`Faber generated public invite:\n${publicInvitation}`)
 
     await vcxAgent.agentShutdownVcx()
@@ -96,18 +93,6 @@ module.exports.createFaber = async function createFaber () {
     return { message, senderVerkey }
   }
 
-  async function createOobMessageWithService (wrappedMessage) {
-    logger.info('Faber is going to generate out of band message')
-    await vcxAgent.agentInitVcx()
-
-    const service = await agent.getService()
-    const oobMsg = await vcxAgent.serviceOutOfBand.createOobMessageWithService(wrappedMessage, 'faber-oob-msg', service)
-
-    await vcxAgent.agentShutdownVcx()
-
-    return oobMsg
-  }
-
   async function createOobMessageWithDid (wrappedMessage) {
     logger.info('Faber is going to generate out of band message')
     await vcxAgent.agentInitVcx()
@@ -120,19 +105,15 @@ module.exports.createFaber = async function createFaber () {
     return oobMsg
   }
 
-  async function createOobCredOffer (usePublicDid = true) {
+  async function createOobCredOffer () {
     await vcxAgent.agentInitVcx()
     const schemaAttrs = getAliceSchemaAttrs()
     const credOfferMsg = await vcxAgent.serviceCredIssuer.buildOfferAndMarkAsSent(issuerCredId, credDefId, revRegId, schemaAttrs)
     await vcxAgent.agentShutdownVcx()
-    if (usePublicDid) {
-      return await createOobMessageWithDid(credOfferMsg)
-    } else {
-      return await createOobMessageWithService(credOfferMsg)
-    }
+    return await createOobMessageWithDid(credOfferMsg)
   }
 
-  async function createOobProofRequest (usePublicDid = true) {
+  async function createOobProofRequest () {
     await vcxAgent.agentInitVcx()
 
     const issuerDid = vcxAgent.getInstitutionDid()
@@ -141,11 +122,7 @@ module.exports.createFaber = async function createFaber () {
     const presentationRequestMsg = await vcxAgent.serviceVerifier.buildProofReqAndMarkAsSent(proofId, proofData)
 
     await vcxAgent.agentShutdownVcx()
-    if (usePublicDid) {
-      return await createOobMessageWithDid(presentationRequestMsg)
-    } else {
-      return await createOobMessageWithService(presentationRequestMsg)
-    }
+    return await createOobMessageWithDid(presentationRequestMsg)
   }
 
   async function sendConnectionResponse () {
@@ -290,19 +267,11 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
-  async function _downloadConnectionRequests () {
-    logger.info('Faber is going to download connection requests')
-    const connectionRequests = await vcxAgent.servicePublicAgents.downloadConnectionRequests(agentId)
-    logger.info(`Downloaded connection requests: ${connectionRequests}`)
-    return JSON.parse(connectionRequests)
-  }
-
-  async function createConnectionFromReceivedRequest () {
+  async function createConnectionFromReceivedRequest (request) {
     logger.info('Faber is going to download connection requests')
     await vcxAgent.agentInitVcx()
 
-    const requests = await _downloadConnectionRequests()
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(requests[0]))
+    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(request))
     expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
 
     await vcxAgent.agentShutdownVcx()
@@ -382,7 +351,6 @@ module.exports.createFaber = async function createFaber () {
     createInvite,
     createPublicInvite,
     createOobMessageWithDid,
-    createOobMessageWithService,
     createOobProofRequest,
     createConnectionFromReceivedRequest,
     createConnectionFromReceivedRequestV2,

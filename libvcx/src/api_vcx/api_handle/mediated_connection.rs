@@ -16,7 +16,6 @@ use aries_vcx::protocols::SendClosure;
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
-use crate::api_vcx::api_handle::agent::PUBLIC_AGENT_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -149,21 +148,6 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
     }
 }
 
-pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResult<u32> {
-    let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
-    let request: Request = serde_json::from_str(request).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
-            format!("Cannot deserialize connection request: {:?}", err),
-        )
-    })?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    let connection =
-        MediatedConnection::create_with_request(&profile, request, agent.pairwise_info(), &get_main_agency_client()?)
-            .await?;
-    store_connection(connection)
-}
-
 pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> LibvcxResult<u32> {
     let request: Request = serde_json::from_str(request).map_err(|err| {
         LibvcxError::from_msg(
@@ -266,7 +250,7 @@ pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.connect(&profile, &get_main_agency_client()?).await?;
+    connection.connect(&profile, &get_main_agency_client()?, None).await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
         InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -455,7 +439,6 @@ pub mod tests {
 
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     use aries_vcx::messages::protocols::connection::invite::test_utils::{
         _pairwise_invitation_json, _public_invitation_json,
     };
@@ -465,11 +448,8 @@ pub mod tests {
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 
-    use crate::api_vcx::api_global::settings::get_config_value;
-    use crate::api_vcx::api_handle::agent::create_public_agent;
     use crate::api_vcx::api_handle::mediated_connection;
     use crate::api_vcx::VcxStateType;
-    use crate::errors::error;
 
     use super::*;
 
@@ -516,19 +496,6 @@ pub mod tests {
                 .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
         assert_eq!(1, mediated_connection::get_state(connection_handle));
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_create_connection_with_request() {
-        let _setup = SetupMocks::init();
-        let institution_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
-        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
-            .await
-            .unwrap();
-        assert!(mediated_connection::is_valid_handle(connection_handle));
-        assert_eq!(2, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]

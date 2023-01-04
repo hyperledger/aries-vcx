@@ -1,6 +1,5 @@
 #[macro_use]
 pub(crate) mod cutils;
-pub(crate) mod agent;
 pub(crate) mod ledger;
 pub(crate) mod logger;
 pub(crate) mod protocols;

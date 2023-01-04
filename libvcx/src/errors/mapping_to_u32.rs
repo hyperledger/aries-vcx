@@ -77,7 +77,6 @@ lazy_static! {
         (LibvcxErrorKind::RevDeltaFailedToClear, 1114),
         (LibvcxErrorKind::PoisonedLock, 1109),
         (LibvcxErrorKind::InvalidMessageFormat, 1111),
-        (LibvcxErrorKind::CreatePublicAgent, 1110),
         (LibvcxErrorKind::CreateOutOfBand, 1112),
         (LibvcxErrorKind::InvalidInput, 1115),
         (LibvcxErrorKind::ParsingError, 1116),
@@ -189,7 +188,6 @@ mod tests {
         assert_eq!(u32::from(LibvcxErrorKind::RevDeltaFailedToClear), 1114);
         assert_eq!(u32::from(LibvcxErrorKind::PoisonedLock), 1109);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidMessageFormat), 1111);
-        assert_eq!(u32::from(LibvcxErrorKind::CreatePublicAgent), 1110);
         assert_eq!(u32::from(LibvcxErrorKind::CreateOutOfBand), 1112);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidInput), 1115);
         assert_eq!(u32::from(LibvcxErrorKind::ParsingError), 1116);
@@ -274,7 +272,6 @@ mod tests {
         assert_eq!(LibvcxErrorKind::from(1114), LibvcxErrorKind::RevDeltaFailedToClear);
         assert_eq!(LibvcxErrorKind::from(1109), LibvcxErrorKind::PoisonedLock);
         assert_eq!(LibvcxErrorKind::from(1111), LibvcxErrorKind::InvalidMessageFormat);
-        assert_eq!(LibvcxErrorKind::from(1110), LibvcxErrorKind::CreatePublicAgent);
         assert_eq!(LibvcxErrorKind::from(1112), LibvcxErrorKind::CreateOutOfBand);
         assert_eq!(LibvcxErrorKind::from(1115), LibvcxErrorKind::InvalidInput);
         assert_eq!(LibvcxErrorKind::from(1116), LibvcxErrorKind::ParsingError);
