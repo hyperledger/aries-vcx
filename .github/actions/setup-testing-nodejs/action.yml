@@ -29,7 +29,7 @@ runs:
     - name: "Build libvcx"
       shell: bash
       run: |
-        cargo build --manifest-path="libvcx/Cargo.toml"
+        cargo build -F "test_utils" --manifest-path="libvcx/Cargo.toml"
         sudo cp "target/debug/libvcx.so" /usr/lib
     - name: "Start indypool, mysql, agency"
       if: ${{ inputs.skip-docker-setup != 'true' }}

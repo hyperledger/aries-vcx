@@ -38,10 +38,10 @@ futures = { version = "0.3", default-features = false }
 tokio = { version = "1.15.0", features = ["rt-multi-thread"] }
 aries-vcx = { path = "../aries_vcx" }
 thiserror = "1.0.37"
+uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"
 
 [dev-dependencies]
 tokio = { version = "1.15", features = [ "rt", "macros" ] }
-uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
