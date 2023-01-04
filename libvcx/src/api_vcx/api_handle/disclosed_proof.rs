@@ -1,12 +1,15 @@
 use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::global::settings::indy_mocks_enabled;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+
+#[cfg(feature = "test_utils")]
+use aries_vcx::{
+    global::settings::indy_mocks_enabled, utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION,
+};
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;
@@ -221,6 +224,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
 }
 
 async fn get_proof_request(connection_handle: u32, msg_id: &str) -> LibvcxResult<String> {
+    #[cfg(feature = "test_utils")]
     if indy_mocks_enabled() {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);

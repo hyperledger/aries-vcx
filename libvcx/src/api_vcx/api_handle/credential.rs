@@ -1,12 +1,13 @@
 use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::global::settings::indy_mocks_enabled;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+
+#[cfg(feature = "test_utils")]
+use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;
@@ -226,6 +227,7 @@ async fn get_credential_offer_msg(connection_handle: u32, msg_id: &str) -> Libvc
         msg_id
     );
 
+    #[cfg(feature = "test_utils")]
     if indy_mocks_enabled() {
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
@@ -257,8 +259,11 @@ pub async fn get_credential_offer_messages_with_conn_handle(connection_handle: u
         connection_handle
     );
 
-    AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
-    AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+    #[cfg(feature = "test_utils")]
+    {
+        AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
+        AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_OFFER);
+    }
 
     let credential_offers: Vec<A2AMessage> = mediated_connection::get_messages(connection_handle)
         .await?
