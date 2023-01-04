@@ -16,6 +16,18 @@ fn store_connection(connection: Connection) -> LibvcxResult<u32> {
         .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::IOError, e.to_string()))
 }
 
+fn serialize<T>(data: &T) -> LibvcxResult<String>
+where
+    T: serde::ser::Serialize,
+{
+    serde_json::to_string(data).map_err(|err| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::SerializationError,
+            format!("Serialization failed: {}", err),
+        )
+    })
+}
+
 fn deserialize<T>(data: &str) -> LibvcxResult<T>
 where
     T: serde::de::DeserializeOwned,
@@ -24,6 +36,7 @@ where
         .map_err(|err| LibvcxError::from_msg(LibvcxErrorKind::InvalidJson, format!("Deserialization failed: {}", err)))
 }
 
+// ----------------------------- CONSTRUCTORS ------------------------------------
 pub async fn create_inviter() -> LibvcxResult<u32> {
     trace!("create_inviter >>>");
     store_connection(Connection::create_inviter(&get_main_profile()?).await?)
@@ -37,6 +50,43 @@ pub async fn create_invitee(invitation: &str) -> LibvcxResult<u32> {
     )
 }
 
+// ----------------------------- GETTERS ------------------------------------
+pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
+    trace!("get_thread_id >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| Ok(connection.get_thread_id()))
+}
+
+pub fn get_pairwise_info(handle: u32) -> LibvcxResult<String> {
+    trace!("get_pairwise_info >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| serialize(connection.pairwise_info()))
+}
+
+pub fn get_remote_did(handle: u32) -> LibvcxResult<String> {
+    trace!("get_remote_did >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| connection.remote_did().map_err(|e| e.into()))
+}
+
+pub fn get_remote_vk(handle: u32) -> LibvcxResult<String> {
+    trace!("get_remote_vk >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| connection.remote_vk().map_err(|e| e.into()))
+}
+
+pub fn get_state(handle: u32) -> LibvcxResult<u32> {
+    trace!("get_state >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| Ok(connection.get_state().into()))
+}
+
+pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
+    trace!("get_invitation >>> handle: {}", handle);
+    CONNECTION_MAP.get(handle, |connection| {
+        serialize(connection.get_invite_details().ok_or(LibvcxError::from_msg(
+            LibvcxErrorKind::ActionNotSupported,
+            "Invitation is not available for the connection.",
+        ))?)
+    })
+}
+
+// ----------------------------- MSG PROCESSING ------------------------------------
 pub fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<u32> {
     trace!("process_invite >>>");
     store_connection(
@@ -127,16 +177,18 @@ pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: 
     )
 }
 
-pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
-    trace!("from_string >>>");
-    store_connection(Connection::from_string(connection_data)?)
-}
-
+// ------------------------- (DE)SERIALIZATION ----------------------------------
 pub fn to_string(handle: u32) -> LibvcxResult<String> {
     trace!("to_string >>>");
     CONNECTION_MAP.get(handle, |connection| connection.to_string().map_err(|err| err.into()))
 }
 
+pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
+    trace!("from_string >>>");
+    store_connection(Connection::from_string(connection_data)?)
+}
+
+// ------------------------------ CLEANUP ---------------------------------------
 pub fn release(handle: u32) -> LibvcxResult<()> {
     trace!("release >>>");
     CONNECTION_MAP.release(handle)
