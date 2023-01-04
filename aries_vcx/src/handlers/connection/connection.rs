@@ -380,6 +380,11 @@ mod unit_tests {
     use crate::common::ledger::transactions::into_did_doc;
     use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
     use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
+    use crate::utils::mockdata::mockdata_connection::{
+        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
+        CONNECTION_SM_INVITEE_RESPONDED, CONNECTION_SM_INVITER_COMPLETED, CONNECTION_SM_INVITER_REQUESTED,
+        CONNECTION_SM_INVITER_RESPONDED,
+    };
 
     use async_channel::bounded;
     use messages::protocols::basic_message::message::BasicMessage;
@@ -504,6 +509,26 @@ mod unit_tests {
     }
 
     #[tokio::test]
+    async fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        fn test_deserialize_and_serialize(sm_serialized: &str) {
+            let original_object: serde_json::Value = serde_json::from_str(sm_serialized).unwrap();
+            let connection = Connection::from_string(sm_serialized).unwrap();
+            let reserialized = connection.to_string().unwrap();
+            let reserialized_object: serde_json::Value = serde_json::from_str(&reserialized).unwrap();
+            assert_eq!(original_object, reserialized_object);
+        }
+
+        // let _setup = SetupMocks::init();
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_RESPONDED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_RESPONDED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
+    }
+
+    #[tokio::test]
     async fn test_connection_e2e() {
         let setup = SetupInstitutionWallet::init().await;
         let profile = indy_handles_to_profile(setup.wallet_handle, 0);
@@ -533,7 +558,6 @@ mod unit_tests {
             .process_invite(Invitation::Pairwise(invite))
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Invited));
-        println!("INVITEE INVITED: {}", invitee.to_string().unwrap());
         let invitee = invitee
             .send_request(
                 &profile,
@@ -544,7 +568,6 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Requested));
-        println!("INVITEE REQUESTED: {}", invitee.to_string().unwrap());
 
         // Inviter receives requests and sends response
         let request = if let A2AMessage::ConnectionRequest(request) = receiver.recv().await.unwrap() {
@@ -564,13 +587,11 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Requested));
-        println!("INVITER REQUESTED: {}", inviter.to_string().unwrap());
         let inviter = inviter
             .send_response(&profile, _send_message(sender.clone()))
             .await
             .unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Responded));
-        println!("INVITER RESPONDED: {}", inviter.to_string().unwrap());
 
         // Invitee receives response and sends ack
         let response = if let A2AMessage::ConnectionResponse(response) = receiver.recv().await.unwrap() {
@@ -584,16 +605,13 @@ mod unit_tests {
             .await
             .unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Responded));
-        println!("INVITEE RESPONDED: {}", invitee.to_string().unwrap());
         let invitee = invitee.send_ack(&profile, _send_message(sender.clone())).await.unwrap();
         assert_eq!(invitee.get_state(), ConnectionState::Invitee(InviteeState::Completed));
-        println!("INVITEE COMPLETED: {}", inviter.to_string().unwrap());
 
         // Inviter receives an ack
         let ack = receiver.recv().await.unwrap();
         let inviter = inviter.process_ack(ack).await.unwrap();
         assert_eq!(inviter.get_state(), ConnectionState::Inviter(InviterState::Completed));
-        println!("INVITER COMPLETED: {}", inviter.to_string().unwrap());
 
         // Invitee sends basic message
         let content = "Hello";
