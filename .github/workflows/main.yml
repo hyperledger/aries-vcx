@@ -76,9 +76,9 @@ jobs:
           HASH_DOCKER_LIBVCX=${HASH_DOCKERFILE_LIBVCX:0:11}-${HASH_SRC_LIBVCX:0:11}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_AGENCYCLIENT:0:11}-${HASH_SRC_MESSAGES:0:11}
           HASH_DOCKER_ANDROID=${HASH_DOCKER_LIBVCX}-${HASH_SRC_ARIESVCX:0:11}-${HASH_SRC_WRAPPER_JAVA:0:15}
 
-          echo "::set-output name=DOCKER_IMG_CACHED_ALPINE_CORE::$DOCKER_REPO_LOCAL_ALPINE_CORE:$HASH_DOCKERFILE_ALPINE_CORE"
-          echo "::set-output name=DOCKER_IMG_CACHED_LIBVCX::$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX"
-          echo "::set-output name=DOCKER_IMG_CACHED_ANDROID::$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID"
+          echo "DOCKER_IMG_CACHED_ALPINE_CORE=$DOCKER_REPO_LOCAL_ALPINE_CORE:$HASH_DOCKERFILE_ALPINE_CORE" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMG_CACHED_LIBVCX=$DOCKER_REPO_LOCAL_LIBVCX:$HASH_DOCKER_LIBVCX" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMG_CACHED_ANDROID=$DOCKER_REPO_LOCAL_ANDROID:$HASH_DOCKER_ANDROID" >> $GITHUB_OUTPUT
 
   clippy-aries-vcx:
     runs-on: ubuntu-20.04
@@ -258,7 +258,7 @@ jobs:
           name: codecov-unit-aries-vcx
           fail_ci_if_error: true
           path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
@@ -287,7 +287,7 @@ jobs:
           name: codecov-unit-aries-vcx
           fail_ci_if_error: true
           path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
@@ -317,7 +317,7 @@ jobs:
           name: codecov-unit-aries-vcx
           fail_ci_if_error: true
           path_to_write_report: /tmp/artifacts/coverage/codecov_report.gz
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report-unit-aries-vcx
           path: /tmp/artifacts/coverage
@@ -455,12 +455,12 @@ jobs:
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           ./wrappers/ios/ci/build.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-device
           path: /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-device.zip
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-${{ env.PUBLISH_VERSION }}-universal
@@ -492,12 +492,12 @@ jobs:
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         run: |
           mv /tmp/artifacts/libvcx-ios-${{ env.PUBLISH_VERSION }}-universal.zip /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal.zip
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device
           path: /tmp/artifacts/libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-device.zip
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ needs.workflow-setup.outputs.SKIP_IOS != 'true' }}
         with:
           name: libvcx-ios-legacy-${{ env.PUBLISH_VERSION }}-universal
@@ -532,7 +532,7 @@ jobs:
           full-version-name: ${{ env.FULL_VERSION_NAME }}
       - name: "Publish aar artifact"
         if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.FULL_VERSION_NAME }}
           path: /tmp/artifacts/aar/${{ env.FULL_VERSION_NAME }}.aar
@@ -564,7 +564,7 @@ jobs:
           abis: "x86 x86_64"
           docker-img-name: ${{ needs.workflow-setup.outputs.DOCKER_IMG_CACHED_ANDROID }}
           full-version-name: ${{ env.FULL_VERSION_NAME }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: ${{ needs.workflow-setup.outputs.SKIP_ANDROID != 'true' }}
         with:
           name: ${{ env.FULL_VERSION_NAME }}
@@ -588,7 +588,7 @@ jobs:
       - name: "Build libvcx.so"
         run: cargo build --release
       - name: "Publish artifact libvcx.so"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: libvcx.so
           path: target/release/libvcx.so
@@ -612,7 +612,7 @@ jobs:
       - name: "Build libvcx.dylib"
         run: cargo build --release
       - name: "Publish artifact libvcx.dylib"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: libvcx.dylib
           path: target/release/libvcx.dylib
