@@ -23,6 +23,9 @@ If you wish to use iOS or Android wrapper, you may find it useful to have look a
 These might be somewhat outdated at the moment, nevertheless they may be a good starting point.
 
 # Testing
+Before you try to build/test `libvcx` crate on your machine, make sure yu can buil `aries-vcx` - see 
+[aries-vcx README](../aries_vcx/README.md#verify-on-your-machine).
+
 - Run unit tests:
 ```
 cargo test  --features "general_test" -- --test-threads=1
@@ -31,3 +34,7 @@ cargo test  --features "general_test" -- --test-threads=1
 ```
 TEST_POOL_IP=127.0.0.1 cargo test  --features "pool_tests" -- --test-threads=1
 ```
+
+## Architecture
+
+<img alt="Libvcx architecture diagram" src="../docs/architecture/libvcx_architecture_040123.png"/>
