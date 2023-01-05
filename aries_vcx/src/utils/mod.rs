@@ -50,6 +50,7 @@ pub mod constants;
 pub mod async_fn_iterator;
 pub mod file;
 pub mod json;
+#[cfg(feature = "test_utils")]
 pub mod mockdata;
 pub mod openssl;
 pub mod provision;

@@ -1091,7 +1091,7 @@ mod tests {
 
     use crate::common::test_utils::mock_profile;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
-    use crate::utils::mockdata::mockdata_connection::{
+    use crate::utils::mockdata::mockdata_mediated_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
         CONNECTION_SM_INVITER_COMPLETED,
     };

@@ -23,7 +23,7 @@ use crate::protocols::connection::inviter::states::responded::RespondedState;
 use crate::protocols::connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInviter {
     pub source_id: String,
     thread_id: String,
