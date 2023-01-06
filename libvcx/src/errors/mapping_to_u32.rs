@@ -83,7 +83,8 @@ lazy_static! {
         (LibvcxErrorKind::CreateOutOfBand, 1112),
         (LibvcxErrorKind::InvalidInput, 1115),
         (LibvcxErrorKind::ParsingError, 1116),
-        (LibvcxErrorKind::UnimplementedFeature, 1117)
+        (LibvcxErrorKind::UnimplementedFeature, 1117),
+        (LibvcxErrorKind::LedgerItemNotFound, 1118)
     ];
 }
 
@@ -194,6 +195,7 @@ mod tests {
         assert_eq!(u32::from(LibvcxErrorKind::InvalidInput), 1115);
         assert_eq!(u32::from(LibvcxErrorKind::ParsingError), 1116);
         assert_eq!(u32::from(LibvcxErrorKind::UnimplementedFeature), 1117);
+        assert_eq!(u32::from(LibvcxErrorKind::LedgerItemNotFound), 1118);
     }
 
     #[test]
@@ -279,6 +281,7 @@ mod tests {
         assert_eq!(LibvcxErrorKind::from(1115), LibvcxErrorKind::InvalidInput);
         assert_eq!(LibvcxErrorKind::from(1116), LibvcxErrorKind::ParsingError);
         assert_eq!(LibvcxErrorKind::from(1117), LibvcxErrorKind::UnimplementedFeature);
+        assert_eq!(LibvcxErrorKind::from(1118), LibvcxErrorKind::LedgerItemNotFound);
         assert_eq!(LibvcxErrorKind::from(9999), LibvcxErrorKind::UnknownError);
     }
 }

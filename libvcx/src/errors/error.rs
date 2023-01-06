@@ -123,6 +123,8 @@ pub enum LibvcxErrorKind {
     NoPoolOpen,
     #[error("Message failed in post")]
     PostMessageFailed,
+    #[error("Ledger item not found.")]
+    LedgerItemNotFound,
 
     // Wallet
     #[error("Error Creating a wallet")]

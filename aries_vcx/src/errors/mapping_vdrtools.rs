@@ -24,7 +24,7 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             InvalidState => AriesVcxErrorKind::InvalidState,
             NoConsensus => AriesVcxErrorKind::InvalidLedgerResponse,
             InvalidTransaction => AriesVcxErrorKind::InvalidLedgerResponse,
-            LedgerItemNotFound => AriesVcxErrorKind::InvalidLedgerResponse,
+            LedgerItemNotFound => AriesVcxErrorKind::LedgerItemNotFound,
             TransactionNotAllowed => AriesVcxErrorKind::InvalidLedgerResponse,
             PoolTimeout => AriesVcxErrorKind::InvalidLedgerResponse,
             PoolIncompatibleProtocolVersion => AriesVcxErrorKind::InvalidConfiguration,
