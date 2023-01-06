@@ -35,7 +35,7 @@ serde = "1.0.97"
 serde_json = "1.0.40"
 serde_derive = "1.0.97"
 futures = { version = "0.3", default-features = false }
-tokio = { version = "1.15.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.20.3", features = ["rt-multi-thread"] }
 aries-vcx = { path = "../aries_vcx" }
 thiserror = "1.0.37"
 uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
@@ -44,4 +44,4 @@ uuid = {version = "0.7.1", default-features = false, features = ["v4"]}
 android_logger = "0.5"
 
 [dev-dependencies]
-tokio = { version = "1.15", features = [ "rt", "macros" ] }
+tokio = { version = "1.20", features = [ "rt", "macros" ] }

@@ -60,7 +60,7 @@ strum = "0.16.0"
 strum_macros = "0.16.0"
 agency_client = { path = "../agency_client" }
 derive_builder = "0.10.2"
-tokio = { version = "1.15.0" }
+tokio = { version = "1.20.3" }
 messages = { path  = "../messages" }
 zmq = { version = "0.9.2" }
 thiserror = "1.0.37"
@@ -70,5 +70,5 @@ android_logger = "0.5"
 
 [dev-dependencies]
 async-channel = "1.7.1"
-tokio = { version = "1.15", features = [ "rt", "macros", "rt-multi-thread" ] }
+tokio = { version = "1.20", features = [ "rt", "macros", "rt-multi-thread" ] }
 sqlx = { version = "0.5",    features = [ "migrate", "mysql", "runtime-tokio-rustls" ] }
