@@ -178,8 +178,6 @@ pub enum LibvcxErrorKind {
     #[error("Error Retrieving messages from API")]
     InvalidMessages,
 
-    #[error("Common error {}", 0)]
-    Common(u32),
     #[error("Libndy error {}", 0)]
     LibndyError(u32),
     #[error("Unknown libindy error")]
@@ -192,6 +190,8 @@ pub enum LibvcxErrorKind {
 
     #[error("Attempted to unlock poisoned lock")]
     PoisonedLock,
+    #[error("Error accessing an object")]
+    ObjectAccessError,
 }
 
 #[derive(Debug, thiserror::Error)]

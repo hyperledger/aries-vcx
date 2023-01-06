@@ -630,7 +630,7 @@ impl TempFile {
 
 impl Drop for TempFile {
     fn drop(&mut self) {
-        fs::remove_file(&self.path).unwrap()
+        fs::remove_file(&self.path).unwrap_or(());
     }
 }
 

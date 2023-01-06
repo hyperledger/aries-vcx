@@ -68,3 +68,50 @@ pub async fn provision_cloud_agent(agency_config: &AgentProvisionConfig) -> Libv
     let res = aries_vcx::utils::provision::provision_cloud_agent(&mut client, wallet, agency_config).await;
     map_ariesvcx_result(res)
 }
+
+#[cfg(test)]
+pub mod tests {
+    use crate::api_vcx::api_global::agency_client::{
+        agency_update_messages, provision_cloud_agent, update_webhook_url,
+    };
+    use aries_vcx::agency_client::configuration::AgentProvisionConfig;
+    use aries_vcx::agency_client::messages::update_message::UIDsByConn;
+    use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
+    use aries_vcx::agency_client::MessageStatusCode;
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::devsetup::SetupMocks;
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_update_institution_webhook() {
+        let _setup = SetupMocks::init();
+        update_webhook_url("https://example.com").await.unwrap();
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_provision_cloud_agent() {
+        let _setup = SetupMocks::init();
+
+        let config = AgentProvisionConfig {
+            agency_did: "Ab8TvZa3Q19VNkQVzAWVL7".into(),
+            agency_verkey: "5LXaR43B1aQyeh94VBP8LG1Sgvjk7aNfqiksBCSjwqbf".into(),
+            agency_endpoint: "https://enym-eagency.pdev.evernym.com".into(),
+            agent_seed: None,
+        };
+        provision_cloud_agent(&config).await.unwrap();
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_messages_update_status() {
+        let _setup = SetupMocks::init();
+        AgencyMockDecrypted::set_next_decrypted_response(constants::GET_MESSAGES_DECRYPTED_RESPONSE);
+
+        let uids_by_conns_str = String::from(r#"[{"pairwiseDID":"QSrw8hebcvQxiwBETmAaRs","uids":["mgrmngq"]}]"#);
+        let uids_by_conns: Vec<UIDsByConn> = serde_json::from_str(&uids_by_conns_str).unwrap();
+        agency_update_messages(MessageStatusCode::Received, uids_by_conns)
+            .await
+            .unwrap();
+    }
+}

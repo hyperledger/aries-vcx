@@ -77,3 +77,78 @@ pub async fn close_main_pool() -> LibvcxResult<()> {
     close(get_main_pool_handle()?).await?;
     Ok(())
 }
+
+#[cfg(test)]
+pub mod tests {
+    use crate::api_c::vcx::vcx_open_main_pool;
+    use crate::api_vcx::api_global::pool::{get_main_pool_handle, open_main_pool, reset_main_pool_handle};
+    use crate::errors::error::LibvcxErrorKind;
+    use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
+    use aries_vcx::indy::ledger::pool::test_utils::{
+        create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool,
+    };
+    use aries_vcx::indy::ledger::pool::PoolConfig;
+    use aries_vcx::utils::constants::GENESIS_PATH;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, TempFile};
+
+    #[tokio::test]
+    #[cfg(feature = "pool_tests")]
+    async fn test_open_pool() {
+        let _setup = SetupEmpty::init();
+
+        let genesis_path = create_tmp_genesis_txn_file();
+        let config = PoolConfig {
+            genesis_path,
+            pool_name: None,
+            pool_config: None,
+        };
+        open_main_pool(&config).await.unwrap();
+        delete_test_pool(get_main_pool_handle().unwrap()).await;
+        reset_main_pool_handle();
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_open_pool_fails_if_genesis_file_is_invalid() {
+        let _setup = SetupEmpty::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
+
+        // Write invalid genesis.txn
+        let _genesis_transactions = TempFile::create_with_data(GENESIS_PATH, "{ \"invalid\": \"genesis\" }");
+
+        set_config_value(CONFIG_GENESIS_PATH, &_genesis_transactions.path).unwrap();
+
+        let pool_config = PoolConfig {
+            genesis_path: _genesis_transactions.path.clone(),
+            pool_name: Some(pool_name.clone()),
+            pool_config: None,
+        };
+        // let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
+        assert_eq!(
+            open_main_pool(&pool_config).await.unwrap_err().kind(),
+            LibvcxErrorKind::PoolLedgerConnect
+        );
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
+
+        delete_named_test_pool(0, &pool_name);
+        reset_main_pool_handle();
+    }
+
+    #[cfg(feature = "pool_tests")]
+    #[tokio::test]
+    async fn test_open_pool_fails_if_genesis_path_is_invalid() {
+        let _setup = SetupDefaults::init();
+        let pool_name = format!("invalidpool_{}", uuid::Uuid::new_v4().to_string());
+
+        let pool_config = PoolConfig {
+            genesis_path: "invalid/txn/path".to_string(),
+            pool_name: Some(pool_name.clone()),
+            pool_config: None,
+        };
+        assert_eq!(
+            open_main_pool(&pool_config).await.unwrap_err().kind(),
+            LibvcxErrorKind::InvalidGenesisTxnPath
+        );
+        assert_eq!(get_main_pool_handle().unwrap_err().kind(), LibvcxErrorKind::NoPoolOpen);
+    }
+}
