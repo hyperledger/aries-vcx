@@ -156,7 +156,7 @@ build_libvcx() {
 
             export OPENSSL_LIB_DIR=$WORK_DIR/libs/openssl/${ARCH}
             echo "Building vcx. OPENSSL_LIB_DIR=${OPENSSL_LIB_DIR}"
-            cargo build --target "${TRIPLET}" --release --features ios-wrapper
+            cargo build --target "${TRIPLET}" --release
         done
     popd
 }

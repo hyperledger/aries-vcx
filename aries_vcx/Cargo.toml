@@ -18,7 +18,6 @@ general_test = ["test_utils", "messages/general_test" ]
 fatal_warnings = []
 warnlog_fetched_messages = []
 mysql_test = ["test_utils" ]
-ios-wrapper = ["libvdrtools/ffi_api"]
 modular_dependencies = ["test_utils", "tokio/rt", "tokio/macros"]
 
 [dependencies]

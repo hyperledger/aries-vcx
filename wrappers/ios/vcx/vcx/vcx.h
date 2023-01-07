@@ -18,6 +18,5 @@ FOUNDATION_EXPORT const unsigned char vcxVersionString[];
 
 #import "VcxAPI.h"
 #import "VcxLogger.h"
-#import "IndySdk.h"
 #import "libvcx.h"
 
