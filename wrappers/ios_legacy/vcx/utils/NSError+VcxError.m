@@ -1,6 +1,5 @@
 //
 //  NSError+VcxError.m
-//  libindy
 //
 
 #import "NSError+VcxError.h"

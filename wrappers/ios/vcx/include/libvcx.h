@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #import "VcxTypes.h"
+#import "IndyTypes.h"
 
 /**
  * Initialize the SDK

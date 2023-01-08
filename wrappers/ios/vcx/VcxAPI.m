@@ -13,7 +13,6 @@
 #import "VcxCallbacks.h"
 #import "VcxWrapperCallbacks.h"
 #import "libvcx.h"
-#import "utils/IndyCallbacks.h"
 #import "utils/VcxLogger.h"
 
 void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void (^completion)()) {

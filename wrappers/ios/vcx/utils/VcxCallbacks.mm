@@ -158,7 +158,3 @@ static NSString *commandCallbackKey = @"commandCallback";
 }
 
 @end
-
-// MARK: - static indy C-callbacks
-
-
