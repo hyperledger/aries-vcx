@@ -74,3 +74,58 @@ pub fn ledger_set_txn_author_agreement(
         time_of_acceptance,
     ))
 }
+
+#[cfg(test)]
+pub mod tests {
+    use crate::api_c::vcx::{vcx_get_ledger_author_agreement, vcx_set_active_txn_author_agreement_meta};
+    use crate::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
+    use crate::api_vcx::api_global::settings::get_config_value;
+    use aries_vcx::global::settings::{set_test_configs, CONFIG_TXN_AUTHOR_AGREEMENT};
+    use aries_vcx::utils::devsetup::SetupMocks;
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_vcx_set_active_txn_author_agreement_meta() {
+        let _setup = SetupMocks::init();
+
+        assert!(&get_config_value(CONFIG_TXN_AUTHOR_AGREEMENT).is_err());
+
+        let text = "text";
+        let version = "1.0.0";
+        let acc_mech_type = "type 1";
+        let time_of_acceptance = 123456789;
+
+        ledger_set_txn_author_agreement(
+            Some(text.into()),
+            Some(version.into()),
+            None,
+            acc_mech_type.into(),
+            time_of_acceptance,
+        )
+        .unwrap();
+        let auth_agreement = get_config_value(CONFIG_TXN_AUTHOR_AGREEMENT).unwrap();
+
+        let expected = json!({
+            "text": text,
+            "version": version,
+            "acceptanceMechanismType": acc_mech_type,
+            "timeOfAcceptance": time_of_acceptance,
+        });
+
+        let auth_agreement = serde_json::from_str::<::serde_json::Value>(&auth_agreement).unwrap();
+
+        assert_eq!(expected, auth_agreement);
+
+        // todo: delete the reset below?
+        set_test_configs();
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_vcx_get_ledger_author_agreement() {
+        let _setup = SetupMocks::init();
+
+        let agreement = ledger_get_txn_author_agreement().await.unwrap();
+        assert_eq!(aries_vcx::utils::constants::DEFAULT_AUTHOR_AGREEMENT, agreement);
+    }
+}

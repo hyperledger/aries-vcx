@@ -8,78 +8,30 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
         use types::errors::IndyErrorKind::*;
 
         match indy {
-            // 100..=111, 115..=129
             InvalidParam(_) => AriesVcxErrorKind::InvalidLibindyParam,
-
-            // 113
             InvalidStructure => AriesVcxErrorKind::LibindyInvalidStructure,
-
-            // 114
             IOError => AriesVcxErrorKind::IOError,
-
-            // 200
             InvalidWalletHandle => AriesVcxErrorKind::InvalidWalletHandle,
-
-            // 203
             WalletAlreadyExists => AriesVcxErrorKind::DuplicationWallet,
-
-            // 204
             WalletNotFound => AriesVcxErrorKind::WalletNotFound,
-
-            // 206
             WalletAlreadyOpened => AriesVcxErrorKind::WalletAlreadyOpen,
-
-            // 212
             WalletItemNotFound => AriesVcxErrorKind::WalletRecordNotFound,
-
-            // 213
             WalletItemAlreadyExists => AriesVcxErrorKind::DuplicationWalletRecord,
-
-            // 306
             PoolConfigAlreadyExists => AriesVcxErrorKind::CreatePoolConfig,
-
-            // 404
             MasterSecretDuplicateName => AriesVcxErrorKind::DuplicationMasterSecret,
-
-            // 407
             CredDefAlreadyExists => AriesVcxErrorKind::CredDefAlreadyCreated,
-
-            // 600
             DIDAlreadyExists => AriesVcxErrorKind::DuplicationDid,
-
-            // 702
-            PaymentInsufficientFunds
-            | InvalidState
-            | ProofRejected
-            | RevocationRegistryFull
-            | LedgerItemNotFound
-            | InvalidPoolHandle
-            | UnknownWalletStorageType
-            | InvalidUserRevocId
-            | CredentialRevoked
-            | NoConsensus
-            | InvalidTransaction
-            | PoolNotCreated
-            | PoolTerminated
-            | PoolTimeout
-            | PoolIncompatibleProtocolVersion
-            | UnknownCrypto
-            | WalletStorageTypeAlreadyRegistered
-            | WalletAccessFailed
-            | WalletEncodingError
-            | WalletStorageError
-            | WalletEncryptionError
-            | WalletQueryError
-            | UnknownPaymentMethodType
-            | IncompatiblePaymentMethods
-            | PaymentSourceDoesNotExist
-            | PaymentOperationNotSupported
-            | PaymentExtraFunds
-            | TransactionNotAllowed
-            | QueryAccountDoesNotExist
-            | InvalidVDRHandle
-            | InvalidVDRNamespace
-            | IncompatibleLedger => {
+            InvalidState => AriesVcxErrorKind::InvalidState,
+            NoConsensus => AriesVcxErrorKind::InvalidLedgerResponse,
+            InvalidTransaction => AriesVcxErrorKind::InvalidLedgerResponse,
+            LedgerItemNotFound => AriesVcxErrorKind::LedgerItemNotFound,
+            TransactionNotAllowed => AriesVcxErrorKind::InvalidLedgerResponse,
+            PoolTimeout => AriesVcxErrorKind::InvalidLedgerResponse,
+            PoolIncompatibleProtocolVersion => AriesVcxErrorKind::InvalidConfiguration,
+            UnknownWalletStorageType => AriesVcxErrorKind::InvalidConfiguration,
+            WalletStorageTypeAlreadyRegistered => AriesVcxErrorKind::InvalidConfiguration,
+            WalletAccessFailed => AriesVcxErrorKind::WalletAccessFailed,
+            _ => {
                 let err_code = types::ErrorCode::from(indy) as u32;
                 AriesVcxErrorKind::VdrToolsError(err_code)
             }

@@ -115,6 +115,7 @@ export enum VCXCode {
   INVALID_INPUT = 1115,
   PARSING_ERROR = 1116,
   UNIMPLEMENTED_FEATURE = 1117,
+  LEDGER_ITEM_NOT_FOUND = 1118,
 }
 export enum ConnectionStateType {
   Initial = 0,

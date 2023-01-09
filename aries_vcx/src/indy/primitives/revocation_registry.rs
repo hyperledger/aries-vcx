@@ -13,8 +13,6 @@ use crate::indy::wallet_non_secrets::{clear_rev_reg_delta, get_rev_reg_delta, se
 use crate::utils::parse_and_validate;
 
 pub const BLOB_STORAGE_TYPE: &str = "default";
-#[allow(dead_code)]
-pub const REVOCATION_REGISTRY_TYPE: &str = "ISSUANCE_BY_DEFAULT";
 
 // consider relocating out of primitive
 pub async fn libindy_create_and_store_revoc_reg(

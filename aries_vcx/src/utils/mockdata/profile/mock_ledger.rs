@@ -74,7 +74,7 @@ impl BaseLedger for MockLedger {
         let rc = LibindyMock::get_result();
         if rc == 309 {
             return Err(AriesVcxError::from_msg(
-                AriesVcxErrorKind::VdrToolsError(309),
+                AriesVcxErrorKind::LedgerItemNotFound,
                 "Mocked error".to_string(),
             ));
         };

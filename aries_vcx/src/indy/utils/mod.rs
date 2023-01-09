@@ -22,6 +22,8 @@ pub struct LibindyMock {
     results: Vec<u32>,
 }
 
+// todo: get rid of this, we no longer deal with rc return codes from vdrtools
+//      (this is leftover from times when we talked to vdrtool via FFI)
 impl LibindyMock {
     pub fn set_next_result(rc: u32) {
         if settings::indy_mocks_enabled() {
