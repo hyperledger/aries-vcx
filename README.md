@@ -2,65 +2,45 @@
 
 ![CI build](https://github.com/hyperledger/aries-vcx/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/main/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
-[![Chat](https://raw.githubusercontent.com/hyperledger/chat-assets/master/aries-vcx.svg)](https://discord.com/channels/905194001349627914/955480822675308604)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Join the chat at https://chat.hyperledger.org/channel/aries](https://img.shields.io/badge/Chat%20on-Hyperledger%20Chat-blue)](https://chat.hyperledger.org/channel/aries)
 
-**Aries-vcx** is Rust library implementing Aries protocols. It can be used to build Aries agents. 
+## Core crates:
+- [`aries-vcx`](aries_vcx) - **implementation of Hyperledger Aries protocols**
+- `messages` - crate encapsulating Aries message models and builders
+- `diddoc` - crate for working with DIDDocs
+- `agency-client` - client to communicate with [vcx mediator](https://github.com/AbsaOSS/vcxagencynode)   
 
-AriesVCX currently requires instance of [mediator agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md) - in 
-particular [NodeVCX Agency](https://github.com/AbsaOSS/vcxagencynode/).
-To get your started with aries-vcx quickly, you can use our deployment at
-`https://ariesvcx.agency.staging.absa.id/agency`
+## Additional crates:
+Additionally, you can find here project built on **top of `aries-vcx`**:
+- `agents/rust/aries-vcx-agent` - simple agent implementation in rust on top of `aries-vcx` crate
+- [`libvcx`](libvcx) - built on top of `aries-vcx`, is a particular approach how to use `aries-vcx` on
+  mobile or from other languages.
 
-# C-Bindings 
-- **libvcx** is library, which provides C-interface to interact with AriesVCX. C-bindings exists for:
-  - Java (+Android)
-  - iOS, 
-  - NodeJS
+## Getting started
+- Ask question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
+- Talk to us on community call starting every Thursday 09:00am UTC via [zoom](https://zoom.us/j/97759680284?pwd=VytRRlJSd3c5NXJ1V25XbUxNU0Jndz09)
+- See high level 2023 roadmap at [ROADMAP_2023.md](ROADMAP_2023.md)
+- Find out what's planned in [issues](https://github.com/hyperledger/aries-vcx/issues) 
+  and project [board](https://github.com/orgs/hyperledger/projects/14)
+- We welcome new contributors! Connect with us via the channels above and take a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
-
-# Get started
-The best way to get your hands on.
-* Simple Rust [Agent](./agents/rust/aries-vcx-agent)
-* Simple NodeJS [Agent](./agents/node/vcxagent-core)
-* Android [demo](https://github.com/sktston/vcx-demo-android) (3rd party demo)
-* iOS [demo](https://github.com/sktston/vcx-demo-ios) (3rd party demo)
-* iOS [skeleton project](https://github.com/sktston/vcx-skeleton-ios) (3rd party demo)
-
-# Implemented Aries protocols
-* ✅ Connection Protocol 1.0: [`https://didcomm.org/connections/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol)
-* ✅ Out of Band 1.0: [`https://didcomm.org/out-of-band/1.1/*`](https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband)
-* ✅ Basic Message 1.0: [`https://didcomm.org/basicmessage/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message)
-* ✅ Credential Issuance 1.0 [`https://didcomm.org/issue-credential/1.0/*`](https://github.com/hyperledger/aries-rfcs/blob/master/features/0036-issue-credential)
-* ✅ Credential Presentation 1.0: [`https://didcomm.org/present-proof/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0037-present-proof)
-* ✅ Trust Ping 1.0: [`https://didcomm.org/trust_ping/1.0/*`](https://github.com/hyperledger/aries-rfcs/blob/master/features/0048-trust-ping/README.md)
-* ✅ Discover Features 1.0: [`https://didcomm.org/discover-features/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features)
-* ✅ Revocation notification 2.0: [`https://didcomm.org/revocation_notification/2.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0031-discover-features)
-
-# Versioning
-- The project currently does not follow semantic versioning. Fow now we are releasing versions `0.x.x`.
-- Although the API is mostly stable, breaking changes still occur in our releases. See changelogs at
+## Versioning
+- We are currently not following semantic versioning. Version are releasing `0.x.x` versions. 
+- Breaking changes to APIs happen occasionally. See full changelogs records at 
   [releases](https://github.com/hyperledger/aries-vcx/releases) page.
-- See our [roadmap](./ROADMAP.md) for what's coming.
 
-# Project architecture
-The architecture is evolving - you can compare the diagram below with diagram under [roadmap](./roadmap.md).
+## CI artifacts
+Following artifacts are build with every CI run and release:
 
-# <img alt="AriesVCX architecture diagram" src="docs/architecture/ariesvcx_architecture_now_150922.png"/>
+### Github Actions artifacts
+  - *(these are to be found at bottom of Summary page for each CI run)*
+  - `libvcx.so`, `libvcx.dylib` - dynamic library for x86_64 ubuntu, x86_64 darwin)
+  - ios and java wrapper built on top of `libvcx`
 
-# Artifacts
-Number of artifacts are built for every CI run (unless it's coming from a forked repository due to limitations of Github Actions). 
-Artifacts tied with particular release can be found on 
- [release page](https://github.com/hyperledger/aries-vcx/releases).
- 
-## Artifacts produced:
-- Alpine based docker image with precompiled `libvcx.so`
-- iOS wrapper
-- Android wrapper
-- NodeJS wrapper
+### Images in Github Container Registry
+  - Alpine based Docker image with prebuilt `libvcx`; [ghcr.io/hyperledger/aries-vcx/libvcx:version](https://github.com/orgs/hyperledger/packages?repo_name=aries-vcx)
 
-#### When looking for artifacts for a particular CI run:
-- NodeJS wrapper is published at [npmjs](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper)
-- NodeJS agent is published at [npmjs](https://www.npmjs.com/package/@hyperledger/vcxagent-core)
-- Docker images are in [Github Packages](https://github.com/hyperledger/aries-vcx/packages)
-- Mobile artifacts are attached to [CI runs](https://github.com/hyperledger/aries-vcx/actions) (click on particular CI run to
-  see the artifacts)
+### Packages on npmjs 
+  - NodeJS wrapper - bindings for libvcx; [node-vcx-wrapper](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper) 
+  - Simple NodeJS aries agent for testing; [vcxagent-core](https://www.npmjs.com/package/@hyperledger/vcxagent-core)
