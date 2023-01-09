@@ -100,8 +100,6 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
         )
         .await;
 
-    warn!("Result: {:?}", handle_res);
-
     Ok(handle_res?)
 }
 
