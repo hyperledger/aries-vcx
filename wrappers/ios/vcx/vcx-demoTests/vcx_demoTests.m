@@ -8,7 +8,6 @@
 
 #import <XCTest/XCTest.h>
 #import "RNIndyTests.h"
-#import "IndyCallbacks.h"
 
 @interface vcx_demoTests : XCTestCase
 

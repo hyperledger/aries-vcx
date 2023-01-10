@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-#import "IndySdk.h"
 #import "VcxTypes.h"
 
 /**
