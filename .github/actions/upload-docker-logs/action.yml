@@ -17,7 +17,7 @@ runs:
       shell: bash
       run: tar cvzf ./logs.tgz ./logs
     - name: "Upload logs to GitHub"
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ inputs.name }}
         path: ./logs.tgz
