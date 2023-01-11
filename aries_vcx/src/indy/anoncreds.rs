@@ -1,4 +1,4 @@
-use vdrtools::{AnoncredsHelpers, Locator, SearchHandle};
+use vdrtools::{Locator, SearchHandle};
 
 use crate::errors::error::prelude::*;
 

@@ -6,18 +6,15 @@ use crate::common::proofs::verifier::verifier_internal::{
 };
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
+use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
 
 pub async fn validate_indy_proof(
     profile: &Arc<dyn Profile>,
     proof_json: &str,
     proof_req_json: &str,
 ) -> VcxResult<bool> {
-    #[cfg(feature = "test_utils")]
-    {
-        use crate::utils::mockdata::mock_settings::get_mock_result_for_validate_indy_proof;
-        if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
-            return mock_result;
-        }
+    if let Some(mock_result) = get_mock_result_for_validate_indy_proof() {
+        return mock_result;
     }
 
     let anoncreds = Arc::clone(profile).inject_anoncreds();

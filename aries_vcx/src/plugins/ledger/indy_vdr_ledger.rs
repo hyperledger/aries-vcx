@@ -10,7 +10,7 @@ use tokio::sync::oneshot;
 use vdr::common::error::VdrError;
 use vdr::config::PoolConfig as IndyVdrPoolConfig;
 use vdr::ledger::identifiers::{CredentialDefinitionId, RevocationRegistryId, SchemaId};
-use vdr::ledger::requests::author_agreement::{GetTxnAuthorAgreementData, TxnAuthrAgrmtAcceptanceData};
+use vdr::ledger::requests::author_agreement::TxnAuthrAgrmtAcceptanceData;
 use vdr::ledger::RequestBuilder;
 use vdr::pool::{PoolBuilder, PoolTransactions};
 use vdr::pool::{PoolRunner, PreparedRequest, ProtocolVersion, RequestResult};
@@ -127,12 +127,6 @@ impl IndyVdrLedger {
         request.set_signature(&signature)?;
 
         self._submit_request(request).await
-    }
-
-    fn build_get_txn_author_agreement_request(&self) -> VcxResult<PreparedRequest> {
-        Ok(self
-            .request_builder()?
-            .build_get_txn_author_agreement_request(None, None)?)
     }
 
     async fn _build_get_cred_def_request(

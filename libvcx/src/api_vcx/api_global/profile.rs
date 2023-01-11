@@ -6,7 +6,6 @@ use aries_vcx::{
     plugins::wallet::{base_wallet::BaseWallet, indy_wallet::IndySdkWallet},
     vdrtools::{PoolHandle, WalletHandle},
 };
-#[cfg(feature = "test_utils")]
 use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::profile::mock_profile::MockProfile};
 
 use super::{pool::get_main_pool_handle, wallet::get_main_wallet_handle};
@@ -24,7 +23,6 @@ pub fn get_main_wallet() -> Arc<dyn BaseWallet> {
 }
 
 pub fn get_main_profile() -> LibvcxResult<Arc<dyn Profile>> {
-    #[cfg(feature = "test_utils")]
     if indy_mocks_enabled() {
         return Ok(Arc::new(MockProfile {}));
     }
@@ -37,7 +35,6 @@ pub fn get_main_profile() -> LibvcxResult<Arc<dyn Profile>> {
 // constructs an indy profile under the condition where a pool_handle is NOT required
 // - e.g. where only a Wallet is used (no ledger interactions). Should be used sparingly.
 pub fn get_main_profile_optional_pool() -> Arc<dyn Profile> {
-    #[cfg(feature = "test_utils")]
     if indy_mocks_enabled() {
         return Arc::new(MockProfile {});
     }
