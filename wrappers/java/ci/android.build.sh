@@ -4,7 +4,7 @@ set -ex
 
 REPO_DIR=$PWD
 SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
-LIBVCX_DIR="${REPO_DIR}/"
+LIBVCX_DIR="${REPO_DIR}"
 JAVA_WRAPPER_DIR="${REPO_DIR}/wrappers/java"
 
 TARGET_ARCHS="$@"

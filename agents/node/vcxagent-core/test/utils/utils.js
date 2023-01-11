@@ -4,14 +4,15 @@ const express = require('express')
 const { createFaber } = require('./faber')
 const { createAlice } = require('./alice')
 const { ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
+const assert = require('assert')
 
-module.exports.createAliceAndFaber = async function createAliceAndFaber() {
+module.exports.createAliceAndFaber = async function createAliceAndFaber () {
   const alice = await createAlice()
   const faber = await createFaber()
   return { alice, faber }
 }
 
-module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFaber() {
+module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFaber () {
   const alice = await createAlice()
   const faber = await createFaber()
   const invite = await faber.createInvite()
@@ -22,7 +23,7 @@ module.exports.createPairedAliceAndFaber = async function createPairedAliceAndFa
   return { alice, faber }
 }
 
-async function executeFunctionWithServer(f1, f2) {
+async function executeFunctionWithServer (f1, f2) {
   let server
   try {
     const port = 5419
@@ -39,6 +40,8 @@ async function executeFunctionWithServer(f1, f2) {
     server = app.listen(port)
 
     const { alice, faber, pwInfo } = await f1(endpoint)
+    await sleep(150)
+    assert(encryptedMsg, "It seems that no message has yet arrived on faber's endpoint, try to increase timeout")
     const { message } = await faber.unpackMsg(encryptedMsg)
     return await f2(alice, faber, pwInfo, message)
   } catch (err) {
@@ -53,7 +56,7 @@ async function executeFunctionWithServer(f1, f2) {
   }
 }
 
-module.exports.createPairedAliceAndFaberViaPublicInvite = async function createPairedAliceAndFaberViaPublicInvite() {
+module.exports.createPairedAliceAndFaberViaPublicInvite = async function createPairedAliceAndFaberViaPublicInvite () {
   const f1 = async (endpoint) => {
     const alice = await createAlice()
     const faber = await createFaber()
@@ -71,7 +74,7 @@ module.exports.createPairedAliceAndFaberViaPublicInvite = async function createP
   return await executeFunctionWithServer(f1, f2)
 }
 
-module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedAliceAndFaberViaOobMsg() {
+module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedAliceAndFaberViaOobMsg () {
   const f1 = async (endpoint) => {
     const alice = await createAlice()
     const faber = await createFaber()
@@ -90,7 +93,7 @@ module.exports.createPairedAliceAndFaberViaOobMsg = async function createPairedA
   return await executeFunctionWithServer(f1, f2)
 }
 
-module.exports.connectViaOobMessage = async function connectViaOobMessage(alice, faber, msg) {
+module.exports.connectViaOobMessage = async function connectViaOobMessage (alice, faber, msg) {
   const f1 = async (endpoint) => {
     const pwInfo = await faber.publishService(endpoint)
     await alice.createConnectionUsingOobMessage(msg)

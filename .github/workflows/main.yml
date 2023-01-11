@@ -19,6 +19,9 @@ env:
   DOCKER_REPO_LOCAL_LIBVCX: libvcx
   DOCKER_REPO_LOCAL_ANDROID: android-test
 
+  RUST_TOOLCHAIN_VERSON: 1.64.0
+  NODE_VERSION: 18
+
 jobs:
   verify-code-formatting:
     runs-on: ubuntu-20.04
@@ -44,6 +47,7 @@ jobs:
 
       SKIP_IOS: ${{ steps.skip-info.outputs.skip-ios }}
       SKIP_ANDROID: ${{ steps.skip-info.outputs.skip-android }}
+      SKIP_NAPI_M1: ${{ steps.skip-info.outputs.skip-napi-m1 }}
 
       DOCKER_IMG_CACHED_ALPINE_CORE: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_ALPINE_CORE }}
       DOCKER_IMG_CACHED_LIBVCX: ${{ steps.docker-imgs.outputs.DOCKER_IMG_CACHED_LIBVCX }}
@@ -377,7 +381,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node-version: [12.x, 18.x, 19.x]
+        node-version: [12.x, 18.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -387,14 +391,14 @@ jobs:
           skip-docker-setup: true
           node-version: ${{ matrix.node-version }}
       - name: "Run tests"
-        run: cd wrappers/node && npm run test
+        run: cd wrappers/node && RUST_LOG=vcx=trace npm run test
 
   test-integration-node-wrapper:
     needs: workflow-setup
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node-version: [12.x, 18.x, 19.x]
+        node-version: [12.x, 18.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -635,10 +639,10 @@ jobs:
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
-      - name: Use Node.js 12
+      - name: Use Node.js 18
         uses: actions/setup-node@v3
         with:
-          node-version: 12.x
+          node-version: 18.x
       - name: "Run tests"
         run: |
           if [[ "$PUBLISH_VERSION" ]]
@@ -678,6 +682,85 @@ jobs:
           else
              echo "New version was not defined, skipping release."
           fi
+
+  build-napi:
+    needs:
+      - workflow-setup
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            build: |-
+              set -e
+              sudo apt-get update -y
+              sudo apt-get install -y libssl-dev libzmq3-dev
+              npm run build:napi -- --target x86_64-unknown-linux-gnu
+              strip *.node
+          - host: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
+            docker: ghcr.io/hyperledger/aries-vcx/napi-rs-alpine
+            build: |-
+              set -e
+              cd wrappers/vcx-napi-rs
+              npm run build:napi
+              strip *.node
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            build: |
+              brew install openssl zmq
+              npm run build:napi
+              strip -x *.node
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            skip: ${{ needs.workflow-setup.outputs.SKIP_NAPI_M1 }}
+            build: |
+              wget https://github.com/macports/macports-base/releases/download/v2.8.0/MacPorts-2.8.0-12-Monterey.pkg
+              sudo installer -pkg ./MacPorts-2.8.0-12-Monterey.pkg -target /
+              export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+
+              sudo port install openssl +universal zmq +universal
+              export OPENSSL_DIR=/opt/local
+              export OPENSSL_INCLUDE_DIR=/opt/local/include/
+              export OPENSSL_LIB_DIR=/opt/local/lib/
+
+              export SODIUM_LIB_DIR=/opt/local/lib/
+              export SODIUM_INCLUDE_DIR=/opt/local/include
+
+              export LIBZMQ_LIB_DIR=/opt/local/lib/
+              export LIBZMQ_INCLUDE_DIR=/opt/local/include
+
+              export PKG_CONFIG_ALLOW_CROSS=1
+              export PKG_CONFIG_SYSROOT_DIR=/
+              export RUST_BACKTRACE=1
+              npm run build:napi -- --target aarch64-apple-darwin
+              strip -x *.node
+    name: ${{ matrix.settings.target }}
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/build-napi
+        if: ${{ matrix.settings.skip != 'true' }}
+        with:
+          docker: ${{ matrix.settings.docker }}
+          target: ${{ matrix.settings.target }}
+          build: ${{ matrix.settings.build }}
+          node-version: ${{ env.NODE_VERSION }}
+          rust-version: ${{ env.RUST_TOOLCHAIN_VERSON }}
+
+  publish-napi:
+    runs-on: ubuntu-20.04
+    needs:
+      - workflow-setup
+      - build-napi
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish-napi
+        with:
+          publish-version: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          npmjs-token: ${{ secrets.NPMJS_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
 
   #  ##########################################################################################
   #  ##############################      RELEASE      #########################################

@@ -6,7 +6,8 @@ members = [
     "messages",
     "shared_vcx",
     "diddoc",
-    "agents/rust/aries-vcx-agent"
+    "agents/rust/aries-vcx-agent",
+    "wrappers/vcx-napi-rs",
 ]
 
 [workspace.package]

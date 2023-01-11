@@ -11,7 +11,7 @@ module.exports.createServiceLedgerRevocationRegistry = function createServiceLed
     }
     const revReg = await RevocationRegistry.create(data)
     await revReg.publish(tailsUrl)
-    const revRegId = await revReg.getRevRegId()
+    const revRegId = revReg.getRevRegId()
     await saveRevReg(revRegId, revReg)
     return { revReg, revRegId }
   }

@@ -1,13 +1,13 @@
 /* eslint-env jest */
 require('jest')
 const { createPairedAliceAndFaber } = require('./utils/utils')
-const { initRustapi } = require('../src/index')
 const { IssuerStateType, HolderStateType, ProverStateType, VerifierStateType } = require('@hyperledger/node-vcx-wrapper')
 const sleep = require('sleep-promise')
+const { initRustLogger } = require('../src')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=warn')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
 })
 
 describe('test update state', () => {
@@ -30,8 +30,8 @@ describe('test update state', () => {
       await faber.updateStateVerifierProof(VerifierStateType.Finished)
       await alice.updateStateHolderProof(ProverStateType.Finished)
     } catch (err) {
-      console.error(`err = ${err.message} stack = ${err.stack}`)
       await sleep(2000)
+      console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
     }
   })

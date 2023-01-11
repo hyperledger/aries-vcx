@@ -185,6 +185,7 @@ where
     }
 
     pub fn add(&self, obj: T) -> LibvcxResult<u32> {
+        trace!("[ObjectCache: {}] add >> Adding object to cache", self.cache_name);
         let mut store = self._lock_store_write()?;
 
         let mut new_handle = rand::thread_rng().gen::<u32>();
@@ -196,12 +197,36 @@ where
         }
 
         match store.insert(new_handle, Mutex::new(obj)) {
-            Some(_) => Ok(new_handle),
-            None => Ok(new_handle),
+            Some(_) => {
+                warn!(
+                    "[ObjectCache: {}] add >> Object already exists for handle: {}",
+                    self.cache_name, new_handle
+                );
+                Err(LibvcxError::from_msg(
+                    LibvcxErrorKind::InvalidHandle,
+                    format!(
+                        "[ObjectCache: {}] add >> generated handle {} conflicts with existing handle, failed to store object",
+                        self.cache_name, new_handle
+                    ),
+                ))
+            }
+            None => {
+                trace!(
+                    "[ObjectCache: {}] add >> Object added to cache for handle: {}",
+                    self.cache_name,
+                    new_handle
+                );
+                Ok(new_handle)
+            }
         }
     }
 
     pub fn insert(&self, handle: u32, obj: T) -> LibvcxResult<()> {
+        trace!(
+            "[ObjectCache: {}] insert >> Inserting object with handle: {}",
+            self.cache_name,
+            handle
+        );
         let mut store = self._lock_store_write()?;
 
         store.insert(handle, Mutex::new(obj));
@@ -209,6 +234,11 @@ where
     }
 
     pub fn release(&self, handle: u32) -> LibvcxResult<()> {
+        trace!(
+            "[ObjectCache: {}] release >> Releasing object with handle: {}",
+            self.cache_name,
+            handle
+        );
         let mut store = self._lock_store_write()?;
         match store.remove(&handle) {
             Some(_) => {}
@@ -223,6 +253,7 @@ where
     }
 
     pub fn drain(&self) -> LibvcxResult<()> {
+        warn!("[ObjectCache: {}] drain >> Draining object cache", self.cache_name);
         let mut store = self._lock_store_write()?;
         store.clear();
         Ok(())

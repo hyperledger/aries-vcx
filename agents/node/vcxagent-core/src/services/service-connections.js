@@ -10,10 +10,10 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
   async function inviterConnectionCreate (connectionId, cbInvitation) {
     logger.info(`InviterConnectionSM creating connection ${connectionId}`)
     const connection = await Connection.create({ id: connectionId })
-    logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(await connection.serialize())}`)
+    logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(connection.serialize())}`)
     await connection.connect('{}')
-    logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(await connection.serialize())}`)
-    const invite = await connection.inviteDetails()
+    logger.debug(`InviterConnectionSM after invitation was generated:\n${JSON.stringify(connection.serialize())}`)
+    const invite = connection.inviteDetails()
     if (cbInvitation) {
       cbInvitation(invite)
     }
@@ -126,7 +126,7 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     const connection = await loadConnection(connectionId)
     const data = Buffer.from(dataBase64, 'base64')
     const signature = Buffer.from(signatureBase64, 'base64')
-    return connection.verifySignature({ data, signature })
+    return await connection.verifySignature({ data, signature })
   }
 
   async function getConnectionPwDid (connectionId) {

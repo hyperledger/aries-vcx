@@ -6,7 +6,7 @@ const assert = require('assert')
 
 module.exports.createServiceVerifier = function createServiceVerifier ({ logger, loadConnection, saveProof, loadProof, listProofIds }) {
   async function createProof (proofId, proofData) {
-    logger.info(`Verifier creating proof ${proofId}, proofData=${JSON.stringify(proofData)}`)
+    logger.info(`Verifier creating proof ${proofId}, proofData: ${JSON.stringify(proofData)}`)
     await sleep(1000)
     const proof = await Proof.create(proofData)
     await saveProof(proofId, proof)
@@ -16,7 +16,7 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
   async function buildProofReqAndMarkAsSent (proofId, proofData) {
     logger.debug(`Building proof request ${proofId}`)
     const proof = await Proof.create(proofData)
-    const presentationRequest = await proof.getProofRequestMessage()
+    const presentationRequest = proof.getProofRequestMessage()
     const state1 = await proof.getState()
     assert.equal(state1, VerifierStateType.PresentationRequestSet)
 
@@ -35,7 +35,7 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     await proof.requestProof(connection)
     const state = await proof.getState()
     await saveProof(proofId, proof)
-    const proofRequestMessage = await proof.getProofRequestMessage()
+    const proofRequestMessage = proof.getProofRequestMessage()
     return { state, proofRequestMessage }
   }
 

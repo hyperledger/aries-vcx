@@ -11,12 +11,6 @@ export abstract class GCWatcher {
     this._releaseFn(this._handleRef);
   }
 
-  // Can not use setter because of https://github.com/Microsoft/TypeScript/issues/2521
-  protected _setHandle(handle: number): void {
-    this._handleRef = handle;
-    this._clearOnExit();
-  }
-
   // _clearOnExit creates a callback that will release the Rust Object
   // when the node Connection object is Garbage collected
   protected _clearOnExit(): void {
@@ -26,6 +20,12 @@ export abstract class GCWatcher {
     weak.addCallback(weakRef, () => {
       release(handle);
     });
+  }
+
+  // Can not use setter because of https://github.com/Microsoft/TypeScript/issues/2521
+  protected _setHandle(handle: number): void {
+    this._handleRef = handle;
+    this._clearOnExit();
   }
 
   get handle(): number {
