@@ -8,6 +8,7 @@ use crate::common::proofs::prover::prover_internal::{
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::global::settings;
+use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
 
 pub async fn generate_indy_proof(
     profile: &Arc<dyn Profile>,
@@ -21,15 +22,11 @@ pub async fn generate_indy_proof(
         secret!(&self_attested_attrs)
     );
 
-    #[cfg(feature = "test_utils")]
-    {
-        use crate::utils::mockdata::mock_settings::get_mock_generate_indy_proof;
-        match get_mock_generate_indy_proof() {
-            None => {}
-            Some(mocked_indy_proof) => {
-                warn!("generate_indy_proof :: returning mocked response");
-                return Ok(mocked_indy_proof);
-            }
+    match get_mock_generate_indy_proof() {
+        None => {}
+        Some(mocked_indy_proof) => {
+            warn!("generate_indy_proof :: returning mocked response");
+            return Ok(mocked_indy_proof);
         }
     }
     let anoncreds = Arc::clone(profile).inject_anoncreds();
