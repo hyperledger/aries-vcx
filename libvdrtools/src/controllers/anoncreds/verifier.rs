@@ -166,7 +166,6 @@ impl VerifierController {
     ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
     ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// valid: true - if signature is valid, false - otherwise
@@ -219,7 +218,6 @@ impl VerifierController {
     ///
     /// #Params
     /// command_handle: command handle to map callback to user context
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// nonce: generated number as a string

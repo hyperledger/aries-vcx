@@ -91,7 +91,6 @@ impl LedgerController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
     /// request_json: Request data json.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -140,7 +139,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// request_json: Request data json.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -181,7 +179,6 @@ impl LedgerController {
     ///        ["Node1", "Node2",...."NodeN"]
     /// timeout: (Optional) Time to wait respond from nodes (override the default timeout) (in sec).
     ///                     Pass -1 to use default timeout
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -223,7 +220,6 @@ impl LedgerController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
     /// request_json: Request data json.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Signed request json.
@@ -268,7 +264,6 @@ impl LedgerController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
     /// request_json: Request data json.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Signed request json.
@@ -309,7 +304,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -352,7 +346,6 @@ impl LedgerController {
     ///                             ENDORSER - equal to TRUST_ANCHOR that will be removed soon
     ///                             NETWORK_MONITOR
     ///                             empty string to reset role
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -405,7 +398,6 @@ impl LedgerController {
     /// hash: (Optional) Hash of attribute data.
     /// raw: (Optional) Json, where key is attribute name and value is attribute value.
     /// enc: (Optional) Encrypted value attribute data.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -453,7 +445,6 @@ impl LedgerController {
     /// raw: (Optional) Requested attribute name.
     /// hash: (Optional) Requested attribute hash.
     /// enc: (Optional) Requested attribute encrypted value.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -496,7 +487,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -530,7 +520,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_nym_response: response on GET_NYM request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// DID (NYM) data
@@ -578,7 +567,6 @@ impl LedgerController {
     ///     version: Schema's version string,
     ///     ver: Version of the Schema json
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -612,7 +600,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id: Schema ID in ledger
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -645,7 +632,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_schema_response: response of GET_SCHEMA request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Schema Id and Schema json.
@@ -696,7 +682,6 @@ impl LedgerController {
     ///     },
     ///     ver: Version of the CredDef json
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -731,7 +716,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id: Credential Definition ID in ledger.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -764,7 +748,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_cred_def_response: response of GET_CRED_DEF request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Credential Definition Id and Credential Definition json.
@@ -817,7 +800,6 @@ impl LedgerController {
     ///     node_port: string - (Optional) The port other Nodes use to communicate with this Node.
     ///     services: array<string> - (Optional) The service of the Node. VALIDATOR is the only supported one now.
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -851,7 +833,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: DID of the read request sender.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -886,7 +867,6 @@ impl LedgerController {
     ///     CONFIG
     ///     any number
     /// seq_no: requested transaction sequence number as it's stored on Ledger.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -927,7 +907,6 @@ impl LedgerController {
     ///         (if false, then pool goes to read-only state). True by default.
     /// force: Whether we should apply transaction (for example, move pool to read-only state)
     ///        without waiting for consensus of this transaction.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -963,7 +942,6 @@ impl LedgerController {
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     /// action:        Action that pool has to do after received transaction. Either `start` or `cancel`.
     /// datetime:      <Optional> Restart time in datetime format. Skip to restart as early as possible.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1011,7 +989,6 @@ impl LedgerController {
     /// force: Whether we should apply transaction (schedule Upgrade) without waiting
     ///        for consensus of this transaction.
     /// package: (Optional) Package to be upgraded.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1093,7 +1070,6 @@ impl LedgerController {
     ///         },
     ///         "ver": string - version of revocation registry definition json.
     ///     }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1130,7 +1106,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id:  ID of Revocation Registry Definition in ledger.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1164,7 +1139,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_revoc_reg_def_response: response of GET_REVOC_REG_DEF request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Revocation Registry Definition Id and Revocation Registry Definition json.
@@ -1223,7 +1197,6 @@ impl LedgerController {
     ///     },
     ///     ver: string - version revocation registry entry json
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1264,7 +1237,6 @@ impl LedgerController {
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
     /// timestamp: Requested time represented as a total number of seconds from Unix Epoch
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1300,7 +1272,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_revoc_reg_response: response of GET_REVOC_REG request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Revocation Registry Definition Id, Revocation Registry json and Timestamp.
@@ -1341,7 +1312,6 @@ impl LedgerController {
     /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
     /// from: Requested time represented as a total number of seconds from Unix Epoch
     /// to: Requested time represented as a total number of seconds from Unix Epoch
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1380,7 +1350,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// get_revoc_reg_response: response of GET_REVOC_REG_DELTA request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Revocation Registry Definition Id, Revocation Registry Delta json and Timestamp.
@@ -1434,7 +1403,6 @@ impl LedgerController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// response: response of write or get request.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// response metadata.
@@ -1495,7 +1463,6 @@ impl LedgerController {
     ///
     /// More about AUTH_RULE request: https://github.com/hyperledger/indy-node/blob/master/docs/source/requests.md#auth_rule
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1558,7 +1525,6 @@ impl LedgerController {
     ///
     /// More about AUTH_RULES request: https://github.com/hyperledger/indy-node/blob/master/docs/source/requests.md#auth_rules
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1601,7 +1567,6 @@ impl LedgerController {
     /// old_value: (Optional) old value of field, which can be changed to a new_value (mandatory for EDIT action).
     /// new_value: (Optional) new value that can be used to fill the field.
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1670,7 +1635,6 @@ impl LedgerController {
     ///
     /// Note: Use `indy_build_disable_all_txn_author_agreements_request` to disable all TAA's on the ledger.
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1715,7 +1679,6 @@ impl LedgerController {
     /// command_handle: command handle to map callback to caller context.
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1763,8 +1726,6 @@ impl LedgerController {
     /// }
     /// Null data or empty JSON are acceptable here. In this case, ledger will return the latest version of TAA.
     ///
-    /// cb: Callback that takes command result as parameter.
-    ///
     /// #Returns
     /// Request result as json.
     ///
@@ -1808,7 +1769,6 @@ impl LedgerController {
     /// }
     /// version: a version of new acceptance mechanisms. (Note: unique on the Ledger)
     /// aml_context: (Optional) common context information about acceptance mechanisms (may be a URL to external resource).
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Request result as json.
@@ -1852,7 +1812,6 @@ impl LedgerController {
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// timestamp: i64 - time to get an active acceptance mechanisms. Pass -1 to get the latest one.
     /// version: (Optional) version of acceptance mechanisms.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// NOTE: timestamp and version cannot be specified together.
     ///
@@ -1908,7 +1867,6 @@ impl LedgerController {
     ///     This parameter is required if text and version parameters are omitted.
     /// mechanism - mechanism how user has accepted the TAA
     /// time - UTC timestamp when user has accepted the TAA. Note that the time portion will be discarded to avoid a privacy risk.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// Updated request result as json.
@@ -1972,8 +1930,8 @@ impl LedgerController {
     /// request_json: original request
     /// endorser_did: DID of the Endorser that will submit the transaction.
     ///               The Endorser's DID must be present on the ledger.
-    /// cb: Callback that takes command result as parameter.
-    ///     The command result is a request JSON with Endorser field appended.
+    /// #Returns
+    /// The command result is a request JSON with Endorser field appended.
     ///
     /// #Errors
     /// Common*

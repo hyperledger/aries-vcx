@@ -191,12 +191,7 @@ impl VDRController {
     ///         time - UTC timestamp when user has accepted the TAA. Note that the time portion will be discarded to avoid a privacy risk.
     ///     }
     ///
-    /// cb: Callback that takes command result as parameter.
-    ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: com
     pub(crate) async fn register_indy_ledger(
         &self,
         vdr_builder: Arc<Mutex<VDRBuilder>>,
@@ -232,13 +227,8 @@ impl VDRController {
     /// command_handle: command handle to map callback to caller context.
     /// vdr: pointer to VDR object
     /// namespace_list: list of namespaces to ping
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
     pub(crate) async fn ping(&self, vdr: &VDR, namespace_list: Namespaces) -> IndyResult<String> {
         // Group namespaces by Ledger name
         let mut ledgers: HashMap<String, Vec<String>> = HashMap::new();
@@ -308,14 +298,10 @@ impl VDRController {
     ///             "signature" - endorser signature as base58 string
     ///         }
     ///     Cheqd: TODO
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - response: received response
+    /// response: received response
     pub(crate) async fn submit_txn(
         &self,
         vdr: &VDR,
@@ -345,14 +331,9 @@ impl VDRController {
     /// namespace of the registered Ledger to submit transaction
     /// txn_bytes_raw: a pointer to first byte of transaction
     /// txn_bytes_len: a transaction length
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - response: received response
+    /// response: received response
 
     pub(crate) async fn submit_raw_txn(
         &self,
@@ -378,14 +359,10 @@ impl VDRController {
     /// vdr: pointer to VDR object
     /// namespace of the registered Ledger to submit transaction
     /// query: query message to submit on the Ledger
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - response: received response
+    /// response: received response
     pub(crate) async fn submit_query(
         &self,
         vdr: &VDR,
@@ -408,13 +385,8 @@ impl VDRController {
     /// #Params
     /// command_handle: command handle to map callback to caller context.
     /// vdr: pointer to VDR object
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
 
     pub(crate) async fn cleanup(&self, vdr: &mut VDR) -> IndyResult<()> {
         trace!("cleanup > ",);

@@ -87,7 +87,6 @@ impl IssuerController {
     /// version: a version of the schema
     /// attrs: a list of schema attributes descriptions (the number of attributes should be less or equal than 125)
     ///     `["attr1", "attr2"]`
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// schema_id: identifier of created schema
@@ -174,7 +173,6 @@ impl IssuerController {
     ///     {
     ///         "support_revocation" - bool (optional, default false) whether to request non-revocation credential
     ///     }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// cred_def_id: identifier of created credential definition
@@ -372,7 +370,6 @@ impl IssuerController {
     ///     {
     ///         "support_revocation" - bool (optional, default false) whether to request non-revocation credential
     ///     }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// cred_def_json: public part of temporary created credential definition
@@ -513,7 +510,6 @@ impl IssuerController {
     /// command_handle: command handle to map callback to user context.
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: an identifier of created credential definition stored in the wallet
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     ///
@@ -606,7 +602,6 @@ impl IssuerController {
     ///     "max_cred_num": maximum number of credentials the new registry can process (optional, default 100000)
     /// }
     /// tails_writer_handle: handle of blob storage to store tails (returned by `indy_open_blob_storage_writer`).
-    /// cb: Callback that takes command result as parameter.
     ///
     /// NOTE:
     ///     Recursive creation of folder for Default Tails Writer (correspondent to `tails_writer_handle`)
@@ -823,7 +818,6 @@ impl IssuerController {
     /// command_handle: command handle to map callback to user context
     /// wallet_handle: wallet handle (created by open_wallet)
     /// cred_def_id: id of credential definition stored in the wallet
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// credential offer json:
@@ -906,7 +900,6 @@ impl IssuerController {
     ///   If you want to use empty value for some credential field, you should set "raw" to "" and "encoded" should not be empty
     /// rev_reg_id: id of revocation registry stored in the wallet
     /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// cred_json: Credential json containing signed credential values
@@ -1151,7 +1144,6 @@ impl IssuerController {
     /// blob_storage_reader_cfg_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`).
     /// rev_reg_id: id of revocation registry stored in wallet
     /// cred_revoc_id: local id for revocation info related to issued credential
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// revoc_reg_delta_json: Revocation registry delta json with a revoked credential
@@ -1390,7 +1382,6 @@ impl IssuerController {
     /// }
     ///
     /// other_rev_reg_delta_json: revocation registry delta for which PrevAccum value is equal to value of accum field of rev_reg_delta_json parameter.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// merged_rev_reg_delta: Merged revocation registry delta

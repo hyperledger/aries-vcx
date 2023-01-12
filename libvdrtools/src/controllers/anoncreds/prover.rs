@@ -172,7 +172,6 @@ impl ProverController {
     ///     }
     /// cred_def_json: credential definition json related to <cred_def_id> in <cred_offer_json>
     /// master_secret_id: the id of the master secret stored in the wallet
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// cred_req_json: Credential request json for creation of credential by Issuer
@@ -288,7 +287,6 @@ impl ProverController {
     /// cred_def_id: credential definition id
     /// tag_attrs_json: JSON array with names of attributes to tag by policy, or null for all
     /// retroactive: boolean, whether to apply policy to existing credentials on credential definition identifier
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Errors
     /// Anoncreds*
@@ -376,7 +374,6 @@ impl ProverController {
     /// command_handle: command handle to map callback to user context.
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: credential definition id
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// JSON array with all attributes that current policy marks taggable;
@@ -445,7 +442,6 @@ impl ProverController {
     ///     }
     /// cred_def_json: credential definition json related to <cred_def_id> in <cred_json>
     /// rev_reg_def_json: revocation registry definition json related to <rev_reg_def_id> in <cred_json>
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// out_cred_id: identifier by which credential is stored in the wallet
@@ -540,7 +536,6 @@ impl ProverController {
     ///            "issuer_did": string, (Optional)
     ///            "cred_def_id": string, (Optional)
     ///        }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// credentials json
@@ -605,7 +600,6 @@ impl ProverController {
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_id: Identifier by which requested credential is stored in the wallet
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// credential json:
@@ -661,7 +655,6 @@ impl ProverController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// query_json: Wql query filter for credentials searching based on tags.
     ///     where query: indy-sdk/docs/design/011-wallet-query-language/README.md
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials)
@@ -710,7 +703,6 @@ impl ProverController {
     /// #Params
     /// search_handle: Search handle (created by indy_prover_search_credentials)
     /// count: Count of credentials to fetch
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// credentials_json: List of human readable credentials:
@@ -829,7 +821,6 @@ impl ProverController {
     ///             - omit or "1.0" to use unqualified identifiers for restrictions
     ///             - "2.0" to use fully qualified identifiers for restrictions
     ///     }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// where
     /// attr_referent: Proof-request local identifier of requested attribute
@@ -1062,7 +1053,6 @@ impl ProverController {
     ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
     ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
     ///
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials_for_proof_req)
@@ -1178,7 +1168,6 @@ impl ProverController {
     /// search_handle: Search handle (created by indy_prover_search_credentials_for_proof_req)
     /// item_referent: Referent of attribute/predicate in the proof request
     /// count: Count of credentials to fetch
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// credentials_json: List of credentials for the given proof request.
@@ -1304,7 +1293,6 @@ impl ProverController {
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_id: Identifier by which requested credential is stored in the wallet
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Errors
     /// Anoncreds*
@@ -1414,7 +1402,6 @@ impl ProverController {
     ///         },
     ///     }
     /// Note: use credential_id instead rev_reg_id in case proving several credentials from the same revocation registry.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// where
     /// attr_referent: Proof-request local identifier of requested attribute
@@ -1599,7 +1586,6 @@ impl ProverController {
     /// rev_reg_delta_json: revocation registry delta which covers the whole registry existence time
     /// timestamp: time represented as a total number of seconds from Unix Epoch.
     /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// revocation state json:
@@ -1685,7 +1671,6 @@ impl ProverController {
     /// rev_reg_delta_json: revocation registry definition delta which covers the gap form original `rev_state_json` creation till the requested timestamp
     /// timestamp: time represented as a total number of seconds from Unix Epoch
     /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
     /// revocation state json:

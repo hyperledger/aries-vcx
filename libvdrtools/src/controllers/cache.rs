@@ -90,7 +90,6 @@ impl CacheController {
     ///    noStore: (bool, optional, false by default) Skip storing fresh data if updated,
     ///    minFresh: (int, optional, -1 by default) Return cached data if not older than this many seconds. -1 means do not check age.
     ///  }
-    /// cb: Callback that takes command result as parameter.
     pub async fn get_schema(
         &self,
         pool_handle: PoolHandle,
@@ -171,7 +170,6 @@ impl CacheController {
     ///  {
     ///    forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
     ///  }
-    /// cb: Callback that takes command result as parameter.
     pub async fn get_cred_def(
         &self,
         pool_handle: PoolHandle,
@@ -232,7 +230,6 @@ impl CacheController {
     ///  {
     ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
     ///  }
-    /// cb: Callback that takes command result as parameter.
     pub async fn purge_schema_cache(
         &self,
         wallet_handle: WalletHandle,
@@ -283,7 +280,6 @@ impl CacheController {
     ///  {
     ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
     ///  }
-    /// cb: Callback that takes command result as parameter.
     pub async fn purge_cred_def_cache(
         &self,
         wallet_handle: WalletHandle,

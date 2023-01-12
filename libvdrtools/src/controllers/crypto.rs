@@ -47,14 +47,9 @@ impl CryptoController {
     ///                                Can be UTF-8, base64 or hex string.
     ///     "crypto_type": string, // Optional (if not set then ed25519 curve is used); Currently only 'ed25519' value is supported for this field.
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - verkey: Ver key of generated key pair, also used as key identifier
+    /// verkey: Ver key of generated key pair, also used as key identifier
     ///
     /// #Errors
     /// Common*
@@ -93,7 +88,6 @@ impl CryptoController {
     /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// message_raw: a pointer to first byte of message to be signed
     /// message_len: a message length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// a signature string
@@ -141,7 +135,6 @@ impl CryptoController {
     /// message_len: a message length
     /// signature_raw: a pointer to first byte of signature to be verified
     /// signature_len: a signature length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// valid: true - if signature is valid, false - otherwise
@@ -192,7 +185,6 @@ impl CryptoController {
     /// recipient_vk: id (verkey) of message recipient
     /// message_raw: a pointer to first byte of message that to be encrypted
     /// message_len: a message length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// an encrypted message as a pointer to array of bytes.
@@ -264,7 +256,6 @@ impl CryptoController {
     /// recipient_vk: id (verkey) of message recipient. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// encrypted_msg_raw: a pointer to first byte of message that to be decrypted
     /// encrypted_msg_len: a message length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// sender verkey and decrypted message as a pointer to array of bytes
@@ -349,7 +340,6 @@ impl CryptoController {
     /// recipient_vk: verkey of message recipient
     /// message_raw: a pointer to first byte of message that to be encrypted
     /// message_len: a message length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// an encrypted message as a pointer to array of bytes
@@ -397,7 +387,6 @@ impl CryptoController {
     /// recipient_vk: id (verkey) of my key. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// encrypted_msg_raw: a pointer to first byte of message that to be decrypted
     /// encrypted_msg_len: a message length
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// decrypted message as a pointer to an array of bytes
@@ -444,13 +433,8 @@ impl CryptoController {
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// verkey - the key (verkey, key id) to store metadata.
     /// metadata - the meta information that will be store with the key.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
     ///
     /// #Errors
     /// Common*
@@ -489,14 +473,9 @@ impl CryptoController {
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// verkey - The key (verkey, key id) to retrieve metadata.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - metadata - The meta information stored with the key; Can be null if no metadata was saved for this key.
+    /// metadata - The meta information stored with the key; Can be null if no metadata was saved for this key.
     ///
     /// #Errors
     /// Common*
@@ -542,7 +521,6 @@ impl CryptoController {
     ///                Example:
     ///                "[<receiver edge_agent_1 verkey>, <receiver edge_agent_2 verkey>]"
     /// sender: the sender's verkey as a string When null pointer is used in this parameter, anoncrypt is used
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// a JWE using authcrypt alg is defined below:
@@ -761,7 +739,6 @@ impl CryptoController {
     /// wallet_handle: wallet handle (created by open_wallet).
     /// jwe_data: a pointer to the first byte of the JWE to be unpacked
     /// jwe_len: the length of the JWE message in bytes
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
     /// if authcrypt was used to pack the message returns this json structure:

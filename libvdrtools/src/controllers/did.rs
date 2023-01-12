@@ -65,15 +65,10 @@ impl DidController {
     ///     "ledger_type": string, (optional) type of the ledger to create fully qualified did.
     ///     "method_name": string, (optional) method name to create fully qualified did.
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    ///   did: DID generated and stored in the wallet
-    ///   verkey: The DIDs verification key
+    /// did: DID generated and stored in the wallet
+    /// verkey: The DIDs verification key
     ///
     /// #Errors
     /// Common*
@@ -138,14 +133,9 @@ impl DidController {
     ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
     ///               currently only 'ed25519' value is supported for this field)
     /// }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    ///   verkey: The DIDs verification key
+    /// verkey: The DIDs verification key
     ///
     ///
     /// #Errors
@@ -205,13 +195,8 @@ impl DidController {
     /// wallet_handle: wallet handler (created by open_wallet).
     /// command_handle: command handle to map callback to user context.
     /// did: DID stored in the wallet
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
     ///
     /// #Errors
     /// Common*
@@ -266,13 +251,8 @@ impl DidController {
     ///             - optional is case of adding a new DID, and DID is cryptonym: did == verkey,
     ///             - mandatory in case of updating an existing DID
     ///     }
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
     ///
     /// #Errors
     /// Common*
@@ -309,20 +289,15 @@ impl DidController {
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to retrieve information.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    ///   did_with_meta:  {
-    ///     "did": string - DID stored in the wallet,
-    ///     "verkey": string - The DIDs transport key (ver key, key id),
-    ///     "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during the rotation of the keys.
-    ///                            After rotation is done, it becomes a new verkey.
-    ///     "metadata": string - The meta information stored with the DID
-    ///   }
+    /// did_with_meta: {
+    ///   "did": string - DID stored in the wallet,
+    ///   "verkey": string - The DIDs transport key (ver key, key id),
+    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during the rotation of the keys.
+    ///                          After rotation is done, it becomes a new verkey.
+    ///   "metadata": string - The meta information stored with the DID
+    /// }
     ///
     /// #Errors
     /// Common*
@@ -382,18 +357,13 @@ impl DidController {
     /// #Params
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    ///   dids:  [{
-    ///     "did": string - DID stored in the wallet,
-    ///     "verkey": string - The DIDs transport key (ver key, key id).,
-    ///     "metadata": string - The meta information stored with the DID
-    ///   }]
+    /// dids:  [{
+    ///   "did": string - DID stored in the wallet,
+    ///   "verkey": string - The DIDs transport key (ver key, key id).,
+    ///   "metadata": string - The meta information stored with the DID
+    /// }]
     ///
     /// #Errors
     /// Common*
@@ -512,14 +482,9 @@ impl DidController {
     /// pool_handle:   Pool handle (created by open_pool).
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve key.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - key - The DIDs ver key (key id).
+    /// key - The DIDs ver key (key id).
     ///
     /// #Errors
     /// Common*
@@ -584,14 +549,9 @@ impl DidController {
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve key.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - key - The DIDs ver key (key id).
+    /// key - The DIDs ver key (key id).
     ///
     /// #Errors
     /// Common*
@@ -639,13 +599,8 @@ impl DidController {
     /// did - The DID to resolve endpoint.
     /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to ip_address:port
     /// transport_key - The DIDs transport key (ver key, key id).
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
     ///
     /// #Errors
     /// Common*
@@ -685,15 +640,10 @@ impl DidController {
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve endpoint.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - endpoint - The DIDs endpoint.
-    /// - transport_vk - The DIDs transport key (ver key, key id).
+    /// endpoint - The DIDs endpoint.
+    /// transport_vk - The DIDs transport key (ver key, key id).
     ///
     /// #Errors
     /// Common*
@@ -740,13 +690,8 @@ impl DidController {
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - the DID to store metadata.
     /// metadata - the meta information that will be store with the DID.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
     ///
     /// #Errors
     /// Common*
@@ -784,14 +729,9 @@ impl DidController {
     /// command_handle: Command handle to map callback to caller context.
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to retrieve metadata.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - metadata - The meta information stored with the DID; Can be null if no metadata was saved for this DID.
+    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved for this DID.
     ///
     /// #Errors
     /// Common*
@@ -828,11 +768,7 @@ impl DidController {
     /// full_verkey: The DIDs verification key,
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: Command handle to map callback to caller context.
-    /// - err: Error code.
-    ///   verkey: The DIDs verification key in either abbreviated or full form
+    /// verkey: The DIDs verification key in either abbreviated or full form
     ///
     /// #Errors
     /// Common*
@@ -877,12 +813,9 @@ impl DidController {
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did: target DID stored in the wallet.
     /// method: method to apply to the DID.
-    /// cb: Callback that takes command result as parameter.
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - did: fully qualified form of did
+    /// did: fully qualified form of did
     ///
     /// #Errors
     /// Common*

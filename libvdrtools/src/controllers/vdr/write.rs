@@ -32,18 +32,13 @@ impl VDRController {
     /// submitter_did: Fully-qualified DID of the transaction author as base58-encoded string.
     /// endorser: DID of the Endorser that will endorse the transaction.
     ///           The Endorser's DID must be present on the ledger with 'ENDORSER' role.
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - namespace: Ledger namespace to submit transaction (captured from submitter DID)
-    /// - txn_bytes: prepared transaction as bytes
-    /// - signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
-    /// - bytes_to_sign: bytes must be signed
-    /// - endorsement_spec: endorsement process specification
+    /// namespace: Ledger namespace to submit transaction (captured from submitter DID)
+    /// txn_bytes: prepared transaction as bytes
+    /// signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
+    /// bytes_to_sign: bytes must be signed
+    /// endorsement_spec: endorsement process specification
     pub(crate) async fn prepare_did_txn(
         &self,
         vdr: &VDR,
@@ -91,18 +86,13 @@ impl VDRController {
     /// submitter_did: Fully-qualified DID of the transaction author as base58-encoded string.
     /// endorser: DID of the Endorser that will endorse the transaction.
     ///           The Endorser's DID must be present on the ledger with 'ENDORSER' role.
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - namespace: Ledger namespace to submit transaction (captured from submitter DID)
-    /// - txn_bytes: prepared transaction as bytes
-    /// - signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
-    /// - bytes_to_sign: bytes must be signed
-    /// - endorsement_spec: endorsement process specification
+    /// namespace: Ledger namespace to submit transaction (captured from submitter DID)
+    /// txn_bytes: prepared transaction as bytes
+    /// signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
+    /// bytes_to_sign: bytes must be signed
+    /// endorsement_spec: endorsement process specification
     pub(crate) async fn prepare_schema_txn(
         &self,
         vdr: &VDR,
@@ -154,18 +144,13 @@ impl VDRController {
     /// submitter_did: Fully-qualified DID of the transaction author as base58-encoded string.
     /// endorser: DID of the Endorser that will endorse the transaction.
     ///           The Endorser's DID must be present on the ledger with 'ENDORSER' role.
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - namespace: Ledger namespace to submit transaction (captured from submitter DID)
-    /// - txn_bytes: prepared transaction as bytes
-    /// - signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
-    /// - bytes_to_sign: bytes must be signed
-    /// - endorsement_spec: endorsement process specification
+    /// namespace: Ledger namespace to submit transaction (captured from submitter DID)
+    /// txn_bytes: prepared transaction as bytes
+    /// signature_spec: type of the signature transaction must be signed with (one of: `Ed25519` or `Secp256k1`)
+    /// bytes_to_sign: bytes must be signed
+    /// endorsement_spec: endorsement process specification
     pub(crate) async fn prepare_creddef_txn(
         &self,
         vdr: &VDR,

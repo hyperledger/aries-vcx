@@ -24,17 +24,12 @@ impl VDRController {
     /// signature_spec: type of the signature used for transaction signing
     /// txn_bytes_to_sign_raw: a pointer to first byte of transaction bytes to sign
     /// txn_bytes_to_sign_len: a transaction length
-    /// cb: Callback that takes command result as parameter
     ///
     /// #Returns
-    /// Error Code
-    /// cb:
-    /// - command_handle_: command handle to map callback to caller context.
-    /// - err: Error code.
-    /// - endorsement: generated endorsement information
-    ///         {
-    ///             "signature": string - endorser transaction signature as baste58 string
-    ///         }
+    /// endorsement: generated endorsement information
+    ///       {
+    ///           "signature": string - endorser transaction signature as baste58 string
+    ///       }
     pub(crate) async fn indy_endorse(
         &self,
         wallet_handle: WalletHandle,

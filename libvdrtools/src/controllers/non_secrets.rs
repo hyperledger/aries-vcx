@@ -21,7 +21,6 @@ impl NonSecretsController {
     /// Create a new non-secret record in the wallet
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record
