@@ -184,6 +184,8 @@ pub enum LibvcxErrorKind {
 
     #[error("Libndy error {}", 0)]
     LibndyError(u32),
+    #[error("Ursa error")]
+    UrsaError,
     #[error("Unknown libindy error")]
     UnknownLibndyError,
     #[error("No Agent pairwise information")]

@@ -80,6 +80,7 @@ impl From<AriesVcxErrorKind> for LibvcxErrorKind {
             AriesVcxErrorKind::NoAgentInformation => LibvcxErrorKind::NoAgentInformation,
             AriesVcxErrorKind::InvalidMessageFormat => LibvcxErrorKind::InvalidMessageFormat,
             AriesVcxErrorKind::LedgerItemNotFound => LibvcxErrorKind::LedgerItemNotFound,
+            AriesVcxErrorKind::UrsaError => LibvcxErrorKind::UrsaError,
             AriesVcxErrorKind::ProofRejected => LibvcxErrorKind::ProofRejected,
         }
     }

@@ -56,7 +56,12 @@ impl IndyCredxAnonCreds {
 
         let ms_value = (&record).try_get("value")?;
         let ms_decimal = ms_value.try_as_str()?;
-        let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal)?;
+        let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::UrsaError,
+                format!("Failed to create BigNumber from value: {}, error: {}", ms_decimal, err),
+            )
+        })?;
         let ursa_ms: UrsaMasterSecret = serde_json::from_value(json!({ "ms": ms_bn }))?;
 
         Ok(MasterSecret { value: ursa_ms })
@@ -627,7 +632,22 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
         }
 
         let secret = credx::prover::create_master_secret()?;
-        let ms_decimal = secret.value.value()?.to_dec()?;
+        let ms_decimal = secret
+            .value
+            .value()
+            .map_err(|err| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::UrsaError,
+                    format!("failed to get BigNumber from MasterSecret: {}", err),
+                )
+            })?
+            .to_dec()
+            .map_err(|err| {
+                AriesVcxError::from_msg(
+                    AriesVcxErrorKind::UrsaError,
+                    format!("Failed convert BigNumber to decimal string, error: {}", err),
+                )
+            })?;
 
         wallet
             .add_wallet_record(CATEGORY_LINK_SECRET, link_secret_id, &ms_decimal, None)
