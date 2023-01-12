@@ -911,9 +911,7 @@ impl WalletService {
         credentials: &Credentials,
     ) -> IndyResult<(Arc<dyn WalletStorageType>, Option<String>, Option<String>)> {
         let storage_type = {
-            let storage_type = config
-                .storage_type.as_deref()
-                .unwrap_or("default");
+            let storage_type = config.storage_type.as_deref().unwrap_or("default");
 
             self.storage_types
                 .lock()

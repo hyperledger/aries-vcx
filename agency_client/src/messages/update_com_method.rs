@@ -64,7 +64,6 @@ impl UpdateComMethod {
 
 #[cfg(test)]
 mod tests {
-    
 
     #[test]
     #[cfg(feature = "general_test")]

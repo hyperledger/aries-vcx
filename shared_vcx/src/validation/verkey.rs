@@ -18,7 +18,6 @@ pub fn validate_verkey(verkey: &str) -> SharedVcxResult<String> {
 
 #[cfg(test)]
 mod tests {
-    
 
     #[test]
     #[cfg(feature = "general_test")]

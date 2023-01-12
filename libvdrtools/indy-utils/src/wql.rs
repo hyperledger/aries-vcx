@@ -37,9 +37,7 @@ impl<'de> Deserialize<'de> for Query {
         let v = Value::deserialize(deserializer)?;
 
         match v {
-            serde_json::Value::Object(map) => {
-                parse_query(map).map_err(de::Error::missing_field)
-            }
+            serde_json::Value::Object(map) => parse_query(map).map_err(de::Error::missing_field),
             serde_json::Value::Array(array) => {
                 // cast old restrictions format to wql
                 let mut res: Vec<serde_json::Value> = Vec::new();
@@ -2689,7 +2687,7 @@ mod tests {
         let value1 = _random_string(10);
 
         let json = json!(vec![
-            json ! ({name1.clone(): value1}),
+            json!({ name1.clone(): value1 }),
             json!({ name2: serde_json::Value::Null })
         ])
         .to_string();
