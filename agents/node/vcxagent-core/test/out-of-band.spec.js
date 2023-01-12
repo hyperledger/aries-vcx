@@ -2,14 +2,14 @@
 require('jest')
 const sleep = require('sleep-promise')
 
-const { initRustapi } = require('../src/index')
 const { VerifierStateType } = require('@hyperledger/node-vcx-wrapper')
 const { createPairedAliceAndFaberViaOobMsg, createAliceAndFaber, connectViaOobMessage, createPairedAliceAndFaber } = require('./utils/utils')
 const { IssuerStateType, HolderStateType, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
+const { initRustLogger } = require('../src')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
 })
 
 describe('test out of band communication', () => {

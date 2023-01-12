@@ -156,6 +156,10 @@ pub fn generate_reject_proof_msg(_handle: u32) -> LibvcxResult<String> {
 }
 
 pub async fn reject_proof(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+    info!(
+        "reject_proof >> handle: {}, connection_handle: {}",
+        handle, connection_handle
+    );
     let mut proof = HANDLE_MAP.get_cloned(handle)?;
     let send_message = mediated_connection::send_message_closure(connection_handle).await?;
     proof

@@ -1,15 +1,3 @@
-import { rustAPI } from '../rustlib';
-
-export enum VCXMockMessage {
-  GetMessages = 3, // get_message response for connection acceptance
-  UpdateIssuerCredential = 4, // get_message response for claim offer
-  UpdateProof = 5, // get_message response for updating proof state
-  IssuerCredentialReq = 6, // get_message response with claim req
-  Proof = 7, // get_message response with proof,
-  CredentialResponse = 8, // reply to credential request with an actual credential
-  AcceptInvite = 9, // connection invite was accepted
-}
-
 export const ARIES_PROOF_REQUEST: string = JSON.stringify({
   '@id': '4e62363d-6348-4b59-9d98-a86497f9301b',
   '@type': 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation',
@@ -69,9 +57,3 @@ export const ARIES_CREDENTIAL_OFFER: string = JSON.stringify({
     },
   ],
 });
-
-export class VCXMock {
-  public static setVcxMock(message: VCXMockMessage): void {
-    rustAPI().vcx_set_next_agency_response(message);
-  }
-}

@@ -2,9 +2,8 @@
 require('jest')
 const express = require('express')
 const axios = require('axios')
-const { buildRevocationDetails } = require('../src')
+const { buildRevocationDetails, initRustLogger } = require('../src')
 const { createPairedAliceAndFaber } = require('./utils/utils')
-const { initRustapi } = require('../src/index')
 const { IssuerStateType, HolderStateType, VerifierStateType, ProverStateType } = require('@hyperledger/node-vcx-wrapper')
 const uuid = require('uuid')
 const sleep = require('sleep-promise')
@@ -13,7 +12,7 @@ const mkdirp = require('mkdirp')
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60 * 4)
-  await initRustapi(process.env.VCX_LOG_LEVEL || 'vcx=error')
+  initRustLogger(process.env.RUST_LOG || 'vcx=error')
 })
 
 describe('test tails distribution', () => {

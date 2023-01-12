@@ -17,17 +17,24 @@ runs:
       shell: bash
       run: |
         if [[ "${{ contains(github.event.pull_request.labels.*.name, 'skip-ios') }}" == "true" ]]; then
-          echo "Detected tag to skip E2E tests"
+          echo "Detected tag to skip ios"
           echo "skip-ios=true" >> $GITHUB_OUTPUT
         else
           echo "skip-ios=false" >> $GITHUB_OUTPUT
         fi
-        
+
         if [[ "${{ contains(github.event.pull_request.labels.*.name, 'skip-android') }}" == "true" ]]; then
-          echo "Detected tag to skip E2E tests"
+          echo "Detected tag to skip android"
           echo "skip-android=true" >> $GITHUB_OUTPUT
-        else 
+        else
           echo "skip-android=false" >> $GITHUB_OUTPUT
         fi;
-        
+
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'skip-napi-m1') }}" == "true" ]]; then
+          echo "Detected tag to skip M1 napi build"
+          echo "skip-napi-m1=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip-napi-m1=false" >> $GITHUB_OUTPUT
+        fi;
+
         echo "Finished, GITHUB_OUTPUT:\n`cat $GITHUB_OUTPUT`"
