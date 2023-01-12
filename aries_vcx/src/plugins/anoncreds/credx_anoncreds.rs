@@ -59,7 +59,7 @@ impl IndyCredxAnonCreds {
         let ms_bn: BigNumber = BigNumber::from_dec(ms_decimal).map_err(|err| {
             AriesVcxError::from_msg(
                 AriesVcxErrorKind::UrsaError,
-                format!("Failed to create BigNumber from value: {}, error: {}", ms_decimal, err),
+                format!("Failed to create BigNumber, UrsaErrorKind: {}", err.kind()),
             )
         })?;
         let ursa_ms: UrsaMasterSecret = serde_json::from_value(json!({ "ms": ms_bn }))?;
@@ -638,14 +638,20 @@ impl BaseAnonCreds for IndyCredxAnonCreds {
             .map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::UrsaError,
-                    format!("failed to get BigNumber from MasterSecret: {}", err),
+                    format!(
+                        "failed to get BigNumber from master secret, UrsaErrorKind: {}",
+                        err.kind()
+                    ),
                 )
             })?
             .to_dec()
             .map_err(|err| {
                 AriesVcxError::from_msg(
                     AriesVcxErrorKind::UrsaError,
-                    format!("Failed convert BigNumber to decimal string, error: {}", err),
+                    format!(
+                        "Failed convert BigNumber to decimal string, UrsaErrorKind: {}",
+                        err.kind()
+                    ),
                 )
             })?;
 
