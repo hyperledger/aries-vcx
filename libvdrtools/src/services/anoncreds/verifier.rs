@@ -682,7 +682,7 @@ impl VerifierService {
                     if pred_sub_proof_index == attr_sub_proof_index {
                         for name in attr_info.values.keys() {
                             let raw_val = attr_info.values.get(name).unwrap().raw.as_str();
-                            attr_value_map.insert(name.clone(), Some(raw_val.clone()));
+                            attr_value_map.insert(name.clone(), Some(raw_val));
                         }
                     }
                 }
