@@ -11,6 +11,27 @@ const SCHEMA_CACHE: &str = "vdr_schema_cache";
 
 #[cfg(feature = "ffi_api")]
 impl VDRController {
+    /// Resolve DID information for specified fully-qualified DID.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// fqdid: fully-qualified DID of the target DID on the Ledger
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - diddoc: Resolved DID information.
+    ///           Note that the format of the value depends on the Ledger type:
+    ///     Indy:    {
+    ///             "did": string
+    ///             "verkey": string
+    ///         }
     pub(crate) async fn resolve_did(&self, vdr: &VDR, id: &str) -> IndyResult<String> {
         trace!("resolve_did >id {:?}", id,);
         let (ledger, _) = vdr.resolve_ledger_for_id(id).await?;
@@ -21,6 +42,35 @@ impl VDRController {
         Ok(response)
     }
 
+    /// Resolve DID information for specified fully-qualified DID with using of wallet cache.
+    ///
+    /// If data is present inside of wallet cache, cached data is returned.
+    /// Otherwise data is fetched from the associated Ledger and stored inside of cache for future use.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
+    /// fqdid: fully-qualified DID of the target DID on the Ledger
+    /// cache_options: caching options
+    ///     {
+    ///         forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
+    ///     }
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - diddoc: Resolved DID information.
+    ///           Note that the format of the value depends on the Ledger type:
+    ///     Indy:    {
+    ///             "did": string
+    ///             "verkey": string
+    ///         }
     pub(crate) async fn resolve_did_with_cache(
         &self,
         vdr: &VDR,
@@ -60,6 +110,29 @@ impl VDRController {
         Ok(response)
     }
 
+    /// Resolve Schema for specified fully-qualified ID.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// fqschema: fully-qualified Schema ID of the target Schema on the Ledger
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - schema: Resolved Schema
+    ///     {
+    ///         id: identifier of schema
+    ///         attrNames: array of attribute name strings
+    ///         name: Schema's name string
+    ///         version: Schema's version string
+    ///         ver: Version of the Schema json
+    ///     }
     pub(crate) async fn resolve_schema(&self, vdr: &VDR, id: &str) -> IndyResult<String> {
         trace!("resolve_schema > id {:?}", id,);
         let (ledger, _) = vdr.resolve_ledger_for_id(id).await?;
@@ -71,6 +144,37 @@ impl VDRController {
         Ok(response)
     }
 
+    /// Resolve Schema for specified fully-qualified ID with using of wallet cache.
+    ///
+    /// If data is present inside of wallet cache, cached data is returned.
+    /// Otherwise data is fetched from the associated Ledger and stored inside of cache for future use.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
+    /// fqschema: fully-qualified Schema ID of the target Schema on the Ledger
+    /// cache_options: caching options
+    ///     {
+    ///         forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
+    ///     }
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - schema: Resolved Schema
+    ///     {
+    ///         id: identifier of schema
+    ///         attrNames: array of attribute name strings
+    ///         name: Schema's name string
+    ///         version: Schema's version string
+    ///         ver: Version of the Schema json
+    ///     }
     pub(crate) async fn resolve_schema_with_cache(
         &self,
         vdr: &VDR,
@@ -110,6 +214,33 @@ impl VDRController {
         Ok(response)
     }
 
+    /// Resolve Credential Definition for specified fully-qualified ID.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// fqcreddef: fully-qualified CredDef ID of the target CredentialDefinition on the Ledger
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - credential_definition: Resolved Credential Definition
+    ///     {
+    ///         id: string - identifier of credential definition
+    ///         schemaId: string - identifier of stored in ledger schema
+    ///         type: string - type of the credential definition. CL is the only supported type now.
+    ///         tag: string - allows to distinct between credential definitions for the same issuer and schema
+    ///         value: Dictionary with Credential Definition's data: {
+    ///             primary: primary credential public key,
+    ///             Optional<revocation>: revocation credential public key
+    ///         },
+    ///         ver: Version of the Credential Definition json
+    ///     }
     pub(crate) async fn resolve_creddef(&self, vdr: &VDR, id: &str) -> IndyResult<String> {
         trace!("resolve_creddef > id {:?}", id,);
         let (ledger, _) = vdr.resolve_ledger_for_id(id).await?;
@@ -121,6 +252,41 @@ impl VDRController {
         Ok(response)
     }
 
+    /// Resolve Credential Definition for specified fully-qualified ID with using of wallet cache.
+    ///
+    /// If data is present inside of wallet cache, cached data is returned.
+    /// Otherwise data is fetched from the associated Ledger and stored inside of cache for future use.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
+    /// fqcreddef: fully-qualified CredDef ID of the target CredentialDefinition on the Ledger
+    /// cache_options: caching options
+    ///     {
+    ///         forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
+    ///     }
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - credential_definition: Resolved Credential Definition
+    ///     {
+    ///         id: string - identifier of credential definition
+    ///         schemaId: string - identifier of stored in ledger schema
+    ///         type: string - type of the credential definition. CL is the only supported type now.
+    ///         tag: string - allows to distinct between credential definitions for the same issuer and schema
+    ///         value: Dictionary with Credential Definition's data: {
+    ///             primary: primary credential public key,
+    ///             Optional<revocation>: revocation credential public key
+    ///         },
+    ///         ver: Version of the Credential Definition json
+    ///     }
     pub(crate) async fn resolve_creddef_with_cache(
         &self,
         vdr: &VDR,

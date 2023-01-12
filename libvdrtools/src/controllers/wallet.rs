@@ -34,6 +34,36 @@ impl WalletController {
         }
     }
 
+    /// Register custom wallet storage implementation.
+    ///
+    /// #Params
+    /// command_handle: Command handle to map callback to caller context.
+    /// type_: Storage type name.
+    /// create: WalletType create operation handler
+    /// open: WalletType open operation handler
+    /// close: Wallet close operation handler
+    /// delete: WalletType delete operation handler
+    /// add_record: WalletType add record operation handler
+    /// update_record_value: WalletType update record value operation handler
+    /// update_record_tags: WalletType update record tags operation handler
+    /// add_record_tags: WalletType add record tags operation handler
+    /// delete_record_tags: WalletType delete record tags operation handler
+    /// delete_record: WalletType delete record operation handler
+    /// get_record: WalletType get record operation handler
+    /// get_record_id: WalletType get record id operation handler
+    /// get_record_type: WalletType get record type operation handler
+    /// get_record_value: WalletType get record value operation handler
+    /// get_record_tags: WalletType get record tags operation handler
+    /// free_record: WalletType free record operation handler
+    /// search_records: WalletType search records operation handler
+    /// search_all_records: WalletType search all records operation handler
+    /// get_search_total_count: WalletType get search total count operation handler
+    /// fetch_search_next_record: WalletType fetch search next record operation handler
+    /// free_search: WalletType free search operation handler
+    /// free: Handler that allows to de-allocate strings allocated in caller code
+    ///
+    /// #Returns
+    /// Error code
     pub fn register_type(
         &self,
         type_: String,
@@ -96,6 +126,45 @@ impl WalletController {
         Ok(())
     }
 
+    /// Create a new secure wallet.
+    ///
+    /// #Params
+    /// config: Wallet configuration json.
+    /// {
+    ///   "id": string, Identifier of the wallet.
+    ///         Configured storage uses this identifier to lookup exact wallet data placement.
+    ///   "storage_type": optional<string>, Type of the wallet storage. Defaults to 'default'.
+    ///                  'Default' storage type allows to store wallet data in the local file.
+    ///                  Custom storage types can be registered with indy_register_wallet_storage call.
+    ///   "storage_config": optional<object>, Storage configuration json. Storage type defines set of supported keys.
+    ///                     Can be optional if storage supports default configuration.
+    ///                     For 'default' storage type configuration is:
+    ///   {
+    ///     "path": optional<string>, Path to the directory with wallet files.
+    ///             Defaults to $HOME/.indy_client/wallet.
+    ///             Wallet will be stored in the file {path}/{id}/sqlite.db
+    ///   }
+    /// }
+    /// credentials: Wallet credentials json
+    /// {
+    ///   "key": string, Key or passphrase used for wallet key derivation.
+    ///                  Look to key_derivation_method param for information about supported key derivation methods.
+    ///   "storage_credentials": optional<object> Credentials for wallet storage. Storage type defines set of supported keys.
+    ///                          Can be optional if storage supports default configuration.
+    ///                          For 'default' storage type should be empty.
+    ///   "key_derivation_method": optional<string> Algorithm to use for wallet key derivation:
+    ///                          ARGON2I_MOD - derive secured wallet master key (used by default)
+    ///                          ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    ///                          RAW - raw wallet key master provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    /// }
+    ///
+    /// #Returns
+    /// err: Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn create(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
         trace!(
             "_create > config: {:?} credentials: {:?}",
@@ -119,6 +188,60 @@ impl WalletController {
         res
     }
 
+    /// Open the wallet.
+    ///
+    /// Wallet must be previously created with indy_create_wallet method.
+    ///
+    /// #Params
+    /// config: Wallet configuration json.
+    ///   {
+    ///       "id": string, Identifier of the wallet.
+    ///             Configured storage uses this identifier to lookup exact wallet data placement.
+    ///       "storage_type": optional<string>, Type of the wallet storage. Defaults to 'default'.
+    ///                       'Default' storage type allows to store wallet data in the local file.
+    ///                       Custom storage types can be registered with indy_register_wallet_storage call.
+    ///       "storage_config": optional<object>, Storage configuration json. Storage type defines set of supported keys.
+    ///                         Can be optional if storage supports default configuration.
+    ///                         For 'default' storage type configuration is:
+    ///           {
+    ///              "path": optional<string>, Path to the directory with wallet files.
+    ///                      Defaults to $HOME/.indy_client/wallet.
+    ///                      Wallet will be stored in the file {path}/{id}/sqlite.db
+    ///           }
+    ///       "cache": optional<object>, Cache configuration json. If omitted the cache is disabled (default).
+    ///       {
+    ///           "size": optional<int>, Number of items in cache,
+    ///           "entities": List<string>, Types of items being cached. eg. ["vdrtools::Did", "vdrtools::Key"]
+    ///           "algorithm" optional<string>, cache algorithm, defaults to lru, which is the only one supported for now.
+    ///       }
+    ///   }
+    /// credentials: Wallet credentials json
+    ///   {
+    ///       "key": string, Key or passphrase used for wallet key derivation.
+    ///                      Look to key_derivation_method param for information about supported key derivation methods.
+    ///       "rekey": optional<string>, If present than wallet master key will be rotated to a new one.
+    ///       "storage_credentials": optional<object> Credentials for wallet storage. Storage type defines set of supported keys.
+    ///                              Can be optional if storage supports default configuration.
+    ///                              For 'default' storage type should be empty.
+    ///       "key_derivation_method": optional<string> Algorithm to use for wallet key derivation:
+    ///                          ARGON2I_MOD - derive secured wallet master key (used by default)
+    ///                          ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    ///                          RAW - raw wallet key master provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    ///       "rekey_derivation_method": optional<string> Algorithm to use for wallet rekey derivation:
+    ///                          ARGON2I_MOD - derive secured wallet master rekey (used by default)
+    ///                          ARGON2I_INT - derive secured wallet master rekey (less secured but faster)
+    ///                          RAW - raw wallet rekey master provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    ///   }
+    ///
+    /// #Returns
+    /// err: Error code
+    /// handle: Handle to opened wallet to use in methods that require wallet access.
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn open(&self, config: Config, credentials: Credentials) -> IndyResult<WalletHandle> {
         trace!(
             "open > config: {:?} credentials: {:?}",
@@ -150,6 +273,17 @@ impl WalletController {
         res
     }
 
+    /// Closes opened wallet and frees allocated resources.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle returned by indy_open_wallet.
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn close(&self, wallet_handle: WalletHandle) -> IndyResult<()> {
         trace!("close > handle: {:?}", wallet_handle);
 
@@ -159,6 +293,45 @@ impl WalletController {
         Ok(())
     }
 
+    /// Deletes created wallet.
+    ///
+    /// #Params
+    /// config: Wallet configuration json.
+    /// {
+    ///   "id": string, Identifier of the wallet.
+    ///         Configured storage uses this identifier to lookup exact wallet data placement.
+    ///   "storage_type": optional<string>, Type of the wallet storage. Defaults to 'default'.
+    ///                  'Default' storage type allows to store wallet data in the local file.
+    ///                  Custom storage types can be registered with indy_register_wallet_storage call.
+    ///   "storage_config": optional<object>, Storage configuration json. Storage type defines set of supported keys.
+    ///                     Can be optional if storage supports default configuration.
+    ///                     For 'default' storage type configuration is:
+    ///   {
+    ///     "path": optional<string>, Path to the directory with wallet files.
+    ///             Defaults to $HOME/.indy_client/wallet.
+    ///             Wallet will be stored in the file {path}/{id}/sqlite.db
+    ///   }
+    /// }
+    /// credentials: Wallet credentials json
+    /// {
+    ///   "key": string, Key or passphrase used for wallet key derivation.
+    ///                  Look to key_derivation_method param for information about supported key derivation methods.
+    ///   "storage_credentials": optional<object> Credentials for wallet storage. Storage type defines set of supported keys.
+    ///                          Can be optional if storage supports default configuration.
+    ///                          For 'default' storage type should be empty.
+    ///   "key_derivation_method": optional<string> Algorithm to use for wallet key derivation:
+    ///                             ARGON2I_MOD - derive secured wallet master key (used by default)
+    ///                             ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    ///                             RAW - raw wallet key master provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    /// }
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn delete(&self, config: Config, credentials: Credentials) -> IndyResult<()> {
         trace!(
             "delete > config: {:?} credentials: {:?}",
@@ -183,6 +356,28 @@ impl WalletController {
         res
     }
 
+    /// Exports opened wallet
+    ///
+    /// #Params:
+    /// wallet_handle: wallet handle returned by indy_open_wallet
+    /// export_config: JSON containing settings for input operation.
+    ///   {
+    ///     "path": <string>, Path of the file that contains exported wallet content
+    ///     "key": <string>, Key or passphrase used for wallet export key derivation.
+    ///                     Look to key_derivation_method param for information about supported key derivation methods.
+    ///     "key_derivation_method": optional<string> Algorithm to use for wallet export key derivation:
+    ///                              ARGON2I_MOD - derive secured export key (used by default)
+    ///                              ARGON2I_INT - derive secured export key (less secured but faster)
+    ///                              RAW - raw export key provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    ///   }
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn export(
         &self,
         wallet_handle: WalletHandle,
@@ -210,6 +405,52 @@ impl WalletController {
         res
     }
 
+    /// Creates a new secure wallet and then imports its content
+    /// according to fields provided in import_config
+    /// This can be seen as an indy_create_wallet call with additional content import
+    ///
+    /// #Params
+    /// config: Wallet configuration json.
+    /// {
+    ///   "id": string, Identifier of the wallet.
+    ///         Configured storage uses this identifier to lookup exact wallet data placement.
+    ///   "storage_type": optional<string>, Type of the wallet storage. Defaults to 'default'.
+    ///                  'Default' storage type allows to store wallet data in the local file.
+    ///                  Custom storage types can be registered with indy_register_wallet_storage call.
+    ///   "storage_config": optional<object>, Storage configuration json. Storage type defines set of supported keys.
+    ///                     Can be optional if storage supports default configuration.
+    ///                     For 'default' storage type configuration is:
+    ///   {
+    ///     "path": optional<string>, Path to the directory with wallet files.
+    ///             Defaults to $HOME/.indy_client/wallet.
+    ///             Wallet will be stored in the file {path}/{id}/sqlite.db
+    ///   }
+    /// }
+    /// credentials: Wallet credentials json
+    /// {
+    ///   "key": string, Key or passphrase used for wallet key derivation.
+    ///                  Look to key_derivation_method param for information about supported key derivation methods.
+    ///   "storage_credentials": optional<object> Credentials for wallet storage. Storage type defines set of supported keys.
+    ///                          Can be optional if storage supports default configuration.
+    ///                          For 'default' storage type should be empty.
+    ///   "key_derivation_method": optional<string> Algorithm to use for wallet key derivation:
+    ///                             ARGON2I_MOD - derive secured wallet master key (used by default)
+    ///                             ARGON2I_INT - derive secured wallet master key (less secured but faster)
+    ///                             RAW - raw wallet key master provided (skip derivation).
+    ///                                RAW keys can be generated with indy_generate_wallet_key call
+    /// }
+    /// import_config: Import settings json.
+    /// {
+    ///   "path": <string>, path of the file that contains exported wallet content
+    ///   "key": <string>, key used for export of the wallet
+    /// }
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn import(
         &self,
         config: Config,
@@ -242,6 +483,23 @@ impl WalletController {
         res
     }
 
+    /// Generate wallet master key.
+    /// Returned key is compatible with "RAW" key derivation method.
+    /// It allows to avoid expensive key derivation for use cases when wallet keys can be stored in a secure enclave.
+    ///
+    /// #Params
+    /// config: (optional) key configuration json.
+    /// {
+    ///   "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
+    ///                              Can be UTF-8, base64 or hex string.
+    /// }
+    ///
+    /// #Returns
+    /// err: Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub fn generate_key(&self, config: Option<KeyConfig>) -> IndyResult<String> {
         trace!("generate_key > config: {:?}", secret!(&config));
 

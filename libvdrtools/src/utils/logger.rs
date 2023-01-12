@@ -33,6 +33,18 @@ pub enum LoggerState {
 
 #[cfg(feature = "ffi_api")]
 impl LoggerState {
+    /// Get the currently used logger.
+    ///
+    /// NOTE: if logger is not set dummy implementation would be returned.
+    ///
+    /// #Params
+    /// `context_p` - Reference that will contain logger context.
+    /// `enabled_cb_p` - Reference that will contain pointer to enable operation handler.
+    /// `log_cb_p` - Reference that will contain pointer to log operation handler.
+    /// `flush_cb_p` - Reference that will contain pointer to flush operation handler.
+    ///
+    /// #Returns
+    /// Error code
     pub fn get(
         &self,
     ) -> (
@@ -166,6 +178,22 @@ unsafe impl Send for LibvdrtoolsLogger {}
 
 #[cfg(feature = "ffi_api")]
 impl LibvdrtoolsLogger {
+    /// Set custom logger implementation.
+    ///
+    /// Allows library user to provide custom logger implementation as set of handlers.
+    ///
+    /// # Arguments
+    /// * `context` - pointer to some logger context that will be available in logger handlers.
+    /// * `enabled` - (optional) "enabled" operation handler - calls to determines if a log record would be logged. (false positive if not specified)
+    /// * `log` - "log" operation handler - calls to logs a record.
+    /// * `flush` - (optional) "flush" operation handler - calls to flushes buffered records (in case of crash or signal).
+    /// * `max_lvl` - Maximum log level represented as u32.
+    /// Possible values are from 0 to 5 inclusive: 0 - Off, 1 - Error, 2 - Warn, 3 - Trace, 4 - Debug, 5 - Trace
+    ///
+    /// # Returns
+    /// On success returns `ErrorCode::Success`
+    /// ErrorCode::CommonInvalidParam3 is returned in case of `log` callback is missed
+    /// ErrorCode::CommonInvalidParam5 is returned in case of `max_lvl` value is out of range [0-5]
     pub fn init(
         context: *const c_void,
         enabled: Option<EnabledCB>,
@@ -206,6 +234,15 @@ impl LibvdrtoolsLogger {
         Ok(max_level)
     }
 
+    /// Set maximum log level
+    ///
+    /// # Arguments
+    /// * `max_lvl` - Maximum log level represented as u32.
+    /// Possible values are from 0 to 5 inclusive: 0 - Off, 1 - Error, 2 - Warn, 3 - Trace, 4 - Debug, 5 - Trace
+    ///
+    /// # Return
+    /// On success returns `ErrorCode::Success`
+    /// ErrorCode::CommonInvalidParam1 is returned in case of `max_lvl` value is out of range [0-5]
     pub fn set_max_level(max_level: u32) -> IndyResult<LevelFilter> {
         let max_level_filter = LibvdrtoolsLogger::map_u32_lvl_to_filter(max_level)?;
 
@@ -220,6 +257,18 @@ pub struct LibvdrtoolsDefaultLogger;
 
 #[cfg(feature = "ffi_api")]
 impl LibvdrtoolsDefaultLogger {
+    /// Set default logger implementation.
+    ///
+    /// Allows library user use `env_logger` logger as default implementation.
+    /// More details about `env_logger` and its customization can be found here: https://crates.io/crates/env_logger
+    ///
+    /// #Params
+    /// pattern: (optional) pattern that corresponds with the log messages to show.
+    ///
+    /// NOTE: You should specify either `pattern` parameter or `RUST_LOG` environment variable to init logger.
+    ///
+    /// #Returns
+    /// Error code
     pub fn init(pattern: Option<String>) -> Result<(), IndyError> {
         let pattern = pattern.or_else(|| env::var("RUST_LOG").ok());
 

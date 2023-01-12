@@ -25,6 +25,13 @@ impl MetricsController {
         }
     }
 
+    /// Collect metrics.
+    ///
+    /// #Returns
+    /// Map in the JSON format. Where keys are names of metrics.
+    ///
+    /// #Errors
+    /// Common*
     pub async fn collect(&self) -> IndyResult<String> {
         trace!("_collect >>>");
         let mut metrics_map = serde_json::Map::new();

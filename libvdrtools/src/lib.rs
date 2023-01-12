@@ -30,9 +30,6 @@ mod controllers;
 mod domain;
 mod services;
 
-#[cfg(feature = "ffi_api")]
-pub mod api;
-
 use std::sync::Arc;
 
 use lazy_static::lazy_static;

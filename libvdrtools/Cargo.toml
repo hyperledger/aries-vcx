@@ -71,8 +71,3 @@ android_logger = "0.5"
 criterion = "0.2"
 dirs = "2.0.2"
 rstest = "0.6.4"
-
-
-[[bench]]
-name = "wallet"
-harness = false

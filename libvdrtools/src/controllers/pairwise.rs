@@ -18,6 +18,20 @@ impl PairwiseController {
         PairwiseController { wallet_service }
     }
 
+    /// Check if pairwise is exists.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// command_handle: command handle to map callback to user context.
+    /// their_did: encrypted DID
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// exists: true - if pairwise is exists, false - otherwise
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn pairwise_exists(
         &self,
         wallet_handle: WalletHandle,
@@ -39,6 +53,22 @@ impl PairwiseController {
         res
     }
 
+    /// Creates pairwise.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// command_handle: command handle to map callback to user context.
+    /// their_did: encrypted DID
+    /// my_did: encrypted DID
+    /// metadata Optional: extra information for pairwise
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn create_pairwise(
         &self,
         wallet_handle: WalletHandle,
@@ -83,6 +113,19 @@ impl PairwiseController {
         res
     }
 
+    /// Get list of saved pairwise.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// command_handle: command handle to map callback to user context.
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// list_pairwise: list of saved pairwise
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn list_pairwise(&self, wallet_handle: WalletHandle) -> IndyResult<String> {
         trace!("list_pairwise > wallet_handle {:?}", wallet_handle);
 
@@ -115,6 +158,20 @@ impl PairwiseController {
         res
     }
 
+    /// Gets pairwise information for specific their_did.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// command_handle: command handle to map callback to user context.
+    /// their_did: encoded Did
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// pairwise_info_json: did info associated with their did
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn get_pairwise(
         &self,
         wallet_handle: WalletHandle,
@@ -144,6 +201,21 @@ impl PairwiseController {
         res
     }
 
+    /// Save some data in the Wallet for pairwise associated with Did.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// command_handle: command handle to map callback to user context.
+    /// their_did: encoded Did
+    /// metadata: some extra information for pairwise
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// Error code
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
     pub async fn set_pairwise_metadata(
         &self,
         wallet_handle: WalletHandle,

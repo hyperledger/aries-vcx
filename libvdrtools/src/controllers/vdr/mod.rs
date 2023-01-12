@@ -33,6 +33,15 @@ pub(crate) struct VDRBuilder {
 
 #[cfg(feature = "ffi_api")]
 impl VDRBuilder {
+    /// Create a Builder object for Verifiable Data Registry which provides a unified interface for interactions with supported Ledgers.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// vdr_builder_p: pointer to store VDRBuilder object
+    ///
+    /// #Returns
+    /// Error Code
     pub fn create() -> VDRBuilder {
         VDRBuilder {
             namespaces: HashMap::new(),
@@ -62,6 +71,17 @@ impl VDRBuilder {
         }
     }
 
+    /// Finalize building of VDR object and receive a pointer to VDR providing a unified interface for interactions with supported Ledgers.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr_builder: pointer to VDRBuilder object
+    /// vdr_p: pointer to store VDR object
+    ///
+    /// #Returns
+    /// Error Code
     pub(crate) fn finalize(&self) -> VDR {
         VDR {
             namespaces: self.namespaces.to_owned(),
@@ -148,6 +168,35 @@ impl VDRController {
         }
     }
 
+    /// Register Indy Ledger in the VDR object.
+    /// Associate registered Indy Ledger with the list of specified namespaces that will be used for
+    /// the resolution of public entities referencing by fully qualified identifiers.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr_builder: pointer to VDRBuilder object
+    /// namespace_list: list of namespaces to associated with Ledger ('["namespace_1", "namespace_2"]')
+    /// genesis_txn_data: genesis transactions for Indy Ledger (Note that node transactions must be located in separate lines)
+    /// taa_config: accepted transaction author agreement data:
+    ///     {
+    ///         text and version - (optional) raw data about TAA from ledger.
+    ///                             These parameters should be passed together.
+    ///                             These parameters are required if taa_digest parameter is omitted.
+    ///         taa_digest - (optional) digest on text and version.
+    ///                             Digest is sha256 hash calculated on concatenated strings: version || text.
+    ///                             This parameter is required if text and version parameters are omitted.
+    ///         acc_mech_type - mechanism how user has accepted the TAA
+    ///         time - UTC timestamp when user has accepted the TAA. Note that the time portion will be discarded to avoid a privacy risk.
+    ///     }
+    ///
+    /// cb: Callback that takes command result as parameter.
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: com
     pub(crate) async fn register_indy_ledger(
         &self,
         vdr_builder: Arc<Mutex<VDRBuilder>>,
@@ -170,6 +219,26 @@ impl VDRController {
         Ok(())
     }
 
+    /// Ping Ledgers registered in the VDR.
+    ///
+    /// NOTE: This function MUST be called for Indy Ledgers before sending any request.
+    ///
+    /// Indy Ledger: The function performs sync with the ledger and returns the most recent nodes state.
+    /// Cheqd Ledger: The function query network information.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// namespace_list: list of namespaces to ping
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
     pub(crate) async fn ping(&self, vdr: &VDR, namespace_list: Namespaces) -> IndyResult<String> {
         // Group namespaces by Ledger name
         let mut ledgers: HashMap<String, Vec<String>> = HashMap::new();
@@ -220,6 +289,33 @@ impl VDRController {
         Ok((namespaces, status))
     }
 
+    /// Submit transaction to the Ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// namespace of the registered Ledger to submit transaction
+    /// txn_bytes_raw: a pointer to first byte of transaction
+    /// txn_bytes_len: a transaction length
+    /// signature_spec: type of the signature used for transaction signing
+    /// signature_raw: a pointer to first byte of the transaction signature
+    /// signatures_len: a transaction signature length
+    /// endorsement: (Optional) transaction endorsement data (depends on the ledger type)
+    ///     Indy:
+    ///         {
+    ///             "signature" - endorser signature as base58 string
+    ///         }
+    ///     Cheqd: TODO
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - response: received response
     pub(crate) async fn submit_txn(
         &self,
         vdr: &VDR,
@@ -239,6 +335,25 @@ impl VDRController {
             .await
     }
 
+    /// Submit raw transaction to the Ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// namespace of the registered Ledger to submit transaction
+    /// txn_bytes_raw: a pointer to first byte of transaction
+    /// txn_bytes_len: a transaction length
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - response: received response
+
     pub(crate) async fn submit_raw_txn(
         &self,
         vdr: &VDR,
@@ -254,6 +369,23 @@ impl VDRController {
         ledger.submit_raw_txn(&txn_bytes).await
     }
 
+    /// Submit query to the Ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// namespace of the registered Ledger to submit transaction
+    /// query: query message to submit on the Ledger
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
+    /// - response: received response
     pub(crate) async fn submit_query(
         &self,
         vdr: &VDR,
@@ -268,6 +400,21 @@ impl VDRController {
         let ledger = vdr.resolve_ledger_for_namespace(&namespace).await?;
         ledger.submit_query(&query).await
     }
+
+    /// Drop VDR object and associated Ledger connections.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+    /// command_handle: command handle to map callback to caller context.
+    /// vdr: pointer to VDR object
+    /// cb: Callback that takes command result as parameter
+    ///
+    /// #Returns
+    /// Error Code
+    /// cb:
+    /// - command_handle_: command handle to map callback to caller context.
+    /// - err: Error code.
 
     pub(crate) async fn cleanup(&self, vdr: &mut VDR) -> IndyResult<()> {
         trace!("cleanup > ",);
