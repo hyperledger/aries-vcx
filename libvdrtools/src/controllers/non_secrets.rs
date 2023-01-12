@@ -75,7 +75,7 @@ impl NonSecretsController {
     /// Update a non-secret wallet record value
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record
@@ -110,7 +110,7 @@ impl NonSecretsController {
     /// Update a non-secret wallet record tags
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record
@@ -154,7 +154,7 @@ impl NonSecretsController {
     /// Add new tags to the wallet record
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record
@@ -200,7 +200,7 @@ impl NonSecretsController {
     /// Delete tags from the wallet record
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record
@@ -241,7 +241,7 @@ impl NonSecretsController {
     /// Delete an existing wallet record in the wallet
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: record type
     /// id: the id of record
@@ -272,7 +272,7 @@ impl NonSecretsController {
     /// Get an wallet record by id
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// type_: allows to separate different record types collections
     /// id: the id of record

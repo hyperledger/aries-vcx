@@ -37,7 +37,7 @@ impl WalletController {
     /// Register custom wallet storage implementation.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// type_: Storage type name.
     /// create: WalletType create operation handler
     /// open: WalletType open operation handler

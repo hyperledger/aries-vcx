@@ -97,7 +97,7 @@ impl ProverController {
     /// The id must be unique.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// master_secret_id: (optional, if not present random one will be generated) new master id
     ///
@@ -159,7 +159,7 @@ impl ProverController {
     /// The blinded master secret is a part of the credential request.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// prover_did: a DID of the prover
     /// cred_offer_json: credential offer as a json containing information about the issuer and a credential
@@ -282,7 +282,7 @@ impl ProverController {
     ///     }
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: credential definition id
     /// tag_attrs_json: JSON array with names of attributes to tag by policy, or null for all
@@ -371,7 +371,7 @@ impl ProverController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: credential definition id
     ///
@@ -422,7 +422,7 @@ impl ProverController {
     ///     }
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_id: (optional, default is a random one) identifier by which credential will be stored in the wallet
     /// cred_req_metadata_json: a credential request metadata created by indy_prover_create_credential_req
@@ -1339,7 +1339,7 @@ impl ProverController {
     ///
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// proof_request_json: proof request json
     ///     {
     ///         "name": string,
@@ -1580,7 +1580,7 @@ impl ProverController {
     /// This new delta should be received with parameters: `from`: `timestamp` and `to`: `needed_time`.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
     /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential
     /// rev_reg_delta_json: revocation registry delta which covers the whole registry existence time
@@ -1664,7 +1664,7 @@ impl ProverController {
     /// The resulting revocation state and provided timestamp can be saved and reused later by applying a new revocation delta again.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
     /// rev_state_json: revocation registry state json
     /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential

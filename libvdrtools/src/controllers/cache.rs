@@ -78,7 +78,7 @@ impl CacheController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: DID of the submitter stored in secured Wallet.
@@ -161,7 +161,7 @@ impl CacheController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: DID of the submitter stored in secured Wallet.
@@ -224,7 +224,7 @@ impl CacheController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// options_json:
     ///  {
@@ -274,7 +274,7 @@ impl CacheController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// options_json:
     ///  {

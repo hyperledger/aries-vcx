@@ -39,7 +39,7 @@ impl CryptoController {
     /// Creates keys pair and stores in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// key_json: Key information as json. Example:
     /// {
@@ -83,7 +83,7 @@ impl CryptoController {
     /// for specific DID.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handler (created by open_wallet).
     /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// message_raw: a pointer to first byte of message to be signed
@@ -129,7 +129,7 @@ impl CryptoController {
     /// for specific DID.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// signer_vk: verkey of the message signer
     /// message_raw: a pointer to first byte of message that has been signed
     /// message_len: a message length
@@ -179,7 +179,7 @@ impl CryptoController {
     /// for specific DID.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// sender_vk: id (verkey) of message sender. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// recipient_vk: id (verkey) of message recipient
@@ -251,7 +251,7 @@ impl CryptoController {
     /// for specific DID.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handler (created by open_wallet).
     /// recipient_vk: id (verkey) of message recipient. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// encrypted_msg_raw: a pointer to first byte of message that to be decrypted
@@ -336,7 +336,7 @@ impl CryptoController {
     /// Note: use indy_pack_message() function for A2A goals.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// recipient_vk: verkey of message recipient
     /// message_raw: a pointer to first byte of message that to be encrypted
     /// message_len: a message length
@@ -382,7 +382,7 @@ impl CryptoController {
     /// Note: use indy_unpack_message() function for A2A goals.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handler (created by open_wallet).
     /// recipient_vk: id (verkey) of my key. The key must be created by calling indy_create_key or indy_create_and_store_my_did
     /// encrypted_msg_raw: a pointer to first byte of message that to be decrypted
@@ -429,7 +429,7 @@ impl CryptoController {
     /// Saves/replaces the meta information for the giving key in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// verkey - the key (verkey, key id) to store metadata.
     /// metadata - the meta information that will be store with the key.
@@ -470,7 +470,7 @@ impl CryptoController {
     /// Retrieves the meta information for the giving key in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// verkey - The key (verkey, key id) to retrieve metadata.
     ///
@@ -512,7 +512,7 @@ impl CryptoController {
     /// for specific DID.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// message: a pointer to the first byte of the message to be packed
     /// message_len: the length of the message
@@ -735,7 +735,7 @@ impl CryptoController {
     /// Unpacks a JWE-like formatted message outputted by indy_pack_message (Experimental)
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// jwe_data: a pointer to the first byte of the JWE to be unpacked
     /// jwe_len: the length of the JWE message in bytes

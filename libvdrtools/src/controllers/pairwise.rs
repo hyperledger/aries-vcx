@@ -22,7 +22,7 @@ impl PairwiseController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// their_did: encrypted DID
     ///
     /// #Returns
@@ -56,7 +56,7 @@ impl PairwiseController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// their_did: encrypted DID
     /// my_did: encrypted DID
     /// metadata Optional: extra information for pairwise
@@ -115,7 +115,7 @@ impl PairwiseController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     ///
     /// #Returns
     /// list_pairwise: list of saved pairwise
@@ -159,7 +159,7 @@ impl PairwiseController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// their_did: encoded Did
     ///
     /// #Returns
@@ -201,7 +201,7 @@ impl PairwiseController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// their_did: encoded Did
     /// metadata: some extra information for pairwise
     ///

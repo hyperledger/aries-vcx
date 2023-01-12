@@ -49,7 +49,7 @@ impl DidController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// did_info: Identity information as json. See domain::crypto::did::MyDidInfo
     /// Example:
     /// {
@@ -124,7 +124,7 @@ impl DidController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// did: target did to rotate keys.
     /// key_info: key information as json. Example:
     /// {
@@ -193,7 +193,7 @@ impl DidController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// did: DID stored in the wallet
     ///
     /// #Returns
@@ -243,7 +243,7 @@ impl DidController {
     ///
     /// #Params
     /// wallet_handle: wallet handler (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// identity_json: Identity information as json. Example:
     ///     {
     ///        "did": string, (required)
@@ -286,7 +286,7 @@ impl DidController {
     /// Retrieves the information about the giving DID in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to retrieve information.
     ///
@@ -355,7 +355,7 @@ impl DidController {
     /// Retrieves the information about all DIDs stored in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     ///
     /// #Returns
@@ -478,7 +478,7 @@ impl DidController {
     /// As result we can use returned ver key in all generic crypto and messaging functions.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// pool_handle:   Pool handle (created by open_pool).
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve key.
@@ -546,7 +546,7 @@ impl DidController {
     /// As result we can use returned ver key in all generic crypto and messaging functions.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve key.
     ///
@@ -594,7 +594,7 @@ impl DidController {
     /// Set/replaces endpoint information for the given DID.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve endpoint.
     /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to ip_address:port
@@ -637,7 +637,7 @@ impl DidController {
     /// Returns endpoint information for the given DID.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to resolve endpoint.
     ///
@@ -686,7 +686,7 @@ impl DidController {
     /// Saves/replaces the meta information for the giving DID in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - the DID to store metadata.
     /// metadata - the meta information that will be store with the DID.
@@ -726,7 +726,7 @@ impl DidController {
     /// Retrieves the meta information for the giving DID in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did - The DID to retrieve metadata.
     ///
@@ -763,7 +763,7 @@ impl DidController {
     /// Retrieves abbreviated verkey if it is possible otherwise return full verkey.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// did: DID.
     /// full_verkey: The DIDs verification key,
     ///
@@ -809,7 +809,7 @@ impl DidController {
     /// Update DID related entities stored in the wallet.
     ///
     /// #Params
-    /// command_handle: Command handle to map callback to caller context.
+
     /// wallet_handle: Wallet handle (created by open_wallet).
     /// did: target DID stored in the wallet.
     /// method: method to apply to the DID.

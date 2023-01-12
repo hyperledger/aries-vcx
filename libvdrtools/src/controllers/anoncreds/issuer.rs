@@ -81,7 +81,7 @@ impl IssuerController {
     /// After that can call indy_issuer_create_and_store_credential_def to build corresponding Credential Definition.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     /// issuer_did: DID of schema issuer
     /// name: a name the schema
     /// version: a version of the schema
@@ -150,7 +150,7 @@ impl IssuerController {
     /// to generate new keys for an existing credential definition.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// issuer_did: a DID of the issuer
     /// schema_json: credential schema as a json: {
@@ -362,7 +362,7 @@ impl IssuerController {
     /// WARNING: Rotating the credential definitional keys will result in making all credentials issued under the previous keys unverifiable.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: an identifier of created credential definition stored in the wallet
     /// config_json: (optional) type-specific configuration of credential definition as json:
@@ -507,7 +507,7 @@ impl IssuerController {
     /// WARNING: Rotating the credential definitional keys will result in making all credentials issued under the previous keys unverifiable.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_def_id: an identifier of created credential definition stored in the wallet
     ///
@@ -584,7 +584,7 @@ impl IssuerController {
     /// This call requires access to pre-configured blob storage writer instance handle that will allow to write generated tails.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// issuer_did: a DID of the issuer
     /// revoc_def_type: revocation registry type (optional, default value depends on credential definition type). Supported types are:
@@ -815,7 +815,7 @@ impl IssuerController {
     /// for authentication between protocol steps and integrity checking.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     /// wallet_handle: wallet handle (created by open_wallet)
     /// cred_def_id: id of credential definition stored in the wallet
     ///
@@ -887,7 +887,7 @@ impl IssuerController {
     /// Note that it is possible to accumulate deltas to reduce ledger load.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// cred_offer_json: a cred offer created by indy_issuer_create_credential_offer
     /// cred_req_json: a credential request created by indy_prover_create_credential_req
@@ -1139,7 +1139,7 @@ impl IssuerController {
     /// Note that it is possible to accumulate deltas to reduce ledger load.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// blob_storage_reader_cfg_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`).
     /// rev_reg_id: id of revocation registry stored in wallet
@@ -1369,7 +1369,7 @@ impl IssuerController {
     /// Send common delta to ledger to reduce the load.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context.
+
     /// rev_reg_delta_json: revocation registry delta.
     /// {
     ///     value: {

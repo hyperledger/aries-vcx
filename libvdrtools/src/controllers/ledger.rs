@@ -86,7 +86,7 @@ impl LedgerController {
     /// to validator pool (see write_request).
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
@@ -136,7 +136,7 @@ impl LedgerController {
     /// The request is sent to the validator pool as is. It's assumed that it's already prepared.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// request_json: Request data json.
     ///
@@ -172,7 +172,7 @@ impl LedgerController {
     /// The request is sent to the nodes as is. It's assumed that it's already prepared.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// pool_handle: pool handle (created by open_pool_ledger).
     /// request_json: Request data json.
     /// nodes: (Optional) List of node names to send the request.
@@ -216,7 +216,7 @@ impl LedgerController {
     /// sign key (see wallet_sign).
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
     /// request_json: Request data json.
@@ -260,7 +260,7 @@ impl LedgerController {
     /// sign key (see wallet_sign).
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// wallet_handle: wallet handle (created by open_wallet).
     /// submitter_did: Id of Identity stored in secured Wallet.
     /// request_json: Request data json.
@@ -301,7 +301,7 @@ impl LedgerController {
     /// Builds a request to get a DDO.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
     ///
@@ -332,7 +332,7 @@ impl LedgerController {
     /// Builds a NYM request to write simplified DID Doc. Request to create a new DID record for a specific user.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
@@ -391,7 +391,7 @@ impl LedgerController {
     /// Note: one of the fields `hash`, `raw`, `enc` must be specified.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
@@ -439,7 +439,7 @@ impl LedgerController {
     /// Note: one of the fields `hash`, `raw`, `enc` must be specified.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
     /// raw: (Optional) Requested attribute name.
@@ -484,7 +484,7 @@ impl LedgerController {
     /// Builds a GET_NYM request. Request to get information about a DID (NYM).
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
     ///
@@ -518,7 +518,7 @@ impl LedgerController {
     /// Parse a GET_NYM response to get DID (NYM) data.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_nym_response: response on GET_NYM request.
     ///
     /// #Returns
@@ -556,7 +556,7 @@ impl LedgerController {
     /// Builds a SCHEMA request. Request to add Credential's schema.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// data: Credential schema.
@@ -597,7 +597,7 @@ impl LedgerController {
     /// Builds a GET_SCHEMA request. Request to get Credential's Schema.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id: Schema ID in ledger
     ///
@@ -630,7 +630,7 @@ impl LedgerController {
     /// Parse a GET_SCHEMA response to get Schema in the format compatible with Anoncreds API.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_schema_response: response of GET_SCHEMA request.
     ///
     /// #Returns
@@ -667,7 +667,7 @@ impl LedgerController {
     /// that Issuer creates for a particular Credential Schema.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// data: credential definition json
@@ -713,7 +713,7 @@ impl LedgerController {
     /// that Issuer creates for a particular Credential Schema.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id: Credential Definition ID in ledger.
     ///
@@ -746,7 +746,7 @@ impl LedgerController {
     /// Parse a GET_CRED_DEF response to get Credential Definition in the format compatible with Anoncreds API.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_cred_def_response: response of GET_CRED_DEF request.
     ///
     /// #Returns
@@ -786,7 +786,7 @@ impl LedgerController {
     /// Builds a NODE request. Request to add a new node to the pool, or updates existing in the pool.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// target_did: Target Node's DID.  It differs from submitter_did field.
@@ -831,7 +831,7 @@ impl LedgerController {
     /// Builds a GET_VALIDATOR_INFO request.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: DID of the read request sender.
     ///
     /// #Returns
@@ -859,7 +859,7 @@ impl LedgerController {
     /// Builds a GET_TXN request. Request to get any transaction by its seq_no.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// ledger_type: (Optional) type of the ledger the requested transaction belongs to:
     ///     DOMAIN - used default,
@@ -900,7 +900,7 @@ impl LedgerController {
     /// Builds a POOL_CONFIG request. Request to change Pool's configuration.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// writes: Whether any write requests can be processed by the pool
@@ -938,7 +938,7 @@ impl LedgerController {
     /// Builds a POOL_RESTART request.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     /// action:        Action that pool has to do after received transaction. Either `start` or `cancel`.
     /// datetime:      <Optional> Restart time in datetime format. Skip to restart as early as possible.
@@ -974,7 +974,7 @@ impl LedgerController {
     /// It upgrades the specified Nodes (either all nodes in the Pool, or some specific ones).
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// name: Human-readable name for the upgrade.
@@ -1052,7 +1052,7 @@ impl LedgerController {
     /// to an exists credential definition.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// data: Revocation Registry data:
@@ -1103,7 +1103,7 @@ impl LedgerController {
     /// that Issuer creates for a particular Credential Definition.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// id:  ID of Revocation Registry Definition in ledger.
     ///
@@ -1137,7 +1137,7 @@ impl LedgerController {
     /// compatible with Anoncreds API.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_revoc_reg_def_response: response of GET_REVOC_REG_DEF request.
     ///
     /// #Returns
@@ -1183,7 +1183,7 @@ impl LedgerController {
     /// So, it can be sent each time a new credential is issued/revoked.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// revoc_reg_def_id: ID of the corresponding RevocRegDef.
@@ -1233,7 +1233,7 @@ impl LedgerController {
     /// by ID. The state is defined by the given timestamp.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
     /// timestamp: Requested time represented as a total number of seconds from Unix Epoch
@@ -1270,7 +1270,7 @@ impl LedgerController {
     /// Parse a GET_REVOC_REG response to get Revocation Registry in the format compatible with Anoncreds API.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_revoc_reg_response: response of GET_REVOC_REG request.
     ///
     /// #Returns
@@ -1307,7 +1307,7 @@ impl LedgerController {
     /// If from is not specified, then the whole state till to will be returned.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
     /// from: Requested time represented as a total number of seconds from Unix Epoch
@@ -1348,7 +1348,7 @@ impl LedgerController {
     /// Parse a GET_REVOC_REG_DELTA response to get Revocation Registry Delta in the format compatible with Anoncreds API.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// get_revoc_reg_response: response of GET_REVOC_REG_DELTA request.
     ///
     /// #Returns
@@ -1401,7 +1401,7 @@ impl LedgerController {
     /// Note: response of GET_VALIDATOR_INFO request isn't supported
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// response: response of write or get request.
     ///
     /// #Returns
@@ -1434,7 +1434,7 @@ impl LedgerController {
     /// Builds a AUTH_RULE request. Request to change authentication rules for a ledger transaction.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// txn_type: ledger transaction alias or associated value.
@@ -1506,7 +1506,7 @@ impl LedgerController {
     /// Builds a AUTH_RULES request. Request to change multiple authentication rules for a ledger transaction.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// rules: a list of auth rules: [
@@ -1559,7 +1559,7 @@ impl LedgerController {
     ///     * all - to get authentication rules for specific action (`old_value` can be skipped for `ADD` action)
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// txn_type: (Optional) target ledger transaction alias or associated value.
     /// action: (Optional) target action type. Can be either "ADD" or "EDIT".
@@ -1610,7 +1610,7 @@ impl LedgerController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// text: (Optional) a content of the TTA.
@@ -1676,7 +1676,7 @@ impl LedgerController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     ///
@@ -1715,7 +1715,7 @@ impl LedgerController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// data: (Optional) specifies a condition for getting specific TAA.
     /// Contains 3 mutually exclusive optional fields:
@@ -1758,7 +1758,7 @@ impl LedgerController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
     ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
     /// aml: a set of new acceptance mechanisms:
@@ -1808,7 +1808,7 @@ impl LedgerController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
     /// timestamp: i64 - time to get an active acceptance mechanisms. Pass -1 to get the latest one.
     /// version: (Optional) version of acceptance mechanisms.
@@ -1857,7 +1857,7 @@ impl LedgerController {
     /// If all text, version and taa_digest parameters are specified, a check integrity of them will be done.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// request_json: original request data json.
     /// text and version - (optional) raw data about TAA from ledger.
     ///     These parameters should be passed together.

@@ -76,7 +76,7 @@ impl VDRBuilder {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr_builder: pointer to VDRBuilder object
     /// vdr_p: pointer to store VDR object
     ///
@@ -175,7 +175,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr_builder: pointer to VDRBuilder object
     /// namespace_list: list of namespaces to associated with Ledger ('["namespace_1", "namespace_2"]')
     /// genesis_txn_data: genesis transactions for Indy Ledger (Note that node transactions must be located in separate lines)
@@ -224,7 +224,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// namespace_list: list of namespaces to ping
     ///
@@ -284,7 +284,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// namespace of the registered Ledger to submit transaction
     /// txn_bytes_raw: a pointer to first byte of transaction
@@ -326,7 +326,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// namespace of the registered Ledger to submit transaction
     /// txn_bytes_raw: a pointer to first byte of transaction
@@ -355,7 +355,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// namespace of the registered Ledger to submit transaction
     /// query: query message to submit on the Ledger
@@ -383,7 +383,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     ///
     /// #Returns

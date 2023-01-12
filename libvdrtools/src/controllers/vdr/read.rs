@@ -16,7 +16,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// fqdid: fully-qualified DID of the target DID on the Ledger
     ///
@@ -45,7 +45,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
     /// fqdid: fully-qualified DID of the target DID on the Ledger
@@ -106,7 +106,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// fqschema: fully-qualified Schema ID of the target Schema on the Ledger
     ///
@@ -138,7 +138,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
     /// fqschema: fully-qualified Schema ID of the target Schema on the Ledger
@@ -200,7 +200,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// fqcreddef: fully-qualified CredDef ID of the target CredentialDefinition on the Ledger
     ///
@@ -236,7 +236,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
     /// fqcreddef: fully-qualified CredDef ID of the target CredentialDefinition on the Ledger

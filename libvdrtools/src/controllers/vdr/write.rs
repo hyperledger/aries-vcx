@@ -10,7 +10,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// txn_specific_params: DID transaction specific data.
     ///                      Depends on the Ledger type:
@@ -71,7 +71,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// handle: handle pointing to created VDR object (returned by vdr_create)
     /// txn_specific_params: Schema transaction specific data
     ///                      Depends on the Ledger type:
@@ -125,7 +125,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// vdr: pointer to VDR object
     /// txn_specific_params: CredDef transaction specific data
     ///                      Depends on the Ledger type:

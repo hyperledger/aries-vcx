@@ -15,7 +15,7 @@ impl VDRController {
     /// EXPERIMENTAL
     ///
     /// #Params
-    /// command_handle: command handle to map callback to caller context.
+
     /// wallet_handle: handle pointing to an opened wallet (returned by indy_open_wallet)
     /// endorsement_data: data required for transaction endorsing
     ///     {

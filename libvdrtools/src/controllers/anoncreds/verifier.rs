@@ -34,7 +34,7 @@ impl VerifierController {
     ///
     /// #Params
     /// wallet_handle: wallet handle (created by open_wallet).
-    /// command_handle: command handle to map callback to user context.
+
     /// proof_request_json: proof request json
     ///     {
     ///         "name": string,
@@ -217,7 +217,7 @@ impl VerifierController {
     ///  Generates 80-bit numbers that can be used as a nonce for proof request.
     ///
     /// #Params
-    /// command_handle: command handle to map callback to user context
+
     ///
     /// #Returns
     /// nonce: generated number as a string
