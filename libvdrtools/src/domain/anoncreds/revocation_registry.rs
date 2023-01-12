@@ -8,7 +8,7 @@ use super::revocation_registry_definition::RevocationRegistryId;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RevocationRegistryV1 {
-    pub value: CryptoRevocationRegistry
+    pub value: CryptoRevocationRegistry,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -28,8 +28,9 @@ impl From<RevocationRegistry> for RevocationRegistryV1 {
 
 pub type RevocationRegistries = HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistry>>;
 
-
-pub fn rev_regs_map_to_rev_regs_local_map(rev_regs: RevocationRegistries) -> HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistryV1>> {
+pub fn rev_regs_map_to_rev_regs_local_map(
+    rev_regs: RevocationRegistries,
+) -> HashMap<RevocationRegistryId, HashMap<u64, RevocationRegistryV1>> {
     rev_regs
         .into_iter()
         .map(|(rev_reg_id, rev_reg_to_timespams)| {

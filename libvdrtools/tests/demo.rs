@@ -1,5 +1,4 @@
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-
 #![allow(temporary_cstring_as_ptr)]
 #[macro_use]
 extern crate derivative;
@@ -318,7 +317,7 @@ fn anoncreds_demo_works() {
             bs_writer_cb,
         )
     };
-    
+
     assert_eq!(ErrorCode::Success, ErrorCode::from(err));
 
     let (err, tails_writer_handle) = bs_writer_receiver

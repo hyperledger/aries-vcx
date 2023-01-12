@@ -19,7 +19,7 @@ impl From<Pairwise> for PairwiseInfo {
     fn from(pairwise: Pairwise) -> Self {
         PairwiseInfo {
             my_did: pairwise.my_did,
-            metadata: pairwise.metadata
+            metadata: pairwise.metadata,
         }
     }
 }

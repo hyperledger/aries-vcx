@@ -21,17 +21,17 @@ pub mod types;
 pub mod wallet;
 //pub mod payments;
 pub mod cache;
-pub mod logger;
-pub mod rand_utils;
-pub mod metrics;
 #[cfg(feature = "cheqd")]
 pub mod cheqd_keys;
 #[cfg(feature = "cheqd")]
 pub mod cheqd_ledger;
 #[cfg(feature = "cheqd")]
-pub mod cheqd_setup;
-#[cfg(feature = "cheqd")]
 pub mod cheqd_pool;
+#[cfg(feature = "cheqd")]
+pub mod cheqd_setup;
+pub mod logger;
+pub mod metrics;
+pub mod rand_utils;
 pub mod vdr;
 
 #[macro_use]
@@ -253,7 +253,8 @@ impl Setup {
     pub fn local_trustee() -> Setup {
         let name = setup();
         let (wallet_handle, wallet_config) = wallet::create_and_open_default_wallet(&name).unwrap();
-        let (did, verkey) = did::create_and_store_my_did(wallet_handle, Some(constants::TRUSTEE_SEED)).unwrap();
+        let (did, verkey) =
+            did::create_and_store_my_did(wallet_handle, Some(constants::TRUSTEE_SEED)).unwrap();
         Setup {
             name,
             wallet_config,

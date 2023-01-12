@@ -1,4 +1,4 @@
-use vdrtoolsrs::{future::Future, IndyError, cheqd_ledger, WalletHandle};
+use vdrtoolsrs::{cheqd_ledger, future::Future, IndyError, WalletHandle};
 
 pub fn build_tx(
     pool_alias: &str,
@@ -23,7 +23,8 @@ pub fn build_tx(
         max_coin_denom,
         timeout_height,
         memo,
-    ).wait()
+    )
+    .wait()
 }
 
 pub fn build_query_account(address: &str) -> Result<String, IndyError> {

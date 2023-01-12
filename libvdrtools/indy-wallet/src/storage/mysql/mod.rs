@@ -10,14 +10,16 @@ use indy_utils::crypto::base64;
 use log::LevelFilter;
 use query::{wql_to_sql, wql_to_sql_count};
 use serde::Deserialize;
-use sqlx::{ConnectOptions, mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlRow}, MySqlPool, Row};
+use sqlx::{
+    mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlRow},
+    ConnectOptions, MySqlPool, Row,
+};
 
 use crate::{
     language,
-    RecordOptions,
-    SearchOptions,
     storage::{StorageIterator, StorageRecord, Tag, TagName, WalletStorage, WalletStorageType},
     wallet::EncryptedValue,
+    RecordOptions, SearchOptions,
 };
 
 mod query;
@@ -65,7 +67,7 @@ struct Config {
     pub write_host: String,
     pub port: u16,
     pub db_name: String,
-    #[serde(default="default_connection_limit")]
+    #[serde(default = "default_connection_limit")]
     pub connection_limit: u32,
 }
 
@@ -151,9 +153,7 @@ impl MySqlStorageType {
         let connection = MySqlPoolOptions::default()
             .max_connections(config.connection_limit)
             .test_before_acquire(false)
-            .connect_with(
-                my_sql_connect_options,
-            )
+            .connect_with(my_sql_connect_options)
             .await?;
 
         connref.insert(connection_string, connection.clone());
@@ -748,7 +748,7 @@ impl WalletStorageType for MySqlStorageType {
             .begin()
             .await?;
 
-         let res = sqlx::query(
+        let res = sqlx::query(
             r#"
             DELETE FROM wallets
             WHERE name = ?
@@ -765,18 +765,14 @@ impl WalletStorageType for MySqlStorageType {
                 tx.commit().await?;
                 Ok(())
             }
-            0 => {
-                Err(err_msg(
-                    IndyErrorKind::WalletNotFound,
-                    "Item to delete not found",
-                ))
-            }
-            _ => {
-                Err(err_msg(
-                    IndyErrorKind::InvalidState,
-                    "More than one row deleted. Seems wallet structure is inconsistent",
-                ))
-            }
+            0 => Err(err_msg(
+                IndyErrorKind::WalletNotFound,
+                "Item to delete not found",
+            )),
+            _ => Err(err_msg(
+                IndyErrorKind::InvalidState,
+                "More than one row deleted. Seems wallet structure is inconsistent",
+            )),
         }
     }
 
@@ -913,8 +909,8 @@ impl WalletStorageType for MySqlStorageType {
 mod tests {
     use indy_utils::{assert_kind, environment};
 
-    use super::*;
     use super::super::Tag;
+    use super::*;
 
     // docker run --name indy-mysql -e MYSQL_ROOT_PASSWORD=pass@word1 -p 3306:3306 -d mysql:latest
 
@@ -961,13 +957,14 @@ mod tests {
                 let (tx, rx) = oneshot::channel::<IndyResult<()>>();
 
                 let future = async move {
-                    let res = st.create_storage(
-                        &format!("mysql_storage_sync_send_{}", id),
-                        _config(),
-                        _credentials(),
-                        &_metadata(),
-                    )
-                    .await;
+                    let res = st
+                        .create_storage(
+                            &format!("mysql_storage_sync_send_{}", id),
+                            _config(),
+                            _credentials(),
+                            &_metadata(),
+                        )
+                        .await;
 
                     tx.send(res).unwrap();
                 };
@@ -977,7 +974,7 @@ mod tests {
             })
             .collect();
 
-            let res = join_all(waiters).await;
+        let res = join_all(waiters).await;
 
         println!("------------> 3 {:?}", SystemTime::now());
 
@@ -988,12 +985,13 @@ mod tests {
                 let (tx, rx) = oneshot::channel::<IndyResult<()>>();
 
                 let future = async move {
-                    let res = st.delete_storage(
-                        &format!("mysql_storage_sync_send_{}", id),
-                        _config(),
-                        _credentials(),
-                    )
-                    .await;
+                    let res = st
+                        .delete_storage(
+                            &format!("mysql_storage_sync_send_{}", id),
+                            _config(),
+                            _credentials(),
+                        )
+                        .await;
 
                     tx.send(res).unwrap();
                 };
@@ -1003,7 +1001,7 @@ mod tests {
             })
             .collect();
 
-            let res = join_all(waiters).await;
+        let res = join_all(waiters).await;
 
         println!("------------> 5 {:?}", SystemTime::now());
     }

@@ -1,10 +1,10 @@
+use crate::utils::qualifier;
 use indy_api_types::{
+    errors::{IndyError, IndyErrorKind, IndyResult},
     validation::Validatable,
-    errors::{IndyError, IndyErrorKind, IndyResult}
 };
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::utils::qualifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DidMethod(pub String);
@@ -84,10 +84,15 @@ impl DidValue {
 
     pub fn new(did: &str, ledger_type: Option<&str>, method: Option<&str>) -> IndyResult<DidValue> {
         match (ledger_type, method) {
-            (Some(ledger_type_), Some(method_)) => Ok(DidValue(did.to_string()).set_ledger_and_method(ledger_type_, method_)),
+            (Some(ledger_type_), Some(method_)) => {
+                Ok(DidValue(did.to_string()).set_ledger_and_method(ledger_type_, method_))
+            }
             (None, Some(method_)) => Ok(DidValue(did.to_string()).set_method(&method_)),
             (None, None) => Ok(DidValue(did.to_string())),
-            (Some(_), None) => Err(IndyError::from_msg(IndyErrorKind::InvalidStructure, "Ledger type can not be specified if DID method is undefined")),
+            (Some(_), None) => Err(IndyError::from_msg(
+                IndyErrorKind::InvalidStructure,
+                "Ledger type can not be specified if DID method is undefined",
+            )),
         }
     }
 
@@ -117,7 +122,9 @@ impl Validatable for DidValue {
         if self.is_fully_qualified() {
             // pass
         } else {
-            let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
+            let did = bs58::decode(&self.0)
+                .into_vec()
+                .map_err(|err| err.to_string())?;
 
             if did.len() != 16 && did.len() != 32 {
                 return Err(format!("Trying to use DID with unexpected length: {}. \
@@ -143,7 +150,9 @@ impl ShortDidValue {
 
 impl Validatable for ShortDidValue {
     fn validate(&self) -> Result<(), String> {
-        let did = bs58::decode(&self.0).into_vec().map_err(|err| err.to_string())?;
+        let did = bs58::decode(&self.0)
+            .into_vec()
+            .map_err(|err| err.to_string())?;
 
         if did.len() != 16 && did.len() != 32 {
             return Err(format!("Trying to use DID with unexpected length: {}. \

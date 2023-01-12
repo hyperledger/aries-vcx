@@ -4,12 +4,12 @@ extern crate android_logger;
 #[cfg(feature = "ffi_api")]
 use env_logger::Builder as EnvLoggerBuilder;
 #[cfg(feature = "ffi_api")]
-use log::{LevelFilter, Level, Record, Metadata};
+use log::{Level, LevelFilter, Metadata, Record};
 
 #[cfg(feature = "ffi_api")]
-use std::{env, io::Write, ffi::CString, ptr};
+use libc::{c_char, c_void};
 #[cfg(feature = "ffi_api")]
-use libc::{c_void, c_char};
+use std::{env, ffi::CString, io::Write, ptr};
 
 #[cfg(target_os = "android")]
 use self::android_logger::Filter;
@@ -28,18 +28,25 @@ pub static mut LOGGER_STATE: LoggerState = LoggerState::Default;
 #[cfg(feature = "ffi_api")]
 pub enum LoggerState {
     Default,
-    Custom
+    Custom,
 }
 
 #[cfg(feature = "ffi_api")]
 impl LoggerState {
-    pub fn get(&self) -> (*const c_void, Option<EnabledCB>, Option<LogCB>, Option<FlushCB>) {
+    pub fn get(
+        &self,
+    ) -> (
+        *const c_void,
+        Option<EnabledCB>,
+        Option<LogCB>,
+        Option<FlushCB>,
+    ) {
         match self {
             LoggerState::Default => (
                 ptr::null(),
                 Some(LibvdrtoolsDefaultLogger::enabled),
                 Some(LibvdrtoolsDefaultLogger::log),
-                Some(LibvdrtoolsDefaultLogger::flush)
+                Some(LibvdrtoolsDefaultLogger::flush),
             ),
             LoggerState::Custom => unsafe { (CONTEXT, ENABLED_CB, LOG_CB, FLUSH_CB) },
         }
@@ -47,21 +54,22 @@ impl LoggerState {
 }
 
 #[cfg(feature = "ffi_api")]
-pub type EnabledCB = extern fn(context: *const c_void,
-                               level: u32,
-                               target: *const c_char) -> bool;
+pub type EnabledCB =
+    extern "C" fn(context: *const c_void, level: u32, target: *const c_char) -> bool;
 
 #[cfg(feature = "ffi_api")]
-pub type LogCB = extern fn(context: *const c_void,
-                           level: u32,
-                           target: *const c_char,
-                           message: *const c_char,
-                           module_path: *const c_char,
-                           file: *const c_char,
-                           line: u32);
+pub type LogCB = extern "C" fn(
+    context: *const c_void,
+    level: u32,
+    target: *const c_char,
+    message: *const c_char,
+    module_path: *const c_char,
+    file: *const c_char,
+    line: u32,
+);
 
 #[cfg(feature = "ffi_api")]
-pub type FlushCB = extern fn(context: *const c_void);
+pub type FlushCB = extern "C" fn(context: *const c_void);
 
 #[cfg(feature = "ffi_api")]
 static mut CONTEXT: *const c_void = ptr::null();
@@ -90,8 +98,18 @@ pub struct LibvdrtoolsLogger {
 
 #[cfg(feature = "ffi_api")]
 impl LibvdrtoolsLogger {
-    fn new(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>) -> Self {
-        LibvdrtoolsLogger { context, enabled, log, flush }
+    fn new(
+        context: *const c_void,
+        enabled: Option<EnabledCB>,
+        log: LogCB,
+        flush: Option<FlushCB>,
+    ) -> Self {
+        LibvdrtoolsLogger {
+            context,
+            enabled,
+            log,
+            flush,
+        }
     }
 }
 
@@ -102,11 +120,10 @@ impl log::Log for LibvdrtoolsLogger {
             let level = metadata.level() as u32;
             let target = CString::new(metadata.target()).unwrap();
 
-            enabled_cb(self.context,
-                       level,
-                       target.as_ptr(),
-            )
-        } else { true }
+            enabled_cb(self.context, level, target.as_ptr())
+        } else {
+            true
+        }
     }
 
     fn log(&self, record: &Record) {
@@ -120,13 +137,17 @@ impl log::Log for LibvdrtoolsLogger {
         let file = record.file().map(|a| CString::new(a).unwrap());
         let line = record.line().unwrap_or(0);
 
-        log_cb(self.context,
-               level,
-               target.as_ptr(),
-               message.as_ptr(),
-               module_path.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
-               file.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
-               line,
+        log_cb(
+            self.context,
+            level,
+            target.as_ptr(),
+            message.as_ptr(),
+            module_path
+                .as_ref()
+                .map(|p| p.as_ptr())
+                .unwrap_or(ptr::null()),
+            file.as_ref().map(|p| p.as_ptr()).unwrap_or(ptr::null()),
+            line,
         )
     }
 
@@ -145,7 +166,13 @@ unsafe impl Send for LibvdrtoolsLogger {}
 
 #[cfg(feature = "ffi_api")]
 impl LibvdrtoolsLogger {
-    pub fn init(context: *const c_void, enabled: Option<EnabledCB>, log: LogCB, flush: Option<FlushCB>, max_lvl: Option<u32>) -> Result<(), IndyError> {
+    pub fn init(
+        context: *const c_void,
+        enabled: Option<EnabledCB>,
+        log: LogCB,
+        flush: Option<FlushCB>,
+        max_lvl: Option<u32>,
+    ) -> Result<(), IndyError> {
         let logger = LibvdrtoolsLogger::new(context, enabled, log, flush);
 
         log::set_boxed_logger(Box::new(logger))?;
@@ -209,7 +236,7 @@ impl LibvdrtoolsDefaultLogger {
                     "trace" => Filter::default().with_min_level(log::Level::Trace),
                     _ => Filter::default().with_min_level(log::Level::Error),
                 },
-                None => Filter::default().with_min_level(log::Level::Error)
+                None => Filter::default().with_min_level(log::Level::Error),
             };
 
             //Set logging to off when deploying production android app.
@@ -218,7 +245,17 @@ impl LibvdrtoolsDefaultLogger {
             info!("Logging for Android");
         } else {
             EnvLoggerBuilder::new()
-                .format(|buf, record| writeln!(buf, "{:>5}|{:<30}|{:>35}:{:<4}| {}", record.level(), record.target(), record.file().get_or_insert(""), record.line().get_or_insert(0), record.args()))
+                .format(|buf, record| {
+                    writeln!(
+                        buf,
+                        "{:>5}|{:<30}|{:>35}:{:<4}| {}",
+                        record.level(),
+                        record.target(),
+                        record.file().get_or_insert(""),
+                        record.line().get_or_insert(0),
+                        record.args()
+                    )
+                })
                 .filter(None, LevelFilter::Off)
                 .parse_filters(pattern.as_ref().map(String::as_str).unwrap_or(""))
                 .try_init()?;
@@ -227,27 +264,24 @@ impl LibvdrtoolsDefaultLogger {
         Ok(())
     }
 
-    extern fn enabled(_context: *const c_void,
-                          level: u32,
-                          target: *const c_char) -> bool {
+    extern "C" fn enabled(_context: *const c_void, level: u32, target: *const c_char) -> bool {
         let level = get_level(level);
         let target = ctypes::c_str_to_string(target).unwrap().unwrap();
 
-        let metadata: Metadata = Metadata::builder()
-            .level(level)
-            .target(&target)
-            .build();
+        let metadata: Metadata = Metadata::builder().level(level).target(&target).build();
 
         log::logger().enabled(&metadata)
     }
 
-    extern fn log(_context: *const c_void,
-                      level: u32,
-                      target: *const c_char,
-                      args: *const c_char,
-                      module_path: *const c_char,
-                      file: *const c_char,
-                      line: u32) {
+    extern "C" fn log(
+        _context: *const c_void,
+        level: u32,
+        target: *const c_char,
+        args: *const c_char,
+        module_path: *const c_char,
+        file: *const c_char,
+        line: u32,
+    ) {
         let target = ctypes::c_str_to_string(target).unwrap().unwrap();
         let args = ctypes::c_str_to_string(args).unwrap().unwrap();
         let module_path = ctypes::c_str_to_string(module_path).unwrap();
@@ -267,7 +301,7 @@ impl LibvdrtoolsDefaultLogger {
         );
     }
 
-    extern fn flush(_context: *const c_void) {
+    extern "C" fn flush(_context: *const c_void) {
         log::logger().flush()
     }
 }
@@ -286,28 +320,30 @@ fn get_level(level: u32) -> Level {
 
 #[macro_export]
 macro_rules! try_log {
-    ($expr:expr) => (match $expr {
-        Ok(val) => val,
-        Err(err) => {
-            error!("try_log! | {}", err);
-            return Err(From::from(err))
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                error!("try_log! | {}", err);
+                return Err(From::from(err));
+            }
         }
-    })
+    };
 }
 
 macro_rules! _map_err {
-    ($lvl:expr, $expr:expr) => (
+    ($lvl:expr, $expr:expr) => {
         |err| {
             log!($lvl, "{} - {}", $expr, err);
             err
         }
-    );
-    ($lvl:expr) => (
+    };
+    ($lvl:expr) => {
         |err| {
             log!($lvl, "{}", err);
             err
         }
-    )
+    };
 }
 
 #[macro_export]
@@ -331,11 +367,15 @@ macro_rules! map_err_info {
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! secret {
-    ($val:expr) => {{ $val }};
+    ($val:expr) => {{
+        $val
+    }};
 }
 
 #[cfg(not(debug_assertions))]
 #[macro_export]
 macro_rules! secret {
-    ($val:expr) => {{ "_" }};
+    ($val:expr) => {{
+        "_"
+    }};
 }

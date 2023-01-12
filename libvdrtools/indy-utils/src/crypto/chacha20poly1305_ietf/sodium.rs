@@ -1,13 +1,13 @@
 extern crate sodiumoxide;
 
-use indy_api_types::domain::wallet::KeyDerivationMethod;
-use indy_api_types::errors::prelude::*;
 use self::sodiumoxide::crypto::aead::chacha20poly1305_ietf;
 use self::sodiumoxide::utils;
+use super::pwhash_argon2i13;
+use indy_api_types::domain::wallet::KeyDerivationMethod;
+use indy_api_types::errors::prelude::*;
 use std::cmp;
 use std::io;
 use std::io::{Read, Write};
-use super::pwhash_argon2i13;
 
 pub const KEYBYTES: usize = chacha20poly1305_ietf::KEYBYTES;
 pub const NONCEBYTES: usize = chacha20poly1305_ietf::NONCEBYTES;
@@ -27,11 +27,20 @@ pub fn gen_key() -> Key {
     Key(chacha20poly1305_ietf::gen_key())
 }
 
-pub fn derive_key(passphrase: &str, salt: &pwhash_argon2i13::Salt, key_derivation_method: &KeyDerivationMethod) -> Result<Key, IndyError> {
+pub fn derive_key(
+    passphrase: &str,
+    salt: &pwhash_argon2i13::Salt,
+    key_derivation_method: &KeyDerivationMethod,
+) -> Result<Key, IndyError> {
     let mut key_bytes = [0u8; chacha20poly1305_ietf::KEYBYTES];
 
-    pwhash_argon2i13::pwhash(&mut key_bytes, passphrase.as_bytes(), salt, key_derivation_method)
-        .map_err(|err| err.extend("Can't derive key"))?;
+    pwhash_argon2i13::pwhash(
+        &mut key_bytes,
+        passphrase.as_bytes(),
+        salt,
+        key_derivation_method,
+    )
+    .map_err(|err| err.extend("Can't derive key"))?;
 
     Ok(Key::new(key_bytes))
 }
@@ -43,12 +52,7 @@ pub fn gen_nonce() -> Nonce {
 pub fn gen_nonce_and_encrypt(data: &[u8], key: &Key) -> (Vec<u8>, Nonce) {
     let nonce = gen_nonce();
 
-    let encrypted_data = chacha20poly1305_ietf::seal(
-        data,
-        None,
-        &nonce.0,
-        &key.0,
-    );
+    let encrypted_data = chacha20poly1305_ietf::seal(data, None, &nonce.0, &key.0);
 
     (encrypted_data, nonce)
 }
@@ -57,46 +61,41 @@ pub fn gen_nonce_and_encrypt_detached(data: &[u8], aad: &[u8], key: &Key) -> (Ve
     let nonce = gen_nonce();
 
     let mut plain = data.to_vec();
-    let tag = chacha20poly1305_ietf::seal_detached(
-        plain.as_mut_slice(),
-        Some(aad),
-        &nonce.0,
-        &key.0
-    );
+    let tag =
+        chacha20poly1305_ietf::seal_detached(plain.as_mut_slice(), Some(aad), &nonce.0, &key.0);
 
     (plain.to_vec(), nonce, Tag(tag))
 }
 
-
-pub fn decrypt_detached(data: &[u8], key: &Key, nonce: &Nonce, tag: &Tag, ad: Option<&[u8]>) -> Result<Vec<u8>, IndyError> {
+pub fn decrypt_detached(
+    data: &[u8],
+    key: &Key,
+    nonce: &Nonce,
+    tag: &Tag,
+    ad: Option<&[u8]>,
+) -> Result<Vec<u8>, IndyError> {
     let mut plain = data.to_vec();
-    chacha20poly1305_ietf::open_detached(plain.as_mut_slice(),
-        ad,
-        &tag.0,
-        &nonce.0,
-        &key.0,
-    )
-        .map_err(|_| IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unable to decrypt data: {:?}"))
+    chacha20poly1305_ietf::open_detached(plain.as_mut_slice(), ad, &tag.0, &nonce.0, &key.0)
+        .map_err(|_| {
+            IndyError::from_msg(
+                IndyErrorKind::InvalidStructure,
+                "Unable to decrypt data: {:?}",
+            )
+        })
         .map(|()| plain)
 }
 
 pub fn encrypt(data: &[u8], key: &Key, nonce: &Nonce) -> Vec<u8> {
-    chacha20poly1305_ietf::seal(
-        data,
-        None,
-        &nonce.0,
-        &key.0,
-    )
+    chacha20poly1305_ietf::seal(data, None, &nonce.0, &key.0)
 }
 
 pub fn decrypt(data: &[u8], key: &Key, nonce: &Nonce) -> Result<Vec<u8>, IndyError> {
-    chacha20poly1305_ietf::open(
-        &data,
-        None,
-        &nonce.0,
-        &key.0,
-    )
-        .map_err(|_| IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unable to open sodium chacha20poly1305_ietf"))
+    chacha20poly1305_ietf::open(&data, None, &nonce.0, &key.0).map_err(|_| {
+        IndyError::from_msg(
+            IndyErrorKind::InvalidStructure,
+            "Unable to open sodium chacha20poly1305_ietf",
+        )
+    })
 }
 
 pub struct Writer<W: Write> {
@@ -132,7 +131,8 @@ impl<W: Write> Write for Writer<W> {
 
         while self.buffer.len() >= chunk_start + self.chunk_size {
             let chunk = &self.buffer[chunk_start..chunk_start + self.chunk_size];
-            self.inner.write_all(&encrypt(chunk, &self.key, &self.nonce))?;
+            self.inner
+                .write_all(&encrypt(chunk, &self.key, &self.nonce))?;
             self.nonce.increment();
             chunk_start += self.chunk_size;
         }
@@ -146,7 +146,8 @@ impl<W: Write> Write for Writer<W> {
 
     fn flush(&mut self) -> io::Result<()> {
         if !self.buffer.is_empty() {
-            self.inner.write_all(&encrypt(&self.buffer, &self.key, &self.nonce))?;
+            self.inner
+                .write_all(&encrypt(&self.buffer, &self.key, &self.nonce))?;
             self.nonce.increment();
         }
 
@@ -186,12 +187,15 @@ impl<R: Read> Reader<R> {
                 Ok(0) => break,
                 Ok(n) => read += n,
                 Err(ref e) if e.kind() == io::ErrorKind::Interrupted => continue,
-                Err(e) => return Err(e)
+                Err(e) => return Err(e),
             }
         }
 
         if read == 0 {
-            Err(io::Error::new(io::ErrorKind::UnexpectedEof, "No more crypto chucks to consume"))
+            Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "No more crypto chucks to consume",
+            ))
         } else {
             Ok(read)
         }
@@ -214,8 +218,9 @@ impl<R: Read> Read for Reader<R> {
         while pos < buf.len() {
             let chunk_size = self._read_chunk()?;
 
-            let chunk = decrypt(&self.chunk_buffer[..chunk_size], &self.key, &self.nonce)
-                .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid data in crypto chunk"))?;
+            let chunk = decrypt(&self.chunk_buffer[..chunk_size], &self.key, &self.nonce).map_err(
+                |_| io::Error::new(io::ErrorKind::InvalidData, "Invalid data in crypto chunk"),
+            )?;
 
             self.nonce.increment();
 
@@ -233,7 +238,6 @@ impl<R: Read> Read for Reader<R> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     extern crate rmp_serde;
@@ -245,19 +249,20 @@ mod tests {
     fn derivation_argon2i_mod_produces_expected_result() {
         let passphrase = "passphrase";
         let salt_bytes: [u8; 32] = [
-            24, 62, 35, 31, 123, 241, 94, 24, 192, 110, 199, 143, 173, 20, 23, 102,
-            184, 99, 221, 64, 247, 230, 11, 253, 10, 7, 80, 236, 185, 249, 110, 187
+            24, 62, 35, 31, 123, 241, 94, 24, 192, 110, 199, 143, 173, 20, 23, 102, 184, 99, 221,
+            64, 247, 230, 11, 253, 10, 7, 80, 236, 185, 249, 110, 187,
         ];
         let key_bytes: [u8; 32] = [
-            148, 89, 76, 239, 127, 103, 13, 86, 84, 217, 216, 13, 223, 141, 225, 41,
-            223, 126, 145, 138, 174, 31, 142, 199, 81, 12, 40, 201, 67, 8, 6, 251
+            148, 89, 76, 239, 127, 103, 13, 86, 84, 217, 216, 13, 223, 141, 225, 41, 223, 126, 145,
+            138, 174, 31, 142, 199, 81, 12, 40, 201, 67, 8, 6, 251,
         ];
 
         let res = derive_key(
             passphrase,
             &pwhash_argon2i13::Salt::from_slice(&salt_bytes).unwrap(),
             &KeyDerivationMethod::ARGON2I_MOD,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(res, Key::new(key_bytes))
     }
@@ -266,19 +271,20 @@ mod tests {
     fn derivation_argon2i_int_produces_expected_result() {
         let passphrase = "passphrase";
         let salt_bytes: [u8; 32] = [
-            24, 62, 35, 31, 123, 241, 94, 24, 192, 110, 199, 143, 173, 20, 23, 102,
-            184, 99, 221, 64, 247, 230, 11, 253, 10, 7, 80, 236, 185, 249, 110, 187
+            24, 62, 35, 31, 123, 241, 94, 24, 192, 110, 199, 143, 173, 20, 23, 102, 184, 99, 221,
+            64, 247, 230, 11, 253, 10, 7, 80, 236, 185, 249, 110, 187,
         ];
         let key_bytes: [u8; 32] = [
-            247, 55, 177, 252, 244, 130, 218, 129, 113, 206, 72, 44, 29, 68, 134, 215,
-            249, 233, 131, 199, 38, 87, 69, 217, 156, 217, 10, 160, 30, 148, 80, 160
+            247, 55, 177, 252, 244, 130, 218, 129, 113, 206, 72, 44, 29, 68, 134, 215, 249, 233,
+            131, 199, 38, 87, 69, 217, 156, 217, 10, 160, 30, 148, 80, 160,
         ];
 
         let res = derive_key(
             passphrase,
             &pwhash_argon2i13::Salt::from_slice(&salt_bytes).unwrap(),
             &KeyDerivationMethod::ARGON2I_INT,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(res, Key::new(key_bytes))
     }
@@ -300,12 +306,12 @@ mod tests {
         let key = gen_key();
         // AAD allows the sender to tie extra (protocol) data to the encryption. Example JWE enc and alg
         // Which the receiver MUST then check before decryption
-        let aad= b"some protocol data input to the encryption";
+        let aad = b"some protocol data input to the encryption";
 
         let (c, nonce, tag) = gen_nonce_and_encrypt_detached(&data, aad, &key);
         let u = decrypt_detached(&c, &key, &nonce, &tag, Some(aad)).unwrap();
         assert_eq!(data, u);
-}
+    }
 
     #[test]
     fn encrypt_decrypt_works_for_nonce() {

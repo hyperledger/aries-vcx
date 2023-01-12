@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
+use crate::utils::crypto::base58::{FromBase58, ToBase58};
 use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
 use crate::{
     domain::crypto::did::{
@@ -140,7 +140,8 @@ impl DidController {
     ) -> IndyResult<()> {
         trace!(
             "replace_keys_apply > wallet_handle {:?} my_did {:?}",
-            wallet_handle, my_did
+            wallet_handle,
+            my_did
         );
 
         self.crypto_service.validate_did(&my_did)?;
@@ -174,7 +175,8 @@ impl DidController {
     ) -> IndyResult<()> {
         trace!(
             "store_their_did > wallet_handle {:?} their_did_info {:?}",
-            wallet_handle, their_did_info
+            wallet_handle,
+            their_did_info
         );
 
         let their_did = self
@@ -198,7 +200,8 @@ impl DidController {
     ) -> IndyResult<String> {
         trace!(
             "get_my_did_with_meta > wallet_handle {:?} my_did {:?}",
-            wallet_handle, my_did
+            wallet_handle,
+            my_did
         );
 
         let did = self
@@ -239,10 +242,7 @@ impl DidController {
         res
     }
 
-    pub async fn list_my_dids_with_meta(
-        &self,
-        wallet_handle: WalletHandle,
-    ) -> IndyResult<String> {
+    pub async fn list_my_dids_with_meta(&self, wallet_handle: WalletHandle) -> IndyResult<String> {
         trace!("list_my_dids_with_meta > wallet_handle {:?}", wallet_handle);
 
         let mut did_search = self
@@ -345,7 +345,9 @@ impl DidController {
     ) -> IndyResult<String> {
         trace!(
             "key_for_did > pool_handle {:?} wallet_handle {:?} did {:?}",
-            pool_handle, wallet_handle, did
+            pool_handle,
+            wallet_handle,
+            did
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -386,7 +388,8 @@ impl DidController {
     ) -> IndyResult<String> {
         trace!(
             "key_for_local_did > wallet_handle {:?} did {:?}",
-            wallet_handle, did
+            wallet_handle,
+            did
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -420,7 +423,9 @@ impl DidController {
     ) -> IndyResult<()> {
         trace!(
             "set_endpoint_for_did > wallet_handle {:?} did {:?} endpoint {:?}",
-            wallet_handle, did, endpoint
+            wallet_handle,
+            did,
+            endpoint
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -447,7 +452,9 @@ impl DidController {
         trace!(
             "get_endpoint_for_did > wallet_handle {:?} \
                 pool_handle {:?} did {:?}",
-            wallet_handle, pool_handle, did
+            wallet_handle,
+            pool_handle,
+            did
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -478,7 +485,9 @@ impl DidController {
     ) -> IndyResult<()> {
         trace!(
             "set_did_metadata > wallet_handle {:?} did {:?} metadata {:?}",
-            wallet_handle, did, metadata
+            wallet_handle,
+            did,
+            metadata
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -501,7 +510,8 @@ impl DidController {
     ) -> IndyResult<String> {
         trace!(
             "get_did_metadata > wallet_handle {:?} did {:?}",
-            wallet_handle, did
+            wallet_handle,
+            did
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -516,11 +526,7 @@ impl DidController {
         res
     }
 
-    pub async fn abbreviate_verkey(
-        &self,
-        did: DidValue,
-        verkey: String,
-    ) -> IndyResult<String> {
+    pub async fn abbreviate_verkey(&self, did: DidValue, verkey: String) -> IndyResult<String> {
         trace!("abbreviate_verkey > did {:?} verkey {:?}", did, verkey);
 
         self.crypto_service.validate_did(&did)?;
@@ -556,7 +562,9 @@ impl DidController {
     ) -> IndyResult<String> {
         trace!(
             "qualify_did > wallet_handle {:?} curr_did {:?} method {:?}",
-            wallet_handle, did, method
+            wallet_handle,
+            did,
+            method
         );
 
         self.crypto_service.validate_did(&did)?;
@@ -566,7 +574,7 @@ impl DidController {
             .get_indy_object::<Did>(wallet_handle, &did.0, &RecordOptions::id_value())
             .await?;
 
-        curr_did.did = DidValue::new(&did.to_short().0, None,Some(&method.0))?;
+        curr_did.did = DidValue::new(&did.to_short().0, None, Some(&method.0))?;
 
         self.wallet_service
             .delete_indy_record::<Did>(wallet_handle, &did.0)

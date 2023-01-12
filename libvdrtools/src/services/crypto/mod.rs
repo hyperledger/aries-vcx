@@ -151,29 +151,23 @@ impl CryptoService {
         let seed = self.convert_seed(my_did_info.seed.as_ref().map(String::as_ref))?;
         let (vk, sk) = crypto_type.create_key(seed.as_ref())?;
         let did = match my_did_info.did {
-            Some(ref did) => {
-                did.clone()
-            },
-            _ if my_did_info.cid == Some(true) => {
-                DidValue::new(
-                    &vk[..].to_vec().to_base58(),
-                    my_did_info.ledger_type.as_deref(),
-                    my_did_info
-                        .method_name
-                        .as_ref()
-                        .map(|method| method.0.as_str()),
-                )?
-            },
-            _ => {
-                DidValue::new(
-                    &vk[0..16].to_vec().to_base58(),
-                    my_did_info.ledger_type.as_deref(),
-                    my_did_info
-                        .method_name
-                        .as_ref()
-                        .map(|method| method.0.as_str()),
-                )?
-            },
+            Some(ref did) => did.clone(),
+            _ if my_did_info.cid == Some(true) => DidValue::new(
+                &vk[..].to_vec().to_base58(),
+                my_did_info.ledger_type.as_deref(),
+                my_did_info
+                    .method_name
+                    .as_ref()
+                    .map(|method| method.0.as_str()),
+            )?,
+            _ => DidValue::new(
+                &vk[0..16].to_vec().to_base58(),
+                my_did_info.ledger_type.as_deref(),
+                my_did_info
+                    .method_name
+                    .as_ref()
+                    .map(|method| method.0.as_str()),
+            )?,
         };
 
         let mut vk = vk[..].to_base58();
@@ -191,7 +185,10 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn create_their_did(&self, their_did_info: &TheirDidInfo) -> IndyResult<TheirDid> {
+    pub(crate) async fn create_their_did(
+        &self,
+        their_did_info: &TheirDidInfo,
+    ) -> IndyResult<TheirDid> {
         trace!("create_their_did > their_did_info {:?}", their_did_info);
 
         // Check did is correct Base58
@@ -241,7 +238,12 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn verify(&self, their_vk: &str, msg: &[u8], signature: &[u8]) -> IndyResult<bool> {
+    pub(crate) async fn verify(
+        &self,
+        their_vk: &str,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> IndyResult<bool> {
         trace!(
             "verify > their_vk {:?} msg {:?} signature {:?}",
             their_vk,
@@ -430,7 +432,11 @@ impl CryptoService {
         res
     }
 
-    pub(crate) async fn crypto_box_seal_open(&self, my_key: &Key, doc: &[u8]) -> IndyResult<Vec<u8>> {
+    pub(crate) async fn crypto_box_seal_open(
+        &self,
+        my_key: &Key,
+        doc: &[u8],
+    ) -> IndyResult<Vec<u8>> {
         trace!("crypto_box_seal_open > my_key {:?} doc {:?}", my_key, doc);
 
         let (my_vk, crypto_type_name) = split_verkey(&my_key.verkey);
@@ -459,7 +465,10 @@ impl CryptoService {
         res
     }
 
-    pub(crate) fn convert_seed(&self, seed: Option<&str>) -> IndyResult<Option<ed25519_sign::Seed>> {
+    pub(crate) fn convert_seed(
+        &self,
+        seed: Option<&str>,
+    ) -> IndyResult<Option<ed25519_sign::Seed>> {
         trace!("convert_seed > seed {:?}", secret!(seed));
 
         if seed.is_none() {
@@ -668,7 +677,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
+            ledger_type: None,
         };
         let my_did = service.create_my_did(&did_info).await;
         assert!(my_did.is_ok());
@@ -685,8 +694,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (my_did, _) = service.create_my_did(&did_info).await.unwrap();
@@ -706,8 +714,7 @@ mod tests {
             seed: None,
             crypto_type,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         assert!(service.create_my_did(&did_info).await.is_err());
@@ -726,8 +733,7 @@ mod tests {
             seed,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
         let did_info_without_seed = MyDidInfo {
             did: Some(did.clone()),
@@ -735,8 +741,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (did_with_seed, _) = service.create_my_did(&did_info_with_seed).await.unwrap();
@@ -797,8 +802,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let message = r#"message"#;
@@ -828,8 +832,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
         let message = r#"message"#;
         let (my_did, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -852,8 +855,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
         let message = r#"message"#;
         let (my_did, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -876,8 +878,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let message = r#"message"#;
@@ -901,8 +902,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
         let message = r#"message"#;
         let (_, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -928,8 +928,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (_, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -955,8 +954,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (my_did, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -1005,8 +1003,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (my_did, my_key) = service.create_my_did(&did_info).await.unwrap();
@@ -1049,8 +1046,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
         let (did, _) = service.create_my_did(&did_info.clone()).await.unwrap();
         let did = Did::new(did.did, did.verkey);
@@ -1069,8 +1065,7 @@ mod tests {
             seed: None,
             crypto_type: None,
             method_name: None,
-            ledger_type: None
-
+            ledger_type: None,
         };
 
         let (did, key) = service.create_my_did(&did_info.clone()).await.unwrap();

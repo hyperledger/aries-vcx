@@ -5,6 +5,7 @@ use indy_api_types::{
 use indy_utils::ctypes;
 use libc::c_char;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::{
         anoncreds::{credential_definition::CredentialDefinitionId, schema::SchemaId},
@@ -13,7 +14,6 @@ use crate::{
     },
     Locator,
 };
-use crate::services::CommandMetric;
 
 /// Gets credential definition json data for specified credential definition id.
 /// If data is present inside of cache, cached data is returned.
@@ -87,7 +87,9 @@ pub extern "C" fn indy_get_cred_def(
         cb(command_handle, err, cred_def.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CacheCommandGetCredDef, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CacheCommandGetCredDef, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_cred_def < {:?}", res);
@@ -167,7 +169,9 @@ pub extern "C" fn indy_get_schema(
         cb(command_handle, err, schema.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CacheCommandGetSchema, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CacheCommandGetSchema, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_schema < {:?}", res);
@@ -224,7 +228,11 @@ pub extern "C" fn indy_purge_cred_def_cache(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CacheCommandPurgeCredDefCache, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::CacheCommandPurgeCredDefCache,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_purge_cred_def_cache < {:?}", res);
@@ -281,7 +289,9 @@ pub extern "C" fn indy_purge_schema_cache(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CacheCommandPurgeSchemaCache, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CacheCommandPurgeSchemaCache, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_purge_schema_cache < {:?}", res);

@@ -1,7 +1,7 @@
-use super::constants::{SCHEMA, GET_SCHEMA};
-use super::response::{GetReplyResultV1, ReplyType};
-use super::super::crypto::did::ShortDidValue;
 use super::super::anoncreds::schema::SchemaId;
+use super::super::crypto::did::ShortDidValue;
+use super::constants::{GET_SCHEMA, SCHEMA};
+use super::response::{GetReplyResultV1, ReplyType};
 
 use std::collections::HashSet;
 
@@ -16,7 +16,7 @@ impl SchemaOperation {
     pub fn new(data: SchemaOperationData) -> SchemaOperation {
         SchemaOperation {
             data,
-            _type: SCHEMA.to_string()
+            _type: SCHEMA.to_string(),
         }
     }
 }
@@ -25,7 +25,7 @@ impl SchemaOperation {
 pub struct SchemaOperationData {
     pub name: String,
     pub version: String,
-    pub attr_names: HashSet<String>
+    pub attr_names: HashSet<String>,
 }
 
 impl SchemaOperationData {
@@ -33,7 +33,7 @@ impl SchemaOperationData {
         SchemaOperationData {
             name,
             version,
-            attr_names
+            attr_names,
         }
     }
 }
@@ -43,7 +43,7 @@ pub struct GetSchemaOperation {
     #[serde(rename = "type")]
     pub _type: String,
     pub dest: ShortDidValue,
-    pub data: GetSchemaOperationData
+    pub data: GetSchemaOperationData,
 }
 
 impl GetSchemaOperation {
@@ -51,7 +51,7 @@ impl GetSchemaOperation {
         GetSchemaOperation {
             _type: GET_SCHEMA.to_string(),
             dest,
-            data
+            data,
         }
     }
 }
@@ -59,15 +59,12 @@ impl GetSchemaOperation {
 #[derive(Serialize, PartialEq, Debug, Deserialize)]
 pub struct GetSchemaOperationData {
     pub name: String,
-    pub version: String
+    pub version: String,
 }
 
 impl GetSchemaOperationData {
     pub fn new(name: String, version: String) -> GetSchemaOperationData {
-        GetSchemaOperationData {
-            name,
-            version
-        }
+        GetSchemaOperationData { name, version }
     }
 }
 
@@ -75,7 +72,7 @@ impl GetSchemaOperationData {
 #[serde(untagged)]
 pub enum GetSchemaReplyResult {
     GetSchemaReplyResultV0(GetSchemaResultV0),
-    GetSchemaReplyResultV1(GetReplyResultV1<GetSchemaResultDataV1>)
+    GetSchemaReplyResultV1(GetReplyResultV1<GetSchemaResultDataV1>),
 }
 
 impl ReplyType for GetSchemaReplyResult {
@@ -89,7 +86,7 @@ impl ReplyType for GetSchemaReplyResult {
 pub struct GetSchemaResultV0 {
     pub seq_no: u32,
     pub data: SchemaOperationData,
-    pub dest: ShortDidValue
+    pub dest: ShortDidValue,
 }
 
 #[derive(Deserialize, Debug)]
@@ -99,11 +96,11 @@ pub struct GetSchemaResultDataV1 {
     pub id: SchemaId,
     pub schema_name: String,
     pub schema_version: String,
-    pub value: GetSchemaResultDataValueV1
+    pub value: GetSchemaResultDataValueV1,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetSchemaResultDataValueV1 {
-    pub attr_names: HashSet<String>
+    pub attr_names: HashSet<String>,
 }

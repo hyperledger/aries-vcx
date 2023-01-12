@@ -504,10 +504,7 @@ impl ProverController {
         res
     }
 
-    pub async fn close_credentials_search(
-        &self,
-        search_handle: SearchHandle,
-    ) -> IndyResult<()> {
+    pub async fn close_credentials_search(&self, search_handle: SearchHandle) -> IndyResult<()> {
         trace!(
             "close_credentials_search > search_handle {:?}",
             search_handle

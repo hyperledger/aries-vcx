@@ -1059,7 +1059,7 @@ mod tests {
         }
 
         #[test]
-        fn  build_credential_tags_works_for_fully_qualified_ids() {
+        fn build_credential_tags_works_for_fully_qualified_ids() {
             let ps = ProverService::new();
 
             let schema_id = "did:indy:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0";

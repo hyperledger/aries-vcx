@@ -9,10 +9,10 @@ use std::{
     },
 };
 
-use vdrtools_sys::Error as ErrorCode;
-use vdrtoolsrs::{CommandHandle, WalletHandle};
 use lazy_static::lazy_static;
 use libc::c_char;
+use vdrtools_sys::Error as ErrorCode;
+use vdrtoolsrs::{CommandHandle, WalletHandle};
 
 lazy_static! {
     static ref COMMAND_HANDLE_COUNTER: AtomicUsize = AtomicUsize::new(1);

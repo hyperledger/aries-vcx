@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
+use crate::utils::crypto::base58::ToBase58;
 use async_std::{fs, fs::File, prelude::*};
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
-use crate::utils::crypto::base58::ToBase58;
 use serde_json;
 
 use crate::utils::environment;
@@ -86,9 +86,13 @@ impl WritableBlob for DefaultWriter {
             .await
             .map_err(map_err_trace!(format!("path: {:?}", path)))?;
 
-        fs::copy(&tmp_storage_file(self.id), &path).await.map_err(map_err_trace!())?; //FIXME
+        fs::copy(&tmp_storage_file(self.id), &path)
+            .await
+            .map_err(map_err_trace!())?; //FIXME
 
-        fs::remove_file(&tmp_storage_file(self.id)).await.map_err(map_err_trace!())?;
+        fs::remove_file(&tmp_storage_file(self.id))
+            .await
+            .map_err(map_err_trace!())?;
 
         let res = path.to_str().unwrap().to_owned();
 

@@ -1,4 +1,4 @@
-use super::constants::{POOL_CONFIG, POOL_UPGRADE, POOL_RESTART};
+use super::constants::{POOL_CONFIG, POOL_RESTART, POOL_UPGRADE};
 
 use std::collections::HashMap;
 
@@ -7,7 +7,7 @@ pub struct PoolConfigOperation {
     #[serde(rename = "type")]
     pub _type: String,
     pub writes: bool,
-    pub force: bool
+    pub force: bool,
 }
 
 impl PoolConfigOperation {
@@ -15,7 +15,7 @@ impl PoolConfigOperation {
         PoolConfigOperation {
             _type: POOL_CONFIG.to_string(),
             writes,
-            force
+            force,
         }
     }
 }
@@ -58,12 +58,22 @@ pub struct PoolUpgradeOperation {
     pub reinstall: bool,
     pub force: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub package: Option<String>
+    pub package: Option<String>,
 }
 
 impl PoolUpgradeOperation {
-    pub fn new(name: &str, version: &str, action: &str, sha256: &str, timeout: Option<u32>, schedule: Option<HashMap<String, String>>,
-               justification: Option<&str>, reinstall: bool, force: bool, package: Option<&str>) -> PoolUpgradeOperation {
+    pub fn new(
+        name: &str,
+        version: &str,
+        action: &str,
+        sha256: &str,
+        timeout: Option<u32>,
+        schedule: Option<HashMap<String, String>>,
+        justification: Option<&str>,
+        reinstall: bool,
+        force: bool,
+        package: Option<&str>,
+    ) -> PoolUpgradeOperation {
         PoolUpgradeOperation {
             _type: POOL_UPGRADE.to_string(),
             name: name.to_string(),

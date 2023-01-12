@@ -747,7 +747,12 @@ mod tests {
 
         let storage = storage_type.open_storage(id, None, None).await.unwrap();
 
-        Wallet::new(id.to_string(), storage, Arc::new(keys), WalletCache::new(None))
+        Wallet::new(
+            id.to_string(),
+            storage,
+            Arc::new(keys),
+            WalletCache::new(None),
+        )
     }
 
     async fn _assert_is_empty(wallet: &Wallet) {
@@ -776,19 +781,39 @@ mod tests {
     async fn _assert_has_2_records(wallet: &Wallet) {
         let metrics = WalletCacheHitMetrics::new();
 
-        let record = wallet.get(&_type1(), &_id1(), _options(), &metrics).await.unwrap();
+        let record = wallet
+            .get(&_type1(), &_id1(), _options(), &metrics)
+            .await
+            .unwrap();
         assert_eq!(record.type_.unwrap(), _type1());
         assert_eq!(record.id, _id1());
         assert_eq!(record.value.unwrap(), _value1());
         assert_eq!(record.tags.unwrap(), _tags1());
-        assert_eq!(metrics.get_data_for_type(&_type1()).await.unwrap().get_not_cached(), 1);
+        assert_eq!(
+            metrics
+                .get_data_for_type(&_type1())
+                .await
+                .unwrap()
+                .get_not_cached(),
+            1
+        );
 
-        let record = wallet.get(&_type2(), &_id2(), _options(), &metrics).await.unwrap();
+        let record = wallet
+            .get(&_type2(), &_id2(), _options(), &metrics)
+            .await
+            .unwrap();
         assert_eq!(record.type_.unwrap(), _type2());
         assert_eq!(record.id, _id2());
         assert_eq!(record.value.unwrap(), _value2());
         assert_eq!(record.tags.unwrap(), _tags2());
-        assert_eq!(metrics.get_data_for_type(&_type2()).await.unwrap().get_not_cached(), 1);
+        assert_eq!(
+            metrics
+                .get_data_for_type(&_type2())
+                .await
+                .unwrap()
+                .get_not_cached(),
+            1
+        );
     }
 
     async fn _add_300_records(wallet: Wallet) -> Wallet {
@@ -816,9 +841,30 @@ mod tests {
             assert_eq!(record.value.unwrap(), _value(i));
             assert_eq!(record.tags.unwrap(), _tags(i));
         }
-        assert_eq!(metrics.get_data_for_type(&_type(0)).await.unwrap().get_not_cached(), 100);
-        assert_eq!(metrics.get_data_for_type(&_type(1)).await.unwrap().get_not_cached(), 100);
-        assert_eq!(metrics.get_data_for_type(&_type(2)).await.unwrap().get_not_cached(), 100);
+        assert_eq!(
+            metrics
+                .get_data_for_type(&_type(0))
+                .await
+                .unwrap()
+                .get_not_cached(),
+            100
+        );
+        assert_eq!(
+            metrics
+                .get_data_for_type(&_type(1))
+                .await
+                .unwrap()
+                .get_not_cached(),
+            100
+        );
+        assert_eq!(
+            metrics
+                .get_data_for_type(&_type(2))
+                .await
+                .unwrap()
+                .get_not_cached(),
+            100
+        );
     }
 
     fn _master_key() -> chacha20poly1305_ietf::Key {

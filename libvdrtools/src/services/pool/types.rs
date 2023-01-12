@@ -2,8 +2,8 @@ use std::cmp::Eq;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
-use indy_api_types::errors::prelude::*;
 use crate::utils::crypto::verkey_builder::build_full_verkey;
+use indy_api_types::errors::prelude::*;
 use indy_api_types::CommandHandle;
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
@@ -23,21 +23,29 @@ pub struct NodeData {
 }
 
 fn string_or_number<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
-    where D: serde::Deserializer<'de>
+where
+    D: serde::Deserializer<'de>,
 {
     let deser_res: Result<serde_json::Value, _> = serde::Deserialize::deserialize(deserializer);
 
     match deser_res {
         Ok(serde_json::Value::String(s)) => match s.parse::<u64>() {
             Ok(num) => Ok(Some(num)),
-            Err(err) => Err(serde::de::Error::custom(format!("Invalid Node transaction: {:?}", err)))
+            Err(err) => Err(serde::de::Error::custom(format!(
+                "Invalid Node transaction: {:?}",
+                err
+            ))),
         },
         Ok(serde_json::Value::Number(n)) => match n.as_u64() {
             Some(num) => Ok(Some(num)),
-            None => Err(serde::de::Error::custom("Invalid Node transaction".to_string()))
+            None => Err(serde::de::Error::custom(
+                "Invalid Node transaction".to_string(),
+            )),
         },
         Ok(serde_json::Value::Null) => Ok(None),
-        _ => Err(serde::de::Error::custom("Invalid Node transaction".to_string())),
+        _ => Err(serde::de::Error::custom(
+            "Invalid Node transaction".to_string(),
+        )),
     }
 }
 
@@ -72,7 +80,6 @@ pub struct NodeTransactionV1 {
     pub req_signature: ReqSignature,
     pub ver: String,
 }
-
 
 impl NodeTransactionV1 {
     pub const VERSION: &'static str = "1.4";
@@ -191,7 +198,10 @@ impl NodeTransactionV1 {
         }
 
         if other.txn.data.verkey.is_some() {
-            self.txn.data.verkey = Some(build_full_verkey(&self.txn.data.dest, other.txn.data.verkey.as_ref().map(String::as_str))?);
+            self.txn.data.verkey = Some(build_full_verkey(
+                &self.txn.data.dest,
+                other.txn.data.verkey.as_ref().map(String::as_str),
+            )?);
         }
 
         Ok(())
@@ -244,12 +254,18 @@ impl CatchupRep {
         let mut min = None;
 
         for (k, _) in self.txns.iter() {
-            let val = k.parse::<usize>()
-                .to_indy(IndyErrorKind::InvalidStructure, "Invalid key in catchup reply")?;
+            let val = k.parse::<usize>().to_indy(
+                IndyErrorKind::InvalidStructure,
+                "Invalid key in catchup reply",
+            )?;
 
             match min {
                 None => min = Some(val),
-                Some(m) => if val < m { min = Some(val) }
+                Some(m) => {
+                    if val < m {
+                        min = Some(val)
+                    }
+                }
             }
         }
 
@@ -268,29 +284,29 @@ impl Reply {
     pub fn req_id(&self) -> u64 {
         match *self {
             Reply::ReplyV0(ref reply) => reply.result.req_id,
-            Reply::ReplyV1(ref reply) => reply.result.txn.metadata.req_id
+            Reply::ReplyV1(ref reply) => reply.result.txn.metadata.req_id,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReplyV0 {
-    pub result: ResponseMetadata
+    pub result: ResponseMetadata,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReplyV1 {
-    pub result: ReplyResultV1
+    pub result: ReplyResultV1,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReplyResultV1 {
-    pub txn: ReplyTxnV1
+    pub txn: ReplyTxnV1,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReplyTxnV1 {
-    pub metadata: ResponseMetadata
+    pub metadata: ResponseMetadata,
 }
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
@@ -304,7 +320,7 @@ impl Response {
     pub fn req_id(&self) -> u64 {
         match *self {
             Response::ResponseV0(ref res) => res.req_id,
-            Response::ResponseV1(ref res) => res.metadata.req_id
+            Response::ResponseV1(ref res) => res.metadata.req_id,
         }
     }
 }
@@ -312,18 +328,18 @@ impl Response {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ResponseV0 {
-    pub req_id: u64
+    pub req_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResponseV1 {
-    pub metadata: ResponseMetadata
+    pub metadata: ResponseMetadata,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ResponseMetadata {
-    pub req_id: u64
+    pub req_id: u64,
 }
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -433,7 +449,7 @@ pub enum KeyValuesInSP {
 pub struct KeyValueSimpleData {
     pub kvs: Vec<(String /* key */, Option<String /* val */>)>,
     #[serde(default)]
-    pub verification_type: KeyValueSimpleDataVerificationType
+    pub verification_type: KeyValueSimpleDataVerificationType,
 }
 
 /**
@@ -447,7 +463,7 @@ pub enum KeyValueSimpleDataVerificationType {
     /* key should be plain string */
     NumericalSuffixAscendingNoGaps(NumericalSuffixAscendingNoGapsData),
     /* nodes are from a simple merkle tree */
-    MerkleTree(u64)
+    MerkleTree(u64),
 }
 
 impl Default for KeyValueSimpleDataVerificationType {
@@ -460,7 +476,7 @@ impl Default for KeyValueSimpleDataVerificationType {
 pub struct NumericalSuffixAscendingNoGapsData {
     pub from: Option<u64>,
     pub next: Option<u64>,
-    pub prefix: String
+    pub prefix: String,
 }
 
 /**
@@ -473,7 +489,10 @@ pub struct NumericalSuffixAscendingNoGapsData {
 pub struct KeyValuesSubTrieData {
     /// base64-encoded common prefix of each pair in `kvs`. Should be used to correct merging initial trie and subtrie
     pub sub_trie_prefix: Option<String>,
-    pub kvs: Vec<(String /* b64-encoded key_suffix */, Option<String /* val */>)>,
+    pub kvs: Vec<(
+        String, /* b64-encoded key_suffix */
+        Option<String /* val */>,
+    )>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -494,20 +513,26 @@ impl MinValue for Vec<(CatchupRep, usize)> {
 
         for (index, &(ref catchup_rep, _)) in self.iter().enumerate() {
             match res {
-                None => { res = Some((catchup_rep, index)); }
-                Some((min_rep, _)) => if catchup_rep.min_tx()? < min_rep.min_tx()? {
+                None => {
                     res = Some((catchup_rep, index));
+                }
+                Some((min_rep, _)) => {
+                    if catchup_rep.min_tx()? < min_rep.min_tx()? {
+                        res = Some((catchup_rep, index));
+                    }
                 }
             }
         }
 
-        Ok(res.ok_or_else(|| err_msg(IndyErrorKind::InvalidStructure, "Element not Found"))?.1)
+        Ok(res
+            .ok_or_else(|| err_msg(IndyErrorKind::InvalidStructure, "Element not Found"))?
+            .1)
     }
 }
 
 #[derive(Debug)]
 pub struct HashableValue {
-    pub inner: serde_json::Value
+    pub inner: serde_json::Value,
 }
 
 impl Eq for HashableValue {}
@@ -523,7 +548,6 @@ impl PartialEq for HashableValue {
         self.inner.eq(&other.inner)
     }
 }
-
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ResendableRequest {

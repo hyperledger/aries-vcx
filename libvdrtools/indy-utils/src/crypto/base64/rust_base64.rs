@@ -1,5 +1,5 @@
-use indy_api_types::errors::prelude::*;
 use failure::ResultExt;
+use indy_api_types::errors::prelude::*;
 
 pub fn encode(doc: &[u8]) -> String {
     base64::encode(doc)

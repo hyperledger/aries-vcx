@@ -1,10 +1,8 @@
-use ursa::cl::{
-    BlindedCredentialSecrets,
-    BlindedCredentialSecretsCorrectnessProof,
-    CredentialSecretsBlindingFactors,
-    Nonce
-};
 use super::super::crypto::did::DidValue;
+use ursa::cl::{
+    BlindedCredentialSecrets, BlindedCredentialSecretsCorrectnessProof,
+    CredentialSecretsBlindingFactors, Nonce,
+};
 
 use super::credential_definition::CredentialDefinitionId;
 
@@ -23,7 +21,7 @@ pub struct CredentialRequest {
 pub struct CredentialRequestMetadata {
     pub master_secret_blinding_data: CredentialSecretsBlindingFactors,
     pub nonce: Nonce,
-    pub master_secret_name: String
+    pub master_secret_name: String,
 }
 
 impl CredentialRequest {
@@ -33,7 +31,7 @@ impl CredentialRequest {
             cred_def_id: self.cred_def_id.to_unqualified(),
             blinded_ms: self.blinded_ms,
             blinded_ms_correctness_proof: self.blinded_ms_correctness_proof,
-            nonce: self.nonce
+            nonce: self.nonce,
         }
     }
 }

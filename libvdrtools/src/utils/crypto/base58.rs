@@ -1,4 +1,4 @@
-use bs58::{encode, decode, decode::Result};
+use bs58::{decode, decode::Result, encode};
 
 pub trait ToBase58 {
     fn to_base58(&self) -> String;

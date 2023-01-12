@@ -64,7 +64,9 @@ impl Validatable for PoolOpenConfig {
             return Err(String::from("`number_read_nodes` must be greater than 0"));
         }
         if self.pool_mode == PoolMode::InMemory && self.transactions.is_none() {
-            return Err(String::from("`transactions` should exist if pool_mode is set to 'InMemory'"));
+            return Err(String::from(
+                "`transactions` should exist if pool_mode is set to 'InMemory'",
+            ));
         }
         Ok(())
     }
@@ -106,7 +108,11 @@ impl PoolOpenConfig {
         Vec::new()
     }
 
-    fn default_number_read_nodes() -> u8 { NUMBER_READ_NODES }
+    fn default_number_read_nodes() -> u8 {
+        NUMBER_READ_NODES
+    }
 
-    fn default_pool_mode() -> PoolMode { POOL_MODE }
+    fn default_pool_mode() -> PoolMode {
+        POOL_MODE
+    }
 }

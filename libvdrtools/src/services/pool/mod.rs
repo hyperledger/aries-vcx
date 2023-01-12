@@ -131,7 +131,7 @@ impl PoolService {
                 .to_indy(IndyErrorKind::InvalidState, "Can't serialize pool config")?
                 .as_bytes()
         })
-            .to_indy(IndyErrorKind::IOError, "Can't write to pool config file")?;
+        .to_indy(IndyErrorKind::IOError, "Can't write to pool config file")?;
 
         f.flush()
             .to_indy(IndyErrorKind::IOError, "Can't write to pool config file")?;
@@ -162,7 +162,12 @@ impl PoolService {
             .to_indy(IndyErrorKind::IOError, "Can't delete pool config directory")
     }
 
-    pub(crate) async fn open(&self, name: String, config: Option<PoolOpenConfig>, handle: Option<PoolHandle>) -> IndyResult<(PoolHandle, String)> {
+    pub(crate) async fn open(
+        &self,
+        name: String,
+        config: Option<PoolOpenConfig>,
+        handle: Option<PoolHandle>,
+    ) -> IndyResult<(PoolHandle, String)> {
         trace!("PoolService::open >>>");
         if self
             .open_pools
@@ -219,21 +224,20 @@ impl PoolService {
 
     #[cfg(feature = "ffi_api")]
     pub(crate) async fn is_pool_opened(&self, handle: PoolHandle) -> bool {
-        self
-            .open_pools
-            .lock()
-            .await
-            .contains_key(&handle)
+        self.open_pools.lock().await.contains_key(&handle)
     }
 
     //#[logfn(trace)] FIXME:
     pub(crate) async fn open_ack(pool_hanlde: PoolHandle, result: IndyResult<String>) {
-        let sender: futures::channel::oneshot::Sender<IndyResult<(PoolHandle, String)>> = POOL_HANDLE_SENDERS
-            .lock()
-            .await
-            .remove(&pool_hanlde)
-            .unwrap();
-        sender.send(result.map(|transactions| (pool_hanlde, transactions))).unwrap(); //FIXME
+        let sender: futures::channel::oneshot::Sender<IndyResult<(PoolHandle, String)>> =
+            POOL_HANDLE_SENDERS
+                .lock()
+                .await
+                .remove(&pool_hanlde)
+                .unwrap();
+        sender
+            .send(result.map(|transactions| (pool_hanlde, transactions)))
+            .unwrap(); //FIXME
     }
 
     //#[logfn(trace)] FIXME:
@@ -247,7 +251,13 @@ impl PoolService {
         self.send_action(handle, msg, None, None).await
     }
 
-    pub(crate) async fn send_action(&self, handle: PoolHandle, msg: &str, nodes: Option<&str>, timeout: Option<i32>) -> IndyResult<String> {
+    pub(crate) async fn send_action(
+        &self,
+        handle: PoolHandle,
+        msg: &str,
+        nodes: Option<&str>,
+        timeout: Option<i32>,
+    ) -> IndyResult<String> {
         trace!("send_action >>");
 
         let receiver = {
@@ -447,8 +457,8 @@ lazy_static! {
 }
 
 fn _handle_response_message_type<T>(message: Message<T>) -> IndyResult<Reply<T>>
-    where
-        T: DeserializeOwned + ::std::fmt::Debug,
+where
+    T: DeserializeOwned + ::std::fmt::Debug,
 {
     trace!("handle_response_message_type >>> message {:?}", message);
 
@@ -912,8 +922,8 @@ pub mod tests {
     }
 
     pub(crate) mod nodes_emulator {
-        use indy_utils::crypto::ed25519_sign;
         use crate::utils::crypto::base58::{FromBase58, ToBase58};
+        use indy_utils::crypto::ed25519_sign;
 
         use super::*;
 
@@ -927,9 +937,9 @@ pub mod tests {
                 &Generator::from_bytes(&DEFAULT_GENERATOR.from_base58().unwrap()).unwrap(),
                 &SignKey::new(None).unwrap(),
             )
-                .unwrap()
-                .as_bytes()
-                .to_base58();
+            .unwrap()
+            .as_bytes()
+            .to_base58();
 
             NodeTransactionV1 {
                 txn: Txn {
@@ -972,9 +982,9 @@ pub mod tests {
                 &Generator::from_bytes(&DEFAULT_GENERATOR.from_base58().unwrap()).unwrap(),
                 &SignKey::new(None).unwrap(),
             )
-                .unwrap()
-                .as_bytes()
-                .to_base58();
+            .unwrap()
+            .as_bytes()
+            .to_base58();
 
             NodeTransactionV1 {
                 txn: Txn {

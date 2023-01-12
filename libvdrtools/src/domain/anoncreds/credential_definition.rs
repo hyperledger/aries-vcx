@@ -1,14 +1,14 @@
-use std::collections::HashMap;
 use indy_api_types::errors::{IndyErrorKind, IndyResult};
 use indy_api_types::IndyError;
+use std::collections::HashMap;
 
 use indy_api_types::validation::Validatable;
 
+use super::indy_identifiers;
 use ursa::cl::{
     CredentialKeyCorrectnessProof, CredentialPrimaryPublicKey, CredentialPrivateKey,
     CredentialRevocationPublicKey,
 };
-use super::indy_identifiers;
 
 use crate::utils::qualifier;
 
@@ -149,12 +149,17 @@ impl CredentialDefinitionId {
         tag: &str,
     ) -> IndyResult<CredentialDefinitionId> {
         match did.get_method() {
-            Some(method) if method.starts_with("indy") => {
-                Ok(CredentialDefinitionId(format!("{}{}{}/{}", did.0, Self::PREFIX, &schema_id.0, tag)))
-            },
-            Some(_method) => {
-                Err(IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unsupported DID method"))
-            }
+            Some(method) if method.starts_with("indy") => Ok(CredentialDefinitionId(format!(
+                "{}{}{}/{}",
+                did.0,
+                Self::PREFIX,
+                &schema_id.0,
+                tag
+            ))),
+            Some(_method) => Err(IndyError::from_msg(
+                IndyErrorKind::InvalidStructure,
+                "Unsupported DID method",
+            )),
             None => {
                 let id = if ProtocolVersion::is_node_1_3() {
                     CredentialDefinitionId(format!(
@@ -192,9 +197,16 @@ impl CredentialDefinitionId {
 
     pub fn parts(&self) -> Option<(DidValue, String, SchemaId, String)> {
         trace!("CredentialDefinitionId::parts >> self.0 {}", self.0);
-        if let Some((did, seq_no, tag)) = indy_identifiers::try_parse_indy_creddef_id(self.0.as_str()) {
+        if let Some((did, seq_no, tag)) =
+            indy_identifiers::try_parse_indy_creddef_id(self.0.as_str())
+        {
             trace!("{:?} {:?} {:?}", did, seq_no, tag);
-            return Some((DidValue(did), CL_SIGNATURE_TYPE.to_owned(), SchemaId(seq_no), tag));
+            return Some((
+                DidValue(did),
+                CL_SIGNATURE_TYPE.to_owned(),
+                SchemaId(seq_no),
+                tag,
+            ));
         }
 
         let parts = self.0.split_terminator(DELIMITER).collect::<Vec<&str>>();
@@ -281,7 +293,8 @@ impl CredentialDefinitionId {
                 &schema_id.to_unqualified(),
                 &signature_type,
                 &tag,
-            ).expect("Can't create unqualified CredentialDefinitionId"),
+            )
+            .expect("Can't create unqualified CredentialDefinitionId"),
             None => self.clone(),
         }
     }
@@ -328,7 +341,9 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string())
+        SchemaId(
+            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/SCHEMA/gvt/1.0".to_string(),
+        )
     }
 
     fn _cred_def_id_unqualified() -> CredentialDefinitionId {
@@ -352,7 +367,10 @@ mod tests {
     }
 
     fn _cred_def_id_qualified_with_schema_as_seq_no() -> CredentialDefinitionId {
-        CredentialDefinitionId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag".to_string())
+        CredentialDefinitionId(
+            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/CLAIM_DEF/1/tag"
+                .to_string(),
+        )
     }
 
     mod to_unqualified {

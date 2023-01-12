@@ -31,8 +31,8 @@ use crate::domain::{
         },
         cred_def::{CredDefOperation, GetCredDefOperation, GetCredDefReplyResult},
         ddo::GetDdoOperation,
-        node::{NodeOperation, NodeOperationData},
         did::{GetNymOperation, GetNymReplyResult, GetNymResultDataV0, NymData, NymOperation},
+        node::{NodeOperation, NodeOperationData},
         pool::{PoolConfigOperation, PoolRestartOperation, PoolUpgradeOperation, Schedule},
         request::{Request, TxnAuthrAgrmtAcceptanceData},
         response::{Message, Reply, ReplyType},
@@ -558,10 +558,10 @@ impl LedgerService {
             serde_json::to_string(
                 &RevocationRegistryDefinition::RevocationRegistryDefinitionV1(revoc_reg_def),
             )
-                .to_indy(
-                    IndyErrorKind::InvalidState,
-                    "Cannot serialize RevocationRegistryDefinition",
-                )?,
+            .to_indy(
+                IndyErrorKind::InvalidState,
+                "Cannot serialize RevocationRegistryDefinition",
+            )?,
         );
 
         Ok(res)
@@ -627,10 +627,10 @@ impl LedgerService {
                     ),
                 },
             ))
-                .to_indy(
-                    IndyErrorKind::InvalidState,
-                    "Cannot serialize RevocationRegistryDelta",
-                )?,
+            .to_indy(
+                IndyErrorKind::InvalidState,
+                "Cannot serialize RevocationRegistryDelta",
+            )?,
             revoc_reg.value.accum_to.txn_time,
         );
 
@@ -811,8 +811,8 @@ impl LedgerService {
 
     #[logfn(Info)]
     pub(crate) fn parse_response<T>(response: &str) -> IndyResult<Reply<T>>
-        where
-            T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
+    where
+        T: DeserializeOwned + ReplyType + ::std::fmt::Debug,
     {
         let message: serde_json::Value = serde_json::from_str(&response).to_indy(
             IndyErrorKind::InvalidTransaction,
@@ -945,41 +945,44 @@ impl LedgerService {
     }
 
     pub(crate) fn get_txn_bytes_to_sign(&self, request: &str) -> IndyResult<(Vec<u8>, Value)> {
-        let request: Value = serde_json::from_str(request)
-            .map_err(|err| err_msg(
+        let request: Value = serde_json::from_str(request).map_err(|err| {
+            err_msg(
                 IndyErrorKind::InvalidStructure,
                 format!("Unable to parse transaction from JSON. Err: {:?}", err),
-            ))?;
+            )
+        })?;
 
         if !request.is_object() {
-            return Err(err_msg(IndyErrorKind::InvalidStructure, "Unable to sign request as it is not an object."));
+            return Err(err_msg(
+                IndyErrorKind::InvalidStructure,
+                "Unable to sign request as it is not an object.",
+            ));
         }
 
         let serialized_request = serialize_signature(request.clone())?.as_bytes().to_vec();
         Ok((serialized_request, request))
     }
 
-    pub(crate) fn append_txn_endorser(&self,
-                                      transaction: &mut Request<serde_json::Value>,
-                                      endorser: &ShortDidValue) -> IndyResult<()> {
+    pub(crate) fn append_txn_endorser(
+        &self,
+        transaction: &mut Request<serde_json::Value>,
+        endorser: &ShortDidValue,
+    ) -> IndyResult<()> {
         transaction.endorser = Some(endorser.clone());
         Ok(())
     }
 
-    pub(crate) fn append_txn_author_agreement_acceptance_to_request(&self,
-                                                                    transaction: &mut Request<serde_json::Value>,
-                                                                    text: Option<&str>,
-                                                                    version: Option<&str>,
-                                                                    taa_digest: Option<&str>,
-                                                                    acc_mech_type: &str,
-                                                                    time: u64) -> IndyResult<()> {
-        let taa_acceptance = self.prepare_acceptance_data(
-            text,
-            version,
-            taa_digest,
-            &acc_mech_type,
-            time,
-        )?;
+    pub(crate) fn append_txn_author_agreement_acceptance_to_request(
+        &self,
+        transaction: &mut Request<serde_json::Value>,
+        text: Option<&str>,
+        version: Option<&str>,
+        taa_digest: Option<&str>,
+        acc_mech_type: &str,
+        time: u64,
+    ) -> IndyResult<()> {
+        let taa_acceptance =
+            self.prepare_acceptance_data(text, version, taa_digest, &acc_mech_type, time)?;
         transaction.taa_acceptance = Some(taa_acceptance);
         Ok(())
     }
@@ -1254,7 +1257,8 @@ mod tests {
             &SchemaId("1".to_string()),
             "signature_type",
             "tag",
-        ).unwrap();
+        )
+        .unwrap();
 
         let expected_result = json!({
             "type": GET_CRED_DEF,

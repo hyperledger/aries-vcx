@@ -1,10 +1,10 @@
 use std::{mem, sync::Once};
 
 use indy_utils::crypto::hash::hash;
-use vdrtoolsrs::{future::Future, ledger, IndyError, PoolHandle, WalletHandle};
 use lazy_static::lazy_static;
+use vdrtoolsrs::{future::Future, ledger, IndyError, PoolHandle, WalletHandle};
 
-use crate::utils::{anoncreds, blob_storage, constants::*, did, pool, timeout, wallet, types::*};
+use crate::utils::{anoncreds, blob_storage, constants::*, did, pool, timeout, types::*, wallet};
 
 pub static mut SCHEMA_ID: &'static str = "";
 pub static mut SCHEMA_ID_V2: &'static str = "";
@@ -693,11 +693,10 @@ pub mod taa {
             Some(ratification_ts),
             None,
         )
-            .unwrap();
+        .unwrap();
 
         let response =
-            sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &request)
-                .unwrap();
+            sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &request).unwrap();
 
         pool::check_response_type(&response, ResponseType::REPLY);
         response
@@ -723,11 +722,9 @@ pub mod taa {
     }
 
     pub fn disable_taa(pool_handle: PoolHandle, wallet_handle: WalletHandle, trustee_did: &str) {
-        let request =
-            build_disable_all_txn_author_agreements_request(&trustee_did).unwrap();
+        let request = build_disable_all_txn_author_agreements_request(&trustee_did).unwrap();
         let response =
-            sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &request)
-                .unwrap();
+            sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &request).unwrap();
         pool::check_response_type(&response, ResponseType::REPLY);
     }
 
@@ -744,11 +741,10 @@ pub mod taa {
             &aml_version,
             Some(&aml_context),
         )
-            .unwrap();
+        .unwrap();
 
         let response =
-            sign_and_submit_request(pool_handle, wallet_handle, trustee_did, &request)
-                .unwrap();
+            sign_and_submit_request(pool_handle, wallet_handle, trustee_did, &request).unwrap();
 
         pool::check_response_type(&response, ResponseType::REPLY);
 
@@ -771,7 +767,7 @@ pub mod taa {
             &get_txn_author_agreement_request,
             txn_author_agreement_response,
         )
-            .unwrap();
+        .unwrap();
 
         pool::check_response_type(&get_txn_author_agreement_response, ResponseType::REPLY);
 

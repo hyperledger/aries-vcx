@@ -4,7 +4,12 @@ pub fn add_random(wallet_handle: WalletHandle, alias: &str) -> Result<String, In
     cheqd_keys::add_random(wallet_handle, alias).wait()
 }
 
-pub fn add_from_mnemonic(wallet_handle: WalletHandle, alias: &str, mnemonic: &str, passphrase: &str) -> Result<String, IndyError> {
+pub fn add_from_mnemonic(
+    wallet_handle: WalletHandle,
+    alias: &str,
+    mnemonic: &str,
+    passphrase: &str,
+) -> Result<String, IndyError> {
     cheqd_keys::add_from_mnemonic(wallet_handle, alias, mnemonic, passphrase).wait()
 }
 

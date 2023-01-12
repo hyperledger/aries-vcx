@@ -8,6 +8,7 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::{
         crypto::{
@@ -18,7 +19,6 @@ use crate::{
     },
     Locator,
 };
-use crate::services::CommandMetric;
 
 /// Creates keys (signing and encryption keys) for a new
 /// DID (owned by the caller of the library).
@@ -109,7 +109,11 @@ pub extern "C" fn indy_create_and_store_my_did(
         cb(command_handle, err, did.as_ptr(), verkey.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandCreateAndStoreMyDid, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::DidCommandCreateAndStoreMyDid,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_create_and_store_my_did < {:?}", res);
@@ -190,7 +194,9 @@ pub extern "C" fn indy_replace_keys_start(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandReplaceKeysStart, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandReplaceKeysStart, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_replace_keys_start < {:?}", res);
@@ -252,7 +258,9 @@ pub extern "C" fn indy_replace_keys_apply(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandReplaceKeysApply, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandReplaceKeysApply, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_replace_keys_apply < {:?}", res);
@@ -322,7 +330,9 @@ pub extern "C" fn indy_store_their_did(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandStoreTheirDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandStoreTheirDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_store_their_did < {:?}", res);
@@ -399,7 +409,9 @@ pub extern "C" fn indy_key_for_did(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandKeyForDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandKeyForDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_key_for_did < {:?}", res);
@@ -472,7 +484,9 @@ pub extern "C" fn indy_key_for_local_did(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandKeyForLocalDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandKeyForLocalDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_key_for_local_did < {:?}", res);
@@ -544,7 +558,9 @@ pub extern "C" fn indy_set_endpoint_for_did(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandSetEndpointForDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandSetEndpointForDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_set_endpoint_for_did < {:?}", res);
@@ -631,7 +647,9 @@ pub extern "C" fn indy_get_endpoint_for_did(
         );
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandGetEndpointForDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandGetEndpointForDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_endpoint_for_did < {:?}", res);
@@ -695,7 +713,9 @@ pub extern "C" fn indy_set_did_metadata(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandSetDidMetadata, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandSetDidMetadata, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_set_did_metadata < {:?}", res);
@@ -761,7 +781,9 @@ pub extern "C" fn indy_get_did_metadata(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandGetDidMetadata, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandGetDidMetadata, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_did_metadata < {:?}", res);
@@ -833,7 +855,9 @@ pub extern "C" fn indy_get_my_did_with_meta(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandGetMyDidWithMeta, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandGetMyDidWithMeta, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_my_did_with_meta < {:?}", res);
@@ -898,7 +922,9 @@ pub extern "C" fn indy_list_my_dids_with_meta(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandListMyDidsWithMeta, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandListMyDidsWithMeta, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_list_my_dids_with_meta < {:?}", res);
@@ -964,7 +990,9 @@ pub extern "C" fn indy_abbreviate_verkey(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandAbbreviateVerkey, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandAbbreviateVerkey, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_abbreviate_verkey < {:?}", res);
@@ -1039,7 +1067,9 @@ pub extern "C" fn indy_qualify_did(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::DidCommandQualifyDid, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::DidCommandQualifyDid, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_qualify_did < {:?}", res);

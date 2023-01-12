@@ -1,9 +1,9 @@
-use indy_api_types::{ErrorCode, CommandHandle};
-use indy_utils::ctypes;
-use libc::c_char;
-use indy_api_types::errors::IndyResult;
 use crate::services::CommandMetric;
 use crate::Locator;
+use indy_api_types::errors::IndyResult;
+use indy_api_types::{CommandHandle, ErrorCode};
+use indy_utils::ctypes;
+use libc::c_char;
 
 /// Collect metrics.
 ///
@@ -13,12 +13,16 @@ use crate::Locator;
 /// #Errors
 /// Common*
 #[no_mangle]
-pub extern fn indy_collect_metrics(command_handle: CommandHandle,
-                                   cb: Option<extern fn(command_handle_: CommandHandle,
-                                                        err: ErrorCode,
-                                                        metrics_json: *const c_char)>) -> ErrorCode {
-    debug!("indy_collect_metrics: >>> command_handle: {:?}, cb: {:?}",
-           command_handle, cb);
+pub extern "C" fn indy_collect_metrics(
+    command_handle: CommandHandle,
+    cb: Option<
+        extern "C" fn(command_handle_: CommandHandle, err: ErrorCode, metrics_json: *const c_char),
+    >,
+) -> ErrorCode {
+    debug!(
+        "indy_collect_metrics: >>> command_handle: {:?}, cb: {:?}",
+        command_handle, cb
+    );
 
     check_useful_c_callback!(cb, ErrorCode::CommonInvalidParam3);
 
@@ -38,7 +42,9 @@ pub extern fn indy_collect_metrics(command_handle: CommandHandle,
         cb(command_handle, err, did.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::MetricsCommandCollectMetrics, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::MetricsCommandCollectMetrics, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_collect_metrics: <<< res: {:?}", res);

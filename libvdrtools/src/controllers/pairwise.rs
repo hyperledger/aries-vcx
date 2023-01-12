@@ -25,7 +25,8 @@ impl PairwiseController {
     ) -> IndyResult<bool> {
         trace!(
             "pairwise_exists > wallet_handle {:?} their_did {:?}",
-            wallet_handle, their_did
+            wallet_handle,
+            their_did
         );
 
         let exists = self
@@ -48,7 +49,10 @@ impl PairwiseController {
         trace!(
             "create_pairwise > wallet_handle {:?} \
                 their_did {:?} my_did {:?} metadata {:?}",
-            wallet_handle, their_did, my_did, metadata
+            wallet_handle,
+            their_did,
+            my_did,
+            metadata
         );
 
         self.wallet_service
@@ -118,7 +122,8 @@ impl PairwiseController {
     ) -> IndyResult<String> {
         trace!(
             "get_pairwise > wallet_handle {:?} their_did {:?}",
-            wallet_handle, their_did
+            wallet_handle,
+            their_did
         );
 
         let pairwise_info = PairwiseInfo::from(
@@ -147,7 +152,9 @@ impl PairwiseController {
     ) -> IndyResult<()> {
         trace!(
             "set_pairwise_metadata > wallet_handle {:?} their_did {:?} metadata {:?}",
-            wallet_handle, their_did, metadata
+            wallet_handle,
+            their_did,
+            metadata
         );
 
         let mut pairwise: Pairwise = self

@@ -11,7 +11,6 @@ use std::{
     unimplemented,
 };
 
-use std::sync::Mutex;
 use indy_api_types::{
     domain::wallet::{Config, Credentials, ExportConfig, Tags},
     errors::prelude::*,
@@ -25,16 +24,17 @@ use indy_utils::{
 use log::trace;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as SValue;
+use std::sync::Mutex;
 
+pub use crate::encryption::KeyDerivationData;
 use crate::{
+    cache::wallet_cache::{WalletCache, WalletCacheHitData, WalletCacheHitMetrics},
     export_import::{export_continue, finish_import, preparse_file_to_import},
     storage::{
         default::SQLiteStorageType, mysql::MySqlStorageType, WalletStorage, WalletStorageType,
     },
     wallet::{Keys, Wallet},
-    cache::wallet_cache::{WalletCache, WalletCacheHitMetrics, WalletCacheHitData},
 };
-pub use crate::encryption::KeyDerivationData;
 use indy_api_types::domain::wallet::CacheConfig;
 
 //use crate::storage::plugged::PluggedStorageType; FXIME:
@@ -47,9 +47,9 @@ mod storage;
 // TODO: Remove query language out of wallet module
 pub mod language;
 
+mod cache;
 mod export_import;
 mod wallet;
-mod cache;
 
 pub struct WalletService {
     storage_types: Mutex<HashMap<String, Arc<dyn WalletStorageType>>>,
@@ -84,15 +84,13 @@ pub struct WalletService {
 impl WalletService {
     pub fn new() -> WalletService {
         let storage_types = {
+            let s1: Arc<dyn WalletStorageType> = Arc::new(SQLiteStorageType::new());
+            let s2: Arc<dyn WalletStorageType> = Arc::new(MySqlStorageType::new());
 
-            let s1 : Arc<dyn WalletStorageType> = Arc::new(SQLiteStorageType::new());
-            let s2 : Arc<dyn WalletStorageType> = Arc::new(MySqlStorageType::new());
-
-            Mutex::new(HashMap::from(
-                [ ("default".to_string(), s1),
-                    ("mysql".to_string(), s2),
-                ]
-            ))
+            Mutex::new(HashMap::from([
+                ("default".to_string(), s1),
+                ("mysql".to_string(), s2),
+            ]))
         };
 
         WalletService {
@@ -291,10 +289,7 @@ impl WalletService {
             )
         });
 
-        self.pending_for_open
-            .lock()
-            .unwrap()
-            .insert(
+        self.pending_for_open.lock().unwrap().insert(
             wallet_handle,
             (
                 WalletService::_get_wallet_id(config),
@@ -333,7 +328,7 @@ impl WalletService {
             id.clone(),
             storage,
             Arc::new(keys),
-            WalletCache::new(cache_config)
+            WalletCache::new(cache_config),
         );
 
         self.wallets
@@ -341,10 +336,7 @@ impl WalletService {
             .unwrap()
             .insert(wallet_handle, Arc::new(wallet));
 
-        self.wallet_ids
-            .lock()
-            .unwrap()
-            .insert(id.to_string());
+        self.wallet_ids.lock().unwrap().insert(id.to_string());
 
         trace!("open_wallet <<< res: {:?}", wallet_handle);
 
@@ -377,10 +369,7 @@ impl WalletService {
     pub async fn close_wallet(&self, handle: WalletHandle) -> IndyResult<()> {
         trace!("close_wallet >>> handle: {:?}", handle);
 
-        let wallet = self.wallets
-            .lock()
-            .unwrap()
-            .remove(&handle);
+        let wallet = self.wallets.lock().unwrap().remove(&handle);
 
         let wallet = if let Some(wallet) = wallet {
             wallet
@@ -391,10 +380,7 @@ impl WalletService {
             ));
         };
 
-        self.wallet_ids
-            .lock()
-            .unwrap()
-            .remove(wallet.get_id());
+        self.wallet_ids.lock().unwrap().remove(wallet.get_id());
 
         trace!("close_wallet <<<");
 
@@ -427,7 +413,9 @@ impl WalletService {
         tags: &Tags,
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.add(type_, name, value, tags).await
+        wallet
+            .add(type_, name, value, tags)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -482,7 +470,9 @@ impl WalletService {
         value: &str,
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.update(type_, name, value).await
+        wallet
+            .update(type_, name, value)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -504,7 +494,9 @@ impl WalletService {
             format!("Cannot serialize {:?}", type_),
         )?;
 
-        wallet.update(&self.add_prefix(type_), name, &object_json).await?;
+        wallet
+            .update(&self.add_prefix(type_), name, &object_json)
+            .await?;
 
         Ok(object_json)
     }
@@ -517,7 +509,9 @@ impl WalletService {
         tags: &Tags,
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.add_tags(type_, name, tags).await
+        wallet
+            .add_tags(type_, name, tags)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -529,7 +523,9 @@ impl WalletService {
         tags: &Tags,
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.update_tags(type_, name, tags).await
+        wallet
+            .update_tags(type_, name, tags)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -541,7 +537,9 @@ impl WalletService {
         tag_names: &[&str],
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.delete_tags(type_, name, tag_names).await
+        wallet
+            .delete_tags(type_, name, tag_names)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -552,7 +550,9 @@ impl WalletService {
         name: &str,
     ) -> IndyResult<()> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.delete(type_, name).await
+        wallet
+            .delete(type_, name)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -582,7 +582,9 @@ impl WalletService {
         options_json: &str,
     ) -> IndyResult<WalletRecord> {
         let wallet = self.get_wallet(wallet_handle).await?;
-        wallet.get(type_, name, options_json, &self.cache_hit_metrics).await
+        wallet
+            .get(type_, name, options_json, &self.cache_hit_metrics)
+            .await
             .map_err(|err| WalletService::_map_wallet_storage_error(err, type_, name))
     }
 
@@ -615,7 +617,9 @@ impl WalletService {
     {
         let type_ = short_type_name::<T>();
 
-        let record = self.get_record(wallet_handle, &self.add_prefix(type_), name, options_json).await?;
+        let record = self
+            .get_record(wallet_handle, &self.add_prefix(type_), name, options_json)
+            .await?;
 
         let record_value = record
             .get_value()
@@ -737,10 +741,15 @@ impl WalletService {
     where
         T: Sized,
     {
-        match self.get_record(wallet_handle,
-                              &self.add_prefix(short_type_name::<T>()),
-                              name,
-                              &RecordOptions::id()).await {
+        match self
+            .get_record(
+                wallet_handle,
+                &self.add_prefix(short_type_name::<T>()),
+                name,
+                &RecordOptions::id(),
+            )
+            .await
+        {
             Ok(_) => Ok(true),
             Err(ref err) if err.kind() == IndyErrorKind::WalletItemNotFound => Ok(false),
             Err(err) => Err(err),
@@ -819,13 +828,10 @@ impl WalletService {
 
         let stashed_key_data = key_data.clone();
 
-        self.pending_for_import
-            .lock()
-            .unwrap()
-            .insert(
-                wallet_handle,
-                (reader, nonce, chunk_size, header_bytes, stashed_key_data),
-            );
+        self.pending_for_import.lock().unwrap().insert(
+            wallet_handle,
+            (reader, nonce, chunk_size, header_bytes, stashed_key_data),
+        );
 
         Ok((wallet_handle, key_data, import_key_derivation_data))
     }
@@ -881,31 +887,19 @@ impl WalletService {
     }
 
     pub fn get_wallets_count(&self) -> usize {
-        self.wallets
-            .lock()
-            .unwrap()
-            .len()
+        self.wallets.lock().unwrap().len()
     }
 
     pub fn get_wallet_ids_count(&self) -> usize {
-        self.wallet_ids
-            .lock()
-            .unwrap()
-            .len()
+        self.wallet_ids.lock().unwrap().len()
     }
 
     pub fn get_pending_for_import_count(&self) -> usize {
-        self.pending_for_import
-            .lock()
-            .unwrap()
-            .len()
+        self.pending_for_import.lock().unwrap().len()
     }
 
     pub fn get_pending_for_open_count(&self) -> usize {
-        self.pending_for_open
-            .lock()
-            .unwrap()
-            .len()
+        self.pending_for_open.lock().unwrap().len()
     }
 
     pub async fn get_wallet_cache_hit_metrics_data(&self) -> HashMap<String, WalletCacheHitData> {
@@ -916,13 +910,8 @@ impl WalletService {
         &self,
         config: &Config,
         credentials: &Credentials,
-    ) -> IndyResult<(
-        Arc<dyn WalletStorageType>,
-        Option<String>,
-        Option<String>,
-    )> {
+    ) -> IndyResult<(Arc<dyn WalletStorageType>, Option<String>, Option<String>)> {
         let storage_type = {
-
             let storage_type = config
                 .storage_type
                 .as_ref()
@@ -1265,10 +1254,9 @@ mod tests {
     use std::{collections::HashMap, fs, path::Path};
 
     use indy_api_types::{
-        domain::wallet::{
-            KeyDerivationMethod,
-            CachingAlgorithm
-        }, INVALID_WALLET_HANDLE};
+        domain::wallet::{CachingAlgorithm, KeyDerivationMethod},
+        INVALID_WALLET_HANDLE,
+    };
     use indy_utils::{
         assert_kind, assert_match, environment, inmem_wallet::InmemWallet, next_wallet_handle, test,
     };
@@ -1375,7 +1363,8 @@ mod tests {
         ) -> IndyResult<()> {
             if self
                 .wallets
-                .lock().await
+                .lock()
+                .await
                 .values()
                 .any(|ref wallet| wallet.get_id() == WalletService::_get_wallet_id(config))
             {
@@ -1973,7 +1962,7 @@ mod tests {
             storage_config: Some(json!({
                 "path": _custom_path("wallet_service_open_wallet_works_for_two_wallets_with_same_ids_but_different_paths")
             })),
-            cache: None
+            cache: None,
         };
 
         wallet_service
@@ -2260,7 +2249,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_add_record_works_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_add_record_works_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -2278,9 +2270,7 @@ mod tests {
             assert_eq!(metrics_data.get("type").unwrap().get_hit(), 1);
         }
 
-        test::cleanup_wallet(
-            "wallet_service_add_record_works_for_cached_wallet",
-        );
+        test::cleanup_wallet("wallet_service_add_record_works_for_cached_wallet");
     }
 
     #[async_std::test]
@@ -2382,7 +2372,9 @@ mod tests {
 
             let wallet_handle = wallet_service
                 .open_wallet(
-                    &_config_cached("wallet_service_get_record_works_for_id_only_for_cached_wallet"),
+                    &_config_cached(
+                        "wallet_service_get_record_works_for_id_only_for_cached_wallet",
+                    ),
                     &RAW_CREDENTIAL,
                 )
                 .await
@@ -2521,7 +2513,9 @@ mod tests {
 
             let wallet_handle = wallet_service
                 .open_wallet(
-                    &_config_cached("wallet_service_get_record_works_for_id_value_for_cached_wallet"),
+                    &_config_cached(
+                        "wallet_service_get_record_works_for_id_value_for_cached_wallet",
+                    ),
                     &RAW_CREDENTIAL,
                 )
                 .await
@@ -2666,7 +2660,9 @@ mod tests {
 
             let wallet_handle = wallet_service
                 .open_wallet(
-                    &_config_cached("wallet_service_get_record_works_for_all_fields_for_cached_wallet"),
+                    &_config_cached(
+                        "wallet_service_get_record_works_for_all_fields_for_cached_wallet",
+                    ),
                     &RAW_CREDENTIAL,
                 )
                 .await
@@ -3039,7 +3035,6 @@ mod tests {
 
             let metrics_data = wallet_service.get_wallet_cache_hit_metrics_data().await;
             assert_eq!(metrics_data.get(type_).unwrap().get_not_cached(), 2);
-
         }
 
         test::cleanup_wallet("wallet_service_update");
@@ -3065,7 +3060,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_update_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_update_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -3105,7 +3103,6 @@ mod tests {
 
             let metrics_data = wallet_service.get_wallet_cache_hit_metrics_data().await;
             assert_eq!(metrics_data.get(type_).unwrap().get_hit(), 2);
-
         }
 
         test::cleanup_wallet("wallet_service_update_for_cached_wallet");
@@ -3260,7 +3257,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_delete_record_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_delete_record_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -3454,7 +3454,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_add_tags_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_add_tags_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -3632,7 +3635,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_update_tags_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_update_tags_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -3809,7 +3815,10 @@ mod tests {
                 .unwrap();
 
             let wallet_handle = wallet_service
-                .open_wallet(&_config_cached("wallet_service_delete_tags_for_cached_wallet"), &RAW_CREDENTIAL)
+                .open_wallet(
+                    &_config_cached("wallet_service_delete_tags_for_cached_wallet"),
+                    &RAW_CREDENTIAL,
+                )
                 .await
                 .unwrap();
 
@@ -3962,7 +3971,13 @@ mod tests {
 
             assert!(search.fetch_next_record().await.unwrap().is_none());
 
-            assert_eq!(wallet_service.get_wallet_cache_hit_metrics_data().await.len(), 0); // only get is using cache
+            assert_eq!(
+                wallet_service
+                    .get_wallet_cache_hit_metrics_data()
+                    .await
+                    .len(),
+                0
+            ); // only get is using cache
         }
 
         test::cleanup_wallet("wallet_service_search_records_works");
@@ -4023,7 +4038,13 @@ mod tests {
 
             assert!(search.fetch_next_record().await.unwrap().is_none());
 
-            assert_eq!(wallet_service.get_wallet_cache_hit_metrics_data().await.len(), 0); // only get() is using cache
+            assert_eq!(
+                wallet_service
+                    .get_wallet_cache_hit_metrics_data()
+                    .await
+                    .len(),
+                0
+            ); // only get() is using cache
         }
 
         test::cleanup_wallet("wallet_service_search_records_works_for_cached_wallet");
@@ -5247,13 +5268,15 @@ mod tests {
             id: name.to_string(),
             storage_type: None,
             storage_config: None,
-            cache: Some(
-                CacheConfig {
-                    size: 10,
-                    entities: vec!["did".to_string(), "their_did".to_string(), "type".to_string()],
-                    algorithm: CachingAlgorithm::LRU,
-                }
-            ),
+            cache: Some(CacheConfig {
+                size: 10,
+                entities: vec![
+                    "did".to_string(),
+                    "their_did".to_string(),
+                    "type".to_string(),
+                ],
+                algorithm: CachingAlgorithm::LRU,
+            }),
         }
     }
 
@@ -5271,13 +5294,15 @@ mod tests {
             id: name.to_string(),
             storage_type: Some("default".to_string()),
             storage_config: None,
-            cache: Some(
-                CacheConfig {
-                    size: 10,
-                    entities: vec!["did".to_string(), "their_did".to_string(), "type".to_string()],
-                    algorithm: CachingAlgorithm::LRU,
-                }
-            ),
+            cache: Some(CacheConfig {
+                size: 10,
+                entities: vec![
+                    "did".to_string(),
+                    "their_did".to_string(),
+                    "type".to_string(),
+                ],
+                algorithm: CachingAlgorithm::LRU,
+            }),
         }
     }
 
@@ -5546,5 +5571,4 @@ mod tests {
     // fn short_type_name_works2() {
     //     assert_eq!("WalletRecord2", short_type_name::<Key>());
     // }
-
 }

@@ -1,8 +1,5 @@
 #[cfg(feature = "ffi_api")]
-use super::super::crypto::{
-    ED25519,
-    SECP256K1,
-};
+use super::super::crypto::{ED25519, SECP256K1};
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub enum DidMethod {

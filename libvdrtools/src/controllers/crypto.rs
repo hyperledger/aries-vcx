@@ -5,10 +5,7 @@ use indy_utils::crypto::{base64, chacha20poly1305_ietf};
 use indy_wallet::RecordOptions;
 
 #[cfg(feature = "ffi_api")]
-use crate::domain::crypto::{
-    combo_box::ComboBox,
-    key::KeyMetadata,
-};
+use crate::domain::crypto::{combo_box::ComboBox, key::KeyMetadata};
 
 use crate::{
     domain::crypto::{
@@ -215,7 +212,11 @@ impl CryptoController {
     }
 
     #[cfg(feature = "ffi_api")]
-    pub(crate) async fn anonymous_encrypt(&self, their_vk: &str, msg: &[u8]) -> IndyResult<Vec<u8>> {
+    pub(crate) async fn anonymous_encrypt(
+        &self,
+        their_vk: &str,
+        msg: &[u8],
+    ) -> IndyResult<Vec<u8>> {
         trace!(
             "anonymous_encrypt >>> their_vk: {:?}, msg: {:?}",
             their_vk,

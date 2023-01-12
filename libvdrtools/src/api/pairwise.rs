@@ -5,8 +5,8 @@ use indy_api_types::{
 use indy_utils::ctypes;
 use libc::c_char;
 
-use crate::{domain::crypto::did::DidValue, Locator};
 use crate::services::CommandMetric;
+use crate::{domain::crypto::did::DidValue, Locator};
 
 /// Check if pairwise is exists.
 ///
@@ -61,7 +61,11 @@ pub extern "C" fn indy_is_pairwise_exists(
         cb(command_handle, err, exists)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PairwiseCommandPairwiseExists, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::PairwiseCommandPairwiseExists,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_is_pairwise_exists < {:?}", res);
@@ -126,7 +130,11 @@ pub extern "C" fn indy_create_pairwise(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PairwiseCommandCreatePairwise, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::PairwiseCommandCreatePairwise,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_create_pairwise < {:?}", res);
@@ -178,7 +186,9 @@ pub extern "C" fn indy_list_pairwise(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PairwiseCommandListPairwise, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PairwiseCommandListPairwise, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_list_pairwise < {:?}", res);
@@ -243,7 +253,9 @@ pub extern "C" fn indy_get_pairwise(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PairwiseCommandGetPairwise, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PairwiseCommandGetPairwise, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_pairwise < {:?}", res);
@@ -305,7 +317,11 @@ pub extern "C" fn indy_set_pairwise_metadata(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PairwiseCommandSetPairwiseMetadata, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::PairwiseCommandSetPairwiseMetadata,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_set_pairwise_metadata < {:?}", res);

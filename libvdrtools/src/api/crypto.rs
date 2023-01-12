@@ -3,11 +3,11 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::crypto::{key::KeyInfo, pack::JWE},
     Locator,
 };
-use crate::services::CommandMetric;
 
 /// Creates keys pair and stores in the wallet.
 ///
@@ -72,7 +72,9 @@ pub extern "C" fn indy_create_key(
         cb(command_handle, err, verkey.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandCreateKey, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandCreateKey, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_create_key: < {:?}", res);
@@ -137,7 +139,9 @@ pub extern "C" fn indy_set_key_metadata(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandSetKeyMetadata, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandSetKeyMetadata, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_set_key_metadata < {:?}", res);
@@ -207,7 +211,9 @@ pub extern "C" fn indy_get_key_metadata(
         cb(command_handle, err, metadata.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandGetKeyMetadata, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandGetKeyMetadata, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_key_metadata < {:?}", res);
@@ -293,7 +299,9 @@ pub extern "C" fn indy_crypto_sign(
         cb(command_handle, err, signature_raw, signature_len)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandCryptoSign, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandCryptoSign, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_sign < {:?}", res);
@@ -375,7 +383,9 @@ pub extern "C" fn indy_crypto_verify(
         cb(command_handle, err, valid)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandCryptoVerify, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandCryptoVerify, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_verify < {:?}", res);
@@ -468,7 +478,11 @@ pub extern "C" fn indy_crypto_auth_crypt(
         cb(command_handle, err, encrypted_msg_raw, encrypted_msg_len)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandAuthenticatedEncrypt, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::CryptoCommandAuthenticatedEncrypt,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_auth_crypt < {:?}", res);
@@ -561,7 +575,11 @@ pub extern "C" fn indy_crypto_auth_decrypt(
         cb(command_handle, err, sender_vk.as_ptr(), msg_data, msg_len);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandAuthenticatedDecrypt, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::CryptoCommandAuthenticatedDecrypt,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_auth_decrypt < {:?}", res);
@@ -652,7 +670,11 @@ pub extern "C" fn indy_crypto_anon_crypt(
         cb(command_handle, err, encrypted_msg_raw, encrypted_msg_len)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandAnonymousEncrypt, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::CryptoCommandAnonymousEncrypt,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_anon_crypt < {:?}", res);
@@ -738,7 +760,11 @@ pub extern "C" fn indy_crypto_anon_decrypt(
         cb(command_handle, err, msg_data, msg_len);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandAnonymousDecrypt, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::CryptoCommandAnonymousDecrypt,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_crypto_anon_decrypt < {:?}", res);
@@ -890,7 +916,9 @@ pub extern "C" fn indy_pack_message(
         cb(command_handle, err, jwe_data, jwe_len);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandPackMessage, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandPackMessage, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_auth_pack_message < {:?}", res);
@@ -987,7 +1015,9 @@ pub extern "C" fn indy_unpack_message(
         cb(command_handle, err, res_json_data, res_json_len)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::CryptoCommandUnpackMessage, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::CryptoCommandUnpackMessage, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_unpack_message < {:?}", res);

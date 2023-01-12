@@ -1,45 +1,62 @@
-use indy_api_types::errors::prelude::*;
-use serde_json::Value;
-use indy_utils::crypto::hash::Hash;
 use crate::domain::ledger::constants::{ATTRIB, GET_ATTR};
+use indy_api_types::errors::prelude::*;
+use indy_utils::crypto::hash::Hash;
+use serde_json::Value;
 
 pub fn serialize_signature(v: Value) -> Result<String, IndyError> {
     let _type = v["operation"]["type"].clone();
     _serialize_signature(v, true, _type.as_str())
 }
 
-fn _serialize_signature(v: Value, is_top_level: bool, _type: Option<&str>) -> Result<String, IndyError> {
+fn _serialize_signature(
+    v: Value,
+    is_top_level: bool,
+    _type: Option<&str>,
+) -> Result<String, IndyError> {
     match v {
-        Value::Bool(value) => Ok(if value { "True".to_string() } else { "False".to_string() }),
+        Value::Bool(value) => Ok(if value {
+            "True".to_string()
+        } else {
+            "False".to_string()
+        }),
         Value::Number(value) => Ok(value.to_string()),
         Value::String(value) => Ok(value),
-        Value::Array(array) => {
-            array
-                .into_iter()
-                .map(|element| _serialize_signature(element, false, _type))
-                .collect::<Result<Vec<String>, IndyError>>()
-                .map(|res| res.join(","))
-        }
+        Value::Array(array) => array
+            .into_iter()
+            .map(|element| _serialize_signature(element, false, _type))
+            .collect::<Result<Vec<String>, IndyError>>()
+            .map(|res| res.join(",")),
         Value::Object(map) => {
             let mut result = "".to_string();
             let mut in_middle = false;
             for key in map.keys() {
                 // Skip signature field at top level as in python code
-                if is_top_level && (key == "signature" || key == "fees" || key == "signatures") { continue; }
+                if is_top_level && (key == "signature" || key == "fees" || key == "signatures") {
+                    continue;
+                }
 
                 if in_middle {
                     result += "|";
                 }
 
                 let mut value = map[key].clone();
-                if (_type == Some(ATTRIB) || _type == Some(GET_ATTR)) && (key == "raw" || key == "hash" || key == "enc") {
+                if (_type == Some(ATTRIB) || _type == Some(GET_ATTR))
+                    && (key == "raw" || key == "hash" || key == "enc")
+                {
                     // do it only for attribute related request
                     let mut ctx = Hash::new_context()?;
 
-                    ctx.update(&value
-                        .as_str()
-                        .ok_or_else(|| IndyError::from_msg(IndyErrorKind::InvalidState, "Cannot update hash context"))?
-                        .as_bytes())?;
+                    ctx.update(
+                        &value
+                            .as_str()
+                            .ok_or_else(|| {
+                                IndyError::from_msg(
+                                    IndyErrorKind::InvalidState,
+                                    "Cannot update hash context",
+                                )
+                            })?
+                            .as_bytes(),
+                    )?;
 
                     value = Value::String(hex::encode(ctx.finish()?.as_ref()));
                 }
@@ -48,7 +65,7 @@ fn _serialize_signature(v: Value, is_top_level: bool, _type: Option<&str>) -> Re
             }
             Ok(result)
         }
-        _ => Ok("".to_string())
+        _ => Ok("".to_string()),
     }
 }
 
@@ -78,7 +95,6 @@ mod tests {
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }
 
-
     #[test]
     fn signature_serialize_works_for_skipped_fields() {
         let data = r#"{
@@ -105,7 +121,6 @@ mod tests {
 
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }
-
 
     #[test]
     fn signature_serialize_works_with_raw_hash_for_attrib_related_type() {
@@ -156,7 +171,6 @@ mod tests {
 
         assert_eq!(serialize_signature(msg).unwrap(), result)
     }
-
 
     #[test]
     fn signature_serialize_works_with_null() {

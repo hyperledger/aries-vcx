@@ -1,7 +1,6 @@
 use super::super::crypto::CryptoTypes;
 use super::ledger_types::DidMethod;
 
-
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub struct SignatureSpec {
     pub signature_type: CryptoTypes,

@@ -432,7 +432,6 @@ mod high_cases {
     mod create_my_did {
         use super::*;
 
-
         #[test]
         fn indy_create_my_did_works_for_empty_json() {
             let setup = Setup::wallet();
@@ -452,7 +451,7 @@ mod high_cases {
 
             assert!(my_did.starts_with(DEFAULT_PREFIX));
             assert_eq!(
-                bs58::decode(my_did .replace(DEFAULT_PREFIX, ""))
+                bs58::decode(my_did.replace(DEFAULT_PREFIX, ""))
                     .into_vec()
                     .unwrap()
                     .len(),

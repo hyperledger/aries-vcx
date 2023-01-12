@@ -1,14 +1,14 @@
 #![allow(dead_code, unused_macros)]
 
-use vdrtoolsrs::IndyError;
 use serde_json::Value;
+use vdrtoolsrs::IndyError;
 
 use crate::utils::{cheqd_keys, cheqd_pool, environment};
 #[cfg(feature = "local_nodes_cheqd_pool")]
 use crate::utils::{cheqd_ledger, cheqd_ledger::auth};
 
-use super::{logger, wallet, WalletHandle};
 use super::test;
+use super::{logger, wallet, WalletHandle};
 
 const BIP39_PASSPHRASE: &str = "";
 pub const MAX_GAS: u64 = 90000;
@@ -52,7 +52,8 @@ impl CheqdSetup {
         let key_alias = "alice";
         let mnemonic = "sketch mountain erode window enact net enrich smoke claim kangaroo another visual write meat latin bacon pulp similar forum guilt father state erase bright";
         // let mnemonic = "shed drama more wrestle rural face example urban phrase practice day glow category list vehicle suggest deal surge clog idle cool foam dice exact";
-        let (account_id, pub_key) = CheqdSetup::create_key(wallet_handle, key_alias, mnemonic).unwrap();
+        let (account_id, pub_key) =
+            CheqdSetup::create_key(wallet_handle, key_alias, mnemonic).unwrap();
 
         // Pool
         let cheqd_test_pool_ip = environment::cheqd_test_pool_ip();
@@ -75,8 +76,13 @@ impl CheqdSetup {
         setup
     }
 
-    pub fn create_key(wallet_handle: WalletHandle, alias: &str, mnemonic: &str) -> Result<(String, String), IndyError> {
-        let key = cheqd_keys::add_from_mnemonic(wallet_handle, alias, mnemonic, BIP39_PASSPHRASE).unwrap();
+    pub fn create_key(
+        wallet_handle: WalletHandle,
+        alias: &str,
+        mnemonic: &str,
+    ) -> Result<(String, String), IndyError> {
+        let key = cheqd_keys::add_from_mnemonic(wallet_handle, alias, mnemonic, BIP39_PASSPHRASE)
+            .unwrap();
         let key: Value = serde_json::from_str(&key).unwrap();
         println!("Cheqd setup. Create key: {:?}", key);
 
@@ -86,7 +92,10 @@ impl CheqdSetup {
     }
 
     #[cfg(feature = "local_nodes_cheqd_pool")]
-    pub fn get_base_account_number_and_sequence(&self, account_id: &str) -> Result<(u64, u64), IndyError> {
+    pub fn get_base_account_number_and_sequence(
+        &self,
+        account_id: &str,
+    ) -> Result<(u64, u64), IndyError> {
         let req = auth::build_query_account(account_id).unwrap();
         let resp = cheqd_pool::abci_query(&self.pool_alias, &req).unwrap();
         let resp = auth::parse_query_account_resp(&resp).unwrap();
@@ -95,8 +104,7 @@ impl CheqdSetup {
         let resp: Value = serde_json::from_str(&resp).unwrap();
         let account = resp["account"].as_object().unwrap();
 
-
-        let base_account= if account["type_url"] == "ModuleAccount" {
+        let base_account = if account["type_url"] == "ModuleAccount" {
             let module_account = account["value"].as_object().unwrap();
             module_account["base_account"].as_object().unwrap()
         } else if account["type_url"] == "BaseVestingAccount" {
@@ -104,15 +112,21 @@ impl CheqdSetup {
             base_vesting_account["base_account"].as_object().unwrap()
         } else if account["type_url"] == "ContinuousVestingAccount" {
             let continuous_vesting_account = account["value"].as_object().unwrap();
-            let base_vesting_account = continuous_vesting_account["base_vesting_account"].as_object().unwrap();
+            let base_vesting_account = continuous_vesting_account["base_vesting_account"]
+                .as_object()
+                .unwrap();
             base_vesting_account["base_account"].as_object().unwrap()
         } else if account["type_url"] == "DelayedVestingAccount" {
             let delayed_vesting_account = account["value"].as_object().unwrap();
-            let base_vesting_account = delayed_vesting_account["base_vesting_account"].as_object().unwrap();
+            let base_vesting_account = delayed_vesting_account["base_vesting_account"]
+                .as_object()
+                .unwrap();
             base_vesting_account["base_account"].as_object().unwrap()
         } else if account["type_url"] == "PeriodicVestingAccount" {
             let periodic_vesting_account = account["value"].as_object().unwrap();
-            let base_vesting_account = periodic_vesting_account["base_vesting_account"].as_object().unwrap();
+            let base_vesting_account = periodic_vesting_account["base_vesting_account"]
+                .as_object()
+                .unwrap();
             base_vesting_account["base_account"].as_object().unwrap()
         } else {
             account["value"].as_object().unwrap()
@@ -127,7 +141,8 @@ impl CheqdSetup {
     #[cfg(feature = "local_nodes_cheqd_pool")]
     pub fn build_and_sign_and_broadcast_tx(&self, msg: &[u8]) -> Result<String, IndyError> {
         // Get account info
-        let (account_number, account_sequence) = self.get_base_account_number_and_sequence(&self.account_id)?;
+        let (account_number, account_sequence) =
+            self.get_base_account_number_and_sequence(&self.account_id)?;
 
         // Tx
         let tx = cheqd_ledger::auth::build_tx(
@@ -157,7 +172,11 @@ impl CheqdSetup {
         const TIMEOUT: u64 = 20;
         let info: String = cheqd_pool::abci_info(&self.pool_alias).unwrap();
         let info: Value = serde_json::from_str(&info).unwrap();
-        let current_height = info["response"]["last_block_height"].as_str().unwrap().parse::<u64>().unwrap();
+        let current_height = info["response"]["last_block_height"]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
         println!("Cheqd setup. Last block height: {:?}", current_height);
 
         return current_height + TIMEOUT;

@@ -1219,7 +1219,8 @@ mod high_cases {
                    }),
                    "requested_predicates": json!({
                    }),
-                }).to_string();
+                })
+                .to_string();
 
                 let credentials_json =
                     anoncreds::prover_get_credentials_for_proof_req(wallet_handle, &proof_req)
@@ -1843,7 +1844,8 @@ mod high_cases {
                    }),
                    "requested_predicates": json!({
                    }),
-                }).to_string();
+                })
+                .to_string();
 
                 let credentials_json =
                     anoncreds::prover_get_credentials_for_proof_req(wallet_handle, &proof_req)

@@ -1,3 +1,3 @@
-pub mod wallet_cache;
 mod cache;
 mod lru;
+pub mod wallet_cache;

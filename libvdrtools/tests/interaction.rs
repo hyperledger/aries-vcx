@@ -1,5 +1,4 @@
 #![cfg(feature = "local_nodes_pool")]
-
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
 #[macro_use]
@@ -20,8 +19,8 @@ mod utils;
 use std::thread;
 
 use core::borrow::Borrow;
-use vdrtoolsrs::{PoolHandle, WalletHandle};
 use serde_json::Value;
+use vdrtoolsrs::{PoolHandle, WalletHandle};
 
 use utils::{
     anoncreds::{self, COMMON_MASTER_SECRET, CREDENTIAL1_ID},
@@ -1337,7 +1336,7 @@ fn anoncreds_revocation_interaction_test_issuance_by_demand_fully_qualified_issu
         &json!({ "schema_name": GVT_SCHEMA_NAME }).to_string(),
     )
     .unwrap();
-   
+
     let credentials: Vec<serde_json::Value> = serde_json::from_str(&credentials).unwrap();
     assert_eq!(credentials.len(), 1);
 

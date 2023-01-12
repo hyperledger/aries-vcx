@@ -8,6 +8,7 @@ use indy_api_types::{
 use indy_utils::ctypes;
 use libc::c_char;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::{
         anoncreds::{
@@ -36,7 +37,6 @@ use crate::{
     services::AnoncredsHelpers,
     Locator,
 };
-use crate::services::CommandMetric;
 
 /*
 These functions wrap the Ursa algorithm as documented in this paper:
@@ -133,7 +133,9 @@ pub extern "C" fn indy_issuer_create_schema(
         cb(command_handle, err, id.as_ptr(), schema_json.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandCreateSchema, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::IssuerCommandCreateSchema, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_create_schema > {:?}", res);
@@ -283,7 +285,11 @@ pub extern "C" fn indy_issuer_create_and_store_credential_def(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandCreateAndStoreCredentialDefinition, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandCreateAndStoreCredentialDefinition,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_create_and_store_credential_def > {:?}", res);
@@ -380,7 +386,11 @@ pub extern "C" fn indy_issuer_rotate_credential_def_start(
         cb(command_handle, err, cred_def_json.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandRotateCredentialDefinitionStart, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandRotateCredentialDefinitionStart,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_rotate_credential_def_star < {:?}", res);
@@ -444,7 +454,11 @@ pub extern "C" fn indy_issuer_rotate_credential_def_apply(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandRotateCredentialDefinitionApply, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandRotateCredentialDefinitionApply,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_rotate_credential_def_apply < {:?}", res);
@@ -632,7 +646,11 @@ pub extern "C" fn indy_issuer_create_and_store_revoc_reg(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandCreateAndStoreRevocationRegistry, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandCreateAndStoreRevocationRegistry,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_create_and_store_credential_def > {:?}", res);
@@ -718,7 +736,11 @@ pub extern "C" fn indy_issuer_create_credential_offer(
         cb(command_handle, err, cred_offer_json.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandCreateCredentialOffer, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandCreateCredentialOffer,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_create_credential_offer < {:?}", res);
@@ -906,7 +928,11 @@ pub extern "C" fn indy_issuer_create_credential(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandCreateCredential, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandCreateCredential,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_create_credential < {:?}", res);
@@ -1013,7 +1039,11 @@ pub extern "C" fn indy_issuer_revoke_credential(
         cb(command_handle, err, revoc_reg_delta_json.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandRevokeCredential, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandRevokeCredential,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_revoke_credential < {:?}", res);
@@ -1178,7 +1208,11 @@ pub extern "C" fn indy_issuer_merge_revocation_registry_deltas(
         cb(command_handle, err, merged_rev_reg_delta.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::IssuerCommandMergeRevocationRegistryDeltas, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::IssuerCommandMergeRevocationRegistryDeltas,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_issuer_merge_revocation_registry_deltas < {:?}", res);
@@ -1250,7 +1284,11 @@ pub extern "C" fn indy_prover_create_master_secret(
         cb(command_handle, err, master_secret_id.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCreateMasterSecret, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandCreateMasterSecret,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_create_master_secret < {:?}", res);
@@ -1382,7 +1420,11 @@ pub extern "C" fn indy_prover_create_credential_req(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCreateCredentialRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandCreateCredentialRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_create_credential_req < {:?}", res);
@@ -1481,7 +1523,11 @@ pub extern "C" fn indy_prover_set_credential_attr_tag_policy(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandSetCredentialAttrTagPolicy, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandSetCredentialAttrTagPolicy,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_set_credential_attr_tag_policy < {:?}", res);
@@ -1556,7 +1602,11 @@ pub extern "C" fn indy_prover_get_credential_attr_tag_policy(
         cb(command_handle, err, catpol.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandGetCredentialAttrTagPolicy, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandGetCredentialAttrTagPolicy,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_get_credential_attr_tag_policy < {:?}", res);
@@ -1692,7 +1742,9 @@ pub extern "C" fn indy_prover_store_credential(
         cb(command_handle, err, cred_id.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandStoreCredential, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::ProverCommandStoreCredential, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_prover_store_credential < {:?}", res);
@@ -1769,7 +1821,9 @@ pub extern "C" fn indy_prover_get_credential(
         cb(command_handle, err, credential.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandGetCredential, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::ProverCommandGetCredential, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_prover_get_credential < {:?}", res);
@@ -1818,7 +1872,11 @@ pub extern "C" fn indy_prover_delete_credential(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandDeleteCredential, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandDeleteCredential,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_delete_credential < {:?}", res);
@@ -1912,7 +1970,9 @@ pub extern "C" fn indy_prover_get_credentials(
         cb(command_handle, err, credentials.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandGetCredentials, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::ProverCommandGetCredentials, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_prover_get_credentials < {:?}", res);
@@ -1988,7 +2048,11 @@ pub extern "C" fn indy_prover_search_credentials(
         cb(command_handle, err, handle, total_count);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandSearchCredentials, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandSearchCredentials,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_search_credentials < {:?}", res);
@@ -2065,7 +2129,11 @@ pub extern "C" fn indy_prover_fetch_credentials(
         cb(command_handle, err, credentials.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandFetchCredentials, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandFetchCredentials,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_fetch_credentials < {:?}", res);
@@ -2115,7 +2183,11 @@ pub extern "C" fn indy_prover_close_credentials_search(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCloseCredentialsSearch, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandCloseCredentialsSearch,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_close_credentials_search < {:?}", res);
@@ -2277,7 +2349,11 @@ pub extern "C" fn indy_prover_get_credentials_for_proof_req(
         cb(command_handle, err, credentials.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandGetCredentialsForProofReq, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandGetCredentialsForProofReq,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_get_credentials_for_proof_req < {:?}", res);
@@ -2429,7 +2505,11 @@ pub extern "C" fn indy_prover_search_credentials_for_proof_req(
         cb(command_handle, err, search_handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandSearchCredentialsForProofReq, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandSearchCredentialsForProofReq,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_search_credentials_for_proof_req < {:?}", res);
@@ -2523,7 +2603,11 @@ pub extern "C" fn indy_prover_fetch_credentials_for_proof_req(
         cb(command_handle, err, credentials.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandFetchCredentialForProofReq, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandFetchCredentialForProofReq,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_prover_fetch_credentials_for_proof_req < {:?}", res);
@@ -2576,7 +2660,11 @@ pub extern "C" fn indy_prover_close_credentials_search_for_proof_req(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCloseCredentialsSearchForProofReq, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandCloseCredentialsSearchForProofReq,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
 
@@ -2845,7 +2933,9 @@ pub extern "C" fn indy_prover_create_proof(
         cb(command_handle, err, proof.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCreateProof, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::ProverCommandCreateProof, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_prover_create_proof < {:?}", res);
@@ -3090,7 +3180,9 @@ pub extern "C" fn indy_verifier_verify_proof(
         cb(command_handle, err, valid)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::VerifierCommandVerifyProof, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::VerifierCommandVerifyProof, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_verifier_verify_proof < {:?}", res);
@@ -3201,7 +3293,11 @@ pub extern "C" fn indy_create_revocation_state(
         cb(command_handle, err, rev_state.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandCreateRevocationState, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandCreateRevocationState,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_create_revocation_state < {:?}", res);
@@ -3330,7 +3426,11 @@ pub extern "C" fn indy_update_revocation_state(
         cb(command_handle, err, rev_state.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::ProverCommandUpdateRevocationState, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::ProverCommandUpdateRevocationState,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_update_revocation_state < {:?}", res);
@@ -3371,7 +3471,9 @@ pub extern "C" fn indy_generate_nonce(
         cb(command_handle, err, nonce.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::VerifierCommandGenerateNonce, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::VerifierCommandGenerateNonce, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_generate_nonce < {:?}", res);
@@ -3431,7 +3533,11 @@ pub extern "C" fn indy_to_unqualified(
         cb(command_handle, err, did.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::AnoncredsCommandToUnqualified, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::AnoncredsCommandToUnqualified,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_to_unqualified < {:?}", res);

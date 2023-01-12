@@ -20,7 +20,24 @@ impl From<f64> for MetricsFloatValue {
     }
 }
 
-pub(super) const LIST_LE: [MetricsFloatValue; BUCKET_COUNT] = [MetricsFloatValue(0.5), MetricsFloatValue(1.0), MetricsFloatValue(2.0), MetricsFloatValue(5.0), MetricsFloatValue(10.0), MetricsFloatValue(20.0), MetricsFloatValue(50.0), MetricsFloatValue(100.0), MetricsFloatValue(200.0), MetricsFloatValue(500.0), MetricsFloatValue(1000.0), MetricsFloatValue(2000.0), MetricsFloatValue(5000.0), MetricsFloatValue(10000.0), MetricsFloatValue(20000.0), MetricsFloatValue(f64::MAX)];
+pub(super) const LIST_LE: [MetricsFloatValue; BUCKET_COUNT] = [
+    MetricsFloatValue(0.5),
+    MetricsFloatValue(1.0),
+    MetricsFloatValue(2.0),
+    MetricsFloatValue(5.0),
+    MetricsFloatValue(10.0),
+    MetricsFloatValue(20.0),
+    MetricsFloatValue(50.0),
+    MetricsFloatValue(100.0),
+    MetricsFloatValue(200.0),
+    MetricsFloatValue(500.0),
+    MetricsFloatValue(1000.0),
+    MetricsFloatValue(2000.0),
+    MetricsFloatValue(5000.0),
+    MetricsFloatValue(10000.0),
+    MetricsFloatValue(20000.0),
+    MetricsFloatValue(f64::MAX),
+];
 
 #[derive(Serialize, Deserialize)]
 pub struct MetricsValue {
@@ -43,7 +60,11 @@ pub struct CommandCounters {
 
 impl CommandCounters {
     pub fn new() -> Self {
-        CommandCounters {count: 0, duration_ms_sum: 0, duration_ms_bucket: [0; BUCKET_COUNT]}
+        CommandCounters {
+            count: 0,
+            duration_ms_sum: 0,
+            duration_ms_bucket: [0; BUCKET_COUNT],
+        }
     }
 
     pub fn add(&mut self, duration: u128) {

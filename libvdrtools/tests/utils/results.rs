@@ -1,7 +1,7 @@
 use std::sync::mpsc::Receiver;
 
-use vdrtoolsrs::ErrorCode;
 use vdrtools_sys::Error;
+use vdrtoolsrs::ErrorCode;
 
 pub fn result_to_empty(err: Error, receiver: Receiver<Error>) -> Result<(), ErrorCode> {
     let err = ErrorCode::from(err as i32);

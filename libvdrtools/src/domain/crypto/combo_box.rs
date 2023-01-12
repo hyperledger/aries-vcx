@@ -5,7 +5,7 @@ use rmp_serde;
 pub struct ComboBox {
     pub msg: String,
     pub sender: String,
-    pub nonce: String
+    pub nonce: String,
 }
 
 #[cfg(feature = "ffi_api")]

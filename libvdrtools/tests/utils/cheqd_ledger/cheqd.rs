@@ -1,4 +1,4 @@
-use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError, WalletHandle};
+use vdrtoolsrs::{cheqd_ledger, future::Future, IndyError, WalletHandle};
 
 #[cfg(feature = "local_nodes_cheqd_pool")]
 use crate::utils::{cheqd_ledger as u_cheqd_ledger, cheqd_pool, cheqd_setup};
@@ -12,7 +12,8 @@ pub fn did_info() -> String {
     json!({
         "ledger_type": "testnet",
         "method_name": "cheqd",
-    }).to_string()
+    })
+    .to_string()
 }
 
 pub fn make_fully_did(did: &str) -> String {
@@ -21,10 +22,7 @@ pub fn make_fully_did(did: &str) -> String {
     fully_did
 }
 
-pub fn build_msg_create_did(
-    did: &str,
-    verkey: &str,
-) -> Result<Vec<u8>, IndyError> {
+pub fn build_msg_create_did(did: &str, verkey: &str) -> Result<Vec<u8>, IndyError> {
     cheqd_ledger::cheqd::build_msg_create_did(did, verkey).wait()
 }
 
@@ -52,15 +50,25 @@ pub fn parse_query_get_did_resp(query_resp: &str) -> Result<String, IndyError> {
     cheqd_ledger::cheqd::parse_query_get_did_resp(query_resp).wait()
 }
 
-pub fn sign_msg_request(wallet_handle: WalletHandle, fully_did: &str, msg: &[u8]) -> Result<Vec<u8>, IndyError> {
+pub fn sign_msg_request(
+    wallet_handle: WalletHandle,
+    fully_did: &str,
+    msg: &[u8],
+) -> Result<Vec<u8>, IndyError> {
     cheqd_ledger::cheqd::sign_msg_write_request(wallet_handle, fully_did, msg).wait()
 }
 
 #[cfg(feature = "local_nodes_cheqd_pool")]
-pub fn sign_and_broadcast_cheqd_msg(setup: &cheqd_setup::CheqdSetup, fully_did: &str, msg: Vec<u8>) -> Result<String, IndyError> {
-    let (account_number, account_sequence) = setup.get_base_account_number_and_sequence(&setup.account_id)?;
+pub fn sign_and_broadcast_cheqd_msg(
+    setup: &cheqd_setup::CheqdSetup,
+    fully_did: &str,
+    msg: Vec<u8>,
+) -> Result<String, IndyError> {
+    let (account_number, account_sequence) =
+        setup.get_base_account_number_and_sequence(&setup.account_id)?;
 
-    let signed_msg = u_cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &fully_did, &msg)?;
+    let signed_msg =
+        u_cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &fully_did, &msg)?;
     println!("Indy Signed message:::::: {:?}", signed_msg);
     // Transaction
     let tx = u_cheqd_ledger::auth::build_tx(

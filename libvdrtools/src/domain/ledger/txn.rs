@@ -6,7 +6,7 @@ pub struct GetTxnOperation {
     pub _type: String,
     pub data: i32,
     #[serde(rename = "ledgerId")]
-    pub ledger_id: i32
+    pub ledger_id: i32,
 }
 
 impl GetTxnOperation {
@@ -14,7 +14,7 @@ impl GetTxnOperation {
         GetTxnOperation {
             _type: GET_TXN.to_string(),
             data,
-            ledger_id
+            ledger_id,
         }
     }
 }
@@ -23,7 +23,7 @@ impl GetTxnOperation {
 pub enum LedgerType {
     POOL = 0,
     DOMAIN = 1,
-    CONFIG = 2
+    CONFIG = 2,
 }
 
 impl LedgerType {

@@ -10,10 +10,7 @@ pub struct Key {
 
 impl Key {
     pub fn new(verkey: String, signkey: String) -> Key {
-        Key {
-            verkey,
-            signkey,
-        }
+        Key { verkey, signkey }
     }
 }
 
@@ -37,5 +34,5 @@ pub struct KeyInfo {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KeyMetadata {
-    pub value: String
+    pub value: String,
 }

@@ -2,13 +2,13 @@ use super::DELIMITER;
 
 use super::super::crypto::did::DidValue;
 
-use std::collections::{HashMap, HashSet};
 use indy_api_types::errors::{IndyErrorKind, IndyResult};
 use indy_api_types::IndyError;
+use std::collections::{HashMap, HashSet};
 
-use indy_api_types::validation::Validatable;
 use super::indy_identifiers;
 use crate::utils::qualifier;
+use indy_api_types::validation::Validatable;
 
 pub const MAX_ATTRIBUTES_COUNT: usize = 125;
 
@@ -27,21 +27,19 @@ pub struct SchemaV1 {
 #[serde(tag = "ver")]
 pub enum Schema {
     #[serde(rename = "1.0")]
-    SchemaV1(SchemaV1)
+    SchemaV1(SchemaV1),
 }
 
 impl Schema {
     pub fn to_unqualified(self) -> Schema {
         match self {
-            Schema::SchemaV1(schema) => {
-                Schema::SchemaV1(SchemaV1 {
-                    id: schema.id.to_unqualified(),
-                    name: schema.name,
-                    version: schema.version,
-                    attr_names: schema.attr_names,
-                    seq_no: schema.seq_no,
-                })
-            }
+            Schema::SchemaV1(schema) => Schema::SchemaV1(SchemaV1 {
+                id: schema.id.to_unqualified(),
+                name: schema.name,
+                version: schema.version,
+                attr_names: schema.attr_names,
+                seq_no: schema.seq_no,
+            }),
         }
     }
 }
@@ -49,7 +47,7 @@ impl Schema {
 impl From<Schema> for SchemaV1 {
     fn from(schema: Schema) -> Self {
         match schema {
-            Schema::SchemaV1(schema) => schema
+            Schema::SchemaV1(schema) => schema,
         }
     }
 }
@@ -57,7 +55,10 @@ impl From<Schema> for SchemaV1 {
 pub type Schemas = HashMap<SchemaId, Schema>;
 
 pub fn schemas_map_to_schemas_v1_map(schemas: Schemas) -> HashMap<SchemaId, SchemaV1> {
-    schemas.into_iter().map(|(schema_id, schema)| { (schema_id, SchemaV1::from(schema)) }).collect()
+    schemas
+        .into_iter()
+        .map(|(schema_id, schema)| (schema_id, SchemaV1::from(schema)))
+        .collect()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -90,10 +91,16 @@ impl Validatable for Schema {
                 schema.id.validate()?;
                 if let Some((_, name, version)) = schema.id.parts() {
                     if name != schema.name {
-                        return Err(format!("Inconsistent Schema Id and Schema Name: {:?} and {}", schema.id, schema.name))
+                        return Err(format!(
+                            "Inconsistent Schema Id and Schema Name: {:?} and {}",
+                            schema.id, schema.name
+                        ));
                     }
                     if version != schema.version {
-                        return Err(format!("Inconsistent Schema Id and Schema Version: {:?} and {}", schema.id, schema.version))
+                        return Err(format!(
+                            "Inconsistent Schema Id and Schema Version: {:?} and {}",
+                            schema.id, schema.version
+                        ));
                     }
                 }
                 Ok(())
@@ -105,11 +112,17 @@ impl Validatable for Schema {
 impl Validatable for AttributeNames {
     fn validate(&self) -> Result<(), String> {
         if self.0.is_empty() {
-            return Err(String::from("Empty list of Schema attributes has been passed"));
+            return Err(String::from(
+                "Empty list of Schema attributes has been passed",
+            ));
         }
 
         if self.0.len() > MAX_ATTRIBUTES_COUNT {
-            return Err(format!("The number of Schema attributes {} cannot be greater than {}", self.0.len(), MAX_ATTRIBUTES_COUNT));
+            return Err(format!(
+                "The number of Schema attributes {} cannot be greater than {}",
+                self.0.len(),
+                MAX_ATTRIBUTES_COUNT
+            ));
         }
         Ok(())
     }
@@ -128,13 +141,21 @@ impl SchemaId {
     pub fn new(did: &DidValue, name: &str, version: &str) -> IndyResult<SchemaId> {
         const MARKER: &str = "2";
         match did.get_method() {
-            Some(method) if method.starts_with("indy") => {
-                Ok(SchemaId(format!("{}{}{}/{}", did.0, Self::PREFIX, name, version)))
-            },
-            Some(_method) => {
-                Err(IndyError::from_msg(IndyErrorKind::InvalidStructure, "Unsupported DID method"))
-            }
-            None => Ok(SchemaId(format!("{}:{}:{}:{}", did.0, MARKER, name, version)))
+            Some(method) if method.starts_with("indy") => Ok(SchemaId(format!(
+                "{}{}{}/{}",
+                did.0,
+                Self::PREFIX,
+                name,
+                version
+            ))),
+            Some(_method) => Err(IndyError::from_msg(
+                IndyErrorKind::InvalidStructure,
+                "Unsupported DID method",
+            )),
+            None => Ok(SchemaId(format!(
+                "{}:{}:{}:{}",
+                did.0, MARKER, name, version
+            ))),
         }
     }
 
@@ -172,10 +193,8 @@ impl SchemaId {
 
     pub fn qualify(&self, method: &str) -> IndyResult<SchemaId> {
         match self.parts() {
-            Some((did, name, version)) => {
-                SchemaId::new(&did.qualify(method), &name, &version)
-            }
-            None => Ok(self.clone())
+            Some((did, name, version)) => SchemaId::new(&did.qualify(method), &name, &version),
+            None => Ok(self.clone()),
         }
     }
 
@@ -183,11 +202,14 @@ impl SchemaId {
         trace!("SchemaId::to_unqualified >> {}", &self.0);
         match self.parts() {
             Some((did, name, version)) => {
-                trace!("SchemaId::to_unqualified: parts {:?}", (&did, &name, &version));
+                trace!(
+                    "SchemaId::to_unqualified: parts {:?}",
+                    (&did, &name, &version)
+                );
                 SchemaId::new(&did.to_unqualified(), &name, &version)
                     .expect("Can't create unqualified SchemaId")
             }
-            None => self.clone()
+            None => self.clone(),
         }
     }
 }
@@ -198,7 +220,10 @@ impl Validatable for SchemaId {
             return Ok(());
         }
 
-        self.parts().ok_or(format!("SchemaId validation failed: {:?}, doesn't match pattern", self.0))?;
+        self.parts().ok_or(format!(
+            "SchemaId validation failed: {:?}, doesn't match pattern",
+            self.0
+        ))?;
 
         Ok(())
     }
@@ -225,7 +250,10 @@ mod tests {
     }
 
     fn _schema_id_qualified() -> SchemaId {
-        SchemaId("did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0".to_string())
+        SchemaId(
+            "did:indy:sovrin:builder:NcYxiDXkpYi6ov5FcYDi1e/anoncreds/v0/SCHEMA/gvt/1.0"
+                .to_string(),
+        )
     }
 
     fn _schema_id_invalid() -> SchemaId {
@@ -242,12 +270,18 @@ mod tests {
 
         #[test]
         fn test_schema_id_parts_for_id_as_unqualified() {
-            assert_eq!(_schema_id_unqualified(), _schema_id_unqualified().to_unqualified());
+            assert_eq!(
+                _schema_id_unqualified(),
+                _schema_id_unqualified().to_unqualified()
+            );
         }
 
         #[test]
         fn test_schema_id_parts_for_id_as_qualified() {
-            assert_eq!(_schema_id_unqualified(), _schema_id_qualified().to_unqualified());
+            assert_eq!(
+                _schema_id_unqualified(),
+                _schema_id_qualified().to_unqualified()
+            );
         }
 
         #[test]
@@ -323,7 +357,8 @@ mod tests {
                 "ver": "1.0",
                 "version": "1.0",
                 "attrNames": ["aaa", "bbb", "ccc"],
-            }).to_string();
+            })
+            .to_string();
 
             let schema: Schema = serde_json::from_str(&schema_json).unwrap();
             schema.validate().unwrap();
@@ -343,7 +378,8 @@ mod tests {
                 "ver": "1.0",
                 "version": "1.0",
                 "attrNames": ["aaa", "bbb", "ccc"],
-            }).to_string();
+            })
+            .to_string();
 
             let schema: Schema = serde_json::from_str(&schema_json).unwrap();
             schema.validate().unwrap_err();
@@ -357,7 +393,8 @@ mod tests {
                 "ver": "1.0",
                 "version": "1.1",
                 "attrNames": ["aaa", "bbb", "ccc"],
-            }).to_string();
+            })
+            .to_string();
 
             let schema: Schema = serde_json::from_str(&schema_json).unwrap();
             schema.validate().unwrap_err();

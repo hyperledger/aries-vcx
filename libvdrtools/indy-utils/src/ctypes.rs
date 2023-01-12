@@ -258,7 +258,10 @@ macro_rules! check_u32_less_or_eq {
 macro_rules! check_useful_c_reference {
     ($ptr:ident, $type:ty, $err:expr) => {
         if $ptr.is_null() {
-            set_current_error(&err_msg($err.into(), "Invalid pointer has been passed: Unable restore object from null pointer"));
+            set_current_error(&err_msg(
+                $err.into(),
+                "Invalid pointer has been passed: Unable restore object from null pointer",
+            ));
             return $err;
         }
 
@@ -270,7 +273,10 @@ macro_rules! check_useful_c_reference {
 macro_rules! check_useful_c_ptr {
     ($ptr:ident, $err1:expr) => {
         if $ptr.is_null() {
-            set_current_error(&err_msg($err1.into(), "Invalid pointer has been passed: Unable to restore object from null pointer"));
+            set_current_error(&err_msg(
+                $err1.into(),
+                "Invalid pointer has been passed: Unable to restore object from null pointer",
+            ));
             return $err1;
         }
     };

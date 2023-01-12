@@ -8,8 +8,8 @@ use std::{
     time::Duration,
 };
 
-use vdrtoolsrs::CommandHandle;
 use libc::c_char;
+use vdrtoolsrs::CommandHandle;
 
 #[test]
 fn get_current_error_works_for_no_error() {

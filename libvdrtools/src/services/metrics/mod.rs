@@ -49,47 +49,64 @@ impl MetricsService {
         CommandMetric::VARIANT_COUNT
     }
 
-    pub fn get_command_tags(
-        command: String,
-        stage: String,
-    ) -> HashMap<String, String> {
+    pub fn get_command_tags(command: String, stage: String) -> HashMap<String, String> {
         let mut tags = HashMap::<String, String>::new();
         tags.insert("command".to_owned(), command.to_owned());
         tags.insert("stage".to_owned(), stage.to_owned());
         tags
     }
 
-    pub async fn append_command_metrics(&self, metrics_map: &mut Map<String, Value>) -> IndyResult<()> {
+    pub async fn append_command_metrics(
+        &self,
+        metrics_map: &mut Map<String, Value>,
+    ) -> IndyResult<()> {
         let mut commands_count = Vec::new();
         let mut commands_duration_ms = Vec::new();
         let mut commands_duration_ms_bucket = Vec::new();
 
         for index in 0..MetricsService::commands_count() {
             let command_name = MetricsService::cmd_name(index);
-            let tags_executed = MetricsService::get_command_tags(
-                command_name.to_owned(),
-                "executed".to_owned(),
-            );
-            let tags_cb = MetricsService::get_command_tags(
-                command_name.to_owned(),
-                "callback".to_owned(),
-            );
+            let tags_executed =
+                MetricsService::get_command_tags(command_name.to_owned(), "executed".to_owned());
+            let tags_cb =
+                MetricsService::get_command_tags(command_name.to_owned(), "callback".to_owned());
 
             let exec_counters = self.executed_counters.lock().await;
-            commands_count.push(Self::get_metric_json(exec_counters[index].count as usize, tags_executed.clone())?);
-            commands_duration_ms.push(Self::get_metric_json(exec_counters[index].duration_ms_sum as usize, tags_executed.clone())?);
+            commands_count.push(Self::get_metric_json(
+                exec_counters[index].count as usize,
+                tags_executed.clone(),
+            )?);
+            commands_duration_ms.push(Self::get_metric_json(
+                exec_counters[index].duration_ms_sum as usize,
+                tags_executed.clone(),
+            )?);
 
             let cb_counters = self.callback_counters.lock().await;
-            commands_count.push(Self::get_metric_json(cb_counters[index].count as usize, tags_cb.clone())?);
-            commands_duration_ms.push(Self::get_metric_json(cb_counters[index].duration_ms_sum as usize, tags_cb.clone())?);
+            commands_count.push(Self::get_metric_json(
+                cb_counters[index].count as usize,
+                tags_cb.clone(),
+            )?);
+            commands_duration_ms.push(Self::get_metric_json(
+                cb_counters[index].duration_ms_sum as usize,
+                tags_cb.clone(),
+            )?);
 
-            for (executed_bucket, le) in exec_counters[index].duration_ms_bucket.iter().zip(models::LIST_LE.iter()) {
+            for (executed_bucket, le) in exec_counters[index]
+                .duration_ms_bucket
+                .iter()
+                .zip(models::LIST_LE.iter())
+            {
                 let mut tags = tags_executed.clone();
                 tags.insert("le".to_owned(), le.to_string());
-                commands_duration_ms_bucket.push(Self::get_metric_json(*executed_bucket as usize, tags)?);
+                commands_duration_ms_bucket
+                    .push(Self::get_metric_json(*executed_bucket as usize, tags)?);
             }
 
-            for (cb_bucket, le) in cb_counters[index].duration_ms_bucket.iter().zip(models::LIST_LE.iter()) {
+            for (cb_bucket, le) in cb_counters[index]
+                .duration_ms_bucket
+                .iter()
+                .zip(models::LIST_LE.iter())
+            {
                 let mut tags = tags_cb.clone();
                 tags.insert("le".to_owned(), le.to_string());
                 commands_duration_ms_bucket.push(Self::get_metric_json(*cb_bucket as usize, tags)?);
@@ -102,10 +119,21 @@ impl MetricsService {
             tags
         };
         let queued_counters = self.queued_counters.lock().await;
-        commands_duration_ms.push(Self::get_metric_json(queued_counters.duration_ms_sum as usize, tags_queued.clone())?);
-        commands_count.push(Self::get_metric_json(queued_counters.count as usize, tags_queued.clone())?);
+        commands_duration_ms.push(Self::get_metric_json(
+            queued_counters.duration_ms_sum as usize,
+            tags_queued.clone(),
+        )?);
+        commands_count.push(Self::get_metric_json(
+            queued_counters.count as usize,
+            tags_queued.clone(),
+        )?);
 
-        for (queued_bucket, le) in queued_counters.duration_ms_bucket.iter().rev().zip(models::LIST_LE.iter().rev()) {
+        for (queued_bucket, le) in queued_counters
+            .duration_ms_bucket
+            .iter()
+            .rev()
+            .zip(models::LIST_LE.iter().rev())
+        {
             let mut tags = tags_queued.clone();
             tags.insert("le".to_owned(), le.to_string());
             commands_duration_ms_bucket.push(Self::get_metric_json(*queued_bucket as usize, tags)?);
@@ -130,11 +158,12 @@ impl MetricsService {
         Ok(())
     }
 
-    pub(crate) fn get_metric_json(value: usize, tags: HashMap<String, String>) -> IndyResult<Value> {
-        let res = serde_json::to_value(MetricsValue::new(
-            value,
-            tags,
-        )).to_indy(IndyErrorKind::IOError, "Unable to convert json")?;
+    pub(crate) fn get_metric_json(
+        value: usize,
+        tags: HashMap<String, String>,
+    ) -> IndyResult<Value> {
+        let res = serde_json::to_value(MetricsValue::new(value, tags))
+            .to_indy(IndyErrorKind::IOError, "Unable to convert json")?;
 
         Ok(res)
     }
@@ -147,7 +176,10 @@ mod test {
     #[async_std::test]
     async fn test_counters_are_initialized() {
         let metrics_service = MetricsService::new();
-        assert_eq!(metrics_service.executed_counters.lock().await.len(), COMMANDS_COUNT);
+        assert_eq!(
+            metrics_service.executed_counters.lock().await.len(),
+            COMMANDS_COUNT
+        );
     }
 
     #[async_std::test]
@@ -163,12 +195,9 @@ mod test {
             let queued_counters = metrics_service.queued_counters.lock().await;
             assert_eq!(queued_counters.count, 1);
             assert_eq!(queued_counters.duration_ms_sum, duration1);
-            assert_eq!(queued_counters
-                           .duration_ms_bucket[
-                           queued_counters
-                               .duration_ms_bucket.len() - 1
-                           ],
-                       1
+            assert_eq!(
+                queued_counters.duration_ms_bucket[queued_counters.duration_ms_bucket.len() - 1],
+                1
             );
         }
 
@@ -177,26 +206,20 @@ mod test {
         {
             let queued_counters = metrics_service.queued_counters.lock().await;
             assert_eq!(queued_counters.count, 1 + 1);
-            assert_eq!(queued_counters.duration_ms_sum,
-                       duration1 + duration2);
-            assert_eq!(queued_counters
-                           .duration_ms_bucket[
-                           queued_counters
-                               .duration_ms_bucket.len() - 1
-                           ],
-                       2
+            assert_eq!(queued_counters.duration_ms_sum, duration1 + duration2);
+            assert_eq!(
+                queued_counters.duration_ms_bucket[queued_counters.duration_ms_bucket.len() - 1],
+                2
             );
         }
 
         let executed_counters = metrics_service.executed_counters.lock().await;
         assert_eq!(executed_counters[index as usize].count, 0);
         assert_eq!(executed_counters[index as usize].duration_ms_sum, 0);
-        assert_eq!(executed_counters[index as usize]
-                       .duration_ms_bucket[
-                            executed_counters[index as usize]
-                            .duration_ms_bucket.len()-1
-                       ],
-                   0
+        assert_eq!(
+            executed_counters[index as usize].duration_ms_bucket
+                [executed_counters[index as usize].duration_ms_bucket.len() - 1],
+            0
         );
     }
 
@@ -209,15 +232,30 @@ mod test {
 
         metrics_service.cmd_executed(index, duration1).await;
 
-        assert_eq!(metrics_service.executed_counters.lock().await[index as usize].count, 1);
-        assert_eq!(metrics_service.executed_counters.lock().await[index as usize].duration_ms_sum, duration1);
+        assert_eq!(
+            metrics_service.executed_counters.lock().await[index as usize].count,
+            1
+        );
+        assert_eq!(
+            metrics_service.executed_counters.lock().await[index as usize].duration_ms_sum,
+            duration1
+        );
 
         metrics_service.cmd_executed(index, duration2).await;
 
         assert_eq!(metrics_service.queued_counters.lock().await.count, 0);
-        assert_eq!(metrics_service.queued_counters.lock().await.duration_ms_sum, 0);
-        assert_eq!(metrics_service.executed_counters.lock().await[index as usize].count, 1 + 1);
-        assert_eq!(metrics_service.executed_counters.lock().await[index as usize].duration_ms_sum, duration1 + duration2);
+        assert_eq!(
+            metrics_service.queued_counters.lock().await.duration_ms_sum,
+            0
+        );
+        assert_eq!(
+            metrics_service.executed_counters.lock().await[index as usize].count,
+            1 + 1
+        );
+        assert_eq!(
+            metrics_service.executed_counters.lock().await[index as usize].duration_ms_sum,
+            duration1 + duration2
+        );
     }
 
     #[async_std::test]
@@ -225,7 +263,10 @@ mod test {
         let metrics_service = MetricsService::new();
         let mut metrics_map = serde_json::Map::new();
 
-        metrics_service.append_command_metrics(&mut metrics_map).await.unwrap();
+        metrics_service
+            .append_command_metrics(&mut metrics_map)
+            .await
+            .unwrap();
 
         assert!(metrics_map.contains_key("command_duration_ms_count"));
         assert!(metrics_map.contains_key("command_duration_ms_sum"));
@@ -278,19 +319,19 @@ mod test {
         let expected_commands_count = [
             generate_json("payments_command_build_set_txn_fees_req_ack", "executed", 0),
             generate_json("cache_command_purge_cred_def_cache", "executed", 0),
-            json!({"tags": {"stage": "queued"}, "value": 0})
+            json!({"tags": {"stage": "queued"}, "value": 0}),
         ];
 
         let expected_commands_duration_ms = [
             generate_json("payments_command_build_set_txn_fees_req_ack", "executed", 0),
             generate_json("cache_command_purge_cred_def_cache", "executed", 0),
-            json!({"tags": {"stage": "queued"}, "value": 0})
+            json!({"tags": {"stage": "queued"}, "value": 0}),
         ];
 
         let expected_commands_duration_ms_bucket = [
             json!({"tags": {"command": "payments_command_build_set_txn_fees_req_ack", "stage": "executed", "le": "+Inf"}, "value": 0}),
             json!({"tags": {"command": "cache_command_purge_cred_def_cache", "stage": "executed", "le": "+Inf"}, "value": 0}),
-            json!({"tags": {"stage": "queued", "le": "+Inf"}, "value": 0})
+            json!({"tags": {"stage": "queued", "le": "+Inf"}, "value": 0}),
         ];
 
         for command in &expected_commands_count {

@@ -1,13 +1,13 @@
 use std::{
     fs::File as SyncFile,
-    io::{SeekFrom, Read, Seek},
+    io::{Read, Seek, SeekFrom},
     path::PathBuf,
 };
 
+use crate::utils::crypto::base58::ToBase58;
 use async_trait::async_trait;
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
-use crate::utils::crypto::base58::ToBase58;
 use serde_json;
 
 use super::{ReadableBlob, Reader, ReaderType};

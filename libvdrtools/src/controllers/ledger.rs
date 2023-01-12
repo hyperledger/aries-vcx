@@ -1,8 +1,8 @@
 use std::{string::ToString, sync::Arc};
 
+use crate::utils::crypto::base58::ToBase58;
 use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
-use crate::utils::crypto::base58::ToBase58;
 use serde_json::{self, Value};
 
 #[cfg(feature = "ffi_api")]
@@ -11,9 +11,7 @@ use crate::api::ledger::{CustomFree, CustomTransactionParser};
 use crate::{
     domain::{
         anoncreds::{
-            credential_definition::{
-                CredentialDefinition, CredentialDefinitionId,
-            },
+            credential_definition::{CredentialDefinition, CredentialDefinitionId},
             revocation_registry_definition::{
                 RevocationRegistryDefinition, RevocationRegistryDefinitionV1, RevocationRegistryId,
             },
@@ -495,10 +493,7 @@ impl LedgerController {
         res
     }
 
-    pub fn build_get_validator_info_request(
-        &self,
-        submitter_did: DidValue,
-    ) -> IndyResult<String> {
+    pub fn build_get_validator_info_request(&self, submitter_did: DidValue) -> IndyResult<String> {
         info!(
             "build_get_validator_info_request > submitter_did {:?}",
             submitter_did
@@ -1058,15 +1053,23 @@ impl LedgerController {
             request_json, text, version, taa_digest, acc_mech_type, time
         );
 
-        let mut request: Request<serde_json::Value> = serde_json::from_str(&request_json)
-            .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, format!("Unable to parse indy transaction. Err: {:?}", err)))?;
+        let mut request: Request<serde_json::Value> =
+            serde_json::from_str(&request_json).map_err(|err| {
+                err_msg(
+                    IndyErrorKind::InvalidStructure,
+                    format!("Unable to parse indy transaction. Err: {:?}", err),
+                )
+            })?;
 
-        self.ledger_service.append_txn_author_agreement_acceptance_to_request(&mut request,
-                                                                              text.as_deref(),
-                                                                              version.as_deref(),
-                                                                              taa_digest.as_deref(),
-                                                                              &acc_mech_type,
-                                                                              time)?;
+        self.ledger_service
+            .append_txn_author_agreement_acceptance_to_request(
+                &mut request,
+                text.as_deref(),
+                version.as_deref(),
+                taa_digest.as_deref(),
+                &acc_mech_type,
+                time,
+            )?;
 
         let res = Ok(json!(request).to_string());
 
@@ -1092,10 +1095,16 @@ impl LedgerController {
 
         let endorser_did = endorser_did.to_short();
 
-        let mut request: Request<serde_json::Value> = serde_json::from_str(&request_json)
-            .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, format!("Unable to parse indy transaction. Err: {:?}", err)))?;
+        let mut request: Request<serde_json::Value> =
+            serde_json::from_str(&request_json).map_err(|err| {
+                err_msg(
+                    IndyErrorKind::InvalidStructure,
+                    format!("Unable to parse indy transaction. Err: {:?}", err),
+                )
+            })?;
 
-        self.ledger_service.append_txn_endorser(&mut request, &endorser_did)?;
+        self.ledger_service
+            .append_txn_endorser(&mut request, &endorser_did)?;
 
         let res = Ok(json!(request).to_string());
 
@@ -1132,7 +1141,8 @@ impl LedgerController {
             .get_indy_object(wallet_handle, &my_did.verkey, &RecordOptions::id_value())
             .await?;
 
-        let (txn_bytes_to_sign, mut request) = self.ledger_service.get_txn_bytes_to_sign(&request_json)?;
+        let (txn_bytes_to_sign, mut request) =
+            self.ledger_service.get_txn_bytes_to_sign(&request_json)?;
 
         let signature = self
             .crypto_service

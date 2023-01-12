@@ -5,10 +5,10 @@ use std::{
     sync::Mutex,
 };
 
-use vdrtoolsrs::{future::Future, wallet, CommandHandle, ErrorCode, IndyError, WalletHandle};
 use lazy_static::lazy_static;
 use libc::c_char;
 use serde_json;
+use vdrtoolsrs::{future::Future, wallet, CommandHandle, ErrorCode, IndyError, WalletHandle};
 
 use crate::utils::{
     callback,

@@ -10,8 +10,8 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
-use crate::Locator;
 use crate::services::CommandMetric;
+use crate::Locator;
 
 /// Register custom wallet storage implementation.
 ///
@@ -144,7 +144,11 @@ pub extern "C" fn indy_register_wallet_storage(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandRegisterWalletType, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::WalletCommandRegisterWalletType,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_register_wallet_type < {:?}", res);
@@ -226,7 +230,9 @@ pub extern "C" fn indy_create_wallet(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandCreate, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandCreate, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_create_wallet < {:?}", res);
@@ -325,7 +331,9 @@ pub extern "C" fn indy_open_wallet(
         cb(command_handle, err, handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandOpen, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandOpen, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_open_wallet < {:?}", res);
@@ -392,7 +400,9 @@ pub extern "C" fn indy_export_wallet(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandExport, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandExport, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_export_wallet < {:?}", res);
@@ -487,7 +497,9 @@ pub extern "C" fn indy_import_wallet(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandImport, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandImport, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_import_wallet < {:?}", res);
@@ -531,7 +543,9 @@ pub extern "C" fn indy_close_wallet(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandClose, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandClose, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_close_wallet < {:?}", res);
@@ -613,7 +627,9 @@ pub extern "C" fn indy_delete_wallet(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandDelete, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandDelete, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_delete_wallet < {:?}", res);
@@ -668,7 +684,9 @@ pub extern "C" fn indy_generate_wallet_key(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::WalletCommandGenerateKey, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::WalletCommandGenerateKey, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_generate_wallet_key {:?}", res);

@@ -1,6 +1,6 @@
+use super::super::crypto::did::ShortDidValue;
 use super::constants::{ATTRIB, GET_ATTR};
 use super::response::GetReplyResultV1;
-use super::super::crypto::did::ShortDidValue;
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct AttribOperation {
@@ -12,12 +12,16 @@ pub struct AttribOperation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub raw: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub enc: Option<String>
+    pub enc: Option<String>,
 }
 
 impl AttribOperation {
-    pub fn new(dest: ShortDidValue, hash: Option<String>, raw: Option<String>,
-               enc: Option<String>) -> AttribOperation {
+    pub fn new(
+        dest: ShortDidValue,
+        hash: Option<String>,
+        raw: Option<String>,
+        enc: Option<String>,
+    ) -> AttribOperation {
         AttribOperation {
             _type: ATTRIB.to_string(),
             dest,
@@ -38,17 +42,22 @@ pub struct GetAttribOperation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub enc: Option<String>
+    pub enc: Option<String>,
 }
 
 impl GetAttribOperation {
-    pub fn new(dest: ShortDidValue, raw: Option<&str>, hash: Option<&str>, enc: Option<&str>) -> GetAttribOperation {
+    pub fn new(
+        dest: ShortDidValue,
+        raw: Option<&str>,
+        hash: Option<&str>,
+        enc: Option<&str>,
+    ) -> GetAttribOperation {
         GetAttribOperation {
             _type: GET_ATTR.to_string(),
             dest,
             raw: raw.map(String::from),
             hash: hash.map(String::from),
-            enc: enc.map(String::from)
+            enc: enc.map(String::from),
         }
     }
 }
@@ -57,16 +66,16 @@ impl GetAttribOperation {
 #[serde(untagged)]
 pub enum GetAttrReplyResult {
     GetAttrReplyResultV0(GetAttResultV0),
-    GetAttrReplyResultV1(GetReplyResultV1<GetAttResultDataV1>)
+    GetAttrReplyResultV1(GetReplyResultV1<GetAttResultDataV1>),
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetAttResultV0 {
-    pub  identifier: ShortDidValue,
-    pub  data: String,
-    pub  dest: ShortDidValue,
-    pub  raw: String
+    pub identifier: ShortDidValue,
+    pub data: String,
+    pub dest: ShortDidValue,
+    pub raw: String,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug)]
@@ -79,20 +88,17 @@ pub struct GetAttResultDataV1 {
 
 #[derive(Deserialize, Debug)]
 pub struct AttribData {
-    pub endpoint: Endpoint
+    pub endpoint: Endpoint,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Endpoint {
     pub ha: String, // indy-node and indy-plenum restrict this to ip-address:port
-    pub verkey: Option<String>
+    pub verkey: Option<String>,
 }
 
 impl Endpoint {
     pub fn new(ha: String, verkey: Option<String>) -> Endpoint {
-        Endpoint {
-            ha,
-            verkey
-        }
+        Endpoint { ha, verkey }
     }
 }

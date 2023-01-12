@@ -1,5 +1,4 @@
 #![cfg(feature = "cheqd")]
-
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
 #[macro_use]
@@ -12,9 +11,9 @@ extern crate serde_json;
 #[macro_use]
 extern crate log;
 
-use utils::{cheqd_keys, cheqd_setup};
 #[cfg(feature = "local_nodes_cheqd_pool")]
 use utils::cheqd_ledger;
+use utils::{cheqd_keys, cheqd_setup};
 
 mod utils;
 
@@ -45,7 +44,13 @@ mod high_cases {
             let alias = "some_alias_2";
             let mnemonic = "sell table balcony salad acquire love hover resist give baby liquid process lecture awkward injury crucial rack stem prepare bar unable among december ankle";
             let setup = cheqd_setup::CheqdSetup::new();
-            let result = cheqd_keys::add_from_mnemonic(setup.wallet_handle, alias, mnemonic, BIP39_PASSPHRASE).unwrap();
+            let result = cheqd_keys::add_from_mnemonic(
+                setup.wallet_handle,
+                alias,
+                mnemonic,
+                BIP39_PASSPHRASE,
+            )
+            .unwrap();
             println!("Mnemonic: {:?}, Data: {:?}", mnemonic, result);
         }
     }
@@ -86,12 +91,16 @@ mod high_cases {
             let key_2 = serde_json::from_str::<serde_json::Value>(&key_2).unwrap();
 
             let account_id_1 = key_1["account_id"].as_str().clone().unwrap();
-            let pub_key_1   = key_1["pub_key"].as_str().clone().unwrap();
-            let pub_key_1 = serde_json::from_str::<PublicKeyJson>(pub_key_1).unwrap().key;
+            let pub_key_1 = key_1["pub_key"].as_str().clone().unwrap();
+            let pub_key_1 = serde_json::from_str::<PublicKeyJson>(pub_key_1)
+                .unwrap()
+                .key;
 
             let account_id_2 = key_2["account_id"].as_str().clone().unwrap();
-            let pub_key_2   = key_2["pub_key"].as_str().clone().unwrap();
-            let pub_key_2 = serde_json::from_str::<PublicKeyJson>(pub_key_2).unwrap().key;
+            let pub_key_2 = key_2["pub_key"].as_str().clone().unwrap();
+            let pub_key_2 = serde_json::from_str::<PublicKeyJson>(pub_key_2)
+                .unwrap()
+                .key;
 
             let result = cheqd_keys::get_list_keys(setup.wallet_handle).unwrap();
             println!("List keys: {:?}", result);
@@ -123,7 +132,8 @@ mod high_cases {
                 "second_account",
                 "1000000",
                 &setup.denom,
-            ).unwrap();
+            )
+            .unwrap();
 
             // Transaction
             let tx = cheqd_ledger::auth::build_tx(
@@ -137,9 +147,11 @@ mod high_cases {
                 "ncheq",
                 setup.get_timeout_height(),
                 "memo",
-            ).unwrap();
+            )
+            .unwrap();
 
-            let result = cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
+            let result =
+                cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
             println!("Data: {:?} ", result);
         }
     }

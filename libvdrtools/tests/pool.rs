@@ -137,10 +137,10 @@ mod high_cases {
             let config = json!({
                 "pool_mode": "InMemory",
                 "transactions": transactions
-            }).to_string();
+            })
+            .to_string();
             pool::open_pool_ledger(&setup.name, Some(&config)).unwrap();
         }
-
     }
 
     mod refresh {
@@ -452,7 +452,7 @@ mod medium_cases {
         #[cfg(feature = "local_nodes_pool")]
         //FIXME: test
         fn indy_close_pool_ledger_works_for_pending_request() {
-            use vdrtoolsrs::{future::Future, self as vdrtools};
+            use vdrtoolsrs::{self as vdrtools, future::Future};
 
             let setup = Setup::empty();
 

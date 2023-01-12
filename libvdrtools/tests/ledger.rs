@@ -1,5 +1,4 @@
 #![cfg(feature = "local_nodes_pool")]
-
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
 
 #[macro_use]
@@ -19,8 +18,8 @@ mod utils;
 
 use std::{collections::HashMap, thread};
 
-use vdrtoolsrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
 use lazy_static::lazy_static;
+use vdrtoolsrs::{ErrorCode, PoolHandle, WalletHandle, INVALID_POOL_HANDLE, INVALID_WALLET_HANDLE};
 
 #[cfg(feature = "local_nodes_pool")]
 use utils::{anoncreds, did, ledger, pool};
@@ -3492,7 +3491,8 @@ mod high_cases {
         fn indy_author_agreement_works() {
             let setup = Setup::trustee();
 
-            let (_, aml_label, _, _) = ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
+            let (_, aml_label, _, _) =
+                ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
 
             let (taa_text, taa_version, _, _) =
                 ledger::taa::set_taa(setup.pool_handle, setup.wallet_handle, &setup.did);
@@ -3598,7 +3598,8 @@ mod high_cases {
         fn indy_author_agreement_works_for_using_invalid_taa() {
             let setup = Setup::trustee();
 
-            let (_, aml_label, _, _) = ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
+            let (_, aml_label, _, _) =
+                ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
 
             let (_, _taa_version, _, _) =
                 ledger::taa::set_taa(setup.pool_handle, setup.wallet_handle, &setup.did);
@@ -3747,7 +3748,8 @@ mod high_cases {
         fn indy_author_agreement_works_for_using_not_latest_taa() {
             let setup = Setup::trustee();
 
-            let (_, aml_label, _, _) = ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
+            let (_, aml_label, _, _) =
+                ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
 
             let (taa_text, taa_version, _, _) =
                 ledger::taa::set_taa(setup.pool_handle, setup.wallet_handle, &setup.did);
@@ -3961,7 +3963,8 @@ mod high_cases {
         fn indy_author_agreement_works_for_acceptance_time_earlier_ratification_ts() {
             let setup = Setup::trustee();
 
-            let (_, aml_label, _, _) = ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
+            let (_, aml_label, _, _) =
+                ledger::taa::set_aml(setup.pool_handle, setup.wallet_handle, &setup.did);
 
             let (taa_text, taa_version, _, ratification_ts) =
                 ledger::taa::set_taa(setup.pool_handle, setup.wallet_handle, &setup.did);
@@ -4112,8 +4115,7 @@ mod high_cases {
             let setup = Setup::pool_in_memory();
 
             let (truste_did, _) =
-                did::create_and_store_my_did(setup.wallet_handle, Some(TRUSTEE_SEED))
-                    .unwrap();
+                did::create_and_store_my_did(setup.wallet_handle, Some(TRUSTEE_SEED)).unwrap();
 
             let (my_did, my_verkey) =
                 did::create_and_store_my_did(setup.wallet_handle, None).unwrap();
@@ -4127,7 +4129,7 @@ mod high_cases {
                 &truste_did,
                 &nym_request,
             )
-                .unwrap();
+            .unwrap();
 
             pool::check_response_type(&nym_resp, ResponseType::REPLY);
 
@@ -4152,10 +4154,7 @@ mod medium_cases {
     use openssl::hash::{Hasher, MessageDigest};
     use sodiumoxide::crypto::secretbox;
 
-    use crate::utils::domain::{
-        anoncreds::schema::Schema,
-        crypto::did::DidValue,
-    };
+    use crate::utils::domain::{anoncreds::schema::Schema, crypto::did::DidValue};
 
     use super::*;
 
@@ -5056,7 +5055,9 @@ mod medium_cases {
 
             let get_schema_request = ledger::build_get_schema_request(
                 Some(DID_TRUSTEE),
-                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").unwrap().0,
+                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0")
+                    .unwrap()
+                    .0,
             )
             .unwrap();
 
@@ -5092,7 +5093,9 @@ mod medium_cases {
 
             let get_schema_request = ledger::build_get_schema_request(
                 Some(DID_TRUSTEE),
-                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0").unwrap().0,
+                &SchemaId::new(&DidValue(DID.to_string()), "other_schema", "1.0")
+                    .unwrap()
+                    .0,
             )
             .unwrap();
 
@@ -5593,12 +5596,12 @@ mod medium_cases {
             let (did, _) = did::create_and_store_my_did(setup.wallet_handle, None).unwrap();
 
             let get_nym_request = ledger::build_get_nym_request(Some(&did), &did).unwrap();
-            
+
             let get_nym_response =
                 ledger::submit_request(setup.pool_handle, &get_nym_request).unwrap();
 
             let response_metadata = ledger::get_response_metadata(&get_nym_response).unwrap();
-           
+
             let response_metadata: serde_json::Value =
                 serde_json::from_str(&response_metadata).unwrap();
 

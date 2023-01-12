@@ -5,8 +5,8 @@ use std::{
 };
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use vdrtoolsrs::{future::Future, pool, ErrorCode, IndyError, PoolHandle};
 use serde_json;
+use vdrtoolsrs::{future::Future, pool, ErrorCode, IndyError, PoolHandle};
 
 use crate::utils::{
     environment, test,
@@ -42,9 +42,7 @@ pub fn create_genesis_txn_file(
     txn_file_path
 }
 
-pub fn genesis_transactions(
-    nodes_count: Option<u8>,
-) -> String {
+pub fn genesis_transactions(nodes_count: Option<u8>) -> String {
     let nodes_count = nodes_count.unwrap_or(4);
     let node_txns = test::gen_txns();
     node_txns[0..(nodes_count as usize)].join("\n")
@@ -79,7 +77,7 @@ pub fn create_genesis_txn_file_for_test_pool_with_invalid_nodes(
                     r#""client_ip":"{0}","client_port":9702,"node_ip":"{0}","node_port":9701"#,
                     test_pool_ip
                 )
-                    .as_str(),
+                .as_str(),
                 r#""node_port":9701"#,
             )
         })
@@ -211,7 +209,8 @@ pub fn open_in_memory_pool_ledger(pool_name: &str) -> Result<PoolHandle, IndyErr
     let config = json!({
         "pool_mode": "InMemory",
         "transactions": transactions
-    }).to_string();
+    })
+    .to_string();
     open_pool_ledger(pool_name, Some(&config))
 }
 

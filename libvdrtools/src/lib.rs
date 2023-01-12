@@ -47,14 +47,11 @@ use crate::{
     controllers::{
         BlobStorageController, CacheController, ConfigController, CryptoController, DidController,
         IssuerController, LedgerController, MetricsController, NonSecretsController,
-        PairwiseController, PoolController, ProverController, VerifierController,
-        WalletController,
+        PairwiseController, PoolController, ProverController, VerifierController, WalletController,
     },
-
     services::{
-        BlobStorageService,
-        CryptoService, IssuerService, LedgerService,
-        MetricsService, PoolService, ProverService, VerifierService, WalletService,
+        BlobStorageService, CryptoService, IssuerService, LedgerService, MetricsService,
+        PoolService, ProverService, VerifierService, WalletService,
     },
 };
 
@@ -72,24 +69,20 @@ pub use controllers::CredentialDefinitionId;
 
 pub use domain::{
     anoncreds::{
-        revocation_registry_definition::{
-            RevocationRegistryId,
-            RevocationRegistryDefinition,
-            RevocationRegistryConfig,
-            IssuanceType,
-        },
-        revocation_state::RevocationStates,
-        credential::{CredentialValues, Credential},
-        credential_request::{CredentialRequest, CredentialRequestMetadata},
+        credential::{Credential, CredentialValues},
         credential_definition::CredentialDefinition,
         credential_offer::CredentialOffer,
+        credential_request::{CredentialRequest, CredentialRequestMetadata},
+        revocation_registry_definition::{
+            IssuanceType, RevocationRegistryConfig, RevocationRegistryDefinition,
+            RevocationRegistryId,
+        },
+        revocation_state::RevocationStates,
         schema::AttributeNames,
         schema::{Schema, SchemaId},
     },
     crypto::{
-        did::{
-            DidMethod, DidValue, MyDidInfo,
-        },
+        did::{DidMethod, DidValue, MyDidInfo},
         key::KeyInfo,
         pack::JWE,
     },
@@ -97,10 +90,8 @@ pub use domain::{
 };
 
 pub use indy_api_types::{
-    WalletHandle, INVALID_WALLET_HANDLE,
-    SearchHandle, INVALID_SEARCH_HANDLE,
-    PoolHandle, INVALID_POOL_HANDLE,
-    CommandHandle, INVALID_COMMAND_HANDLE,
+    CommandHandle, PoolHandle, SearchHandle, WalletHandle, INVALID_COMMAND_HANDLE,
+    INVALID_POOL_HANDLE, INVALID_SEARCH_HANDLE, INVALID_WALLET_HANDLE,
 };
 
 pub use services::AnoncredsHelpers;

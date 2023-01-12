@@ -1,6 +1,6 @@
-use super::constants::{NYM, GET_NYM};
-use super::response::{GetReplyResultV0, GetReplyResultV1, ReplyType};
 use super::super::crypto::did::{DidValue, ShortDidValue};
+use super::constants::{GET_NYM, NYM};
+use super::response::{GetReplyResultV0, GetReplyResultV1, ReplyType};
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct NymOperation {
@@ -16,7 +16,12 @@ pub struct NymOperation {
 }
 
 impl NymOperation {
-    pub fn new(dest: ShortDidValue, verkey: Option<String>, alias: Option<String>, role: Option<::serde_json::Value>) -> NymOperation {
+    pub fn new(
+        dest: ShortDidValue,
+        verkey: Option<String>,
+        alias: Option<String>,
+        role: Option<::serde_json::Value>,
+    ) -> NymOperation {
         NymOperation {
             _type: NYM.to_string(),
             dest,
@@ -31,14 +36,14 @@ impl NymOperation {
 pub struct GetNymOperation {
     #[serde(rename = "type")]
     pub _type: String,
-    pub dest: ShortDidValue
+    pub dest: ShortDidValue,
 }
 
 impl GetNymOperation {
     pub fn new(dest: ShortDidValue) -> GetNymOperation {
         GetNymOperation {
             _type: GET_NYM.to_string(),
-            dest
+            dest,
         }
     }
 }
@@ -47,7 +52,7 @@ impl GetNymOperation {
 #[serde(untagged)]
 pub enum GetNymReplyResult {
     GetNymReplyResultV0(GetReplyResultV0<String>),
-    GetNymReplyResultV1(GetReplyResultV1<GetNymResultDataV1>)
+    GetNymReplyResultV1(GetReplyResultV1<GetNymResultDataV1>),
 }
 
 impl ReplyType for GetNymReplyResult {
@@ -61,7 +66,7 @@ pub struct GetNymResultDataV0 {
     pub identifier: Option<ShortDidValue>,
     pub dest: ShortDidValue,
     pub role: Option<String>,
-    pub verkey: Option<String>
+    pub verkey: Option<String>,
 }
 
 #[derive(Deserialize, Eq, PartialEq, Debug)]
@@ -70,7 +75,7 @@ pub struct GetNymResultDataV1 {
     pub id: String,
     pub did: ShortDidValue,
     pub verkey: Option<String>,
-    pub role: Option<String>
+    pub role: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]

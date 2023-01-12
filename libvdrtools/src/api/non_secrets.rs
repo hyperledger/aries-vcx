@@ -7,8 +7,8 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
-use crate::Locator;
 use crate::services::CommandMetric;
+use crate::Locator;
 
 /// Create a new non-secret record in the wallet
 ///
@@ -74,7 +74,9 @@ pub extern "C" fn indy_add_wallet_record(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandAddRecord, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::NonSecretsCommandAddRecord, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_add_wallet_record < {:?}", res);
@@ -132,7 +134,11 @@ pub extern "C" fn indy_update_wallet_record_value(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandUpdateRecordValue, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandUpdateRecordValue,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_update_wallet_record_value < {:?}", res);
@@ -199,7 +205,11 @@ pub extern "C" fn indy_update_wallet_record_tags(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandUpdateRecordTags, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandUpdateRecordTags,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_update_wallet_record_tags < {:?}", res);
@@ -268,7 +278,11 @@ pub extern "C" fn indy_add_wallet_record_tags(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandAddRecordTags, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandAddRecordTags,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_add_wallet_record_tags < {:?}", res);
@@ -319,7 +333,11 @@ pub extern "C" fn indy_delete_wallet_record_tags(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandDeleteRecordTags, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandDeleteRecordTags,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_delete_wallet_record_tags < {:?}", res);
@@ -375,7 +393,11 @@ pub extern "C" fn indy_delete_wallet_record(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandDeleteRecord, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandDeleteRecord,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_delete_wallet_record < {:?}", res);
@@ -447,7 +469,9 @@ pub extern "C" fn indy_get_wallet_record(
         cb(command_handle, err, res.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandGetRecord, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::NonSecretsCommandGetRecord, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_get_wallet_record < {:?}", res);
@@ -531,7 +555,9 @@ pub extern "C" fn indy_open_wallet_search(
         cb(command_handle, err, handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandOpenSearch, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::NonSecretsCommandOpenSearch, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_open_wallet_search < {:?}", res);
@@ -604,7 +630,11 @@ pub extern "C" fn indy_fetch_wallet_search_next_records(
         cb(command_handle, err, res.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandFetchSearchNextRecords, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::NonSecretsCommandFetchSearchNextRecords,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_fetch_wallet_search_next_records < {:?}", res);
@@ -651,7 +681,9 @@ pub extern "C" fn indy_close_wallet_search(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::NonSecretsCommandCloseSearch, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::NonSecretsCommandCloseSearch, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_close_wallet_search < {:?}", res);

@@ -89,7 +89,14 @@ impl CacheController {
             options
         );
 
-        let cache = get_record_from_cache(&self.wallet_service, wallet_handle, &id.0, &options, SCHEMA_CACHE).await?;
+        let cache = get_record_from_cache(
+            &self.wallet_service,
+            wallet_handle,
+            &id.0,
+            &options,
+            SCHEMA_CACHE,
+        )
+        .await?;
 
         check_cache!(cache, options);
 
@@ -120,8 +127,8 @@ impl CacheController {
             &schema_json,
             SCHEMA_CACHE,
         )
-            .await
-            .to_indy(IndyErrorKind::InvalidState, "Can't update cache.")?;
+        .await
+        .to_indy(IndyErrorKind::InvalidState, "Can't update cache.")?;
 
         let res = Ok(schema_json);
         trace!("get_schema < {:?}", res);
@@ -146,7 +153,14 @@ impl CacheController {
             options
         );
 
-        let cache = get_record_from_cache(&self.wallet_service, wallet_handle, &id.0, &options, CRED_DEF_CACHE).await?;
+        let cache = get_record_from_cache(
+            &self.wallet_service,
+            wallet_handle,
+            &id.0,
+            &options,
+            CRED_DEF_CACHE,
+        )
+        .await?;
 
         check_cache!(cache, options);
 
@@ -162,8 +176,8 @@ impl CacheController {
             &cred_def_json,
             CRED_DEF_CACHE,
         )
-            .await
-            .to_indy(IndyErrorKind::InvalidState, "Can't update cache.")?;
+        .await
+        .to_indy(IndyErrorKind::InvalidState, "Can't update cache.")?;
 
         let res = Ok(cred_def_json);
         trace!("get_cred_def < {:?}", res);
@@ -194,7 +208,7 @@ impl CacheController {
                     "retrieveValue": false,
                     "retrieveTags": false,
                 })
-                    .to_string(),
+                .to_string(),
             )
             .await?;
 
@@ -233,7 +247,7 @@ impl CacheController {
                     "retrieveValue": false,
                     "retrieveTags": false,
                 })
-                    .to_string(),
+                .to_string(),
             )
             .await?;
 
@@ -290,16 +304,16 @@ pub(crate) async fn get_record_from_cache(
         "retrieveValue": true,
         "retrieveTags": true,
     })
-        .to_string();
+    .to_string();
 
     match wallet_service
         .get_record(wallet_handle, which_cache, &id, &options)
         .await
-        {
-            Ok(record) => Ok(Some(record)),
-            Err(err) if err.kind() == IndyErrorKind::WalletItemNotFound => Ok(None),
-            Err(err) => Err(err),
-        }
+    {
+        Ok(record) => Ok(Some(record)),
+        Err(err) if err.kind() == IndyErrorKind::WalletItemNotFound => Ok(None),
+        Err(err) => Err(err),
+    }
 }
 
 pub(crate) async fn delete_and_add_record(
@@ -320,8 +334,12 @@ pub(crate) async fn delete_and_add_record(
             }
         };
         tags.insert("timestamp".to_string(), ts.to_string());
-        let _ignore = wallet_service.delete_record(wallet_handle, which_cache, &schema_id).await;
-        wallet_service.add_record(wallet_handle, which_cache, &schema_id, &schema_json, &tags).await
+        let _ignore = wallet_service
+            .delete_record(wallet_handle, which_cache, &schema_id)
+            .await;
+        wallet_service
+            .add_record(wallet_handle, which_cache, &schema_id, &schema_json, &tags)
+            .await
             .to_indy(IndyErrorKind::InvalidState, "Can't update cache.")?;
     }
     Ok(())

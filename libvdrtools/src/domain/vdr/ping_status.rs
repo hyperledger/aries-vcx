@@ -1,4 +1,4 @@
-use indy_api_types::{errors::*};
+use indy_api_types::errors::*;
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq, Clone)]
 pub struct PingStatus {

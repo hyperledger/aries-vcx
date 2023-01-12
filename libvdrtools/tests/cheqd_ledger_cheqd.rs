@@ -103,7 +103,6 @@ mod high_cases {
         #[cfg(feature = "cheqd")]
         #[ignore] // TODO VE-3079 debug intermittent test
         fn test_get_tx_by_hash() {
-
             let setup = cheqd_setup::CheqdSetup::new();
             let to_account = "cheqd1l9sq0se0jd3vklyrrtjchx4ua47awug5vsyeeh";
             let amount = "1000000";
@@ -112,7 +111,8 @@ mod high_cases {
                 to_account,
                 amount,
                 &setup.denom,
-            ).unwrap();
+            )
+            .unwrap();
 
             let resp = setup.build_and_sign_and_broadcast_tx(&msg).unwrap();
             println!("Response broadcast tx:{:?}", resp);
@@ -124,7 +124,8 @@ mod high_cases {
             let get_tx_req = cheqd_ledger::tx::build_query_get_tx_by_hash(&hash).unwrap();
             let result = cheqd_pool::abci_query(&setup.pool_alias, &get_tx_req).unwrap();
 
-            let query_resp_parsed = cheqd_ledger::tx::parse_query_get_tx_by_hash_resp(result.as_str()).unwrap();
+            let query_resp_parsed =
+                cheqd_ledger::tx::parse_query_get_tx_by_hash_resp(result.as_str()).unwrap();
             println!("Query get txn by hash result: {:?}", query_resp_parsed);
             assert!(query_resp_parsed.contains(setup.account_id.as_str()));
             assert!(query_resp_parsed.contains(amount));
@@ -142,13 +143,14 @@ mod high_cases {
             let setup = cheqd_setup::CheqdSetup::new();
 
             // Create Did
-            let (did, verkey) = did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
+            let (did, verkey) =
+                did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
 
             // Send Did
             let msg = cheqd_ledger::cheqd::build_msg_create_did(&did, &verkey).unwrap();
-            let _resp = cheqd_ledger::cheqd::sign_and_broadcast_cheqd_msg(&setup, &did, msg).unwrap();
+            let _resp =
+                cheqd_ledger::cheqd::sign_and_broadcast_cheqd_msg(&setup, &did, msg).unwrap();
             // TODO VE-3079 compare response vs get result
-
 
             // Get DID request
             let query = cheqd_ledger::cheqd::build_query_get_did(did.as_str()).unwrap();
@@ -170,7 +172,8 @@ mod high_cases {
                 &did,
                 new_verkey.as_str(),
                 &resp_version_id,
-            ).unwrap();
+            )
+            .unwrap();
             let resp =
                 cheqd_ledger::cheqd::sign_and_broadcast_cheqd_msg(&setup, &did, msg).unwrap();
 

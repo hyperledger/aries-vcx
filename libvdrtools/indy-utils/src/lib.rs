@@ -4,13 +4,17 @@ extern crate serde_json;
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! secret {
-    ($val:expr) => {{ $val }};
+    ($val:expr) => {{
+        $val
+    }};
 }
 
 #[cfg(not(debug_assertions))]
 #[macro_export]
 macro_rules! secret {
-    ($val:expr) => {{ "_" }};
+    ($val:expr) => {{
+        "_"
+    }};
 }
 
 #[macro_use]
@@ -26,9 +30,11 @@ pub mod wql;
 
 pub(crate) use indy_api_types::ErrorCode;
 
-use indy_api_types::{CommandHandle, PoolHandle, WalletHandle, SearchHandle, VdrHandle};
+use indy_api_types::{CommandHandle, PoolHandle, SearchHandle, VdrHandle, WalletHandle};
 
-pub fn next_wallet_handle() -> WalletHandle { WalletHandle(sequence::get_next_id()) }
+pub fn next_wallet_handle() -> WalletHandle {
+    WalletHandle(sequence::get_next_id())
+}
 
 pub fn next_pool_handle() -> PoolHandle {
     sequence::get_next_id()
@@ -45,4 +51,3 @@ pub fn next_search_handle() -> SearchHandle {
 pub fn next_vdr_handle() -> VdrHandle {
     sequence::get_next_id()
 }
-

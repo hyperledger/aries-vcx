@@ -7,11 +7,11 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::pool::{PoolConfig, PoolOpenConfig},
     Locator,
 };
-use crate::services::CommandMetric;
 
 /// Creates a new local pool ledger configuration that can be used later to connect pool nodes.
 ///
@@ -64,7 +64,9 @@ pub extern "C" fn indy_create_pool_ledger_config(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandCreate, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandCreate, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_create_pool_ledger_config < {:?}", res);
@@ -146,7 +148,9 @@ pub extern "C" fn indy_open_pool_ledger(
         cb(command_handle, err, pool_handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandOpen, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandOpen, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_open_pool_ledger < {:?}", res);
@@ -190,7 +194,9 @@ pub extern "C" fn indy_refresh_pool_ledger(
         cb(command_handle, err)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandRefresh, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandRefresh, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_refresh_pool_ledger < {:?}", res);
@@ -231,7 +237,9 @@ pub extern "C" fn indy_list_pools(
         cb(command_handle, err, list.as_ptr());
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandList, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandList, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_list_pools < {:?}", res);
@@ -275,7 +283,9 @@ pub extern "C" fn indy_close_pool_ledger(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandClose, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandClose, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_close_pool_ledger < {:?}", res);
@@ -326,7 +336,9 @@ pub extern "C" fn indy_delete_pool_ledger_config(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandDelete, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::PoolCommandDelete, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_delete_pool_ledger_config < {:?}", res);
@@ -384,7 +396,11 @@ pub extern "C" fn indy_set_protocol_version(
         cb(command_handle, err);
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::PoolCommandSetProtocolVersion, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::PoolCommandSetProtocolVersion,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_set_protocol_version < {:?}", res);

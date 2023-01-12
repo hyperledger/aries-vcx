@@ -15,7 +15,8 @@ pub fn create_store_and_publish_did(
     let my_did_json = json!({ "method_name": method_name }).to_string();
     let (did, vk) = create_my_did(wallet_handle, &my_did_json)?;
     let did_req = ledger::build_nym_request(&trustee_did, &did, Some(&vk), None, Some(role))?;
-    let response = ledger::sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &did_req)?;
+    let response =
+        ledger::sign_and_submit_request(pool_handle, wallet_handle, &trustee_did, &did_req)?;
     pool::check_response_type(&response, ResponseType::REPLY);
     Ok((did, vk))
 }
@@ -24,7 +25,9 @@ pub fn create_store_predefined_trustee_did(
     wallet_handle: WalletHandle,
     method_name: Option<&str>,
 ) -> Result<(String, String), IndyError> {
-    let method = method_name.map(|method| method.splitn(2,":").collect::<Vec<&str>>()).unwrap_or(Vec::new());
+    let method = method_name
+        .map(|method| method.splitn(2, ":").collect::<Vec<&str>>())
+        .unwrap_or(Vec::new());
     let my_did_json =
         json!({"method_name": method.get(0), "ledger_type": method.get(1), "seed": crate::utils::constants::TRUSTEE_SEED})
             .to_string();
@@ -52,7 +55,12 @@ pub fn create_store_and_publish_my_did_from_trustee_v1(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
 ) -> Result<(String, String), IndyError> {
-    create_store_and_publish_did(wallet_handle, pool_handle, "TRUSTEE", Some(DEFAULT_METHOD_NAME))
+    create_store_and_publish_did(
+        wallet_handle,
+        pool_handle,
+        "TRUSTEE",
+        Some(DEFAULT_METHOD_NAME),
+    )
 }
 
 pub fn create_store_and_publish_my_did_from_steward(
@@ -89,10 +97,9 @@ pub fn create_my_did_with_method(
     wallet_handle: WalletHandle,
     method: &str,
 ) -> Result<(String, String), IndyError> {
-    let method = method.splitn(2,":").collect::<Vec<&str>>();
+    let method = method.splitn(2, ":").collect::<Vec<&str>>();
     let my_did_json =
-        json!({"method_name": method.get(0), "ledger_type": method.get(1)})
-            .to_string();
+        json!({"method_name": method.get(0), "ledger_type": method.get(1)}).to_string();
     did::create_and_store_my_did(wallet_handle, &my_did_json).wait()
 }
 

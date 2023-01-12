@@ -1,4 +1,4 @@
-use vdrtoolsrs::{future::Future, cheqd_ledger, IndyError};
+use vdrtoolsrs::{cheqd_ledger, future::Future, IndyError};
 
 pub fn build_msg_send(
     from: &str,
@@ -13,10 +13,7 @@ pub fn parse_msg_send_resp(commit_resp: &str) -> Result<String, IndyError> {
     cheqd_ledger::bank::parse_msg_send_resp(commit_resp).wait()
 }
 
-pub fn bank_build_query_balance(
-    address: &str,
-    denom: &str,
-) -> Result<String, IndyError> {
+pub fn bank_build_query_balance(address: &str, denom: &str) -> Result<String, IndyError> {
     cheqd_ledger::bank::build_query_balance(address, denom).wait()
 }
 

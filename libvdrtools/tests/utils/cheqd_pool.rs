@@ -1,11 +1,17 @@
 use vdrtoolsrs::{cheqd_pool, future::Future, IndyError};
 
-pub fn add(alias: &str, rpc_address: &str, chain_id: &str, mode: Option<&str>) -> Result<String, IndyError> {
+pub fn add(
+    alias: &str,
+    rpc_address: &str,
+    chain_id: &str,
+    mode: Option<&str>,
+) -> Result<String, IndyError> {
     let config = json!({
         "rpc_address": rpc_address,
         "chain_id": chain_id,
         "pool_mode": mode.unwrap_or("Persistent"),
-    }).to_string();
+    })
+    .to_string();
     cheqd_pool::add(alias, &config).wait()
 }
 

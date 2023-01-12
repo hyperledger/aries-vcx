@@ -351,8 +351,8 @@ mod high_cases {
 #[cfg(not(feature = "only_high_cases"))]
 mod medium_cases {
     use super::*;
-    use vdrtoolsrs::INVALID_WALLET_HANDLE;
     use std::ffi::CString;
+    use vdrtoolsrs::INVALID_WALLET_HANDLE;
 
     mod register_wallet_type {
         use super::*;

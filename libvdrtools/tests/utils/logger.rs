@@ -15,7 +15,8 @@ impl log::Log for SimpleLogger {
             record.target().to_string(),
             record.file().unwrap_or(""),
             record.line(),
-            record.args());
+            record.args()
+        );
     }
 
     fn flush(&self) {}
@@ -26,5 +27,8 @@ pub fn set_logger(logger: &'static dyn log::Log) {
 }
 
 pub fn set_default_logger() {
-    logger::set_default_logger(Some("polling=warn,async_io=warn,async_std=warn,sqlx=warn,trace")).ok();
+    logger::set_default_logger(Some(
+        "polling=warn,async_io=warn,async_std=warn,sqlx=warn,trace",
+    ))
+    .ok();
 }

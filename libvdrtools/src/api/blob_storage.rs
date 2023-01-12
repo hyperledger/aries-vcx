@@ -2,8 +2,8 @@ use indy_api_types::{errors::prelude::*, CommandHandle, ErrorCode, IndyHandle};
 use indy_utils::ctypes;
 use libc::c_char;
 
-use crate::Locator;
 use crate::services::CommandMetric;
+use crate::Locator;
 
 #[no_mangle]
 pub extern "C" fn indy_open_blob_storage_reader(
@@ -47,7 +47,9 @@ pub extern "C" fn indy_open_blob_storage_reader(
         cb(command_handle, err, handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::BlobStorageCommandOpenReader, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::BlobStorageCommandOpenReader, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_open_blob_storage_reader < {:?}", res);
@@ -96,7 +98,9 @@ pub extern "C" fn indy_open_blob_storage_writer(
         cb(command_handle, err, handle)
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::BlobStorageCommandOpenWriter, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::BlobStorageCommandOpenWriter, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_open_blob_storage_writer < {:?}", res);

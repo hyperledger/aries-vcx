@@ -1,33 +1,27 @@
+mod endorsement;
 mod indy_ledger;
 mod ledger;
 mod read;
 mod write;
-mod endorsement;
 
 use indy_ledger::IndyLedger;
 
+use async_std::sync::{Arc, Mutex, RwLock, RwLockReadGuard};
 use futures::future::join_all;
+use indy_api_types::errors::*;
 use std::{
     collections::{HashMap, HashSet},
     convert::TryFrom,
 };
-use indy_api_types::errors::*;
-use async_std::sync::{Arc, RwLock, Mutex, RwLockReadGuard};
 
 use crate::services::{
-    PoolService as IndyPoolService,
-    LedgerService as IndyLedgerService,
+    CryptoService, LedgerService as IndyLedgerService, PoolService as IndyPoolService,
     WalletService,
-    CryptoService,
 };
 
 use crate::domain::{
-    vdr::{
-        taa_config::TAAConfig,
-        ping_status::PingStatus,
-        namespaces::Namespaces,
-    },
     id::FullyQualifiedId,
+    vdr::{namespaces::Namespaces, ping_status::PingStatus, taa_config::TAAConfig},
 };
 
 use ledger::Ledger;
@@ -45,32 +39,32 @@ impl VDRBuilder {
         }
     }
 
-    fn add_ledger(&mut self,
-                  namespace_list: Namespaces,
-                  ledger: Arc<RwLock<dyn Ledger>>) {
-        namespace_list
-            .into_iter()
-            .for_each(|namespace| {
-                self.namespaces.insert(namespace, ledger.clone());
-            });
+    fn add_ledger(&mut self, namespace_list: Namespaces, ledger: Arc<RwLock<dyn Ledger>>) {
+        namespace_list.into_iter().for_each(|namespace| {
+            self.namespaces.insert(namespace, ledger.clone());
+        });
     }
 
-    fn validate_unique_namespaces(&self,
-                                  namespace_list: &Namespaces) -> IndyResult<()> {
-        match namespace_list.0.iter().find(|key| self.namespaces.contains_key(key.as_str())) {
-            Some(namespace) => {
-                Err(err_msg(
-                    IndyErrorKind::InvalidVDRNamespace,
-                    format!("Unable to register namespace \"{}\" as it was already registered.", namespace),
-                ))
-            }
-            None => Ok(())
+    fn validate_unique_namespaces(&self, namespace_list: &Namespaces) -> IndyResult<()> {
+        match namespace_list
+            .0
+            .iter()
+            .find(|key| self.namespaces.contains_key(key.as_str()))
+        {
+            Some(namespace) => Err(err_msg(
+                IndyErrorKind::InvalidVDRNamespace,
+                format!(
+                    "Unable to register namespace \"{}\" as it was already registered.",
+                    namespace
+                ),
+            )),
+            None => Ok(()),
         }
     }
 
     pub(crate) fn finalize(&self) -> VDR {
         VDR {
-            namespaces: self.namespaces.to_owned()
+            namespaces: self.namespaces.to_owned(),
         }
     }
 }
@@ -82,39 +76,47 @@ pub(crate) struct VDR {
 
 #[cfg(feature = "ffi_api")]
 impl VDR {
-    async fn resolve_ledger_for_namespace<'a>(&'a self,
-                                              namespace: &str) -> IndyResult<RwLockReadGuard<'a, dyn Ledger>> {
+    async fn resolve_ledger_for_namespace<'a>(
+        &'a self,
+        namespace: &str,
+    ) -> IndyResult<RwLockReadGuard<'a, dyn Ledger>> {
         trace!(
             "resolve_ledger_for_namespace > namespace {:?}, all registred namespaces {:?}",
-            namespace, self.namespaces.keys()
+            namespace,
+            self.namespaces.keys()
         );
-        let ledger = self.namespaces
-            .get(namespace)
-            .ok_or(err_msg(
-                IndyErrorKind::InvalidVDRNamespace,
-                format!("Unable to get Ledger with namespace \"{}\" in VDR.", namespace),
-            ))?;
+        let ledger = self.namespaces.get(namespace).ok_or(err_msg(
+            IndyErrorKind::InvalidVDRNamespace,
+            format!(
+                "Unable to get Ledger with namespace \"{}\" in VDR.",
+                namespace
+            ),
+        ))?;
 
         let ledger = ledger.read().await;
         Ok(ledger)
     }
 
-    async fn resolve_ledger_for_id<'a>(&'a self,
-                                       id: &str) -> IndyResult<(RwLockReadGuard<'a, dyn Ledger>, FullyQualifiedId)> {
-        trace!(
-            "resolve_ledger_for_id > id {:?}",
-            id
-        );
+    async fn resolve_ledger_for_id<'a>(
+        &'a self,
+        id: &str,
+    ) -> IndyResult<(RwLockReadGuard<'a, dyn Ledger>, FullyQualifiedId)> {
+        trace!("resolve_ledger_for_id > id {:?}", id);
         let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from(id)
             .map_err(|err| err_msg(IndyErrorKind::InvalidStructure, err))?;
 
-        let ledger = self.resolve_ledger_for_namespace(&parsed_id.namespace()).await?;
+        let ledger = self
+            .resolve_ledger_for_namespace(&parsed_id.namespace())
+            .await?;
 
         if parsed_id.did_method != ledger.ledger_type() {
             return Err(err_msg(
                 IndyErrorKind::InvalidVDRHandle,
-                format!("Registered Ledger type \"{:?}\" does not match to the network of id \"{:?}\"",
-                        ledger.ledger_type(), parsed_id.did_method),
+                format!(
+                    "Registered Ledger type \"{:?}\" does not match to the network of id \"{:?}\"",
+                    ledger.ledger_type(),
+                    parsed_id.did_method
+                ),
             ));
         }
 
@@ -136,7 +138,8 @@ impl VDRController {
         wallet_service: Arc<WalletService>,
         indy_ledger_service: Arc<IndyLedgerService>,
         indy_pool_service: Arc<IndyPoolService>,
-        crypto_service: Arc<CryptoService>) -> VDRController {
+        crypto_service: Arc<CryptoService>,
+    ) -> VDRController {
         VDRController {
             wallet_service,
             indy_ledger_service,
@@ -155,27 +158,26 @@ impl VDRController {
         let mut vdr_builder = vdr_builder.lock().await;
         vdr_builder.validate_unique_namespaces(&namespace_list)?;
 
-        let ledger = IndyLedger::create(genesis_txn,
-                                        taa_config,
-                                        self.indy_ledger_service.clone(),
-                                        self.indy_pool_service.clone())?;
+        let ledger = IndyLedger::create(
+            genesis_txn,
+            taa_config,
+            self.indy_ledger_service.clone(),
+            self.indy_pool_service.clone(),
+        )?;
         let ledger = Arc::new(RwLock::new(ledger));
 
         vdr_builder.add_ledger(namespace_list, ledger);
         Ok(())
     }
 
-    pub(crate) async fn ping(&self,
-                             vdr: &VDR,
-                             namespace_list: Namespaces) -> IndyResult<String> {
+    pub(crate) async fn ping(&self, vdr: &VDR, namespace_list: Namespaces) -> IndyResult<String> {
         // Group namespaces by Ledger name
         let mut ledgers: HashMap<String, Vec<String>> = HashMap::new();
         for namespace in namespace_list {
-            let ledger = vdr.namespaces.get(&namespace)
-                .ok_or(err_msg(
-                    IndyErrorKind::InvalidVDRNamespace,
-                    format!("Unable to get Ledger with namespace \"{}\".", namespace),
-                ))?;
+            let ledger = vdr.namespaces.get(&namespace).ok_or(err_msg(
+                IndyErrorKind::InvalidVDRNamespace,
+                format!("Unable to get Ledger with namespace \"{}\".", namespace),
+            ))?;
 
             let ledger = ledger.read().await;
             let networks = ledgers.entry(ledger.name()).or_insert(Vec::new());
@@ -185,9 +187,7 @@ impl VDRController {
         // Ping Ledgers
         let mut futures = Vec::new();
         for (_, namespaces) in ledgers.into_iter() {
-            futures.push(
-                self.query_ledger_status(vdr, namespaces)
-            );
+            futures.push(self.query_ledger_status(vdr, namespaces));
         }
         let statuses = join_all(futures).await;
 
@@ -202,9 +202,11 @@ impl VDRController {
         json_string_result!(status_list)
     }
 
-    async fn query_ledger_status(&self,
-                                 vdr: &VDR,
-                                 namespaces: Vec<String>) -> IndyResult<(Vec<String>, PingStatus)> {
+    async fn query_ledger_status(
+        &self,
+        vdr: &VDR,
+        namespaces: Vec<String>,
+    ) -> IndyResult<(Vec<String>, PingStatus)> {
         let ledger = namespaces
             .get(0)
             .and_then(|namespace| vdr.namespaces.get(namespace.as_str()))
@@ -218,50 +220,57 @@ impl VDRController {
         Ok((namespaces, status))
     }
 
-    pub(crate) async fn submit_txn(&self,
-                                   vdr: &VDR,
-                                   namespace: String,
-                                   signature_spec: String,
-                                   txn_bytes: Vec<u8>,
-                                   signature: Vec<u8>,
-                                   endorsement: Option<String>) -> IndyResult<String> {
+    pub(crate) async fn submit_txn(
+        &self,
+        vdr: &VDR,
+        namespace: String,
+        signature_spec: String,
+        txn_bytes: Vec<u8>,
+        signature: Vec<u8>,
+        endorsement: Option<String>,
+    ) -> IndyResult<String> {
         trace!(
             "submit_txn > namespace {:?} signature_spec {:?} txn_bytes {:?} signature {:?} endorsement {:?}",
             namespace, signature_spec, txn_bytes, signature, endorsement
         );
         let ledger = vdr.resolve_ledger_for_namespace(&namespace).await?;
-        ledger.submit_txn(&txn_bytes, &signature, endorsement.as_deref()).await
+        ledger
+            .submit_txn(&txn_bytes, &signature, endorsement.as_deref())
+            .await
     }
 
-    pub(crate) async fn submit_raw_txn(&self,
-                                       vdr: &VDR,
-                                       namespace: String,
-                                       txn_bytes: Vec<u8>) -> IndyResult<String> {
+    pub(crate) async fn submit_raw_txn(
+        &self,
+        vdr: &VDR,
+        namespace: String,
+        txn_bytes: Vec<u8>,
+    ) -> IndyResult<String> {
         trace!(
             "submit_raw_txn > namespace {:?} txn_bytes {:?} ",
-            namespace, txn_bytes
+            namespace,
+            txn_bytes
         );
         let ledger = vdr.resolve_ledger_for_namespace(&namespace).await?;
         ledger.submit_raw_txn(&txn_bytes).await
     }
 
-    pub(crate) async fn submit_query(&self,
-                                     vdr: &VDR,
-                                     namespace: String,
-                                     query: String) -> IndyResult<String> {
+    pub(crate) async fn submit_query(
+        &self,
+        vdr: &VDR,
+        namespace: String,
+        query: String,
+    ) -> IndyResult<String> {
         trace!(
             "submit_query > namespace {:?} query {:?} ",
-            namespace, query
+            namespace,
+            query
         );
         let ledger = vdr.resolve_ledger_for_namespace(&namespace).await?;
         ledger.submit_query(&query).await
     }
 
-    pub(crate) async fn cleanup(&self,
-                                vdr: &mut VDR) -> IndyResult<()> {
-        trace!(
-            "cleanup > ",
-        );
+    pub(crate) async fn cleanup(&self, vdr: &mut VDR) -> IndyResult<()> {
+        trace!("cleanup > ",);
         let mut visited_ledgers: HashSet<String> = HashSet::new();
 
         for (_, ledger) in vdr.namespaces.iter() {

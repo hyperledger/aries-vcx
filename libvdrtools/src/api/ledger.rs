@@ -6,6 +6,7 @@ use indy_utils::ctypes;
 use libc::c_char;
 use serde_json;
 
+use crate::services::CommandMetric;
 use crate::{
     domain::{
         anoncreds::{
@@ -24,7 +25,6 @@ use crate::{
     },
     Locator,
 };
-use crate::services::CommandMetric;
 
 /// Signs and submits request message to validator pool.
 ///
@@ -97,7 +97,11 @@ pub extern "C" fn indy_sign_and_submit_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandSignAndSubmitRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandSignAndSubmitRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_sign_and_submit_request < {:?}", res);
@@ -164,7 +168,9 @@ pub extern "C" fn indy_submit_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandSubmitRequest, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::LedgerCommandSubmitRequest, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_submit_request < {:?}", res);
@@ -246,7 +252,9 @@ pub extern "C" fn indy_submit_action(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandSubmitAction, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::LedgerCommandSubmitAction, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_submit_action < {:?}", res);
@@ -319,8 +327,9 @@ pub extern "C" fn indy_sign_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandSignRequest, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::LedgerCommandSignRequest, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_sign_request < {:?}", res);
@@ -393,7 +402,11 @@ pub extern "C" fn indy_multi_sign_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandMultiSignRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandMultiSignRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_multi_sign_request < {:?}", res);
@@ -453,7 +466,11 @@ pub extern "C" fn indy_build_get_ddo_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetDdoRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetDdoRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_ddo_request < {:?}", res);
@@ -533,7 +550,9 @@ pub extern "C" fn indy_build_nym_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildNymRequest, action, cb);
+    locator
+        .executor
+        .spawn_ok_instrumented(CommandMetric::LedgerCommandBuildNymRequest, action, cb);
 
     let res = ErrorCode::Success;
     debug!("indy_build_nym_request < {:?}", res);
@@ -593,7 +612,11 @@ pub extern "C" fn indy_build_get_nym_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetNymRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetNymRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_nym_request < {:?}", res);
@@ -662,7 +685,11 @@ pub extern "C" fn indy_parse_get_nym_response(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetNymResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetNymResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_nym_response < {:?}", res);
@@ -744,7 +771,11 @@ pub extern "C" fn indy_build_attrib_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildAttribRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildAttribRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_attrib_request < {:?}", res);
@@ -827,7 +858,11 @@ pub extern "C" fn indy_build_get_attrib_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetAttribRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetAttribRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_attrib_request < {:?}", res);
@@ -895,7 +930,11 @@ pub extern "C" fn indy_build_schema_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildSchemaRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildSchemaRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_schema_request < {:?}", res);
@@ -959,7 +998,11 @@ pub extern "C" fn indy_build_get_schema_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetSchemaRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetSchemaRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_schema_request < {:?}", res);
@@ -1040,7 +1083,11 @@ pub extern "C" fn indy_parse_get_schema_response(
         );
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetSchemaResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetSchemaResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_schema_response < {:?}", res);
@@ -1117,7 +1164,11 @@ pub extern "C" fn indy_build_cred_def_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildCredDefRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildCredDefRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_cred_def_request < {:?}", res);
@@ -1182,7 +1233,11 @@ pub extern "C" fn indy_build_get_cred_def_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetCredDefRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetCredDefRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_cred_def_request < {:?}", res);
@@ -1267,7 +1322,11 @@ pub extern "C" fn indy_parse_get_cred_def_response(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetCredDefResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetCredDefResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_cred_def_response < {:?}", res);
@@ -1341,7 +1400,11 @@ pub extern "C" fn indy_build_node_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildNodeRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildNodeRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_node_request < {:?}", res);
@@ -1397,7 +1460,11 @@ pub extern "C" fn indy_build_get_validator_info_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetValidatorInfoRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetValidatorInfoRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_validator_info_request < {:?}", res,);
@@ -1466,7 +1533,11 @@ pub extern "C" fn indy_build_get_txn_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetTxnRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetTxnRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_txn_request < {:?}", res);
@@ -1536,7 +1607,11 @@ pub extern "C" fn indy_build_pool_config_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildPoolConfigRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildPoolConfigRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_pool_config_request < {:?}", res);
@@ -1615,7 +1690,11 @@ pub extern "C" fn indy_build_pool_restart_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildPoolRestartRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildPoolRestartRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_pool_restart_request < {:?}", res);
@@ -1763,7 +1842,11 @@ pub extern "C" fn indy_build_pool_upgrade_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildPoolUpgradeRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildPoolUpgradeRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_pool_upgrade_request < {:?}", res);
@@ -1851,7 +1934,11 @@ pub extern "C" fn indy_build_revoc_reg_def_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildRevocRegDefRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildRevocRegDefRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_revoc_reg_def_request < {:?}", res);
@@ -1916,7 +2003,11 @@ pub extern "C" fn indy_build_get_revoc_reg_def_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetRevocRegDefRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetRevocRegDefRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_revoc_reg_def_request < {:?}", res);
@@ -2006,7 +2097,11 @@ pub extern "C" fn indy_parse_get_revoc_reg_def_response(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetRevocRegDefResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetRevocRegDefResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_revoc_reg_def_response < {:?}", res);
@@ -2105,7 +2200,11 @@ pub extern "C" fn indy_build_revoc_reg_entry_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildRevocRegEntryRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildRevocRegEntryRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_revoc_reg_entry_request < {:?}", res);
@@ -2182,7 +2281,11 @@ pub extern "C" fn indy_build_get_revoc_reg_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetRevocRegRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetRevocRegRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_revoc_reg_request < {:?}", res);
@@ -2265,7 +2368,11 @@ pub extern "C" fn indy_parse_get_revoc_reg_response(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetRevocRegResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetRevocRegResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_revoc_reg_response < {:?}", res);
@@ -2348,7 +2455,11 @@ pub extern "C" fn indy_build_get_revoc_reg_delta_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetRevocRegDeltaRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetRevocRegDeltaRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_revoc_reg_delta_request < {:?}", res);
@@ -2434,7 +2545,11 @@ pub extern "C" fn indy_parse_get_revoc_reg_delta_response(
         )
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandParseGetRevocRegDeltaResponse, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandParseGetRevocRegDeltaResponse,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_parse_get_revoc_reg_delta_response < {:?}", res);
@@ -2576,7 +2691,11 @@ pub extern "C" fn indy_get_response_metadata(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandGetResponseMetadata, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandGetResponseMetadata,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_get_response_metadata < {:?}", res);
@@ -2682,7 +2801,11 @@ pub extern "C" fn indy_build_auth_rule_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildAuthRuleRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildAuthRuleRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_auth_rule_request < {:?}", res);
@@ -2770,7 +2893,11 @@ pub extern "C" fn indy_build_auth_rules_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildAuthRulesRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildAuthRulesRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_auth_rules_request < {:?}", res);
@@ -2860,7 +2987,11 @@ pub extern "C" fn indy_build_get_auth_rule_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetAuthRuleRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetAuthRuleRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_auth_rule_request < {:?}", res);
@@ -2962,7 +3093,11 @@ pub extern "C" fn indy_build_txn_author_agreement_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildTxnAuthorAgreementRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildTxnAuthorAgreementRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_txn_author_agreement_request < {:?}", res);
@@ -3026,7 +3161,11 @@ pub extern "C" fn indy_build_disable_all_txn_author_agreements_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildDisableAllTxnAuthorAgreementsRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildDisableAllTxnAuthorAgreementsRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
 
@@ -3111,7 +3250,11 @@ pub extern "C" fn indy_build_get_txn_author_agreement_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetTxnAuthorAgreementRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetTxnAuthorAgreementRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_txn_author_agreement_request < {:?}", res);
@@ -3186,7 +3329,11 @@ pub extern "C" fn indy_build_acceptance_mechanisms_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildAcceptanceMechanismRequests, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildAcceptanceMechanismRequests,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_acceptance_mechanisms_request < {:?}", res);
@@ -3265,7 +3412,11 @@ pub extern "C" fn indy_build_get_acceptance_mechanisms_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandBuildGetAcceptanceMechanismsRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandBuildGetAcceptanceMechanismsRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_build_get_acceptance_mechanisms_request < {:?}", res);
@@ -3365,7 +3516,11 @@ pub extern "C" fn indy_append_txn_author_agreement_acceptance_to_request(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandAppendTxnAuthorAgreementAcceptanceToRequest, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandAppendTxnAuthorAgreementAcceptanceToRequest,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
 
@@ -3440,7 +3595,11 @@ pub extern "C" fn indy_append_request_endorser(
         cb(command_handle, err, res.as_ptr())
     };
 
-    locator.executor.spawn_ok_instrumented(CommandMetric::LedgerCommandAppendRequestEndorser, action, cb);
+    locator.executor.spawn_ok_instrumented(
+        CommandMetric::LedgerCommandAppendRequestEndorser,
+        action,
+        cb,
+    );
 
     let res = ErrorCode::Success;
     debug!("indy_append_request_endorser < {:?}", res);

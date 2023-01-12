@@ -1,7 +1,7 @@
 use ursa::cl::{CredentialKeyCorrectnessProof, Nonce};
 
-use super::schema::SchemaId;
 use super::credential_definition::CredentialDefinitionId;
+use super::schema::SchemaId;
 
 use indy_api_types::validation::Validatable;
 
@@ -17,7 +17,11 @@ pub struct CredentialOffer {
 
 impl CredentialOffer {
     pub fn to_unqualified(self) -> CredentialOffer {
-        let method_name= if self.cred_def_id.is_fully_qualified(){ self.cred_def_id.get_method()} else { None };
+        let method_name = if self.cred_def_id.is_fully_qualified() {
+            self.cred_def_id.get_method()
+        } else {
+            None
+        };
         CredentialOffer {
             method_name,
             schema_id: self.schema_id.to_unqualified(),

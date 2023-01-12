@@ -16,8 +16,7 @@ mod wallet;
 pub(crate) mod vdr;
 
 pub use anoncreds::{
-    IssuerController, CredentialDefinitionId,
-    ProverController, VerifierController,
+    CredentialDefinitionId, IssuerController, ProverController, VerifierController,
 };
 
 pub(crate) use blob_storage::BlobStorageController;

@@ -1,20 +1,20 @@
-use std::{fs, io};
 use std::collections::HashMap;
 use std::io::{BufRead, Read, Write};
 use std::path::PathBuf;
+use std::{fs, io};
 
 use serde_json;
 use serde_json::Value as SJsonValue;
 
 use crate::domain::ledger::request::ProtocolVersion;
-use indy_api_types::errors::prelude::*;
 use crate::services::ledger::merkletree::merkletree::MerkleTree;
 use crate::services::pool::types::{NodeTransaction, NodeTransactionV0, NodeTransactionV1};
 use crate::utils::environment;
+use indy_api_types::errors::prelude::*;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-const POOL_EXT : &str = "txn";
+const POOL_EXT: &str = "txn";
 
 pub fn create(pool_name: &str) -> IndyResult<MerkleTree> {
     let mut p = environment::pool_path(pool_name);
@@ -30,7 +30,10 @@ pub fn create(pool_name: &str) -> IndyResult<MerkleTree> {
 
         if !p.exists() {
             trace!("here");
-            return Err(err_msg(IndyErrorKind::PoolNotCreated, format!("Pool is not created for name: {:?}", pool_name)));
+            return Err(err_msg(
+                IndyErrorKind::PoolNotCreated,
+                format!("Pool is not created for name: {:?}", pool_name),
+            ));
         }
 
         _from_genesis(&p)
@@ -44,11 +47,13 @@ pub fn drop_cache(pool_name: &str) -> IndyResult<()> {
     let p = get_pool_stored_path(pool_name, false);
     if p.exists() {
         warn!("Cache is invalid -- dropping it!");
-        fs::remove_file(p)
-            .to_indy(IndyErrorKind::IOError, "Can't drop pool ledger cache file")?;
+        fs::remove_file(p).to_indy(IndyErrorKind::IOError, "Can't drop pool ledger cache file")?;
         Ok(())
     } else {
-        Err(err_msg(IndyErrorKind::InvalidState, "Can't recover to genesis -- no txns stored. Possible problems in genesis txns."))
+        Err(err_msg(
+            IndyErrorKind::InvalidState,
+            "Can't recover to genesis -- no txns stored. Possible problems in genesis txns.",
+        ))
     }
 }
 
@@ -64,7 +69,12 @@ fn _from_cache(file_name: &PathBuf) -> IndyResult<MerkleTree> {
         let bytes = match f.read_u64::<LittleEndian>() {
             Ok(bytes) => bytes,
             Err(ref e) if e.kind() == io::ErrorKind::UnexpectedEof => break,
-            Err(e) => return Err(e.to_indy(IndyErrorKind::IOError, "Can't read from pool ledger cache file"))
+            Err(e) => {
+                return Err(e.to_indy(
+                    IndyErrorKind::IOError,
+                    "Can't read from pool ledger cache file",
+                ))
+            }
         };
 
         trace!("bytes: {:?}", bytes);
@@ -73,9 +83,19 @@ fn _from_cache(file_name: &PathBuf) -> IndyResult<MerkleTree> {
         match f.read_exact(buf.as_mut()) {
             Ok(()) => (),
             Err(e) => match e.kind() {
-                    io::ErrorKind::UnexpectedEof => return Err(e.to_indy(IndyErrorKind::InvalidState, "Malformed pool ledger cache file")),
-                    _  => return Err(e.to_indy(IndyErrorKind::IOError, "Can't read from pool ledger cache file"))
-            }
+                io::ErrorKind::UnexpectedEof => {
+                    return Err(e.to_indy(
+                        IndyErrorKind::InvalidState,
+                        "Malformed pool ledger cache file",
+                    ))
+                }
+                _ => {
+                    return Err(e.to_indy(
+                        IndyErrorKind::IOError,
+                        "Can't read from pool ledger cache file",
+                    ))
+                }
+            },
         }
 
         mt.append(buf.to_vec())?;
@@ -87,16 +107,18 @@ fn _from_cache(file_name: &PathBuf) -> IndyResult<MerkleTree> {
 fn _from_genesis(file_name: &PathBuf) -> IndyResult<MerkleTree> {
     let mut mt = MerkleTree::from_vec(Vec::new())?;
 
-    let f = fs::File::open(file_name)
-        .to_indy(IndyErrorKind::IOError, "Can't open genesis txn file")?;
+    let f =
+        fs::File::open(file_name).to_indy(IndyErrorKind::IOError, "Can't open genesis txn file")?;
 
     let reader = io::BufReader::new(&f);
 
     for line in reader.lines() {
-        let line: String = line
-            .to_indy(IndyErrorKind::IOError, "Can't read from genesis txn file")?;
+        let line: String =
+            line.to_indy(IndyErrorKind::IOError, "Can't read from genesis txn file")?;
 
-        if line.trim().is_empty() { continue; };
+        if line.trim().is_empty() {
+            continue;
+        };
         mt.append(_parse_txn_from_json(&line)?)?;
     }
     validate_merkle_tree(&mt)?;
@@ -107,7 +129,12 @@ fn get_pool_stored_path(pool_name: &str, create_dir: bool) -> PathBuf {
     get_pool_stored_path_base(pool_name, create_dir, "stored", "btxn")
 }
 
-fn get_pool_stored_path_base(pool_name: &str, create_dir: bool, filename: &str, ext: &str) -> PathBuf {
+fn get_pool_stored_path_base(
+    pool_name: &str,
+    create_dir: bool,
+    filename: &str,
+    ext: &str,
+) -> PathBuf {
     let mut path = environment::pool_path(pool_name);
     if create_dir {
         fs::create_dir_all(path.as_path()).unwrap();
@@ -118,7 +145,7 @@ fn get_pool_stored_path_base(pool_name: &str, create_dir: bool, filename: &str, 
 }
 
 pub fn dump_new_txns(pool_name: &str, txns: &[Vec<u8>]) -> IndyResult<()> {
-    let p = get_pool_stored_path( pool_name, false);
+    let p = get_pool_stored_path(pool_name, false);
     if !p.exists() {
         _dump_genesis_to_stored(&p, pool_name)?;
     }
@@ -136,11 +163,16 @@ fn _dump_genesis_to_stored(p: &PathBuf, pool_name: &str) -> IndyResult<()> {
 
     if !p_genesis.exists() {
         trace!("here");
-        return Err(err_msg(IndyErrorKind::PoolNotCreated, format!("Pool is not created for name: {:?}", pool_name)));
+        return Err(err_msg(
+            IndyErrorKind::PoolNotCreated,
+            format!("Pool is not created for name: {:?}", pool_name),
+        ));
     }
 
-    let mut file = fs::File::create(p)
-        .to_indy(IndyErrorKind::IOError, "Can't create pool ledger cache file")?;
+    let mut file = fs::File::create(p).to_indy(
+        IndyErrorKind::IOError,
+        "Can't create pool ledger cache file",
+    )?;
 
     let genesis_vec = _genesis_to_binary(&p_genesis)?;
     _dump_vec_to_file(&genesis_vec, &mut file)
@@ -148,26 +180,28 @@ fn _dump_genesis_to_stored(p: &PathBuf, pool_name: &str) -> IndyResult<()> {
 
 fn _dump_vec_to_file(v: &[Vec<u8>], file: &mut fs::File) -> IndyResult<()> {
     for ref line in v {
-        file.write_u64::<LittleEndian>(line.len() as u64)
-            .to_indy(IndyErrorKind::IOError, "Can't write to pool ledger cache file")?;
+        file.write_u64::<LittleEndian>(line.len() as u64).to_indy(
+            IndyErrorKind::IOError,
+            "Can't write to pool ledger cache file",
+        )?;
 
-        file.write_all(line)
-            .to_indy(IndyErrorKind::IOError, "Can't write to pool ledger cache file")?;
+        file.write_all(line).to_indy(
+            IndyErrorKind::IOError,
+            "Can't write to pool ledger cache file",
+        )?;
     }
 
     Ok(())
 }
 
 fn _genesis_to_binary(p: &PathBuf) -> IndyResult<Vec<Vec<u8>>> {
-    let f = fs::File::open(p)
-        .to_indy(IndyErrorKind::IOError, "Can't open genesis txn file")?;
+    let f = fs::File::open(p).to_indy(IndyErrorKind::IOError, "Can't open genesis txn file")?;
 
     let reader = io::BufReader::new(&f);
     let mut txns: Vec<Vec<u8>> = vec![];
 
     for line in reader.lines() {
-        let line = line
-            .to_indy(IndyErrorKind::IOError, "Can't read from genesis txn file")?;
+        let line = line.to_indy(IndyErrorKind::IOError, "Can't read from genesis txn file")?;
 
         txns.push(_parse_txn_from_json(&line)?);
     }
@@ -182,19 +216,27 @@ fn _parse_txn_from_json(txn: &str) -> IndyResult<Vec<u8>> {
         return Ok(vec![]);
     }
 
-    let txn: SJsonValue = serde_json::from_str(txn)
-        .to_indy(IndyErrorKind::InvalidStructure, "Genesis txn is mailformed json")?;
+    let txn: SJsonValue = serde_json::from_str(txn).to_indy(
+        IndyErrorKind::InvalidStructure,
+        "Genesis txn is mailformed json",
+    )?;
 
-    rmp_serde::encode::to_vec_named(&txn)
-        .to_indy(IndyErrorKind::InvalidState, "Can't encode genesis txn as message pack")
+    rmp_serde::encode::to_vec_named(&txn).to_indy(
+        IndyErrorKind::InvalidState,
+        "Can't encode genesis txn as message pack",
+    )
 }
 
-pub fn build_node_state(merkle_tree: &MerkleTree) -> IndyResult<HashMap<String, NodeTransactionV1>> {
+pub fn build_node_state(
+    merkle_tree: &MerkleTree,
+) -> IndyResult<HashMap<String, NodeTransactionV1>> {
     let mut gen_tnxs: HashMap<String, NodeTransactionV1> = HashMap::new();
 
     for gen_txn in merkle_tree {
-        let gen_txn: NodeTransaction = rmp_serde::decode::from_slice(gen_txn.as_slice())
-            .to_indy(IndyErrorKind::InvalidState, "MerkleTree contains invalid item")?;
+        let gen_txn: NodeTransaction = rmp_serde::decode::from_slice(gen_txn.as_slice()).to_indy(
+            IndyErrorKind::InvalidState,
+            "MerkleTree contains invalid item",
+        )?;
 
         let protocol_version = ProtocolVersion::get();
 
@@ -220,7 +262,10 @@ pub fn build_node_state(merkle_tree: &MerkleTree) -> IndyResult<HashMap<String, 
         };
 
         if gen_tnxs.contains_key(&gen_txn.txn.data.dest) {
-            gen_tnxs.get_mut(&gen_txn.txn.data.dest).unwrap().update(&mut gen_txn)?;
+            gen_tnxs
+                .get_mut(&gen_txn.txn.data.dest)
+                .unwrap()
+                .update(&mut gen_txn)?;
         } else {
             gen_tnxs.insert(gen_txn.txn.data.dest.clone(), gen_txn);
         }
@@ -236,7 +281,9 @@ pub fn from_raw_data(genesis_transactions: &str) -> IndyResult<MerkleTree> {
     let mut mt = MerkleTree::from_vec(Vec::new())?;
     let lines: Vec<&str> = genesis_transactions.split("\n").collect();
     for line in lines {
-        if line.trim().is_empty() { continue; };
+        if line.trim().is_empty() {
+            continue;
+        };
         mt.append(_parse_txn_from_json(&line)?)?;
     }
     validate_merkle_tree(&mt)?;
@@ -252,10 +299,14 @@ pub fn validate_merkle_tree(mt: &MerkleTree) -> IndyResult<()> {
 
 pub fn dump_to_json_string(merkle_tree: &MerkleTree) -> IndyResult<String> {
     let node_state = build_node_state(merkle_tree)?;
-    let txns = node_state.iter()
-        .map(|(_, v)|serde_json::to_string(&v))
+    let txns = node_state
+        .iter()
+        .map(|(_, v)| serde_json::to_string(&v))
         .collect::<Result<Vec<_>, _>>()
-        .to_indy(IndyErrorKind::InvalidStructure, "Cannot serialize merkle tree transactions to JSON")?;
+        .to_indy(
+            IndyErrorKind::InvalidStructure,
+            "Cannot serialize merkle tree transactions to JSON",
+        )?;
     Ok(String::from(txns.join("\n")))
 }
 
@@ -288,20 +339,30 @@ mod tests {
 
     #[test]
     fn pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version() {
-        test::cleanup_storage("pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version");
+        test::cleanup_storage(
+            "pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version",
+        );
 
         _set_protocol_version(1);
 
         let node_txns = test::gen_txns();
         let txns_src = node_txns[0..(2 as usize)].join("\n");
 
-        _write_genesis_txns("pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version", &txns_src);
+        _write_genesis_txns(
+            "pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version",
+            &txns_src,
+        );
 
-        let merkle_tree = super::create("pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version").unwrap();
+        let merkle_tree = super::create(
+            "pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version",
+        )
+        .unwrap();
         let res = super::build_node_state(&merkle_tree);
         assert_kind!(IndyErrorKind::PoolIncompatibleProtocolVersion, res);
 
-        test::cleanup_storage("pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version");
+        test::cleanup_storage(
+            "pool_worker_build_node_state_works_for_new_txns_format_and_1_protocol_version",
+        );
     }
 
     #[test]
@@ -317,10 +378,12 @@ mod tests {
             let txn3_json: serde_json::Value = serde_json::from_str(&node_txns[2]).unwrap();
             let txn4_json: serde_json::Value = serde_json::from_str(&node_txns[3]).unwrap();
 
-            let pool_cache = vec![rmp_serde::to_vec_named(&txn1_json).unwrap(),
-                                  rmp_serde::to_vec_named(&txn2_json).unwrap(),
-                                  rmp_serde::to_vec_named(&txn3_json).unwrap(),
-                                  rmp_serde::to_vec_named(&txn4_json).unwrap()];
+            let pool_cache = vec![
+                rmp_serde::to_vec_named(&txn1_json).unwrap(),
+                rmp_serde::to_vec_named(&txn2_json).unwrap(),
+                rmp_serde::to_vec_named(&txn3_json).unwrap(),
+                rmp_serde::to_vec_named(&txn4_json).unwrap(),
+            ];
 
             let pool_name = "pool_worker_works_for_deserialize_cache";
             let path = get_pool_stored_path(pool_name, true);
@@ -341,15 +404,25 @@ mod tests {
         test::cleanup_storage("pool_worker_restore_merkle_tree_works_from_genesis_txns");
 
         let node_txns = test::gen_txns();
-        let txns_src = format!("{}\n{}",
-                               node_txns[0].replace(environment::test_pool_ip().as_str(), "10.0.0.2"),
-                               node_txns[1].replace(environment::test_pool_ip().as_str(), "10.0.0.2"));
-        _write_genesis_txns("pool_worker_restore_merkle_tree_works_from_genesis_txns", &txns_src);
+        let txns_src = format!(
+            "{}\n{}",
+            node_txns[0].replace(environment::test_pool_ip().as_str(), "10.0.0.2"),
+            node_txns[1].replace(environment::test_pool_ip().as_str(), "10.0.0.2")
+        );
+        _write_genesis_txns(
+            "pool_worker_restore_merkle_tree_works_from_genesis_txns",
+            &txns_src,
+        );
 
-        let merkle_tree = super::create("pool_worker_restore_merkle_tree_works_from_genesis_txns").unwrap();
+        let merkle_tree =
+            super::create("pool_worker_restore_merkle_tree_works_from_genesis_txns").unwrap();
 
         assert_eq!(merkle_tree.count(), 2, "test restored MT size");
-        assert_eq!(merkle_tree.root_hash_hex(), "c715aef44aaacab8746c9a505ba106b5554fe6d29ec7f0a2abc9d7723fdea523", "test restored MT root hash");
+        assert_eq!(
+            merkle_tree.root_hash_hex(),
+            "c715aef44aaacab8746c9a505ba106b5554fe6d29ec7f0a2abc9d7723fdea523",
+            "test restored MT root hash"
+        );
 
         test::cleanup_storage("pool_worker_restore_merkle_tree_works_from_genesis_txns");
     }
@@ -360,14 +433,20 @@ mod tests {
 
         _set_protocol_version(1);
 
-        let node1: NodeTransactionV1 = NodeTransactionV1::from(serde_json::from_str::<NodeTransactionV0>(NODE1_OLD).unwrap());
-        let node2: NodeTransactionV1 = NodeTransactionV1::from(serde_json::from_str::<NodeTransactionV0>(NODE2_OLD).unwrap());
+        let node1: NodeTransactionV1 =
+            NodeTransactionV1::from(serde_json::from_str::<NodeTransactionV0>(NODE1_OLD).unwrap());
+        let node2: NodeTransactionV1 =
+            NodeTransactionV1::from(serde_json::from_str::<NodeTransactionV0>(NODE2_OLD).unwrap());
 
         let txns_src = format!("{}\n{}\n", NODE1_OLD, NODE2_OLD);
 
-        _write_genesis_txns("pool_worker_build_node_state_works_for_old_format", &txns_src);
+        _write_genesis_txns(
+            "pool_worker_build_node_state_works_for_old_format",
+            &txns_src,
+        );
 
-        let merkle_tree = super::create("pool_worker_build_node_state_works_for_old_format").unwrap();
+        let merkle_tree =
+            super::create("pool_worker_build_node_state_works_for_old_format").unwrap();
         let node_state = super::build_node_state(&merkle_tree).unwrap();
 
         assert_eq!(1, ProtocolVersion::get());
@@ -376,8 +455,14 @@ mod tests {
         assert!(node_state.contains_key("Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"));
         assert!(node_state.contains_key("8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"));
 
-        assert_eq!(node_state["Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"], node1);
-        assert_eq!(node_state["8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"], node2);
+        assert_eq!(
+            node_state["Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"],
+            node1
+        );
+        assert_eq!(
+            node_state["8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"],
+            node2
+        );
 
         test::cleanup_storage("pool_worker_build_node_state_works_for_old_format");
     }
@@ -395,9 +480,13 @@ mod tests {
 
         let txns_src = node_txns.join("\n");
 
-        _write_genesis_txns("pool_worker_build_node_state_works_for_new_format", &txns_src);
+        _write_genesis_txns(
+            "pool_worker_build_node_state_works_for_new_format",
+            &txns_src,
+        );
 
-        let merkle_tree = super::create("pool_worker_build_node_state_works_for_new_format").unwrap();
+        let merkle_tree =
+            super::create("pool_worker_build_node_state_works_for_new_format").unwrap();
         let node_state = super::build_node_state(&merkle_tree).unwrap();
 
         assert_eq!(2, ProtocolVersion::get());
@@ -406,26 +495,42 @@ mod tests {
         assert!(node_state.contains_key("Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"));
         assert!(node_state.contains_key("8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"));
 
-        assert_eq!(node_state["Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"], node1);
-        assert_eq!(node_state["8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"], node2);
+        assert_eq!(
+            node_state["Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv"],
+            node1
+        );
+        assert_eq!(
+            node_state["8ECVSk179mjsjKRLWiQtssMLgp6EPhWXtaYyStWPSGAb"],
+            node2
+        );
 
         test::cleanup_storage("pool_worker_build_node_state_works_for_new_format");
     }
 
     #[test]
     fn pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version() {
-        test::cleanup_storage("pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version");
+        test::cleanup_storage(
+            "pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version",
+        );
 
         _set_protocol_version(TEST_PROTOCOL_VERSION);
 
         let txns_src = format!("{}\n{}\n", NODE1_OLD, NODE2_OLD);
 
-        _write_genesis_txns("pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version", &txns_src);
+        _write_genesis_txns(
+            "pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version",
+            &txns_src,
+        );
 
-        let merkle_tree = super::create("pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version").unwrap();
+        let merkle_tree = super::create(
+            "pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version",
+        )
+        .unwrap();
         let res = super::build_node_state(&merkle_tree);
         assert_kind!(IndyErrorKind::PoolIncompatibleProtocolVersion, res);
 
-        test::cleanup_storage("pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version");
+        test::cleanup_storage(
+            "pool_worker_build_node_state_works_for_old_txns_format_and_2_protocol_version",
+        );
     }
 }

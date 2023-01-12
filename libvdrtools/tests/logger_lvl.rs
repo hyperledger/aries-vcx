@@ -18,9 +18,9 @@ mod utils;
 use std::sync::Mutex;
 
 use indy_api_types::PoolHandle;
-use vdrtoolsrs::{future::Future, logger, pool};
 use lazy_static::lazy_static;
 use log::{LevelFilter, Log, Metadata, Record};
+use vdrtoolsrs::{future::Future, logger, pool};
 
 struct LogCounter {}
 
@@ -58,7 +58,10 @@ fn indy_set_log_max_lvl_works() {
         vdrtools_sys::logger::indy_set_log_max_lvl(LevelFilter::Trace as usize as u32);
     }
 
-    LOG_IGNORE_IN_STAT.lock().unwrap().push("vdrtools::api::logger");
+    LOG_IGNORE_IN_STAT
+        .lock()
+        .unwrap()
+        .push("vdrtools::api::logger");
 
     pool::close_pool_ledger(1 as PoolHandle).wait().unwrap_err();
 

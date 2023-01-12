@@ -1,10 +1,11 @@
+use super::vdr::ledger_types::DidMethod;
 use core::convert::TryFrom;
 use lazy_static::lazy_static;
-use regex::{Regex, Captures};
-use super::vdr::ledger_types::DidMethod;
+use regex::{Captures, Regex};
 
 lazy_static! {
-    pub static ref REGEX: Regex = Regex::new("^(did|schema|creddef):(indy|cheqd)?(:?:)?([a-z0-9-:]+):(.*)$").unwrap();
+    pub static ref REGEX: Regex =
+        Regex::new("^(did|schema|creddef):(indy|cheqd)?(:?:)?([a-z0-9-:]+):(.*)$").unwrap();
 }
 
 #[derive(Deserialize, Debug, Serialize, PartialEq, Clone)]
@@ -26,9 +27,10 @@ impl TryFrom<&str> for FullyQualifiedId {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match REGEX.captures(value) {
-            None => {
-                Err(format!("Unable to parse FullyQualifiedId from the string: {}", value))
-            }
+            None => Err(format!(
+                "Unable to parse FullyQualifiedId from the string: {}",
+                value
+            )),
             Some(caps) => {
                 trace!("FullyQualifiedId::TryFrom str: parts {:?}", caps);
                 let did_method = match get_opt_string_value(&caps, 2).as_ref().map(String::as_str) {
@@ -49,7 +51,6 @@ impl TryFrom<&str> for FullyQualifiedId {
         }
     }
 }
-
 
 fn get_string_value(caps: &Captures, index: usize) -> String {
     get_opt_string_value(caps, index).unwrap_or_default()
@@ -108,7 +109,8 @@ mod tests {
 
     #[test]
     fn cheqd_parse_fully_qulified_did() {
-        let parsed_id: FullyQualifiedId = FullyQualifiedId::try_from("did:cheqd:cheqd-testnet:NcYxiDXkpYi6ov5FcYDi1e").unwrap();
+        let parsed_id: FullyQualifiedId =
+            FullyQualifiedId::try_from("did:cheqd:cheqd-testnet:NcYxiDXkpYi6ov5FcYDi1e").unwrap();
         let expected = FullyQualifiedId {
             prefix: _prefix().to_string(),
             did_method: DidMethod::Cheqd,

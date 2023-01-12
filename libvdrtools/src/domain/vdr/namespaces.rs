@@ -1,6 +1,6 @@
-use std::iter::IntoIterator;
-use std::collections::HashSet;
 use indy_api_types::validation::Validatable;
+use std::collections::HashSet;
+use std::iter::IntoIterator;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Namespaces(pub HashSet<String>);

@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use indy_api_types::validation::Validatable;
 
-use super::constants::{GET_TXN_AUTHR_AGRMT, GET_TXN_AUTHR_AGRMT_AML, TXN_AUTHR_AGRMT, TXN_AUTHR_AGRMT_AML, DISABLE_ALL_TXN_AUTHR_AGRMTS};
+use super::constants::{
+    DISABLE_ALL_TXN_AUTHR_AGRMTS, GET_TXN_AUTHR_AGRMT, GET_TXN_AUTHR_AGRMT_AML, TXN_AUTHR_AGRMT,
+    TXN_AUTHR_AGRMT_AML,
+};
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct TxnAuthorAgreementOperation {
@@ -18,7 +21,12 @@ pub struct TxnAuthorAgreementOperation {
 }
 
 impl TxnAuthorAgreementOperation {
-    pub fn new(text: Option<String>, version: String, ratification_ts: Option<u64>, retirement_ts: Option<u64>) -> TxnAuthorAgreementOperation {
+    pub fn new(
+        text: Option<String>,
+        version: String,
+        ratification_ts: Option<u64>,
+        retirement_ts: Option<u64>,
+    ) -> TxnAuthorAgreementOperation {
         TxnAuthorAgreementOperation {
             _type: TXN_AUTHR_AGRMT.to_string(),
             text,
@@ -50,14 +58,21 @@ pub struct GetTxnAuthorAgreementData {
     pub timestamp: Option<u64>,
 }
 
-impl Validatable for GetTxnAuthorAgreementData{
+impl Validatable for GetTxnAuthorAgreementData {
     fn validate(&self) -> Result<(), String> {
-        match (self.digest.as_ref(), self.version.as_ref(), self.timestamp.as_ref()) {
+        match (
+            self.digest.as_ref(),
+            self.version.as_ref(),
+            self.timestamp.as_ref(),
+        ) {
             (Some(_), None, None) => Ok(()),
             (None, Some(_), None) => Ok(()),
             (None, None, Some(_)) => Ok(()),
             (None, None, None) => Ok(()),
-            (digest, version, timestamp) => Err(format!("Only one of field can be specified: digest: {:?}, version: {:?}, timestamp: {:?}", digest, version, timestamp))
+            (digest, version, timestamp) => Err(format!(
+                "Only one of field can be specified: digest: {:?}, version: {:?}, timestamp: {:?}",
+                digest, version, timestamp
+            )),
         }
     }
 }
@@ -98,7 +113,9 @@ impl AcceptanceMechanisms {
 impl Validatable for AcceptanceMechanisms {
     fn validate(&self) -> Result<(), String> {
         if self.0.is_empty() {
-            return Err(String::from("Empty list of Acceptance Mechanisms has been passed"));
+            return Err(String::from(
+                "Empty list of Acceptance Mechanisms has been passed",
+            ));
         }
         Ok(())
     }
@@ -116,12 +133,16 @@ pub struct SetAcceptanceMechanismOperation {
 }
 
 impl SetAcceptanceMechanismOperation {
-    pub fn new(aml: AcceptanceMechanisms, version: String, aml_context: Option<String>) -> SetAcceptanceMechanismOperation {
+    pub fn new(
+        aml: AcceptanceMechanisms,
+        version: String,
+        aml_context: Option<String>,
+    ) -> SetAcceptanceMechanismOperation {
         SetAcceptanceMechanismOperation {
             _type: TXN_AUTHR_AGRMT_AML.to_string(),
             aml,
             version,
-            aml_context
+            aml_context,
         }
     }
 }

@@ -570,7 +570,10 @@ impl WalletStorage for SQLiteStorage {
             let mut mtags = if options.retrieve_tags && records.len() > 0 {
                 let mut tags: Vec<(i64, Tag)> = Vec::new();
 
-                let in_binings = std::iter::repeat("?").take(records.len()).collect::<Vec<_>>().join(",");
+                let in_binings = std::iter::repeat("?")
+                    .take(records.len())
+                    .collect::<Vec<_>>()
+                    .join(",");
 
                 let query = format!(
                     r#"

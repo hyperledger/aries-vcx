@@ -1,11 +1,6 @@
 use std::collections::HashMap;
 
-use ursa::cl::{
-    CredentialSignature,
-    RevocationRegistry,
-    SignatureCorrectnessProof,
-    Witness
-};
+use ursa::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProof, Witness};
 
 use indy_api_types::validation::Validatable;
 
@@ -22,11 +17,17 @@ pub struct Credential {
     pub signature: CredentialSignature,
     pub signature_correctness_proof: SignatureCorrectnessProof,
     pub rev_reg: Option<RevocationRegistry>,
-    pub witness: Option<Witness>
+    pub witness: Option<Witness>,
 }
 
 impl Credential {
-    pub const QUALIFIABLE_TAGS: [&'static str; 5] = ["issuer_did", "cred_def_id", "schema_id", "schema_issuer_did", "rev_reg_id"];
+    pub const QUALIFIABLE_TAGS: [&'static str; 5] = [
+        "issuer_did",
+        "cred_def_id",
+        "schema_id",
+        "schema_issuer_did",
+        "rev_reg_id",
+    ];
     pub const EXTRA_TAG_SUFFIX: &'static str = "_short";
 
     pub fn add_extra_tag_suffix(tag: &str) -> String {
@@ -41,7 +42,7 @@ pub struct CredentialInfo {
     pub schema_id: SchemaId,
     pub cred_def_id: CredentialDefinitionId,
     pub rev_reg_id: Option<RevocationRegistryId>,
-    pub cred_rev_id: Option<String>
+    pub cred_rev_id: Option<String>,
 }
 
 pub type ShortCredentialValues = HashMap<String, String>;
@@ -52,13 +53,15 @@ pub struct CredentialValues(pub HashMap<String, AttributeValues>);
 #[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
 pub struct AttributeValues {
     pub raw: String,
-    pub encoded: String
+    pub encoded: String,
 }
 
 impl Validatable for CredentialValues {
     fn validate(&self) -> Result<(), String> {
         if self.0.is_empty() {
-            return Err(String::from("CredentialValues validation failed: empty list has been passed"));
+            return Err(String::from(
+                "CredentialValues validation failed: empty list has been passed",
+            ));
         }
 
         Ok(())
@@ -76,7 +79,9 @@ impl Validatable for Credential {
         }
 
         if self.values.0.is_empty() {
-            return Err(String::from("Credential validation failed: `values` is empty"));
+            return Err(String::from(
+                "Credential validation failed: `values` is empty",
+            ));
         }
 
         Ok(())

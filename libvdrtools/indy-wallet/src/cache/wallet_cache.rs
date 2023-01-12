@@ -1,23 +1,21 @@
 use crate::{
-    cache::{
-        lru::LruCache,
-        cache::Cache,
-    },
+    cache::{cache::Cache, lru::LruCache},
     storage::{
+        StorageRecord, Tag,
         Tag::{Encrypted, PlainText},
+        TagName,
         TagName::{OfEncrypted, OfPlain},
-        StorageRecord, Tag, TagName,
     },
     wallet::EncryptedValue,
     RecordOptions,
 };
+use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
+use std::sync::{Mutex, RwLock};
 use std::{
-    collections::{HashSet, HashMap},
+    collections::{HashMap, HashSet},
     iter::FromIterator,
     sync::atomic::{AtomicUsize, Ordering},
 };
-use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
-use std::sync::{Mutex, RwLock};
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct WalletCacheKey {
@@ -48,7 +46,8 @@ impl WalletCache {
                 }
             }
             _ => {
-                WalletCache { // no cache
+                WalletCache {
+                    // no cache
                     cache: None,
                     cache_entities: HashSet::new(),
                 }
@@ -78,65 +77,44 @@ impl WalletCache {
                     value: evalue.to_owned(),
                     tags: etags.to_owned(),
                 };
+                let _ = protected_cache.lock().unwrap().put(key, value);
+            }
+        }
+    }
+
+    pub async fn add_tags(&self, type_: &str, etype: &[u8], eid: &[u8], etags: &[Tag]) {
+        if let Some(protected_cache) = &self.cache {
+            if self.cache_entities.contains(&type_.to_owned()) {
+                let key = WalletCacheKey {
+                    type_: etype.to_owned(),
+                    id: eid.to_owned(),
+                };
                 let _ = protected_cache
                     .lock()
-                    .unwrap()
-                    .put(key, value);
+                    .unwrap() //await
+                    .get_mut(&key)
+                    .map(|v| v.tags.append(&mut etags.to_owned()));
             }
         }
     }
 
-    pub async fn add_tags(
-        &self,
-        type_: &str,
-        etype: &[u8],
-        eid: &[u8],
-        etags: &[Tag],
-    ) {
+    pub async fn update_tags(&self, type_: &str, etype: &[u8], eid: &[u8], etags: &[Tag]) {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
                 let key = WalletCacheKey {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock()
+                let _ = protected_cache
+                    .lock()
                     .unwrap() //await
-                    .get_mut(&key).map(|v|{
-                        v.tags.append(&mut etags.to_owned())
-                    });
+                    .get_mut(&key)
+                    .map(|v| v.tags = etags.to_vec());
             }
         }
     }
 
-    pub async fn update_tags(
-        &self,
-        type_: &str,
-        etype: &[u8],
-        eid: &[u8],
-        etags: &[Tag],
-    ) {
-        if let Some(protected_cache) = &self.cache {
-            if self.cache_entities.contains(&type_.to_owned()) {
-                let key = WalletCacheKey {
-                    type_: etype.to_owned(),
-                    id: eid.to_owned(),
-                };
-                let _ = protected_cache.lock()
-                    .unwrap() //await
-                    .get_mut(&key).map(|v|{
-                        v.tags = etags.to_vec()
-                    });
-            }
-        }
-    }
-
-    pub async fn delete_tags(
-        &self,
-        type_: &str,
-        etype: &[u8],
-        eid: &[u8],
-        etag_names: &[TagName],
-    ) {
+    pub async fn delete_tags(&self, type_: &str, etype: &[u8], eid: &[u8], etag_names: &[TagName]) {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
                 let key = WalletCacheKey {
@@ -151,42 +129,32 @@ impl WalletCache {
                         OfPlain(value) => plain_tag_names.insert(value),
                     };
                 }
-                let _ = protected_cache.lock()
+                let _ = protected_cache
+                    .lock()
                     .unwrap() //await
-                    .get_mut(&key).map(|v|{
-                        v.tags.retain(|el| {
-                            match el {
-                                Encrypted(tag_name, _) => {
-                                    !enc_tag_names.contains(tag_name)
-                                },
-                                PlainText(tag_name, _) => {
-                                    !plain_tag_names.contains(tag_name)
-                                }
-                            }
+                    .get_mut(&key)
+                    .map(|v| {
+                        v.tags.retain(|el| match el {
+                            Encrypted(tag_name, _) => !enc_tag_names.contains(tag_name),
+                            PlainText(tag_name, _) => !plain_tag_names.contains(tag_name),
                         });
                     });
             }
         }
     }
 
-    pub async fn update(
-        &self,
-        type_: &str,
-        etype: &[u8],
-        eid: &[u8],
-        evalue: &EncryptedValue,
-    ) {
+    pub async fn update(&self, type_: &str, etype: &[u8], eid: &[u8], evalue: &EncryptedValue) {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
                 let key = WalletCacheKey {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock()
+                let _ = protected_cache
+                    .lock()
                     .unwrap() // await
-                    .get_mut(&key).map(|v|{
-                        v.value = evalue.to_owned()
-                    });
+                    .get_mut(&key)
+                    .map(|v| v.value = evalue.to_owned());
             }
         }
     }
@@ -196,7 +164,7 @@ impl WalletCache {
         type_: &str,
         etype: &[u8],
         eid: &[u8],
-        options: &RecordOptions
+        options: &RecordOptions,
     ) -> Option<StorageRecord> {
         if let Some(protected_cache) = &self.cache {
             if self.cache_entities.contains(&type_.to_owned()) {
@@ -204,15 +172,27 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                protected_cache.lock()
+                protected_cache
+                    .lock()
                     .unwrap() //await
-                    .get(&key).map(|v|{
-                        StorageRecord {
-                            id: eid.to_owned(),
-                            value: if options.retrieve_value {Some(v.value.clone())} else {None},
-                            type_: if options.retrieve_type {Some(etype.to_owned())} else {None},
-                            tags: if options.retrieve_tags {Some(v.tags.clone())} else {None},
-                        }
+                    .get(&key)
+                    .map(|v| StorageRecord {
+                        id: eid.to_owned(),
+                        value: if options.retrieve_value {
+                            Some(v.value.clone())
+                        } else {
+                            None
+                        },
+                        type_: if options.retrieve_type {
+                            Some(etype.to_owned())
+                        } else {
+                            None
+                        },
+                        tags: if options.retrieve_tags {
+                            Some(v.tags.clone())
+                        } else {
+                            None
+                        },
                     })
             } else {
                 None
@@ -229,7 +209,8 @@ impl WalletCache {
                     type_: etype.to_owned(),
                     id: eid.to_owned(),
                 };
-                let _ = protected_cache.lock()
+                let _ = protected_cache
+                    .lock()
                     .unwrap() //await
                     .pop(&key);
             }
@@ -283,7 +264,7 @@ impl Clone for WalletCacheHitData {
         WalletCacheHitData {
             hit: AtomicUsize::from(self.get_hit()),
             miss: AtomicUsize::from(self.get_miss()),
-            not_cached: AtomicUsize::from(self.get_not_cached())
+            not_cached: AtomicUsize::from(self.get_not_cached()),
         }
     }
 
@@ -301,7 +282,7 @@ pub struct WalletCacheHitMetrics {
 impl WalletCacheHitMetrics {
     pub fn new() -> Self {
         WalletCacheHitMetrics {
-            data: RwLock::new(HashMap::new())
+            data: RwLock::new(HashMap::new()),
         }
     }
 
@@ -324,7 +305,7 @@ impl WalletCacheHitMetrics {
             None => {
                 drop(read_guard);
                 let mut write_guard = self.data.write().unwrap(); //await;
-                // check if data is inserted in the mean time until write lock is acquired.
+                                                                  // check if data is inserted in the mean time until write lock is acquired.
                 match write_guard.get(type_) {
                     Some(x) => f(x),
                     None => {
@@ -341,15 +322,11 @@ impl WalletCacheHitMetrics {
 
     #[allow(dead_code)]
     pub async fn get_data_for_type(&self, type_: &str) -> Option<WalletCacheHitData> {
-        self.data.read()
-            .unwrap()
-            .get(type_).map(|x|x.clone())
+        self.data.read().unwrap().get(type_).map(|x| x.clone())
     }
 
     pub fn get_data(&self) -> HashMap<String, WalletCacheHitData> {
-        self.data.read()
-            .unwrap()
-            .clone()
+        self.data.read().unwrap().clone()
     }
 }
 
@@ -359,9 +336,9 @@ mod tests {
 
     use super::*;
     use crate::storage::{Tag, TagName};
-    use rand::{distributions::Uniform, distributions::Alphanumeric, Rng};
-    use indy_api_types::domain::wallet::DEFAULT_CACHE_SIZE;
     use futures::Future;
+    use indy_api_types::domain::wallet::DEFAULT_CACHE_SIZE;
+    use rand::{distributions::Alphanumeric, distributions::Uniform, Rng};
     use std::time::Duration;
 
     const TYPE_A: &str = "TypeA";
@@ -375,21 +352,28 @@ mod tests {
     const FULL_OPTIONS: RecordOptions = RecordOptions {
         retrieve_type: true,
         retrieve_value: true,
-        retrieve_tags: true
+        retrieve_tags: true,
     };
 
     fn _rand_vec(size: usize) -> Vec<u8> {
-        rand::thread_rng().sample_iter(&Uniform::new(0, 255)).take(size).collect()
+        rand::thread_rng()
+            .sample_iter(&Uniform::new(0, 255))
+            .take(size)
+            .collect()
     }
 
     fn _rand_str(size: usize) -> String {
-        rand::thread_rng().sample_iter(&Alphanumeric).take(size).map(char::from).collect()
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(size)
+            .map(char::from)
+            .collect()
     }
 
     fn _enc_value() -> EncryptedValue {
         EncryptedValue {
             data: _rand_vec(200),
-            key: _rand_vec(20)
+            key: _rand_vec(20),
         }
     }
 
@@ -405,7 +389,7 @@ mod tests {
         let config = CacheConfig {
             size: 10,
             entities: vec![TYPE_A.to_string(), TYPE_B.to_string()],
-            algorithm: CachingAlgorithm::LRU
+            algorithm: CachingAlgorithm::LRU,
         };
         WalletCache::new(Some(config))
     }
@@ -414,22 +398,22 @@ mod tests {
         let config = CacheConfig {
             size: 10,
             entities: vec![],
-            algorithm: CachingAlgorithm::LRU
+            algorithm: CachingAlgorithm::LRU,
         };
         WalletCache::new(Some(config))
     }
 
     fn _vec_to_hash_set(items: &[&str]) -> HashSet<String> {
-        HashSet::from_iter(items.into_iter().map(|el|el.to_string()))
+        HashSet::from_iter(items.into_iter().map(|el| el.to_string()))
     }
 
     fn _tag_names(tags: &[Tag]) -> Vec<TagName> {
-        tags.into_iter().map(|el|{
-            match el {
+        tags.into_iter()
+            .map(|el| match el {
                 Encrypted(key, _) => TagName::OfEncrypted(key.to_owned()),
                 PlainText(key, _) => TagName::OfPlain(key.to_owned()),
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     #[test]
@@ -444,7 +428,7 @@ mod tests {
         let config = CacheConfig {
             size: DEFAULT_CACHE_SIZE,
             entities: vec![],
-            algorithm: CachingAlgorithm::LRU
+            algorithm: CachingAlgorithm::LRU,
         };
         let cache = WalletCache::new(Some(config));
         assert!(cache.cache.is_none());
@@ -456,7 +440,7 @@ mod tests {
         let config = CacheConfig {
             size: 20,
             entities: vec![],
-            algorithm: CachingAlgorithm::LRU
+            algorithm: CachingAlgorithm::LRU,
         };
         let cache = WalletCache::new(Some(config));
         assert!(cache.cache.is_none());
@@ -465,9 +449,8 @@ mod tests {
 
     #[test]
     fn new_with_default_size_in_config_works() {
-        let config_str = json!({
-            "entities": vec![TYPE_A.to_string(), TYPE_B.to_string()]
-        }).to_string();
+        let config_str =
+            json!({ "entities": vec![TYPE_A.to_string(), TYPE_B.to_string()] }).to_string();
         let config: CacheConfig = serde_json::from_str(&config_str).unwrap();
         let wallet_cache = WalletCache::new(Some(config));
         assert!(wallet_cache.cache.is_some());
@@ -475,7 +458,10 @@ mod tests {
         assert_eq!(cache.get_mut().cap(), DEFAULT_CACHE_SIZE);
         assert_eq!(cache.get_mut().len(), 0);
         assert_eq!(wallet_cache.cache_entities.len(), 2);
-        assert_eq!(wallet_cache.cache_entities, _vec_to_hash_set(&[TYPE_A, TYPE_B]));
+        assert_eq!(
+            wallet_cache.cache_entities,
+            _vec_to_hash_set(&[TYPE_A, TYPE_B])
+        );
     }
 
     #[test]
@@ -483,7 +469,7 @@ mod tests {
         let config = CacheConfig {
             size: 20,
             entities: vec![TYPE_A.to_string(), TYPE_B.to_string()],
-            algorithm: CachingAlgorithm::LRU
+            algorithm: CachingAlgorithm::LRU,
         };
         let wallet_cache = WalletCache::new(Some(config));
         assert!(wallet_cache.cache.is_some());
@@ -491,7 +477,10 @@ mod tests {
         assert_eq!(cache.get_mut().cap(), 20);
         assert_eq!(cache.get_mut().len(), 0);
         assert_eq!(wallet_cache.cache_entities.len(), 2);
-        assert_eq!(wallet_cache.cache_entities, _vec_to_hash_set(&[TYPE_A, TYPE_B]));
+        assert_eq!(
+            wallet_cache.cache_entities,
+            _vec_to_hash_set(&[TYPE_A, TYPE_B])
+        );
     }
 
     #[test]
@@ -527,7 +516,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -548,7 +537,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -600,7 +589,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -620,11 +609,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
-        cache.add_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone(), tag2.clone()]).await;
+        cache
+            .add_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone(), tag2.clone()])
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -649,7 +640,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -661,7 +652,7 @@ mod tests {
 
         let key2 = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID2.to_vec()
+            id: EID2.to_vec(),
         };
 
         assert!(lru.peek(&key2).is_none());
@@ -709,11 +700,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1, tag2]);
-        cache.update_tags(TYPE_A, ETYPE1, EID1, &[tag3.clone()]).await;
+        cache
+            .update_tags(TYPE_A, ETYPE1, EID1, &[tag3.clone()])
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -732,11 +725,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
-        cache.update_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone()]).await;
+        cache
+            .update_tags(TYPE_A, ETYPE1, EID1, &[tag1.clone()])
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -762,7 +757,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -774,7 +769,7 @@ mod tests {
 
         let key2 = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID2.to_vec()
+            id: EID2.to_vec(),
         };
 
         assert!(lru.peek(&key2).is_none());
@@ -790,7 +785,9 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1, tag2]);
-        cache.update_tags(TYPE_NON_CACHED, ETYPE1, EID1, &[tag3]).await;
+        cache
+            .update_tags(TYPE_NON_CACHED, ETYPE1, EID1, &[tag3])
+            .await;
 
         let mut internal_cache = cache.cache.unwrap();
         let lru = internal_cache.get_mut();
@@ -822,11 +819,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
-        cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1, tag3])).await;
+        cache
+            .delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1, tag3]))
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -845,11 +844,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
-        cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1])).await;
+        cache
+            .delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1]))
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -869,11 +870,13 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
-        cache.delete_tags(TYPE_A, ETYPE1, EID2, &_tag_names(&[tag1.clone()])).await;
+        cache
+            .delete_tags(TYPE_A, ETYPE1, EID2, &_tag_names(&[tag1.clone()]))
+            .await;
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -885,7 +888,7 @@ mod tests {
 
         let key2 = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID2.to_vec()
+            id: EID2.to_vec(),
         };
 
         assert!(lru.peek(&key2).is_none());
@@ -899,8 +902,16 @@ mod tests {
 
         let cache = _cache();
 
-        cache.add(TYPE_NON_CACHED, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
-        cache.delete_tags(TYPE_NON_CACHED, ETYPE1, EID1, &_tag_names(&[tag1.clone()])).await;
+        cache.add(
+            TYPE_NON_CACHED,
+            ETYPE1,
+            EID1,
+            &value,
+            &[tag1.clone(), tag2.clone()],
+        );
+        cache
+            .delete_tags(TYPE_NON_CACHED, ETYPE1, EID1, &_tag_names(&[tag1.clone()]))
+            .await;
 
         let mut internal_cache = cache.cache.unwrap();
         let lru = internal_cache.get_mut();
@@ -916,7 +927,9 @@ mod tests {
         let cache = _no_cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
-        cache.delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1])).await;
+        cache
+            .delete_tags(TYPE_A, ETYPE1, EID1, &_tag_names(&[tag1]))
+            .await;
 
         assert!(cache.cache.is_none());
     }
@@ -935,7 +948,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -958,7 +971,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -983,7 +996,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -995,7 +1008,7 @@ mod tests {
 
         let key2 = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID2.to_vec()
+            id: EID2.to_vec(),
         };
 
         assert!(lru.peek(&key2).is_none());
@@ -1046,7 +1059,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1066,7 +1079,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1088,7 +1101,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1100,7 +1113,7 @@ mod tests {
 
         let key2 = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID2.to_vec()
+            id: EID2.to_vec(),
         };
 
         assert!(lru.peek(&key2).is_none());
@@ -1145,7 +1158,10 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[tag1.clone(), tag2.clone()]);
-        let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await.unwrap();
+        let result = cache
+            .get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS)
+            .await
+            .unwrap();
 
         assert_eq!(result.id, EID1);
         assert_eq!(result.type_, Some(ETYPE1.to_owned()));
@@ -1154,7 +1170,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1172,7 +1188,10 @@ mod tests {
         let cache = _cache();
 
         cache.add(TYPE_A, ETYPE1, EID1, &value, &[]);
-        let result = cache.get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS).await.unwrap();
+        let result = cache
+            .get(TYPE_A, ETYPE1, EID1, &FULL_OPTIONS)
+            .await
+            .unwrap();
 
         assert_eq!(result.id, EID1);
         assert_eq!(result.type_, Some(ETYPE1.to_owned()));
@@ -1181,7 +1200,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1207,7 +1226,7 @@ mod tests {
 
         let key = WalletCacheKey {
             type_: ETYPE1.to_vec(),
-            id: EID1.to_vec()
+            id: EID1.to_vec(),
         };
 
         let mut internal_cache = cache.cache.unwrap();
@@ -1363,7 +1382,8 @@ mod tests {
     }
 
     async fn _execute_with_random_delay<F>(future: F) -> usize
-        where F: Future<Output=usize>
+    where
+        F: Future<Output = usize>,
     {
         async_std::task::sleep(Duration::from_millis(rand::thread_rng().gen_range(0, 1000))).await;
         future.await + 0
@@ -1379,14 +1399,17 @@ mod tests {
         for _ in 0..1000 {
             futures1.push(_execute_with_random_delay(metrics.inc_cache_hit(TYPE_A)));
             futures2.push(_execute_with_random_delay(metrics.inc_cache_miss(TYPE_A)));
-            futures3.push(_execute_with_random_delay(metrics.inc_not_cached(TYPE_NON_CACHED)));
+            futures3.push(_execute_with_random_delay(
+                metrics.inc_not_cached(TYPE_NON_CACHED),
+            ));
         }
 
         let result = futures::future::join3(
             futures::future::join_all(futures1),
             futures::future::join_all(futures2),
-            futures::future::join_all(futures3)
-        ).await;
+            futures::future::join_all(futures3),
+        )
+        .await;
         println!("result: {:?}", result);
 
         let type_a_data = metrics.get_data_for_type(TYPE_A).await.unwrap();

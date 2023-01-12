@@ -3,14 +3,13 @@ pub struct JWE {
     pub protected: String,
     pub iv: String,
     pub ciphertext: String,
-    pub tag: String
-
+    pub tag: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Recipient {
     pub encrypted_key: String,
-    pub header: Header
+    pub header: Header,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -21,7 +20,7 @@ pub struct Header {
     pub iv: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sender: Option<String>
+    pub sender: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -37,5 +36,5 @@ pub struct UnpackMessage {
     pub message: String,
     pub recipient_verkey: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sender_verkey: Option<String>
+    pub sender_verkey: Option<String>,
 }

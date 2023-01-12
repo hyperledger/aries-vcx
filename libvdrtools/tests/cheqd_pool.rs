@@ -13,13 +13,13 @@ extern crate log;
 mod utils;
 
 #[cfg(feature = "cheqd")]
-use utils::{cheqd_pool, Setup};
-#[cfg(feature = "local_nodes_cheqd_pool")]
-use utils::{cheqd_setup, cheqd_ledger};
+use serde_json::Value;
 #[cfg(feature = "cheqd")]
 use utils::test;
+#[cfg(feature = "local_nodes_cheqd_pool")]
+use utils::{cheqd_ledger, cheqd_setup};
 #[cfg(feature = "cheqd")]
-use serde_json::Value;
+use utils::{cheqd_pool, Setup};
 
 #[cfg(feature = "cheqd")]
 mod high_cases {
@@ -43,7 +43,8 @@ mod high_cases {
         #[test]
         fn test_add_in_memory() {
             let setup = Setup::empty();
-            let _result = cheqd_pool::add(&setup.name, "rpc_address", "chain_id", Some("InMemory")).unwrap();
+            let _result =
+                cheqd_pool::add(&setup.name, "rpc_address", "chain_id", Some("InMemory")).unwrap();
             // TODO VE-3079 check result
             assert!(!test::check_cheqd_pool_exists(&setup.name));
 
@@ -52,7 +53,8 @@ mod high_cases {
             assert!(result.is_err());
 
             // try to add Persistent pool with the same alias
-            let result = cheqd_pool::add(&setup.name, "rpc_address", "chain_id", Some("Persistent"));
+            let result =
+                cheqd_pool::add(&setup.name, "rpc_address", "chain_id", Some("Persistent"));
             assert!(result.is_err());
 
             test::cleanup_storage(&setup.name);
@@ -69,7 +71,6 @@ mod high_cases {
             cheqd_pool::add(&setup.name, "rpc_address", "chain_id", None).unwrap();
             let result = cheqd_pool::get_config(&setup.name).unwrap();
             test::cleanup_storage(&setup.name);
-
 
             println!("Data: {:?} ", result);
         }
@@ -117,7 +118,6 @@ mod high_cases {
             assert!(result.contains(expect_pool_1));
             assert!(result.contains(expect_pool_2));
         }
-
     }
 
     #[cfg(test)]
@@ -131,15 +131,19 @@ mod high_cases {
         fn test_broadcast_tx_commit() {
             let setup = cheqd_setup::CheqdSetup::new();
 
-            let (account_number, account_sequence) = setup.get_base_account_number_and_sequence(&setup.account_id).unwrap();
+            let (account_number, account_sequence) = setup
+                .get_base_account_number_and_sequence(&setup.account_id)
+                .unwrap();
 
             // Create DID
-            let (did, verkey) = did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
+            let (did, verkey) =
+                did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
 
             // Send DID
             let msg = cheqd_ledger::cheqd::build_msg_create_did(&did, &verkey).unwrap();
 
-            let signed_msg = cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &did, &msg).unwrap();
+            let signed_msg =
+                cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &did, &msg).unwrap();
 
             // Transaction
             let tx = cheqd_ledger::auth::build_tx(
@@ -153,10 +157,12 @@ mod high_cases {
                 "ncheq",
                 setup.get_timeout_height(),
                 "memo",
-            ).unwrap();
+            )
+            .unwrap();
 
             // Sign
-            let signed = cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
+            let signed =
+                cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
 
             // Broadcast
             cheqd_pool::broadcast_tx_commit(&setup.pool_alias, &signed).unwrap();
@@ -175,15 +181,19 @@ mod high_cases {
             let setup = cheqd_setup::CheqdSetup::new();
             ///// Transaction sending
 
-            let (account_number, account_sequence) = setup.get_base_account_number_and_sequence(&setup.account_id).unwrap();
+            let (account_number, account_sequence) = setup
+                .get_base_account_number_and_sequence(&setup.account_id)
+                .unwrap();
 
             // Create DID
-            let (did, verkey) = did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
+            let (did, verkey) =
+                did::create_my_did(setup.wallet_handle, &cheqd_ledger::cheqd::did_info()).unwrap();
 
             // Send DID
             let msg = cheqd_ledger::cheqd::build_msg_create_did(&did, &verkey).unwrap();
 
-            let signed_msg = cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &did, &msg).unwrap();
+            let signed_msg =
+                cheqd_ledger::cheqd::sign_msg_request(setup.wallet_handle, &did, &msg).unwrap();
 
             // Transaction
             let tx = cheqd_ledger::auth::build_tx(
@@ -197,10 +207,12 @@ mod high_cases {
                 "ncheq",
                 setup.get_timeout_height(),
                 "memo",
-            ).unwrap();
+            )
+            .unwrap();
 
             // Signature
-            let signed = cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
+            let signed =
+                cheqd_ledger::auth::sign_tx(setup.wallet_handle, &setup.key_alias, &tx).unwrap();
 
             // Broadcast
             let resp = cheqd_pool::broadcast_tx_commit(&setup.pool_alias, &signed).unwrap();
@@ -212,10 +224,12 @@ mod high_cases {
 
             ///// Querying
 
-            let query = cheqd_ledger::cheqd::build_query_get_did(tx_resp["id"].as_str().unwrap()).unwrap();
+            let query =
+                cheqd_ledger::cheqd::build_query_get_did(tx_resp["id"].as_str().unwrap()).unwrap();
 
             let query_resp = cheqd_pool::abci_query(&setup.pool_alias, &query).unwrap();
-            let query_resp_parsed = cheqd_ledger::cheqd::parse_query_get_did_resp(&query_resp).unwrap();
+            let query_resp_parsed =
+                cheqd_ledger::cheqd::parse_query_get_did_resp(&query_resp).unwrap();
             println!("Query response: {:?}", query_resp_parsed);
 
             assert!(true);
@@ -243,7 +257,13 @@ mod high_cases {
             let setup = Setup::empty();
             let cheqd_test_pool_ip = environment::cheqd_test_pool_ip();
             let cheqd_test_chain_id = environment::cheqd_test_chain_id();
-            cheqd_pool::add(&setup.name, &cheqd_test_pool_ip, &cheqd_test_chain_id, Some("InMemory")).unwrap();
+            cheqd_pool::add(
+                &setup.name,
+                &cheqd_test_pool_ip,
+                &cheqd_test_chain_id,
+                Some("InMemory"),
+            )
+            .unwrap();
             let query_resp = cheqd_pool::abci_info(&setup.name).unwrap();
             println!("Query response: {:?}", query_resp);
         }

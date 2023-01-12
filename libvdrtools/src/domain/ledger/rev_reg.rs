@@ -1,11 +1,11 @@
-use super::constants::{REVOC_REG_ENTRY, GET_REVOC_REG, GET_REVOC_REG_DELTA};
+use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY};
 
 use ursa::cl::{RevocationRegistry, RevocationRegistryDelta};
 
-use super::response::{GetReplyResultV1, ReplyType};
-use super::super::anoncreds::revocation_registry_definition::RevocationRegistryId;
 use super::super::anoncreds::revocation_registry::RevocationRegistryV1;
+use super::super::anoncreds::revocation_registry_definition::RevocationRegistryId;
 use super::super::anoncreds::revocation_registry_delta::RevocationRegistryDeltaV1;
+use super::response::{GetReplyResultV1, ReplyType};
 
 use std::collections::HashSet;
 
@@ -20,12 +20,16 @@ pub struct RevRegEntryOperation {
 }
 
 impl RevRegEntryOperation {
-    pub fn new(rev_def_type: &str, revoc_reg_def_id: &RevocationRegistryId, value: RevocationRegistryDeltaV1) -> RevRegEntryOperation {
+    pub fn new(
+        rev_def_type: &str,
+        revoc_reg_def_id: &RevocationRegistryId,
+        value: RevocationRegistryDeltaV1,
+    ) -> RevRegEntryOperation {
         RevRegEntryOperation {
             _type: REVOC_REG_ENTRY.to_string(),
             revoc_def_type: rev_def_type.to_string(),
             revoc_reg_def_id: revoc_reg_def_id.clone(),
-            value: value.value
+            value: value.value,
         }
     }
 }
@@ -44,7 +48,7 @@ impl GetRevRegOperation {
         GetRevRegOperation {
             _type: GET_REVOC_REG.to_string(),
             revoc_reg_def_id: revoc_reg_def_id.clone(),
-            timestamp
+            timestamp,
         }
     }
 }
@@ -57,16 +61,20 @@ pub struct GetRevRegDeltaOperation {
     pub revoc_reg_def_id: RevocationRegistryId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<i64>,
-    pub to: i64
+    pub to: i64,
 }
 
 impl GetRevRegDeltaOperation {
-    pub fn new(revoc_reg_def_id: &RevocationRegistryId, from: Option<i64>, to: i64) -> GetRevRegDeltaOperation {
+    pub fn new(
+        revoc_reg_def_id: &RevocationRegistryId,
+        from: Option<i64>,
+        to: i64,
+    ) -> GetRevRegDeltaOperation {
         GetRevRegDeltaOperation {
             _type: GET_REVOC_REG_DELTA.to_string(),
             revoc_reg_def_id: revoc_reg_def_id.clone(),
             from,
-            to
+            to,
         }
     }
 }
@@ -75,7 +83,7 @@ impl GetRevRegDeltaOperation {
 #[serde(untagged)]
 pub enum GetRevocRegReplyResult {
     GetRevocRegReplyResultV0(GetRevocRegResultV0),
-    GetRevocRegReplyResultV1(GetReplyResultV1<GetRevocRegDataV1>)
+    GetRevocRegReplyResultV1(GetReplyResultV1<GetRevocRegDataV1>),
 }
 
 impl ReplyType for GetRevocRegReplyResult {
@@ -90,20 +98,20 @@ pub struct GetRevocRegResultV0 {
     pub seq_no: i32,
     pub revoc_reg_def_id: RevocationRegistryId,
     pub data: RevocationRegistryV1,
-    pub txn_time: u64
+    pub txn_time: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetRevocRegDataV1 {
     pub revoc_reg_def_id: RevocationRegistryId,
-    pub value: RevocationRegistryV1
+    pub value: RevocationRegistryV1,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RevocationRegistryDeltaData {
-    pub value: RevocationRegistryDeltaValue
+    pub value: RevocationRegistryDeltaValue,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -111,21 +119,21 @@ pub struct RevocationRegistryDeltaValue {
     pub accum_from: Option<AccumulatorState>,
     pub accum_to: AccumulatorState,
     pub issued: HashSet<u32>,
-    pub revoked: HashSet<u32>
+    pub revoked: HashSet<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccumulatorState {
     pub value: RevocationRegistry,
-    pub txn_time: u64
+    pub txn_time: u64,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum GetRevocRegDeltaReplyResult {
     GetRevocRegDeltaReplyResultV0(GetRevocRegDeltaResultV0),
-    GetRevocRegDeltaReplyResultV1(GetReplyResultV1<GetRevocRegDeltaDataV1>)
+    GetRevocRegDeltaReplyResultV1(GetReplyResultV1<GetRevocRegDeltaDataV1>),
 }
 
 impl ReplyType for GetRevocRegDeltaReplyResult {
@@ -139,12 +147,12 @@ impl ReplyType for GetRevocRegDeltaReplyResult {
 pub struct GetRevocRegDeltaResultV0 {
     pub seq_no: i32,
     pub revoc_reg_def_id: RevocationRegistryId,
-    pub data: RevocationRegistryDeltaData
+    pub data: RevocationRegistryDeltaData,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetRevocRegDeltaDataV1 {
     pub revoc_reg_def_id: RevocationRegistryId,
-    pub value: RevocationRegistryDeltaData
+    pub value: RevocationRegistryDeltaData,
 }

@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Once};
 
-use vdrtoolsrs::{future::Future, wallet, IndyError, WalletHandle};
 use lazy_static::lazy_static;
 use serde_json;
+use vdrtoolsrs::{future::Future, wallet, IndyError, WalletHandle};
 
 use crate::utils::{constants::WALLET_CREDENTIALS, test, types::WalletRecord};
 
