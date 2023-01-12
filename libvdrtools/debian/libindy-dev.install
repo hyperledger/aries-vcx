@@ -1,2 +1,0 @@
-include/*.h usr/include/vdrtools/
-target/release/vdrtools.a usr/lib/

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-VERSION=$(cat /etc/os-release | grep UBUNTU_CODENAME | sed "s/UBUNTU_CODENAME=\(.*\)/\1/")
-RELEASE=%RELEASE%
