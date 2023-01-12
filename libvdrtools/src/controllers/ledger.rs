@@ -5,9 +5,6 @@ use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
 use serde_json::{self, Value};
 
-#[cfg(feature = "ffi_api")]
-use crate::api::ledger::{CustomFree, CustomTransactionParser};
-
 use crate::{
     domain::{
         anoncreds::{
@@ -58,25 +55,6 @@ impl LedgerController {
             wallet_service,
             ledger_service,
         }
-    }
-
-    #[cfg(feature = "ffi_api")]
-    #[allow(dead_code)] // FIXME [async] TODO implement external SP parsers
-    pub(crate) fn register_sp_parser(
-        &self,
-        txn_type: String,
-        parser: CustomTransactionParser,
-        free: CustomFree,
-    ) -> IndyResult<()> {
-        debug!(
-            "register_sp_parser > txn_type {:?} parser {:?} free {:?}",
-            txn_type, parser, free
-        );
-
-        unimplemented!();
-        // FIXME: !!!
-        // PoolService::register_sp_parser(txn_type, parser, free)
-        //     .map_err(IndyError::from)
     }
 
     /// Signs and submits request message to validator pool.

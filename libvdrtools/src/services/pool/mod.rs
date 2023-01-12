@@ -222,11 +222,6 @@ impl PoolService {
         res
     }
 
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn is_pool_opened(&self, handle: PoolHandle) -> bool {
-        self.open_pools.lock().await.contains_key(&handle)
-    }
-
     //#[logfn(trace)] FIXME:
     pub(crate) async fn open_ack(pool_hanlde: PoolHandle, result: IndyResult<String>) {
         let sender: futures::channel::oneshot::Sender<IndyResult<(PoolHandle, String)>> =

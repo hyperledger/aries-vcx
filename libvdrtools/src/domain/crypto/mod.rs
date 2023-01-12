@@ -1,4 +1,3 @@
-pub mod combo_box;
 pub mod did;
 pub mod key;
 pub mod pack;
@@ -10,8 +9,3 @@ pub enum CryptoTypes {
     #[serde(rename = "secp256k1")]
     Secp256k1,
 }
-
-#[cfg(feature = "ffi_api")]
-pub const ED25519: &str = "ed25519";
-#[cfg(feature = "ffi_api")]
-pub const SECP256K1: &str = "secp256k1";

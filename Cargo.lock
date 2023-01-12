@@ -1490,7 +1490,6 @@ dependencies = [
  "futures-core",
  "futures-task",
  "futures-util",
- "num_cpus",
 ]
 
 [[package]]
@@ -2266,7 +2265,6 @@ dependencies = [
  "convert_case 0.3.2",
  "criterion",
  "dirs",
- "env_logger 0.9.3",
  "etcommon-rlp",
  "failure",
  "futures",
@@ -2281,7 +2279,6 @@ dependencies = [
  "log-panics",
  "num-derive",
  "num-traits",
- "num_cpus",
  "rand 0.8.5",
  "regex",
  "rmp-serde",

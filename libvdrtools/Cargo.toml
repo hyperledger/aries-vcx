@@ -21,7 +21,6 @@ force_full_interaction_tests = []
 sodium_static = []
 only_high_cases = []
 mysql_storage = []
-ffi_api = [ "env_logger", "num_cpus", "futures/thread-pool" ]
 
 # Causes the build to fail on all warnings
 fatal_warnings = []
@@ -30,14 +29,12 @@ fatal_warnings = []
 async-std = "1.8.0"
 async-trait = "0.1.42"
 cfg-if = "1.0.0"
-env_logger = { version = "0.9", optional = true }
 etcommon-rlp = "0.2.4"
 failure = { version = "0.1.8", features = ["backtrace"] }
 hex = "0.4.0"
 libc = "0.2.114"
 log = "0.4.8"
 log-derive = "0.3.0"
-num_cpus = { version = "1.8.0", optional = true }
 rand = "0.8.4"
 bs58 = { version = "0.4.0", optional = true }
 serde = "1.0.99"
