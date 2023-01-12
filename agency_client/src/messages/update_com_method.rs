@@ -64,6 +64,7 @@ impl UpdateComMethod {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

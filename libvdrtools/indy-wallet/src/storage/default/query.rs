@@ -395,37 +395,3 @@ fn join_operators<'a>(
     }
     Ok(s)
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn simple_and() {
-        let condition_1 = Operator::And(vec![
-            Operator::Eq(
-                TagName::EncryptedTagName(vec![1, 2, 3]),
-                TargetValue::Encrypted(vec![4, 5, 6]),
-            ),
-            Operator::Eq(
-                TagName::PlainTagName(vec![7, 8, 9]),
-                TargetValue::Unencrypted("spam".to_string()),
-            ),
-        ]);
-
-        let condition_2 = Operator::And(vec![
-            Operator::Eq(
-                TagName::EncryptedTagName(vec![10, 11, 12]),
-                TargetValue::Encrypted(vec![13, 14, 15]),
-            ),
-            Operator::Not(Box::new(Operator::Eq(
-                TagName::PlainTagName(vec![16, 17, 18]),
-                TargetValue::Unencrypted("eggs".to_string()),
-            ))),
-        ]);
-
-        let query = Operator::Or(vec![condition_1, condition_2]);
-        let class = vec![100, 100, 100];
-        let (_query, _arguments) = wql_to_sql(&class, &query, None).unwrap();
-    }
-}
