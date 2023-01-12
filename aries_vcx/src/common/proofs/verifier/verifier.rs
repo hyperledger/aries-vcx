@@ -192,14 +192,13 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
-            // TODO: should return a new AriesVcxErrorKind err instead of AriesVcxErrorKind::VdrToolsError
             assert_eq!(
                 validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
                     .await
                     .unwrap_err()
                     .kind(),
                 AriesVcxErrorKind::ProofRejected
-            ); // AnoncredsProofRejected
+            );
 
             let mut proof_req_json: serde_json::Value = serde_json::from_str(&proof_req_json).unwrap();
             proof_req_json["requested_attributes"]["attribute_0"]["restrictions"] = json!({});
