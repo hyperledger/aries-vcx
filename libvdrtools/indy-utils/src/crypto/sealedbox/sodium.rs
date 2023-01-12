@@ -13,7 +13,7 @@ pub fn decrypt(
     sk: &ed25519_box::SecretKey,
     doc: &[u8],
 ) -> Result<Vec<u8>, IndyError> {
-    sealedbox::open(&doc, &pk.0, &sk.0).map_err(|_| {
+    sealedbox::open(doc, &pk.0, &sk.0).map_err(|_| {
         IndyError::from_msg(
             IndyErrorKind::InvalidStructure,
             "Unable to open sodium sealedbox",

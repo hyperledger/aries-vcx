@@ -33,6 +33,6 @@ impl WalletIterator {
     }
 
     pub fn get_total_count(&self) -> Result<Option<usize>, IndyError> {
-        Ok(self.storage_iterator.get_total_count()?)
+        self.storage_iterator.get_total_count()
     }
 }

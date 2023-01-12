@@ -90,7 +90,7 @@ pub fn encrypt(data: &[u8], key: &Key, nonce: &Nonce) -> Vec<u8> {
 }
 
 pub fn decrypt(data: &[u8], key: &Key, nonce: &Nonce) -> Result<Vec<u8>, IndyError> {
-    chacha20poly1305_ietf::open(&data, None, &nonce.0, &key.0).map_err(|_| {
+    chacha20poly1305_ietf::open(data, None, &nonce.0, &key.0).map_err(|_| {
         IndyError::from_msg(
             IndyErrorKind::InvalidStructure,
             "Unable to open sodium chacha20poly1305_ietf",

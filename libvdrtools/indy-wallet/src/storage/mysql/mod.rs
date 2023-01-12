@@ -344,7 +344,7 @@ impl WalletStorage for MySqlStorage {
             return Ok(());
         }
 
-        let tag_paths = _tags_to_plain(&tags)
+        let tag_paths = _tags_to_plain(tags)
             .into_iter()
             .map(|(tag, val)| format!(r#"'$."{}"', "{}""#, tag, val))
             .collect::<Vec<_>>()
@@ -429,7 +429,7 @@ impl WalletStorage for MySqlStorage {
 
         let mut tx = self.write_pool.begin().await?;
 
-        let tag_name_paths = _tag_names_to_plain(&tag_names)
+        let tag_name_paths = _tag_names_to_plain(tag_names)
             .into_iter()
             .map(|tag_name| format!(r#"'$."{}"'"#, tag_name))
             .collect::<Vec<_>>()
@@ -2072,10 +2072,10 @@ fn _tags_to_plain(tags: &[Tag]) -> HashMap<String, String> {
     for tag in tags {
         match *tag {
             Tag::Encrypted(ref name, ref value) => {
-                map.insert(base64::encode(&name), base64::encode(&value))
+                map.insert(base64::encode(name), base64::encode(value))
             }
             Tag::PlainText(ref name, ref value) => {
-                map.insert(format!("~{}", &base64::encode(&name)), value.to_string())
+                map.insert(format!("~{}", &base64::encode(name)), value.to_string())
             }
         };
     }

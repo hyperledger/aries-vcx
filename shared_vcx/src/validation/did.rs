@@ -33,7 +33,7 @@ pub fn validate_did(did: &str) -> SharedVcxResult<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     #[test]
     #[cfg(feature = "general_test")]

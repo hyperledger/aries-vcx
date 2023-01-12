@@ -187,8 +187,8 @@ impl WalletService {
         storage_type
             .create_storage(
                 &config.id,
-                storage_config.as_ref().map(String::as_str),
-                storage_credentials.as_ref().map(String::as_str),
+                storage_config.as_deref(),
+                storage_credentials.as_deref(),
                 &metadata,
             )
             .await?;
@@ -225,7 +225,7 @@ impl WalletService {
         // check credentials and close connection before deleting wallet
 
         let (_, metadata, key_derivation_data) = self
-            ._open_storage_and_fetch_metadata(config, &credentials)
+            ._open_storage_and_fetch_metadata(config, credentials)
             .await?;
 
         Ok((metadata, key_derivation_data))
@@ -245,7 +245,7 @@ impl WalletService {
         );
 
         {
-            self._restore_keys(metadata, &master_key)?;
+            self._restore_keys(metadata, master_key)?;
         }
 
         let (storage_type, storage_config, storage_credentials) =
@@ -254,8 +254,8 @@ impl WalletService {
         storage_type
             .delete_storage(
                 &config.id,
-                storage_config.as_ref().map(String::as_str),
-                storage_credentials.as_ref().map(String::as_str),
+                storage_config.as_deref(),
+                storage_credentials.as_deref(),
             )
             .await?;
 
@@ -282,7 +282,7 @@ impl WalletService {
 
         let wallet_handle = indy_utils::next_wallet_handle();
 
-        let rekey_data: Option<KeyDerivationData> = credentials.rekey.as_ref().map(|ref rekey| {
+        let rekey_data: Option<KeyDerivationData> = credentials.rekey.as_ref().map(|rekey| {
             KeyDerivationData::from_passphrase_with_new_salt(
                 rekey,
                 &credentials.rekey_derivation_method,
@@ -316,7 +316,7 @@ impl WalletService {
             .ok_or_else(|| err_msg(IndyErrorKind::InvalidState, "Open data not found"))?;
 
         let (master_key, rekey) = master_key;
-        let keys = self._restore_keys(&metadata, &master_key)?;
+        let keys = self._restore_keys(&metadata, master_key)?;
 
         // Rotate master key
         if let (Some(rekey), Some(rekey_data)) = (rekey, rekey_data) {
@@ -863,7 +863,7 @@ impl WalletService {
 
         let res = {
             let wallet = Wallet::new(
-                WalletService::_get_wallet_id(&config),
+                WalletService::_get_wallet_id(config),
                 storage,
                 Arc::new(keys),
                 WalletCache::new(None),
@@ -913,9 +913,7 @@ impl WalletService {
     ) -> IndyResult<(Arc<dyn WalletStorageType>, Option<String>, Option<String>)> {
         let storage_type = {
             let storage_type = config
-                .storage_type
-                .as_ref()
-                .map(String::as_str)
+                .storage_type.as_deref()
                 .unwrap_or("default");
 
             self.storage_types
@@ -977,8 +975,8 @@ impl WalletService {
         let storage = storage_type
             .open_storage(
                 &config.id,
-                storage_config.as_ref().map(String::as_str),
-                storage_credentials.as_ref().map(String::as_str),
+                storage_config.as_deref(),
+                storage_credentials.as_deref(),
             )
             .await?;
 
@@ -1016,7 +1014,7 @@ impl WalletService {
     fn _restore_keys(&self, metadata: &Metadata, master_key: &MasterKey) -> IndyResult<Keys> {
         let metadata_keys = metadata.get_keys();
 
-        let res = Keys::deserialize_encrypted(&metadata_keys, master_key).map_err(|err| {
+        let res = Keys::deserialize_encrypted(metadata_keys, master_key).map_err(|err| {
             err.map(
                 IndyErrorKind::WalletAccessFailed,
                 "Invalid master key provided",
@@ -1115,11 +1113,11 @@ impl WalletRecord {
 
     #[allow(dead_code)]
     pub fn get_type(&self) -> Option<&str> {
-        self.type_.as_ref().map(String::as_str)
+        self.type_.as_deref()
     }
 
     pub fn get_value(&self) -> Option<&str> {
-        self.value.as_ref().map(String::as_str)
+        self.value.as_deref()
     }
 
     #[allow(dead_code)]
@@ -1136,7 +1134,7 @@ fn default_false() -> bool {
     false
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct RecordOptions {
     #[serde(default = "default_false")]
@@ -1203,7 +1201,7 @@ impl WalletSearch {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchOptions {
     #[serde(default = "default_true")]
@@ -1246,7 +1244,7 @@ impl Default for SearchOptions {
 
 fn short_type_name<T>() -> &'static str {
     let type_name = std::any::type_name::<T>();
-    type_name.rsplitn(2, "::").next().unwrap_or(type_name)
+    type_name.rsplit("::").next().unwrap_or(type_name)
 }
 
 #[cfg(test)]

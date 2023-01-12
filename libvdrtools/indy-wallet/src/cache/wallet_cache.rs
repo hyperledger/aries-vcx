@@ -322,7 +322,7 @@ impl WalletCacheHitMetrics {
 
     #[allow(dead_code)]
     pub async fn get_data_for_type(&self, type_: &str) -> Option<WalletCacheHitData> {
-        self.data.read().unwrap().get(type_).map(|x| x.clone())
+        self.data.read().unwrap().get(type_).cloned()
     }
 
     pub fn get_data(&self) -> HashMap<String, WalletCacheHitData> {

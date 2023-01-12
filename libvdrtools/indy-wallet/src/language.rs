@@ -3,7 +3,7 @@ use std::string;
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::base64;
 
-#[derive(Debug, PartialEq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum TagName {
     EncryptedTagName(Vec<u8>),
     PlainTagName(Vec<u8>),

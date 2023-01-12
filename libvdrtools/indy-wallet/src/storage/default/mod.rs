@@ -567,7 +567,7 @@ impl WalletStorage for SQLiteStorage {
 
             let mut records = query.fetch_all(&mut conn).await?;
 
-            let mut mtags = if options.retrieve_tags && records.len() > 0 {
+            let mut mtags = if options.retrieve_tags && !records.is_empty() {
                 let mut tags: Vec<(i64, Tag)> = Vec::new();
 
                 let in_binings = std::iter::repeat("?")
@@ -662,7 +662,7 @@ impl WalletStorage for SQLiteStorage {
         };
 
         let total_count = if options.retrieve_total_count {
-            let (query, args) = query::wql_to_sql_count(&type_, query)?;
+            let (query, args) = query::wql_to_sql_count(type_, query)?;
 
             let mut query = sqlx::query_as::<sqlx::Sqlite, (i64,)>(&query);
 

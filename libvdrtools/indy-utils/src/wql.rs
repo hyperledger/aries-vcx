@@ -38,7 +38,7 @@ impl<'de> Deserialize<'de> for Query {
 
         match v {
             serde_json::Value::Object(map) => {
-                parse_query(map).map_err(|err| de::Error::missing_field(err))
+                parse_query(map).map_err(de::Error::missing_field)
             }
             serde_json::Value::Array(array) => {
                 // cast old restrictions format to wql
@@ -60,7 +60,7 @@ impl<'de> Deserialize<'de> for Query {
                 let mut map = serde_json::Map::new();
                 map.insert("$or".to_string(), serde_json::Value::Array(res));
 
-                parse_query(map).map_err(|err| de::Error::custom(err))
+                parse_query(map).map_err(de::Error::custom)
             }
             _ => Err(de::Error::missing_field(
                 "Restriction must be either object or array",
@@ -79,7 +79,7 @@ impl Query {
                     Some(Query::Not(boxed_operator))
                 }
             }
-            Query::And(suboperators) if suboperators.len() == 0 => None,
+            Query::And(suboperators) if suboperators.is_empty() => None,
             Query::And(mut suboperators) if suboperators.len() == 1 => {
                 suboperators.remove(0).optimise()
             }
@@ -95,7 +95,7 @@ impl Query {
                     _ => Some(Query::And(suboperators)),
                 }
             }
-            Query::Or(suboperators) if suboperators.len() == 0 => None,
+            Query::Or(suboperators) if suboperators.is_empty() => None,
             Query::Or(mut suboperators) if suboperators.len() == 1 => {
                 suboperators.remove(0).optimise()
             }
@@ -205,7 +205,7 @@ fn parse_operator(key: String, value: serde_json::Value) -> Result<Option<Query>
         (_, serde_json::Value::Object(map)) => {
             if map.len() == 1 {
                 let (operator_name, value) = map.into_iter().next().unwrap();
-                parse_single_operator(operator_name, key, value).map(|operator| Some(operator))
+                parse_single_operator(operator_name, key, value).map(Some)
             } else {
                 Err("value must be JSON object of length 1")
             }
@@ -2673,7 +2673,7 @@ mod tests {
 
     #[test]
     fn test_old_format_empty() {
-        let json = format!(r#"[]"#);
+        let json = r#"[]"#.to_string();
 
         let query: Query = ::serde_json::from_str(&json).unwrap();
 
@@ -2689,8 +2689,8 @@ mod tests {
         let value1 = _random_string(10);
 
         let json = json!(vec![
-            json ! ({name1.clone(): value1.clone()}),
-            json!({ name2.clone(): serde_json::Value::Null })
+            json ! ({name1.clone(): value1}),
+            json!({ name2: serde_json::Value::Null })
         ])
         .to_string();
 
@@ -2714,7 +2714,7 @@ mod tests {
     fn test_optimise_or() {
         let json = r#"[]"#;
 
-        let query: Query = ::serde_json::from_str(&json).unwrap();
+        let query: Query = ::serde_json::from_str(json).unwrap();
 
         assert_eq!(query.optimise(), None);
     }

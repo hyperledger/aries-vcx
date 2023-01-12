@@ -242,7 +242,7 @@ fn in_to_sql(
     let mut in_string = format!("JSON_UNQUOTE(JSON_EXTRACT(tags, {})) IN (", tag_path);
 
     for (index, tag_value) in tag_values.iter().enumerate() {
-        in_string.push_str("?");
+        in_string.push('?');
         if index < tag_values.len() - 1 {
             in_string.push(',');
         } else {

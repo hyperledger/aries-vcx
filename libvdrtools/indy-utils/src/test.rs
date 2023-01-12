@@ -53,13 +53,13 @@ pub fn test_pool_create_poolfile(pool_name: &str) -> File {
 }
 
 pub fn check_pool_exists(name: &str) -> bool {
-    let mut path = environment::pool_home_path().clone();
+    let mut path = environment::pool_home_path();
     path.push(name);
     path.exists()
 }
 
 pub fn check_cheqd_pool_exists(name: &str) -> bool {
-    let mut path = environment::cheqd_pool_home_path().clone();
+    let mut path = environment::cheqd_pool_home_path();
     path.push(name);
     path.exists()
 }

@@ -78,10 +78,10 @@ impl KeyDerivationData {
         match self {
             KeyDerivationData::Raw(passphrase) => _raw_master_key(passphrase),
             KeyDerivationData::Argon2iInt(passphrase, salt) => {
-                _derive_master_key(passphrase, &salt, &KeyDerivationMethod::ARGON2I_INT)
+                _derive_master_key(passphrase, salt, &KeyDerivationMethod::ARGON2I_INT)
             }
             KeyDerivationData::Argon2iMod(passphrase, salt) => {
-                _derive_master_key(passphrase, &salt, &KeyDerivationMethod::ARGON2I_MOD)
+                _derive_master_key(passphrase, salt, &KeyDerivationMethod::ARGON2I_MOD)
             }
         }
     }
@@ -210,7 +210,7 @@ pub(super) fn decrypt_tags(
             for etag in etags {
                 let (name, value) = match *etag {
                     Tag::PlainText(ref ename, ref value) => {
-                        let name = match decrypt_merged(&ename, tag_name_key) {
+                        let name = match decrypt_merged(ename, tag_name_key) {
                             Err(err) => {
                                 return Err(err.to_indy(
                                     IndyErrorKind::WalletEncryptionError,
@@ -228,12 +228,12 @@ pub(super) fn decrypt_tags(
                         (name, value.clone())
                     }
                     Tag::Encrypted(ref ename, ref evalue) => {
-                        let name = String::from_utf8(decrypt_merged(&ename, tag_name_key)?)
+                        let name = String::from_utf8(decrypt_merged(ename, tag_name_key)?)
                             .to_indy(
                                 IndyErrorKind::WalletEncryptionError,
                                 "Tag name is invalid utf8",
                             )?;
-                        let value = String::from_utf8(decrypt_merged(&evalue, tag_value_key)?)
+                        let value = String::from_utf8(decrypt_merged(evalue, tag_value_key)?)
                             .to_indy(
                                 IndyErrorKind::WalletEncryptionError,
                                 "Tag value is invalid utf8",

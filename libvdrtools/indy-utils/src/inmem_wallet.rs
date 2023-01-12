@@ -109,7 +109,7 @@ impl InmemWallet {
             return ErrorCode::CommonInvalidState;
         }
         wallets.insert(
-            id.clone(),
+            id,
             InmemWalletEntity {
                 metadata: CString::new(metadata).unwrap(),
                 records: HashMap::new(),
@@ -783,7 +783,7 @@ impl InmemWallet {
                     let handle = sequence::get_next_id();
 
                     let mut handles = ACTIVE_RECORDS.lock().unwrap();
-                    handles.insert(handle, record.clone());
+                    handles.insert(handle, record);
 
                     unsafe { *record_handle = handle };
                 }

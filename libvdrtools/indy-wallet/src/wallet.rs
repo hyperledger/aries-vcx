@@ -69,7 +69,7 @@ impl Keys {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EncryptedValue {
     pub data: Vec<u8>,
     pub key: Vec<u8>,

@@ -315,7 +315,7 @@ fn in_to_sql<'a>(
 
             for (index, value) in values.iter().enumerate() {
                 if let TargetValue::Unencrypted(ref target) = *value {
-                    in_string.push_str("?");
+                    in_string.push('?');
                     arguments.push(target.into());
                     if index < values.len() - 1 {
                         in_string.push(',');
@@ -339,7 +339,7 @@ fn in_to_sql<'a>(
 
             for (index, value) in values.iter().enumerate() {
                 if let TargetValue::Encrypted(ref target) = *value {
-                    in_string.push_str("?");
+                    in_string.push('?');
                     arguments.push(target.into());
                     if index <= index_before_last {
                         in_string.push(',');
