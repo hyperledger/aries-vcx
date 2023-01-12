@@ -1,6 +1,5 @@
 //
 //  VcxCallbacks.m
-//  libindy
 //
 
 #import "VcxCallbacks.h"
@@ -159,6 +158,5 @@ static NSString *commandCallbackKey = @"commandCallback";
 
 @end
 
-// MARK: - static indy C-callbacks
 
 

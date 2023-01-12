@@ -48,7 +48,7 @@ impl ServiceMediatedConnections {
 
     pub async fn create_invitation(&self) -> AgentResult<Invitation> {
         let mut connection = MediatedConnection::create("", &self.profile, &self.agency_client()?, true).await?;
-        connection.connect(&self.profile, &self.agency_client()?).await?;
+        connection.connect(&self.profile, &self.agency_client()?, None).await?;
         let invite = connection
             .get_invite_details()
             .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
@@ -69,7 +69,7 @@ impl ServiceMediatedConnections {
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
         let mut connection = self.mediated_connections.get(thread_id)?;
-        connection.connect(&self.profile, &self.agency_client()?).await?;
+        connection.connect(&self.profile, &self.agency_client()?, None).await?;
         connection
             .find_message_and_update_state(&self.profile, &self.agency_client()?)
             .await?;

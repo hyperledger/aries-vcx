@@ -93,6 +93,8 @@ pub enum LibvcxErrorKind {
     InvalidProofCredentialData,
     #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
+    #[error("The proof was rejected")]
+    ProofRejected,
 
     // Schema
     #[error("Could not create schema")]
@@ -105,10 +107,6 @@ pub enum LibvcxErrorKind {
     DuplicationSchema,
     #[error("Unknown Rejection of Schema Creation, refer to libindy documentation")]
     UnknownSchemaRejection,
-
-    // Public agent
-    #[error("Could not create public agent")]
-    CreatePublicAgent,
 
     // Out of Band
     #[error("Could not create out of band message.")]
@@ -127,6 +125,8 @@ pub enum LibvcxErrorKind {
     NoPoolOpen,
     #[error("Message failed in post")]
     PostMessageFailed,
+    #[error("Ledger item not found.")]
+    LedgerItemNotFound,
 
     // Wallet
     #[error("Error Creating a wallet")]
@@ -182,8 +182,6 @@ pub enum LibvcxErrorKind {
     #[error("Error Retrieving messages from API")]
     InvalidMessages,
 
-    #[error("Common error {}", 0)]
-    Common(u32),
     #[error("Libndy error {}", 0)]
     LibndyError(u32),
     #[error("Unknown libindy error")]
@@ -196,6 +194,8 @@ pub enum LibvcxErrorKind {
 
     #[error("Attempted to unlock poisoned lock")]
     PoisonedLock,
+    #[error("Error accessing an object")]
+    ObjectAccessError,
 }
 
 #[derive(Debug, thiserror::Error)]

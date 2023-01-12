@@ -15,7 +15,6 @@ lazy_static! {
 
 pub async fn create(source_id: String, schema_id: String, tag: String, support_revocation: bool) -> LibvcxResult<u32> {
     let issuer_did = get_config_value(CONFIG_INSTITUTION_DID)?;
-
     let config = CredentialDefConfigBuilder::default()
         .issuer_did(issuer_did)
         .schema_id(schema_id)
@@ -118,6 +117,25 @@ pub mod tests {
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_vcx_credentialdef_release() {
+        let _setup = SetupMocks::init();
+        let schema_handle = schema::tests::create_schema_real().await;
+        sleep(Duration::from_secs(1));
+
+        let schema_id = schema::get_schema_id(schema_handle).unwrap();
+        let issuer_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
+        let cred_def_handle = create("1".to_string(), schema_id, "tag_1".to_string(), false)
+            .await
+            .unwrap();
+        release(cred_def_handle).unwrap();
+        assert_eq!(
+            to_string(cred_def_handle).unwrap_err().kind,
+            LibvcxErrorKind::InvalidHandle
+        )
+    }
 
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
         let schema_handle = schema::tests::create_schema_real().await;
@@ -239,8 +257,10 @@ pub mod tests {
         let h2 = create("SourceId".to_string(), SCHEMA_ID.to_string(), "tag".to_string(), false)
             .await
             .unwrap();
+
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidCredDefHandle);
+
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
     }
 }

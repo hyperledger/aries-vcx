@@ -6,6 +6,8 @@ impl From<LibvcxError> for u32 {
     }
 }
 
+static UNKNOWN_ERROR_CODE: u32 = 1001;
+
 lazy_static! {
     static ref ERROR_KINDS: Vec<(LibvcxErrorKind, u32)> = vec![
         (LibvcxErrorKind::InvalidState, 1081),
@@ -60,7 +62,7 @@ lazy_static! {
         (LibvcxErrorKind::PostMessageFailed, 1010),
         (LibvcxErrorKind::LoggingError, 1090),
         (LibvcxErrorKind::EncodeError, 1022),
-        (LibvcxErrorKind::UnknownError, 1001),
+        (LibvcxErrorKind::UnknownError, UNKNOWN_ERROR_CODE),
         (LibvcxErrorKind::InvalidDid, 1008),
         (LibvcxErrorKind::InvalidVerkey, 1009),
         (LibvcxErrorKind::InvalidNonce, 1011),
@@ -76,12 +78,13 @@ lazy_static! {
         (LibvcxErrorKind::RevDeltaNotFound, 1108),
         (LibvcxErrorKind::RevDeltaFailedToClear, 1114),
         (LibvcxErrorKind::PoisonedLock, 1109),
+        (LibvcxErrorKind::ObjectAccessError, 1110),
         (LibvcxErrorKind::InvalidMessageFormat, 1111),
-        (LibvcxErrorKind::CreatePublicAgent, 1110),
         (LibvcxErrorKind::CreateOutOfBand, 1112),
         (LibvcxErrorKind::InvalidInput, 1115),
         (LibvcxErrorKind::ParsingError, 1116),
-        (LibvcxErrorKind::UnimplementedFeature, 1117)
+        (LibvcxErrorKind::UnimplementedFeature, 1117),
+        (LibvcxErrorKind::LedgerItemNotFound, 1118)
     ];
 }
 
@@ -91,11 +94,10 @@ lazy_static! {
 impl From<LibvcxErrorKind> for u32 {
     fn from(kind: LibvcxErrorKind) -> u32 {
         match kind {
-            LibvcxErrorKind::Common(code) => code,
             LibvcxErrorKind::LibndyError(code) => code,
-            _ => match ERROR_KINDS.iter().find(|(k, _)| *k == kind) {
-                Some((_, num)) => *num,
-                None => 1001,
+            _ => match ERROR_KINDS.iter().find(|(mapping_kind, _)| *mapping_kind == kind) {
+                Some((_, mapping_code)) => *mapping_code,
+                None => UNKNOWN_ERROR_CODE,
             },
         }
     }
@@ -181,19 +183,19 @@ mod tests {
         assert_eq!(u32::from(LibvcxErrorKind::InvalidMessages), 1020);
         assert_eq!(u32::from(LibvcxErrorKind::UnknownLibndyError), 1035);
         assert_eq!(u32::from(LibvcxErrorKind::ActionNotSupported), 1103);
-        assert_eq!(u32::from(LibvcxErrorKind::Common(11111)), 11111);
         assert_eq!(u32::from(LibvcxErrorKind::LibndyError(22222)), 22222);
         assert_eq!(u32::from(LibvcxErrorKind::NoAgentInformation), 1106);
         assert_eq!(u32::from(LibvcxErrorKind::RevRegDefNotFound), 1107);
         assert_eq!(u32::from(LibvcxErrorKind::RevDeltaNotFound), 1108);
         assert_eq!(u32::from(LibvcxErrorKind::RevDeltaFailedToClear), 1114);
         assert_eq!(u32::from(LibvcxErrorKind::PoisonedLock), 1109);
+        assert_eq!(u32::from(LibvcxErrorKind::ObjectAccessError), 1110);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidMessageFormat), 1111);
-        assert_eq!(u32::from(LibvcxErrorKind::CreatePublicAgent), 1110);
         assert_eq!(u32::from(LibvcxErrorKind::CreateOutOfBand), 1112);
         assert_eq!(u32::from(LibvcxErrorKind::InvalidInput), 1115);
         assert_eq!(u32::from(LibvcxErrorKind::ParsingError), 1116);
         assert_eq!(u32::from(LibvcxErrorKind::UnimplementedFeature), 1117);
+        assert_eq!(u32::from(LibvcxErrorKind::LedgerItemNotFound), 1118);
     }
 
     #[test]
@@ -273,12 +275,13 @@ mod tests {
         assert_eq!(LibvcxErrorKind::from(1108), LibvcxErrorKind::RevDeltaNotFound);
         assert_eq!(LibvcxErrorKind::from(1114), LibvcxErrorKind::RevDeltaFailedToClear);
         assert_eq!(LibvcxErrorKind::from(1109), LibvcxErrorKind::PoisonedLock);
+        assert_eq!(LibvcxErrorKind::from(1110), LibvcxErrorKind::ObjectAccessError);
         assert_eq!(LibvcxErrorKind::from(1111), LibvcxErrorKind::InvalidMessageFormat);
-        assert_eq!(LibvcxErrorKind::from(1110), LibvcxErrorKind::CreatePublicAgent);
         assert_eq!(LibvcxErrorKind::from(1112), LibvcxErrorKind::CreateOutOfBand);
         assert_eq!(LibvcxErrorKind::from(1115), LibvcxErrorKind::InvalidInput);
         assert_eq!(LibvcxErrorKind::from(1116), LibvcxErrorKind::ParsingError);
         assert_eq!(LibvcxErrorKind::from(1117), LibvcxErrorKind::UnimplementedFeature);
+        assert_eq!(LibvcxErrorKind::from(1118), LibvcxErrorKind::LedgerItemNotFound);
         assert_eq!(LibvcxErrorKind::from(9999), LibvcxErrorKind::UnknownError);
     }
 }

@@ -32,7 +32,7 @@ impl CStringUtils {
         }
     }
     pub fn string_to_cstring(s: String) -> CString {
-        CString::new(s).unwrap()
+        CString::new(s).expect("Unexpected error converting to CString")
     }
 }
 

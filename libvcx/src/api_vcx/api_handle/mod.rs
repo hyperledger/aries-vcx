@@ -1,4 +1,4 @@
-pub mod agent;
+pub mod connection;
 pub mod credential;
 pub mod credential_def;
 pub mod disclosed_proof;

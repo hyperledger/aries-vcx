@@ -406,7 +406,8 @@ pub extern "C" fn vcx_schema_get_attributes(
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
         match schema::get_schema_attrs(source_id, schema_id).await {
             Ok((handle, data)) => {
-                let data: serde_json::Value = serde_json::from_str(&data).unwrap();
+                let data: serde_json::Value = serde_json::from_str(&data)
+                    .unwrap_or_else(|_| panic!("unexpected error deserializing data: {}", data));
                 let data = data["data"].clone();
                 trace!(
                     "vcx_schema_get_attributes_cb(command_handle: {}, rc: {}, handle: {}, attrs: {})",
@@ -676,21 +677,6 @@ mod tests {
         let schema_data_as_string = schema_data_as_string.unwrap();
         let schema_as_json: serde_json::Value = serde_json::from_str(&schema_data_as_string).unwrap();
         assert_eq!(schema_as_json["data"].to_string(), data);
-    }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_vcx_schema_release() {
-        let _setup = SetupMocks::init();
-
-        let (_, schema_name, schema_version, data) = prepare_schema_data();
-        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-
-        let unknown_handle = handle + 1;
-        assert_eq!(
-            vcx_schema_release(unknown_handle),
-            u32::from(LibvcxErrorKind::InvalidSchemaHandle)
-        );
     }
 
     #[test]

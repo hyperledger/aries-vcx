@@ -7,7 +7,6 @@ use crate::global::settings;
 use crate::indy::anoncreds::close_search_handle;
 use crate::utils;
 use crate::utils::constants::{ATTRS, PROOF_REQUESTED_PREDICATES, REQUESTED_ATTRIBUTES};
-use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
 use crate::utils::parse_and_validate;
 
 pub async fn libindy_prover_create_proof(
@@ -87,11 +86,15 @@ pub async fn libindy_prover_get_credentials_for_proof_req(
         proof_req
     );
 
-    match get_mock_creds_retrieved_for_proof_request() {
-        None => {}
-        Some(mocked_creds) => {
-            warn!("get_mock_creds_retrieved_for_proof_request  returning mocked response");
-            return Ok(mocked_creds);
+    #[cfg(feature = "test_utils")]
+    {
+        use crate::utils::mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request;
+        match get_mock_creds_retrieved_for_proof_request() {
+            None => {}
+            Some(mocked_creds) => {
+                warn!("get_mock_creds_retrieved_for_proof_request  returning mocked response");
+                return Ok(mocked_creds);
+            }
         }
     }
 

@@ -6,12 +6,10 @@ const { createServiceProver } = require('./services/service-prover')
 const { createServiceCredHolder } = require('./services/service-cred-holder')
 const { createServiceCredIssuer } = require('./services/service-cred-issuer')
 const { createServiceConnections } = require('./services/service-connections')
-const { createServicePublicAgents } = require('./services/service-public-agents')
 const { createServiceOutOfBand } = require('./services/service-out-of-band')
 const { createServiceLedgerRevocationRegistry } = require('./services/service-revocation-registry')
 const { provisionAgentInAgency } = require('./utils/vcx-workflows')
 const {
-  initThreadpool,
   createAgencyClientForMainWallet,
   initIssuerConfig,
   openMainWallet,
@@ -39,8 +37,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
   async function agentInitVcx () {
     logger.info(`Initializing ${agentName} vcx session.`)
     logger.silly(`Using following agent provision to initialize VCX settings ${JSON.stringify(agentProvision, null, 2)}`)
-    logger.silly('Initializing threadpool')
-    await initThreadpool({})
     logger.silly('Initializing issuer config')
     await initIssuerConfig(agentProvision.issuerConfig)
     logger.silly('Opening main wallet')
@@ -130,11 +126,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     loadProof: storageService.loadProof,
     listProofIds: storageService.listProofKeys
   })
-  const servicePublicAgents = createServicePublicAgents({
-    logger,
-    saveAgent: storageService.saveAgent,
-    loadAgent: storageService.loadAgent
-  })
   const serviceOutOfBand = createServiceOutOfBand({
     logger,
     saveConnection: storageService.saveConnection,
@@ -164,9 +155,6 @@ async function createVcxAgent ({ agentName, genesisPath, agencyUrl, seed, wallet
     // proofs
     serviceProver,
     serviceVerifier,
-
-    // agents
-    servicePublicAgents,
 
     // out of band
     serviceOutOfBand

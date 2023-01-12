@@ -38,7 +38,7 @@
     "test:integration": "npm run test:integration:issue-verify && npm run test:integration:signing && npm run test:integration:messaging && npm run test:integration:tails && npm run test:integration:trustping && npm run test:integration:feature-discovery && npm run test:integration:public-invite && npm run test:integration:out-of-band && npm run test:integration:nonmediation",
     "test:integration:issue-verify": "jest --forceExit --env=node --runInBand test/issue-verify.spec.js",
     "test:integration:signing": "jest --forceExit --env=node --runInBand test/sign-verify.spec.js",
-    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/sign-messaging.spec.js",
+    "test:integration:messaging": "jest --forceExit --env=node --runInBand test/messaging.spec.js",
     "test:integration:tails": "jest --forceExit --env=node --runInBand test/distribute-tails.spec.js",
     "test:integration:trustping": "jest --forceExit --env=node --runInBand test/trustping.spec.js",
     "test:integration:feature-discovery": "jest --forceExit --env=node --runInBand test/feature-discovery.spec.js",
@@ -69,6 +69,7 @@
     "winston": "^3.3.3"
   },
   "peerDependencies": {
-    "@hyperledger/node-vcx-wrapper": "^0.50.0"
+    "@hyperledger/node-vcx-wrapper": "^0.50.0-featurenapi-rs-separate-crate-4226",
+    "@hyperledger/vcx-napi-rs": "^0.50.0-featurenapi-rs-separate-crate-4226"
   }
 }

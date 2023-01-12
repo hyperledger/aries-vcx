@@ -15,7 +15,7 @@ use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
-use crate::api_vcx::api_handle::agent::PUBLIC_AGENT_MAP;
+use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -82,6 +82,16 @@ pub fn get_their_pw_verkey(handle: u32) -> LibvcxResult<String> {
     connection.remote_vk().map_err(|err| err.into())
 }
 
+pub async fn verify_signature(connection_handle: u32, data: &[u8], signature: &[u8]) -> LibvcxResult<bool> {
+    let vk = get_their_pw_verkey(connection_handle)?;
+    wallet_verify(&vk, data, signature).await
+}
+
+pub async fn sign_data(connection_handle: u32, data: &[u8]) -> LibvcxResult<Vec<u8>> {
+    let vk = get_pw_verkey(connection_handle)?;
+    wallet_sign(&vk, data).await
+}
+
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_thread_id()))
 }
@@ -108,7 +118,7 @@ pub async fn create_connection(source_id: &str) -> LibvcxResult<u32> {
     let connection = MediatedConnection::create(
         source_id,
         &get_main_profile_optional_pool(), // do not throw if pool is not open
-        &get_main_agency_client().unwrap(),
+        &get_main_agency_client()?,
         true,
     )
     .await?;
@@ -123,7 +133,7 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
         let connection = MediatedConnection::create_with_invite(
             source_id,
             &profile,
-            &get_main_agency_client().unwrap(),
+            &get_main_agency_client()?,
             invitation,
             ddo,
             true,
@@ -138,25 +148,6 @@ pub async fn create_connection_with_invite(source_id: &str, details: &str) -> Li
     }
 }
 
-pub async fn create_with_request(request: &str, agent_handle: u32) -> LibvcxResult<u32> {
-    let agent = PUBLIC_AGENT_MAP.get_cloned(agent_handle)?;
-    let request: Request = serde_json::from_str(request).map_err(|err| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::InvalidJson,
-            format!("Cannot deserialize connection request: {:?}", err),
-        )
-    })?;
-    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    let connection = MediatedConnection::create_with_request(
-        &profile,
-        request,
-        agent.pairwise_info(),
-        &get_main_agency_client().unwrap(),
-    )
-    .await?;
-    store_connection(connection)
-}
-
 pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> LibvcxResult<u32> {
     let request: Request = serde_json::from_str(request).map_err(|err| {
         LibvcxError::from_msg(
@@ -166,7 +157,7 @@ pub async fn create_with_request_v2(request: &str, pw_info: PairwiseInfo) -> Lib
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     let connection =
-        MediatedConnection::create_with_request(&profile, request, pw_info, &get_main_agency_client().unwrap()).await?;
+        MediatedConnection::create_with_request(&profile, request, pw_info, &get_main_agency_client()?).await?;
     store_connection(connection)
 }
 
@@ -201,7 +192,7 @@ pub async fn update_state_with_message(handle: u32, message: &str) -> LibvcxResu
     })?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
     connection
-        .update_state_with_message(&profile, get_main_agency_client().unwrap(), Some(message))
+        .update_state_with_message(&profile, get_main_agency_client()?, Some(message))
         .await?;
     let state: u32 = connection.get_state().into();
     CONNECTION_MAP.insert(handle, connection)?;
@@ -233,7 +224,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_and_handle_message(&profile, &get_main_agency_client().unwrap())
+            .find_and_handle_message(&profile, &get_main_agency_client()?)
             .await?
     } else {
         info!(
@@ -242,7 +233,7 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
         );
         let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
         connection
-            .find_message_and_update_state(&profile, &get_main_agency_client().unwrap())
+            .find_message_and_update_state(&profile, &get_main_agency_client()?)
             .await?
     };
     let state: u32 = connection.get_state().into();
@@ -252,14 +243,14 @@ pub async fn update_state(handle: u32) -> LibvcxResult<u32> {
 
 pub async fn delete_connection(handle: u32) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
-    connection.delete(&get_main_agency_client().unwrap()).await?;
+    connection.delete(&get_main_agency_client()?).await?;
     release(handle)
 }
 
 pub async fn connect(handle: u32) -> LibvcxResult<Option<String>> {
     let mut connection = CONNECTION_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
-    connection.connect(&profile, &get_main_agency_client().unwrap()).await?;
+    connection.connect(&profile, &get_main_agency_client()?, None).await?;
     let invitation = connection.get_invite_details().map(|invitation| match invitation {
         InvitationV3::Pairwise(invitation) => json!(invitation.to_a2a_message()).to_string(),
         InvitationV3::Public(invitation) => json!(invitation.to_a2a_message()).to_string(),
@@ -309,7 +300,7 @@ pub fn get_invite_details(handle: u32) -> LibvcxResult<String> {
 pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessage>> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_messages(&get_main_agency_client().unwrap())
+        .get_messages(&get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -317,7 +308,7 @@ pub async fn get_messages(handle: u32) -> LibvcxResult<HashMap<String, A2AMessag
 pub async fn update_message_status(handle: u32, uid: &str) -> LibvcxResult<()> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .update_message_status(uid, &get_main_agency_client().unwrap())
+        .update_message_status(uid, &get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -325,7 +316,7 @@ pub async fn update_message_status(handle: u32, uid: &str) -> LibvcxResult<()> {
 pub async fn get_message_by_id(handle: u32, msg_id: &str) -> LibvcxResult<A2AMessage> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_message_by_id(msg_id, &get_main_agency_client().unwrap())
+        .get_message_by_id(msg_id, &get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -364,7 +355,7 @@ pub async fn send_discovery_features(handle: u32, query: Option<&str>, comment: 
 pub async fn get_connection_info(handle: u32) -> LibvcxResult<String> {
     let connection = CONNECTION_MAP.get_cloned(handle)?;
     connection
-        .get_connection_info(&get_main_agency_client().unwrap())
+        .get_connection_info(&get_main_agency_client()?)
         .await
         .map_err(|err| err.into())
 }
@@ -431,7 +422,7 @@ pub async fn download_messages(
     }
     for connection in connections {
         let msgs = connection
-            .download_messages(&get_main_agency_client().unwrap(), status_codes.clone(), uids.clone())
+            .download_messages(&get_main_agency_client()?, status_codes.clone(), uids.clone())
             .await?;
         res.push(MessageByConnection {
             pairwise_did: connection.pairwise_info().pw_did.clone(),
@@ -448,21 +439,17 @@ pub mod tests {
 
     use aries_vcx;
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
     use aries_vcx::messages::protocols::connection::invite::test_utils::{
         _pairwise_invitation_json, _public_invitation_json,
     };
     use aries_vcx::utils::constants;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_connection::{
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
     };
 
-    use crate::api_vcx::api_global::settings::get_config_value;
-    use crate::api_vcx::api_handle::agent::create_public_agent;
     use crate::api_vcx::api_handle::mediated_connection;
     use crate::api_vcx::VcxStateType;
-    use crate::errors::error;
 
     use super::*;
 
@@ -476,6 +463,15 @@ pub mod tests {
 
     fn _source_id() -> &'static str {
         "test connection"
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_vcx_connection_release() {
+        let _setup = SetupMocks::init();
+        let handle = mediated_connection::create_connection(_source_id()).await.unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
     }
 
     #[tokio::test]
@@ -509,19 +505,6 @@ pub mod tests {
                 .unwrap();
         assert!(mediated_connection::is_valid_handle(connection_handle));
         assert_eq!(1, mediated_connection::get_state(connection_handle));
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_create_connection_with_request() {
-        let _setup = SetupMocks::init();
-        let institution_did = get_config_value(CONFIG_INSTITUTION_DID).unwrap();
-        let agent_handle = create_public_agent("test", &institution_did).await.unwrap();
-        let connection_handle = mediated_connection::create_with_request(ARIES_CONNECTION_REQUEST, agent_handle)
-            .await
-            .unwrap();
-        assert!(mediated_connection::is_valid_handle(connection_handle));
-        assert_eq!(2, mediated_connection::get_state(connection_handle));
     }
 
     #[tokio::test]
@@ -619,15 +602,6 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
-    async fn test_connection_release_fails() {
-        let _setup = SetupEmpty::init();
-
-        let rc = release(1);
-        assert_eq!(rc.unwrap_err().kind(), LibvcxErrorKind::InvalidConnectionHandle);
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
     async fn test_get_state_fails() {
         let _setup = SetupEmpty::init();
 
@@ -683,29 +657,10 @@ pub mod tests {
         let h1 = create_connection("rel1").await.unwrap();
         let h2 = create_connection("rel2").await.unwrap();
         let h3 = create_connection("rel3").await.unwrap();
-        let h4 = create_connection("rel4").await.unwrap();
-        let h5 = create_connection("rel5").await.unwrap();
         release_all();
-        assert_eq!(
-            release(h1).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h2).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h3).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h4).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
-        assert_eq!(
-            release(h5).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidConnectionHandle
-        );
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 
     #[tokio::test]

@@ -49,7 +49,60 @@ pub fn state_vcx_shutdown(delete: bool) {
         if let Ok(()) = futures::executor::block_on(pool::delete(&pool_name)) {}
     }
 
-    reset_config_values();
+    let _ = reset_config_values();
     reset_main_agency_client();
     reset_main_pool_handle();
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::api_c::vcx::vcx_shutdown;
+    use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
+    use crate::api_vcx::api_handle::credential::credential_create_with_offer;
+    use crate::api_vcx::api_handle::disclosed_proof::create_with_proof_request;
+    use crate::api_vcx::api_handle::schema::create_and_publish_schema;
+    use crate::api_vcx::api_handle::{
+        credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema,
+    };
+    use aries_vcx::utils::devsetup::SetupMocks;
+    use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+    use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
+    use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_shutdown() {
+        let _setup = SetupMocks::init();
+
+        let data = r#"["name","male"]"#;
+        let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
+        let credentialdef = credential_def::create("SID".to_string(), "id".to_string(), "tag".to_string(), false)
+            .await
+            .unwrap();
+        let issuer_credential = issuer_credential::issuer_credential_create("1".to_string()).unwrap();
+        let proof = proof::create_proof(
+            "1".to_string(),
+            "[]".to_string(),
+            "[]".to_string(),
+            r#"{"support_revocation":false}"#.to_string(),
+            "Optional".to_owned(),
+        )
+        .await
+        .unwrap();
+        let schema = create_and_publish_schema("5", "name".to_string(), "0.1".to_string(), data.to_string())
+            .await
+            .unwrap();
+        let disclosed_proof = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
+        let credential = credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
+
+        vcx_shutdown(true);
+        assert_eq!(mediated_connection::is_valid_handle(connection), false);
+        assert_eq!(issuer_credential::is_valid_handle(issuer_credential), false);
+        assert_eq!(schema::is_valid_handle(schema), false);
+        assert_eq!(proof::is_valid_handle(proof), false);
+        assert_eq!(credential_def::is_valid_handle(credentialdef), false);
+        assert_eq!(credential::is_valid_handle(credential), false);
+        assert_eq!(disclosed_proof::is_valid_handle(disclosed_proof), false);
+        assert_eq!(get_main_wallet_handle(), INVALID_WALLET_HANDLE);
+    }
 }

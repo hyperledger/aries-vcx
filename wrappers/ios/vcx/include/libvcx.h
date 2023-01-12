@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-#import "IndySdk.h"
 #import "VcxTypes.h"
 
 /**
@@ -190,47 +189,12 @@ vcx_error_t vcx_schema_release(vcx_schema_handle_t handle);
 /*
 *    vcx agent
 */
-vcx_error_t vcx_public_agent_create(
-        vcx_command_handle_t command_handle,
-        const char *source_id,
-        const char *institution_did,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, vcx_u32_t agent_handle)
-);
-
 vcx_error_t vcx_generate_public_invite(
         vcx_command_handle_t command_handle,
         const char *public_did,
         const char *label,
         void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *public_invite)
 );
-
-vcx_error_t vcx_public_agent_download_connection_requests(
-        vcx_command_handle_t command_handle,
-        vcx_u32_t agent_handle,
-        const char *uids,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *requests)
-);
-
-vcx_error_t vcx_public_agent_download_message(
-        vcx_command_handle_t command_handle,
-        vcx_u32_t agent_handle,
-        const char *uid,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *message)
-);
-
-vcx_error_t vcx_public_agent_get_service(
-        vcx_command_handle_t command_handle,
-        vcx_u32_t agent_handle,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *service)
-);
-
-vcx_error_t vcx_public_agent_serialize(
-        vcx_command_handle_t command_handle,
-        vcx_u32_t agent_handle,
-        void (*cb)(vcx_command_handle_t xcommand_handle, vcx_error_t err, const char *agent_json)
-);
-
-vcx_error_t vcx_public_agent_release(vcx_u32_t agent_handle);
 
 /*
 *   Out of Band protocol

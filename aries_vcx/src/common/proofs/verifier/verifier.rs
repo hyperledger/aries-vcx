@@ -192,6 +192,7 @@ pub mod unit_tests {
                 )
                 .await
                 .unwrap();
+            // TODO: should return a new AriesVcxErrorKind err instead of AriesVcxErrorKind::VdrToolsError
             assert_eq!(
                 validate_indy_proof(&holder_setup.profile, &prover_proof_json, &proof_req_json)
                     .await

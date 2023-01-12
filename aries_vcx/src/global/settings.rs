@@ -56,7 +56,7 @@ pub fn disable_indy_mocks() -> VcxResult<()> {
 }
 
 pub fn indy_mocks_enabled() -> bool {
-    let config = SETTINGS.read().unwrap();
+    let config = SETTINGS.read().expect("Unable to access SETTINGS");
 
     match config.get(CONFIG_ENABLE_TEST_MODE) {
         None => false,
@@ -96,15 +96,18 @@ pub fn set_config_value(key: &str, value: &str) -> VcxResult<()> {
     Ok(())
 }
 
-pub fn reset_config_values() {
+pub fn reset_config_values() -> VcxResult<()> {
     trace!("reset_config_values >>>");
-    let mut config = SETTINGS.write().unwrap();
+    let mut config = SETTINGS.write()?;
     config.clear();
+    Ok(())
 }
 
 pub fn set_test_configs() -> String {
     trace!("set_testing_defaults >>>");
-    let mut settings = SETTINGS.write().unwrap();
+    let mut settings = SETTINGS
+        .write()
+        .expect("Unabled to access SETTINGS while setting test configs");
     let institution_did = CONFIG_INSTITUTION_DID;
     settings.insert(CONFIG_POOL_NAME.to_string(), DEFAULT_POOL_NAME.to_string());
     settings.insert(institution_did.to_string(), DEFAULT_DID.to_string());

@@ -31,4 +31,4 @@ shared_vcx = { path = "../shared_vcx" }
 android_logger = "0.5"
 
 [dev-dependencies]
-tokio = { version = "1.15", features = [ "rt", "macros" ] }
+tokio = { version = "1.20", features = [ "rt", "macros" ] }

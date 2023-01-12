@@ -1397,24 +1397,4 @@ mod tests {
             error::SUCCESS_ERR_CODE
         );
     }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_vcx_credential_release() {
-        let _setup = SetupMocks::init();
-
-        let handle = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
-
-        assert_eq!(
-            vcx_credential_release(handle + 1),
-            u32::from(LibvcxErrorKind::InvalidCredentialHandle)
-        );
-
-        assert_eq!(vcx_credential_release(handle), error::SUCCESS_ERR_CODE);
-
-        assert_eq!(
-            vcx_credential_release(handle),
-            u32::from(LibvcxErrorKind::InvalidCredentialHandle)
-        );
-    }
 }

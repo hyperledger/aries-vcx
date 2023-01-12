@@ -643,7 +643,12 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn connect(&mut self, profile: &Arc<dyn Profile>, agency_client: &AgencyClient) -> VcxResult<()> {
+    pub async fn connect(
+        &mut self,
+        profile: &Arc<dyn Profile>,
+        agency_client: &AgencyClient,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<()> {
         trace!("MediatedConnection::connect >>> source_id: {}", self.source_id());
         let cloud_agent_info = self.cloud_agent_info.clone().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::NoAgentInformation,
@@ -654,16 +659,19 @@ impl MediatedConnection {
                 cloud_agent_info.routing_keys(agency_client)?,
                 cloud_agent_info.service_endpoint(agency_client)?,
             )?),
-            SmConnection::Invitee(sm_invitee) => SmConnection::Invitee(
-                sm_invitee
-                    .clone()
-                    .send_connection_request(
-                        cloud_agent_info.routing_keys(agency_client)?,
-                        cloud_agent_info.service_endpoint(agency_client)?,
-                        self.send_message_closure_connection(profile),
-                    )
-                    .await?,
-            ),
+            SmConnection::Invitee(sm_invitee) => {
+                let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
+                SmConnection::Invitee(
+                    sm_invitee
+                        .clone()
+                        .send_connection_request(
+                            cloud_agent_info.routing_keys(agency_client)?,
+                            cloud_agent_info.service_endpoint(agency_client)?,
+                            send_message,
+                        )
+                        .await?,
+                )
+            }
         };
         Ok(())
     }
@@ -1082,9 +1090,8 @@ mod tests {
     use agency_client::testing::mocking::enable_agency_mocks;
 
     use crate::common::test_utils::mock_profile;
-    use crate::handlers::connection::public_agent::test_utils::_pw_info;
     use crate::utils::devsetup::{SetupIndyMocks, SetupMocks};
-    use crate::utils::mockdata::mockdata_connection::{
+    use crate::utils::mockdata::mockdata_mediated_connection::{
         CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
         CONNECTION_SM_INVITER_COMPLETED,
     };
@@ -1097,6 +1104,13 @@ mod tests {
     use messages::protocols::discovery::query::test_utils::_query;
 
     use super::*;
+
+    pub fn _pw_info() -> PairwiseInfo {
+        PairwiseInfo {
+            pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
+            pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
+        }
+    }
 
     #[tokio::test]
     async fn test_create_with_pairwise_invite() {
@@ -1151,7 +1165,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&mock_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client, None).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)
@@ -1169,7 +1183,7 @@ mod tests {
         )
         .await
         .unwrap();
-        connection.connect(&mock_profile(), &agency_client).await.unwrap();
+        connection.connect(&mock_profile(), &agency_client, None).await.unwrap();
         assert_eq!(
             connection.get_state(),
             ConnectionState::Invitee(InviteeState::Requested)

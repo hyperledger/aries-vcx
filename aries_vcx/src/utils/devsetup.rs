@@ -97,7 +97,7 @@ fn reset_global_state() {
     PoolMocks::clear_mocks();
     DidMocks::clear_mocks();
     disable_indy_mocks().unwrap();
-    settings::reset_config_values();
+    settings::reset_config_values().unwrap();
 }
 
 impl SetupEmpty {
@@ -628,7 +628,7 @@ impl TempFile {
 
 impl Drop for TempFile {
     fn drop(&mut self) {
-        fs::remove_file(&self.path).unwrap()
+        fs::remove_file(&self.path).unwrap_or(());
     }
 }
 

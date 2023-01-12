@@ -15,7 +15,7 @@ mod integration_tests {
     };
     use aries_vcx::common::test_utils::create_and_store_nonrevocable_credential_def;
     use aries_vcx::messages::protocols::connection::did::Did;
-    use aries_vcx::utils::constants::{DEFAULT_SCHEMA_ATTRS, SCHEMA_DATA};
+    use aries_vcx::utils::constants::DEFAULT_SCHEMA_ATTRS;
     use aries_vcx::utils::devsetup::{SetupProfile, SetupWalletPool};
     use messages::diddoc::aries::service::AriesService;
     use std::sync::Arc;

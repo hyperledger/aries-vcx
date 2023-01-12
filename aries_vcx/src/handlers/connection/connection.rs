@@ -16,12 +16,12 @@ use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::request::Request;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Connection {
     connection_sm: SmConnection,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum SmConnection {
     Inviter(SmConnectionInviter),
     Invitee(SmConnectionInvitee),
@@ -322,6 +322,25 @@ impl Connection {
             Box::pin(send_message(wallet, sender_vk, did_doc, message))
         })
     }
+
+    // ------------------------- (DE)SERIALIZATION ----------------------------------
+    pub fn to_string(&self) -> VcxResult<String> {
+        serde_json::to_string(&self).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::SerializationError,
+                format!("Cannot serialize Connection: {:?}", err),
+            )
+        })
+    }
+
+    pub fn from_string(serialized: &str) -> VcxResult<Self> {
+        serde_json::from_str(serialized).map_err(|err| {
+            AriesVcxError::from_msg(
+                AriesVcxErrorKind::InvalidJson,
+                format!("Cannot deserialize Connection: {:?}", err),
+            )
+        })
+    }
 }
 
 #[cfg(feature = "test_utils")]
@@ -361,6 +380,11 @@ mod unit_tests {
     use crate::common::ledger::transactions::into_did_doc;
     use crate::common::test_utils::{indy_handles_to_profile, mock_profile};
     use crate::utils::devsetup::{SetupInstitutionWallet, SetupMocks};
+    use crate::utils::mockdata::mockdata_connection::{
+        CONNECTION_SM_INVITEE_COMPLETED, CONNECTION_SM_INVITEE_INVITED, CONNECTION_SM_INVITEE_REQUESTED,
+        CONNECTION_SM_INVITEE_RESPONDED, CONNECTION_SM_INVITER_COMPLETED, CONNECTION_SM_INVITER_REQUESTED,
+        CONNECTION_SM_INVITER_RESPONDED,
+    };
 
     use async_channel::bounded;
     use messages::protocols::basic_message::message::BasicMessage;
@@ -447,6 +471,61 @@ mod unit_tests {
             connection.get_state(),
             ConnectionState::Inviter(InviterState::Requested)
         );
+    }
+
+    #[tokio::test]
+    async fn test_inviter_deserialize_serialized() {
+        let _setup = SetupMocks::init();
+        let connection = Connection::create_inviter(&mock_profile())
+            .await
+            .unwrap()
+            .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
+            .await
+            .unwrap();
+        let ser_conn = connection.to_string().unwrap();
+        assert_eq!(
+            ser_conn,
+            Connection::from_string(&ser_conn).unwrap().to_string().unwrap()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_invitee_deserialize_serialized() {
+        let _setup = SetupMocks::init();
+        let invite = _pairwise_invitation_random_id();
+        let connection = Connection::create_invitee(&mock_profile(), AriesDidDoc::default())
+            .await
+            .unwrap()
+            .process_invite(Invitation::Pairwise(invite.clone()))
+            .unwrap()
+            .send_request(&mock_profile(), _service_endpoint(), vec![], None)
+            .await
+            .unwrap();
+        let ser_conn = connection.to_string().unwrap();
+        assert_eq!(
+            ser_conn,
+            Connection::from_string(&ser_conn).unwrap().to_string().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_deserialize_and_serialize_should_produce_the_same_object() {
+        fn test_deserialize_and_serialize(sm_serialized: &str) {
+            let original_object: serde_json::Value = serde_json::from_str(sm_serialized).unwrap();
+            let connection = Connection::from_string(sm_serialized).unwrap();
+            let reserialized = connection.to_string().unwrap();
+            let reserialized_object: serde_json::Value = serde_json::from_str(&reserialized).unwrap();
+            assert_eq!(original_object, reserialized_object);
+        }
+
+        // let _setup = SetupMocks::init();
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_INVITED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_RESPONDED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITEE_COMPLETED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_REQUESTED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_RESPONDED);
+        test_deserialize_and_serialize(CONNECTION_SM_INVITER_COMPLETED);
     }
 
     #[tokio::test]

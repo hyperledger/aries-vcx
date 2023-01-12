@@ -7,7 +7,6 @@ use crate::api_c::cutils;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 
 use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::wallet::{wallet_sign, wallet_verify};
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::mediated_connection::*;
 use crate::errors::error;
@@ -322,45 +321,6 @@ pub extern "C" fn vcx_connection_create_with_invite(
                     "vcx_connection_create_with_invite_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}",
                     command_handle, err, 0, source_id
                 );
-                cb(command_handle, err.into(), 0);
-            }
-        };
-
-        Ok(())
-    }));
-
-    error::SUCCESS_ERR_CODE
-}
-
-#[no_mangle]
-#[deprecated(
-    since = "0.45.0",
-    note = "Deprecated in favor of vcx_connection_create_with_connection_request_v2."
-)]
-pub extern "C" fn vcx_connection_create_with_connection_request(
-    command_handle: CommandHandle,
-    source_id: *const c_char,
-    agent_handle: u32,
-    request: *const c_char,
-    cb: Option<extern "C" fn(xcommand_handle: CommandHandle, err: u32, connection_handle: u32)>,
-) -> u32 {
-    info!("vcx_connection_create_with_connection_request >>>");
-
-    check_useful_c_callback!(cb, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(source_id, LibvcxErrorKind::InvalidOption);
-    check_useful_c_str!(request, LibvcxErrorKind::InvalidOption);
-
-    trace!("vcx_connection_create_with_connection_request(command_handle: {}, agent_handle: {}, request: {}) source_id: {}", command_handle, agent_handle, request, source_id);
-
-    execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match create_with_request(&request, agent_handle).await {
-            Ok(handle) => {
-                trace!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {:?}) source_id: {}", command_handle, error::SUCCESS_ERR_CODE, handle, source_id);
-                cb(command_handle, error::SUCCESS_ERR_CODE, handle);
-            }
-            Err(err) => {
-                set_current_error_vcx(&err);
-                error!("vcx_connection_create_with_connection_request_cb(command_handle: {}, rc: {}, handle: {}) source_id: {}", command_handle, err, 0, source_id);
                 cb(command_handle, err.into(), 0);
             }
         };
@@ -1128,19 +1088,7 @@ pub extern "C" fn vcx_connection_sign_data(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_messages_sign_data_cb(command_handle: {}, rc: {}, signature: null)",
-                    command_handle, err
-                );
-                cb(command_handle, err.into(), ptr::null_mut(), 0);
-                return Ok(());
-            }
-        };
-
-        match wallet_sign(&vk, &data_raw).await {
+        match mediated_connection::sign_data(connection_handle, &data_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_sign_data_cb(command_handle: {}, connection_handle: {}, rc: {}, signature: {:?})",
@@ -1225,19 +1173,7 @@ pub extern "C" fn vcx_connection_verify_signature(
     trace!("vcx_connection_verify_signature: entities >>> connection_handle: {}, data_raw: {:?}, data_len: {}, signature_raw: {:?}, signature_len: {}", connection_handle, data_raw, data_len, signature_raw, signature_len);
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        let vk = match mediated_connection::get_their_pw_verkey(connection_handle) {
-            Ok(err) => err,
-            Err(err) => {
-                error!(
-                    "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
-                    command_handle, err, false
-                );
-                cb(command_handle, err.into(), false);
-                return Ok(());
-            }
-        };
-
-        match wallet_verify(&vk, &data_raw, &signature_raw).await {
+        match mediated_connection::verify_signature(connection_handle, &data_raw, &signature_raw).await {
             Ok(err) => {
                 trace!(
                     "vcx_connection_verify_signature_cb(command_handle: {}, rc: {}, valid: {})",
@@ -1655,7 +1591,7 @@ mod tests {
     use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
     use aries_vcx::utils::constants::{DELETE_CONNECTION_DECRYPTED_RESPONSE, GET_MESSAGES_DECRYPTED_RESPONSE};
     use aries_vcx::utils::devsetup::SetupMocks;
-    use aries_vcx::utils::mockdata::mockdata_connection::{
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION,
     };
 
@@ -1830,33 +1766,6 @@ mod tests {
         assert_eq!(rc, SUCCESS_ERR_CODE);
 
         cb.receive(TimeoutUtils::some_medium()).unwrap().unwrap();
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_vcx_connection_release() {
-        let _setup = SetupMocks::init();
-
-        let handle = build_test_connection_inviter_requested().await;
-
-        let rc = vcx_connection_release(handle);
-        assert_eq!(rc, SUCCESS_ERR_CODE);
-
-        let unknown_handle = handle + 1;
-        assert_eq!(
-            vcx_connection_release(unknown_handle),
-            u32::from(LibvcxErrorKind::InvalidConnectionHandle)
-        );
-
-        let cb = return_types_u32::Return_U32_STR::new().unwrap();
-        let rc = vcx_connection_connect(
-            0,
-            handle,
-            CString::new("{}").unwrap().into_raw(),
-            Some(cb.get_callback()),
-        );
-        assert!(cb.receive(TimeoutUtils::some_custom(1)).is_err());
-        assert_eq!(rc, SUCCESS_ERR_CODE);
     }
 
     #[test]

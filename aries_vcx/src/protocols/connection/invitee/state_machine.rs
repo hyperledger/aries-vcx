@@ -23,7 +23,7 @@ use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::SignedResponse;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SmConnectionInvitee {
     source_id: String,
     thread_id: String,
@@ -242,9 +242,17 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let thread_id = invitation.get_id()?;
         let state = match state {
-            InviteeFullState::Initial(state) => {
-                InviteeFullState::Invited((state.clone(), invitation, state.did_doc.unwrap()).into())
-            }
+            InviteeFullState::Initial(state) => InviteeFullState::Invited(
+                (
+                    state.clone(),
+                    invitation,
+                    state.did_doc.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Expected none None state.did_doc result given current state",
+                    ))?,
+                )
+                    .into(),
+            ),
             s => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,

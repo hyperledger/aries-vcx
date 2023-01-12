@@ -66,7 +66,7 @@ pub struct RestoreWalletConfigs {
 pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle> {
     trace!("open_as_main_wallet >>> {}", &wallet_config.wallet_name);
 
-    let handle = Locator::instance()
+    let handle_res = Locator::instance()
         .wallet_controller
         .open(
             vdrtools::types::domain::wallet::Config {
@@ -98,9 +98,9 @@ pub async fn open_wallet(wallet_config: &WalletConfig) -> VcxResult<WalletHandle
                     .transpose()?,
             },
         )
-        .await?;
+        .await;
 
-    Ok(handle)
+    Ok(handle_res?)
 }
 
 fn parse_key_derivation_method(method: &str) -> Result<KeyDerivationMethod, AriesVcxError> {

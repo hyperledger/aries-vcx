@@ -90,6 +90,8 @@ pub enum AriesVcxErrorKind {
     PoolLedgerConnect,
     #[error("Ledger rejected submitted request.")]
     InvalidLedgerResponse,
+    #[error("Ledger item not found.")]
+    LedgerItemNotFound,
     #[error("No Pool open. Can't return handle.")]
     NoPoolOpen,
     #[error("Message failed in post")]

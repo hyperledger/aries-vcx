@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "IndyTypes.h"
 
 @interface VcxLogger : NSObject
 

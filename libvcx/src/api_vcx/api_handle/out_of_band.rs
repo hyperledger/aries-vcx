@@ -43,7 +43,7 @@ fn store_out_of_band_sender(oob: OutOfBandSender) -> LibvcxResult<u32> {
         .map_err(|e| LibvcxError::from_msg(LibvcxErrorKind::CreateOutOfBand, e.to_string()))
 }
 
-pub async fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
+pub fn create_out_of_band(config: &str) -> LibvcxResult<u32> {
     trace!("create_out_of_band >>> config: {}", config);
     let config: OOBConfig = serde_json::from_str(config).map_err(|err| {
         LibvcxError::from_msg(
@@ -180,7 +180,7 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
     let invitation = Invitation::OutOfBand(oob.oob.clone());
     let profile = get_main_profile()?;
     let ddo = into_did_doc(&profile, &invitation).await?;
-    oob.build_connection(&profile, &get_main_agency_client().unwrap(), ddo, false)
+    oob.build_connection(&profile, &get_main_agency_client()?, ddo, false)
         .await?
         .to_string()
         .map_err(|err| err.into())
@@ -239,7 +239,7 @@ pub mod tests {
             "goal": "foobar"
         })
         .to_string();
-        let oob_handle = create_out_of_band(&config).await.unwrap();
+        let oob_handle = create_out_of_band(&config).unwrap();
         assert!(oob_handle > 0);
         let service = ServiceOob::AriesService(
             AriesService::create()

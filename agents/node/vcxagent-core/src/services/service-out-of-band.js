@@ -1,36 +1,27 @@
 const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 
 module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
-  async function _createOobSender (message, label) {
-    logger.info('createOobMsg >>>')
-    const oob = await OutOfBandSender.create({ label })
+  function _createOobSender (message, label) {
+    const oob = OutOfBandSender.create({ label })
     if (message) {
       const msgParsed = JSON.parse(message)
       const msgType = msgParsed['@type']
       if (!msgType) {
         throw Error(`Message appended to OOB message must have @type. Invalid message: ${msgParsed}`)
       }
-      logger.info(`createOobMsg >>> appending message of type ${msgType}`)
-      await oob.appendMessage(message)
-      logger.info('createOobMsg >>> append message')
+      oob.appendMessage(message)
     }
     return oob
   }
 
-  async function createOobMessageWithService (message, label, service) {
-    const oobSender = await _createOobSender(message, label)
-    await oobSender.appendService(service)
-    return await oobSender.toMessage()
-  }
-
   async function createOobMessageWithDid (message, label, publicDid) {
-    const oobSender = await _createOobSender(message, label)
-    await oobSender.appendServiceDid(publicDid)
-    return await oobSender.toMessage()
+    const oobSender = _createOobSender(message, label)
+    oobSender.appendServiceDid(publicDid)
+    return oobSender.toMessage()
   }
 
   async function createConnectionFromOobMsg (connectionId, oobMsg) {
-    const oob = await OutOfBandReceiver.createWithMessage(oobMsg)
+    const oob = OutOfBandReceiver.createWithMessage(oobMsg)
     const connection = await oob.buildConnection()
     await connection.connect('{}')
     await saveConnection(connectionId, connection)
@@ -50,7 +41,7 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
         return filtered
       } catch {}
     }, [])
-    const oobReceiver = await OutOfBandReceiver.createWithMessage(oobMsg)
+    const oobReceiver = OutOfBandReceiver.createWithMessage(oobMsg)
     if (connections && await oobReceiver.connectionExists(connections)) {
       return true
     }
@@ -58,7 +49,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   }
 
   return {
-    createOobMessageWithService,
     createOobMessageWithDid,
     createConnectionFromOobMsg,
     connectionExists,

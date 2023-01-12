@@ -38,7 +38,7 @@ pub async fn create_proof(
     PROOF_MAP.add(verifier)
 }
 
-pub async fn is_valid_handle(handle: u32) -> bool {
+pub fn is_valid_handle(handle: u32) -> bool {
     PROOF_MAP.has_handle(handle)
 }
 
@@ -85,11 +85,11 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(state)
 }
 
-pub async fn get_state(handle: u32) -> LibvcxResult<u32> {
+pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
 }
 
-pub async fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
+pub fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
 }
 
@@ -103,7 +103,7 @@ pub fn release_all() {
     PROOF_MAP.drain().ok();
 }
 
-pub async fn to_string(handle: u32) -> LibvcxResult<String> {
+pub fn to_string(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         serde_json::to_string(&Proofs::V3(proof.clone())).map_err(|err| {
             LibvcxError::from_msg(
@@ -118,7 +118,7 @@ pub fn get_source_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_source_id()))
 }
 
-pub async fn from_string(proof_data: &str) -> LibvcxResult<u32> {
+pub fn from_string(proof_data: &str) -> LibvcxResult<u32> {
     let proof: Proofs = serde_json::from_str(proof_data).map_err(|err| {
         LibvcxError::from_msg(
             LibvcxErrorKind::InvalidJson,
@@ -139,23 +139,23 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
     PROOF_MAP.insert(handle, proof)
 }
 
-pub async fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
+pub fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof.mark_presentation_request_msg_sent()?;
     PROOF_MAP.insert(handle, proof)
 }
 
-pub async fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
+pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| {
         proof.get_presentation_request_msg().map_err(|err| err.into())
     })
 }
 
-pub async fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
+pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_presentation_msg().map_err(|err| err.into()))
 }
 
-pub async fn get_thread_id(handle: u32) -> LibvcxResult<String> {
+pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
 }
 
@@ -188,6 +188,15 @@ pub mod tests {
         )
         .await
         .unwrap()
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
+    async fn test_get_proof_returns_proof_with_proof_state_invalid() {
+        let _setup = SetupMocks::init();
+        let handle = create_default_proof().await;
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
     }
 
     #[tokio::test]
@@ -226,7 +235,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_default_proof().await;
-        let proof_string = to_string(handle).await.unwrap();
+        let proof_string = to_string(handle).unwrap();
         let s: Value = serde_json::from_str(&proof_string).unwrap();
         assert_eq!(s["version"], V3_OBJECT_SERIALIZE_VERSION);
         assert!(s["data"]["verifier_sm"].is_object());
@@ -239,9 +248,9 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_default_proof().await;
-        let proof_data = to_string(handle).await.unwrap();
-        let _hnadle2 = from_string(&proof_data).await.unwrap();
-        let proof_data2 = to_string(handle).await.unwrap();
+        let proof_data = to_string(handle).unwrap();
+        let _hnadle2 = from_string(&proof_data).unwrap();
+        let proof_data2 = to_string(handle).unwrap();
         assert_eq!(proof_data, proof_data2);
     }
 
@@ -252,7 +261,7 @@ pub mod tests {
 
         let handle = create_default_proof().await;
         assert!(release(handle).is_ok());
-        assert!(!is_valid_handle(handle).await);
+        assert!(!is_valid_handle(handle));
     }
 
     #[tokio::test]
@@ -265,7 +274,7 @@ pub mod tests {
         let handle_proof = create_default_proof().await;
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
     }
@@ -276,8 +285,8 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let handle = create_default_proof().await;
-        assert!(is_valid_handle(handle).await);
-        assert!(get_presentation_msg(handle).await.is_err())
+        assert!(is_valid_handle(handle));
+        assert!(get_presentation_msg(handle).is_err())
     }
 
     #[tokio::test]
@@ -291,7 +300,7 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
 
@@ -306,7 +315,7 @@ pub mod tests {
         .await
         .unwrap();
 
-        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -320,7 +329,7 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
 
@@ -331,7 +340,7 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -345,7 +354,7 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
 
@@ -356,7 +365,7 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -372,7 +381,7 @@ pub mod tests {
         update_state(handle_proof, Some(PROOF_REJECT_RESPONSE_STR_V2), handle_conn)
             .await
             .unwrap();
-        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Failed as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Failed as u32);
     }
 
     #[tokio::test]
@@ -385,7 +394,7 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
     }
@@ -401,7 +410,7 @@ pub mod tests {
 
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
 
@@ -412,9 +421,9 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(get_state(handle_proof).await.unwrap(), VerifierState::Finished as u32);
+        assert_eq!(get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
 
-        let proof_str = get_presentation_msg(handle_proof).await.unwrap();
+        let proof_str = get_presentation_msg(handle_proof).unwrap();
         assert_eq!(
             proof_str,
             mockdata_proof::ARIES_PROOF_PRESENTATION
@@ -455,30 +464,10 @@ pub mod tests {
         )
         .await
         .unwrap();
-        let h4 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
-        let h5 = create_proof(
-            "1".to_string(),
-            REQUESTED_ATTRS.to_owned(),
-            REQUESTED_PREDICATES.to_owned(),
-            r#"{"support_revocation":false}"#.to_string(),
-            "Optional".to_owned(),
-        )
-        .await
-        .unwrap();
         release_all();
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidProofHandle);
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 
     #[tokio::test]
@@ -489,8 +478,8 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof().await;
 
-        let _request = get_presentation_request_msg(handle_proof).await.unwrap();
-        assert_eq!(get_state(handle_proof).await.unwrap(), 1);
+        let _request = get_presentation_request_msg(handle_proof).unwrap();
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         HttpClientMockResponse::set_next_response(aries_vcx::agency_client::errors::error::AgencyClientResult::Err(
             aries_vcx::agency_client::errors::error::AgencyClientError::from_msg(
@@ -502,12 +491,12 @@ pub mod tests {
             send_proof_request(handle_proof, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::IOError
         );
-        assert_eq!(get_state(handle_proof).await.unwrap(), 1);
+        assert_eq!(get_state(handle_proof).unwrap(), 1);
 
         // Retry sending proof request
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         assert_eq!(
-            get_state(handle_proof).await.unwrap(),
+            get_state(handle_proof).unwrap(),
             VerifierState::PresentationRequestSent as u32
         );
     }
@@ -521,7 +510,7 @@ pub mod tests {
         let handle_conn = build_test_connection_inviter_requested().await;
         let handle_proof = create_default_proof().await;
 
-        let _request = get_presentation_request_msg(handle_proof).await.unwrap();
+        let _request = get_presentation_request_msg(handle_proof).unwrap();
         send_proof_request(handle_proof, handle_conn).await.unwrap();
         update_state(
             handle_proof,
@@ -530,10 +519,7 @@ pub mod tests {
         )
         .await
         .unwrap();
-        assert_eq!(
-            proof::get_state(handle_proof).await.unwrap(),
-            VerifierState::Finished as u32
-        );
+        assert_eq!(proof::get_state(handle_proof).unwrap(), VerifierState::Finished as u32);
     }
 
     #[tokio::test]
@@ -551,7 +537,7 @@ pub mod tests {
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(get_proof_state(handle_proof).await.unwrap(), 0);
+        assert_eq!(get_proof_state(handle_proof).unwrap(), 0);
         assert_eq!(
             create_proof(
                 "my source id".to_string(),
@@ -566,16 +552,13 @@ pub mod tests {
             LibvcxErrorKind::InvalidJson
         );
         assert_eq!(
-            to_string(bad_handle).await.unwrap_err().kind(),
+            to_string(bad_handle).unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
         assert_eq!(
             get_source_id(bad_handle).unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(
-            from_string(empty).await.unwrap_err().kind(),
-            LibvcxErrorKind::InvalidJson
-        );
+        assert_eq!(from_string(empty).unwrap_err().kind(), LibvcxErrorKind::InvalidJson);
     }
 }

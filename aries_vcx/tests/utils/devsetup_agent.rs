@@ -10,9 +10,11 @@ pub mod test_utils {
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::plugins::wallet::base_wallet::BaseWallet;
     use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
+    use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use futures::future::BoxFuture;
     use messages::concepts::ack::please_ack::AckOn;
+    use messages::diddoc::aries::service::AriesService;
     use messages::protocols::revocation_notification::revocation_ack::RevocationAck;
     use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
     use messages::status::Status;
@@ -23,7 +25,7 @@ pub mod test_utils {
     use agency_client::MessageStatusCode;
     use aries_vcx::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 
-    use aries_vcx::common::ledger::transactions::into_did_doc;
+    use aries_vcx::common::ledger::transactions::{into_did_doc, write_endpoint_legacy};
     use aries_vcx::common::primitives::credential_definition::CredentialDef;
     use aries_vcx::common::primitives::credential_definition::CredentialDefConfigBuilder;
     use aries_vcx::common::primitives::credential_schema::Schema;
@@ -31,7 +33,6 @@ pub mod test_utils {
     use aries_vcx::global::settings;
     use aries_vcx::global::settings::init_issuer_config;
     use aries_vcx::handlers::connection::mediated_connection::{ConnectionState, MediatedConnection};
-    use aries_vcx::handlers::connection::public_agent::PublicAgent;
     use aries_vcx::handlers::issuance::holder::test_utils::get_credential_offer_messages;
     use aries_vcx::handlers::issuance::holder::Holder;
     use aries_vcx::handlers::issuance::issuer::Issuer;
@@ -128,14 +129,14 @@ pub mod test_utils {
         pub cred_def: CredentialDef,
         pub issuer_credential: Issuer,
         pub verifier: Verifier,
-        pub agent: PublicAgent,
+        pub pairwise_info: PairwiseInfo,
         pub agency_client: AgencyClient,
         pub(self) teardown: Arc<dyn Fn() -> BoxFuture<'static, ()>>,
     }
 
     impl Faber {
         pub async fn setup(pool_handle: PoolHandle) -> Faber {
-            settings::reset_config_values();
+            settings::reset_config_values().unwrap();
             let enterprise_seed = "000000000000000000000000Trustee1";
             let config_wallet = WalletConfig {
                 wallet_name: format!("faber_wallet_{}", uuid::Uuid::new_v4().to_string()),
@@ -169,9 +170,15 @@ pub mod test_utils {
             let connection = MediatedConnection::create("faber", &profile, &agency_client, true)
                 .await
                 .unwrap();
-            let agent = PublicAgent::create(&profile, &agency_client, "faber", &config_issuer.institution_did)
+
+            let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await.unwrap();
+            let service = AriesService::create()
+                .set_service_endpoint(agency_client.get_agency_url_full())
+                .set_recipient_keys(vec![pairwise_info.pw_vk.clone()]);
+            write_endpoint_legacy(&profile, &config_issuer.institution_did, &service)
                 .await
                 .unwrap();
+
             let rev_not_sender = RevocationNotificationSender::build();
 
             let faber = Faber {
@@ -186,7 +193,7 @@ pub mod test_utils {
                 issuer_credential: Issuer::default(),
                 verifier: Verifier::default(),
                 rev_not_sender,
-                agent,
+                pairwise_info,
                 teardown: Arc::new(move || Box::pin(teardown_indy_wallet(wallet_handle, config_wallet.clone()))),
             };
             faber
@@ -249,7 +256,7 @@ pub mod test_utils {
 
         pub async fn create_invite(&mut self) -> String {
             self.connection
-                .connect(&self.profile, &self.agency_client)
+                .connect(&self.profile, &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection
@@ -444,7 +451,7 @@ pub mod test_utils {
 
     impl Alice {
         async fn setup_indy_wallet() -> (WalletHandle, WalletConfig) {
-            settings::reset_config_values();
+            settings::reset_config_values().unwrap();
             let config_wallet = WalletConfig {
                 wallet_name: format!("alice_wallet_{}", uuid::Uuid::new_v4().to_string()),
                 wallet_key: settings::DEFAULT_WALLET_KEY.into(),
@@ -533,11 +540,7 @@ pub mod test_utils {
                     .await
                     .unwrap();
             self.connection
-                .connect(&self.profile, &self.agency_client)
-                .await
-                .unwrap();
-            self.connection
-                .connect(&self.profile, &self.agency_client)
+                .connect(&self.profile, &self.agency_client, None)
                 .await
                 .unwrap();
             self.connection

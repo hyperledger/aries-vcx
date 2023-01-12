@@ -1,12 +1,11 @@
 use serde_json;
 
 use aries_vcx::agency_client::testing::mocking::AgencyMockDecrypted;
-use aries_vcx::global::settings::indy_mocks_enabled;
 use aries_vcx::handlers::issuance::holder::Holder;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::utils::constants::GET_MESSAGES_DECRYPTED_RESPONSE;
-use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
+use aries_vcx::{global::settings::indy_mocks_enabled, utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER};
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_profile_optional_pool};
 use crate::api_vcx::api_handle::mediated_connection;
@@ -363,6 +362,15 @@ pub mod tests {
         let offers: serde_json::Value = serde_json::from_str(&offers).unwrap();
         let offer = serde_json::to_string(&offers[0]).unwrap();
         offer
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_vcx_credential_release() {
+        let _setup = SetupDefaults::init();
+        let handle = credential_create_with_offer("test_credential_create_with_offer", ARIES_CREDENTIAL_OFFER).unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle);
     }
 
     #[tokio::test]

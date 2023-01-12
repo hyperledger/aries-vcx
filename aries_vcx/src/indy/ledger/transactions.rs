@@ -23,16 +23,6 @@ pub async fn multisign_request(wallet_handle: WalletHandle, did: &str, request: 
     Ok(res)
 }
 
-#[allow(dead_code)]
-pub async fn libindy_sign_request(wallet_handle: WalletHandle, did: &str, request: &str) -> VcxResult<String> {
-    let res = Locator::instance()
-        .ledger_controller
-        .sign_request(wallet_handle, DidValue(did.into()), request.into())
-        .await?;
-
-    Ok(res)
-}
-
 pub async fn libindy_sign_and_submit_request(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -167,16 +157,6 @@ pub async fn append_txn_author_agreement_to_request(request_json: &str) -> VcxRe
 }
 
 // TODO: remove async
-#[allow(dead_code)]
-pub async fn libindy_build_auth_rules_request(submitter_did: &str, data: &str) -> VcxResult<String> {
-    let res = Locator::instance()
-        .ledger_controller
-        .build_auth_rules_request(submitter_did.into(), serde_json::from_str(data)?)?;
-
-    Ok(res)
-}
-
-// TODO: remove async
 pub async fn libindy_build_attrib_request(
     submitter_did: &str,
     target_did: &str,
@@ -190,27 +170,6 @@ pub async fn libindy_build_attrib_request(
         hash.map(|s| s.to_owned()),
         raw.map(serde_json::from_str).transpose()?,
         enc.map(|s| s.to_owned()),
-    )?;
-
-    Ok(res)
-}
-
-#[allow(dead_code)]
-pub async fn libindy_build_get_auth_rule_request(
-    submitter_did: Option<&str>,
-    txn_type: Option<&str>,
-    action: Option<&str>,
-    field: Option<&str>,
-    old_value: Option<&str>,
-    new_value: Option<&str>,
-) -> VcxResult<String> {
-    let res = Locator::instance().ledger_controller.build_get_auth_rule_request(
-        submitter_did.map(|did| did.into()),
-        txn_type.map(|s| s.into()),
-        action.map(|s| s.into()),
-        field.map(|s| s.into()),
-        old_value.map(|s| s.into()),
-        new_value.map(|s| s.into()),
     )?;
 
     Ok(res)
@@ -288,16 +247,6 @@ pub async fn libindy_get_schema(
     Ok(res)
 }
 
-// TODO: remove async
-#[allow(dead_code)]
-pub async fn libindy_build_get_cred_def_request(submitter_did: Option<&str>, cred_def_id: &str) -> VcxResult<String> {
-    let res = Locator::instance()
-        .ledger_controller
-        .build_get_cred_def_request(submitter_did.map(|s| s.into()), cred_def_id.into())?;
-
-    Ok(res)
-}
-
 async fn libindy_get_cred_def(
     wallet_handle: WalletHandle,
     pool_handle: PoolHandle,
@@ -323,14 +272,6 @@ async fn libindy_get_cred_def(
         .await?;
 
     Ok(res)
-}
-#[allow(dead_code)]
-pub async fn append_request_endorser(request: &str, endorser: &str) -> VcxResult<String> {
-    let request = Locator::instance()
-        .ledger_controller
-        .append_request_endorser(request.into(), endorser.into())?;
-
-    Ok(request)
 }
 
 pub async fn set_endorser(
@@ -561,16 +502,6 @@ async fn libindy_parse_get_revoc_reg_response(get_cred_def_resp: &str) -> VcxRes
     Ok(res)
 }
 
-// TODO: remove async
-#[allow(dead_code)]
-async fn libindy_parse_get_cred_def_response(get_rev_reg_resp: &str) -> VcxResult<(String, String)> {
-    let res = Locator::instance()
-        .ledger_controller
-        .parse_get_cred_def_response(get_rev_reg_resp.into())?;
-
-    Ok(res)
-}
-
 pub async fn libindy_parse_get_revoc_reg_delta_response(
     get_rev_reg_delta_response: &str,
 ) -> VcxResult<(String, String, u64)> {
@@ -694,45 +625,6 @@ pub async fn get_rev_reg(
     let res = libindy_submit_request(pool_handle, &req).await?;
 
     libindy_parse_get_revoc_reg_response(&res).await
-}
-
-#[allow(dead_code)]
-pub async fn get_cred_def(
-    pool_handle: PoolHandle,
-    issuer_did: Option<&str>,
-    cred_def_id: &str,
-) -> VcxResult<(String, String)> {
-    if settings::indy_mocks_enabled() {
-        return Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::VdrToolsError(309),
-            "Mocked error".to_string(),
-        ));
-    }
-
-    let req = libindy_build_get_cred_def_request(issuer_did, cred_def_id).await?;
-
-    let res = libindy_submit_request(pool_handle, &req).await?;
-
-    libindy_parse_get_cred_def_response(&res).await
-}
-
-#[allow(dead_code)]
-pub async fn is_cred_def_on_ledger(
-    pool_handle: PoolHandle,
-    issuer_did: Option<&str>,
-    cred_def_id: &str,
-) -> VcxResult<bool> {
-    match get_cred_def(pool_handle, issuer_did, cred_def_id).await {
-        Ok(_) => Ok(true),
-        Err(err) if err.kind() == AriesVcxErrorKind::VdrToolsError(309) => Ok(false),
-        Err(err) => Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::InvalidLedgerResponse,
-            format!(
-                "Failed to check presence of credential definition id {} on the ledger\nError: {}",
-                cred_def_id, err
-            ),
-        )),
-    }
 }
 
 async fn libindy_build_get_txn_request(submitter_did: Option<&str>, seq_no: i32) -> VcxResult<String> {

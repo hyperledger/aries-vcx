@@ -1,4 +1,4 @@
-use vdrtools::{AnoncredsHelpers, Locator, SearchHandle};
+use vdrtools::{Locator, SearchHandle};
 
 use crate::errors::error::prelude::*;
 
@@ -26,11 +26,6 @@ pub(super) async fn close_search_handle(search_handle: SearchHandle) -> VcxResul
         .await?;
 
     Ok(())
-}
-
-#[allow(dead_code)]
-pub fn libindy_to_unqualified(entity: &str) -> VcxResult<String> {
-    Ok(AnoncredsHelpers::to_unqualified(entity)?)
 }
 
 pub async fn generate_nonce() -> VcxResult<String> {

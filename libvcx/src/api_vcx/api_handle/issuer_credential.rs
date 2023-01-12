@@ -212,8 +212,8 @@ pub mod tests {
     use aries_vcx::indy::utils::LibindyMock;
     use aries_vcx::utils::constants::V3_OBJECT_SERIALIZE_VERSION;
     use aries_vcx::utils::devsetup::{SetupEmpty, SetupMocks};
-    use aries_vcx::utils::mockdata::mockdata_connection::ARIES_CONNECTION_ACK;
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::ARIES_CONNECTION_ACK;
 
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_vcx::api_handle::issuer_credential;
@@ -229,6 +229,15 @@ pub mod tests {
 
     fn _cred_json() -> &'static str {
         "{\"attr\":\"value\"}"
+    }
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_vcx_issuer_credential_release() {
+        let _setup = SetupMocks::init();
+        let handle = _issuer_credential_create();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
     }
 
     #[tokio::test]
@@ -368,40 +377,9 @@ pub mod tests {
         let h1 = _issuer_credential_create();
         let h2 = _issuer_credential_create();
         let h3 = _issuer_credential_create();
-        let h4 = _issuer_credential_create();
-        let h5 = _issuer_credential_create();
         release_all();
-        assert_eq!(
-            release(h1).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-        assert_eq!(
-            release(h2).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-        assert_eq!(
-            release(h3).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-        assert_eq!(
-            release(h4).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-        assert_eq!(
-            release(h5).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "general_test")]
-    async fn test_errors() {
-        let _setup = SetupEmpty::init();
-
-        assert_eq!(to_string(0).unwrap_err().kind(), LibvcxErrorKind::InvalidHandle);
-        assert_eq!(
-            release(0).unwrap_err().kind(),
-            LibvcxErrorKind::InvalidIssuerCredentialHandle
-        );
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 }

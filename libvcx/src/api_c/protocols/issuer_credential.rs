@@ -1060,23 +1060,4 @@ pub mod tests {
         );
         cb.receive(TimeoutUtils::some_medium()).unwrap();
     }
-
-    #[test]
-    #[cfg(feature = "general_test")]
-    fn test_vcx_issuer_credential_release() {
-        let _setup = SetupMocks::init();
-
-        let handle = _vcx_issuer_create_credential_c_closure().unwrap();
-        assert_eq!(
-            vcx_issuer_credential_release(handle + 1),
-            u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle)
-        );
-
-        assert_eq!(vcx_issuer_credential_release(handle), error::SUCCESS_ERR_CODE);
-
-        assert_eq!(
-            vcx_issuer_credential_release(handle),
-            u32::from(LibvcxErrorKind::InvalidIssuerCredentialHandle)
-        );
-    }
 }

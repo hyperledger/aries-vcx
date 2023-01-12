@@ -227,6 +227,19 @@ pub mod tests {
 
     #[tokio::test]
     #[cfg(feature = "general_test")]
+    async fn test_vcx_schema_release() {
+        let _setup = SetupMocks::init();
+
+        let (did, schema_name, schema_version, data) = prepare_schema_data();
+        let handle = create_and_publish_schema("test_create_schema_success", schema_name, schema_version, data.clone())
+            .await
+            .unwrap();
+        release(handle).unwrap();
+        assert_eq!(to_string(handle).unwrap_err().kind, LibvcxErrorKind::InvalidHandle)
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "general_test")]
     async fn test_create_schema_to_string() {
         let _setup = SetupMocks::init();
 
@@ -372,20 +385,12 @@ pub mod tests {
         let h3 = create_and_publish_schema("3", schema_name.clone(), version.clone(), data.clone())
             .await
             .unwrap();
-        let h4 = create_and_publish_schema("4", schema_name.clone(), version.clone(), data.clone())
-            .await
-            .unwrap();
-        let h5 = create_and_publish_schema("5", schema_name.clone(), version.clone(), data.clone())
-            .await
-            .unwrap();
 
         release_all();
 
-        assert_eq!(release(h1).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
-        assert_eq!(release(h2).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
-        assert_eq!(release(h3).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
-        assert_eq!(release(h4).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
-        assert_eq!(release(h5).unwrap_err().kind(), LibvcxErrorKind::InvalidSchemaHandle);
+        assert_eq!(is_valid_handle(h1), false);
+        assert_eq!(is_valid_handle(h2), false);
+        assert_eq!(is_valid_handle(h3), false);
     }
 
     #[test]
