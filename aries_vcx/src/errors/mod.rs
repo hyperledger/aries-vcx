@@ -5,5 +5,4 @@ mod mapping_diddoc;
 mod mapping_indyvdr;
 mod mapping_messages;
 mod mapping_others;
-mod mapping_ursa;
 mod mapping_vdrtools;
