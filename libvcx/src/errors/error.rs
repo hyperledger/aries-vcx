@@ -93,6 +93,8 @@ pub enum LibvcxErrorKind {
     InvalidProofCredentialData,
     #[error("Proof Request Passed into Libindy Call Was Invalid")]
     InvalidProofRequest,
+    #[error("The proof was rejected")]
+    ProofRejected,
 
     // Schema
     #[error("Could not create schema")]
