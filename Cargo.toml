@@ -8,6 +8,7 @@ members = [
     "diddoc",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
+    "wrappers/vcx-uniffi"
 ]
 
 [workspace.package]

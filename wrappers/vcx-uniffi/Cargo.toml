@@ -1,0 +1,20 @@
+[package]
+name = "vcx-uniffi"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+name = "vcx_uniffi"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+uniffi = "0.22.0"
+aries-vcx = { path = "../../aries_vcx" }
+
+
+[build-dependencies]
+uniffi_build = "0.22.0"
