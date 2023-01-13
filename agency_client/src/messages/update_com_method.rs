@@ -64,7 +64,7 @@ impl UpdateComMethod {
 
 #[cfg(test)]
 mod tests {
-    use crate::messages::update_com_method::ComMethodType;
+    use super::*;
 
     #[test]
     #[cfg(feature = "general_test")]

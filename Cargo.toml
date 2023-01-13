@@ -3,6 +3,7 @@ members = [
     "aries_vcx",
     "libvcx",
     "agency_client",
+    "libvdrtools",
     "messages",
     "shared_vcx",
     "diddoc",

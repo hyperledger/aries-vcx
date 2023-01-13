@@ -31,6 +31,7 @@ impl From<IndyErrorKind> for AriesVcxErrorKind {
             UnknownWalletStorageType => AriesVcxErrorKind::InvalidConfiguration,
             WalletStorageTypeAlreadyRegistered => AriesVcxErrorKind::InvalidConfiguration,
             WalletAccessFailed => AriesVcxErrorKind::WalletAccessFailed,
+            ProofRejected => AriesVcxErrorKind::ProofRejected,
             _ => {
                 let err_code = types::ErrorCode::from(indy) as u32;
                 AriesVcxErrorKind::VdrToolsError(err_code)

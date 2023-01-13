@@ -340,7 +340,7 @@ jobs:
         with:
           skip-docker-setup: true
       - name: "Run workspace tests: general_test"
-        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent -F "general_test"
+        run: RUST_TEST_THREADS=1 cargo test --workspace --exclude aries-vcx-agent --exclude libvdrtools -F general_test
 
   test-integration-aries-vcx:
     needs: workflow-setup
