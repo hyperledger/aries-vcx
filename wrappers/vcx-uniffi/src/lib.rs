@@ -1,14 +1,20 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+uniffi_macros::include_scaffolding!("vcx");
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod core;
+pub mod errors;
+pub mod handlers;
+pub mod runtime;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+use crate::core::profile::*;
+use crate::errors::error::*;
+use aries_vcx::{
+    indy::wallet::WalletConfig,
+    messages::diddoc::{
+        aries::{diddoc::AriesDidDoc, service::AriesService},
+        w3c::model::{Authentication, Ed25519PublicKey},
+    },
+    protocols::connection::pairwise_info::PairwiseInfo,
+};
+use handlers::connection::{connection::*, *};
+
+// fn remove_me() {}
