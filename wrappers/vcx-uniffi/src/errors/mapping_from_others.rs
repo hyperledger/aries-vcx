@@ -9,3 +9,11 @@ impl<T> From<PoisonError<T>> for VcxUniFFIError {
         }
     }
 }
+
+impl From<serde_json::Error> for VcxUniFFIError {
+    fn from(e: serde_json::Error) -> Self {
+        VcxUniFFIError::SerializationError {
+            error_msg: e.to_string(),
+        }
+    }
+}

@@ -4390,6 +4390,7 @@ version = "0.51.1"
 dependencies = [
  "aries-vcx",
  "once_cell",
+ "serde_json",
  "thiserror",
  "tokio",
  "uniffi",

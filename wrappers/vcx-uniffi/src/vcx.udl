@@ -59,11 +59,30 @@ interface Connection {
 
     [Throws=VcxUniFFIError]
     PairwiseInfo pairwise_info();
+
+    [Throws=VcxUniFFIError]
+    void process_invite(string invitation);
+
+    [Throws=VcxUniFFIError]
+    void process_request(ProfileHolder profile, string request, string service_endpoint, sequence<string> routing_keys);
+
+    [Throws=VcxUniFFIError]
+    void process_response(ProfileHolder profile, string response);
+
+    [Throws=VcxUniFFIError]
+    void send_request(ProfileHolder profile, string service_endpoint, sequence<string> routing_keys);
+
+    [Throws=VcxUniFFIError]
+    void send_response(ProfileHolder profile);
+
+    [Throws=VcxUniFFIError]
+    void send_ack(ProfileHolder profile);
 };
 
 [Error]
 enum VcxUniFFIError {
     "AriesVcxError",
+    "SerializationError",
     "InternalError",
 };
 
