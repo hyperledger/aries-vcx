@@ -1,3 +1,4 @@
+use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::protocols::connection::invitee::states::initial::InitialState;
 use crate::protocols::connection::invitee::states::responded::RespondedState;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -5,10 +6,38 @@ use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::Response;
 
+use super::InviteeState;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
     pub request: Request,
     pub did_doc: AriesDidDoc,
+}
+
+impl RequestedState {
+    /// Attempts to convert [`Self`] based on a [`Response`] into a [`RespondedState`].
+    ///
+    /// # Errors
+    /// An error is returned if conversion fails.
+    pub fn try_into_responded(self, response: Response) -> VcxResult<RespondedState> {
+        if !response.from_thread(&self.request.get_thread_id()) {
+            let err_msg = format!(
+                "Cannot handle response: thread id does not match: {:?}",
+                response.thread
+            );
+
+            let err = AriesVcxError::from_msg(AriesVcxErrorKind::InvalidJson, err_msg);
+
+            Err(err)
+        } else {
+            let state = RespondedState {
+                response,
+                request: self.request,
+                did_doc: self.did_doc,
+            };
+            Ok(state)
+        }
+    }
 }
 
 impl From<(RequestedState, ProblemReport)> for InitialState {
@@ -29,5 +58,11 @@ impl From<(RequestedState, Response)> for RespondedState {
             did_doc: state.did_doc,
             request: state.request,
         }
+    }
+}
+
+impl InviteeState for RequestedState {
+    fn their_did_doc(&self) -> Option<AriesDidDoc> {
+        Some(self.did_doc.clone())
     }
 }

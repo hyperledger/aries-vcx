@@ -6,6 +6,8 @@ use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::response::Response;
 use messages::protocols::discovery::disclose::ProtocolDescriptor;
 
+use super::InviteeState;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
     pub did_doc: AriesDidDoc,
@@ -43,5 +45,16 @@ impl From<RespondedState> for CompleteState {
             did_doc: state.response.connection.did_doc,
             protocols: None,
         }
+    }
+}
+
+impl InviteeState for CompleteState {
+    fn their_did_doc(&self) -> Option<AriesDidDoc> {
+        Some(self.did_doc.clone())
+    }
+
+    /// Overriding the default implementation.
+    fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
+        Some(self.bootstrap_did_doc.clone())
     }
 }

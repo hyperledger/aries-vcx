@@ -3,6 +3,8 @@ use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::invite::Invitation;
 use messages::protocols::connection::problem_report::ProblemReport;
 
+use super::InviteeState;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
     problem_report: Option<ProblemReport>,
@@ -22,5 +24,11 @@ impl InitialState {
             problem_report,
             did_doc,
         }
+    }
+}
+
+impl InviteeState for InitialState {
+    fn their_did_doc(&self) -> Option<AriesDidDoc> {
+        self.did_doc.clone()
     }
 }

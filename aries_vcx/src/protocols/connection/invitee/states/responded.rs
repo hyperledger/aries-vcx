@@ -4,12 +4,16 @@ use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::request::Request;
 use messages::protocols::connection::response::Response;
 
+use super::InviteeState;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
     pub response: Response,
     pub request: Request,
     pub did_doc: AriesDidDoc,
 }
+
+
 
 impl From<(RespondedState, ProblemReport)> for InitialState {
     fn from((_state, problem_report): (RespondedState, ProblemReport)) -> InitialState {
@@ -18,5 +22,11 @@ impl From<(RespondedState, ProblemReport)> for InitialState {
             problem_report
         );
         InitialState::new(Some(problem_report), None)
+    }
+}
+
+impl InviteeState for RespondedState {
+    fn their_did_doc(&self) -> Option<AriesDidDoc> {
+        Some(self.did_doc.clone())
     }
 }
