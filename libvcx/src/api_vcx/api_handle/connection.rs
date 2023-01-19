@@ -87,9 +87,10 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
 }
 
 // ----------------------------- MSG PROCESSING ------------------------------------
-pub fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<u32> {
+pub fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     trace!("process_invite >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .process_invite(deserialize(invitation)?)?,
@@ -101,9 +102,10 @@ pub async fn process_request(
     request: &str,
     service_endpoint: String,
     routing_keys: Vec<String>,
-) -> LibvcxResult<u32> {
+) -> LibvcxResult<()> {
     trace!("process_request >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .process_request(
@@ -117,9 +119,10 @@ pub async fn process_request(
     )
 }
 
-pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<u32> {
+pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
     trace!("process_response >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .process_response(&get_main_profile()?, deserialize(response)?, None)
@@ -127,9 +130,10 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<u32> 
     )
 }
 
-pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<u32> {
+pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
     trace!("process_ack >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .process_ack(deserialize(message)?)
@@ -137,9 +141,10 @@ pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<u32> {
     )
 }
 
-pub async fn send_response(handle: u32) -> LibvcxResult<u32> {
+pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .send_response(&get_main_profile()?, None)
@@ -147,9 +152,10 @@ pub async fn send_response(handle: u32) -> LibvcxResult<u32> {
     )
 }
 
-pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<u32> {
+pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
     trace!("send_request >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .send_request(&get_main_profile()?, service_endpoint, routing_keys, None)
@@ -157,9 +163,10 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     )
 }
 
-pub async fn send_ack(handle: u32) -> LibvcxResult<u32> {
+pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     trace!("send_ack >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .send_ack(&get_main_profile()?, None)
@@ -167,9 +174,10 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<u32> {
     )
 }
 
-pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<u32> {
+pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
     trace!("create_invite >>>");
-    store_connection(
+    CONNECTION_MAP.insert(
+        handle,
         CONNECTION_MAP
             .get_cloned(handle)?
             .create_invite(service_endpoint, routing_keys)

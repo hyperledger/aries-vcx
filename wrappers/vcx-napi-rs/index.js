@@ -11,7 +11,8 @@ function isMusl() {
   // For Node 10
   if (!process.report || typeof process.report.getReport !== 'function') {
     try {
-      return readFileSync('/usr/bin/ldd', 'utf8').includes('musl')
+      const lddPath = require('child_process').execSync('which ldd').toString().trim();
+      return readFileSync(lddPath, 'utf8').includes('musl')
     } catch (e) {
       return true
     }
@@ -101,6 +102,15 @@ switch (platform) {
     }
     break
   case 'darwin':
+    localFileExisted = existsSync(join(__dirname, 'vcx-napi-rs.darwin-universal.node'))
+    try {
+      if (localFileExisted) {
+        nativeBinding = require('./vcx-napi-rs.darwin-universal.node')
+      } else {
+        nativeBinding = require('@hyperledger/vcx-napi-rs-darwin-universal')
+      }
+      break
+    } catch {}
     switch (arch) {
       case 'x64':
         localFileExisted = existsSync(join(__dirname, 'vcx-napi-rs.darwin-x64.node'))
@@ -236,13 +246,31 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { updateWebhookUrl, createAgencyClientForMainWallet, provisionCloudAgent, messagesUpdateStatus, generatePublicInvitation, credentialCreateWithOffer, credentialRelease, credentialSendRequest, credentialDeclineOffer, credentialSerialize, credentialDeserialize, v2CredentialUpdateStateWithMessage, v2CredentialUpdateState, credentialGetState, credentialGetOffers, credentialGetAttributes, credentialGetAttachment, credentialGetTailsLocation, credentialGetTailsHash, credentialGetRevRegId, credentialGetThreadId, credentialdefCreateV2, credentialdefPublish, credentialdefDeserialize, credentialdefRelease, credentialdefSerialize, credentialdefGetCredDefId, credentialdefUpdateState, credentialdefGetState, disclosedProofCreateWithRequest, disclosedProofRelease, disclosedProofSendProof, disclosedProofRejectProof, disclosedProofGetProofMsg, disclosedProofSerialize, disclosedProofDeserialize, v2DisclosedProofUpdateState, v2DisclosedProofUpdateStateWithMessage, disclosedProofGetState, disclosedProofGetRequests, disclosedProofRetrieveCredentials, disclosedProofGetProofRequestAttachment, disclosedProofGenerateProof, disclosedProofDeclinePresentationRequest, disclosedProofGetThreadId, issuerCredentialDeserialize, issuerCredentialSerialize, issuerCredentialUpdateStateV2, issuerCredentialUpdateStateWithMessageV2, issuerCredentialGetState, issuerCredentialGetRevRegId, issuerCredentialCreate, issuerCredentialRevokeLocal, issuerCredentialIsRevokable, issuerCredentialSendCredential, issuerCredentialSendOfferV2, issuerCredentialMarkOfferMsgSent, issuerCredentialBuildOfferMsgV2, issuerCredentialGetOfferMsg, issuerCredentialRelease, issuerCredentialGetThreadId, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta, createService, getServiceFromLedger, getVerkeyFromLedger, getLedgerTxn, initDefaultLogger, mediatedConnectionGeneratePublicInvite, mediatedConnectionGetPwDid, mediatedConnectionGetTheirPwDid, mediatedConnectionGetThreadId, mediatedConnectionGetState, mediatedConnectionGetSourceId, mediatedConnectionCreate, mediatedConnectionCreateWithInvite, mediatedConnectionSendMessage, mediatedConnectionCreateWithConnectionRequestV2, mediatedConnectionSendHandshakeReuse, mediatedConnectionUpdateStateWithMessage, mediatedConnectionHandleMessage, mediatedConnectionUpdateState, mediatedConnectionDeleteConnection, mediatedConnectionConnect, mediatedConnectionSerialize, mediatedConnectionDeserialize, mediatedConnectionRelease, mediatedConnectionInviteDetails, mediatedConnectionSendPing, mediatedConnectionSendDiscoveryFeatures, mediatedConnectionInfo, mediatedConnectionMessagesDownload, mediatedConnectionSignData, mediatedConnectionVerifySignature, outOfBandReceiverCreate, outOfBandReceiverExtractMessage, outOfBandReceiverConnectionExists, outOfBandReceiverBuildConnection, outOfBandReceiverGetThreadId, outOfBandReceiverSerialize, outOfBandReceiverDeserialize, outOfBandReceiverRelease, outOfBandSenderCreate, outOfBandSenderAppendMessage, outOfBandSenderAppendService, outOfBandSenderAppendServiceDid, outOfBandSenderToMessage, outOfBandSenderGetThreadId, outOfBandSenderSerialize, outOfBandSenderDeserialize, outOfBandSenderRelease, openMainPool, closeMainPool, proofCreate, proofGetProofMsg, proofRelease, proofSendRequest, proofGetRequestMsg, proofSerialize, proofDeserialize, v2ProofUpdateState, v2ProofUpdateStateWithMessage, proofGetState, proofGetProofState, proofGetThreadId, markPresentationRequestMsgSent, revocationRegistryCreate, revocationRegistryPublish, revocationRegistryPublishRevocations, revocationRegistryGetRevRegId, revocationRegistryGetTailsHash, revocationRegistrySerialize, revocationRegistryDeserialize, revocationRegistryRelease, schemaGetAttributes, schemaPrepareForEndorser, schemaCreate, schemaGetSchemaId, schemaDeserialize, schemaSerialize, schemaRelease, schemaUpdateState, schemaGetState, enableMocks, shutdown, getVersion, walletOpenAsMain, walletCreateMain, walletCloseMain, vcxInitIssuerConfig, configureIssuerWallet, unpack, createPairwiseInfo, walletImport, walletExport, getVerkeyFromWallet, rotateVerkey, rotateVerkeyStart, rotateVerkeyApply } = nativeBinding
+const { updateWebhookUrl, createAgencyClientForMainWallet, provisionCloudAgent, messagesUpdateStatus, generatePublicInvitation, connectionCreateInviter, connectionCreateInvitee, connectionGetThreadId, connectionGetPairwiseInfo, connectionGetRemoteDid, connectionGetState, connectionGetInvitation, connectionProcessInvite, connectionProcessRequest, connectionProcessResponse, connectionProcessAck, connectionSendResponse, connectionSendRequest, connectionSendAck, connectionCreateInvite, connectionSerialize, connectionDeserialize, connectionRelease, credentialCreateWithOffer, credentialRelease, credentialSendRequest, credentialDeclineOffer, credentialSerialize, credentialDeserialize, v2CredentialUpdateStateWithMessage, v2CredentialUpdateState, credentialGetState, credentialGetOffers, credentialGetAttributes, credentialGetAttachment, credentialGetTailsLocation, credentialGetTailsHash, credentialGetRevRegId, credentialGetThreadId, credentialdefCreateV2, credentialdefPublish, credentialdefDeserialize, credentialdefRelease, credentialdefSerialize, credentialdefGetCredDefId, credentialdefUpdateState, credentialdefGetState, disclosedProofCreateWithRequest, disclosedProofRelease, disclosedProofSendProof, disclosedProofRejectProof, disclosedProofGetProofMsg, disclosedProofSerialize, disclosedProofDeserialize, v2DisclosedProofUpdateState, v2DisclosedProofUpdateStateWithMessage, disclosedProofGetState, disclosedProofGetRequests, disclosedProofRetrieveCredentials, disclosedProofGetProofRequestAttachment, disclosedProofGenerateProof, disclosedProofDeclinePresentationRequest, disclosedProofGetThreadId, issuerCredentialDeserialize, issuerCredentialSerialize, issuerCredentialUpdateStateV2, issuerCredentialUpdateStateWithMessageV2, issuerCredentialGetState, issuerCredentialGetRevRegId, issuerCredentialCreate, issuerCredentialRevokeLocal, issuerCredentialIsRevokable, issuerCredentialSendCredential, issuerCredentialSendOfferV2, issuerCredentialMarkOfferMsgSent, issuerCredentialBuildOfferMsgV2, issuerCredentialGetOfferMsg, issuerCredentialRelease, issuerCredentialGetThreadId, getLedgerAuthorAgreement, setActiveTxnAuthorAgreementMeta, createService, getServiceFromLedger, getVerkeyFromLedger, getLedgerTxn, initDefaultLogger, mediatedConnectionGeneratePublicInvite, mediatedConnectionGetPwDid, mediatedConnectionGetTheirPwDid, mediatedConnectionGetThreadId, mediatedConnectionGetState, mediatedConnectionGetSourceId, mediatedConnectionCreate, mediatedConnectionCreateWithInvite, mediatedConnectionSendMessage, mediatedConnectionCreateWithConnectionRequestV2, mediatedConnectionSendHandshakeReuse, mediatedConnectionUpdateStateWithMessage, mediatedConnectionHandleMessage, mediatedConnectionUpdateState, mediatedConnectionDeleteConnection, mediatedConnectionConnect, mediatedConnectionSerialize, mediatedConnectionDeserialize, mediatedConnectionRelease, mediatedConnectionInviteDetails, mediatedConnectionSendPing, mediatedConnectionSendDiscoveryFeatures, mediatedConnectionInfo, mediatedConnectionMessagesDownload, mediatedConnectionSignData, mediatedConnectionVerifySignature, outOfBandReceiverCreate, outOfBandReceiverExtractMessage, outOfBandReceiverConnectionExists, outOfBandReceiverBuildConnection, outOfBandReceiverGetThreadId, outOfBandReceiverSerialize, outOfBandReceiverDeserialize, outOfBandReceiverRelease, outOfBandSenderCreate, outOfBandSenderAppendMessage, outOfBandSenderAppendService, outOfBandSenderAppendServiceDid, outOfBandSenderToMessage, outOfBandSenderGetThreadId, outOfBandSenderSerialize, outOfBandSenderDeserialize, outOfBandSenderRelease, openMainPool, closeMainPool, proofCreate, proofGetProofMsg, proofRelease, proofSendRequest, proofGetRequestMsg, proofSerialize, proofDeserialize, v2ProofUpdateState, v2ProofUpdateStateWithMessage, proofGetState, proofGetProofState, proofGetThreadId, markPresentationRequestMsgSent, revocationRegistryCreate, revocationRegistryPublish, revocationRegistryPublishRevocations, revocationRegistryGetRevRegId, revocationRegistryGetTailsHash, revocationRegistrySerialize, revocationRegistryDeserialize, revocationRegistryRelease, schemaGetAttributes, schemaPrepareForEndorser, schemaCreate, schemaGetSchemaId, schemaDeserialize, schemaSerialize, schemaRelease, schemaUpdateState, schemaGetState, enableMocks, shutdown, getVersion, walletOpenAsMain, walletCreateMain, walletCloseMain, vcxInitIssuerConfig, configureIssuerWallet, unpack, createPairwiseInfo, walletImport, walletExport, getVerkeyFromWallet, rotateVerkey, rotateVerkeyStart, rotateVerkeyApply } = nativeBinding
 
 module.exports.updateWebhookUrl = updateWebhookUrl
 module.exports.createAgencyClientForMainWallet = createAgencyClientForMainWallet
 module.exports.provisionCloudAgent = provisionCloudAgent
 module.exports.messagesUpdateStatus = messagesUpdateStatus
 module.exports.generatePublicInvitation = generatePublicInvitation
+module.exports.connectionCreateInviter = connectionCreateInviter
+module.exports.connectionCreateInvitee = connectionCreateInvitee
+module.exports.connectionGetThreadId = connectionGetThreadId
+module.exports.connectionGetPairwiseInfo = connectionGetPairwiseInfo
+module.exports.connectionGetRemoteDid = connectionGetRemoteDid
+module.exports.connectionGetState = connectionGetState
+module.exports.connectionGetInvitation = connectionGetInvitation
+module.exports.connectionProcessInvite = connectionProcessInvite
+module.exports.connectionProcessRequest = connectionProcessRequest
+module.exports.connectionProcessResponse = connectionProcessResponse
+module.exports.connectionProcessAck = connectionProcessAck
+module.exports.connectionSendResponse = connectionSendResponse
+module.exports.connectionSendRequest = connectionSendRequest
+module.exports.connectionSendAck = connectionSendAck
+module.exports.connectionCreateInvite = connectionCreateInvite
+module.exports.connectionSerialize = connectionSerialize
+module.exports.connectionDeserialize = connectionDeserialize
+module.exports.connectionRelease = connectionRelease
 module.exports.credentialCreateWithOffer = credentialCreateWithOffer
 module.exports.credentialRelease = credentialRelease
 module.exports.credentialSendRequest = credentialSendRequest
