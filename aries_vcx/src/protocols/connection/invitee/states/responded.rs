@@ -1,4 +1,5 @@
 use crate::protocols::connection::invitee::states::initial::InitialState;
+use crate::protocols::connection::trait_bounds::TheirDidDoc;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::request::Request;
@@ -17,6 +18,12 @@ impl From<(RespondedState, ProblemReport)> for InitialState {
             "ConnectionInvitee: transit state from RespondedState to InitialState, problem_report: {:?}",
             problem_report
         );
-        InitialState::new(Some(problem_report), None)
+        InitialState::new(Some(problem_report), _state.did_doc)
+    }
+}
+
+impl TheirDidDoc for RespondedState {
+    fn their_did_doc(&self) -> &AriesDidDoc {
+        &self.did_doc
     }
 }

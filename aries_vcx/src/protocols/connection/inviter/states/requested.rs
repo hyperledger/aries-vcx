@@ -1,5 +1,6 @@
 use crate::protocols::connection::inviter::states::initial::InitialState;
 use crate::protocols::connection::inviter::states::responded::RespondedState;
+use crate::protocols::connection::trait_bounds::TheirDidDoc;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
@@ -28,5 +29,11 @@ impl From<RequestedState> for RespondedState {
             signed_response: state.signed_response,
             did_doc: state.did_doc,
         }
+    }
+}
+
+impl TheirDidDoc for RequestedState {
+    fn their_did_doc(&self) -> &AriesDidDoc {
+        &self.did_doc
     }
 }

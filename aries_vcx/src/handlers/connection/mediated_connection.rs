@@ -245,7 +245,7 @@ impl MediatedConnection {
         }
     }
 
-    pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
+    pub fn get_remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         match &self.connection_sm {
             SmConnection::Inviter(sm_inviter) => sm_inviter.get_remote_protocols(),
             SmConnection::Invitee(sm_invitee) => sm_invitee.get_remote_protocols(),
@@ -898,7 +898,7 @@ impl MediatedConnection {
                 recipient_keys: did_doc.recipient_keys()?,
                 routing_keys: did_doc.routing_keys(),
                 service_endpoint: did_doc.get_endpoint(),
-                protocols: self.get_remote_protocols(),
+                protocols: self.get_remote_protocols().map(ToOwned::to_owned),
             }),
             None => None,
         };

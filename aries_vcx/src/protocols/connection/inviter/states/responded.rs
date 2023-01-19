@@ -7,6 +7,7 @@ use messages::protocols::connection::response::SignedResponse;
 
 use crate::protocols::connection::inviter::states::complete::CompleteState;
 use crate::protocols::connection::inviter::states::initial::InitialState;
+use crate::protocols::connection::trait_bounds::TheirDidDoc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
@@ -32,5 +33,11 @@ impl From<RespondedState> for CompleteState {
             thread_id: Some(state.signed_response.get_thread_id()),
             protocols: None,
         }
+    }
+}
+
+impl TheirDidDoc for RespondedState {
+    fn their_did_doc(&self) -> &AriesDidDoc {
+        &self.did_doc
     }
 }
