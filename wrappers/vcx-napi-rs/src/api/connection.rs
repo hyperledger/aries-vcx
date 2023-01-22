@@ -1,12 +1,24 @@
 use napi_derive::napi;
+
 use vcx::api_vcx::api_handle::connection;
+use vcx::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use vcx::errors::error::{LibvcxError, LibvcxErrorKind};
+use vcx::serde_json;
 
 use crate::error::to_napi_err;
 
 #[napi]
-pub async fn connection_create_inviter() -> napi::Result<u32> {
+pub async fn connection_create_inviter(pw_info: String) -> napi::Result<u32> {
     trace!("connection_create_inviter >>>");
-    connection::create_inviter().await.map_err(to_napi_err)
+    let pw_info: PairwiseInfo = serde_json::from_str(&pw_info)
+        .map_err(|err| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::InvalidJson,
+                format!("Cannot deserialize pw info: {:?}", err),
+            )
+        })
+        .map_err(to_napi_err)?;
+    connection::create_inviter(pw_info).await.map_err(to_napi_err)
 }
 
 #[napi]

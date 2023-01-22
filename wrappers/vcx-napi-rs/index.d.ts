@@ -8,7 +8,7 @@ export function createAgencyClientForMainWallet(config: string): void
 export function provisionCloudAgent(config: string): Promise<string>
 export function messagesUpdateStatus(statusCode: string, uidsByConns: string): Promise<void>
 export function generatePublicInvitation(publicDid: string, label: string): string
-export function connectionCreateInviter(): Promise<number>
+export function connectionCreateInviter(pwInfo: string): Promise<number>
 export function connectionCreateInvitee(invitation: string): Promise<number>
 export function connectionGetThreadId(handle: number): string
 export function connectionGetPairwiseInfo(handle: number): string

@@ -2,6 +2,7 @@ import * as ffiNapi from '@hyperledger/vcx-napi-rs';
 import { VCXInternalError } from '../errors';
 import { ISerializedData, ConnectionStateType } from './common';
 import { VcxBaseWithState } from './vcx-base-with-state';
+import { IPwInfo } from './utils';
 
 export type INonmediatedConnectionInvite = string;
 
@@ -13,10 +14,10 @@ export interface IEndpointInfo {
 }
 
 export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnectionData, ConnectionStateType> {
-  public static async createInviter(): Promise<NonmediatedConnection> {
+  public static async createInviter(pwInfo: IPwInfo): Promise<NonmediatedConnection> {
     try {
       const connection = new NonmediatedConnection("");
-      connection._setHandle(await ffiNapi.connectionCreateInviter());
+      connection._setHandle(await ffiNapi.connectionCreateInviter(JSON.stringify(pwInfo)));
       return connection;
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -84,7 +85,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
 
   public async processAck(message: string): Promise<void> {
     try {
-      await ffiNapi.connectionProcessResponse(this.handle, message);
+      await ffiNapi.connectionProcessAck(this.handle, message);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -127,6 +128,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   public getInvitation(): INonmediatedConnectionInvite {
     try {
       return ffiNapi.connectionGetInvitation(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public getState(): ConnectionStateType {
+    try {
+      return ffiNapi.connectionGetState(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

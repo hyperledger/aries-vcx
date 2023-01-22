@@ -7,11 +7,10 @@ const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require(
 const sleep = require('sleep-promise')
 const assert = require('assert')
 
-module.exports.createFaber = async function createFaber () {
+module.exports.createFaber = async function createFaber (serviceEndpoint = 'http://localhost:5400') {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
-  const agentId = 'faber-public-agent'
   let credDefId, revRegId
   const proofId = 'proof-from-alice'
   const logger = require('../../demo/logger')('Faber')
@@ -22,6 +21,10 @@ module.exports.createFaber = async function createFaber () {
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    endpointInfo: {
+      serviceEndpoint,
+      routingKeys: []
+    },
     logger
   }
 
@@ -270,12 +273,22 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
-  async function createConnectionFromReceivedRequest (request) {
-    logger.info('Faber is going to download connection requests')
-    await vcxAgent.agentInitVcx()
+  async function createNonmediatedConnectionFromRequest (request, pwInfo) {
+    logger.info(`Faber is going to create a connection from a request: ${request}`)
 
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(request))
-    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreateFromRequest(connectionId, request, pwInfo)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function nonmediatedConnectionProcessAck (ack) {
+    logger.info(`Faber is processing ack: ${ack}`)
+
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionProcessAck(connectionId, ack)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Finished)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -355,7 +368,8 @@ module.exports.createFaber = async function createFaber () {
     createPublicInvite,
     createOobMessageWithDid,
     createOobProofRequest,
-    createConnectionFromReceivedRequest,
+    createNonmediatedConnectionFromRequest,
+    nonmediatedConnectionProcessAck,
     createConnectionFromReceivedRequestV2,
     updateConnection,
     handleMessage,

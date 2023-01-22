@@ -1,9 +1,11 @@
 [package]
 name = "vcx-napi-rs"
-version.workspace = true
-authors.workspace = true
-license.workspace = true
-edition.workspace = true
+version = "1.0.0"
+edition = "2021"
+# version.workspace = true
+# authors.workspace = true
+# license.workspace = true
+# edition.workspace = true
 
 [lib]
 name = "vcx_napi_rs"

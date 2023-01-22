@@ -1,4 +1,7 @@
-use aries_vcx::{common::ledger::transactions::into_did_doc, handlers::connection::connection::Connection};
+use aries_vcx::{
+    common::ledger::transactions::into_did_doc, handlers::connection::connection::Connection,
+    protocols::connection::pairwise_info::PairwiseInfo,
+};
 
 use crate::{
     api_vcx::{api_global::profile::get_main_profile, api_handle::object_cache::ObjectCache},
@@ -6,7 +9,7 @@ use crate::{
 };
 
 lazy_static! {
-    pub static ref CONNECTION_MAP: ObjectCache<Connection> =
+    static ref CONNECTION_MAP: ObjectCache<Connection> =
         ObjectCache::<Connection>::new("nonmediated-connections-cache");
 }
 
@@ -37,9 +40,9 @@ where
 }
 
 // ----------------------------- CONSTRUCTORS ------------------------------------
-pub async fn create_inviter() -> LibvcxResult<u32> {
+pub async fn create_inviter(pw_info: PairwiseInfo) -> LibvcxResult<u32> {
     trace!("create_inviter >>>");
-    store_connection(Connection::create_inviter(&get_main_profile()?).await?)
+    store_connection(Connection::create_inviter(pw_info).await?)
 }
 
 pub async fn create_invitee(invitation: &str) -> LibvcxResult<u32> {
