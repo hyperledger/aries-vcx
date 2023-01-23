@@ -120,6 +120,7 @@ export function outOfBandReceiverCreate(msg: string): number
 export function outOfBandReceiverExtractMessage(handle: number): string
 export function outOfBandReceiverConnectionExists(handle: number, connHandles: Array<number>): Promise<number>
 export function outOfBandReceiverBuildConnection(handle: number): Promise<string>
+export function outOfBandReceiverBuildNonmediatedConnection(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<string>
 export function outOfBandReceiverGetThreadId(handle: number): string
 export function outOfBandReceiverSerialize(handle: number): string
 export function outOfBandReceiverDeserialize(oobData: string): number

@@ -4,6 +4,7 @@ import { IOOBSerializedData } from './out-of-band-sender';
 import { Connection } from './mediated-connection';
 import { VcxBase } from './vcx-base';
 import { ISerializedData } from './common';
+import { IEndpointInfo, NonmediatedConnection } from './connection';
 
 export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
   public static createWithMessage(msg: string): OutOfBandReceiver {
@@ -47,6 +48,16 @@ export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
     try {
       const connection = await ffi.outOfBandReceiverBuildConnection(this.handle);
       return Connection.deserialize(JSON.parse(connection));
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async buildNonmediatedConnection(endpointInfo: IEndpointInfo): Promise<NonmediatedConnection> {
+    try {
+      const { serviceEndpoint, routingKeys } = endpointInfo;
+      const connection = await ffi.outOfBandReceiverBuildNonmediatedConnection(this.handle, serviceEndpoint, routingKeys);
+      return NonmediatedConnection.deserialize({ data: connection, version: '1.0', source_id: '' });
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

@@ -138,7 +138,9 @@ async function createVcxAgent({ agentName, genesisPath, agencyUrl, seed, walletE
   const serviceOutOfBand = createServiceOutOfBand({
     logger,
     saveConnection: storageService.saveConnection,
-    loadConnection: storageService.loadConnection
+    loadConnection: storageService.loadConnection,
+    saveNonmediatedConnection: storageService.saveNonmediatedConnection,
+    endpointInfo
   })
 
   return {

@@ -63,6 +63,16 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function createNonmediatedConnectionUsingOobMessage (oobMsg) {
+    logger.info('createNonmediatedConnectionUsingOobMessage >> Alice going to create connection using oob message')
+    logger.debug(`createNonmediatedConnectionUsingOobMessage >> oobMsg = ${oobMsg}`)
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceOutOfBand.createNonmediatedConnectionFromOobMsg(connectionId, oobMsg)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function createOrReuseConnectionUsingOobMsg (oobMsg) {
     logger.info('createOrReuseConnectionUsingOobMsg >> Alice going to create or reuse connection using oob message')
     logger.debug(`createOrReuseConnectionUsingOobMsg >> oobMsg = ${oobMsg}`)
@@ -255,6 +265,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     createNonmediatedConnectionFromInvite,
     nonmediatedConnectionProcessResponse,
     createConnectionUsingOobMessage,
+    createNonmediatedConnectionUsingOobMessage,
     createOrReuseConnectionUsingOobMsg,
     acceptOobCredentialOffer,
     updateConnection,
