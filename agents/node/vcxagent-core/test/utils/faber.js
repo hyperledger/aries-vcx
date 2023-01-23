@@ -273,6 +273,28 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return agencyMessages
   }
 
+  async function createNonmediatedConnectionWithInvite () {
+    logger.info(`Faber is going to create a connection with invite`)
+
+    await vcxAgent.agentInitVcx()
+    const invite = await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreatePwInvite(connectionId)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
+
+    await vcxAgent.agentShutdownVcx()
+    return invite
+  }
+
+  async function nonmediatedConnectionProcessRequest (request) {
+    logger.info(`Faber is going to process a connection request`)
+
+    await vcxAgent.agentInitVcx()
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionProcessRequest(connectionId, request)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function createNonmediatedConnectionFromRequest (request, pwInfo) {
     logger.info(`Faber is going to create a connection from a request: ${request}`)
 
@@ -368,6 +390,8 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     createPublicInvite,
     createOobMessageWithDid,
     createOobProofRequest,
+    createNonmediatedConnectionWithInvite,
+    nonmediatedConnectionProcessRequest,
     createNonmediatedConnectionFromRequest,
     nonmediatedConnectionProcessAck,
     createConnectionFromReceivedRequestV2,

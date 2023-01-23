@@ -14,10 +14,10 @@ export interface IEndpointInfo {
 }
 
 export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnectionData, ConnectionStateType> {
-  public static async createInviter(pwInfo: IPwInfo): Promise<NonmediatedConnection> {
+  public static async createInviter(pwInfo?: IPwInfo): Promise<NonmediatedConnection> {
     try {
       const connection = new NonmediatedConnection("");
-      connection._setHandle(await ffiNapi.connectionCreateInviter(JSON.stringify(pwInfo)));
+      connection._setHandle(await ffiNapi.connectionCreateInviter(pwInfo ? JSON.stringify(pwInfo) : null));
       return connection;
     } catch (err: any) {
       throw new VCXInternalError(err);

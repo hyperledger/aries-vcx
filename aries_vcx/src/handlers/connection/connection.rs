@@ -41,7 +41,8 @@ pub enum ConnectionState {
 
 impl Connection {
     // ----------------------------- CONSTRUCTORS ------------------------------------
-    pub async fn create_inviter(pw_info: PairwiseInfo) -> VcxResult<Self> {
+    pub async fn create_inviter(profile: &Arc<dyn Profile>, pw_info: Option<PairwiseInfo>) -> VcxResult<Self> {
+        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
         trace!("Connection::create_inviter >>>");
         Ok(Self {
             connection_sm: SmConnection::Inviter(SmConnectionInviter::new("", pw_info)),
@@ -395,13 +396,6 @@ mod unit_tests {
     use super::test_utils::*;
     use super::*;
 
-    pub fn _pw_info() -> PairwiseInfo {
-        PairwiseInfo {
-            pw_did: "FgjjUduQaJnH4HiEVfViTp".to_string(),
-            pw_vk: "91E5YBaQVnY2dLbv2mrfFQB1y2wPyYuYVPKziamrZiuS".to_string(),
-        }
-    }
-
     #[tokio::test]
     #[ignore]
     async fn test_create_with_pairwise_invite() {
@@ -466,7 +460,7 @@ mod unit_tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create_inviter(_pw_info())
+        let connection = Connection::create_inviter(&mock_profile(), None)
             .await
             .unwrap()
             .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
@@ -482,7 +476,7 @@ mod unit_tests {
     #[tokio::test]
     async fn test_inviter_deserialize_serialized() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_inviter(_pw_info())
+        let connection = Connection::create_inviter(&mock_profile(), None)
             .await
             .unwrap()
             .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
@@ -542,7 +536,7 @@ mod unit_tests {
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(_pw_info())
+        let inviter = Connection::create_inviter(&mock_profile(), None)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())

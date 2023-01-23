@@ -40,9 +40,9 @@ where
 }
 
 // ----------------------------- CONSTRUCTORS ------------------------------------
-pub async fn create_inviter(pw_info: PairwiseInfo) -> LibvcxResult<u32> {
+pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> {
     trace!("create_inviter >>>");
-    store_connection(Connection::create_inviter(pw_info).await?)
+    store_connection(Connection::create_inviter(&get_main_profile()?, pw_info).await?)
 }
 
 pub async fn create_invitee(invitation: &str) -> LibvcxResult<u32> {
