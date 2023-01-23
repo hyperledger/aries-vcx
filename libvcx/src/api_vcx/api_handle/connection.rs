@@ -177,6 +177,15 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     )
 }
 
+pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<()> {
+    trace!("send_generic_message >>>");
+    CONNECTION_MAP
+        .get_cloned(handle)?
+        .send_generic_message(&get_main_profile()?, None, content)
+        .await
+        .map_err(|e| e.into())
+}
+
 pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
     trace!("create_invite >>>");
     CONNECTION_MAP.insert(

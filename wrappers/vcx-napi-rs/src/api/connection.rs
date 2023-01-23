@@ -121,6 +121,14 @@ pub async fn connection_send_ack(handle: u32) -> napi::Result<()> {
 }
 
 #[napi]
+pub async fn connection_send_generic_message(handle: u32, content: String) -> napi::Result<()> {
+    trace!("connection_send_generic_message >>> handle: {:?}", handle);
+    connection::send_generic_message(handle, content)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
 pub async fn connection_create_invite(
     handle: u32,
     service_endpoint: String,

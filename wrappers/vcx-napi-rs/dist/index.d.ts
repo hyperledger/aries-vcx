@@ -17,6 +17,7 @@ export const connectionProcessAck: any;
 export const connectionSendResponse: any;
 export const connectionSendRequest: any;
 export const connectionSendAck: any;
+export const connectionSendGenericMessage: any;
 export const connectionCreateInvite: any;
 export const connectionSerialize: any;
 export const connectionDeserialize: any;

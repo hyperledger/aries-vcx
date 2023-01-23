@@ -379,12 +379,22 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function nonmediatedConnectionSendMessage (message) {
+    logger.info('Faber is going to send message')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.sendMessage(connectionId, message)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
     buildLedgerPrimitives,
     rotateRevReg,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
     sendMessage,
+    nonmediatedConnectionSendMessage,
     verifySignature,
     createInvite,
     createPublicInvite,

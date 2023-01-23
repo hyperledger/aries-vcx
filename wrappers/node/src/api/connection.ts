@@ -116,6 +116,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
+  public async sendMessage(content: string): Promise<void> {
+    try {
+      return await ffiNapi.connectionSendGenericMessage(this.handle, content);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async createInvite(endpointInfo: IEndpointInfo): Promise<void> {
     try {
       const { serviceEndpoint, routingKeys } = endpointInfo;

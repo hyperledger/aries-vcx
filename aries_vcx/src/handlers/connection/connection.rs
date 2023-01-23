@@ -2,6 +2,7 @@ use std::clone::Clone;
 use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
+use messages::protocols::basic_message::message::BasicMessage;
 use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
@@ -296,6 +297,22 @@ impl Connection {
             }
         };
         Ok(Self { connection_sm })
+    }
+
+    pub async fn send_generic_message(
+        &self,
+        profile: &Arc<dyn Profile>,
+        send_message: Option<SendClosureConnection>,
+        content: String,
+    ) -> VcxResult<()> {
+        trace!("Connection::send_generic_message >>>");
+        let message = BasicMessage::create()
+            .set_content(content)
+            .set_time()
+            .set_out_time()
+            .to_a2a_message();
+        let send_message = self.send_message_closure(profile, send_message).await?;
+        send_message(message).await
     }
 
     pub async fn send_message_closure(

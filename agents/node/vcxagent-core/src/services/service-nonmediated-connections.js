@@ -66,6 +66,12 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
+  async function sendMessage (connectionId, content) {
+    logger.info(`nonmediatedConnectionSendMessage >> connectionId=${connectionId}, content: ${content}`)
+    const connection = await loadNonmediatedConnection(connectionId)
+    await connection.sendMessage(content)
+  }
+
   async function getState (connectionId) {
     const connection = await loadNonmediatedConnection(connectionId)
     return connection.getState()
@@ -78,6 +84,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     inviterConnectionProcessAck,
     inviteeConnectionCreateFromInvite,
     inviteeConnectionProcessResponse,
+    sendMessage,
     getState,
   }
 }

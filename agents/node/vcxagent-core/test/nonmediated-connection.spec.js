@@ -56,6 +56,16 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       const { message: ack } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.nonmediatedConnectionProcessAck(ack)
+
+      await alice.nonmediatedConnectionSendMessage('Hello Faber')
+      const { message: msgFaber } = await faber.unpackMsg(faberEncryptedMsg)
+      console.log(`msgFaber = ${msgFaber}`)
+      expect(JSON.parse(msgFaber).content).toBe('Hello Faber')
+
+      await faber.nonmediatedConnectionSendMessage('Hello Alice')
+      const { message: msgAlice } = await alice.unpackMsg(aliceEncryptedMsg)
+      expect(JSON.parse(msgAlice).content).toBe('Hello Alice')
+
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
@@ -74,7 +84,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
     let faberServer
     try {
       const path = '/msg'
-      const faberPort = 5406
+      const faberPort = 5402
       const faberEndpoint = `http://127.0.0.1:${faberPort}${path}`
 
       let faberEncryptedMsg
@@ -86,7 +96,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
       })
       faberServer = faberApp.listen(faberPort)
 
-      const alicePort = 5407
+      const alicePort = 5403
       const aliceEndpoint = `http://127.0.0.1:${alicePort}${path}`
 
       let aliceEncryptedMsg
@@ -111,6 +121,16 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       const { message: ack } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.nonmediatedConnectionProcessAck(ack)
+
+      await alice.nonmediatedConnectionSendMessage('Hello Faber')
+      const { message: msgFaber } = await faber.unpackMsg(faberEncryptedMsg)
+      console.log(`msgFaber = ${msgFaber}`)
+      expect(JSON.parse(msgFaber).content).toBe('Hello Faber')
+
+      await faber.nonmediatedConnectionSendMessage('Hello Alice')
+      const { message: msgAlice } = await alice.unpackMsg(aliceEncryptedMsg)
+      expect(JSON.parse(msgAlice).content).toBe('Hello Alice')
+
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)

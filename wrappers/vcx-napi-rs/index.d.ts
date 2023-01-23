@@ -22,6 +22,7 @@ export function connectionProcessAck(handle: number, message: string): Promise<v
 export function connectionSendResponse(handle: number): Promise<void>
 export function connectionSendRequest(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionSendAck(handle: number): Promise<void>
+export function connectionSendGenericMessage(handle: number, content: string): Promise<void>
 export function connectionCreateInvite(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionSerialize(handle: number): string
 export function connectionDeserialize(connectionData: string): number

@@ -174,6 +174,15 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function nonmediatedConnectionSendMessage (message) {
+    logger.info('Alice is going to send message')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.sendMessage(connectionId, message)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   async function getTailsLocation () {
     logger.info('Alice is going to get tails location')
     await vcxAgent.agentInitVcx()
@@ -240,6 +249,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
 
   return {
     sendMessage,
+    nonmediatedConnectionSendMessage,
     signData,
     acceptInvite,
     createNonmediatedConnectionFromInvite,
