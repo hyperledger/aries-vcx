@@ -553,7 +553,7 @@ mod unit_tests {
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(&mock_profile(), None)
+        let inviter = Connection::create_inviter(&profile, None)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())
