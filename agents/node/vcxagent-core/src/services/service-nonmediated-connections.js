@@ -1,9 +1,6 @@
 const { NonmediatedConnection } = require('@hyperledger/node-vcx-wrapper')
-const assert = require('assert')
 
 module.exports.createServiceNonmediatedConnections = function createServiceNonmediatedConnections ({ logger, saveNonmediatedConnection, loadNonmediatedConnection, endpointInfo }) {
-  assert(endpointInfo.serviceEndpoint)
-  assert(endpointInfo.routingKeys)
 
   async function inviterConnectionCreatePwInvite (connectionId) {
     logger.info(`inviterConnectionCreatePwInvite >> connectionId=${connectionId}`)
