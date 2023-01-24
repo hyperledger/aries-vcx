@@ -74,7 +74,7 @@ impl<T> InviterConnection<T, InitialState> {
         }
     }
 
-    pub async fn create_invite(
+    pub fn create_invite(
         self,
         service_endpoint: String,
         routing_keys: Vec<String>,

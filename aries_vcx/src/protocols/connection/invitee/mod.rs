@@ -9,7 +9,7 @@ use messages::{
     },
 };
 
-use crate::errors::error::VcxResult;
+use crate::{core::profile::profile::Profile, errors::error::VcxResult};
 
 use self::states::{
     complete::CompleteState, initial::InitialState, invited::InvitedState, requested::RequestedState,
@@ -172,6 +172,19 @@ impl<T> InviteeConnection<T, InvitedState> {
             initiation_type: Invitee,
             transport_type,
         })
+    }
+
+    pub async fn send_request(
+        self,
+        profile: &Arc<dyn Profile>,
+        service_endpoint: String,
+        routing_keys: Vec<String>,
+        send_message: Option<SendClosureConnection>,
+    ) -> VcxResult<InviteeConnection<T, RequestedState>> {
+        trace!("Connection::send_request");
+        let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
+        self.send_connection_request(routing_keys, service_endpoint, send_message)
+            .await
     }
 }
 
