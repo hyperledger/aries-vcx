@@ -41,6 +41,39 @@ impl DidController {
         }
     }
 
+    /// Creates keys (signing and encryption keys) for a new
+    /// DID (owned by the caller of the library).
+    /// Identity's DID must be either explicitly provided, or taken as the first 16 bit of verkey.
+    /// Saves the Identity DID with keys in a secured Wallet, so that it can be used to sign
+    /// and encrypt transactions.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+
+    /// did_info: Identity information as json. See domain::crypto::did::MyDidInfo
+    /// Example:
+    /// {
+    ///     "did": string, (optional;
+    ///             if not provided and cid param is false then the first 16 bit of the verkey will be used as a new DID;
+    ///             if not provided and cid is true then the full verkey will be used as a new DID;
+    ///             if provided, then keys will be replaced - key rotation use case)
+    ///     "seed": string, (optional) Seed that allows deterministic did creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
+    ///               currently only 'ed25519' value is supported for this field)
+    ///     "cid": bool, (optional; if not set then false is used;)
+    ///     "ledger_type": string, (optional) type of the ledger to create fully qualified did.
+    ///     "method_name": string, (optional) method name to create fully qualified did.
+    /// }
+    ///
+    /// #Returns
+    /// did: DID generated and stored in the wallet
+    /// verkey: The DIDs verification key
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn create_and_store_my_did(
         &self,
         wallet_handle: WalletHandle,
@@ -86,6 +119,29 @@ impl DidController {
         res
     }
 
+    /// Generated temporary keys (signing and encryption keys) for an existing
+    /// DID (owned by the caller of the library).
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+
+    /// did: target did to rotate keys.
+    /// key_info: key information as json. Example:
+    /// {
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, (optional; if not set then ed25519 curve is used;
+    ///               currently only 'ed25519' value is supported for this field)
+    /// }
+    ///
+    /// #Returns
+    /// verkey: The DIDs verification key
+    ///
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn replace_keys_start(
         &self,
         wallet_handle: WalletHandle,
@@ -133,6 +189,19 @@ impl DidController {
         res
     }
 
+    /// Apply temporary keys as main for an existing DID (owned by the caller of the library).
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+
+    /// did: DID stored in the wallet
+    ///
+    /// #Returns
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn replace_keys_apply(
         &self,
         wallet_handle: WalletHandle,
@@ -168,6 +237,27 @@ impl DidController {
         res
     }
 
+    /// Saves their DID for a pairwise connection in a secured Wallet,
+    /// so that it can be used to verify transaction.
+    /// Updates DID associated verkey in case DID already exists in the Wallet.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handler (created by open_wallet).
+
+    /// identity_json: Identity information as json. Example:
+    ///     {
+    ///        "did": string, (required)
+    ///        "verkey": string
+    ///             - optional is case of adding a new DID, and DID is cryptonym: did == verkey,
+    ///             - mandatory in case of updating an existing DID
+    ///     }
+    ///
+    /// #Returns
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn store_their_did(
         &self,
         wallet_handle: WalletHandle,
@@ -193,6 +283,26 @@ impl DidController {
         res
     }
 
+    /// Retrieves the information about the giving DID in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to retrieve information.
+    ///
+    /// #Returns
+    /// did_with_meta: {
+    ///   "did": string - DID stored in the wallet,
+    ///   "verkey": string - The DIDs transport key (ver key, key id),
+    ///   "tempVerkey": string - Temporary DIDs transport key (ver key, key id), exist only during the rotation of the keys.
+    ///                          After rotation is done, it becomes a new verkey.
+    ///   "metadata": string - The meta information stored with the DID
+    /// }
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn get_my_did_with_meta(
         &self,
         wallet_handle: WalletHandle,
@@ -242,6 +352,23 @@ impl DidController {
         res
     }
 
+    /// Retrieves the information about all DIDs stored in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    ///
+    /// #Returns
+    /// dids:  [{
+    ///   "did": string - DID stored in the wallet,
+    ///   "verkey": string - The DIDs transport key (ver key, key id).,
+    ///   "metadata": string - The meta information stored with the DID
+    /// }]
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn list_my_dids_with_meta(&self, wallet_handle: WalletHandle) -> IndyResult<String> {
         trace!("list_my_dids_with_meta > wallet_handle {:?}", wallet_handle);
 
@@ -337,6 +464,32 @@ impl DidController {
         res
     }
 
+    /// Returns ver key (key id) for the given DID.
+    ///
+    /// "indy_key_for_did" call follow the idea that we resolve information about their DID from
+    /// the ledger with cache in the local wallet. The "indy_open_wallet" call has freshness parameter
+    /// that is used for checking the freshness of cached pool value.
+    ///
+    /// Note if you don't want to resolve their DID info from the ledger you can use
+    /// "indy_key_for_local_did" call instead that will look only to the local wallet and skip
+    /// freshness checking.
+    ///
+    /// Note that "indy_create_and_store_my_did" makes similar wallet record as "indy_create_key".
+    /// As result we can use returned ver key in all generic crypto and messaging functions.
+    ///
+    /// #Params
+
+    /// pool_handle:   Pool handle (created by open_pool).
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to resolve key.
+    ///
+    /// #Returns
+    /// key - The DIDs ver key (key id).
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn key_for_did(
         &self,
         pool_handle: PoolHandle,
@@ -381,6 +534,29 @@ impl DidController {
         res
     }
 
+    /// Returns ver key (key id) for the given DID.
+    ///
+    /// "indy_key_for_local_did" call looks data stored in the local wallet only and skips freshness
+    /// checking.
+    ///
+    /// Note if you want to get fresh data from the ledger you can use "indy_key_for_did" call
+    /// instead.
+    ///
+    /// Note that "indy_create_and_store_my_did" makes similar wallet record as "indy_create_key".
+    /// As result we can use returned ver key in all generic crypto and messaging functions.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to resolve key.
+    ///
+    /// #Returns
+    /// key - The DIDs ver key (key id).
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn key_for_local_did(
         &self,
         wallet_handle: WalletHandle,
@@ -415,6 +591,21 @@ impl DidController {
         res
     }
 
+    /// Set/replaces endpoint information for the given DID.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to resolve endpoint.
+    /// address -  The DIDs endpoint address. indy-node and indy-plenum restrict this to ip_address:port
+    /// transport_key - The DIDs transport key (ver key, key id).
+    ///
+    /// #Returns
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn set_endpoint_for_did(
         &self,
         wallet_handle: WalletHandle,
@@ -443,6 +634,21 @@ impl DidController {
         res
     }
 
+    /// Returns endpoint information for the given DID.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to resolve endpoint.
+    ///
+    /// #Returns
+    /// endpoint - The DIDs endpoint.
+    /// transport_vk - The DIDs transport key (ver key, key id).
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn get_endpoint_for_did(
         &self,
         wallet_handle: WalletHandle,
@@ -477,6 +683,20 @@ impl DidController {
         res
     }
 
+    /// Saves/replaces the meta information for the giving DID in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - the DID to store metadata.
+    /// metadata - the meta information that will be store with the DID.
+    ///
+    /// #Returns
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn set_did_metadata(
         &self,
         wallet_handle: WalletHandle,
@@ -503,6 +723,20 @@ impl DidController {
         res
     }
 
+    /// Retrieves the meta information for the giving DID in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did - The DID to retrieve metadata.
+    ///
+    /// #Returns
+    /// metadata - The meta information stored with the DID; Can be null if no metadata was saved for this DID.
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn get_did_metadata(
         &self,
         wallet_handle: WalletHandle,
@@ -526,6 +760,20 @@ impl DidController {
         res
     }
 
+    /// Retrieves abbreviated verkey if it is possible otherwise return full verkey.
+    ///
+    /// #Params
+
+    /// did: DID.
+    /// full_verkey: The DIDs verification key,
+    ///
+    /// #Returns
+    /// verkey: The DIDs verification key in either abbreviated or full form
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn abbreviate_verkey(&self, did: DidValue, verkey: String) -> IndyResult<String> {
         trace!("abbreviate_verkey > did {:?} verkey {:?}", did, verkey);
 
@@ -554,6 +802,25 @@ impl DidController {
         res
     }
 
+    /// Update DID stored in the wallet to make fully qualified, or to do other DID maintenance.
+    ///     - If the DID has no method, a method will be appended (prepend did:peer to a legacy did)
+    ///     - If the DID has a method, a method will be updated (migrate did:peer to did:peer-new)
+    ///
+    /// Update DID related entities stored in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// did: target DID stored in the wallet.
+    /// method: method to apply to the DID.
+    ///
+    /// #Returns
+    /// did: fully qualified form of did
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn qualify_did(
         &self,
         wallet_handle: WalletHandle,

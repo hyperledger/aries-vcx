@@ -13,9 +13,6 @@ use indy_utils::crypto::{
 
 use crate::utils::crypto::base58::{FromBase58, ToBase58};
 
-#[cfg(feature = "ffi_api")]
-use crate::domain::crypto::combo_box::ComboBox;
-
 use crate::{
     domain::crypto::{
         did::{Did, DidValue, MyDidInfo, TheirDid, TheirDidInfo},
@@ -272,33 +269,6 @@ impl CryptoService {
 
         let res = Ok(valid);
         trace!("verify < {:?}", res);
-        res
-    }
-
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn create_combo_box(
-        &self,
-        my_key: &Key,
-        their_vk: &str,
-        doc: &[u8],
-    ) -> IndyResult<ComboBox> {
-        trace!(
-            "create_combo_box > my_key {:?} their_vk {:?} doc {:?}",
-            my_key,
-            their_vk,
-            doc
-        );
-
-        let (msg, nonce) = self.crypto_box(my_key, their_vk, doc).await?;
-
-        let res = ComboBox {
-            msg: base64::encode(msg.as_slice()),
-            sender: my_key.verkey.to_string(),
-            nonce: base64::encode(nonce.as_slice()),
-        };
-
-        let res = Ok(res);
-        trace!("create_combo_box < {:?}", res);
         res
     }
 

@@ -30,39 +30,20 @@ mod controllers;
 mod domain;
 mod services;
 
-#[cfg(feature = "ffi_api")]
-pub mod api;
-
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
 
-#[cfg(feature = "ffi_api")]
-use crate::services::CommandMetric;
-
-#[cfg(feature = "ffi_api")]
-use crate::controllers::VDRController;
-
 use crate::{
     controllers::{
         BlobStorageController, CacheController, ConfigController, CryptoController, DidController,
-        IssuerController, LedgerController, MetricsController, NonSecretsController,
-        PairwiseController, PoolController, ProverController, VerifierController, WalletController,
+        IssuerController, LedgerController, NonSecretsController, PairwiseController,
+        PoolController, ProverController, VerifierController, WalletController,
     },
     services::{
-        BlobStorageService, CryptoService, IssuerService, LedgerService, MetricsService,
-        PoolService, ProverService, VerifierService, WalletService,
+        BlobStorageService, CryptoService, IssuerService, LedgerService, PoolService,
+        ProverService, VerifierService, WalletService,
     },
-};
-
-#[cfg(feature = "ffi_api")]
-use indy_api_types::errors::IndyResult;
-
-#[cfg(feature = "ffi_api")]
-use std::{
-    cmp,
-    future::Future,
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 pub use controllers::CredentialDefinitionId;
@@ -96,54 +77,6 @@ pub use indy_api_types::{
 
 pub use services::AnoncredsHelpers;
 
-#[cfg(feature = "ffi_api")]
-fn get_cur_time() -> u128 {
-    let since_epoch = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time has gone backwards");
-    since_epoch.as_millis()
-}
-
-#[cfg(feature = "ffi_api")]
-#[derive(Clone)]
-pub struct InstrumentedThreadPool {
-    executor: futures::executor::ThreadPool,
-    metrics_service: Arc<MetricsService>,
-}
-
-#[cfg(feature = "ffi_api")]
-impl InstrumentedThreadPool {
-    pub fn spawn_ok_instrumented<T, FutIndyRes, FnCb>(
-        &self,
-        idx: CommandMetric,
-        action: FutIndyRes,
-        cb: FnCb,
-    ) where
-        FutIndyRes: Future<Output = IndyResult<T>> + Send + 'static,
-        FnCb: Fn(IndyResult<T>) + Sync + Send + 'static,
-        T: Send + 'static,
-    {
-        let requested_time = get_cur_time();
-        let metrics_service = self.metrics_service.clone();
-        self.executor.spawn_ok(async move {
-            let start_time = get_cur_time();
-            let res = action.await;
-            let executed_time = get_cur_time();
-            cb(res);
-            let cb_finished_time = get_cur_time();
-            metrics_service
-                .cmd_left_queue(idx, start_time - requested_time)
-                .await;
-            metrics_service
-                .cmd_executed(idx, executed_time - start_time)
-                .await;
-            metrics_service
-                .cmd_callback(idx, cb_finished_time - executed_time)
-                .await;
-        })
-    }
-}
-
 // Global (lazy inited) instance of Locator
 lazy_static! {
     static ref LOCATOR: Locator = Locator::new();
@@ -163,13 +96,6 @@ pub struct Locator {
     pub blob_storage_controller: BlobStorageController,
     pub non_secret_controller: NonSecretsController,
     pub cache_controller: CacheController,
-    pub metrics_controller: MetricsController,
-
-    #[cfg(feature = "ffi_api")]
-    pub vdr_controller: VDRController,
-
-    #[cfg(feature = "ffi_api")]
-    pub executor: InstrumentedThreadPool,
 }
 
 impl Locator {
@@ -186,23 +112,8 @@ impl Locator {
         let blob_storage_service = Arc::new(BlobStorageService::new());
         let crypto_service = Arc::new(CryptoService::new());
         let ledger_service = Arc::new(LedgerService::new());
-        let metrics_service = Arc::new(MetricsService::new());
         let pool_service = Arc::new(PoolService::new());
         let wallet_service = Arc::new(WalletService::new());
-
-        #[cfg(feature = "ffi_api")]
-        let executor = {
-            // TODO: Make it work with lower number of threads (VE-2668)
-            let num_threads = cmp::max(8, num_cpus::get());
-
-            InstrumentedThreadPool {
-                executor: futures::executor::ThreadPool::builder()
-                    .pool_size(num_threads)
-                    .create()
-                    .unwrap(),
-                metrics_service: metrics_service.clone(),
-            }
-        };
 
         let issuer_controller = IssuerController::new(
             issuer_service,
@@ -246,8 +157,6 @@ impl Locator {
 
         let pairwise_controller = PairwiseController::new(wallet_service.clone());
         let blob_storage_controller = BlobStorageController::new(blob_storage_service.clone());
-        let metrics_controller =
-            MetricsController::new(wallet_service.clone(), metrics_service.clone());
         let non_secret_controller = NonSecretsController::new(wallet_service.clone());
 
         let cache_controller = CacheController::new(
@@ -255,14 +164,6 @@ impl Locator {
             ledger_service.clone(),
             pool_service.clone(),
             wallet_service.clone(),
-        );
-
-        #[cfg(feature = "ffi_api")]
-        let vdr_controller = VDRController::new(
-            wallet_service.clone(),
-            ledger_service.clone(),
-            pool_service.clone(),
-            crypto_service.clone(),
         );
 
         let res = Locator {
@@ -279,13 +180,6 @@ impl Locator {
             blob_storage_controller,
             non_secret_controller,
             cache_controller,
-            metrics_controller,
-
-            #[cfg(feature = "ffi_api")]
-            vdr_controller,
-
-            #[cfg(feature = "ffi_api")]
-            executor,
         };
 
         info!("new <");

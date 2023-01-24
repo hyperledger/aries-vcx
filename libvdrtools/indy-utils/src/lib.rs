@@ -20,9 +20,7 @@ macro_rules! secret {
 
 #[macro_use]
 pub mod crypto;
-pub mod ctypes;
 pub mod environment;
-pub mod inmem_wallet;
 pub mod sequence;
 #[macro_use]
 #[allow(unused_macros)]

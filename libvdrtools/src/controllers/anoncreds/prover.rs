@@ -93,6 +93,21 @@ impl ProverController {
         }
     }
 
+    /// Creates a master secret with a given id and stores it in the wallet.
+    /// The id must be unique.
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// master_secret_id: (optional, if not present random one will be generated) new master id
+    ///
+    /// #Returns
+    /// out_master_secret_id: Id of generated master secret
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn create_master_secret(
         &self,
         wallet_handle: WalletHandle,
@@ -137,6 +152,49 @@ impl ProverController {
         res
     }
 
+    /// Creates a credential request for the given credential offer.
+    ///
+    /// The method creates a blinded master secret for a master secret identified by a provided name.
+    /// The master secret identified by the name must be already stored in the secure wallet (see prover_create_master_secret)
+    /// The blinded master secret is a part of the credential request.
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// prover_did: a DID of the prover
+    /// cred_offer_json: credential offer as a json containing information about the issuer and a credential
+    ///     {
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///          ...
+    ///         Other fields that contains data structures internal to Ursa.
+    ///         These fields should not be parsed and are likely to change in future versions.
+    ///     }
+    /// cred_def_json: credential definition json related to <cred_def_id> in <cred_offer_json>
+    /// master_secret_id: the id of the master secret stored in the wallet
+    ///
+    /// #Returns
+    /// cred_req_json: Credential request json for creation of credential by Issuer
+    ///     {
+    ///      "prover_did" : string,
+    ///      "cred_def_id" : string,
+    ///         // Fields below can depend on Cred Def type
+    ///      "blinded_ms" : <blinded_master_secret>,
+    ///                     (opaque type that contains data structures internal to Ursa.
+    ///                      It should not be parsed and are likely to change in future versions).
+    ///      "blinded_ms_correctness_proof" : <blinded_ms_correctness_proof>,
+    ///                     (opaque type that contains data structures internal to Ursa.
+    ///                      It should not be parsed and are likely to change in future versions).
+    ///      "nonce": string
+    ///    }
+    /// cred_req_metadata_json: Credential request metadata json for further processing of received form Issuer credential.
+    ///     Credential request metadata contains data structures internal to Ursa.
+    ///     Credential request metadata mustn't be shared with Issuer.
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn create_credential_request(
         &self,
         wallet_handle: WalletHandle,
@@ -199,6 +257,41 @@ impl ProverController {
         res
     }
 
+    /// Set credential attribute tagging policy.
+    /// Writes a non-secret record marking attributes to tag, and optionally
+    /// updates tags on existing credentials on the credential definition to match.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// The following tags are always present on write:
+    ///     {
+    ///         "schema_id": <credential schema id>,
+    ///         "schema_issuer_did": <credential schema issuer did>,
+    ///         "schema_name": <credential schema name>,
+    ///         "schema_version": <credential schema version>,
+    ///         "issuer_did": <credential issuer did>,
+    ///         "cred_def_id": <credential definition id>,
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///     }
+    ///
+    /// The policy sets the following tags for each attribute it marks taggable, written to subsequent
+    /// credentials and (optionally) all existing credentials on the credential definition:
+    ///     {
+    ///         "attr::<attribute name>::marker": "1",
+    ///         "attr::<attribute name>::value": <attribute raw value>,
+    ///     }
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// cred_def_id: credential definition id
+    /// tag_attrs_json: JSON array with names of attributes to tag by policy, or null for all
+    /// retroactive: boolean, whether to apply policy to existing credentials on credential definition identifier
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn set_credential_attr_tag_policy(
         &self,
         wallet_handle: WalletHandle,
@@ -273,6 +366,23 @@ impl ProverController {
         res
     }
 
+    /// Get credential attribute tagging policy by credential definition id.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// cred_def_id: credential definition id
+    ///
+    /// #Returns
+    /// JSON array with all attributes that current policy marks taggable;
+    /// null for default policy (tag all credential attributes).
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn get_credential_attr_tag_policy(
         &self,
         wallet_handle: WalletHandle,
@@ -294,6 +404,52 @@ impl ProverController {
         res
     }
 
+    /// Check credential provided by Issuer for the given credential request,
+    /// updates the credential by a master secret and stores in a secure wallet.
+    ///
+    /// To support efficient and flexible search the following tags will be created for stored credential:
+    ///     {
+    ///         "schema_id": <credential schema id>,
+    ///         "schema_issuer_did": <credential schema issuer did>,
+    ///         "schema_name": <credential schema name>,
+    ///         "schema_version": <credential schema version>,
+    ///         "issuer_did": <credential issuer did>,
+    ///         "cred_def_id": <credential definition id>,
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // for every attribute in <credential values> that credential attribute tagging policy marks taggable
+    ///         "attr::<attribute name>::marker": "1",
+    ///         "attr::<attribute name>::value": <attribute raw value>,
+    ///     }
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// cred_id: (optional, default is a random one) identifier by which credential will be stored in the wallet
+    /// cred_req_metadata_json: a credential request metadata created by indy_prover_create_credential_req
+    /// cred_json: credential json received from issuer
+    ///     {
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_def_id", Optional<string>, - identifier of revocation registry
+    ///         "values": - credential values
+    ///             {
+    ///                 "attr1" : {"raw": "value1", "encoded": "value1_as_int" },
+    ///                 "attr2" : {"raw": "value1", "encoded": "value1_as_int" }
+    ///             }
+    ///         // Fields below can depend on Cred Def type
+    ///         Other fields that contains data structures internal to Ursa.
+    ///         These fields should not be parsed and are likely to change in future versions.
+    ///     }
+    /// cred_def_json: credential definition json related to <cred_def_id> in <cred_json>
+    /// rev_reg_def_json: revocation registry definition json related to <rev_reg_def_id> in <cred_json>
+    ///
+    /// #Returns
+    /// out_cred_id: identifier by which credential is stored in the wallet
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn store_credential(
         &self,
         wallet_handle: WalletHandle,
@@ -362,6 +518,45 @@ impl ProverController {
         res
     }
 
+    /// Gets human readable credentials according to the filter.
+    /// If filter is NULL, then all credentials are returned.
+    /// Credentials can be filtered by Issuer, credential_def and/or Schema.
+    ///
+    /// NOTE: This method is deprecated because immediately returns all fetched credentials.
+    /// Use <indy_prover_search_credentials> to fetch records by small batches.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// filter_json: filter for credentials
+    ///        {
+    ///            "schema_id": string, (Optional)
+    ///            "schema_issuer_did": string, (Optional)
+    ///            "schema_name": string, (Optional)
+    ///            "schema_version": string, (Optional)
+    ///            "issuer_did": string, (Optional)
+    ///            "cred_def_id": string, (Optional)
+    ///        }
+    ///
+    /// #Returns
+    /// credentials json
+    ///     [{
+    ///         "referent": string, - id of credential in the wallet
+    ///         "attrs": {"key1":"raw_value1", "key2":"raw_value2"}, - credential attributes
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }]
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
+    #[no_mangle]
+    #[deprecated(
+        since = "1.6.1",
+        note = "Please use indy_prover_search_credentials instead!"
+    )]
     pub async fn get_credentials(
         &self,
         wallet_handle: WalletHandle,
@@ -400,6 +595,27 @@ impl ProverController {
         res
     }
 
+    /// Gets human readable credential by the given id.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// cred_id: Identifier by which requested credential is stored in the wallet
+    ///
+    /// #Returns
+    /// credential json:
+    ///     {
+    ///         "referent": string, - id of credential in the wallet
+    ///         "attrs": {"key1":"raw_value1", "key2":"raw_value2"}, - credential attributes
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn get_credential(
         &self,
         wallet_handle: WalletHandle,
@@ -428,6 +644,26 @@ impl ProverController {
         res
     }
 
+    /// Search for credentials stored in wallet.
+    /// Credentials can be filtered by tags created during saving of credential.
+    ///
+    /// Instead of immediately returning of fetched credentials
+    /// this call returns search_handle that can be used later
+    /// to fetch records by small batches (with indy_prover_fetch_credentials).
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// query_json: Wql query filter for credentials searching based on tags.
+    ///     where query: indy-sdk/docs/design/011-wallet-query-language/README.md
+    ///
+    /// #Returns
+    /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials)
+    /// total_count: Total count of records
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn search_credentials(
         &self,
         wallet_handle: WalletHandle,
@@ -462,6 +698,28 @@ impl ProverController {
         Ok(res)
     }
 
+    /// Fetch next credentials for search.
+    ///
+    /// #Params
+    /// search_handle: Search handle (created by indy_prover_search_credentials)
+    /// count: Count of credentials to fetch
+    ///
+    /// #Returns
+    /// credentials_json: List of human readable credentials:
+    ///     [{
+    ///         "referent": string, - id of credential in the wallet
+    ///         "attrs": {"key1":"raw_value1", "key2":"raw_value2"}, - credential attributes
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }]
+    /// NOTE: The list of length less than the requested count means credentials search iterator is completed.
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn fetch_credentials(
         &self,
         search_handle: SearchHandle,
@@ -504,6 +762,15 @@ impl ProverController {
         res
     }
 
+    /// Close credentials search (make search handle invalid)
+    ///
+    /// #Params
+    /// search_handle: Search handle (created by indy_prover_search_credentials)
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn close_credentials_search(&self, search_handle: SearchHandle) -> IndyResult<()> {
         trace!(
             "close_credentials_search > search_handle {:?}",
@@ -526,6 +793,106 @@ impl ProverController {
         res
     }
 
+    /// Gets human readable credentials matching the given proof request.
+    ///
+    /// NOTE: This method is deprecated because immediately returns all fetched credentials.
+    /// Use <indy_prover_search_credentials_for_proof_req> to fetch records by small batches.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// proof_request_json: proof request json
+    ///     {
+    ///         "name": string,
+    ///         "version": string,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
+    ///         },
+    ///         "requested_predicates": { // set of requested predicates
+    ///              "<predicate_referent>": <predicate_info>, // see below
+    ///              ...,
+    ///          },
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval for each attribute
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level),
+    ///         "ver": Optional<str>  - proof request version:
+    ///             - omit or "1.0" to use unqualified identifiers for restrictions
+    ///             - "2.0" to use fully qualified identifiers for restrictions
+    ///     }
+    ///
+    /// where
+    /// attr_referent: Proof-request local identifier of requested attribute
+    /// attr_info: Describes requested attribute
+    ///     {
+    ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
+    ///         "restrictions": Optional<filter_json>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// predicate_referent: Proof-request local identifier of requested attribute predicate
+    /// predicate_info: Describes requested attribute predicate
+    ///     {
+    ///         "name": attribute name, (case insensitive and ignore spaces)
+    ///         "p_type": predicate type (">=", ">", "<=", "<")
+    ///         "p_value": int predicate value
+    ///         "restrictions": Optional<filter_json>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// non_revoc_interval: Defines non-revocation interval
+    ///     {
+    ///         "from": Optional<int>, // timestamp of interval beginning
+    ///         "to": Optional<int>, // timestamp of interval ending
+    ///     }
+    ///  filter_json:
+    ///     {
+    ///        "schema_id": string, (Optional)
+    ///        "schema_issuer_did": string, (Optional)
+    ///        "schema_name": string, (Optional)
+    ///        "schema_version": string, (Optional)
+    ///        "issuer_did": string, (Optional)
+    ///        "cred_def_id": string, (Optional)
+    ///     }
+    ///
+    /// #Returns
+    /// credentials_json: json with credentials for the given proof request.
+    ///     {
+    ///         "attrs": {
+    ///             "<attr_referent>": [{ cred_info: <credential_info>, interval: Optional<non_revoc_interval> }],
+    ///             ...,
+    ///         },
+    ///         "predicates": {
+    ///             "requested_predicates": [{ cred_info: <credential_info>, timestamp: Optional<integer> }, { cred_info: <credential_2_info>, timestamp: Optional<integer> }],
+    ///             "requested_predicate_2_referent": [{ cred_info: <credential_2_info>, timestamp: Optional<integer> }]
+    ///         }
+    ///     }, where <credential_info> is
+    ///     {
+    ///         "referent": string, - id of credential in the wallet
+    ///         "attrs": {"key1":"raw_value1", "key2":"raw_value2"}, - credential attributes
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
+    #[deprecated(
+        since = "1.6.1",
+        note = "Please use indy_prover_search_credentials_for_proof_req instead!"
+    )]
+    #[no_mangle]
     pub async fn get_credentials_for_proof_req(
         &self,
         wallet_handle: WalletHandle,
@@ -607,6 +974,93 @@ impl ProverController {
         res
     }
 
+    /// Search for credentials matching the given proof request.
+    ///
+    /// Instead of immediately returning of fetched credentials
+    /// this call returns search_handle that can be used later
+    /// to fetch records by small batches (with indy_prover_fetch_credentials_for_proof_req).
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// proof_request_json: proof request json
+    ///     {
+    ///         "name": string,
+    ///         "version": string,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
+    ///         },
+    ///         "requested_predicates": { // set of requested predicates
+    ///              "<predicate_referent>": <predicate_info>, // see below
+    ///              ...,
+    ///          },
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval for each attribute
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level)
+    ///                        // (can be overridden on attribute level)
+    ///         "ver": Optional<str>  - proof request version:
+    ///             - omit or "1.0" to use unqualified identifiers for restrictions
+    ///             - "2.0" to use fully qualified identifiers for restrictions
+    ///     }
+    ///
+    /// where
+    /// attr_info: Describes requested attribute
+    ///     {
+    ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
+    ///         "restrictions": Optional<wql query>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// predicate_referent: Proof-request local identifier of requested attribute predicate
+    /// predicate_info: Describes requested attribute predicate
+    ///     {
+    ///         "name": attribute name, (case insensitive and ignore spaces)
+    ///         "p_type": predicate type (">=", ">", "<=", "<")
+    ///         "p_value": predicate value
+    ///         "restrictions": Optional<wql query>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// non_revoc_interval: Defines non-revocation interval
+    ///     {
+    ///         "from": Optional<int>, // timestamp of interval beginning
+    ///         "to": Optional<int>, // timestamp of interval ending
+    ///     }
+    /// extra_query_json:(Optional) List of extra queries that will be applied to correspondent attribute/predicate:
+    ///     {
+    ///         "<attr_referent>": <wql query>,
+    ///         "<predicate_referent>": <wql query>,
+    ///     }
+    /// where wql query: indy-sdk/docs/design/011-wallet-query-language/README.md
+    ///     The list of allowed keys that can be combine into complex queries.
+    ///         "schema_id": <credential schema id>,
+    ///         "schema_issuer_did": <credential schema issuer did>,
+    ///         "schema_name": <credential schema name>,
+    ///         "schema_version": <credential schema version>,
+    ///         "issuer_did": <credential issuer did>,
+    ///         "cred_def_id": <credential definition id>,
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // the following keys can be used for every `attribute name` in credential.
+    ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
+    ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
+    ///
+    ///
+    /// #Returns
+    /// search_handle: Search handle that can be used later to fetch records by small batches (with indy_prover_fetch_credentials_for_proof_req)
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn search_credentials_for_proof_req(
         &self,
         wallet_handle: WalletHandle,
@@ -707,6 +1161,42 @@ impl ProverController {
         res
     }
 
+    /// Fetch next credentials for the requested item using proof request search
+    /// handle (created by indy_prover_search_credentials_for_proof_req).
+    ///
+    /// #Params
+    /// search_handle: Search handle (created by indy_prover_search_credentials_for_proof_req)
+    /// item_referent: Referent of attribute/predicate in the proof request
+    /// count: Count of credentials to fetch
+    ///
+    /// #Returns
+    /// credentials_json: List of credentials for the given proof request.
+    ///     [{
+    ///         cred_info: <credential_info>,
+    ///         interval: Optional<non_revoc_interval>
+    ///     }]
+    /// where
+    /// credential_info:
+    ///     {
+    ///         "referent": string, - id of credential in the wallet
+    ///         "attrs": {"key1":"raw_value1", "key2":"raw_value2"}, - credential attributes
+    ///         "schema_id": string, - identifier of schema
+    ///         "cred_def_id": string, - identifier of credential definition
+    ///         "rev_reg_id": Optional<string>, - identifier of revocation registry definition
+    ///         "cred_rev_id": Optional<string> - identifier of credential in the revocation registry definition
+    ///     }
+    /// non_revoc_interval:
+    ///     {
+    ///         "from": Optional<int>, // timestamp of interval beginning
+    ///         "to": Optional<int>, // timestamp of interval ending
+    ///     }
+    /// NOTE: The list of length less than the requested count means that search iterator
+    /// correspondent to the requested <item_referent> is completed.
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn fetch_credential_for_proof_request(
         &self,
         search_handle: SearchHandle,
@@ -764,6 +1254,15 @@ impl ProverController {
         res
     }
 
+    /// Close credentials search for proof request (make search handle invalid)
+    ///
+    /// #Params
+    /// search_handle: Search handle (created by indy_prover_search_credentials_for_proof_req)
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn close_credentials_search_for_proof_req(
         &self,
         search_handle: SearchHandle,
@@ -789,6 +1288,16 @@ impl ProverController {
         res
     }
 
+    /// Deletes credential by given id.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// cred_id: Identifier by which requested credential is stored in the wallet
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn delete_credential(
         &self,
         wallet_handle: WalletHandle,
@@ -820,6 +1329,170 @@ impl ProverController {
         res
     }
 
+    /// Creates a proof according to the given proof request
+    /// Either a corresponding credential with optionally revealed attributes or self-attested attribute must be provided
+    /// for each requested attribute (see indy_prover_get_credentials_for_pool_req).
+    /// A proof request may request multiple credentials from different schemas and different issuers.
+    /// All required schemas, public keys and revocation registries must be provided.
+    /// The proof request also contains nonce.
+    /// The proof contains either proof or self-attested attribute value for each requested attribute.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet).
+
+    /// proof_request_json: proof request json
+    ///     {
+    ///         "name": string,
+    ///         "version": string,
+    ///         "nonce": string, - a decimal number represented as a string (use `indy_generate_nonce` function to generate 80-bit number)
+    ///         "requested_attributes": { // set of requested attributes
+    ///              "<attr_referent>": <attr_info>, // see below
+    ///              ...,
+    ///         },
+    ///         "requested_predicates": { // set of requested predicates
+    ///              "<predicate_referent>": <predicate_info>, // see below
+    ///              ...,
+    ///          },
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval for each attribute
+    ///                        // (applies to every attribute and predicate but can be overridden on attribute level)
+    ///                        // (can be overridden on attribute level)
+    ///         "ver": Optional<str>  - proof request version:
+    ///             - omit or "1.0" to use unqualified identifiers for restrictions
+    ///             - "2.0" to use fully qualified identifiers for restrictions
+    ///     }
+    /// requested_credentials_json: either a credential or self-attested attribute for each requested attribute
+    ///     {
+    ///         "self_attested_attributes": {
+    ///             "self_attested_attribute_referent": string
+    ///         },
+    ///         "requested_attributes": {
+    ///             "requested_attribute_referent_1": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }},
+    ///             "requested_attribute_referent_2": {"cred_id": string, "timestamp": Optional<number>, revealed: <bool> }}
+    ///         },
+    ///         "requested_predicates": {
+    ///             "requested_predicates_referent_1": {"cred_id": string, "timestamp": Optional<number> }},
+    ///         }
+    ///     }
+    /// master_secret_id: the id of the master secret stored in the wallet
+    /// schemas_json: all schemas participating in the proof request
+    ///     {
+    ///         <schema1_id>: <schema1>,
+    ///         <schema2_id>: <schema2>,
+    ///         <schema3_id>: <schema3>,
+    ///     }
+    /// credential_defs_json: all credential definitions participating in the proof request
+    ///     {
+    ///         "cred_def1_id": <credential_def1>,
+    ///         "cred_def2_id": <credential_def2>,
+    ///         "cred_def3_id": <credential_def3>,
+    ///     }
+    /// rev_states_json: all revocation states participating in the proof request
+    ///     {
+    ///         "rev_reg_def1_id or credential_1_id": {
+    ///             "timestamp1": <rev_state1>,
+    ///             "timestamp2": <rev_state2>,
+    ///         },
+    ///         "rev_reg_def2_id or credential_1_id"": {
+    ///             "timestamp3": <rev_state3>
+    ///         },
+    ///         "rev_reg_def3_id or credential_1_id"": {
+    ///             "timestamp4": <rev_state4>
+    ///         },
+    ///     }
+    /// Note: use credential_id instead rev_reg_id in case proving several credentials from the same revocation registry.
+    ///
+    /// where
+    /// attr_referent: Proof-request local identifier of requested attribute
+    /// attr_info: Describes requested attribute
+    ///     {
+    ///         "name": Optional<string>, // attribute name, (case insensitive and ignore spaces)
+    ///         "names": Optional<[string, string]>, // attribute names, (case insensitive and ignore spaces)
+    ///                                              // NOTE: should either be "name" or "names", not both and not none of them.
+    ///                                              // Use "names" to specify several attributes that have to match a single credential.
+    ///         "restrictions": Optional<wql query>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// predicate_referent: Proof-request local identifier of requested attribute predicate
+    /// predicate_info: Describes requested attribute predicate
+    ///     {
+    ///         "name": attribute name, (case insensitive and ignore spaces)
+    ///         "p_type": predicate type (">=", ">", "<=", "<")
+    ///         "p_value": predicate value
+    ///         "restrictions": Optional<wql query>, // see below
+    ///         "non_revoked": Optional<<non_revoc_interval>>, // see below,
+    ///                        // If specified prover must proof non-revocation
+    ///                        // for date in this interval this attribute
+    ///                        // (overrides proof level interval)
+    ///     }
+    /// non_revoc_interval: Defines non-revocation interval
+    ///     {
+    ///         "from": Optional<int>, // timestamp of interval beginning
+    ///         "to": Optional<int>, // timestamp of interval ending
+    ///     }
+    /// where wql query: indy-sdk/docs/design/011-wallet-query-language/README.md
+    ///     The list of allowed keys that can be combine into complex queries.
+    ///         "schema_id": <credential schema id>,
+    ///         "schema_issuer_did": <credential schema issuer did>,
+    ///         "schema_name": <credential schema name>,
+    ///         "schema_version": <credential schema version>,
+    ///         "issuer_did": <credential issuer did>,
+    ///         "cred_def_id": <credential definition id>,
+    ///         "rev_reg_id": <credential revocation registry id>, // "None" as string if not present
+    ///         // the following keys can be used for every `attribute name` in credential.
+    ///         "attr::<attribute name>::marker": "1", - to filter based on existence of a specific attribute
+    ///         "attr::<attribute name>::value": <attribute raw value>, - to filter based on value of a specific attribute
+    ///
+    /// #Returns
+    /// Proof json
+    /// For each requested attribute either a proof (with optionally revealed attribute value) or
+    /// self-attested attribute value is provided.
+    /// Each proof is associated with a credential and corresponding schema_id, cred_def_id, rev_reg_id and timestamp.
+    /// There is also aggregated proof part common for all credential proofs.
+    ///     {
+    ///         "requested_proof": {
+    ///             "revealed_attrs": {
+    ///                 "requested_attr1_id": {sub_proof_index: number, raw: string, encoded: string},
+    ///                 "requested_attr4_id": {sub_proof_index: number: string, encoded: string},
+    ///             },
+    ///             "revealed_attr_groups": {
+    ///                 "requested_attr5_id": {
+    ///                     "sub_proof_index": number,
+    ///                     "values": {
+    ///                         "attribute_name": {
+    ///                             "raw": string,
+    ///                             "encoded": string
+    ///                         }
+    ///                     },
+    ///                 }
+    ///             },
+    ///             "unrevealed_attrs": {
+    ///                 "requested_attr3_id": {sub_proof_index: number}
+    ///             },
+    ///             "self_attested_attrs": {
+    ///                 "requested_attr2_id": self_attested_value,
+    ///             },
+    ///             "predicates": {
+    ///                 "requested_predicate_1_referent": {sub_proof_index: int},
+    ///                 "requested_predicate_2_referent": {sub_proof_index: int},
+    ///             }
+    ///         }
+    ///         "proof": {
+    ///             "proofs": [ <credential_proof>, <credential_proof>, <credential_proof> ],
+    ///             "aggregated_proof": <aggregated_proof>
+    ///         } (opaque type that contains data structures internal to Ursa.
+    ///           It should not be parsed and are likely to change in future versions).
+    ///         "identifiers": [{schema_id, cred_def_id, Optional<rev_reg_id>, Optional<timestamp>}]
+    ///     }
+    ///
+    /// #Errors
+    /// Anoncreds*
+    /// Common*
+    /// Wallet*
     pub async fn create_proof(
         &self,
         wallet_handle: WalletHandle,
@@ -897,6 +1570,36 @@ impl ProverController {
         res
     }
 
+    /// Create revocation state for a credential that corresponds to a particular time.
+    ///
+    /// Note that revocation delta must cover the whole registry existence time.
+    /// You can use `from`: `0` and `to`: `needed_time` as parameters for building request to get correct revocation delta.
+    ///
+    /// The resulting revocation state and provided timestamp can be saved and reused later with applying a new
+    /// revocation delta with `indy_update_revocation_state` function.
+    /// This new delta should be received with parameters: `from`: `timestamp` and `to`: `needed_time`.
+    ///
+    /// #Params
+
+    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
+    /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential
+    /// rev_reg_delta_json: revocation registry delta which covers the whole registry existence time
+    /// timestamp: time represented as a total number of seconds from Unix Epoch.
+    /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
+    ///
+    /// #Returns
+    /// revocation state json:
+    ///     {
+    ///         "rev_reg": <revocation registry>,
+    ///         "witness": <witness>,  (opaque type that contains data structures internal to Ursa.
+    ///                                 It should not be parsed and are likely to change in future versions).
+    ///         "timestamp" : integer
+    ///     }
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Anoncreds*
     pub async fn create_revocation_state(
         &self,
         blob_storage_reader_handle: i32,
@@ -952,6 +1655,36 @@ impl ProverController {
         res
     }
 
+    /// Create a new revocation state for a credential based on a revocation state created before.
+    /// Note that provided revocation delta must cover the registry gap from based state creation until the specified time
+    /// (this new delta should be received with parameters: `from`: `state_timestamp` and `to`: `needed_time`).
+    ///
+    /// This function reduces the calculation time.
+    ///
+    /// The resulting revocation state and provided timestamp can be saved and reused later by applying a new revocation delta again.
+    ///
+    /// #Params
+
+    /// blob_storage_reader_handle: configuration of blob storage reader handle that will allow to read revocation tails (returned by `indy_open_blob_storage_reader`)
+    /// rev_state_json: revocation registry state json
+    /// rev_reg_def_json: revocation registry definition json related to `rev_reg_id` in a credential
+    /// rev_reg_delta_json: revocation registry definition delta which covers the gap form original `rev_state_json` creation till the requested timestamp
+    /// timestamp: time represented as a total number of seconds from Unix Epoch
+    /// cred_rev_id: user credential revocation id in revocation registry (match to `cred_rev_id` in a credential)
+    ///
+    /// #Returns
+    /// revocation state json:
+    ///     {
+    ///         "rev_reg": <revocation registry>,
+    ///         "witness": <witness>,  (opaque type that contains data structures internal to Ursa.
+    ///                                 It should not be parsed and are likely to change in future versions).
+    ///         "timestamp" : integer
+    ///     }
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Anoncreds*
     pub async fn update_revocation_state(
         &self,
         blob_storage_reader_handle: i32,

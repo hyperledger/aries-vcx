@@ -18,6 +18,24 @@ impl NonSecretsController {
         }
     }
 
+    /// Create a new non-secret record in the wallet
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// value: the value of record
+    /// tags_json: (optional) the record tags used for search and storing meta information as json:
+    ///   {
+    ///     "tagName1": <str>, // string tag (will be stored encrypted)
+    ///     "tagName2": <str>, // string tag (will be stored encrypted)
+    ///     "~tagName3": <str>, // string tag (will be stored un-encrypted)
+    ///     "~tagName4": <str>, // string tag (will be stored un-encrypted)
+    ///   }
+    ///   Note that null means no tags
+    ///   If tag name starts with "~" the tag will be stored un-encrypted that will allow
+    ///   usage of this tag in complex search queries (comparison, predicates)
+    ///   Encrypted tags can be searched only for exact matching
     // TODO: change to String -> &str
     pub async fn add_record(
         &self,
@@ -54,6 +72,14 @@ impl NonSecretsController {
         res
     }
 
+    /// Update a non-secret wallet record value
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// value: the new value of record
     pub async fn update_record_value(
         &self,
         wallet_handle: WalletHandle,
@@ -81,6 +107,23 @@ impl NonSecretsController {
         res
     }
 
+    /// Update a non-secret wallet record tags
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// tags_json: the record tags used for search and storing meta information as json:
+    ///   {
+    ///     "tagName1": <str>, // string tag (will be stored encrypted)
+    ///     "tagName2": <str>, // string tag (will be stored encrypted)
+    ///     "~tagName3": <str>, // string tag (will be stored un-encrypted)
+    ///     "~tagName4": <str>, // string tag (will be stored un-encrypted)
+    ///   }
+    ///   If tag name starts with "~" the tag will be stored un-encrypted that will allow
+    ///   usage of this tag in complex search queries (comparison, predicates)
+    ///   Encrypted tags can be searched only for exact matching
     pub async fn update_record_tags(
         &self,
         wallet_handle: WalletHandle,
@@ -108,6 +151,25 @@ impl NonSecretsController {
         res
     }
 
+    /// Add new tags to the wallet record
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// tags_json: the record tags used for search and storing meta information as json:
+    ///   {
+    ///     "tagName1": <str>, // string tag (will be stored encrypted)
+    ///     "tagName2": <str>, // string tag (will be stored encrypted)
+    ///     "~tagName3": <str>, // string tag (will be stored un-encrypted)
+    ///     "~tagName4": <str>, // string tag (will be stored un-encrypted)
+    ///   }
+    ///   If tag name starts with "~" the tag will be stored un-encrypted that will allow
+    ///   usage of this tag in complex search queries (comparison, predicates)
+    ///   Encrypted tags can be searched only for exact matching
+    ///   Note if some from provided tags already assigned to the record than
+    ///     corresponding tags values will be replaced
     pub async fn add_record_tags(
         &self,
         wallet_handle: WalletHandle,
@@ -135,6 +197,15 @@ impl NonSecretsController {
         res
     }
 
+    /// Delete tags from the wallet record
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// tag_names_json: the list of tag names to remove from the record as json array:
+    ///   ["tagName1", "tagName2", ...]
     pub async fn delete_record_tags(
         &self,
         wallet_handle: WalletHandle,
@@ -167,6 +238,13 @@ impl NonSecretsController {
         res
     }
 
+    /// Delete an existing wallet record in the wallet
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: record type
+    /// id: the id of record
     pub async fn delete_record(
         &self,
         wallet_handle: WalletHandle,
@@ -191,6 +269,27 @@ impl NonSecretsController {
         res
     }
 
+    /// Get an wallet record by id
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// id: the id of record
+    /// options_json: //TODO: FIXME: Think about replacing by bitmask
+    ///  {
+    ///    retrieveType: (optional, false by default) Retrieve record type,
+    ///    retrieveValue: (optional, true by default) Retrieve record value,
+    ///    retrieveTags: (optional, false by default) Retrieve record tags
+    ///  }
+    /// #Returns
+    /// wallet record json:
+    /// {
+    ///   id: "Some id",
+    ///   type: "Some type", // present only if retrieveType set to true
+    ///   value: "Some value", // present only if retrieveValue set to true
+    ///   tags: <tags json>, // present only if retrieveTags set to true
+    /// }
     pub async fn get_record(
         &self,
         wallet_handle: WalletHandle,
@@ -229,6 +328,34 @@ impl NonSecretsController {
         res
     }
 
+    /// Search for wallet records.
+    ///
+    /// Note instead of immediately returning of fetched records
+    /// this call returns wallet_search_handle that can be used later
+    /// to fetch records by small batches (with indy_fetch_wallet_search_next_records).
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// type_: allows to separate different record types collections
+    /// query_json: MongoDB style query to wallet record tags:
+    ///  {
+    ///    "tagName": "tagValue",
+    ///    $or: {
+    ///      "tagName2": { $regex: 'pattern' },
+    ///      "tagName3": { $gte: '123' },
+    ///    },
+    ///  }
+    /// options_json: //TODO: FIXME: Think about replacing by bitmask
+    ///  {
+    ///    retrieveRecords: (optional, true by default) If false only "counts" will be calculated,
+    ///    retrieveTotalCount: (optional, false by default) Calculate total count,
+    ///    retrieveType: (optional, false by default) Retrieve record type,
+    ///    retrieveValue: (optional, true by default) Retrieve record value,
+    ///    retrieveTags: (optional, false by default) Retrieve record tags,
+    ///  }
+    /// #Returns
+    /// search_handle: Wallet search handle that can be used later
+    ///   to fetch records by small batches (with indy_fetch_wallet_search_next_records)
     pub async fn open_search(
         &self,
         wallet_handle: WalletHandle,
@@ -269,6 +396,26 @@ impl NonSecretsController {
         res
     }
 
+    /// Fetch next records for wallet search.
+    ///
+    /// Not if there are no records this call returns WalletNoRecords error.
+    ///
+    /// #Params
+    /// wallet_handle: wallet handle (created by open_wallet)
+    /// wallet_search_handle: wallet search handle (created by indy_open_wallet_search)
+    /// count: Count of records to fetch
+    ///
+    /// #Returns
+    /// wallet records json:
+    /// {
+    ///   totalCount: <str>, // present only if retrieveTotalCount set to true
+    ///   records: [{ // present only if retrieveRecords set to true
+    ///       id: "Some id",
+    ///       type: "Some type", // present only if retrieveType set to true
+    ///       value: "Some value", // present only if retrieveValue set to true
+    ///       tags: <tags json>, // present only if retrieveTags set to true
+    ///   }],
+    /// }
     pub async fn fetch_search_next_records(
         &self,
         wallet_handle: WalletHandle,
@@ -323,6 +470,10 @@ impl NonSecretsController {
         res
     }
 
+    /// Close wallet search (make search handle invalid)
+    ///
+    /// #Params
+    /// wallet_search_handle: wallet search handle
     pub async fn close_search(&self, wallet_search_handle: SearchHandle) -> IndyResult<()> {
         trace!(
             "close_search > wallet_search_handle {:?}",
