@@ -21,23 +21,6 @@ use self::{pairwise_info::PairwiseInfo, trait_bounds::TheirDidDoc};
 
 use super::{SendClosure, SendClosureConnection};
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SideConnectionInfo {
-    did: String,
-    recipient_keys: Vec<String>,
-    routing_keys: Vec<String>,
-    service_endpoint: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    protocols: Option<Vec<ProtocolDescriptor>>,
-}
-
-#[derive(Debug, Serialize)]
-struct ConnectionInfo {
-    my: SideConnectionInfo,
-    their: Option<SideConnectionInfo>,
-}
-
 pub struct Connection<I, T, S> {
     source_id: String,
     thread_id: String,
