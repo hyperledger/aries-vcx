@@ -175,7 +175,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       const pwInfo = await faber.publishService(faberEndpoint)
       const msg = await faber.createOobMessageWithDid()
-      await alice.createNonmediatedConnectionUsingOobMessage(msg)
+      await alice.createNonmediatedConnectionFromInvite(msg)
 
       const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
       await faber.createNonmediatedConnectionFromRequest(request, pwInfo)

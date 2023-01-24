@@ -1,10 +1,7 @@
 const { OutOfBandSender, OutOfBandReceiver } = require('@hyperledger/node-vcx-wrapper')
 const assert = require('assert')
 
-module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection, saveNonmediatedConnection, endpointInfo }) {
-  assert(endpointInfo.serviceEndpoint)
-  assert(endpointInfo.routingKeys)
-
+module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logger, saveConnection, loadConnection }) {
   function _createOobSender (message, label) {
     const oob = OutOfBandSender.create({ label })
     if (message) {
@@ -31,12 +28,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
     await saveConnection(connectionId, connection)
   }
 
-  async function createNonmediatedConnectionFromOobMsg (connectionId, oobMsg) {
-    const oob = OutOfBandReceiver.createWithMessage(oobMsg)
-    const connection = await oob.buildNonmediatedConnection(endpointInfo)
-    await saveNonmediatedConnection(connectionId, connection)
-  }
-
   async function reuseConnectionFromOobMsg (connectionId, oobMsg) {
     const connection = await loadConnection(connectionId)
     await connection.sendHandshakeReuse(oobMsg)
@@ -61,7 +52,6 @@ module.exports.createServiceOutOfBand = function createServiceOutOfBand ({ logge
   return {
     createOobMessageWithDid,
     createConnectionFromOobMsg,
-    createNonmediatedConnectionFromOobMsg,
     connectionExists,
     reuseConnectionFromOobMsg
   }

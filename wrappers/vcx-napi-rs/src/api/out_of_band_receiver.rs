@@ -27,17 +27,6 @@ pub async fn out_of_band_receiver_build_connection(handle: u32) -> napi::Result<
 }
 
 #[napi]
-pub async fn out_of_band_receiver_build_nonmediated_connection(
-    handle: u32,
-    service_endpoint: String,
-    routing_keys: Vec<String>,
-) -> napi::Result<String> {
-    out_of_band::build_nonmediated_connection(handle, service_endpoint, routing_keys)
-        .await
-        .map_err(to_napi_err)
-}
-
-#[napi]
 pub fn out_of_band_receiver_get_thread_id(handle: u32) -> napi::Result<String> {
     out_of_band::get_thread_id_receiver(handle).map_err(to_napi_err)
 }

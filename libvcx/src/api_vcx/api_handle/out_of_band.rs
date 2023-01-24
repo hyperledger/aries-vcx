@@ -187,22 +187,6 @@ pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
         .map_err(|err| err.into())
 }
 
-pub async fn build_nonmediated_connection(
-    handle: u32,
-    service_endpoint: String,
-    routing_keys: Vec<String>,
-) -> LibvcxResult<String> {
-    trace!("build_nonmediated_connection >>> handle: {}", handle);
-    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
-    let invitation = Invitation::OutOfBand(oob.oob.clone());
-    let profile = get_main_profile()?;
-    let ddo = into_did_doc(&profile, &invitation).await?;
-    oob.build_nonmediated_connection(&profile, ddo, service_endpoint, routing_keys)
-        .await?
-        .to_string()
-        .map_err(|err| err.into())
-}
-
 pub fn get_thread_id_sender(handle: u32) -> LibvcxResult<String> {
     trace!("get_thread_id_sender >>> handle: {}", handle);
     OUT_OF_BAND_SENDER_MAP.get(handle, |oob| Ok(oob.get_id()))

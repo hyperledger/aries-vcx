@@ -6,7 +6,6 @@ use agency_client::agency_client::AgencyClient;
 use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
-use crate::handlers::connection::connection::Connection;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
@@ -156,21 +155,6 @@ impl OutOfBandReceiver {
             autohop_enabled,
         )
         .await
-    }
-
-    pub async fn build_nonmediated_connection(
-        &self,
-        profile: &Arc<dyn Profile>,
-        did_doc: AriesDidDoc,
-        service_endpoint: String,
-        routing_keys: Vec<String>,
-    ) -> VcxResult<Connection> {
-        trace!("OutOfBandReceiver::build_nonmediated_connection >>>",);
-        Connection::create_invitee(profile, did_doc)
-            .await?
-            .process_invite(Invitation::OutOfBand(self.oob.clone()))?
-            .send_request(profile, service_endpoint, routing_keys, None)
-            .await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
