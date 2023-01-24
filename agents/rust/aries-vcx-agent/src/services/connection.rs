@@ -11,6 +11,7 @@ use aries_vcx::messages::concepts::ack::Ack;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 
 pub type ServiceEndpoint = String;
 
@@ -29,8 +30,8 @@ impl ServiceConnections {
         }
     }
 
-    pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let inviter = Connection::create_inviter(&self.profile)
+    pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<Invitation> {
+        let inviter = Connection::create_inviter(&self.profile, pw_info)
             .await?
             .create_invite(self.service_endpoint.clone(), vec![])
             .await?;
