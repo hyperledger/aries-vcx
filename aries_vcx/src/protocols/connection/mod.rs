@@ -93,39 +93,3 @@ where
         }))
     }
 }
-
-#[cfg(test)]
-/// Only present to illustrate the transition between states for the typestate Connection.
-/// Methods are only available to given states (encoded as types) and thus the Connection is guaranteed
-/// at compile time not to get into an invalid state.
-mod dummy_tests {
-    use super::*;
-
-    async fn invitee() {
-        let con = Connection::new_invitee(source_id, pairwise_info, did_doc, transport_type)
-            .process_invite(invitation)
-            .unwrap()
-            .send_request(profile, service_endpoint, routing_keys, None)
-            .await
-            .unwrap()
-            .handle_connection_response(wallet, response, send_message)
-            .await
-            .unwrap()
-            .handle_send_ack(send_message)
-            .await
-            .unwrap();
-    }
-
-    async fn inviter() {
-        let con = Connection::new_inviter(source_id, pairwise_info, transport_type)
-            .create_invite(service_endpoint, routing_keys)
-            .process_request(profile, request, service_endpoint, routing_keys, send_message)
-            .await
-            .unwrap()
-            .handle_send_response(send_message)
-            .await
-            .unwrap()
-            .handle_confirmation_message(msg)
-            .unwrap();
-    }
-}
