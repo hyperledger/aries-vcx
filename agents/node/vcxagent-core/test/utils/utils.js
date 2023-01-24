@@ -6,7 +6,7 @@ const { createAlice } = require('./alice')
 const { ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 const assert = require('assert')
 
-module.exports.createAliceAndFaber = async function createAliceAndFaber ({ aliceEndpoint, faberEndpoint }) {
+module.exports.createAliceAndFaber = async function createAliceAndFaber ({ aliceEndpoint, faberEndpoint } = {}) {
   const alice = await createAlice(aliceEndpoint)
   const faber = await createFaber(faberEndpoint)
   return { alice, faber }

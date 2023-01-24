@@ -1,5 +1,6 @@
 /* eslint-env jest */
 require('jest')
+const { ConnectionStateType } = require('@hyperledger/node-vcx-wrapper')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
 const express = require('express')
@@ -188,7 +189,6 @@ describe('test establishing and exchanging messages via nonmediated connections'
 
       await alice.nonmediatedConnectionSendMessage('Hello Faber')
       const { message: msgFaber } = await faber.unpackMsg(faberEncryptedMsg)
-      console.log(`msgFaber = ${msgFaber}`)
       expect(JSON.parse(msgFaber).content).toBe('Hello Faber')
 
       await faber.nonmediatedConnectionSendMessage('Hello Alice')
@@ -204,6 +204,61 @@ describe('test establishing and exchanging messages via nonmediated connections'
       }
       if (aliceServer) {
         aliceServer.close()
+      }
+      await sleep(2000)
+    }
+  })
+
+  it('Establish a nonmediated with mediated connection, exchange messages', async () => {
+    let faberServer
+    try {
+      const path = '/msg'
+      const faberPort = 5406
+      const faberEndpoint = `http://127.0.0.1:${faberPort}${path}`
+
+      let faberEncryptedMsg
+      const faberApp = express()
+      faberApp.use(bodyParser.raw({ type: '*/*' }))
+      faberApp.post(path, (req, res) => {
+        faberEncryptedMsg = req.body
+        res.status(200).send()
+      })
+      faberServer = faberApp.listen(faberPort)
+
+      const { alice, faber } = await createAliceAndFaber({ faberEndpoint })
+
+      const pwInfo = await faber.publishService(faberEndpoint)
+      const msg = await faber.createOobMessageWithDid()
+      await alice.createConnectionUsingOobMessage(msg)
+
+      const { message: request } = await faber.unpackMsg(faberEncryptedMsg)
+      await faber.createNonmediatedConnectionFromRequest(request, pwInfo)
+
+      await alice.updateConnection(ConnectionStateType.Finished)
+
+      const { message: ack } = await faber.unpackMsg(faberEncryptedMsg)
+      await faber.nonmediatedConnectionProcessAck(ack)
+
+      await alice.sendMessage('Hello Faber')
+      const { message: msgFaber } = await faber.unpackMsg(faberEncryptedMsg)
+      expect(JSON.parse(msgFaber).content).toBe('Hello Faber')
+
+      await faber.nonmediatedConnectionSendMessage('Hello Alice')
+      const msgsAlice = await alice.downloadReceivedMessagesV2()
+      expect(msgsAlice.length).toBe(1)
+      expect(msgsAlice[0].uid).toBeDefined()
+      expect(msgsAlice[0].statusCode).toBe('MS-103')
+      const payloadAlice = JSON.parse(msgsAlice[0].decryptedMsg)
+      expect(payloadAlice['@id']).toBeDefined()
+      expect(payloadAlice['@type']).toBeDefined()
+      expect(payloadAlice.content).toBe('Hello Alice')
+
+    } catch (err) {
+      console.error(`err = ${err.message} stack = ${err.stack}`)
+      throw Error(err)
+    } finally {
+      if (faberServer) {
+        faberServer.close()
       }
       await sleep(2000)
     }
