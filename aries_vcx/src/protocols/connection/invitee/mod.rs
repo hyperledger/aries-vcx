@@ -34,33 +34,31 @@ use crate::{
 };
 
 /// Convenience alias
-pub type InviteeConnection<T, S> = Connection<Invitee, T, S>;
+pub type InviteeConnection<S> = Connection<Invitee, S>;
 
-impl<T, S> InviteeConnection<T, S> {
+impl<S> InviteeConnection<S> {
     pub fn new_invitee(
         source_id: String,
         pairwise_info: PairwiseInfo,
         did_doc: AriesDidDoc,
-        transport_type: T,
-    ) -> InviteeConnection<T, InitialState> {
+    ) -> InviteeConnection<InitialState> {
         Connection {
             source_id,
             thread_id: String::new(),
             state: InitialState::new(None, did_doc),
             pairwise_info,
             initiation_type: Invitee,
-            transport_type,
         }
     }
 }
 
-impl<T> InviteeConnection<T, InitialState> {
+impl InviteeConnection<InitialState> {
     /// Tries to convert [`InviteeNonMediatedConnection<T, InitialState>`] to [`InviteeNonMediatedConnection<T, InvitedState>`]
     /// by handling a received invitation.
     ///
     /// # Errors
     /// Will error out if the there's no thread ID in the [`Invitation`].
-    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<InviteeConnection<T, InvitedState>> {
+    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
         let thread_id = invitation.get_id()?;
 
         let did_doc = self.state.did_doc;
@@ -73,17 +71,16 @@ impl<T> InviteeConnection<T, InitialState> {
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
-            transport_type: self.transport_type,
         })
     }
 
-    pub fn process_invite(self, invitation: Invitation) -> VcxResult<InviteeConnection<T, InvitedState>> {
+    pub fn process_invite(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
         trace!("Connection::process_invite >>> invitation: {:?}", invitation);
         self.handle_invitation(invitation)
     }
 }
 
-impl<T> InviteeConnection<T, InvitedState> {
+impl InviteeConnection<InvitedState> {
     pub fn get_invitation(&self) -> &Invitation {
         &self.state.invitation
     }
@@ -129,7 +126,7 @@ impl<T> InviteeConnection<T, InvitedState> {
         routing_keys: Vec<String>,
         service_endpoint: String,
         send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<T, RequestedState>> {
+    ) -> VcxResult<InviteeConnection<RequestedState>> {
         let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
         let did_doc = self.state.did_doc;
 
@@ -148,16 +145,14 @@ impl<T> InviteeConnection<T, InvitedState> {
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
-            transport_type: self.transport_type,
         })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<T, InitialState>> {
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<InitialState>> {
         let Self {
             source_id,
             thread_id,
             pairwise_info,
-            transport_type,
             state,
             ..
         } = self;
@@ -170,7 +165,6 @@ impl<T> InviteeConnection<T, InvitedState> {
             thread_id,
             pairwise_info,
             initiation_type: Invitee,
-            transport_type,
         })
     }
 
@@ -180,7 +174,7 @@ impl<T> InviteeConnection<T, InvitedState> {
         service_endpoint: String,
         routing_keys: Vec<String>,
         send_message: Option<SendClosureConnection>,
-    ) -> VcxResult<InviteeConnection<T, RequestedState>> {
+    ) -> VcxResult<InviteeConnection<RequestedState>> {
         trace!("Connection::send_request");
         let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
         self.send_connection_request(routing_keys, service_endpoint, send_message)
@@ -188,7 +182,7 @@ impl<T> InviteeConnection<T, InvitedState> {
     }
 }
 
-impl<T> InviteeConnection<T, RequestedState> {
+impl InviteeConnection<RequestedState> {
     /// Returns the first entry from the map for which the message indicates a progressable state.
     pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
         messages
@@ -218,7 +212,7 @@ impl<T> InviteeConnection<T, RequestedState> {
         wallet: &Arc<dyn BaseWallet>,
         response: SignedResponse,
         _send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<T, RespondedState>> {
+    ) -> VcxResult<InviteeConnection<RespondedState>> {
         verify_thread_id(self.thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
 
         let remote_vk: String =
@@ -237,7 +231,6 @@ impl<T> InviteeConnection<T, RequestedState> {
             thread_id,
             pairwise_info,
             state,
-            transport_type,
             ..
         } = self;
 
@@ -251,16 +244,14 @@ impl<T> InviteeConnection<T, RequestedState> {
             thread_id,
             pairwise_info,
             initiation_type: Invitee,
-            transport_type,
         })
     }
 
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<T, InitialState>> {
+    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<InitialState>> {
         let Self {
             source_id,
             thread_id,
             pairwise_info,
-            transport_type,
             state,
             ..
         } = self;
@@ -273,12 +264,11 @@ impl<T> InviteeConnection<T, RequestedState> {
             thread_id,
             pairwise_info,
             initiation_type: Invitee,
-            transport_type,
         })
     }
 }
 
-impl<T> InviteeConnection<T, RespondedState> {
+impl InviteeConnection<RespondedState> {
     fn build_connection_ack_msg(&self) -> Ack {
         Ack::create().set_out_time().set_thread_id(&self.thread_id)
     }
@@ -286,7 +276,7 @@ impl<T> InviteeConnection<T, RespondedState> {
     pub async fn handle_send_ack(
         self,
         send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<T, CompleteState>> {
+    ) -> VcxResult<InviteeConnection<CompleteState>> {
         let sender_vk = self.pairwise_info().pw_vk.clone();
         let did_doc = self.state.response.connection.did_doc.clone();
 
@@ -297,7 +287,6 @@ impl<T> InviteeConnection<T, RespondedState> {
             thread_id,
             pairwise_info,
             state,
-            transport_type,
             ..
         } = self;
 
@@ -313,12 +302,11 @@ impl<T> InviteeConnection<T, RespondedState> {
             thread_id,
             pairwise_info,
             initiation_type: Invitee,
-            transport_type,
         })
     }
 }
 
-impl<T> InviteeConnection<T, CompleteState> {
+impl InviteeConnection<CompleteState> {
     pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
         &self.state.bootstrap_did_doc
     }

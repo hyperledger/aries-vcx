@@ -21,16 +21,15 @@ use self::{pairwise_info::PairwiseInfo, trait_bounds::TheirDidDoc};
 
 use super::{SendClosure, SendClosureConnection};
 
-pub struct Connection<I, T, S> {
+pub struct Connection<I, S> {
     source_id: String,
     thread_id: String,
     pairwise_info: PairwiseInfo,
     initiation_type: I,
-    transport_type: T,
     state: S,
 }
 
-impl<I, T, S> Connection<I, T, S> {
+impl<I, S> Connection<I, S> {
     pub fn pairwise_info(&self) -> &PairwiseInfo {
         &self.pairwise_info
     }
@@ -56,7 +55,7 @@ impl<I, T, S> Connection<I, T, S> {
     }
 }
 
-impl<I, T, S> Connection<I, T, S>
+impl<I, S> Connection<I, S>
 where
     S: TheirDidDoc,
 {

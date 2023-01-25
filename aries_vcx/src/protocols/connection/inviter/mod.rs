@@ -22,31 +22,29 @@ use messages::protocols::connection::{
 };
 use messages::protocols::discovery::disclose::{ProtocolDescriptor, Disclose};
 
-pub type InviterConnection<T, S> = Connection<Inviter, T, S>;
+pub type InviterConnection<S> = Connection<Inviter, S>;
 
-impl<T, S> InviterConnection<T, S> {
+impl<S> InviterConnection<S> {
     pub fn new_inviter(
         source_id: String,
         pairwise_info: PairwiseInfo,
-        transport_type: T,
-    ) -> InviterConnection<T, InitialState> {
+    ) -> InviterConnection<InitialState> {
         Connection {
             source_id,
             thread_id: String::new(),
             state: InitialState::new(None),
             pairwise_info,
             initiation_type: Inviter,
-            transport_type,
         }
     }
 }
 
-impl<T> InviterConnection<T, InitialState> {
+impl InviterConnection<InitialState> {
     pub fn create_invitation(
         self,
         routing_keys: Vec<String>,
         service_endpoint: String,
-    ) -> InviterConnection<T, InvitedState> {
+    ) -> InviterConnection<InvitedState> {
         let invite: PairwiseInvitation = PairwiseInvitation::create()
             .set_id(&self.thread_id)
             .set_label(&self.source_id)
@@ -59,7 +57,6 @@ impl<T> InviterConnection<T, InitialState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         } = self;
         let state = (state, Invitation::Pairwise(invite)).into();
@@ -69,7 +66,6 @@ impl<T> InviterConnection<T, InitialState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         }
     }
@@ -78,12 +74,12 @@ impl<T> InviterConnection<T, InitialState> {
         self,
         service_endpoint: String,
         routing_keys: Vec<String>,
-    ) -> InviterConnection<T, InvitedState> {
+    ) -> InviterConnection<InvitedState> {
         self.create_invitation(routing_keys, service_endpoint)
     }
 }
 
-impl<T> InviterConnection<T, InvitedState> {
+impl InviterConnection<InvitedState> {
     pub fn get_invitation(&self) -> &Invitation {
         &self.state.invitation
     }
@@ -96,7 +92,7 @@ impl<T> InviterConnection<T, InvitedState> {
         new_routing_keys: Vec<String>,
         new_service_endpoint: String,
         _send_message: SendClosureConnection,
-    ) -> VcxResult<InviterConnection<T, RequestedState>> {
+    ) -> VcxResult<InviterConnection<RequestedState>> {
         verify_thread_id(self.thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
         request.connection.did_doc.validate()?;
 
@@ -121,7 +117,6 @@ impl<T> InviterConnection<T, InvitedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             ..
         } = self;
 
@@ -130,7 +125,6 @@ impl<T> InviterConnection<T, InvitedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         })
     }
@@ -165,7 +159,7 @@ impl<T> InviterConnection<T, InvitedState> {
         service_endpoint: String,
         routing_keys: Vec<String>,
         send_message: Option<SendClosureConnection>,
-    ) -> VcxResult<InviterConnection<T, RequestedState>> {
+    ) -> VcxResult<InviterConnection<RequestedState>> {
         trace!(
             "Connection::process_request >>> request: {:?}, service_endpoint: {}, routing_keys: {:?}",
             request,
@@ -188,11 +182,11 @@ impl<T> InviterConnection<T, InvitedState> {
     }
 }
 
-impl<T> InviterConnection<T, RequestedState> {
+impl InviterConnection<RequestedState> {
     pub async fn handle_send_response(
         self,
         send_message: SendClosureConnection,
-    ) -> VcxResult<InviterConnection<T, RespondedState>> {
+    ) -> VcxResult<InviterConnection<RespondedState>> {
         send_message(
             self.state.signed_response.to_a2a_message(),
             self.pairwise_info.pw_vk.clone(),
@@ -205,7 +199,6 @@ impl<T> InviterConnection<T, RequestedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         } = self;
 
@@ -215,7 +208,6 @@ impl<T> InviterConnection<T, RequestedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
         })
     }
 
@@ -223,15 +215,15 @@ impl<T> InviterConnection<T, RequestedState> {
         self,
         profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
-    ) -> VcxResult<InviterConnection<T, RespondedState>> {
+    ) -> VcxResult<InviterConnection<RespondedState>> {
         trace!("Connection::send_response >>>");
         let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
         self.handle_send_response(send_message).await
     }
 }
 
-impl<T> InviterConnection<T, RespondedState> {
-    pub fn handle_confirmation_message(self, msg: &A2AMessage) -> VcxResult<InviterConnection<T, CompleteState>> {
+impl InviterConnection<RespondedState> {
+    pub fn handle_confirmation_message(self, msg: &A2AMessage) -> VcxResult<InviterConnection<CompleteState>> {
         verify_thread_id(self.thread_id(), msg)?;
 
         let Self {
@@ -239,7 +231,6 @@ impl<T> InviterConnection<T, RespondedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         } = self;
 
@@ -250,18 +241,17 @@ impl<T> InviterConnection<T, RespondedState> {
             thread_id,
             pairwise_info,
             initiation_type,
-            transport_type,
             state,
         })
     }
 
-    pub fn process_ack(self, message: &A2AMessage) -> VcxResult<InviterConnection<T, CompleteState>> {
+    pub fn process_ack(self, message: &A2AMessage) -> VcxResult<InviterConnection<CompleteState>> {
         self.handle_confirmation_message(message)
     }
 }
 
 
-impl<T> InviterConnection< T, CompleteState> {
+impl InviterConnection<CompleteState> {
     pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         self.state.remote_protocols()
     }
