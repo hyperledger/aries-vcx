@@ -11,6 +11,7 @@ pub mod oob;
 pub mod proof_presentation;
 pub mod revocation_notification;
 pub mod trustping;
+mod typestate_con;
 
 pub type SendClosure = Box<dyn FnOnce(A2AMessage) -> BoxFuture<'static, VcxResult<()>> + Send + Sync>;
 pub type SendClosureConnection =
