@@ -85,11 +85,17 @@ impl InviteeConnection<InvitedState> {
         &self.state.invitation
     }
 
-    fn build_connection_request_msg(
-        &self,
+    /// Tries to convert [`SmConnectionInvitee2<InvitedState>`] to [`SmConnectionInvitee2<RequestedState>`]
+    /// by sending a connection request.
+    ///
+    /// # Errors
+    /// Will error out if building or sending the connection request message fails.
+    pub async fn send_connection_request(
+        self,
         routing_keys: Vec<String>,
         service_endpoint: String,
-    ) -> VcxResult<(Request, String)> {
+        send_message: SendClosureConnection,
+    ) -> VcxResult<InviteeConnection<RequestedState>> {
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
         let request = Request::create()
             .set_label(self.source_id.to_string())
@@ -113,21 +119,7 @@ impl InviteeConnection<InvitedState> {
                 request_id,
             ),
         };
-        Ok((request, thread_id))
-    }
-
-    /// Tries to convert [`SmConnectionInvitee2<InvitedState>`] to [`SmConnectionInvitee2<RequestedState>`]
-    /// by sending a connection request.
-    ///
-    /// # Errors
-    /// Will error out if building or sending the connection request message fails.
-    pub async fn send_connection_request(
-        self,
-        routing_keys: Vec<String>,
-        service_endpoint: String,
-        send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<RequestedState>> {
-        let (request, thread_id) = self.build_connection_request_msg(routing_keys, service_endpoint)?;
+        
         let did_doc = self.state.did_doc;
 
         send_message(
