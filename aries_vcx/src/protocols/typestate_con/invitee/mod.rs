@@ -1,50 +1,41 @@
 pub mod states;
 
-use messages::{
-    diddoc::aries::diddoc::AriesDidDoc,
-    protocols::{
-        connection::invite::Invitation,
-        discovery::disclose::{Disclose, ProtocolDescriptor},
-    },
-};
+use std::sync::Arc;
 
-use crate::{core::profile::profile::Profile, errors::error::VcxResult};
+use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use self::states::{
-    complete::CompleteState, initial::InitialState, invited::InvitedState, requested::RequestedState,
-    responded::RespondedState,
-};
+use crate::{errors::error::VcxResult, utils::uuid};
 
-use std::{collections::HashMap, sync::Arc};
+use self::states::{initial::InitialState, invited::InvitedState, requested::RequestedState};
 
 use messages::{
     a2a::A2AMessage,
     concepts::ack::Ack,
-    protocols::connection::{problem_report::ProblemReport, request::Request, response::SignedResponse},
+    protocols::connection::{request::Request, response::SignedResponse},
 };
 
-use super::{initiation_type::Invitee, Connection};
+use super::{
+    common::states::{complete::CompleteState, responded::RespondedState},
+    initiation_type::Invitee,
+    pairwise_info::PairwiseInfo,
+    trait_bounds::Transport,
+    Connection,
+};
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     handlers::util::verify_thread_id,
     plugins::wallet::base_wallet::BaseWallet,
-    protocols::{connection::pairwise_info::PairwiseInfo, SendClosureConnection},
 };
 
 /// Convenience alias
 pub type InviteeConnection<S> = Connection<Invitee, S>;
 
 impl<S> InviteeConnection<S> {
-    pub fn new_invitee(
-        source_id: String,
-        pairwise_info: PairwiseInfo,
-        did_doc: AriesDidDoc,
-    ) -> InviteeConnection<InitialState> {
+    pub fn new(source_id: String, pairwise_info: PairwiseInfo) -> InviteeConnection<InitialState> {
         Connection {
             source_id,
-            thread_id: String::new(),
-            state: InitialState::new(None, did_doc),
+            state: InitialState,
             pairwise_info,
             initiation_type: Invitee,
         }
@@ -52,50 +43,42 @@ impl<S> InviteeConnection<S> {
 }
 
 impl InviteeConnection<InitialState> {
-    /// Tries to convert [`InviteeNonMediatedConnection<T, InitialState>`] to [`InviteeNonMediatedConnection<T, InvitedState>`]
-    /// by handling a received invitation.
-    ///
-    /// # Errors
-    /// Will error out if the there's no thread ID in the [`Invitation`].
-    pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
-        let thread_id = invitation.get_id()?;
+    // This should take an Invitation, but that also implies a DDO resolver
+    // for public invitations.
+    // Proper signature:
+    //      pub fn into_invited(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
 
-        let did_doc = self.state.did_doc;
-        let state = InvitedState { invitation, did_doc };
+    // We'll accept a DidDoc for now.
+    pub fn into_invited(self, did_doc: AriesDidDoc) -> VcxResult<InviteeConnection<InvitedState>> {
+        trace!("Connection::into_invited >>> did_doc: {:?}", &did_doc);
+        let thread_id = uuid::uuid();
+        let state = InvitedState { did_doc, thread_id };
 
         // Convert to `InvitedState`
         Ok(Connection {
             state,
-            thread_id,
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
         })
     }
-
-    pub fn process_invite(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
-        trace!("Connection::process_invite >>> invitation: {:?}", invitation);
-        self.handle_invitation(invitation)
-    }
 }
 
 impl InviteeConnection<InvitedState> {
-    pub fn get_invitation(&self) -> &Invitation {
-        &self.state.invitation
-    }
-
-    /// Tries to convert [`SmConnectionInvitee2<InvitedState>`] to [`SmConnectionInvitee2<RequestedState>`]
-    /// by sending a connection request.
-    ///
-    /// # Errors
-    /// Will error out if building or sending the connection request message fails.
-    pub async fn send_connection_request(
+    pub async fn send_request<T>(
         self,
-        routing_keys: Vec<String>,
+        wallet: &Arc<dyn BaseWallet>,
         service_endpoint: String,
-        send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<RequestedState>> {
+        routing_keys: Vec<String>,
+        transport: &T,
+    ) -> VcxResult<InviteeConnection<RequestedState>>
+    where
+        T: Transport,
+    {
+        trace!("Connection::send_request");
+
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
+
         let request = Request::create()
             .set_label(self.source_id.to_string())
             .set_did(self.pairwise_info.pw_did.to_string())
@@ -103,210 +86,104 @@ impl InviteeConnection<InvitedState> {
             .set_keys(recipient_keys, routing_keys)
             .set_out_time();
 
-        let request_id = request.id.0.clone();
+        // Should be properly retrieved from Invitation.
+        // Also there's if this Request will just be serialized, it might as well take references.
+        let request = request.set_parent_thread_id(&self.state.thread_id);
 
-        let (request, thread_id) = match &self.state.invitation {
-            Invitation::Public(_) => (
-                request
-                    .set_parent_thread_id(&self.thread_id)
-                    .set_thread_id_matching_id(),
-                request_id,
-            ),
-            Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.thread_id().to_owned()),
-            Invitation::OutOfBand(invite) => (
-                request.set_parent_thread_id(&invite.id.0).set_thread_id_matching_id(),
-                request_id,
-            ),
-        };
-        
-        let did_doc = self.state.did_doc;
+        // The Invitation gets lost along the way when converting from Invited to Requested
+        // in previous implementations. Apart from these thread ID's, it's not used at all.
+        //
+        // Might as well implement it properly when accepting an Invitation in the `into_invited` method.
+        //
+        // let request_id = request.id.0.clone();
+        //
+        // let (request, thread_id) = match &self.state.invitation {
+        //     Invitation::Public(_) => (
+        //         request
+        //             .set_parent_thread_id(&self.thread_id)
+        //             .set_thread_id_matching_id(),
+        //         request_id,
+        //     ),
+        //     Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.thread_id().to_owned()),
+        //     Invitation::OutOfBand(invite) => (
+        //         request.set_parent_thread_id(&invite.id.0).set_thread_id_matching_id(),
+        //         request_id,
+        //     ),
+        // };
 
-        send_message(
-            request.to_a2a_message(),
-            self.pairwise_info.pw_vk.clone(),
-            did_doc.clone(),
+        Self::send_message(
+            wallet,
+            &self.state.did_doc,
+            &request.to_a2a_message(),
+            &self.pairwise_info.pw_vk,
+            transport,
         )
         .await?;
 
-        let state = RequestedState { request, did_doc };
-
         Ok(Connection {
-            state,
-            thread_id,
+            state: RequestedState::new(self.state.did_doc, self.state.thread_id),
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
         })
     }
-
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<InitialState>> {
-        let Self {
-            source_id,
-            thread_id,
-            pairwise_info,
-            state,
-            ..
-        } = self;
-
-        let state = InitialState::new(Some(problem_report), state.did_doc);
-
-        Ok(Connection {
-            state,
-            source_id,
-            thread_id,
-            pairwise_info,
-            initiation_type: Invitee,
-        })
-    }
-
-    pub async fn send_request(
-        self,
-        profile: &Arc<dyn Profile>,
-        service_endpoint: String,
-        routing_keys: Vec<String>,
-        send_message: Option<SendClosureConnection>,
-    ) -> VcxResult<InviteeConnection<RequestedState>> {
-        trace!("Connection::send_request");
-        let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
-        self.send_connection_request(routing_keys, service_endpoint, send_message)
-            .await
-    }
 }
 
 impl InviteeConnection<RequestedState> {
-    /// Returns the first entry from the map for which the message indicates a progressable state.
-    pub fn find_message_to_update_state(&self, messages: HashMap<String, A2AMessage>) -> Option<(String, A2AMessage)> {
-        messages
-            .into_iter()
-            .find(|(_, message)| Self::can_progress_state(message))
-    }
-
-    /// Determines whether the message indicates a progressable state.
-    pub fn can_progress_state(message: &A2AMessage) -> bool {
-        matches!(
-            message,
-            A2AMessage::ConnectionResponse(_) | A2AMessage::ConnectionProblemReport(_)
-        )
-    }
-
-    /// Tries to convert [`SmConnectionInvitee2<RequestedState>`] to [`SmConnectionInvitee2<RespondedState>`]
-    /// by handling a connection response.
-    ///
-    /// # Errors
-    /// Will error out if the thread ID verification fails, there are no keys in the DidDoc
-    /// or decoding the response fails.
-    //
-    // TODO: Why only convert the state to `InitialState` if the decoding fails?
-    // Why not on any other errors?
-    pub async fn handle_connection_response(
+    pub async fn handle_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         response: SignedResponse,
-        _send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<RespondedState>> {
-        verify_thread_id(self.thread_id(), &A2AMessage::ConnectionResponse(response.clone()))?;
+    ) -> VcxResult<InviteeConnection<RespondedState>>
+    where
+        T: Transport,
+    {
+        verify_thread_id(&self.state.thread_id, &A2AMessage::ConnectionResponse(response.clone()))?;
 
-        let remote_vk: String =
-            self.state
-                .did_doc
-                .recipient_keys()?
-                .first()
-                .cloned()
-                .ok_or(AriesVcxError::from_msg(
-                    AriesVcxErrorKind::InvalidState,
-                    "Cannot handle response: remote verkey not found",
-                ))?;
+        let keys = &self.state.did_doc.recipient_keys()?;
+        let remote_vk = keys.first().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::InvalidState,
+            "Cannot handle response: remote verkey not found",
+        ))?;
 
-        let Self {
-            source_id,
-            thread_id,
-            pairwise_info,
-            state,
-            ..
-        } = self;
-
-        let state = decode_signed_connection_response(wallet, response.clone(), &remote_vk)
+        let did_doc = decode_signed_connection_response(wallet, response, remote_vk)
             .await
-            .and_then(|response| state.try_into_responded(response))?;
+            .map(|response| response.connection.did_doc)?;
+
+        let state = RespondedState::new(did_doc, self.state.thread_id);
 
         Ok(Connection {
             state,
-            source_id,
-            thread_id,
-            pairwise_info,
-            initiation_type: Invitee,
-        })
-    }
-
-    pub fn handle_problem_report(self, problem_report: ProblemReport) -> VcxResult<InviteeConnection<InitialState>> {
-        let Self {
-            source_id,
-            thread_id,
-            pairwise_info,
-            state,
-            ..
-        } = self;
-
-        let state = InitialState::new(Some(problem_report), state.did_doc);
-
-        Ok(Connection {
-            state,
-            source_id,
-            thread_id,
-            pairwise_info,
+            source_id: self.source_id,
+            pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
         })
     }
 }
 
 impl InviteeConnection<RespondedState> {
-    fn build_connection_ack_msg(&self) -> Ack {
-        Ack::create().set_out_time().set_thread_id(&self.thread_id)
-    }
-
-    pub async fn handle_send_ack(
+    pub async fn send_ack<T>(
         self,
-        send_message: SendClosureConnection,
-    ) -> VcxResult<InviteeConnection<CompleteState>> {
-        let sender_vk = self.pairwise_info().pw_vk.clone();
-        let did_doc = self.state.response.connection.did_doc.clone();
+        wallet: &Arc<dyn BaseWallet>,
+        transport: &T,
+    ) -> VcxResult<InviteeConnection<CompleteState>>
+    where
+        T: Transport,
+    {
+        let msg = Ack::create()
+            .set_out_time()
+            .set_thread_id(&self.state.thread_id)
+            .to_a2a_message();
 
-        send_message(self.build_connection_ack_msg().to_a2a_message(), sender_vk, did_doc).await?;
+        Self::send_message(wallet, &self.state.did_doc, &msg, &self.pairwise_info.pw_vk, transport).await?;
 
-        let Self {
-            source_id,
-            thread_id,
-            pairwise_info,
-            state,
-            ..
-        } = self;
-
-        let state = CompleteState {
-            did_doc: state.did_doc,
-            bootstrap_did_doc: state.response.connection.did_doc,
-            protocols: None,
-        };
+        let state = CompleteState::new(self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
             state,
-            source_id,
-            thread_id,
-            pairwise_info,
+            source_id: self.source_id,
+            pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
         })
-    }
-}
-
-impl InviteeConnection<CompleteState> {
-    pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
-        &self.state.bootstrap_did_doc
-    }
-
-    pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
-        self.state.remote_protocols()
-    }
-
-    pub fn handle_disclose(&mut self, disclose: Disclose) {
-        self.state.handle_disclose(disclose)
     }
 }

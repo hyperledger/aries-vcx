@@ -1,26 +1,31 @@
-mod trait_bounds;
+mod common;
+mod initiation_type;
+mod invitee;
+mod inviter;
 mod pairwise_info;
+mod trait_bounds;
 
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
     diddoc::aries::diddoc::AriesDidDoc,
-    protocols::discovery::disclose::ProtocolDescriptor,
+    protocols::discovery::disclose::{Disclose, ProtocolDescriptor},
 };
 use std::sync::Arc;
 
 use crate::{
-    core::profile::profile::Profile,
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
-    utils::send_message,
+    plugins::wallet::base_wallet::BaseWallet,
+    utils::encryption_envelope::EncryptionEnvelope,
 };
 
-use self::{pairwise_info::PairwiseInfo, trait_bounds::TheirDidDoc};
-
-use super::{SendClosure, SendClosureConnection};
+use self::{
+    common::states::complete::CompleteState,
+    pairwise_info::PairwiseInfo,
+    trait_bounds::{TheirDidDoc, Transport},
+};
 
 pub struct Connection<I, S> {
     source_id: String,
-    thread_id: String,
     pairwise_info: PairwiseInfo,
     initiation_type: I,
     state: S,
@@ -35,20 +40,24 @@ impl<I, S> Connection<I, S> {
         &self.source_id
     }
 
-    pub fn thread_id(&self) -> &str {
-        &self.thread_id
-    }
-
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
     }
 
-    fn send_message_closure_connection(&self, profile: &Arc<dyn Profile>) -> SendClosureConnection {
-        trace!("send_message_closure_connection >>>");
-        let wallet = profile.inject_wallet();
-        Box::new(move |message: A2AMessage, sender_vk: String, did_doc: AriesDidDoc| {
-            Box::pin(send_message(wallet, sender_vk, did_doc, message))
-        })
+    pub async fn send_message<T>(
+        wallet: &Arc<dyn BaseWallet>,
+        did_doc: &AriesDidDoc,
+        message: &A2AMessage,
+        sender_verkey: &str,
+        transport: &T,
+    ) -> VcxResult<()>
+    where
+        T: Transport,
+    {
+        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
+        let msg = env.0;
+        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
+        transport.send_message(msg, &service_endpoint).await
     }
 }
 
@@ -74,18 +83,14 @@ where
                 "Can't resolve recipient key from the counterparty diddoc.",
             ))
     }
+}
 
-    pub async fn send_message_closure(
-        &self,
-        profile: &Arc<dyn Profile>,
-        send_message: Option<SendClosureConnection>,
-    ) -> VcxResult<SendClosure> {
-        trace!("send_message_closure >>>");
-        let did_doc = self.their_did_doc().clone();
-        let sender_vk = self.pairwise_info().pw_vk.clone();
-        let send_message = send_message.unwrap_or(self.send_message_closure_connection(profile));
-        Ok(Box::new(move |message: A2AMessage| {
-            Box::pin(send_message(message, sender_vk, did_doc))
-        }))
+impl<I> Connection<I, CompleteState> {
+    pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
+        self.state.remote_protocols()
+    }
+
+    pub fn handle_disclose(&mut self, disclose: Disclose) {
+        self.state.handle_disclose(disclose)
     }
 }

@@ -3,14 +3,24 @@ use std::clone::Clone;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
+use crate::protocols::typestate_con::trait_bounds::TheirDidDoc;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
     pub did_doc: AriesDidDoc,
+    pub thread_id: String,
     pub protocols: Option<Vec<ProtocolDescriptor>>,
-    pub thread_id: Option<String>,
 }
 
 impl CompleteState {
+    pub fn new(did_doc: AriesDidDoc, thread_id: String, protocols: Option<Vec<ProtocolDescriptor>>) -> Self {
+        Self {
+            did_doc,
+            thread_id,
+            protocols,
+        }
+    }
+
     pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         self.protocols.as_deref()
     }
@@ -20,13 +30,8 @@ impl CompleteState {
     }
 }
 
-impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {
-    fn from((state, protocols): (CompleteState, Vec<ProtocolDescriptor>)) -> CompleteState {
-        trace!("ConnectionInviter: transit state from CompleteState to CompleteState");
-        CompleteState {
-            did_doc: state.did_doc,
-            thread_id: state.thread_id,
-            protocols: Some(protocols),
-        }
+impl TheirDidDoc for CompleteState {
+    fn their_did_doc(&self) -> &AriesDidDoc {
+        &self.did_doc
     }
 }
