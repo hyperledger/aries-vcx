@@ -6,7 +6,7 @@ const {
 } = require('@hyperledger/node-vcx-wrapper')
 const { pollFunction } = require('../common')
 
-module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, loadAgent, listConnectionIds }) {
+module.exports.createServiceConnections = function createServiceConnections ({ logger, saveConnection, loadConnection, listConnectionIds }) {
   async function inviterConnectionCreate (connectionId, cbInvitation) {
     logger.info(`InviterConnectionSM creating connection ${connectionId}`)
     const connection = await Connection.create({ id: connectionId })
@@ -20,18 +20,6 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
     await saveConnection(connectionId, connection)
     logger.info(`InviterConnectionSM has established connection ${connectionId}`)
     return invite
-  }
-
-  async function inviterConnectionCreateFromRequest (connectionId, agentId, request) {
-    logger.info(`InviterConnectionSM creating connection ${connectionId} from received request ${request} and agent id ${agentId}`)
-    const agent = await loadAgent(agentId)
-    const connection = await Connection.createWithConnectionRequest({
-      id: connectionId,
-      agent,
-      request
-    })
-    await saveConnection(connectionId, connection)
-    return connection
   }
 
   async function inviterConnectionCreateFromRequestV2 (connectionId, pwInfo, request) {
@@ -195,7 +183,6 @@ module.exports.createServiceConnections = function createServiceConnections ({ l
   return {
     // inviter
     inviterConnectionCreate,
-    inviterConnectionCreateFromRequest,
     inviterConnectionCreateFromRequestV2,
     inviterConnectionCreateAndAccept,
 

@@ -176,6 +176,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
 }
 
 pub async fn build_connection(handle: u32) -> LibvcxResult<String> {
+    trace!("build_connection >>> handle: {}", handle);
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let invitation = Invitation::OutOfBand(oob.oob.clone());
     let profile = get_main_profile()?;

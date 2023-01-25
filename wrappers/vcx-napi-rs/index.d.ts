@@ -8,6 +8,25 @@ export function createAgencyClientForMainWallet(config: string): void
 export function provisionCloudAgent(config: string): Promise<string>
 export function messagesUpdateStatus(statusCode: string, uidsByConns: string): Promise<void>
 export function generatePublicInvitation(publicDid: string, label: string): string
+export function connectionCreateInviter(pwInfo?: string | undefined | null): Promise<number>
+export function connectionCreateInvitee(invitation: string): Promise<number>
+export function connectionGetThreadId(handle: number): string
+export function connectionGetPairwiseInfo(handle: number): string
+export function connectionGetRemoteDid(handle: number): string
+export function connectionGetState(handle: number): number
+export function connectionGetInvitation(handle: number): string
+export function connectionProcessInvite(handle: number, invitation: string): void
+export function connectionProcessRequest(handle: number, request: string, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
+export function connectionProcessResponse(handle: number, response: string): Promise<void>
+export function connectionProcessAck(handle: number, message: string): Promise<void>
+export function connectionSendResponse(handle: number): Promise<void>
+export function connectionSendRequest(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
+export function connectionSendAck(handle: number): Promise<void>
+export function connectionSendGenericMessage(handle: number, content: string): Promise<void>
+export function connectionCreateInvite(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
+export function connectionSerialize(handle: number): string
+export function connectionDeserialize(connectionData: string): number
+export function connectionRelease(handle: number): void
 export function credentialCreateWithOffer(sourceId: string, offer: string): number
 export function credentialRelease(handle: number): void
 export function credentialSendRequest(handle: number, handleConnection: number): Promise<void>

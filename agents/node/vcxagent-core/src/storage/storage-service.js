@@ -2,6 +2,7 @@ const { createFileStorage } = require('./storage-file')
 const mkdirp = require('mkdirp')
 const {
   Connection,
+  NonmediatedConnection,
   Credential,
   IssuerCredential,
   CredentialDef,
@@ -14,12 +15,14 @@ const {
 async function createStorageService (agentName) {
   mkdirp.sync('storage-agentProvisions/')
   mkdirp.sync('storage-connections/')
+  mkdirp.sync('storage-nonmediated-connections/')
   mkdirp.sync('storage-credentialDefinitions/')
   mkdirp.sync('storage-revocationRegistries/')
   mkdirp.sync('storage-schemas/')
 
   const storageAgentProvisions = await createFileStorage(`storage-agentProvisions/${agentName}`)
   const storageConnections = await createFileStorage(`storage-connections/${agentName}`)
+  const storageNonmediatedConnections = await createFileStorage(`storage-connections/${agentName}`)
   const storageCredIssuer = await createFileStorage(`storage-credsIssuer/${agentName}`)
   const storageCredHolder = await createFileStorage(`storage-credsHolder/${agentName}`)
   const storageProof = await createFileStorage(`storage-proofs/${agentName}`)
@@ -51,6 +54,19 @@ async function createStorageService (agentName) {
       throw Error(`Connection ${name} was not found.`)
     }
     return Connection.deserialize(serialized)
+  }
+
+  async function saveNonmediatedConnection (name, connection) {
+    const serialized = await connection.serialize()
+    await storageNonmediatedConnections.set(`${name}`, serialized)
+  }
+
+  async function loadNonmediatedConnection (name) {
+    const serialized = await storageNonmediatedConnections.get(`${name}`)
+    if (!serialized) {
+      throw Error(`Nonmediated connection ${name} was not found.`)
+    }
+    return NonmediatedConnection.deserialize(serialized)
   }
 
   async function saveSchema (name, schema) {
@@ -183,6 +199,9 @@ async function createStorageService (agentName) {
 
     saveConnection,
     loadConnection,
+
+    saveNonmediatedConnection,
+    loadNonmediatedConnection,
 
     saveSchema,
     loadSchema,

@@ -7,11 +7,10 @@ const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require(
 const sleep = require('sleep-promise')
 const assert = require('assert')
 
-module.exports.createFaber = async function createFaber () {
+module.exports.createFaber = async function createFaber (serviceEndpoint = 'http://localhost:5400') {
   const agentName = `faber-${Math.floor(new Date() / 1000)}`
   const connectionId = 'connection-faber-to-alice'
   const issuerCredId = 'credential-for-alice'
-  const agentId = 'faber-public-agent'
   let credDefId, revRegId
   const proofId = 'proof-from-alice'
   const logger = require('../../demo/logger')('Faber')
@@ -22,6 +21,10 @@ module.exports.createFaber = async function createFaber () {
     agencyUrl: 'http://localhost:8080',
     seed: '000000000000000000000000Trustee1',
     webhookUrl: `http://localhost:7209/notifications/${agentName}`,
+    endpointInfo: {
+      serviceEndpoint,
+      routingKeys: []
+    },
     logger
   }
 
@@ -270,12 +273,44 @@ module.exports.createFaber = async function createFaber () {
     return agencyMessages
   }
 
-  async function createConnectionFromReceivedRequest (request) {
-    logger.info('Faber is going to download connection requests')
-    await vcxAgent.agentInitVcx()
+  async function createNonmediatedConnectionWithInvite () {
+    logger.info(`Faber is going to create a connection with invite`)
 
-    await vcxAgent.serviceConnections.inviterConnectionCreateFromRequest(connectionId, agentId, JSON.stringify(request))
-    expect(await vcxAgent.serviceConnections.connectionUpdate(connectionId)).toBe(ConnectionStateType.Responded)
+    await vcxAgent.agentInitVcx()
+    const invite = await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreatePwInvite(connectionId)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
+
+    await vcxAgent.agentShutdownVcx()
+    return invite
+  }
+
+  async function nonmediatedConnectionProcessRequest (request) {
+    logger.info(`Faber is going to process a connection request`)
+
+    await vcxAgent.agentInitVcx()
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionProcessRequest(connectionId, request)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function createNonmediatedConnectionFromRequest (request, pwInfo) {
+    logger.info(`Faber is going to create a connection from a request: ${request}`)
+
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreateFromRequest(connectionId, request, pwInfo)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Responded)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function nonmediatedConnectionProcessAck (ack) {
+    logger.info(`Faber is processing ack: ${ack}`)
+
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceNonmediatedConnections.inviterConnectionProcessAck(connectionId, ack)
+    expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Finished)
 
     await vcxAgent.agentShutdownVcx()
   }
@@ -344,18 +379,31 @@ module.exports.createFaber = async function createFaber () {
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function nonmediatedConnectionSendMessage (message) {
+    logger.info('Faber is going to send message')
+    await vcxAgent.agentInitVcx()
+
+    await vcxAgent.serviceNonmediatedConnections.sendMessage(connectionId, message)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
   return {
     buildLedgerPrimitives,
     rotateRevReg,
     downloadReceivedMessages,
     downloadReceivedMessagesV2,
     sendMessage,
+    nonmediatedConnectionSendMessage,
     verifySignature,
     createInvite,
     createPublicInvite,
     createOobMessageWithDid,
     createOobProofRequest,
-    createConnectionFromReceivedRequest,
+    createNonmediatedConnectionWithInvite,
+    nonmediatedConnectionProcessRequest,
+    createNonmediatedConnectionFromRequest,
+    nonmediatedConnectionProcessAck,
     createConnectionFromReceivedRequestV2,
     updateConnection,
     handleMessage,

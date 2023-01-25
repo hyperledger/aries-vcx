@@ -2,6 +2,7 @@ use std::clone::Clone;
 use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
+use messages::protocols::basic_message::message::BasicMessage;
 use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
@@ -41,11 +42,11 @@ pub enum ConnectionState {
 
 impl Connection {
     // ----------------------------- CONSTRUCTORS ------------------------------------
-    pub async fn create_inviter(profile: &Arc<dyn Profile>) -> VcxResult<Self> {
-        trace!("Connection::create >>>");
-        let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
+    pub async fn create_inviter(profile: &Arc<dyn Profile>, pw_info: Option<PairwiseInfo>) -> VcxResult<Self> {
+        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
+        trace!("Connection::create_inviter >>>");
         Ok(Self {
-            connection_sm: SmConnection::Inviter(SmConnectionInviter::new("", pairwise_info)),
+            connection_sm: SmConnection::Inviter(SmConnectionInviter::new("", pw_info)),
         })
     }
 
@@ -264,7 +265,7 @@ impl Connection {
         profile: &Arc<dyn Profile>,
         send_message: Option<SendClosureConnection>,
     ) -> VcxResult<Self> {
-        trace!("Connection::send_request");
+        trace!("Connection::send_ack");
         let connection_sm = match &self.connection_sm {
             SmConnection::Inviter(_) => {
                 return Err(AriesVcxError::from_msg(
@@ -296,6 +297,22 @@ impl Connection {
             }
         };
         Ok(Self { connection_sm })
+    }
+
+    pub async fn send_generic_message(
+        &self,
+        profile: &Arc<dyn Profile>,
+        send_message: Option<SendClosureConnection>,
+        content: String,
+    ) -> VcxResult<()> {
+        trace!("Connection::send_generic_message >>>");
+        let message = BasicMessage::create()
+            .set_content(content)
+            .set_time()
+            .set_out_time()
+            .to_a2a_message();
+        let send_message = self.send_message_closure(profile, send_message).await?;
+        send_message(message).await
     }
 
     pub async fn send_message_closure(
@@ -460,7 +477,7 @@ mod unit_tests {
     async fn test_create_with_request() {
         let _setup = SetupMocks::init();
 
-        let connection = Connection::create_inviter(&mock_profile())
+        let connection = Connection::create_inviter(&mock_profile(), None)
             .await
             .unwrap()
             .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
@@ -476,7 +493,7 @@ mod unit_tests {
     #[tokio::test]
     async fn test_inviter_deserialize_serialized() {
         let _setup = SetupMocks::init();
-        let connection = Connection::create_inviter(&mock_profile())
+        let connection = Connection::create_inviter(&mock_profile(), None)
             .await
             .unwrap()
             .process_request(&mock_profile(), _request(), _service_endpoint(), _routing_keys(), None)
@@ -536,7 +553,7 @@ mod unit_tests {
         let (sender, receiver) = bounded(1);
 
         // Inviter creates connection and sends invite
-        let inviter = Connection::create_inviter(&profile)
+        let inviter = Connection::create_inviter(&profile, None)
             .await
             .unwrap()
             .create_invite(_service_endpoint(), _routing_keys())

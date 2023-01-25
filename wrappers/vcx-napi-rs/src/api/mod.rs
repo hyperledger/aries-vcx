@@ -1,5 +1,6 @@
 pub mod agency_client;
 pub mod agent;
+pub mod connection;
 pub mod credential;
 pub mod credential_definition;
 pub mod disclosed_proof;
