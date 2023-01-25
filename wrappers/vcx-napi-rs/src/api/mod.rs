@@ -15,5 +15,6 @@ pub mod proof;
 pub mod revocation_registry;
 pub mod schema;
 pub mod testing;
+pub mod trustping;
 pub mod utils;
 pub mod wallet;

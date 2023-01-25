@@ -52,6 +52,12 @@ pub fn connection_get_remote_did(handle: u32) -> napi::Result<String> {
 }
 
 #[napi]
+pub fn connection_get_remote_vk(handle: u32) -> napi::Result<String> {
+    trace!("connection_get_remote_vk >>> handle: {:?}", handle);
+    connection::get_remote_vk(handle).map_err(to_napi_err)
+}
+
+#[napi]
 pub fn connection_get_state(handle: u32) -> napi::Result<u32> {
     trace!("connection_get_state >>> handle: {:?}", handle);
     connection::get_state(handle).map_err(to_napi_err)

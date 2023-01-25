@@ -13,6 +13,7 @@ export function connectionCreateInvitee(invitation: string): Promise<number>
 export function connectionGetThreadId(handle: number): string
 export function connectionGetPairwiseInfo(handle: number): string
 export function connectionGetRemoteDid(handle: number): string
+export function connectionGetRemoteVk(handle: number): string
 export function connectionGetState(handle: number): number
 export function connectionGetInvitation(handle: number): string
 export function connectionProcessInvite(handle: number, invitation: string): void
@@ -166,6 +167,8 @@ export function schemaRelease(handleSchema: number): void
 export function schemaUpdateState(handleSchema: number): Promise<number>
 export function schemaGetState(handleSchema: number): number
 export function enableMocks(): void
+export function trustpingBuildResponseMsg(ping: string): string
+export function trustpingBuildPing(requestResponse: boolean, comment?: string | undefined | null): string
 export function shutdown(deleteAll?: boolean | undefined | null): void
 export function getVersion(): string
 export function walletOpenAsMain(walletConfig: string): Promise<number>

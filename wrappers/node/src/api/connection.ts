@@ -58,6 +58,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
+  public getRemoteVerkey(): string {
+    try {
+      return ffiNapi.connectionGetRemoteVk(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public processInvite(invite: string): void {
     try {
       ffiNapi.connectionProcessInvite(this.handle, invite);

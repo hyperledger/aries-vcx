@@ -16,3 +16,4 @@ export * from './api/out-of-band-sender';
 export * from './api/out-of-band-receiver';
 export * from './errors';
 export * from './api/logging';
+export * from './api/trustping';

@@ -306,11 +306,14 @@ impl Connection {
         content: String,
     ) -> VcxResult<()> {
         trace!("Connection::send_generic_message >>>");
-        let message = BasicMessage::create()
-            .set_content(content)
-            .set_time()
-            .set_out_time()
-            .to_a2a_message();
+        let message = match ::serde_json::from_str::<A2AMessage>(&content) {
+            Ok(a2a_message) => a2a_message,
+            Err(_) => BasicMessage::create()
+                .set_content(content.to_string())
+                .set_time()
+                .set_out_time()
+                .to_a2a_message(),
+        };
         let send_message = self.send_message_closure(profile, send_message).await?;
         send_message(message).await
     }
