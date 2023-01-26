@@ -1,23 +1,13 @@
 use std::clone::Clone;
 
 use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
+use messages::protocols::discovery::disclose::ProtocolDescriptor;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
     pub did_doc: AriesDidDoc,
     pub protocols: Option<Vec<ProtocolDescriptor>>,
     pub thread_id: Option<String>,
-}
-
-impl CompleteState {
-    pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
-        self.protocols.as_deref()
-    }
-
-    pub fn handle_disclose(&mut self, disclose: Disclose) {
-        self.protocols = Some(disclose.protocols)
-    }
 }
 
 impl From<(CompleteState, Vec<ProtocolDescriptor>)> for CompleteState {

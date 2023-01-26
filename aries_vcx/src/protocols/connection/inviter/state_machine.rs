@@ -132,9 +132,9 @@ impl SmConnectionInviter {
         ProtocolRegistry::init().protocols()
     }
 
-    pub fn get_remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
+    pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
         match self.state {
-            InviterFullState::Completed(ref state) => state.remote_protocols(),
+            InviterFullState::Completed(ref state) => state.protocols.clone(),
             _ => None,
         }
     }

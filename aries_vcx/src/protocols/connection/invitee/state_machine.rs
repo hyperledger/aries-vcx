@@ -72,7 +72,7 @@ impl SmConnectionInvitee {
         SmConnectionInvitee {
             source_id: source_id.to_string(),
             thread_id: String::new(),
-            state: InviteeFullState::Initial(InitialState::new(None, did_doc)),
+            state: InviteeFullState::Initial(InitialState::new(None, Some(did_doc))),
             pairwise_info,
         }
     }
@@ -112,7 +112,7 @@ impl SmConnectionInvitee {
 
     pub fn their_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
-            InviteeFullState::Initial(ref state) => Some(state.did_doc.clone()),
+            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
@@ -122,7 +122,7 @@ impl SmConnectionInvitee {
 
     pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
-            InviteeFullState::Initial(ref state) => Some(state.did_doc.clone()),
+            InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Requested(ref state) => Some(state.did_doc.clone()),
             InviteeFullState::Responded(ref state) => Some(state.did_doc.clone()),
@@ -150,9 +150,9 @@ impl SmConnectionInvitee {
         ProtocolRegistry::init().protocols()
     }
 
-    pub fn get_remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
+    pub fn get_remote_protocols(&self) -> Option<Vec<ProtocolDescriptor>> {
         match self.state {
-            InviteeFullState::Completed(ref state) => state.remote_protocols(),
+            InviteeFullState::Completed(ref state) => state.protocols.clone(),
             _ => None,
         }
     }
@@ -242,9 +242,17 @@ impl SmConnectionInvitee {
         let Self { state, .. } = self;
         let thread_id = invitation.get_id()?;
         let state = match state {
-            InviteeFullState::Initial(state) => {
-                InviteeFullState::Invited((state.clone(), invitation, state.did_doc).into())
-            }
+            InviteeFullState::Initial(state) => InviteeFullState::Invited(
+                (
+                    state.clone(),
+                    invitation,
+                    state.did_doc.ok_or(AriesVcxError::from_msg(
+                        AriesVcxErrorKind::InvalidState,
+                        "Expected none None state.did_doc result given current state",
+                    ))?,
+                )
+                    .into(),
+            ),
             s => {
                 return Err(AriesVcxError::from_msg(
                     AriesVcxErrorKind::InvalidState,
@@ -365,8 +373,8 @@ impl SmConnectionInvitee {
 
     pub fn handle_problem_report(self, _problem_report: ProblemReport) -> VcxResult<Self> {
         let state = match self.state {
-            InviteeFullState::Requested(_state) => InviteeFullState::Initial(InitialState::new(None, _state.did_doc)),
-            InviteeFullState::Invited(_state) => InviteeFullState::Initial(InitialState::new(None, _state.did_doc)),
+            InviteeFullState::Requested(_state) => InviteeFullState::Initial(InitialState::new(None, None)),
+            InviteeFullState::Invited(_state) => InviteeFullState::Initial(InitialState::new(None, None)),
             _ => self.state.clone(),
         };
         Ok(Self { state, ..self })

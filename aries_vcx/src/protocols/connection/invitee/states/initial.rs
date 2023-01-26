@@ -5,8 +5,8 @@ use messages::protocols::connection::problem_report::ProblemReport;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
-    pub problem_report: Option<ProblemReport>,
-    pub did_doc: AriesDidDoc,
+    problem_report: Option<ProblemReport>,
+    pub did_doc: Option<AriesDidDoc>,
 }
 
 impl From<(InitialState, Invitation, AriesDidDoc)> for InvitedState {
@@ -17,7 +17,7 @@ impl From<(InitialState, Invitation, AriesDidDoc)> for InvitedState {
 }
 
 impl InitialState {
-    pub fn new(problem_report: Option<ProblemReport>, did_doc: AriesDidDoc) -> Self {
+    pub fn new(problem_report: Option<ProblemReport>, did_doc: Option<AriesDidDoc>) -> Self {
         InitialState {
             problem_report,
             did_doc,
