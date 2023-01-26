@@ -8,6 +8,7 @@ pub mod issuer_credential;
 pub mod ledger;
 pub mod logging;
 pub mod mediated_connection;
+pub mod out_of_band;
 pub mod out_of_band_receiver;
 pub mod out_of_band_sender;
 pub mod pool;

@@ -111,6 +111,13 @@ impl Connection {
         }
     }
 
+    pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
+        match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => None,
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
+        }
+    }
+
     pub fn get_invite_details(&self) -> Option<&Invitation> {
         trace!("Connection::get_invite_details >>>");
         match &self.connection_sm {

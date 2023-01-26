@@ -41,6 +41,13 @@ async fn proof_send_request(handle_proof: u32, handle_connection: u32) -> napi::
 }
 
 #[napi]
+async fn proof_send_request_nonmediated(handle_proof: u32, handle_connection: u32) -> napi::Result<()> {
+    proof::send_proof_request_nonmediated(handle_proof, handle_connection)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
 fn proof_get_request_msg(handle: u32) -> napi::Result<String> {
     proof::get_presentation_request_msg(handle).map_err(to_napi_err)
 }
@@ -70,6 +77,17 @@ async fn v2_proof_update_state_with_message(
     connection_handle: u32,
 ) -> napi::Result<u32> {
     proof::update_state(handle_proof, Some(&message), connection_handle)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
+async fn proof_update_state_with_message_nonmediated(
+    handle_proof: u32,
+    connection_handle: u32,
+    message: String,
+) -> napi::Result<u32> {
+    proof::update_state_nonmediated(handle_proof, connection_handle, &message)
         .await
         .map_err(to_napi_err)
 }

@@ -11,6 +11,7 @@ use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::get_main_profile;
+use crate::api_vcx::api_handle::connection::CONNECTION_MAP as NONMEDIATED_CONNECTION_MAP;
 use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -168,6 +169,36 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
             Err(LibvcxError::from_msg(
                 LibvcxErrorKind::UnknownError,
                 "Can't find handel for found connection. Instance was probably released in the meantime.",
+            ))
+        }
+    } else {
+        Ok((0, false))
+    }
+}
+
+// todo: remove this
+pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxResult<(u32, bool)> {
+    trace!(
+        "nonmediated_connection_exists >>> handle: {}, conn_handles: {:?}",
+        handle,
+        conn_handles
+    );
+    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
+    let mut conn_map = HashMap::new();
+    for conn_handle in conn_handles {
+        let connection = NONMEDIATED_CONNECTION_MAP.get_cloned(*conn_handle)?;
+        conn_map.insert(*conn_handle, connection);
+    }
+    let connections = conn_map.values().collect();
+    let profile = get_main_profile()?;
+
+    if let Some(connection) = oob.nonmediated_connection_exists(&profile, &connections).await? {
+        if let Some((&handle, _)) = conn_map.iter().find(|(_, conn)| *conn == connection) {
+            Ok((handle, true))
+        } else {
+            Err(LibvcxError::from_msg(
+                LibvcxErrorKind::UnknownError,
+                "Can't find handle for found connection. Instance was probably released in the meantime.",
             ))
         }
     } else {

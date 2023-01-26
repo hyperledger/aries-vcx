@@ -1,6 +1,7 @@
 import * as ffi from '@hyperledger/vcx-napi-rs';
 import { ISerializedData, VerifierStateType } from './common';
 import { Connection } from './mediated-connection';
+import { NonmediatedConnection } from './connection';
 import { VcxBaseWithState } from './vcx-base-with-state';
 import { VCXInternalError } from '../errors';
 
@@ -137,9 +138,21 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
-  public async requestProof(connection: Connection): Promise<void> {
+  public async updateStateWithMessageNonmediated(connection: NonmediatedConnection, message: string): Promise<number> {
     try {
-      return await ffi.proofSendRequest(this.handle, connection.handle);
+      return await ffi.proofUpdateStateWithMessageNonmediated(
+        this.handle,
+        connection.handle,
+        message,
+      );
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async requestProofNonmediated(connection: NonmediatedConnection): Promise<void> {
+    try {
+      return await ffi.proofSendRequestNonmediated(this.handle, connection.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

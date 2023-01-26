@@ -12,6 +12,7 @@ export * from './api/credential';
 export * from './api/disclosed-proof';
 export * from './api/utils';
 export * from './api/wallet';
+export * from './api/out-of-band';
 export * from './api/out-of-band-sender';
 export * from './api/out-of-band-receiver';
 export * from './errors';

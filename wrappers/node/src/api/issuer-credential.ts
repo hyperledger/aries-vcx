@@ -1,6 +1,7 @@
 import * as ffi from '@hyperledger/vcx-napi-rs';
 import { ISerializedData, IssuerStateType } from './common';
 import { Connection } from './mediated-connection';
+import { NonmediatedConnection } from './connection';
 import { CredentialDef } from './credential-def';
 import { RevocationRegistry } from './revocation-registry';
 import { VcxBaseWithState } from './vcx-base-with-state';
@@ -71,6 +72,18 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     }
   }
 
+  public async updateStateWithMessageNonmediated(connection: NonmediatedConnection, message: string): Promise<number> {
+    try {
+      return await ffi.issuerCredentialUpdateStateWithMessageNonmediated(
+        this.handle,
+        connection.handle,
+        message,
+      );
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async sendOfferV2(connection: Connection): Promise<void> {
     try {
       return await ffi.issuerCredentialSendOfferV2(this.handle, connection.handle);
@@ -81,7 +94,7 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
 
   public async markCredentialOfferMsgSent(): Promise<void> {
     try {
-      return await ffi.issuerCredentialMarkOfferMsgSent(this.handle);
+      return ffi.issuerCredentialMarkOfferMsgSent(this.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -125,6 +138,14 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
   public async sendCredential(connection: Connection): Promise<number> {
     try {
       return await ffi.issuerCredentialSendCredential(this.handle, connection.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async sendCredentialNonmediated(connection: NonmediatedConnection): Promise<number> {
+    try {
+      return await ffi.issuerCredentialSendCredentialNonmediated(this.handle, connection.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

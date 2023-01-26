@@ -1,15 +1,19 @@
 use aries_vcx::{
-    common::ledger::transactions::into_did_doc, handlers::connection::connection::Connection,
-    protocols::connection::pairwise_info::PairwiseInfo,
+    common::ledger::transactions::into_did_doc,
+    handlers::connection::connection::Connection,
+    protocols::{connection::pairwise_info::PairwiseInfo, SendClosure},
 };
 
 use crate::{
-    api_vcx::{api_global::profile::get_main_profile, api_handle::object_cache::ObjectCache},
+    api_vcx::{
+        api_global::profile::{get_main_profile, get_main_profile_optional_pool},
+        api_handle::object_cache::ObjectCache,
+    },
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
 lazy_static! {
-    static ref CONNECTION_MAP: ObjectCache<Connection> =
+    pub static ref CONNECTION_MAP: ObjectCache<Connection> =
         ObjectCache::<Connection>::new("nonmediated-connections-cache");
 }
 
@@ -208,7 +212,7 @@ pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
     store_connection(Connection::from_string(connection_data)?)
 }
 
-// ------------------------------ CLEANUP ---------------------------------------
+// ---------------------------- CLEANUP ---------------------------------------
 pub fn release(handle: u32) -> LibvcxResult<()> {
     trace!("release >>>");
     CONNECTION_MAP.release(handle)
@@ -217,4 +221,14 @@ pub fn release(handle: u32) -> LibvcxResult<()> {
 pub fn release_all() {
     trace!("release_all >>>");
     CONNECTION_MAP.drain().ok();
+}
+
+// ------------------------------ UTILS ---------------------------------------
+pub async fn send_message_closure(handle: u32) -> LibvcxResult<SendClosure> {
+    let connection = CONNECTION_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool();
+    connection
+        .send_message_closure(&profile, None)
+        .await
+        .map_err(|err| err.into())
 }
