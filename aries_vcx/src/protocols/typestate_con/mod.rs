@@ -3,6 +3,7 @@ mod initiation_type;
 mod invitee;
 mod inviter;
 mod pairwise_info;
+pub mod serde;
 mod trait_bounds;
 
 use messages::{
@@ -21,9 +22,21 @@ use crate::{
 use self::{
     common::states::complete::CompleteState,
     pairwise_info::PairwiseInfo,
+    serde::{SerdeCon, SerdeState},
     trait_bounds::{TheirDidDoc, Transport},
 };
 
+// The serialization will first convert into the serializable connection type
+// but will do that by cloning, which is fairly unfortunate and unnecessary.
+//
+// We can theoretically serialize this type as well directly, through a reference,
+// but we must align the deserialization to be to the serializable connection
+// and ensure the format matches.
+//
+// Can definitely be done, but just requires a bit of work put into it.
+#[derive(Clone, Serialize)]
+#[serde(into = "SerdeCon")]
+#[serde(bound(serialize = "SerdeState: From<(I, S)>, I: Clone, S: Clone"))]
 pub struct Connection<I, S> {
     source_id: String,
     pairwise_info: PairwiseInfo,
