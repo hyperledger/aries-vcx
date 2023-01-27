@@ -1,4 +1,4 @@
-use super::{
+use crate::protocols::typestate_con::{
     common::states::{complete::CompleteState, responded::RespondedState},
     initiation_type::{Invitee, Inviter},
     invitee::states::{
@@ -13,15 +13,18 @@ use super::{
     Connection,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SerdeCon {
+/// Type used for deserialization of a [`Connection`].
+/// This struct cannot be used for anything useful directly,
+/// but the inner `state` has to be matched to get the concrete [`Connection`] type.
+#[derive(Debug, Deserialize)]
+pub struct VagueConnection {
     source_id: String,
     pairwise_info: PairwiseInfo,
-    state: SerdeState,
+    pub state: State,
 }
 
-impl SerdeCon {
-    fn new(source_id: String, pairwise_info: PairwiseInfo, state: SerdeState) -> Self {
+impl VagueConnection {
+    fn new(source_id: String, pairwise_info: PairwiseInfo, state: State) -> Self {
         Self {
             source_id,
             pairwise_info,
@@ -30,9 +33,9 @@ impl SerdeCon {
     }
 }
 
-impl<I, S> From<Connection<I, S>> for SerdeCon
+impl<I, S> From<Connection<I, S>> for VagueConnection
 where
-    SerdeState: From<(I, S)>,
+    State: From<(I, S)>,
 {
     fn from(value: Connection<I, S>) -> Self {
         let state = From::from((value.initiation_type, value.state));
@@ -40,15 +43,15 @@ where
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum SerdeState {
-    Inviter(SerdeInviterState),
-    Invitee(SerdeInviteeState),
+#[derive(Debug, Deserialize)]
+pub enum State {
+    Inviter(InviterState),
+    Invitee(InviteeState),
 }
 
-impl<S> From<(Inviter, S)> for SerdeState
+impl<S> From<(Inviter, S)> for State
 where
-    SerdeInviterState: From<S>,
+    InviterState: From<S>,
 {
     fn from(value: (Inviter, S)) -> Self {
         let (_, state) = value;
@@ -57,9 +60,9 @@ where
     }
 }
 
-impl<S> From<(Invitee, S)> for SerdeState
+impl<S> From<(Invitee, S)> for State
 where
-    SerdeInviteeState: From<S>,
+    InviteeState: From<S>,
 {
     fn from(value: (Invitee, S)) -> Self {
         let (_, state) = value;
@@ -68,8 +71,8 @@ where
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum SerdeInviterState {
+#[derive(Debug, Deserialize)]
+pub enum InviterState {
     Initial(InviterInitial),
     Invited(InviterInvited),
     Requested(InviterRequested),
@@ -77,38 +80,38 @@ pub enum SerdeInviterState {
     Complete(CompleteState),
 }
 
-impl From<InviterInitial> for SerdeInviterState {
+impl From<InviterInitial> for InviterState {
     fn from(value: InviterInitial) -> Self {
         Self::Initial(value)
     }
 }
 
-impl From<InviterInvited> for SerdeInviterState {
+impl From<InviterInvited> for InviterState {
     fn from(value: InviterInvited) -> Self {
         Self::Invited(value)
     }
 }
 
-impl From<InviterRequested> for SerdeInviterState {
+impl From<InviterRequested> for InviterState {
     fn from(value: InviterRequested) -> Self {
         Self::Requested(value)
     }
 }
 
-impl From<RespondedState> for SerdeInviterState {
+impl From<RespondedState> for InviterState {
     fn from(value: RespondedState) -> Self {
         Self::Responded(value)
     }
 }
 
-impl From<CompleteState> for SerdeInviterState {
+impl From<CompleteState> for InviterState {
     fn from(value: CompleteState) -> Self {
         Self::Complete(value)
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum SerdeInviteeState {
+#[derive(Debug, Deserialize)]
+pub enum InviteeState {
     Initial(InviteeInitial),
     Invited(InviteeInvited),
     Requested(InviteeRequested),
@@ -116,31 +119,31 @@ pub enum SerdeInviteeState {
     Complete(CompleteState),
 }
 
-impl From<InviteeInitial> for SerdeInviteeState {
+impl From<InviteeInitial> for InviteeState {
     fn from(value: InviteeInitial) -> Self {
         Self::Initial(value)
     }
 }
 
-impl From<InviteeInvited> for SerdeInviteeState {
+impl From<InviteeInvited> for InviteeState {
     fn from(value: InviteeInvited) -> Self {
         Self::Invited(value)
     }
 }
 
-impl From<InviteeRequested> for SerdeInviteeState {
+impl From<InviteeRequested> for InviteeState {
     fn from(value: InviteeRequested) -> Self {
         Self::Requested(value)
     }
 }
 
-impl From<RespondedState> for SerdeInviteeState {
+impl From<RespondedState> for InviteeState {
     fn from(value: RespondedState) -> Self {
         Self::Responded(value)
     }
 }
 
-impl From<CompleteState> for SerdeInviteeState {
+impl From<CompleteState> for InviteeState {
     fn from(value: CompleteState) -> Self {
         Self::Complete(value)
     }

@@ -22,7 +22,6 @@ use crate::{
 use self::{
     common::states::complete::CompleteState,
     pairwise_info::PairwiseInfo,
-    serde::{SerdeCon, SerdeState},
     trait_bounds::{TheirDidDoc, Transport},
 };
 
@@ -34,9 +33,6 @@ use self::{
 // and ensure the format matches.
 //
 // Can definitely be done, but just requires a bit of work put into it.
-#[derive(Clone, Serialize)]
-#[serde(into = "SerdeCon")]
-#[serde(bound(serialize = "SerdeState: From<(I, S)>, I: Clone, S: Clone"))]
 pub struct Connection<I, S> {
     source_id: String,
     pairwise_info: PairwiseInfo,
@@ -95,7 +91,7 @@ where
         let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
         let msg = env.0;
         let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
-        
+
         transport.send_message(msg, &service_endpoint).await
     }
 }
