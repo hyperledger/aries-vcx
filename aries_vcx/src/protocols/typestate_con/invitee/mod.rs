@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use messages::protocols::connection::invite::Invitation;
 
-use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult, utils};
+use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult};
 
 use self::states::{initial::InitialState, invited::InvitedState, requested::RequestedState};
 
@@ -48,11 +48,7 @@ impl InviteeConnection<InitialState> {
     ) -> VcxResult<InviteeConnection<InvitedState>> {
         trace!("Connection::into_invited >>> invitation: {:?}", &invitation);
 
-        // Why would all inviters that accept an 
-        // invitation use the same thread ID?
-        //
-        // let thread_id = invitation.get_id()?;
-        let thread_id = utils::uuid::uuid();
+        let thread_id = invitation.get_id()?;
         let did_doc = into_did_doc(profile, invitation).await?;
         let state = InvitedState { did_doc, thread_id };
 
