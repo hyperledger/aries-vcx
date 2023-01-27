@@ -81,6 +81,7 @@ export function issuerCredentialIsRevokable(handleCredential: number): boolean
 export function issuerCredentialSendCredential(handleCredential: number, handleConnection: number): Promise<number>
 export function issuerCredentialSendCredentialNonmediated(handleCredential: number, handleConnection: number): Promise<number>
 export function issuerCredentialSendOfferV2(handleCredential: number, handleConnection: number): Promise<void>
+export function issuerCredentialSendOfferNonmediated(handleCredential: number, handleConnection: number): Promise<void>
 export function issuerCredentialMarkOfferMsgSent(handleCredential: number): void
 export function issuerCredentialBuildOfferMsgV2(credentialHandle: number, credDefHandle: number, revRegHandle: number, credentialJson: string, comment?: string | undefined | null): Promise<void>
 export function issuerCredentialGetOfferMsg(credentialHandle: number): string

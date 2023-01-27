@@ -92,6 +92,14 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     }
   }
 
+  public async sendOfferNonmediated(connection: NonmediatedConnection): Promise<void> {
+    try {
+      return await ffi.issuerCredentialSendOfferNonmediated(this.handle, connection.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async markCredentialOfferMsgSent(): Promise<void> {
     try {
       return ffi.issuerCredentialMarkOfferMsgSent(this.handle);

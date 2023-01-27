@@ -189,6 +189,14 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     Ok(())
 }
 
+pub async fn send_credential_offer_nonmediated(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
+    let send_message = connection::send_message_closure(connection_handle).await?;
+    credential.send_credential_offer(send_message).await?;
+    ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
+    Ok(())
+}
+
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open

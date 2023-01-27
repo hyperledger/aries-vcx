@@ -96,6 +96,14 @@ async fn issuer_credential_send_offer_v2(handle_credential: u32, handle_connecti
 }
 
 #[napi]
+async fn issuer_credential_send_offer_nonmediated(handle_credential: u32, handle_connection: u32) -> napi::Result<()> {
+    issuer_credential::send_credential_offer_nonmediated(handle_credential, handle_connection)
+        .await
+        .map_err(to_napi_err)?;
+    Ok(())
+}
+
+#[napi]
 fn issuer_credential_mark_offer_msg_sent(handle_credential: u32) -> napi::Result<()> {
     issuer_credential::mark_credential_offer_msg_sent(handle_credential).map_err(to_napi_err)
 }
