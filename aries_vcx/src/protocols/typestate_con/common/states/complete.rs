@@ -7,9 +7,9 @@ use crate::protocols::typestate_con::trait_bounds::TheirDidDoc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompleteState {
-    pub did_doc: AriesDidDoc,
-    pub thread_id: String,
-    pub protocols: Option<Vec<ProtocolDescriptor>>,
+    pub(crate) did_doc: AriesDidDoc,
+    pub(crate) thread_id: String,
+    pub(crate) protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
 impl CompleteState {

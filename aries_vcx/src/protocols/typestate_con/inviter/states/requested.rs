@@ -4,7 +4,7 @@ use crate::protocols::typestate_con::trait_bounds::TheirDidDoc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
-    pub request: Request,
+    pub(crate) request: Request,
 }
 
 impl RequestedState {

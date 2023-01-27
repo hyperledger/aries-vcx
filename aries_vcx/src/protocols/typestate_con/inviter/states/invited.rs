@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvitedState {
-    pub thread_id: Option<String>,
+    pub(crate) thread_id: Option<String>,
 }
 
 impl InvitedState {

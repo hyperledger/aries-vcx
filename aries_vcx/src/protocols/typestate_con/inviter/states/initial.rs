@@ -2,7 +2,7 @@ use messages::protocols::connection::invite::Invitation;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InitialState {
-    pub invitation: Invitation,
+    pub(crate) invitation: Invitation,
 }
 
 impl InitialState {
