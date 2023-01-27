@@ -2,9 +2,9 @@ pub mod states;
 
 use std::sync::Arc;
 
-use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::protocols::connection::invite::Invitation;
 
-use crate::{errors::error::VcxResult, utils::uuid};
+use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult, utils};
 
 use self::states::{initial::InitialState, invited::InvitedState, requested::RequestedState};
 
@@ -31,27 +31,29 @@ use crate::{
 /// Convenience alias
 pub type InviteeConnection<S> = Connection<Invitee, S>;
 
-impl<S> InviteeConnection<S> {
-    pub fn new(source_id: String, pairwise_info: PairwiseInfo) -> InviteeConnection<InitialState> {
-        Connection {
+impl InviteeConnection<InitialState> {
+    pub fn new(source_id: String, pairwise_info: PairwiseInfo) -> Self {
+        Self {
             source_id,
             state: InitialState,
             pairwise_info,
             initiation_type: Invitee,
         }
     }
-}
 
-impl InviteeConnection<InitialState> {
-    // This should take an Invitation, but that also implies a DDO resolver
-    // for public invitations.
-    // Proper signature:
-    //      pub fn into_invited(self, invitation: Invitation) -> VcxResult<InviteeConnection<InvitedState>> {
+    pub async fn accept_invitation(
+        self,
+        profile: &Arc<dyn Profile>,
+        invitation: &Invitation,
+    ) -> VcxResult<InviteeConnection<InvitedState>> {
+        trace!("Connection::into_invited >>> invitation: {:?}", &invitation);
 
-    // We'll accept a DidDoc for now.
-    pub fn into_invited(self, did_doc: AriesDidDoc) -> VcxResult<InviteeConnection<InvitedState>> {
-        trace!("Connection::into_invited >>> did_doc: {:?}", &did_doc);
-        let thread_id = uuid::uuid();
+        // Why would all inviters that accept an 
+        // invitation use the same thread ID?
+        //
+        // let thread_id = invitation.get_id()?;
+        let thread_id = utils::uuid::uuid();
+        let did_doc = into_did_doc(profile, invitation).await?;
         let state = InvitedState { did_doc, thread_id };
 
         // Convert to `InvitedState`
@@ -111,14 +113,7 @@ impl InviteeConnection<InvitedState> {
         //     ),
         // };
 
-        Self::send_message(
-            wallet,
-            &self.state.did_doc,
-            &request.to_a2a_message(),
-            &self.pairwise_info.pw_vk,
-            transport,
-        )
-        .await?;
+        self.send_message(wallet, &request.to_a2a_message(), transport).await?;
 
         Ok(Connection {
             state: RequestedState::new(self.state.did_doc, self.state.thread_id),
@@ -130,14 +125,11 @@ impl InviteeConnection<InvitedState> {
 }
 
 impl InviteeConnection<RequestedState> {
-    pub async fn handle_response<T>(
+    pub async fn handle_response(
         self,
         wallet: &Arc<dyn BaseWallet>,
         response: SignedResponse,
-    ) -> VcxResult<InviteeConnection<RespondedState>>
-    where
-        T: Transport,
-    {
+    ) -> VcxResult<InviteeConnection<RespondedState>> {
         verify_thread_id(&self.state.thread_id, &A2AMessage::ConnectionResponse(response.clone()))?;
 
         let keys = &self.state.did_doc.recipient_keys()?;
@@ -175,7 +167,7 @@ impl InviteeConnection<RespondedState> {
             .set_thread_id(&self.state.thread_id)
             .to_a2a_message();
 
-        Self::send_message(wallet, &self.state.did_doc, &msg, &self.pairwise_info.pw_vk, transport).await?;
+        self.send_message(wallet, &msg, transport).await?;
 
         let state = CompleteState::new(self.state.did_doc, self.state.thread_id, None);
 

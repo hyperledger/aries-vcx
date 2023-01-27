@@ -1,8 +1,8 @@
 mod common;
 mod initiation_type;
-mod invitee;
-mod inviter;
-mod pairwise_info;
+pub mod invitee;
+pub mod inviter;
+pub mod pairwise_info;
 pub mod serde;
 mod trait_bounds;
 
@@ -56,22 +56,6 @@ impl<I, S> Connection<I, S> {
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
     }
-
-    pub async fn send_message<T>(
-        wallet: &Arc<dyn BaseWallet>,
-        did_doc: &AriesDidDoc,
-        message: &A2AMessage,
-        sender_verkey: &str,
-        transport: &T,
-    ) -> VcxResult<()>
-    where
-        T: Transport,
-    {
-        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
-        let msg = env.0;
-        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
-        transport.send_message(msg, &service_endpoint).await
-    }
 }
 
 impl<I, S> Connection<I, S>
@@ -95,6 +79,24 @@ where
                 AriesVcxErrorKind::NotReady,
                 "Can't resolve recipient key from the counterparty diddoc.",
             ))
+    }
+
+    pub async fn send_message<T>(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &A2AMessage,
+        transport: &T,
+    ) -> VcxResult<()>
+    where
+        T: Transport,
+    {
+        let sender_verkey = &self.pairwise_info.pw_vk;
+        let did_doc = self.their_did_doc();
+        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
+        let msg = env.0;
+        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
+        
+        transport.send_message(msg, &service_endpoint).await
     }
 }
 

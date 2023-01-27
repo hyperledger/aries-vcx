@@ -25,13 +25,13 @@ use messages::protocols::connection::{
 
 pub type InviterConnection<S> = Connection<Inviter, S>;
 
-impl<S> InviterConnection<S> {
+impl InviterConnection<InitialState> {
     pub fn new(
         source_id: String,
         pairwise_info: PairwiseInfo,
         routing_keys: Vec<String>,
         service_endpoint: String,
-    ) -> InviterConnection<InitialState> {
+    ) -> Self {
         let invite: PairwiseInvitation = PairwiseInvitation::create()
             .set_id(&uuid::uuid())
             .set_label(&source_id)
@@ -41,7 +41,7 @@ impl<S> InviterConnection<S> {
 
         let invitation = Invitation::Pairwise(invite);
 
-        Connection {
+        Self {
             source_id,
             state: InitialState::new(invitation),
             pairwise_info,
@@ -49,17 +49,6 @@ impl<S> InviterConnection<S> {
         }
     }
 
-    pub fn new_invited(source_id: String, pairwise_info: PairwiseInfo) -> InviterConnection<InvitedState> {
-        Connection {
-            source_id,
-            state: InvitedState::new(None), // what should the thread ID be in this case???
-            pairwise_info,
-            initiation_type: Inviter,
-        }
-    }
-}
-
-impl InviterConnection<InitialState> {
     pub fn get_invitation(&self) -> &Invitation {
         &self.state.invitation
     }
@@ -74,10 +63,16 @@ impl InviterConnection<InitialState> {
 }
 
 impl InviterConnection<InvitedState> {
-    pub async fn handle_request<T>(self, request: Request) -> VcxResult<InviterConnection<RequestedState>>
-    where
-        T: Transport,
-    {
+    pub fn new_invited(source_id: String, pairwise_info: PairwiseInfo) -> Self {
+        Self {
+            source_id,
+            state: InvitedState::new(None), // what should the thread ID be in this case???
+            pairwise_info,
+            initiation_type: Inviter,
+        }
+    }
+
+    pub async fn handle_request(self, request: Request) -> VcxResult<InviterConnection<RequestedState>> {
         trace!("Connection::process_request >>> request: {:?}", request,);
 
         // There must be some other way to validate the thread ID other than cloning the entire Request
@@ -150,14 +145,8 @@ impl InviterConnection<RequestedState> {
             )
             .await?;
 
-        Self::send_message(
-            wallet,
-            self.their_did_doc(),
-            &signed_response.to_a2a_message(),
-            &self.pairwise_info.pw_vk,
-            transport,
-        )
-        .await?;
+        self.send_message(wallet, &signed_response.to_a2a_message(), transport)
+            .await?;
 
         let state = RespondedState::new(self.state.request.connection.did_doc, thread_id);
 
