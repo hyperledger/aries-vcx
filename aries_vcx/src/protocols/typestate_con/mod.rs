@@ -4,7 +4,7 @@ pub mod invitee;
 pub mod inviter;
 pub mod pairwise_info;
 mod serde;
-mod trait_bounds;
+mod traits;
 
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
@@ -20,13 +20,11 @@ use crate::{
 };
 
 use self::{
-    common::states::complete::CompleteState,
-    pairwise_info::PairwiseInfo,
-    serde::de::VagueState,
-    trait_bounds::{TheirDidDoc, Transport},
+    common::states::complete::CompleteState, pairwise_info::PairwiseInfo, serde::de::VagueState, traits::TheirDidDoc,
 };
 
 pub use self::serde::de::VagueConnection;
+pub use self::traits::Transport;
 
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "VagueConnection")]

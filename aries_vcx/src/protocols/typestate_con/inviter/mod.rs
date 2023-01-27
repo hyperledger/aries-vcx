@@ -13,7 +13,7 @@ use self::states::initial::InitialState;
 use self::states::{invited::InvitedState, requested::RequestedState};
 use super::common::states::complete::CompleteState;
 use super::common::states::responded::RespondedState;
-use super::trait_bounds::Transport;
+use super::traits::Transport;
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use messages::a2a::A2AMessage;
 use messages::protocols::connection::invite::PairwiseInvitation;

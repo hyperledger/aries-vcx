@@ -9,3 +9,4 @@ pub mod out_of_band;
 pub mod proof;
 pub mod revocation_registry;
 pub mod schema;
+pub mod typestate_con;

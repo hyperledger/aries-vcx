@@ -85,23 +85,23 @@ macro_rules! try_from_vague_to_concrete {
     };
 }
 
-/// Type used for deserialization of a [`Connection`].
-/// This struct cannot be used for anything useful directly,
-/// but the inner `state` has to be matched to get the concrete [`Connection`] type.
-#[derive(Debug, Deserialize)]
+/// Helper type mainly used for deserialization of a [`Connection`]. 
+/// It does not expose methods to advance the connection protocol
+/// It does, however, expose some methods agnostic to the [`Connection`] type.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VagueConnection {
     source_id: String,
     pairwise_info: PairwiseInfo,
     state: VagueState,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum VagueState {
     Inviter(VagueInviterState),
     Invitee(VagueInviteeState),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum VagueInviterState {
     Initial(InviterInitial),
     Invited(InviterInvited),
@@ -110,7 +110,7 @@ pub enum VagueInviterState {
     Complete(CompleteState),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum VagueInviteeState {
     Initial(InviteeInitial),
     Invited(InviteeInvited),
@@ -119,6 +119,7 @@ pub enum VagueInviteeState {
     Complete(CompleteState),
 }
 
+// ---------------------------- From Concrete State to Vague State implementations ----------------------------
 impl<I, S> From<Connection<I, S>> for VagueConnection
 where
     VagueState: From<(I, S)>,
@@ -148,6 +149,7 @@ from_concrete_to_vague!(InviteeRequested, Requested, VagueInviteeState);
 from_concrete_to_vague!(RespondedState, Responded, VagueInviteeState);
 from_concrete_to_vague!(CompleteState, Complete, VagueInviteeState);
 
+// ---------------------------- Try From Vague State to Concrete State implementations ----------------------------
 impl<I, S> TryFrom<VagueConnection> for Connection<I, S>
 where
     (I, S): TryFrom<VagueState, Error = AriesVcxError>,
@@ -175,3 +177,70 @@ try_from_vague_to_concrete!(VagueInviteeState, Invited, InviteeInvited);
 try_from_vague_to_concrete!(VagueInviteeState, Requested, InviteeRequested);
 try_from_vague_to_concrete!(VagueInviteeState, Responded, RespondedState);
 try_from_vague_to_concrete!(VagueInviteeState, Complete, CompleteState);
+
+/// Small sized enum used for determining
+/// a connection's state in terms of initiation type.
+#[derive(Clone, Copy, Debug)]
+pub enum State {
+    Invitee(ConState),
+    Inviter(ConState),
+}
+
+/// Small sized enum used for determining
+/// a connection's state in terms of connection stage.
+#[derive(Clone, Copy, Debug)]
+pub enum ConState {
+    Initial,
+    Invited,
+    Requested,
+    Responded,
+    Complete,
+}
+
+impl From<State> for u32 {
+    fn from(value: State) -> Self {
+        match value {
+            State::Invitee(v) => v as u32,
+            State::Inviter(v) => v as u32,
+        }
+    }
+}
+
+impl From<&VagueState> for State {
+    fn from(value: &VagueState) -> Self {
+        match value {
+            VagueState::Invitee(v) => Self::Invitee(v.into()),
+            VagueState::Inviter(v) => Self::Inviter(v.into()),
+        }
+    }
+}
+
+impl From<&VagueInviterState> for ConState {
+    fn from(value: &VagueInviterState) -> Self {
+        match value {
+            VagueInviterState::Initial(_) => Self::Initial,
+            VagueInviterState::Invited(_) => Self::Invited,
+            VagueInviterState::Requested(_) => Self::Requested,
+            VagueInviterState::Responded(_) => Self::Responded,
+            VagueInviterState::Complete(_) => Self::Complete,
+        }
+    }
+}
+
+impl From<&VagueInviteeState> for ConState {
+    fn from(value: &VagueInviteeState) -> Self {
+        match value {
+            VagueInviteeState::Initial(_) => Self::Initial,
+            VagueInviteeState::Invited(_) => Self::Invited,
+            VagueInviteeState::Requested(_) => Self::Requested,
+            VagueInviteeState::Responded(_) => Self::Responded,
+            VagueInviteeState::Complete(_) => Self::Complete,
+        }
+    }
+}
+
+impl VagueConnection {
+    pub fn state(&self) -> State {
+        (&self.state).into()
+    }
+}

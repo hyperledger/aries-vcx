@@ -335,9 +335,9 @@ checksum = "7a40729d2133846d9ed0ea60a8b9541bccddab49cd30f0715a1da672fe9a2524"
 
 [[package]]
 name = "async-trait"
-version = "0.1.59"
+version = "0.1.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31e6e93155431f3931513b243d371981bb2770112b370c82745a1d19d2f99364"
+checksum = "eff18d764974428cf3a9328e23fc5c986f5fbed46e6cd4cdf42544df5d297ec1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2231,8 +2231,10 @@ dependencies = [
 name = "libvcx"
 version = "0.51.1"
 dependencies = [
+ "agency_client",
  "android_logger",
  "aries-vcx",
+ "async-trait",
  "cfg-if 1.0.0",
  "chrono",
  "env_logger 0.9.3",

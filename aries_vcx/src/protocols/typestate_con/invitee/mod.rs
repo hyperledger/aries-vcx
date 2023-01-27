@@ -18,7 +18,7 @@ use super::{
     common::states::{complete::CompleteState, responded::RespondedState},
     initiation_type::Invitee,
     pairwise_info::PairwiseInfo,
-    trait_bounds::Transport,
+    traits::Transport,
     Connection,
 };
 use crate::{
