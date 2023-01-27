@@ -3,7 +3,7 @@ mod initiation_type;
 pub mod invitee;
 pub mod inviter;
 pub mod pairwise_info;
-pub mod serde;
+mod serde;
 mod trait_bounds;
 
 use messages::{
@@ -22,9 +22,15 @@ use crate::{
 use self::{
     common::states::complete::CompleteState,
     pairwise_info::PairwiseInfo,
+    serde::de::VagueState,
     trait_bounds::{TheirDidDoc, Transport},
 };
 
+pub use self::serde::de::VagueConnection;
+
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "VagueConnection")]
+#[serde(bound = "(I, S): TryFrom<VagueState, Error = AriesVcxError>")]
 pub struct Connection<I, S> {
     source_id: String,
     pairwise_info: PairwiseInfo,
@@ -33,6 +39,15 @@ pub struct Connection<I, S> {
 }
 
 impl<I, S> Connection<I, S> {
+    pub(crate) fn from_parts(source_id: String, pairwise_info: PairwiseInfo, initiation_type: I, state: S) -> Self {
+        Self {
+            source_id,
+            pairwise_info,
+            initiation_type,
+            state,
+        }
+    }
+
     pub fn pairwise_info(&self) -> &PairwiseInfo {
         &self.pairwise_info
     }
