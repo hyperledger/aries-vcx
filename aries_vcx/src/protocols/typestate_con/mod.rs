@@ -25,14 +25,6 @@ use self::{
     trait_bounds::{TheirDidDoc, Transport},
 };
 
-// The serialization will first convert into the serializable connection type
-// but will do that by cloning, which is fairly unfortunate and unnecessary.
-//
-// We can theoretically serialize this type as well directly, through a reference,
-// but we must align the deserialization to be to the serializable connection
-// and ensure the format matches.
-//
-// Can definitely be done, but just requires a bit of work put into it.
 pub struct Connection<I, S> {
     source_id: String,
     pairwise_info: PairwiseInfo,
