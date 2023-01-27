@@ -17,8 +17,6 @@ use crate::protocols::typestate_con::{
 
 impl<I, S> Serialize for Connection<I, S>
 where
-    I: Serialize,
-    S: Serialize,
     for<'a> SerializableConnection<'a>: From<&'a Connection<I, S>>,
 {
     fn serialize<Serializer>(&self, serializer: Serializer) -> Result<Serializer::Ok, Serializer::Error>
