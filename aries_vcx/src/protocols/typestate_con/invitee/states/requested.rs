@@ -1,6 +1,6 @@
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use crate::protocols::typestate_con::traits::TheirDidDoc;
+use crate::protocols::typestate_con::traits::{TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RequestedState {
@@ -17,5 +17,11 @@ impl RequestedState {
 impl TheirDidDoc for RequestedState {
     fn their_did_doc(&self) -> &AriesDidDoc {
         &self.did_doc
+    }
+}
+
+impl ThreadId for RequestedState {
+    fn thread_id(&self) -> &str {
+        &self.thread_id
     }
 }

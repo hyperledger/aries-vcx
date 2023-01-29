@@ -14,3 +14,9 @@ pub trait TheirDidDoc {
 pub trait Transport {
     async fn send_message(&self, msg: Vec<u8>, service_endpoint: &str) -> VcxResult<()>;
 }
+
+/// Trait used for implementing common [`super::Connection`] behavior based 
+/// on states implementing it.
+pub trait ThreadId {
+    fn thread_id(&self) -> &str;
+}

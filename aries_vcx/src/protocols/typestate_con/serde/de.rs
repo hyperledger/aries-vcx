@@ -1,5 +1,10 @@
+use std::sync::Arc;
+
+use messages::{a2a::A2AMessage, diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
+
 use crate::{
-    errors::error::{AriesVcxError, AriesVcxErrorKind},
+    errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
+    plugins::wallet::base_wallet::BaseWallet,
     protocols::typestate_con::{
         common::states::{complete::CompleteState, responded::RespondedState},
         initiation_type::{Invitee, Inviter},
@@ -12,7 +17,8 @@ use crate::{
             requested::RequestedState as InviterRequested,
         },
         pairwise_info::PairwiseInfo,
-        Connection,
+        traits::{TheirDidDoc, ThreadId},
+        Connection, Transport,
     },
 };
 
@@ -85,7 +91,7 @@ macro_rules! try_from_vague_to_concrete {
     };
 }
 
-/// Helper type mainly used for deserialization of a [`Connection`]. 
+/// Helper type mainly used for deserialization of a [`Connection`].
 /// It does not expose methods to advance the connection protocol
 /// It does, however, expose some methods agnostic to the [`Connection`] type.
 #[derive(Debug, Serialize, Deserialize)]
@@ -242,5 +248,84 @@ impl From<&VagueInviteeState> for ConState {
 impl VagueConnection {
     pub fn state(&self) -> State {
         (&self.state).into()
+    }
+
+    pub fn thread_id(&self) -> Option<&str> {
+        match &self.state {
+            VagueState::Invitee(VagueInviteeState::Initial(_)) => None,
+            VagueState::Invitee(VagueInviteeState::Invited(s)) => Some(s.thread_id()),
+            VagueState::Invitee(VagueInviteeState::Requested(s)) => Some(s.thread_id()),
+            VagueState::Invitee(VagueInviteeState::Responded(s)) => Some(s.thread_id()),
+            VagueState::Invitee(VagueInviteeState::Complete(s)) => Some(s.thread_id()),
+            VagueState::Inviter(VagueInviterState::Initial(s)) => Some(s.thread_id()),
+            VagueState::Inviter(VagueInviterState::Invited(s)) => s.thread_id(),
+            VagueState::Inviter(VagueInviterState::Requested(s)) => Some(s.thread_id()),
+            VagueState::Inviter(VagueInviterState::Responded(s)) => Some(s.thread_id()),
+            VagueState::Inviter(VagueInviterState::Complete(s)) => Some(s.thread_id()),
+        }
+    }
+
+    pub fn pairwise_info(&self) -> &PairwiseInfo {
+        &self.pairwise_info
+    }
+
+    pub fn their_did_doc(&self) -> Option<&AriesDidDoc> {
+        match &self.state {
+            VagueState::Invitee(VagueInviteeState::Initial(_)) => None,
+            VagueState::Invitee(VagueInviteeState::Invited(s)) => Some(s.their_did_doc()),
+            VagueState::Invitee(VagueInviteeState::Requested(s)) => Some(s.their_did_doc()),
+            VagueState::Invitee(VagueInviteeState::Responded(s)) => Some(s.their_did_doc()),
+            VagueState::Invitee(VagueInviteeState::Complete(s)) => Some(s.their_did_doc()),
+            VagueState::Inviter(VagueInviterState::Initial(_)) => None,
+            VagueState::Inviter(VagueInviterState::Invited(_)) => None,
+            VagueState::Inviter(VagueInviterState::Requested(s)) => Some(s.their_did_doc()),
+            VagueState::Inviter(VagueInviterState::Responded(s)) => Some(s.their_did_doc()),
+            VagueState::Inviter(VagueInviterState::Complete(s)) => Some(s.their_did_doc()),
+        }
+    }
+
+    pub fn remote_did(&self) -> Option<&str> {
+        self.their_did_doc().map(|d| d.id.as_str())
+    }
+
+    pub fn remote_vk(&self) -> VcxResult<String> {
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
+            "No DidDoc present",
+        ))?;
+
+        did_doc
+            .recipient_keys()?
+            .first()
+            .map(ToOwned::to_owned)
+            .ok_or(AriesVcxError::from_msg(
+                AriesVcxErrorKind::NotReady,
+                "Can't resolve recipient key from the counterparty diddoc.",
+            ))
+    }
+
+    pub fn invitation(&self) -> Option<&Invitation> {
+        match &self.state {
+            VagueState::Inviter(VagueInviterState::Initial(s)) => Some(&s.invitation),
+            _ => None,
+        }
+    }
+
+    pub async fn send_message<T>(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        message: &A2AMessage,
+        transport: &T,
+    ) -> VcxResult<()>
+    where
+        T: Transport,
+    {
+        let sender_verkey = &self.pairwise_info().pw_vk;
+        let did_doc = self.their_did_doc().ok_or(AriesVcxError::from_msg(
+            AriesVcxErrorKind::NotReady,
+            "No DidDoc present",
+        ))?;
+
+        Connection::<(), ()>::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
     }
 }

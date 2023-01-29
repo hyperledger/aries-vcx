@@ -240,7 +240,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { state, .. } = self;
-        let thread_id = invitation.get_id()?;
+        let thread_id = invitation.get_id().to_owned();
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited(
                 (

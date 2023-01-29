@@ -41,11 +41,11 @@ pub struct PublicInvitation {
 }
 
 impl Invitation {
-    pub fn get_id(&self) -> MessagesResult<String> {
+    pub fn get_id(&self) -> &str {
         match self {
-            Self::Pairwise(invite) => Ok(invite.id.0.clone()),
-            Self::Public(invite) => Ok(invite.id.0.clone()),
-            Self::OutOfBand(invite) => Ok(invite.id.0.clone()),
+            Self::Pairwise(invite) => &invite.id.0,
+            Self::Public(invite) => &invite.id.0,
+            Self::OutOfBand(invite) => &invite.id.0,
         }
     }
 }

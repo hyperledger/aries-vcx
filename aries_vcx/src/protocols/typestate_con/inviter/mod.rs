@@ -72,6 +72,12 @@ impl InviterConnection<InvitedState> {
         }
     }
 
+    /// As the inviter connection can be started directly in the invited state,
+    /// like with a public invitation, we might or might not have a thread ID.
+    pub fn thread_id(&self) -> Option<&str> {
+        self.state.thread_id()
+    }
+
     pub async fn handle_request(self, request: Request) -> VcxResult<InviterConnection<RequestedState>> {
         trace!("Connection::process_request >>> request: {:?}", request,);
 

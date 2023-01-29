@@ -1,11 +1,11 @@
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use crate::protocols::typestate_con::traits::TheirDidDoc;
+use crate::protocols::typestate_con::traits::{TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RespondedState {
     pub(crate) did_doc: AriesDidDoc,
-    pub(crate) thread_id: String
+    pub(crate) thread_id: String,
 }
 
 impl RespondedState {
@@ -17,5 +17,11 @@ impl RespondedState {
 impl TheirDidDoc for RespondedState {
     fn their_did_doc(&self) -> &AriesDidDoc {
         &self.did_doc
+    }
+}
+
+impl ThreadId for RespondedState {
+    fn thread_id(&self) -> &str {
+        &self.thread_id
     }
 }

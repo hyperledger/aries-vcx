@@ -20,7 +20,10 @@ use crate::{
 };
 
 use self::{
-    common::states::complete::CompleteState, pairwise_info::PairwiseInfo, serde::de::VagueState, traits::TheirDidDoc,
+    common::states::complete::CompleteState,
+    pairwise_info::PairwiseInfo,
+    serde::de::VagueState,
+    traits::{TheirDidDoc, ThreadId},
 };
 
 pub use self::serde::de::VagueConnection;
@@ -57,6 +60,32 @@ impl<I, S> Connection<I, S> {
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
     }
+
+    pub(crate) async fn basic_send_message<T>(
+        wallet: &Arc<dyn BaseWallet>,
+        message: &A2AMessage,
+        sender_verkey: &str,
+        did_doc: &AriesDidDoc,
+        transport: &T,
+    ) -> VcxResult<()>
+    where
+        T: Transport,
+    {
+        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
+        let msg = env.0;
+        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
+
+        transport.send_message(msg, &service_endpoint).await
+    }
+}
+
+impl<I, S> Connection<I, S>
+where
+    S: ThreadId,
+{
+    pub fn thread_id(&self) -> &str {
+        self.state.thread_id()
+    }
 }
 
 impl<I, S> Connection<I, S>
@@ -91,13 +120,9 @@ where
     where
         T: Transport,
     {
-        let sender_verkey = &self.pairwise_info.pw_vk;
+        let sender_verkey = &self.pairwise_info().pw_vk;
         let did_doc = self.their_did_doc();
-        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
-        let msg = env.0;
-        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
-
-        transport.send_message(msg, &service_endpoint).await
+        Self::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
     }
 }
 

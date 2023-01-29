@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::RwLock};
 use agency_client::httpclient::post_message;
 use aries_vcx::{
     errors::error::VcxResult,
+    messages::protocols::basic_message::message::BasicMessage,
     protocols::typestate_con::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection, Transport,
         VagueConnection,
@@ -46,6 +47,20 @@ fn new_handle() -> LibvcxResult<u32> {
     }
 }
 
+fn add_connection(connection: VagueConnection) -> LibvcxResult<u32> {
+    let handle = new_handle()?;
+    CONNECTION_MAP.write()?.insert(handle, connection);
+    Ok(handle)
+}
+
+fn insert_connection<I, S>(handle: u32, connection: Connection<I, S>) -> LibvcxResult<()>
+where
+    VagueConnection: From<Connection<I, S>>,
+{
+    CONNECTION_MAP.write()?.insert(handle, connection.into());
+    Ok(())
+}
+
 fn remove_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
 where
     Connection<I, S>: TryFrom<VagueConnection>,
@@ -60,20 +75,6 @@ where
                 format!("Unable to retrieve expected connection for handle: {}", handle),
             )
         })
-}
-
-fn add_connection(connection: VagueConnection) -> LibvcxResult<u32> {
-    let handle = new_handle()?;
-    CONNECTION_MAP.write()?.insert(handle, connection);
-    Ok(handle)
-}
-
-fn insert_connection<I, S>(handle: u32, connection: Connection<I, S>) -> LibvcxResult<()>
-where
-    VagueConnection: From<Connection<I, S>>,
-{
-    CONNECTION_MAP.write()?.insert(handle, connection.into());
-    Ok(())
 }
 
 fn serialize<T>(data: &T) -> LibvcxResult<String>
@@ -101,7 +102,6 @@ pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> 
     trace!("create_inviter >>>");
     let profile = get_main_profile()?;
 
-    // This could probably be generated once and used/cloned around.
     let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
     let con = InviterConnection::new_invited("".to_owned(), pw_info);
 
@@ -135,37 +135,106 @@ pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: 
 }
 
 // ----------------------------- GETTERS ------------------------------------
-// pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
-//     trace!("get_thread_id >>> handle: {}", handle);
-//     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_thread_id()))
-// }
+pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
+    trace!("get_thread_id >>> handle: {}", handle);
 
-// pub fn get_pairwise_info(handle: u32) -> LibvcxResult<String> {
-//     trace!("get_pairwise_info >>> handle: {}", handle);
-//     CONNECTION_MAP.get(handle, |connection| serialize(connection.pairwise_info()))
-// }
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
 
-// pub fn get_remote_did(handle: u32) -> LibvcxResult<String> {
-//     trace!("get_remote_did >>> handle: {}", handle);
-//     CONNECTION_MAP.get(handle, |connection| connection.remote_did().map_err(|e| e.into()))
-// }
+    con.thread_id().map(ToOwned::to_owned).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("No thread ID for connection with handle: {}", handle),
+        )
+    })
+}
 
-// pub fn get_remote_vk(handle: u32) -> LibvcxResult<String> {
-//     trace!("get_remote_vk >>> handle: {}", handle);
-//     CONNECTION_MAP.get(handle, |connection| connection.remote_vk().map_err(|e| e.into()))
-// }
+pub fn get_pairwise_info(handle: u32) -> LibvcxResult<String> {
+    trace!("get_pairwise_info >>> handle: {}", handle);
 
-// pub fn get_state(handle: u32) -> LibvcxResult<u32> {
-//     trace!("get_state >>> handle: {}", handle);
-//     CONNECTION_MAP.get(handle, |connection| Ok(connection.get_state().into()))
-// }
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
 
-// pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
-//     trace!("get_invitation >>> handle: {}", handle);
+    serialize(con.pairwise_info())
+}
 
-//     let invitation = get_connection(&handle)?.get_invitation();
-//     serialize(invitation)
-// }
+pub fn get_remote_did(handle: u32) -> LibvcxResult<String> {
+    trace!("get_remote_did >>> handle: {}", handle);
+
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
+
+    con.remote_did().map(ToOwned::to_owned).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("No remote DID for connection with handle: {}", handle),
+        )
+    })
+}
+
+pub fn get_remote_vk(handle: u32) -> LibvcxResult<String> {
+    trace!("get_remote_vk >>> handle: {}", handle);
+
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
+
+    con.remote_vk().map_err(From::from)
+}
+
+pub fn get_state(handle: u32) -> LibvcxResult<u32> {
+    trace!("get_state >>> handle: {}", handle);
+
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
+
+    Ok(con.state().into())
+}
+
+pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
+    trace!("get_invitation >>> handle: {}", handle);
+
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
+
+    let invitation = con.invitation().ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("No invitation for connection with handle: {}", handle),
+        )
+    })?;
+
+    serialize(invitation)
+}
 
 // ----------------------------- MSG PROCESSING ------------------------------------
 pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
@@ -252,6 +321,28 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     let con = con.send_ack(&wallet, &*HTTP_CLIENT).await?;
 
     insert_connection(handle, con)
+}
+
+pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<()> {
+    trace!("send_generic_message >>>");
+
+    let wallet = get_main_profile()?.inject_wallet();
+    let message = BasicMessage::create()
+        .set_content(content)
+        .set_time()
+        .set_out_time()
+        .to_a2a_message();
+
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(&handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("Unable to retrieve expected connection for handle: {}", handle),
+        )
+    })?;
+
+    con.send_message(&wallet, &message, &*HTTP_CLIENT).await?;
+    Ok(())
 }
 
 // // ------------------------- (DE)SERIALIZATION ----------------------------------

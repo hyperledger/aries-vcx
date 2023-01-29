@@ -48,7 +48,7 @@ impl InviteeConnection<InitialState> {
     ) -> VcxResult<InviteeConnection<InvitedState>> {
         trace!("Connection::into_invited >>> invitation: {:?}", &invitation);
 
-        let thread_id = invitation.get_id()?;
+        let thread_id = invitation.get_id().to_owned();
         let did_doc = into_did_doc(profile, invitation).await?;
         let state = InvitedState { did_doc, thread_id };
 
