@@ -78,30 +78,8 @@ impl InviterConnection<InvitedState> {
         self.state.thread_id()
     }
 
-    pub async fn handle_request(self, request: Request) -> VcxResult<InviterConnection<RequestedState>> {
-        trace!("Connection::process_request >>> request: {:?}", request,);
-
-        // There must be some other way to validate the thread ID other than cloning the entire Request
-        self.state
-            .thread_id
-            .as_ref()
-            .map(|thread_id| verify_thread_id(thread_id, &A2AMessage::ConnectionRequest(request.clone())))
-            .unwrap_or(Ok(()))?;
-
-        request.connection.did_doc.validate()?;
-
-        let state = RequestedState::new(request);
-
-        Ok(Connection {
-            source_id: self.source_id,
-            pairwise_info: self.pairwise_info,
-            initiation_type: self.initiation_type,
-            state,
-        })
-    }
-}
-
-impl InviterConnection<RequestedState> {
+    // This should ideally belong in the Connection<Inviter,RequestedState>
+    // but was placed here to retro-fit the previous API.
     async fn build_response(
         &self,
         wallet: &Arc<dyn BaseWallet>,
@@ -122,44 +100,81 @@ impl InviterConnection<RequestedState> {
         sign_connection_response(wallet, &self.pairwise_info.pw_vk, response).await
     }
 
-    pub async fn send_response<T>(
+    // Due to backwards compatibility, we generate the signed response and store that in the state.
+    // However, it would be more efficient to store the request and postpone the response generation and 
+    // signing until the next state, thus taking advantage of the request attributes and avoiding cloning the DidDoc.
+    pub async fn handle_request(
         self,
         wallet: &Arc<dyn BaseWallet>,
+        request: Request,
         new_service_endpoint: String,
         new_routing_keys: Vec<String>,
-        transport: &T,
-    ) -> VcxResult<InviterConnection<RespondedState>>
-    where
-        T: Transport,
-    {
+    ) -> VcxResult<InviterConnection<RequestedState>> {
         trace!(
-            "Connection::send_response >>> service_endpoint: {}, routing_keys: {:?}",
+            "Connection::process_request >>> request: {:?}, service_endpoint: {}, routing_keys: {:?}",
+            request,
             new_service_endpoint,
             new_routing_keys,
         );
 
+        // There must be some other way to validate the thread ID other than cloning the entire Request
+        self.state
+            .thread_id
+            .as_ref()
+            .map(|thread_id| verify_thread_id(thread_id, &A2AMessage::ConnectionRequest(request.clone())))
+            .unwrap_or(Ok(()))?;
+
+        request.connection.did_doc.validate()?;
+
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
-        let thread_id = self.state.request.get_thread_id();
+        let did_doc = request.connection.did_doc.clone();
 
         let signed_response = self
             .build_response(
                 wallet,
-                &self.state.request,
+                &request,
                 &new_pairwise_info,
                 new_service_endpoint,
                 new_routing_keys,
             )
             .await?;
 
-        self.send_message(wallet, &signed_response.to_a2a_message(), transport)
+        let state = RequestedState::new(signed_response, did_doc);
+
+        Ok(Connection {
+            source_id: self.source_id,
+            pairwise_info: new_pairwise_info,
+            initiation_type: self.initiation_type,
+            state,
+        })
+    }
+}
+
+impl InviterConnection<RequestedState> {
+    pub async fn send_response<T>(
+        self,
+        wallet: &Arc<dyn BaseWallet>,
+        transport: &T,
+    ) -> VcxResult<InviterConnection<RespondedState>>
+    where
+        T: Transport,
+    {
+        trace!(
+            "Connection::send_response >>> signed_response: {:?}",
+            &self.state.signed_response
+        );
+
+        let thread_id = self.state.signed_response.get_thread_id();
+
+        self.send_message(wallet, &self.state.signed_response.to_a2a_message(), transport)
             .await?;
 
-        let state = RespondedState::new(self.state.request.connection.did_doc, thread_id);
+        let state = RespondedState::new(self.state.did_doc, thread_id);
 
         Ok(Connection {
             state,
             source_id: self.source_id,
-            pairwise_info: new_pairwise_info,
+            pairwise_info: self.pairwise_info,
             initiation_type: self.initiation_type,
         })
     }

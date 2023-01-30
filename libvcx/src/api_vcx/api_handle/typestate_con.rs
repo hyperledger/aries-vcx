@@ -250,14 +250,20 @@ pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     insert_connection(handle, con)
 }
 
-// ------------------ BREAKING CHANGE ------------------
-// Extra function arguments are deffered to send_response.
-pub async fn process_request(handle: u32, request: &str) -> LibvcxResult<()> {
+pub async fn process_request(
+    handle: u32,
+    request: &str,
+    service_endpoint: String,
+    routing_keys: Vec<String>,
+) -> LibvcxResult<()> {
     trace!("process_request >>>");
 
     let con = get_cloned_connection(&handle)?;
+    let wallet = get_main_profile()?.inject_wallet();
     let request = deserialize(request)?;
-    let con = con.handle_request(request).await?;
+    let con = con
+        .handle_request(&wallet, request, service_endpoint, routing_keys)
+        .await?;
 
     insert_connection(handle, con)
 }
@@ -283,16 +289,12 @@ pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
     insert_connection(handle, con)
 }
 
-// ------------------ BREAKING CHANGE ------------------
-// Got new arguments that were moved from process_request
-pub async fn send_response(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
+pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
 
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
-    let con = con
-        .send_response(&wallet, service_endpoint, routing_keys, &HttpClient)
-        .await?;
+    let con = con.send_response(&wallet, &HttpClient).await?;
 
     insert_connection(handle, con)
 }
