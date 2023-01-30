@@ -15,8 +15,12 @@ pub trait Transport {
     async fn send_message(&self, msg: Vec<u8>, service_endpoint: &str) -> VcxResult<()>;
 }
 
-/// Trait used for implementing common [`super::Connection`] behavior based 
+/// Trait used for implementing common [`super::Connection`] behavior based
 /// on states implementing it.
 pub trait ThreadId {
     fn thread_id(&self) -> &str;
 }
+
+/// Marker trait used for implementing [`messages::protocols::connection::problem_report::ProblemReport`] 
+/// handling on certain [`super::Connection`] types.
+pub trait HandleProblem {}

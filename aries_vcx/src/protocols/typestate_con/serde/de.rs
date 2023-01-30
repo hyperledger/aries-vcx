@@ -258,7 +258,7 @@ impl VagueConnection {
             VagueState::Invitee(VagueInviteeState::Responded(s)) => Some(s.thread_id()),
             VagueState::Invitee(VagueInviteeState::Complete(s)) => Some(s.thread_id()),
             VagueState::Inviter(VagueInviterState::Initial(s)) => Some(s.thread_id()),
-            VagueState::Inviter(VagueInviterState::Invited(s)) => s.thread_id(),
+            VagueState::Inviter(VagueInviterState::Invited(s)) => s.opt_thread_id(),
             VagueState::Inviter(VagueInviterState::Requested(s)) => Some(s.thread_id()),
             VagueState::Inviter(VagueInviterState::Responded(s)) => Some(s.thread_id()),
             VagueState::Inviter(VagueInviterState::Complete(s)) => Some(s.thread_id()),
@@ -326,7 +326,7 @@ impl VagueConnection {
             "No DidDoc present",
         ))?;
 
-        // The generic types do not matter here as the method is available 
+        // The generic types do not matter here as the method is available
         // on all possible implementations.
         Connection::<(), ()>::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
     }

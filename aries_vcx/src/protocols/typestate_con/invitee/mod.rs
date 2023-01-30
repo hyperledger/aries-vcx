@@ -121,22 +121,34 @@ impl InviteeConnection<InvitedState> {
 }
 
 impl InviteeConnection<RequestedState> {
-    pub async fn handle_response(
+    pub async fn handle_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         response: SignedResponse,
-    ) -> VcxResult<InviteeConnection<RespondedState>> {
+        transport: &T,
+    ) -> VcxResult<InviteeConnection<RespondedState>>
+    where
+        T: Transport,
+    {
         verify_thread_id(&self.state.thread_id, &A2AMessage::ConnectionResponse(response.clone()))?;
 
         let keys = &self.state.did_doc.recipient_keys()?;
-        let remote_vk = keys.first().ok_or(AriesVcxError::from_msg(
+        let their_vk = keys.first().ok_or(AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidState,
             "Cannot handle response: remote verkey not found",
         ))?;
 
-        let did_doc = decode_signed_connection_response(wallet, response, remote_vk)
-            .await
-            .map(|response| response.connection.did_doc)?;
+        let did_doc = match decode_signed_connection_response(wallet, response, their_vk).await {
+            Ok(response) => Ok(response.connection.did_doc),
+            Err(err) => {
+                error!("Request DidDoc validation failed! Sending ProblemReport...");
+
+                self.send_problem_report(wallet, &err, self.thread_id(), &self.state.did_doc, transport)
+                    .await;
+
+                Err(err)
+            }
+        }?;
 
         let state = RespondedState::new(did_doc, self.state.thread_id);
 

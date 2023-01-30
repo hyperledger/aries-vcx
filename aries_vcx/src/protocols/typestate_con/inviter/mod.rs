@@ -74,8 +74,8 @@ impl InviterConnection<InvitedState> {
 
     /// As the inviter connection can be started directly in the invited state,
     /// like with a public invitation, we might or might not have a thread ID.
-    pub fn thread_id(&self) -> Option<&str> {
-        self.state.thread_id()
+    pub fn opt_thread_id(&self) -> Option<&str> {
+        self.state.opt_thread_id()
     }
 
     // This should ideally belong in the Connection<Inviter,RequestedState>
@@ -101,15 +101,19 @@ impl InviterConnection<InvitedState> {
     }
 
     // Due to backwards compatibility, we generate the signed response and store that in the state.
-    // However, it would be more efficient to store the request and postpone the response generation and 
+    // However, it would be more efficient to store the request and postpone the response generation and
     // signing until the next state, thus taking advantage of the request attributes and avoiding cloning the DidDoc.
-    pub async fn handle_request(
+    pub async fn handle_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         request: Request,
         new_service_endpoint: String,
         new_routing_keys: Vec<String>,
-    ) -> VcxResult<InviterConnection<RequestedState>> {
+        transport: &T,
+    ) -> VcxResult<InviterConnection<RequestedState>>
+    where
+        T: Transport,
+    {
         trace!(
             "Connection::process_request >>> request: {:?}, service_endpoint: {}, routing_keys: {:?}",
             request,
@@ -124,7 +128,22 @@ impl InviterConnection<InvitedState> {
             .map(|thread_id| verify_thread_id(thread_id, &A2AMessage::ConnectionRequest(request.clone())))
             .unwrap_or(Ok(()))?;
 
-        request.connection.did_doc.validate()?;
+        // If the request's DidDoc validation fails, we generate and send a ProblemReport.
+        // We then return early with the provided error.
+        if let Err(err) = request.connection.did_doc.validate() {
+            error!("Request DidDoc validation failed! Sending ProblemReport...");
+
+            self.send_problem_report(
+                wallet,
+                &err,
+                &request.get_thread_id(),
+                &request.connection.did_doc,
+                transport,
+            )
+            .await;
+
+            Err(err)?;
+        }
 
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
         let did_doc = request.connection.did_doc.clone();

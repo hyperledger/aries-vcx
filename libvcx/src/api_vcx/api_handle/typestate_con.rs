@@ -236,11 +236,6 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
 pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     trace!("process_invite >>>");
 
-    // ------------------ BREAKING CHANGE ------------------
-    // The code below would do the proper thing, but the function must be async
-    // Also, this doesn't really make sense conceptually as the invitation is also passed
-    // when the invitee is created -> so the transition happens there automatically.
-
     let profile = get_main_profile()?;
     let invitation = deserialize(invitation)?;
     let con = get_cloned_connection(&handle)?
@@ -262,7 +257,7 @@ pub async fn process_request(
     let wallet = get_main_profile()?.inject_wallet();
     let request = deserialize(request)?;
     let con = con
-        .handle_request(&wallet, request, service_endpoint, routing_keys)
+        .handle_request(&wallet, request, service_endpoint, routing_keys, &HttpClient)
         .await?;
 
     insert_connection(handle, con)
@@ -274,7 +269,7 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let response = deserialize(response)?;
-    let con = con.handle_response(&wallet, response).await?;
+    let con = con.handle_response(&wallet, response, &HttpClient).await?;
 
     insert_connection(handle, con)
 }

@@ -9,9 +9,12 @@ mod traits;
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
     diddoc::aries::diddoc::AriesDidDoc,
-    protocols::discovery::disclose::{Disclose, ProtocolDescriptor},
+    protocols::{
+        connection::problem_report::{ProblemCode, ProblemReport},
+        discovery::disclose::{Disclose, ProtocolDescriptor},
+    },
 };
-use std::sync::Arc;
+use std::{error::Error, sync::Arc};
 
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
@@ -23,7 +26,7 @@ use self::{
     common::states::complete::CompleteState,
     pairwise_info::PairwiseInfo,
     serde::de::VagueState,
-    traits::{TheirDidDoc, ThreadId},
+    traits::{HandleProblem, TheirDidDoc, ThreadId},
 };
 
 pub use self::serde::de::VagueConnection;
@@ -123,6 +126,51 @@ where
         let sender_verkey = &self.pairwise_info().pw_vk;
         let did_doc = self.their_did_doc();
         Self::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
+    }
+}
+
+impl<I, S> Connection<I, S>
+where
+    S: HandleProblem,
+{
+    fn create_problem_report<E>(&self, err: &E, thread_id: &str) -> ProblemReport
+    where
+        E: Error,
+    {
+        ProblemReport::create()
+            .set_problem_code(ProblemCode::RequestProcessingError)
+            .set_explain(err.to_string())
+            .set_thread_id(thread_id)
+            .set_out_time()
+    }
+
+    async fn send_problem_report<E, T>(
+        &self,
+        wallet: &Arc<dyn BaseWallet>,
+        err: &E,
+        thread_id: &str,
+        did_doc: &AriesDidDoc,
+        transport: &T,
+    ) where
+        E: Error,
+        T: Transport,
+    {
+        let sender_verkey = &self.pairwise_info().pw_vk;
+        let problem_report = self.create_problem_report(err, thread_id);
+        let res = Self::basic_send_message(
+            wallet,
+            &problem_report.to_a2a_message(),
+            sender_verkey,
+            did_doc,
+            transport,
+        )
+        .await;
+
+        if let Err(e) = res {
+            trace!("Error encountered when sending ProblemReport: {}", e);
+        } else {
+            info!("Error report sent!");
+        }
     }
 }
 
