@@ -24,10 +24,6 @@ lazy_static! {
     static ref CONNECTION_MAP: Cache = RwLock::new(HashMap::new());
 }
 
-lazy_static! {
-    static ref HTTP_CLIENT: HttpClient = HttpClient;
-}
-
 struct HttpClient;
 
 #[async_trait]
@@ -295,7 +291,7 @@ pub async fn send_response(handle: u32, service_endpoint: String, routing_keys: 
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con
-        .send_response(&wallet, service_endpoint, routing_keys, &*HTTP_CLIENT)
+        .send_response(&wallet, service_endpoint, routing_keys, &HttpClient)
         .await?;
 
     insert_connection(handle, con)
@@ -307,7 +303,7 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con
-        .send_request(&wallet, service_endpoint, routing_keys, &*HTTP_CLIENT)
+        .send_request(&wallet, service_endpoint, routing_keys, &HttpClient)
         .await?;
 
     insert_connection(handle, con)
@@ -318,7 +314,7 @@ pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
 
     let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
-    let con = con.send_ack(&wallet, &*HTTP_CLIENT).await?;
+    let con = con.send_ack(&wallet, &HttpClient).await?;
 
     insert_connection(handle, con)
 }
@@ -341,7 +337,7 @@ pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<
         )
     })?;
 
-    con.send_message(&wallet, &message, &*HTTP_CLIENT).await?;
+    con.send_message(&wallet, &message, &HttpClient).await?;
     Ok(())
 }
 
