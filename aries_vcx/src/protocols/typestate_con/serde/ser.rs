@@ -32,9 +32,9 @@ where
 /// of a [`Connection`] (so we don't clone unnecessarily) to itself and then serialize it.
 #[derive(Debug, Serialize)]
 pub struct SerializableConnection<'a> {
-    source_id: &'a str,
-    pairwise_info: &'a PairwiseInfo,
-    pub state: RefState<'a>,
+    pub(super) source_id: &'a str,
+    pub(super) pairwise_info: &'a PairwiseInfo,
+    pub(super) state: RefState<'a>,
 }
 
 impl<'a> SerializableConnection<'a> {
@@ -164,5 +164,63 @@ impl<'a> From<&'a RespondedState> for RefInviteeState<'a> {
 impl<'a> From<&'a CompleteState> for RefInviteeState<'a> {
     fn from(value: &'a CompleteState) -> Self {
         Self::Complete(value)
+    }
+}
+
+/// Compile-time assurance that the serialization type
+/// of the [`Connection`], if modified, will be modified along the deserialization type.
+#[cfg(test)]
+mod tests {
+    use crate::protocols::typestate_con::serde::de::*;
+
+    use super::*;
+
+    impl<'a> From<&'a VagueInviteeState> for RefInviteeState<'a> {
+        fn from(value: &'a VagueInviteeState) -> Self {
+            match value {
+                VagueInviteeState::Initial(s) => Self::Initial(s),
+                VagueInviteeState::Invited(s) => Self::Invited(s),
+                VagueInviteeState::Requested(s) => Self::Requested(s),
+                VagueInviteeState::Responded(s) => Self::Responded(s),
+                VagueInviteeState::Complete(s) => Self::Complete(s),
+            }
+        }
+    }
+
+    impl<'a> From<&'a VagueInviterState> for RefInviterState<'a> {
+        fn from(value: &'a VagueInviterState) -> Self {
+            match value {
+                VagueInviterState::Initial(s) => Self::Initial(s),
+                VagueInviterState::Invited(s) => Self::Invited(s),
+                VagueInviterState::Requested(s) => Self::Requested(s),
+                VagueInviterState::Responded(s) => Self::Responded(s),
+                VagueInviterState::Complete(s) => Self::Complete(s),
+            }
+        }
+    }
+
+    impl<'a> From<&'a VagueState> for RefState<'a> {
+        fn from(value: &'a VagueState) -> Self {
+            match value {
+                VagueState::Invitee(s) => Self::Invitee(s.into()),
+                VagueState::Inviter(s) => Self::Inviter(s.into()),
+            }
+        }
+    }
+
+    impl<'a> From<&'a VagueConnection> for SerializableConnection<'a> {
+        fn from(value: &'a VagueConnection) -> Self {
+            let VagueConnection {
+                source_id,
+                pairwise_info,
+                state,
+            } = value;
+
+            Self {
+                source_id,
+                pairwise_info,
+                state: state.into(),
+            }
+        }
     }
 }

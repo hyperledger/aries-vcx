@@ -1,2 +1,2 @@
 pub mod de;
-mod ser;
+pub mod ser;

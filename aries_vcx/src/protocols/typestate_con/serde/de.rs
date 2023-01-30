@@ -96,9 +96,9 @@ macro_rules! try_from_vague_to_concrete {
 /// It does, however, expose some methods agnostic to the [`Connection`] type.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VagueConnection {
-    source_id: String,
-    pairwise_info: PairwiseInfo,
-    state: VagueState,
+    pub(super) source_id: String,
+    pub(super) pairwise_info: PairwiseInfo,
+    pub(super) state: VagueState,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -329,5 +329,63 @@ impl VagueConnection {
         // The generic types do not matter here as the method is available
         // on all possible implementations.
         Connection::<(), ()>::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
+    }
+}
+
+/// Compile-time assurance that the deserialization type
+/// of the [`Connection`], if modified, will be modified along the serialization type.
+#[cfg(test)]
+mod tests {
+    use crate::protocols::typestate_con::serde::ser::*;
+
+    use super::*;
+
+    impl<'a> From<RefInviteeState<'a>> for VagueInviteeState {
+        fn from(value: RefInviteeState<'a>) -> Self {
+            match value {
+                RefInviteeState::Initial(s) => Self::Initial(s.to_owned()),
+                RefInviteeState::Invited(s) => Self::Invited(s.to_owned()),
+                RefInviteeState::Requested(s) => Self::Requested(s.to_owned()),
+                RefInviteeState::Responded(s) => Self::Responded(s.to_owned()),
+                RefInviteeState::Complete(s) => Self::Complete(s.to_owned()),
+            }
+        }
+    }
+
+    impl<'a> From<RefInviterState<'a>> for VagueInviterState {
+        fn from(value: RefInviterState<'a>) -> Self {
+            match value {
+                RefInviterState::Initial(s) => Self::Initial(s.to_owned()),
+                RefInviterState::Invited(s) => Self::Invited(s.to_owned()),
+                RefInviterState::Requested(s) => Self::Requested(s.to_owned()),
+                RefInviterState::Responded(s) => Self::Responded(s.to_owned()),
+                RefInviterState::Complete(s) => Self::Complete(s.to_owned()),
+            }
+        }
+    }
+
+    impl<'a> From<RefState<'a>> for VagueState {
+        fn from(value: RefState<'a>) -> Self {
+            match value {
+                RefState::Invitee(s) => Self::Invitee(s.into()),
+                RefState::Inviter(s) => Self::Inviter(s.into()),
+            }
+        }
+    }
+
+    impl<'a> From<SerializableConnection<'a>> for VagueConnection {
+        fn from(value: SerializableConnection<'a>) -> Self {
+            let SerializableConnection {
+                source_id,
+                pairwise_info,
+                state,
+            } = value;
+
+            Self {
+                source_id: source_id.to_owned(),
+                pairwise_info: pairwise_info.to_owned(),
+                state: state.into(),
+            }
+        }
     }
 }
