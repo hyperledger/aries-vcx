@@ -15,16 +15,31 @@ use crate::protocols::typestate_con::{
     Connection,
 };
 
-impl<I, S> Serialize for Connection<I, S>
-where
-    for<'a> SerializableConnection<'a>: From<&'a Connection<I, S>>,
-{
-    fn serialize<Serializer>(&self, serializer: Serializer) -> Result<Serializer::Ok, Serializer::Error>
-    where
-        Serializer: ::serde::Serializer,
-    {
-        SerializableConnection::from(self).serialize(serializer)
-    }
+/// Macro used for boilerplace implementation of the
+/// [`From`] trait from a concrete connection state to the equivalent reference state
+/// used for serialization.
+macro_rules! from_concrete_to_serializable {
+    ($from:ident, $var:ident, $to:ident) => {
+        impl<'a> From<&'a $from> for $to<'a> {
+            fn from(value: &'a $from) -> Self {
+                Self::$var(value)
+            }
+        }
+    };
+
+    ($init_type:ident, $state:ident, $var:ident, $to:ident) => {
+        impl<'a, S> From<(&'a $init_type, &'a S)> for $to<'a>
+        where
+            $state<'a>: From<&'a S>,
+            S: 'a,
+        {
+            fn from(value: (&'a $init_type, &'a S)) -> Self {
+                let (_, state) = value;
+                let serde_state = From::from(state);
+                Self::$var(serde_state)
+            }
+        }
+    };
 }
 
 /// Type used for serialization of a [`Connection`].
@@ -37,14 +52,28 @@ pub struct SerializableConnection<'a> {
     pub(super) state: RefState<'a>,
 }
 
-impl<'a> SerializableConnection<'a> {
-    fn new(source_id: &'a str, pairwise_info: &'a PairwiseInfo, state: RefState<'a>) -> Self {
-        Self {
-            source_id,
-            pairwise_info,
-            state,
-        }
-    }
+#[derive(Debug, Serialize)]
+pub enum RefState<'a> {
+    Inviter(RefInviterState<'a>),
+    Invitee(RefInviteeState<'a>),
+}
+
+#[derive(Debug, Serialize)]
+pub enum RefInviterState<'a> {
+    Initial(&'a InviterInitial),
+    Invited(&'a InviterInvited),
+    Requested(&'a InviterRequested),
+    Responded(&'a RespondedState),
+    Complete(&'a CompleteState),
+}
+
+#[derive(Debug, Serialize)]
+pub enum RefInviteeState<'a> {
+    Initial(&'a InviteeInitial),
+    Invited(&'a InviteeInvited),
+    Requested(&'a InviteeRequested),
+    Responded(&'a RespondedState),
+    Complete(&'a CompleteState),
 }
 
 impl<'a, I, S> From<&'a Connection<I, S>> for SerializableConnection<'a>
@@ -59,111 +88,43 @@ where
     }
 }
 
-#[derive(Debug, Serialize)]
-pub enum RefState<'a> {
-    Inviter(RefInviterState<'a>),
-    Invitee(RefInviteeState<'a>),
+from_concrete_to_serializable!(Inviter, RefInviterState, Inviter, RefState);
+from_concrete_to_serializable!(Invitee, RefInviteeState, Invitee, RefState);
+
+from_concrete_to_serializable!(InviterInitial, Initial, RefInviterState);
+from_concrete_to_serializable!(InviterInvited, Invited, RefInviterState);
+from_concrete_to_serializable!(InviterRequested, Requested, RefInviterState);
+from_concrete_to_serializable!(RespondedState, Responded, RefInviterState);
+from_concrete_to_serializable!(CompleteState, Complete, RefInviterState);
+
+from_concrete_to_serializable!(InviteeInitial, Initial, RefInviteeState);
+from_concrete_to_serializable!(InviteeInvited, Invited, RefInviteeState);
+from_concrete_to_serializable!(InviteeRequested, Requested, RefInviteeState);
+from_concrete_to_serializable!(RespondedState, Responded, RefInviteeState);
+from_concrete_to_serializable!(CompleteState, Complete, RefInviteeState);
+
+impl<'a> SerializableConnection<'a> {
+    fn new(source_id: &'a str, pairwise_info: &'a PairwiseInfo, state: RefState<'a>) -> Self {
+        Self {
+            source_id,
+            pairwise_info,
+            state,
+        }
+    }
 }
 
-impl<'a, S> From<(&'a Inviter, &'a S)> for RefState<'a>
+/// Manual implementation of [`Serialize`] for [`Connection`],
+/// as we'll first convert into [`SerializableConnection`] for a [`Connection`] reference
+/// and serialize that.
+impl<I, S> Serialize for Connection<I, S>
 where
-    RefInviterState<'a>: From<&'a S>,
-    S: 'a,
+    for<'a> SerializableConnection<'a>: From<&'a Connection<I, S>>,
 {
-    fn from(value: (&'a Inviter, &'a S)) -> Self {
-        let (_, state) = value;
-        let serde_state = From::from(state);
-        Self::Inviter(serde_state)
-    }
-}
-
-impl<'a, S> From<(&'a Invitee, &'a S)> for RefState<'a>
-where
-    RefInviteeState<'a>: From<&'a S>,
-    S: 'a,
-{
-    fn from(value: (&'a Invitee, &'a S)) -> Self {
-        let (_, state) = value;
-        let serde_state = From::from(state);
-        Self::Invitee(serde_state)
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub enum RefInviterState<'a> {
-    Initial(&'a InviterInitial),
-    Invited(&'a InviterInvited),
-    Requested(&'a InviterRequested),
-    Responded(&'a RespondedState),
-    Complete(&'a CompleteState),
-}
-
-impl<'a> From<&'a InviterInitial> for RefInviterState<'a> {
-    fn from(value: &'a InviterInitial) -> Self {
-        Self::Initial(value)
-    }
-}
-
-impl<'a> From<&'a InviterInvited> for RefInviterState<'a> {
-    fn from(value: &'a InviterInvited) -> Self {
-        Self::Invited(value)
-    }
-}
-
-impl<'a> From<&'a InviterRequested> for RefInviterState<'a> {
-    fn from(value: &'a InviterRequested) -> Self {
-        Self::Requested(value)
-    }
-}
-
-impl<'a> From<&'a RespondedState> for RefInviterState<'a> {
-    fn from(value: &'a RespondedState) -> Self {
-        Self::Responded(value)
-    }
-}
-
-impl<'a> From<&'a CompleteState> for RefInviterState<'a> {
-    fn from(value: &'a CompleteState) -> Self {
-        Self::Complete(value)
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub enum RefInviteeState<'a> {
-    Initial(&'a InviteeInitial),
-    Invited(&'a InviteeInvited),
-    Requested(&'a InviteeRequested),
-    Responded(&'a RespondedState),
-    Complete(&'a CompleteState),
-}
-
-impl<'a> From<&'a InviteeInitial> for RefInviteeState<'a> {
-    fn from(value: &'a InviteeInitial) -> Self {
-        Self::Initial(value)
-    }
-}
-
-impl<'a> From<&'a InviteeInvited> for RefInviteeState<'a> {
-    fn from(value: &'a InviteeInvited) -> Self {
-        Self::Invited(value)
-    }
-}
-
-impl<'a> From<&'a InviteeRequested> for RefInviteeState<'a> {
-    fn from(value: &'a InviteeRequested) -> Self {
-        Self::Requested(value)
-    }
-}
-
-impl<'a> From<&'a RespondedState> for RefInviteeState<'a> {
-    fn from(value: &'a RespondedState) -> Self {
-        Self::Responded(value)
-    }
-}
-
-impl<'a> From<&'a CompleteState> for RefInviteeState<'a> {
-    fn from(value: &'a CompleteState) -> Self {
-        Self::Complete(value)
+    fn serialize<Serializer>(&self, serializer: Serializer) -> Result<Serializer::Ok, Serializer::Error>
+    where
+        Serializer: ::serde::Serializer,
+    {
+        SerializableConnection::from(self).serialize(serializer)
     }
 }
 

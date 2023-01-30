@@ -23,7 +23,7 @@ use crate::{
 };
 
 /// Macro used for boilerplace implementation of the
-/// [`From`] trait from a concrete connection state to the vague state.
+/// [`From`] trait from a concrete connection state to the equivalent vague state.
 macro_rules! from_concrete_to_vague {
     ($from:ident, $var:ident, $to:ident) => {
         impl From<$from> for $to {
