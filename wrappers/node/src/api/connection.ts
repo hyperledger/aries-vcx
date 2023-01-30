@@ -99,6 +99,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
+  public processProblemReport(problemReport: string): void {
+    try {
+      ffiNapi.connectionProcessProblemReport(this.handle, problemReport);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async sendResponse(): Promise<void> {
     try {
       await ffiNapi.connectionSendResponse(this.handle);

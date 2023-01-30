@@ -148,6 +148,16 @@ pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
     )
 }
 
+pub fn process_problem_report(handle: u32, problem_report: &str) -> LibvcxResult<()> {
+    trace!("process_problem_report >>>");
+    CONNECTION_MAP.insert(
+        handle,
+        CONNECTION_MAP
+            .get_cloned(handle)?
+            .process_problem_report(deserialize(problem_report)?)?,
+    )
+}
+
 pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
     CONNECTION_MAP.insert(

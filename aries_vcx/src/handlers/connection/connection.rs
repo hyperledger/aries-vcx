@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use messages::a2a::A2AMessage;
 use messages::protocols::basic_message::message::BasicMessage;
+use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
 use serde::{Deserialize, Serialize};
 
@@ -113,7 +114,7 @@ impl Connection {
 
     pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
-            SmConnection::Inviter(sm_inviter) => None,
+            SmConnection::Inviter(_sm_inviter) => None,
             SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
@@ -210,6 +211,22 @@ impl Connection {
             }
             SmConnection::Invitee(_) => {
                 return Err(AriesVcxError::from_msg(AriesVcxErrorKind::NotReady, "Invalid action"));
+            }
+        };
+        Ok(Self { connection_sm })
+    }
+
+    pub fn process_problem_report(self, problem_report: ProblemReport) -> VcxResult<Self> {
+        trace!(
+            "Connection::process_problem_report >>> problem_report: {:?}",
+            problem_report
+        );
+        let connection_sm = match &self.connection_sm {
+            SmConnection::Inviter(sm_inviter) => {
+                SmConnection::Inviter(sm_inviter.clone().handle_problem_report(problem_report)?)
+            }
+            SmConnection::Invitee(sm_invitee) => {
+                SmConnection::Invitee(sm_invitee.clone().handle_problem_report(problem_report)?)
             }
         };
         Ok(Self { connection_sm })

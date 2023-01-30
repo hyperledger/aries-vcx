@@ -103,6 +103,12 @@ pub async fn connection_process_ack(handle: u32, message: String) -> napi::Resul
 }
 
 #[napi]
+pub fn connection_process_problem_report(handle: u32, problem_report: String) -> napi::Result<()> {
+    trace!("connection_process_problem_report >>> handle: {:?}", handle);
+    connection::process_problem_report(handle, &problem_report).map_err(to_napi_err)
+}
+
+#[napi]
 pub async fn connection_send_response(handle: u32) -> napi::Result<()> {
     trace!("connection_send_response >>> handle: {:?}", handle);
     connection::send_response(handle).await.map_err(to_napi_err)

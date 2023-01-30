@@ -20,6 +20,7 @@ export function connectionProcessInvite(handle: number, invitation: string): voi
 export function connectionProcessRequest(handle: number, request: string, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionProcessResponse(handle: number, response: string): Promise<void>
 export function connectionProcessAck(handle: number, message: string): Promise<void>
+export function connectionProcessProblemReport(handle: number, problemReport: string): void
 export function connectionSendResponse(handle: number): Promise<void>
 export function connectionSendRequest(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionSendAck(handle: number): Promise<void>
