@@ -47,6 +47,22 @@ fn new_handle() -> LibvcxResult<u32> {
     }
 }
 
+fn get_cloned_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
+where
+    Connection<I, S>: TryFrom<VagueConnection>,
+{
+    CONNECTION_MAP
+        .write()?
+        .get(handle)
+        .and_then(|c| c.clone().try_into().ok())
+        .ok_or_else(|| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::ObjectAccessError,
+                format!("Unable to retrieve expected connection for handle: {}", handle),
+            )
+        })
+}
+
 fn add_connection(connection: VagueConnection) -> LibvcxResult<u32> {
     let handle = new_handle()?;
     CONNECTION_MAP.write()?.insert(handle, connection);
@@ -59,22 +75,6 @@ where
 {
     CONNECTION_MAP.write()?.insert(handle, connection.into());
     Ok(())
-}
-
-fn remove_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
-where
-    Connection<I, S>: TryFrom<VagueConnection>,
-{
-    CONNECTION_MAP
-        .write()?
-        .remove(handle)
-        .and_then(|c| c.try_into().ok())
-        .ok_or_else(|| {
-            LibvcxError::from_msg(
-                LibvcxErrorKind::ObjectAccessError,
-                format!("Unable to retrieve expected connection for handle: {}", handle),
-            )
-        })
 }
 
 fn serialize<T>(data: &T) -> LibvcxResult<String>
@@ -247,7 +247,7 @@ pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
 
     let profile = get_main_profile()?;
     let invitation = deserialize(invitation)?;
-    let con = remove_connection(&handle)?
+    let con = get_cloned_connection(&handle)?
         .accept_invitation(&profile, &invitation)
         .await?;
 
@@ -259,7 +259,7 @@ pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
 pub async fn process_request(handle: u32, request: &str) -> LibvcxResult<()> {
     trace!("process_request >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let request = deserialize(request)?;
     let con = con.handle_request(request).await?;
 
@@ -269,7 +269,7 @@ pub async fn process_request(handle: u32, request: &str) -> LibvcxResult<()> {
 pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
     trace!("process_response >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let response = deserialize(response)?;
     let con = con.handle_response(&wallet, response).await?;
@@ -280,7 +280,7 @@ pub async fn process_response(handle: u32, response: &str) -> LibvcxResult<()> {
 pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
     trace!("process_ack >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let msg = deserialize(message)?;
     let con = con.acknowledge_connection(&msg)?;
 
@@ -292,7 +292,7 @@ pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
 pub async fn send_response(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
     trace!("send_response >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con
         .send_response(&wallet, service_endpoint, routing_keys, &*HTTP_CLIENT)
@@ -304,7 +304,7 @@ pub async fn send_response(handle: u32, service_endpoint: String, routing_keys: 
 pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
     trace!("send_request >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con
         .send_request(&wallet, service_endpoint, routing_keys, &*HTTP_CLIENT)
@@ -316,7 +316,7 @@ pub async fn send_request(handle: u32, service_endpoint: String, routing_keys: V
 pub async fn send_ack(handle: u32) -> LibvcxResult<()> {
     trace!("send_ack >>>");
 
-    let con = remove_connection(&handle)?;
+    let con = get_cloned_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
     let con = con.send_ack(&wallet, &*HTTP_CLIENT).await?;
 

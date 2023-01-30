@@ -94,20 +94,20 @@ macro_rules! try_from_vague_to_concrete {
 /// Helper type mainly used for deserialization of a [`Connection`].
 /// It does not expose methods to advance the connection protocol
 /// It does, however, expose some methods agnostic to the [`Connection`] type.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct VagueConnection {
     source_id: String,
     pairwise_info: PairwiseInfo,
     state: VagueState,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VagueState {
     Inviter(VagueInviterState),
     Invitee(VagueInviteeState),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VagueInviterState {
     Initial(InviterInitial),
     Invited(InviterInvited),
@@ -116,7 +116,7 @@ pub enum VagueInviterState {
     Complete(CompleteState),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum VagueInviteeState {
     Initial(InviteeInitial),
     Invited(InviteeInvited),
@@ -326,6 +326,8 @@ impl VagueConnection {
             "No DidDoc present",
         ))?;
 
+        // The generic types do not matter here as the method is available 
+        // on all possible implementations.
         Connection::<(), ()>::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
     }
 }
