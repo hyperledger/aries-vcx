@@ -26,7 +26,7 @@ use messages::protocols::connection::{
 pub type InviterConnection<S> = Connection<Inviter, S>;
 
 impl InviterConnection<InitialState> {
-    pub fn new(
+    pub fn new_inviter(
         source_id: String,
         pairwise_info: PairwiseInfo,
         routing_keys: Vec<String>,
@@ -63,7 +63,13 @@ impl InviterConnection<InitialState> {
 }
 
 impl InviterConnection<InvitedState> {
-    pub fn new_invited(source_id: String, pairwise_info: PairwiseInfo) -> Self {
+    /// Creates an [`InviterConnection<InvitedState>`], essentially bypassing the [`InitialState`]
+    /// where an [`Invitation`] is created.
+    /// 
+    /// This is useful for cases where an [`Invitation`] is received by the invitee without
+    /// any interaction from the inviter, thus the next logical step is to wait for the invitee
+    /// to send a connection request.
+    pub fn new_awaiting_request(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
             state: InvitedState::new(None), // what should the thread ID be in this case???

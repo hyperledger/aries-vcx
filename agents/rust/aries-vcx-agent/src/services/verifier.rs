@@ -1,15 +1,18 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::http_client::HttpClient;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::verifier::Verifier;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation::Presentation;
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposal;
 use aries_vcx::messages::status::Status;
 use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
+use aries_vcx::protocols::SendClosure;
 
 use super::connection::ServiceConnections;
 
@@ -55,9 +58,14 @@ impl ServiceVerifier {
         } else {
             Verifier::create_from_request("".to_string(), &request)?
         };
-        verifier
-            .send_presentation_request(connection.send_message_closure(&self.profile, None).await?)
-            .await?;
+
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        verifier.send_presentation_request(send_closure).await?;
         self.verifiers.insert(
             &verifier.get_thread_id()?,
             VerifierWrapper::new(verifier, connection_id),
@@ -75,12 +83,14 @@ impl ServiceVerifier {
             connection_id,
         } = self.verifiers.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
         verifier
-            .verify_presentation(
-                &self.profile,
-                presentation,
-                connection.send_message_closure(&self.profile, None).await?,
-            )
+            .verify_presentation(&self.profile, presentation, send_closure)
             .await?;
         self.verifiers
             .insert(thread_id, VerifierWrapper::new(verifier, &connection_id))?;

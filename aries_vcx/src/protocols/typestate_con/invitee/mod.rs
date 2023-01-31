@@ -32,7 +32,7 @@ use crate::{
 pub type InviteeConnection<S> = Connection<Invitee, S>;
 
 impl InviteeConnection<InitialState> {
-    pub fn new(source_id: String, pairwise_info: PairwiseInfo) -> Self {
+    pub fn new_invitee(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
             state: InitialState,

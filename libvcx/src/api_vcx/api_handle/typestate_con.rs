@@ -111,7 +111,7 @@ pub async fn create_invitee(invitation: &str) -> LibvcxResult<u32> {
     let invitation = deserialize(invitation)?;
     let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
 
-    let con = InviteeConnection::new("".to_owned(), pairwise_info)
+    let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info)
         .accept_invitation(&profile, &invitation)
         .await?;
 
@@ -125,7 +125,7 @@ pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: 
 
     let profile = get_main_profile()?;
     let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
-    let con = InviterConnection::new("".to_owned(), pairwise_info, routing_keys, service_endpoint);
+    let con = InviterConnection::new_inviter("".to_owned(), pairwise_info, routing_keys, service_endpoint);
 
     insert_connection(handle, con)
 }

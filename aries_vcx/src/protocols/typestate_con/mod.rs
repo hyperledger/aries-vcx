@@ -29,7 +29,7 @@ use self::{
     traits::{HandleProblem, TheirDidDoc, ThreadId},
 };
 
-pub use self::serde::de::VagueConnection;
+pub use self::serde::de::{State, VagueConnection};
 pub use self::traits::Transport;
 
 #[derive(Clone, Deserialize)]
