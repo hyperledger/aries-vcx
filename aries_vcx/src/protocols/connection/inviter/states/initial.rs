@@ -1,21 +1,20 @@
-use crate::protocols::connection::inviter::states::invited::InvitedState;
 use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::problem_report::ProblemReport;
+
+use crate::protocols::connection::traits::ThreadId;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct InitialState {
-    problem_report: Option<ProblemReport>,
+pub struct Initial {
+    pub(crate) invitation: Invitation,
 }
 
-impl From<(InitialState, Invitation)> for InvitedState {
-    fn from((_state, invitation): (InitialState, Invitation)) -> InvitedState {
-        trace!("ConnectionInviter: transit state from InitialState to InvitedState");
-        InvitedState { invitation }
+impl Initial {
+    pub fn new(invitation: Invitation) -> Self {
+        Self { invitation }
     }
 }
 
-impl InitialState {
-    pub fn new(problem_report: Option<ProblemReport>) -> Self {
-        InitialState { problem_report }
+impl ThreadId for Initial {
+    fn thread_id(&self) -> &str {
+        self.invitation.get_id()
     }
 }

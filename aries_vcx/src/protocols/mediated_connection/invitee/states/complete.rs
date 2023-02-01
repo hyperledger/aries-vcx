@@ -1,7 +1,7 @@
 use std::clone::Clone;
 
-use crate::protocols::connection::invitee::states::requested::RequestedState;
-use crate::protocols::connection::invitee::states::responded::RespondedState;
+use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
+use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::response::Response;
 use messages::protocols::discovery::disclose::ProtocolDescriptor;

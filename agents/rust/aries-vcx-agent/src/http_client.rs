@@ -1,5 +1,5 @@
 use aries_vcx::{
-    agency_client::httpclient::post_message, errors::error::VcxResult, protocols::typestate_con::Transport,
+    agency_client::httpclient::post_message, errors::error::VcxResult, protocols::connection::Transport,
 };
 use async_trait::async_trait;
 

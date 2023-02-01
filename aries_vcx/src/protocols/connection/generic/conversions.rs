@@ -1,7 +1,7 @@
 use super::{GenericConnection, GenericState, InviteeState, InviterState};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
-    protocols::typestate_con::{
+    protocols::connection::{
         common::states::{complete::CompleteState, responded::RespondedState},
         initiation_type::{Invitee, Inviter},
         invitee::states::{

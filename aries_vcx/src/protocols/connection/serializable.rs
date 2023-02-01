@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::protocols::typestate_con::{
+use crate::protocols::connection::{
     common::states::{complete::CompleteState, responded::RespondedState},
     initiation_type::{Invitee, Inviter},
     invitee::states::{

@@ -64,9 +64,11 @@ pub fn connection_get_invitation(handle: u32) -> napi::Result<String> {
 }
 
 #[napi]
-pub fn connection_process_invite(handle: u32, invitation: String) -> napi::Result<()> {
+pub async fn connection_process_invite(handle: u32, invitation: String) -> napi::Result<()> {
     trace!("connection_process_invite >>> handle: {:?}", handle);
-    connection::process_invite(handle, &invitation).map_err(to_napi_err)
+    connection::process_invite(handle, &invitation)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]

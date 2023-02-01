@@ -10,7 +10,7 @@ pub use self::thin_state::{State, ThinState};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
-    protocols::typestate_con::{
+    protocols::connection::{
         common::states::{complete::CompleteState, responded::RespondedState},
         invitee::states::{
             initial::Initial as InviteeInitial, invited::Invited as InviteeInvited,
@@ -181,7 +181,7 @@ impl GenericConnection {
 /// of the [`Connection`], if modified, will be modified along the serialization type.
 #[cfg(test)]
 mod tests {
-    use crate::protocols::typestate_con::serializable::*;
+    use crate::protocols::connection::serializable::*;
 
     use super::*;
 

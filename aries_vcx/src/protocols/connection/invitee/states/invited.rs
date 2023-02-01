@@ -1,17 +1,27 @@
-use crate::protocols::connection::invitee::states::requested::RequestedState;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
-use messages::protocols::connection::invite::Invitation;
-use messages::protocols::connection::request::Request;
+
+use crate::protocols::connection::traits::{TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct InvitedState {
-    pub invitation: Invitation,
-    pub did_doc: AriesDidDoc,
+pub struct Invited {
+    pub(crate) did_doc: AriesDidDoc,
+    pub(crate) thread_id: String,
 }
 
-impl From<(InvitedState, Request, AriesDidDoc)> for RequestedState {
-    fn from((_state, request, did_doc): (InvitedState, Request, AriesDidDoc)) -> RequestedState {
-        trace!("ConnectionInvitee: transit state from InvitedState to RequestedState");
-        RequestedState { request, did_doc }
+impl Invited {
+    pub fn new(did_doc: AriesDidDoc, thread_id: String) -> Self {
+        Self { did_doc, thread_id }
+    }
+}
+
+impl TheirDidDoc for Invited {
+    fn their_did_doc(&self) -> &AriesDidDoc {
+        &self.did_doc
+    }
+}
+
+impl ThreadId for Invited {
+    fn thread_id(&self) -> &str {
+        &self.thread_id
     }
 }

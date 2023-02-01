@@ -10,8 +10,8 @@ use aries_vcx::messages::concepts::ack::Ack;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
-use aries_vcx::protocols::typestate_con::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::typestate_con::{Connection, GenericConnection, State};
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::connection::{Connection, GenericConnection, State};
 
 pub type ServiceEndpoint = String;
 

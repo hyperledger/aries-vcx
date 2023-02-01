@@ -1,4 +1,4 @@
-use crate::protocols::connection::invitee::states::initial::InitialState;
+use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::request::Request;
