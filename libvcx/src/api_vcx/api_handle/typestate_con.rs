@@ -99,7 +99,7 @@ pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> 
     let profile = get_main_profile()?;
 
     let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
-    let con = InviterConnection::new_invited("".to_owned(), pw_info);
+    let con = InviterConnection::new_awaiting_request("".to_owned(), pw_info);
 
     add_connection(con.into())
 }
