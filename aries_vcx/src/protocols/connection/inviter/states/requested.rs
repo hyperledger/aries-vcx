@@ -1,6 +1,6 @@
 use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::response::SignedResponse};
 
-use crate::protocols::connection::traits::{TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Requested {

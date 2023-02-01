@@ -21,9 +21,9 @@ use crate::{
             requested::Requested as InviterRequested,
         },
         pairwise_info::PairwiseInfo,
-        traits::{TheirDidDoc, ThreadId},
-        Transport,
+        trait_bounds::{TheirDidDoc, ThreadId},
     },
+    transport::Transport,
 };
 
 use super::basic_send_message;

@@ -5,7 +5,7 @@ pub mod invitee;
 pub mod inviter;
 pub mod pairwise_info;
 mod serializable;
-mod traits;
+mod trait_bounds;
 
 use messages::{
     a2a::{protocol_registry::ProtocolRegistry, A2AMessage},
@@ -20,6 +20,7 @@ use std::{error::Error, sync::Arc};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
+    transport::Transport,
     utils::encryption_envelope::EncryptionEnvelope,
 };
 
@@ -27,11 +28,10 @@ use self::{
     common::states::complete::CompleteState,
     generic::GenericState,
     pairwise_info::PairwiseInfo,
-    traits::{HandleProblem, TheirDidDoc, ThreadId},
+    trait_bounds::{HandleProblem, TheirDidDoc, ThreadId},
 };
 
 pub use self::generic::{GenericConnection, State, ThinState};
-pub use self::traits::Transport;
 
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "GenericConnection")]

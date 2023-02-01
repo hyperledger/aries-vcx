@@ -6,8 +6,9 @@ use aries_vcx::{
     messages::protocols::basic_message::message::BasicMessage,
     protocols::connection::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
-        GenericConnection, State, Transport,
+        GenericConnection, State,
     },
+    transport::Transport,
 };
 use async_trait::async_trait;
 use rand::Rng;

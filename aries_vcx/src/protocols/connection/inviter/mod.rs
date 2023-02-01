@@ -3,6 +3,7 @@ pub mod states;
 use std::sync::Arc;
 
 use crate::handlers::util::verify_thread_id;
+use crate::transport::Transport;
 use crate::utils::uuid;
 use crate::{
     common::signing::sign_connection_response, errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet,
@@ -12,7 +13,6 @@ use self::states::initial::Initial;
 use self::states::{invited::Invited, requested::Requested};
 use super::common::states::complete::CompleteState;
 use super::common::states::responded::RespondedState;
-use super::traits::Transport;
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use messages::a2a::A2AMessage;
 use messages::protocols::connection::invite::PairwiseInvitation;

@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use messages::protocols::connection::invite::Invitation;
 
-use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult};
+use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult, transport::Transport};
 
 use self::states::{initial::Initial, invited::Invited, requested::Requested};
 
@@ -18,7 +18,6 @@ use super::{
     common::states::{complete::CompleteState, responded::RespondedState},
     initiation_type::Invitee,
     pairwise_info::PairwiseInfo,
-    traits::Transport,
     Connection,
 };
 use crate::{

@@ -1,6 +1,6 @@
 use messages::protocols::connection::invite::Invitation;
 
-use crate::protocols::connection::traits::ThreadId;
+use crate::protocols::connection::trait_bounds::ThreadId;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Initial {

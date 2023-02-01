@@ -1,4 +1,4 @@
-use crate::protocols::connection::traits::HandleProblem;
+use crate::protocols::connection::trait_bounds::HandleProblem;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {
