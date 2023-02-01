@@ -2,7 +2,6 @@ pub mod states;
 
 use std::sync::Arc;
 
-use crate::errors::error::{AriesVcxError, AriesVcxErrorKind};
 use crate::handlers::util::verify_thread_id;
 use crate::utils::uuid;
 use crate::{
@@ -51,14 +50,6 @@ impl InviterConnection<InitialState> {
 
     pub fn get_invitation(&self) -> &Invitation {
         &self.state.invitation
-    }
-
-    pub fn send_invitation<T>(self, _transport: &T) -> VcxResult<InviterConnection<InvitedState>> {
-        // Implement some way to actually send the invitation
-        Err(AriesVcxError::from_msg(
-            AriesVcxErrorKind::ActionNotSupported,
-            "sending invites isn't yet supported!",
-        ))
     }
 }
 
