@@ -150,6 +150,14 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
+  public async requestProof(connection: Connection): Promise<void> {
+    try {
+      return await ffi.proofSendRequest(this.handle, connection.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async requestProofNonmediated(connection: NonmediatedConnection): Promise<void> {
     try {
       return await ffi.proofSendRequestNonmediated(this.handle, connection.handle);
