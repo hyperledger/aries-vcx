@@ -97,9 +97,6 @@ impl InviterConnection<Invited> {
         sign_connection_response(wallet, &self.pairwise_info.pw_vk, response).await
     }
 
-    // Due to backwards compatibility, we generate the signed response and store that in the state.
-    // However, it would be more efficient to store the request and postpone the response generation and
-    // signing until the next state, thus taking advantage of the request attributes and avoiding cloning the DidDoc.
     pub async fn handle_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
@@ -143,8 +140,6 @@ impl InviterConnection<Invited> {
         }
 
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
-        let did_doc = request.connection.did_doc.clone();
-
         let signed_response = self
             .build_response(
                 wallet,
@@ -155,6 +150,7 @@ impl InviterConnection<Invited> {
             )
             .await?;
 
+        let did_doc = request.connection.did_doc;
         let state = Requested::new(signed_response, did_doc);
 
         Ok(Connection {
