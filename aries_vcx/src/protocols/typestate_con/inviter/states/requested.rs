@@ -3,12 +3,12 @@ use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::respon
 use crate::protocols::typestate_con::traits::{TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RequestedState {
+pub struct Requested {
     pub(crate) signed_response: SignedResponse,
     pub(crate) did_doc: AriesDidDoc,
 }
 
-impl RequestedState {
+impl Requested {
     pub fn new(signed_response: SignedResponse, did_doc: AriesDidDoc) -> Self {
         Self {
             signed_response,
@@ -17,13 +17,13 @@ impl RequestedState {
     }
 }
 
-impl TheirDidDoc for RequestedState {
+impl TheirDidDoc for Requested {
     fn their_did_doc(&self) -> &AriesDidDoc {
         &self.did_doc
     }
 }
 
-impl ThreadId for RequestedState {
+impl ThreadId for Requested {
     //TODO: This should land in the threadlike macro.
     fn thread_id(&self) -> &str {
         self.signed_response

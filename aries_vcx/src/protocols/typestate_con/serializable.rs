@@ -4,12 +4,12 @@ use crate::protocols::typestate_con::{
     common::states::{complete::CompleteState, responded::RespondedState},
     initiation_type::{Invitee, Inviter},
     invitee::states::{
-        initial::InitialState as InviteeInitial, invited::InvitedState as InviteeInvited,
-        requested::RequestedState as InviteeRequested,
+        initial::Initial as InviteeInitial, invited::Invited as InviteeInvited,
+        requested::Requested as InviteeRequested,
     },
     inviter::states::{
-        initial::InitialState as InviterInitial, invited::InvitedState as InviterInvited,
-        requested::RequestedState as InviterRequested,
+        initial::Initial as InviterInitial, invited::Invited as InviterInvited,
+        requested::Requested as InviterRequested,
     },
     pairwise_info::PairwiseInfo,
     Connection,
@@ -125,63 +125,5 @@ where
         Serializer: ::serde::Serializer,
     {
         SerializableConnection::from(self).serialize(serializer)
-    }
-}
-
-/// Compile-time assurance that the serialization type
-/// of the [`Connection`], if modified, will be modified along the deserialization type.
-#[cfg(test)]
-mod tests {
-    use crate::protocols::typestate_con::serde::de::*;
-
-    use super::*;
-
-    impl<'a> From<&'a VagueInviteeState> for RefInviteeState<'a> {
-        fn from(value: &'a VagueInviteeState) -> Self {
-            match value {
-                VagueInviteeState::Initial(s) => Self::Initial(s),
-                VagueInviteeState::Invited(s) => Self::Invited(s),
-                VagueInviteeState::Requested(s) => Self::Requested(s),
-                VagueInviteeState::Responded(s) => Self::Responded(s),
-                VagueInviteeState::Complete(s) => Self::Complete(s),
-            }
-        }
-    }
-
-    impl<'a> From<&'a VagueInviterState> for RefInviterState<'a> {
-        fn from(value: &'a VagueInviterState) -> Self {
-            match value {
-                VagueInviterState::Initial(s) => Self::Initial(s),
-                VagueInviterState::Invited(s) => Self::Invited(s),
-                VagueInviterState::Requested(s) => Self::Requested(s),
-                VagueInviterState::Responded(s) => Self::Responded(s),
-                VagueInviterState::Complete(s) => Self::Complete(s),
-            }
-        }
-    }
-
-    impl<'a> From<&'a VagueState> for RefState<'a> {
-        fn from(value: &'a VagueState) -> Self {
-            match value {
-                VagueState::Invitee(s) => Self::Invitee(s.into()),
-                VagueState::Inviter(s) => Self::Inviter(s.into()),
-            }
-        }
-    }
-
-    impl<'a> From<&'a VagueConnection> for SerializableConnection<'a> {
-        fn from(value: &'a VagueConnection) -> Self {
-            let VagueConnection {
-                source_id,
-                pairwise_info,
-                state,
-            } = value;
-
-            Self {
-                source_id,
-                pairwise_info,
-                state: state.into(),
-            }
-        }
     }
 }

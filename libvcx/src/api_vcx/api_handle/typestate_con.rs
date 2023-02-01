@@ -5,8 +5,8 @@ use aries_vcx::{
     errors::error::VcxResult,
     messages::protocols::basic_message::message::BasicMessage,
     protocols::typestate_con::{
-        invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection, Transport,
-        VagueConnection,
+        invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
+        GenericConnection, State, Transport,
     },
 };
 use async_trait::async_trait;
@@ -17,7 +17,7 @@ use crate::{
     errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult},
 };
 
-type Map = HashMap<u32, VagueConnection>;
+type Map = HashMap<u32, GenericConnection>;
 type Cache = RwLock<Map>;
 
 lazy_static! {
@@ -45,7 +45,7 @@ fn new_handle() -> LibvcxResult<u32> {
 
 fn get_cloned_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
 where
-    Connection<I, S>: TryFrom<VagueConnection>,
+    Connection<I, S>: TryFrom<GenericConnection>,
 {
     CONNECTION_MAP
         .write()?
@@ -59,7 +59,7 @@ where
         })
 }
 
-fn add_connection(connection: VagueConnection) -> LibvcxResult<u32> {
+fn add_connection(connection: GenericConnection) -> LibvcxResult<u32> {
     let handle = new_handle()?;
     CONNECTION_MAP.write()?.insert(handle, connection);
     Ok(handle)
@@ -67,7 +67,7 @@ fn add_connection(connection: VagueConnection) -> LibvcxResult<u32> {
 
 fn insert_connection<I, S>(handle: u32, connection: Connection<I, S>) -> LibvcxResult<()>
 where
-    VagueConnection: From<Connection<I, S>>,
+    GenericConnection: From<Connection<I, S>>,
 {
     CONNECTION_MAP.write()?.insert(handle, connection.into());
     Ok(())
@@ -208,7 +208,12 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
         )
     })?;
 
-    Ok(con.state().into())
+    let state_id = match con.state() {
+        State::Invitee(s) => s as u32,
+        State::Inviter(s) => s as u32,
+    };
+
+    Ok(state_id)
 }
 
 pub fn get_invitation(handle: u32) -> LibvcxResult<String> {

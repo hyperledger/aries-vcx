@@ -8,8 +8,8 @@ use crate::{
     common::signing::sign_connection_response, errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet,
 };
 
-use self::states::initial::InitialState;
-use self::states::{invited::InvitedState, requested::RequestedState};
+use self::states::initial::Initial;
+use self::states::{invited::Invited, requested::Requested};
 use super::common::states::complete::CompleteState;
 use super::common::states::responded::RespondedState;
 use super::traits::Transport;
@@ -24,7 +24,7 @@ use messages::protocols::connection::{
 
 pub type InviterConnection<S> = Connection<Inviter, S>;
 
-impl InviterConnection<InitialState> {
+impl InviterConnection<Initial> {
     pub fn new_inviter(
         source_id: String,
         pairwise_info: PairwiseInfo,
@@ -42,7 +42,7 @@ impl InviterConnection<InitialState> {
 
         Self {
             source_id,
-            state: InitialState::new(invitation),
+            state: Initial::new(invitation),
             pairwise_info,
             initiation_type: Inviter,
         }
@@ -53,17 +53,17 @@ impl InviterConnection<InitialState> {
     }
 }
 
-impl InviterConnection<InvitedState> {
+impl InviterConnection<Invited> {
     /// Creates an [`InviterConnection<InvitedState>`], essentially bypassing the [`InitialState`]
     /// where an [`Invitation`] is created.
-    /// 
+    ///
     /// This is useful for cases where an [`Invitation`] is received by the invitee without
     /// any interaction from the inviter, thus the next logical step is to wait for the invitee
     /// to send a connection request.
     pub fn new_awaiting_request(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
-            state: InvitedState::new(None), // what should the thread ID be in this case???
+            state: Invited::new(None), // what should the thread ID be in this case???
             pairwise_info,
             initiation_type: Inviter,
         }
@@ -107,7 +107,7 @@ impl InviterConnection<InvitedState> {
         new_service_endpoint: String,
         new_routing_keys: Vec<String>,
         transport: &T,
-    ) -> VcxResult<InviterConnection<RequestedState>>
+    ) -> VcxResult<InviterConnection<Requested>>
     where
         T: Transport,
     {
@@ -155,7 +155,7 @@ impl InviterConnection<InvitedState> {
             )
             .await?;
 
-        let state = RequestedState::new(signed_response, did_doc);
+        let state = Requested::new(signed_response, did_doc);
 
         Ok(Connection {
             source_id: self.source_id,
@@ -166,7 +166,7 @@ impl InviterConnection<InvitedState> {
     }
 }
 
-impl InviterConnection<RequestedState> {
+impl InviterConnection<Requested> {
     pub async fn send_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,

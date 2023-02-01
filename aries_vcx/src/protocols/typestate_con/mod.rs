@@ -1,9 +1,10 @@
-mod common;
-mod initiation_type;
+pub mod common;
+mod generic;
+pub mod initiation_type;
 pub mod invitee;
 pub mod inviter;
 pub mod pairwise_info;
-mod serde;
+mod serializable;
 mod traits;
 
 use messages::{
@@ -24,17 +25,17 @@ use crate::{
 
 use self::{
     common::states::complete::CompleteState,
+    generic::GenericState,
     pairwise_info::PairwiseInfo,
-    serde::de::VagueState,
     traits::{HandleProblem, TheirDidDoc, ThreadId},
 };
 
-pub use self::serde::de::{State, VagueConnection};
+pub use self::generic::{GenericConnection, State, ThinState};
 pub use self::traits::Transport;
 
 #[derive(Clone, Deserialize)]
-#[serde(try_from = "VagueConnection")]
-#[serde(bound = "(I, S): TryFrom<VagueState, Error = AriesVcxError>")]
+#[serde(try_from = "GenericConnection")]
+#[serde(bound = "(I, S): TryFrom<GenericState, Error = AriesVcxError>")]
 pub struct Connection<I, S> {
     source_id: String,
     pairwise_info: PairwiseInfo,
@@ -62,23 +63,6 @@ impl<I, S> Connection<I, S> {
 
     pub fn protocols(&self) -> Vec<ProtocolDescriptor> {
         ProtocolRegistry::init().protocols()
-    }
-
-    pub(crate) async fn basic_send_message<T>(
-        wallet: &Arc<dyn BaseWallet>,
-        message: &A2AMessage,
-        sender_verkey: &str,
-        did_doc: &AriesDidDoc,
-        transport: &T,
-    ) -> VcxResult<()>
-    where
-        T: Transport,
-    {
-        let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
-        let msg = env.0;
-        let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
-
-        transport.send_message(msg, &service_endpoint).await
     }
 }
 
@@ -125,7 +109,7 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let did_doc = self.their_did_doc();
-        Self::basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
+        basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
     }
 }
 
@@ -157,7 +141,7 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let problem_report = self.create_problem_report(err, thread_id);
-        let res = Self::basic_send_message(
+        let res = basic_send_message(
             wallet,
             &problem_report.to_a2a_message(),
             sender_verkey,
@@ -182,4 +166,21 @@ impl<I> Connection<I, CompleteState> {
     pub fn handle_disclose(&mut self, disclose: Disclose) {
         self.state.handle_disclose(disclose)
     }
+}
+
+pub(crate) async fn basic_send_message<T>(
+    wallet: &Arc<dyn BaseWallet>,
+    message: &A2AMessage,
+    sender_verkey: &str,
+    did_doc: &AriesDidDoc,
+    transport: &T,
+) -> VcxResult<()>
+where
+    T: Transport,
+{
+    let env = EncryptionEnvelope::create(wallet, message, Some(sender_verkey), did_doc).await?;
+    let msg = env.0;
+    let service_endpoint = did_doc.get_endpoint(); // This, like many other things, shouldn't clone...
+
+    transport.send_message(msg, &service_endpoint).await
 }

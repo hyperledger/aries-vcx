@@ -6,7 +6,7 @@ use messages::protocols::connection::invite::Invitation;
 
 use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult};
 
-use self::states::{initial::InitialState, invited::InvitedState, requested::RequestedState};
+use self::states::{initial::Initial, invited::Invited, requested::Requested};
 
 use messages::{
     a2a::A2AMessage,
@@ -31,11 +31,11 @@ use crate::{
 /// Convenience alias
 pub type InviteeConnection<S> = Connection<Invitee, S>;
 
-impl InviteeConnection<InitialState> {
+impl InviteeConnection<Initial> {
     pub fn new_invitee(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
-            state: InitialState,
+            state: Initial,
             pairwise_info,
             initiation_type: Invitee,
         }
@@ -45,12 +45,12 @@ impl InviteeConnection<InitialState> {
         self,
         profile: &Arc<dyn Profile>,
         invitation: &Invitation,
-    ) -> VcxResult<InviteeConnection<InvitedState>> {
+    ) -> VcxResult<InviteeConnection<Invited>> {
         trace!("Connection::into_invited >>> invitation: {:?}", &invitation);
 
         let thread_id = invitation.get_id().to_owned();
         let did_doc = into_did_doc(profile, invitation).await?;
-        let state = InvitedState { did_doc, thread_id };
+        let state = Invited { did_doc, thread_id };
 
         // Convert to `InvitedState`
         Ok(Connection {
@@ -62,14 +62,14 @@ impl InviteeConnection<InitialState> {
     }
 }
 
-impl InviteeConnection<InvitedState> {
+impl InviteeConnection<Invited> {
     pub async fn send_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         service_endpoint: String,
         routing_keys: Vec<String>,
         transport: &T,
-    ) -> VcxResult<InviteeConnection<RequestedState>>
+    ) -> VcxResult<InviteeConnection<Requested>>
     where
         T: Transport,
     {
@@ -112,7 +112,7 @@ impl InviteeConnection<InvitedState> {
         self.send_message(wallet, &request.to_a2a_message(), transport).await?;
 
         Ok(Connection {
-            state: RequestedState::new(self.state.did_doc, self.state.thread_id),
+            state: Requested::new(self.state.did_doc, self.state.thread_id),
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
@@ -120,7 +120,7 @@ impl InviteeConnection<InvitedState> {
     }
 }
 
-impl InviteeConnection<RequestedState> {
+impl InviteeConnection<Requested> {
     pub async fn handle_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,

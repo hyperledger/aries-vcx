@@ -11,14 +11,14 @@ use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
 use aries_vcx::protocols::typestate_con::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::typestate_con::{Connection, State, VagueConnection};
+use aries_vcx::protocols::typestate_con::{Connection, GenericConnection, State};
 
 pub type ServiceEndpoint = String;
 
 pub struct ServiceConnections {
     profile: Arc<dyn Profile>,
     service_endpoint: ServiceEndpoint,
-    connections: Arc<ObjectCache<VagueConnection>>,
+    connections: Arc<ObjectCache<GenericConnection>>,
 }
 
 impl ServiceConnections {
@@ -128,13 +128,13 @@ impl ServiceConnections {
         Ok(self.connections.get(thread_id)?.state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<VagueConnection> {
+    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
         self.connections.get(thread_id)
     }
 
     pub fn get_by_their_vk(&self, their_vk: &str) -> AgentResult<Vec<String>> {
         let their_vk = their_vk.to_string();
-        let f = |(id, m): (&String, &Mutex<VagueConnection>)| -> Option<String> {
+        let f = |(id, m): (&String, &Mutex<GenericConnection>)| -> Option<String> {
             let connection = m.lock().unwrap();
             match connection.remote_vk() {
                 Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),

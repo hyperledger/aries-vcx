@@ -1,11 +1,11 @@
 use crate::protocols::typestate_con::traits::HandleProblem;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct InvitedState {
+pub struct Invited {
     pub(crate) thread_id: Option<String>,
 }
 
-impl InvitedState {
+impl Invited {
     pub fn new(thread_id: Option<String>) -> Self {
         Self { thread_id }
     }
@@ -17,4 +17,4 @@ impl InvitedState {
     }
 }
 
-impl HandleProblem for InvitedState {}
+impl HandleProblem for Invited {}
