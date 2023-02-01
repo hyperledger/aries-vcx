@@ -46,7 +46,7 @@
     "test:integration:out-of-band": "jest --forceExit --env=node --runInBand test/out-of-band.spec.js",
     "test:integration:nonmediated-endpoint": "jest --forceExit --env=node --runInBand test/nonmediated-endpoint.spec.js",
     "test:integration:nonmediated-connection": "jest --forceExit --env=node --runInBand test/nonmediated-connection.spec.js"
- },
+  },
   "dependencies": {
     "axios": "^0.27.2",
     "ffi-napi": "^4.0.3",
@@ -54,6 +54,7 @@
     "lodash": "^4.17.21",
     "mkdirp": "^1.0.4",
     "node-persist": "^3.1.0",
+    "ref-napi": "file:../../../../../ref-napi-3.0.3.tgz",
     "sleep-promise": "^9.0.1",
     "uuid": "^8.3.2"
   },
