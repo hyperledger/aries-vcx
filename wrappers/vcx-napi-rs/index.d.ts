@@ -15,7 +15,7 @@ export function connectionGetPairwiseInfo(handle: number): string
 export function connectionGetRemoteDid(handle: number): string
 export function connectionGetState(handle: number): number
 export function connectionGetInvitation(handle: number): string
-export function connectionProcessInvite(handle: number, invitation: string): void
+export function connectionProcessInvite(handle: number, invitation: string): Promise<void>
 export function connectionProcessRequest(handle: number, request: string, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionProcessResponse(handle: number, response: string): Promise<void>
 export function connectionProcessAck(handle: number, message: string): Promise<void>
