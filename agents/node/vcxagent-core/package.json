@@ -54,7 +54,6 @@
     "lodash": "^4.17.21",
     "mkdirp": "^1.0.4",
     "node-persist": "^3.1.0",
-    "ref-napi": "file:../../../../../ref-napi-3.0.3.tgz",
     "sleep-promise": "^9.0.1",
     "uuid": "^8.3.2"
   },
