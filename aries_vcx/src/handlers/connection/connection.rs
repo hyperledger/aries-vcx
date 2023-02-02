@@ -61,6 +61,24 @@ impl Connection {
         })
     }
 
+    pub fn from_parts(
+        source_id: String,
+        thread_id: String,
+        pairwise_info: PairwiseInfo,
+        state: SmConnectionState,
+    ) -> Self {
+        let connection_sm = match state {
+            SmConnectionState::Inviter(state) => {
+                SmConnection::Inviter(SmConnectionInviter::from(source_id, thread_id, pairwise_info, state))
+            }
+            SmConnectionState::Invitee(state) => {
+                SmConnection::Invitee(SmConnectionInvitee::from(source_id, thread_id, pairwise_info, state))
+            }
+        };
+
+        Self { connection_sm }
+    }
+
     // ----------------------------- GETTERS ------------------------------------
     pub fn get_thread_id(&self) -> String {
         match &self.connection_sm {
