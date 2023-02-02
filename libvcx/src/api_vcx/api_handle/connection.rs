@@ -1,8 +1,8 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::{any::type_name, collections::HashMap, sync::RwLock};
 
 use agency_client::httpclient::post_message;
 use aries_vcx::{
-    errors::error::VcxResult,
+    errors::error::{AriesVcxError, VcxResult},
     messages::protocols::basic_message::message::BasicMessage,
     protocols::connection::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
@@ -48,37 +48,49 @@ fn get_cloned_generic_connection(handle: &u32) -> LibvcxResult<GenericConnection
     CONNECTION_MAP.write()?.get(handle).cloned().ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })
 }
 
 fn get_cloned_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
 where
-    Connection<I, S>: TryFrom<GenericConnection>,
+    Connection<I, S>: TryFrom<GenericConnection, Error = AriesVcxError>,
 {
-    CONNECTION_MAP
+    let con = CONNECTION_MAP
         .write()?
         .get(handle)
-        .and_then(|c| c.clone().try_into().ok())
         .ok_or_else(|| {
             LibvcxError::from_msg(
                 LibvcxErrorKind::ObjectAccessError,
-                format!("Unable to retrieve expected connection for handle: {}", handle),
+                format!("No connection found for handle: {}", handle),
             )
-        })
+        })?
+        .clone()
+        .try_into()?;
+
+    Ok(con)
 }
 
-fn add_connection(connection: GenericConnection) -> LibvcxResult<u32> {
-    let handle = new_handle()?;
-    CONNECTION_MAP.write()?.insert(handle, connection);
-    Ok(handle)
-}
-
-fn insert_connection<I, S>(handle: u32, connection: Connection<I, S>) -> LibvcxResult<()>
+fn add_connection<I, S>(connection: Connection<I, S>) -> LibvcxResult<u32>
 where
     GenericConnection: From<Connection<I, S>>,
 {
+    let handle = new_handle()?;
+    insert_connection(handle, connection)?;
+    Ok(handle)
+}
+
+pub fn insert_connection<I, S>(handle: u32, connection: Connection<I, S>) -> LibvcxResult<()>
+where
+    GenericConnection: From<Connection<I, S>>,
+{
+    trace!(
+        "Inserting connection; Handle: {} - Type: {}",
+        &handle,
+        type_name::<Connection<I, S>>()
+    );
+
     CONNECTION_MAP.write()?.insert(handle, connection.into());
     Ok(())
 }
@@ -111,7 +123,7 @@ pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> 
     let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
     let con = InviterConnection::new_inviter("".to_owned(), pw_info);
 
-    add_connection(con.into())
+    add_connection(con)
 }
 
 pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
@@ -122,7 +134,7 @@ pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
 
     let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info);
 
-    add_connection(con.into())
+    add_connection(con)
 }
 
 // ----------------------------- GETTERS ------------------------------------
@@ -133,7 +145,7 @@ pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -152,7 +164,7 @@ pub fn get_pairwise_info(handle: u32) -> LibvcxResult<String> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -166,7 +178,7 @@ pub fn get_remote_did(handle: u32) -> LibvcxResult<String> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -185,7 +197,7 @@ pub fn get_remote_vk(handle: u32) -> LibvcxResult<String> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -199,7 +211,7 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -218,7 +230,7 @@ pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
     let con = lock.get(&handle).ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
-            format!("Unable to retrieve expected connection for handle: {}", handle),
+            format!("No connection found for handle: {}", handle),
         )
     })?;
 
@@ -358,7 +370,12 @@ pub fn to_string(handle: u32) -> LibvcxResult<String> {
 
 pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
     trace!("from_string >>>");
-    add_connection(deserialize(connection_data)?)
+
+    let connection = deserialize(connection_data)?;
+    let handle = new_handle()?;
+    CONNECTION_MAP.write()?.insert(handle, connection);
+
+    Ok(handle)
 }
 
 // ------------------------------ CLEANUP ---------------------------------------

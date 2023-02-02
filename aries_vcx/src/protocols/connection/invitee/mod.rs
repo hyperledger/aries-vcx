@@ -48,7 +48,7 @@ impl InviteeConnection<Initial> {
         profile: &Arc<dyn Profile>,
         invitation: &Invitation,
     ) -> VcxResult<InviteeConnection<Invited>> {
-        trace!("Connection::into_invited >>> invitation: {:?}", &invitation);
+        trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
 
         let thread_id = invitation.get_id().to_owned();
         let did_doc = into_did_doc(profile, invitation).await?;
