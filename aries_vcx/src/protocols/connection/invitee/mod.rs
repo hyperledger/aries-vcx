@@ -50,9 +50,25 @@ impl InviteeConnection<Initial> {
     ) -> VcxResult<InviteeConnection<Invited>> {
         trace!("Connection::accept_invitation >>> invitation: {:?}", &invitation);
 
-        let thread_id = invitation.get_id().to_owned();
+        let invitation_id = invitation.get_id();
         let did_doc = into_did_doc(profile, invitation).await?;
-        let state = Invited { did_doc, thread_id };
+        let request = Request::create()
+            .set_label(self.source_id.to_string())
+            .set_did(self.pairwise_info.pw_did.to_string());
+
+        let (thread_id, request) = match invitation {
+            Invitation::Pairwise(_) => (invitation_id.to_owned(), request.set_thread_id(invitation_id)),
+            Invitation::Public(_) => (
+                request.id.0.clone(),
+                request.set_parent_thread_id(invitation_id).set_thread_id_matching_id(),
+            ),
+            Invitation::OutOfBand(_) => (
+                request.id.0.clone(),
+                request.set_parent_thread_id(invitation_id).set_thread_id_matching_id(),
+            ),
+        };
+
+        let state = Invited::new(did_doc, thread_id, request);
 
         // Convert to `InvitedState`
         Ok(Connection {
@@ -66,7 +82,7 @@ impl InviteeConnection<Initial> {
 
 impl InviteeConnection<Invited> {
     pub async fn send_request<T>(
-        self,
+        mut self,
         wallet: &Arc<dyn BaseWallet>,
         service_endpoint: String,
         routing_keys: Vec<String>,
@@ -79,42 +95,18 @@ impl InviteeConnection<Invited> {
 
         let recipient_keys = vec![self.pairwise_info.pw_vk.clone()];
 
-        let request = Request::create()
-            .set_label(self.source_id.to_string())
-            .set_did(self.pairwise_info.pw_did.to_string())
+        self.state.request = self
+            .state
+            .request
             .set_service_endpoint(service_endpoint)
             .set_keys(recipient_keys, routing_keys)
             .set_out_time();
 
-        // Should be properly retrieved from Invitation.
-        // Also there's if this Request will just be serialized, it might as well take references.
-        let request = request.set_parent_thread_id(&self.state.thread_id);
-
-        // The Invitation gets lost along the way when converting from Invited to Requested
-        // in previous implementations. Apart from these thread ID's, it's not used at all.
-        //
-        // Might as well implement it properly when accepting an Invitation in the `into_invited` method.
-        //
-        // let request_id = request.id.0.clone();
-        //
-        // let (request, thread_id) = match &self.state.invitation {
-        //     Invitation::Public(_) => (
-        //         request
-        //             .set_parent_thread_id(&self.thread_id)
-        //             .set_thread_id_matching_id(),
-        //         request_id,
-        //     ),
-        //     Invitation::Pairwise(_) => (request.set_thread_id(&self.thread_id), self.thread_id().to_owned()),
-        //     Invitation::OutOfBand(invite) => (
-        //         request.set_parent_thread_id(&invite.id.0).set_thread_id_matching_id(),
-        //         request_id,
-        //     ),
-        // };
-
-        self.send_message(wallet, &request.to_a2a_message(), transport).await?;
+        self.send_message(wallet, &self.state.request.to_a2a_message(), transport)
+            .await?;
 
         Ok(Connection {
-            state: Requested::new(self.state.did_doc, self.state.thread_id),
+            state: Requested::new(self.state.did_doc, self.state.request.id.0),
             source_id: self.source_id,
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,

@@ -1,4 +1,4 @@
-use messages::diddoc::aries::diddoc::AriesDidDoc;
+use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::request::Request};
 
 use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId};
 
@@ -6,11 +6,16 @@ use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId};
 pub struct Invited {
     pub(crate) did_doc: AriesDidDoc,
     pub(crate) thread_id: String,
+    pub(crate) request: Request,
 }
 
 impl Invited {
-    pub fn new(did_doc: AriesDidDoc, thread_id: String) -> Self {
-        Self { did_doc, thread_id }
+    pub fn new(did_doc: AriesDidDoc, thread_id: String, request: Request) -> Self {
+        Self {
+            did_doc,
+            thread_id,
+            request,
+        }
     }
 }
 

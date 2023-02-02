@@ -1,8 +1,8 @@
 const { NonmediatedConnection } = require('@hyperledger/node-vcx-wrapper')
 
-module.exports.createServiceNonmediatedConnections = function createServiceNonmediatedConnections ({ logger, saveNonmediatedConnection, loadNonmediatedConnection, endpointInfo }) {
+module.exports.createServiceNonmediatedConnections = function createServiceNonmediatedConnections({ logger, saveNonmediatedConnection, loadNonmediatedConnection, endpointInfo }) {
 
-  async function inviterConnectionCreatePwInvite (connectionId) {
+  async function inviterConnectionCreatePwInvite(connectionId) {
     logger.info(`inviterConnectionCreatePwInvite >> connectionId=${connectionId}`)
     const connection = await NonmediatedConnection.createInviter()
     logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(connection.serialize())}`)
@@ -14,10 +14,12 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     return invite
   }
 
-  async function inviterConnectionCreateFromRequest (connectionId, request, pwInfo) {
+  async function inviterConnectionCreateFromRequest(connectionId, request, pwInfo) {
     logger.info(`inviterConnectionCreateFromRequest >> connectionId=${connectionId}, request: ${request}, pwInfo: ${pwInfo}`)
     const connection = await NonmediatedConnection.createInviter(pwInfo)
     logger.debug(`InviterConnectionSM after created connection:\n${JSON.stringify(connection.serialize())}`)
+    await connection.createInvite(endpointInfo)
+    logger.debug(`InviterConnectionSM after create invite:\n${JSON.stringify(connection.serialize())}`)
     await connection.processRequest(request, endpointInfo)
     logger.debug(`InviterConnectionSM after processing request:\n${JSON.stringify(connection.serialize())}`)
     await connection.sendResponse()
@@ -25,7 +27,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
-  async function inviterConnectionProcessRequest (connectionId, request) {
+  async function inviterConnectionProcessRequest(connectionId, request) {
     logger.info(`inviterConnectionProcessRequest >> connectionId=${connectionId}, request: ${request}`)
     const connection = await loadNonmediatedConnection(connectionId)
     await connection.processRequest(request, endpointInfo)
@@ -35,7 +37,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
-  async function inviterConnectionProcessAck (connectionId, ack) {
+  async function inviterConnectionProcessAck(connectionId, ack) {
     logger.info(`inviterConnectionProcessAck >> connectionId=${connectionId}, ack: ${ack}`)
     const connection = await loadNonmediatedConnection(connectionId)
     await connection.processAck(ack)
@@ -43,7 +45,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
-  async function inviteeConnectionCreateFromInvite (connectionId, invite) {
+  async function inviteeConnectionCreateFromInvite(connectionId, invite) {
     logger.info(`inviteeConnectionCreateFromInvite >> connectionId=${connectionId}, invite: ${invite}`)
     const connection = await NonmediatedConnection.createInvitee(invite)
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(connection.serialize())}`)
@@ -53,7 +55,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
-  async function inviteeConnectionProcessResponse (connectionId, response) {
+  async function inviteeConnectionProcessResponse(connectionId, response) {
     logger.info(`inviteeConnectionProcessResponse >> connectionId=${connectionId}, response: ${response}`)
     const connection = await loadNonmediatedConnection(connectionId)
     await connection.processResponse(response)
@@ -63,13 +65,13 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     await saveNonmediatedConnection(connectionId, connection)
   }
 
-  async function sendMessage (connectionId, content) {
+  async function sendMessage(connectionId, content) {
     logger.info(`nonmediatedConnectionSendMessage >> connectionId=${connectionId}, content: ${content}`)
     const connection = await loadNonmediatedConnection(connectionId)
     await connection.sendMessage(content)
   }
 
-  async function getState (connectionId) {
+  async function getState(connectionId) {
     const connection = await loadNonmediatedConnection(connectionId)
     return connection.getState()
   }
