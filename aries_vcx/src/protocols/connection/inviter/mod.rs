@@ -3,16 +3,17 @@ pub mod states;
 use std::sync::Arc;
 
 use crate::handlers::util::verify_thread_id;
+use crate::protocols::connection::trait_bounds::ThreadId;
 use crate::transport::Transport;
 use crate::utils::uuid;
 use crate::{
     common::signing::sign_connection_response, errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet,
 };
 
-use self::states::initial::Initial;
 use self::states::{invited::Invited, requested::Requested};
-use super::common::states::complete::CompleteState;
-use super::common::states::responded::RespondedState;
+use super::common::states::complete::Complete;
+use super::common::states::initial::Initial;
+use super::common::states::responded::Responded;
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use messages::a2a::A2AMessage;
 use messages::protocols::connection::invite::PairwiseInvitation;
@@ -25,56 +26,35 @@ use messages::protocols::connection::{
 pub type InviterConnection<S> = Connection<Inviter, S>;
 
 impl InviterConnection<Initial> {
-    pub fn new_inviter(
-        source_id: String,
-        pairwise_info: PairwiseInfo,
-        routing_keys: Vec<String>,
-        service_endpoint: String,
-    ) -> Self {
+    pub fn new_inviter(source_id: String, pairwise_info: PairwiseInfo) -> Self {
+        Self {
+            source_id,
+            state: Initial,
+            pairwise_info,
+            initiation_type: Inviter,
+        }
+    }
+
+    pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> InviterConnection<Invited> {
         let invite: PairwiseInvitation = PairwiseInvitation::create()
             .set_id(&uuid::uuid())
-            .set_label(&source_id)
-            .set_recipient_keys(vec![pairwise_info.pw_vk.clone()])
+            .set_label(&self.source_id)
+            .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
             .set_routing_keys(routing_keys)
             .set_service_endpoint(service_endpoint);
 
         let invitation = Invitation::Pairwise(invite);
 
-        Self {
-            source_id,
-            state: Initial::new(invitation),
-            pairwise_info,
-            initiation_type: Inviter,
+        Connection {
+            source_id: self.source_id,
+            pairwise_info: self.pairwise_info,
+            initiation_type: self.initiation_type,
+            state: Invited::new(invitation),
         }
-    }
-
-    pub fn get_invitation(&self) -> &Invitation {
-        &self.state.invitation
     }
 }
 
 impl InviterConnection<Invited> {
-    /// Creates an [`InviterConnection<InvitedState>`], essentially bypassing the [`InitialState`]
-    /// where an [`Invitation`] is created.
-    ///
-    /// This is useful for cases where an [`Invitation`] is received by the invitee without
-    /// any interaction from the inviter, thus the next logical step is to wait for the invitee
-    /// to send a connection request.
-    pub fn new_awaiting_request(source_id: String, pairwise_info: PairwiseInfo) -> Self {
-        Self {
-            source_id,
-            state: Invited::new(None), // what should the thread ID be in this case???
-            pairwise_info,
-            initiation_type: Inviter,
-        }
-    }
-
-    /// As the inviter connection can be started directly in the invited state,
-    /// like with a public invitation, we might or might not have a thread ID.
-    pub fn opt_thread_id(&self) -> Option<&str> {
-        self.state.opt_thread_id()
-    }
-
     // This should ideally belong in the Connection<Inviter,RequestedState>
     // but was placed here to retro-fit the previous API.
     async fn build_response(
@@ -116,11 +96,7 @@ impl InviterConnection<Invited> {
         );
 
         // There must be some other way to validate the thread ID other than cloning the entire Request
-        self.state
-            .thread_id
-            .as_ref()
-            .map(|thread_id| verify_thread_id(thread_id, &A2AMessage::ConnectionRequest(request.clone())))
-            .unwrap_or(Ok(()))?;
+        verify_thread_id(self.state.thread_id(), &A2AMessage::ConnectionRequest(request.clone()))?;
 
         // If the request's DidDoc validation fails, we generate and send a ProblemReport.
         // We then return early with the provided error.
@@ -160,6 +136,10 @@ impl InviterConnection<Invited> {
             state,
         })
     }
+
+    pub fn get_invitation(&self) -> &Invitation {
+        &self.state.invitation
+    }
 }
 
 impl InviterConnection<Requested> {
@@ -167,7 +147,7 @@ impl InviterConnection<Requested> {
         self,
         wallet: &Arc<dyn BaseWallet>,
         transport: &T,
-    ) -> VcxResult<InviterConnection<RespondedState>>
+    ) -> VcxResult<InviterConnection<Responded>>
     where
         T: Transport,
     {
@@ -181,7 +161,7 @@ impl InviterConnection<Requested> {
         self.send_message(wallet, &self.state.signed_response.to_a2a_message(), transport)
             .await?;
 
-        let state = RespondedState::new(self.state.did_doc, thread_id);
+        let state = Responded::new(self.state.did_doc, thread_id);
 
         Ok(Connection {
             state,
@@ -192,10 +172,10 @@ impl InviterConnection<Requested> {
     }
 }
 
-impl InviterConnection<RespondedState> {
-    pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<CompleteState>> {
+impl InviterConnection<Responded> {
+    pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Complete>> {
         verify_thread_id(&self.state.thread_id, msg)?;
-        let state = CompleteState::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Complete::new(self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
             source_id: self.source_id,

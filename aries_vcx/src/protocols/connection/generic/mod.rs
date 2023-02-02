@@ -11,22 +11,16 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
     protocols::connection::{
-        common::states::{complete::CompleteState, responded::RespondedState},
-        invitee::states::{
-            initial::Initial as InviteeInitial, invited::Invited as InviteeInvited,
-            requested::Requested as InviteeRequested,
-        },
-        inviter::states::{
-            initial::Initial as InviterInitial, invited::Invited as InviterInvited,
-            requested::Requested as InviterRequested,
-        },
+        common::states::{complete::Complete, responded::Responded},
+        invitee::states::{invited::Invited as InviteeInvited, requested::Requested as InviteeRequested},
+        inviter::states::{invited::Invited as InviterInvited, requested::Requested as InviterRequested},
         pairwise_info::PairwiseInfo,
         trait_bounds::{TheirDidDoc, ThreadId},
     },
     transport::Transport,
 };
 
-use super::basic_send_message;
+use super::{basic_send_message, common::states::initial::Initial};
 
 /// A type that can encapsulate a [`Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
@@ -73,20 +67,20 @@ pub enum GenericState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InviterState {
-    Initial(InviterInitial),
+    Initial(Initial),
     Invited(InviterInvited),
     Requested(InviterRequested),
-    Responded(RespondedState),
-    Complete(CompleteState),
+    Responded(Responded),
+    Complete(Complete),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InviteeState {
-    Initial(InviteeInitial),
+    Initial(Initial),
     Invited(InviteeInvited),
     Requested(InviteeRequested),
-    Responded(RespondedState),
-    Complete(CompleteState),
+    Responded(Responded),
+    Complete(Complete),
 }
 
 impl GenericConnection {
@@ -104,8 +98,8 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Responded(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Complete(s)) => Some(s.thread_id()),
-            GenericState::Inviter(InviterState::Initial(s)) => Some(s.thread_id()),
-            GenericState::Inviter(InviterState::Invited(s)) => s.opt_thread_id(),
+            GenericState::Inviter(InviterState::Initial(_)) => None,
+            GenericState::Inviter(InviterState::Invited(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Responded(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Complete(s)) => Some(s.thread_id()),
@@ -153,7 +147,7 @@ impl GenericConnection {
 
     pub fn invitation(&self) -> Option<&Invitation> {
         match &self.state {
-            GenericState::Inviter(InviterState::Initial(s)) => Some(&s.invitation),
+            GenericState::Inviter(InviterState::Invited(s)) => Some(&s.invitation),
             _ => None,
         }
     }

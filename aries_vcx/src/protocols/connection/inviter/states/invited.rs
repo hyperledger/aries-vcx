@@ -1,19 +1,21 @@
-use crate::protocols::connection::trait_bounds::HandleProblem;
+use messages::protocols::connection::invite::Invitation;
+
+use crate::protocols::connection::trait_bounds::{HandleProblem, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {
-    pub(crate) thread_id: Option<String>,
+    pub(crate) invitation: Invitation,
 }
 
 impl Invited {
-    pub fn new(thread_id: Option<String>) -> Self {
-        Self { thread_id }
+    pub fn new(invitation: Invitation) -> Self {
+        Self { invitation }
     }
+}
 
-    /// Unlike other states, the ones implementing the [`crate::protocols::typestate_con::traits::ThreadId`],
-    /// this state may or may not have a thread ID, so we're returning an option.
-    pub fn opt_thread_id(&self) -> Option<&str> {
-        self.thread_id.as_deref()
+impl ThreadId for Invited {
+    fn thread_id(&self) -> &str {
+        self.invitation.get_id()
     }
 }
 

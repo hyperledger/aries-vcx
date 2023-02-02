@@ -13,10 +13,10 @@ describe('Nonmediated connection:', () => {
       const serviceEndpoint = 'http://localhost:8080';
       const routingKeys = [ 'routingKey' ];
       const connection = await NonmediatedConnection.createInviter();
-      assert.equal(connection.getState(), ConnectionStateType.Invited);
+      assert.equal(connection.getState(), ConnectionStateType.Initial);
 
       await connection.createInvite({ serviceEndpoint, routingKeys });
-      assert.equal(connection.getState(), ConnectionStateType.Initial);
+      assert.equal(connection.getState(), ConnectionStateType.Invited);
 
       const invite = JSON.parse(connection.getInvitation());
       expect(invite.routingKeys).deep.equal(routingKeys);
@@ -27,7 +27,7 @@ describe('Nonmediated connection:', () => {
   describe('serialize / deserialize:', () => {
     it('success', async () => {
       const connection = await NonmediatedConnection.createInviter();
-      assert.equal(connection.getState(), ConnectionStateType.Invited);
+      assert.equal(connection.getState(), ConnectionStateType.Initial);
 
       const serialized = connection.serialize()
       const deserialized = NonmediatedConnection.deserialize(serialized);

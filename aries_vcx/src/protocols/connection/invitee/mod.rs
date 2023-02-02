@@ -4,9 +4,12 @@ use std::sync::Arc;
 
 use messages::protocols::connection::invite::Invitation;
 
-use crate::{common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult, transport::Transport};
+use crate::{
+    common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult,
+    transport::Transport,
+};
 
-use self::states::{initial::Initial, invited::Invited, requested::Requested};
+use self::states::{invited::Invited, requested::Requested};
 
 use messages::{
     a2a::A2AMessage,
@@ -15,7 +18,7 @@ use messages::{
 };
 
 use super::{
-    common::states::{complete::CompleteState, responded::RespondedState},
+    common::states::{complete::Complete, initial::Initial, responded::Responded},
     initiation_type::Invitee,
     pairwise_info::PairwiseInfo,
     Connection,
@@ -125,7 +128,7 @@ impl InviteeConnection<Requested> {
         wallet: &Arc<dyn BaseWallet>,
         response: SignedResponse,
         transport: &T,
-    ) -> VcxResult<InviteeConnection<RespondedState>>
+    ) -> VcxResult<InviteeConnection<Responded>>
     where
         T: Transport,
     {
@@ -149,7 +152,7 @@ impl InviteeConnection<Requested> {
             }
         }?;
 
-        let state = RespondedState::new(did_doc, self.state.thread_id);
+        let state = Responded::new(did_doc, self.state.thread_id);
 
         Ok(Connection {
             state,
@@ -160,12 +163,12 @@ impl InviteeConnection<Requested> {
     }
 }
 
-impl InviteeConnection<RespondedState> {
+impl InviteeConnection<Responded> {
     pub async fn send_ack<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
         transport: &T,
-    ) -> VcxResult<InviteeConnection<CompleteState>>
+    ) -> VcxResult<InviteeConnection<Complete>>
     where
         T: Transport,
     {
@@ -176,7 +179,7 @@ impl InviteeConnection<RespondedState> {
 
         self.send_message(wallet, &msg, transport).await?;
 
-        let state = CompleteState::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Complete::new(self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
             state,

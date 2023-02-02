@@ -32,7 +32,8 @@ impl ServiceConnections {
 
     pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<Invitation> {
         let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&self.profile.inject_wallet()).await?);
-        let inviter = Connection::new_inviter("".to_owned(), pw_info, vec![], self.service_endpoint.clone());
+        let inviter =
+            Connection::new_inviter("".to_owned(), pw_info).create_invitation(vec![], self.service_endpoint.clone());
         let invite = inviter.get_invitation().clone();
         let thread_id = inviter.thread_id().to_owned();
 

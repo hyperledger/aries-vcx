@@ -109,35 +109,20 @@ pub async fn create_inviter(pw_info: Option<PairwiseInfo>) -> LibvcxResult<u32> 
     let profile = get_main_profile()?;
 
     let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&profile.inject_wallet()).await?);
-    let con = InviterConnection::new_awaiting_request("".to_owned(), pw_info);
+    let con = InviterConnection::new_inviter("".to_owned(), pw_info);
 
     add_connection(con.into())
 }
 
-pub async fn create_invitee(invitation: &str) -> LibvcxResult<u32> {
+pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
     trace!("create_invitee >>>");
 
     let profile = get_main_profile()?;
-    let invitation = deserialize(invitation)?;
     let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
 
-    let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info)
-        .accept_invitation(&profile, &invitation)
-        .await?;
+    let con = InviteeConnection::new_invitee("".to_owned(), pairwise_info);
 
     add_connection(con.into())
-}
-
-// Just trying to retro-fit this.
-// It essentially creates an inviter connection in the initial state, also genereting an Invitation.
-pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
-    trace!("create_invite >>>");
-
-    let profile = get_main_profile()?;
-    let pairwise_info = PairwiseInfo::create(&profile.inject_wallet()).await?;
-    let con = InviterConnection::new_inviter("".to_owned(), pairwise_info, routing_keys, service_endpoint);
-
-    insert_connection(handle, con)
 }
 
 // ----------------------------- GETTERS ------------------------------------
@@ -344,6 +329,15 @@ pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<
     let con = get_cloned_generic_connection(&handle)?;
     con.send_message(&wallet, &message, &HttpClient).await?;
     Ok(())
+}
+
+pub async fn create_invite(handle: u32, service_endpoint: String, routing_keys: Vec<String>) -> LibvcxResult<()> {
+    trace!("create_invite >>>");
+
+    let con = get_cloned_connection(&handle)?;
+    let con = con.create_invitation(routing_keys, service_endpoint);
+
+    insert_connection(handle, con)
 }
 
 // // ------------------------- (DE)SERIALIZATION ----------------------------------

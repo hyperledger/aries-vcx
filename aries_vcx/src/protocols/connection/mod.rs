@@ -25,7 +25,7 @@ use crate::{
 };
 
 use self::{
-    common::states::complete::CompleteState,
+    common::states::complete::Complete,
     generic::GenericState,
     pairwise_info::PairwiseInfo,
     trait_bounds::{HandleProblem, TheirDidDoc, ThreadId},
@@ -158,7 +158,7 @@ where
     }
 }
 
-impl<I> Connection<I, CompleteState> {
+impl<I> Connection<I, Complete> {
     pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         self.state.remote_protocols()
     }
