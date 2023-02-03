@@ -35,10 +35,10 @@ pub mod test_utils {
         Attribute, PresentationProposalData,
     };
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
-    use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+    use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::constants::{DEFAULT_PROOF_NAME, TAILS_DIR, TEST_TAILS_URL};

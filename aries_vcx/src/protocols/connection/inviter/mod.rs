@@ -27,7 +27,7 @@ pub type InviterConnection<S> = Connection<Inviter, S>;
 
 impl InviterConnection<Initial> {
     /// Creates a new [`InviterConnection<Initial>`].
-    /// 
+    ///
     /// The connection can transition to [`InviterConnection<Invited>`] by
     /// either `create_invitation` or `into_invited`.
     pub fn new_inviter(source_id: String, pairwise_info: PairwiseInfo) -> Self {
@@ -60,8 +60,8 @@ impl InviterConnection<Initial> {
 
     /// This is implemented for retro-fitting the previous implementation
     /// where a [`Request`] could get processed directly from the initial state.
-    /// 
-    /// If you want to generate a new inviter and not create an invitation through 
+    ///
+    /// If you want to generate a new inviter and not create an invitation through
     /// [`InviterConnection<Initial>::create_invitation`] then you can call this
     /// to transition to the [`InviterConnection<Invited>`] directly by passing the
     /// expected thread_id (external's [`Invitation`] id).
@@ -105,9 +105,9 @@ impl InviterConnection<Invited> {
     }
 
     /// Processes a [`Request`] and transitions to [`InviterConnection<Requested>`].
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Will return an error if either:
     ///     * the [`Request`]'s thread ID does not match with the expected thread ID from an invitation
     ///     * the [`Request`]'s DidDoc is not valid
@@ -181,9 +181,9 @@ impl InviterConnection<Invited> {
 
 impl InviterConnection<Requested> {
     /// Sends a [`Response`] to the invitee and transitions to [`InviterConnection<Responded>`].
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Will return an error if sending the repsonse fails.
     pub async fn send_response<T>(
         self,
@@ -217,10 +217,10 @@ impl InviterConnection<Requested> {
 impl InviterConnection<Responded> {
     /// Acknowledges an invitee's connection by processing their first message
     /// and transitions to [`InviterConnection<Complete>`].
-    /// 
+    ///
     /// # Errors
-    /// 
-    /// Will error out if the message's thread ID does not match 
+    ///
+    /// Will error out if the message's thread ID does not match
     /// the ID of the thread context used in this connection.
     pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Complete>> {
         verify_thread_id(self.state.thread_id(), msg)?;

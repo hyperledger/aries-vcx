@@ -134,9 +134,9 @@ impl InviteeConnection<Invited> {
 
 impl InviteeConnection<Requested> {
     /// Processes a [`SignedResponse`] from the inviter and transitions to [`InviteeConnection<Responded>`].
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Will error out if:
     ///     * the thread ID of the response does not match the connection thread ID
     ///     * no recipient verkeys are provided in the response.
@@ -186,9 +186,9 @@ impl InviteeConnection<Requested> {
 
 impl InviteeConnection<Responded> {
     /// Sends an acknolwedgement message to the inviter and transitions to [`InviteeConnection<Complete>`].
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Will error out if sending the message fails.
     pub async fn send_ack<T>(
         self,

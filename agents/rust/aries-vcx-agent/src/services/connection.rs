@@ -75,7 +75,7 @@ impl ServiceConnections {
             ThinState::Inviter(State::Initial) => Connection::try_from(inviter)
                 .map_err(From::from)
                 .map(|c| c.into_invited(&request.id.0)),
-                ThinState::Inviter(State::Invited) => Connection::try_from(inviter).map_err(From::from),
+            ThinState::Inviter(State::Invited) => Connection::try_from(inviter).map_err(From::from),
             s => Err(AgentError::from_msg(
                 AgentErrorKind::GenericAriesVcxError,
                 &format!(
