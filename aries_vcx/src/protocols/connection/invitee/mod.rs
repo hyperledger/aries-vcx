@@ -80,15 +80,19 @@ impl InviteeConnection<Invited> {
 
         let request = Request::create()
             .set_label(self.source_id.to_string())
-            .set_did(self.pairwise_info.pw_did.to_string())
-            .set_thread_id(self.state.thread_id());
+            .set_did(self.pairwise_info.pw_did.to_string());
 
         let (thread_id, request) = match &self.state.invitation {
             Invitation::Public(_) | Invitation::OutOfBand(_) => (
                 request.id.0.clone(),
-                request.set_parent_thread_id(self.state.thread_id()),
+                request
+                    .set_parent_thread_id(self.state.thread_id())
+                    .set_thread_id_matching_id(),
             ),
-            _ => (self.state.thread_id().to_owned(), request),
+            _ => (
+                self.state.thread_id().to_owned(),
+                request.set_thread_id(self.state.thread_id()),
+            ),
         };
 
         let request = request
@@ -117,7 +121,10 @@ impl InviteeConnection<Requested> {
     where
         T: Transport,
     {
-        verify_thread_id(&self.state.thread_id, &A2AMessage::ConnectionResponse(response.clone()))?;
+        verify_thread_id(
+            self.state.thread_id(),
+            &A2AMessage::ConnectionResponse(response.clone()),
+        )?;
 
         let keys = &self.state.did_doc.recipient_keys()?;
         let their_vk = keys.first().ok_or(AriesVcxError::from_msg(

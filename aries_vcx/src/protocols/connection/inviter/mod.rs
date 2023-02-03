@@ -196,7 +196,7 @@ impl InviterConnection<Requested> {
 
 impl InviterConnection<Responded> {
     pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Complete>> {
-        verify_thread_id(&self.state.thread_id, msg)?;
+        verify_thread_id(self.state.thread_id(), msg)?;
         let state = Complete::new(self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
