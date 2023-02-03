@@ -3,10 +3,10 @@ use std::{any::type_name, collections::HashMap, sync::RwLock};
 use agency_client::httpclient::post_message;
 use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
-    messages::protocols::basic_message::message::BasicMessage,
+    messages::protocols::{basic_message::message::BasicMessage, connection::request::Request},
     protocols::connection::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
-        GenericConnection, State,
+        GenericConnection, State, ThinState,
     },
     transport::Transport,
 };
@@ -251,7 +251,7 @@ pub async fn process_invite(handle: u32, invitation: &str) -> LibvcxResult<()> {
     let profile = get_main_profile()?;
     let invitation = deserialize(invitation)?;
     let con = get_cloned_connection(&handle)?
-        .accept_invitation(&profile, &invitation)
+        .accept_invitation(&profile, invitation)
         .await?;
 
     insert_connection(handle, con)
@@ -265,9 +265,24 @@ pub async fn process_request(
 ) -> LibvcxResult<()> {
     trace!("process_request >>>");
 
-    let con = get_cloned_connection(&handle)?;
+    let con = get_cloned_generic_connection(&handle)?;
     let wallet = get_main_profile()?.inject_wallet();
-    let request = deserialize(request)?;
+    let request: Request = deserialize(request)?;
+
+    let con = match con.state() {
+        State::Inviter(ThinState::Initial) => Connection::try_from(con)
+            .map_err(From::from)
+            .map(|c| c.into_invited(&request.get_thread_id())),
+        State::Inviter(ThinState::Invited) => Connection::try_from(con).map_err(From::from),
+        s => Err(LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!(
+                "Connection with handle {} cannot process a request; State: {:?}",
+                handle, s
+            ),
+        )),
+    }?;
+
     let con = con
         .handle_request(&wallet, request, service_endpoint, routing_keys, &HttpClient)
         .await?;

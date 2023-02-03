@@ -11,7 +11,7 @@ use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
 use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use aries_vcx::protocols::connection::{Connection, GenericConnection, State};
+use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
 
 pub type ServiceEndpoint = String;
 
@@ -45,7 +45,7 @@ impl ServiceConnections {
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
         let pairwise_info = PairwiseInfo::create(&self.profile.inject_wallet()).await?;
         let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
-            .accept_invitation(&self.profile, &invite)
+            .accept_invitation(&self.profile, invite)
             .await?;
 
         let thread_id = invitee.thread_id().to_owned();
@@ -69,7 +69,22 @@ impl ServiceConnections {
     }
 
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
-        let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let inviter = self.connections.get(thread_id)?;
+
+        let inviter = match inviter.state() {
+            State::Inviter(ThinState::Initial) => Connection::try_from(inviter)
+                .map_err(From::from)
+                .map(|c| c.into_invited(&request.id.0)),
+            State::Inviter(ThinState::Invited) => Connection::try_from(inviter).map_err(From::from),
+            s => Err(AgentError::from_msg(
+                AgentErrorKind::GenericAriesVcxError,
+                &format!(
+                    "Connection with handle {} cannot process a request; State: {:?}",
+                    thread_id, s
+                ),
+            )),
+        }?;
+
         let inviter = inviter
             .handle_request(
                 &self.profile.inject_wallet(),

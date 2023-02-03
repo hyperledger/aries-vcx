@@ -36,13 +36,35 @@ impl InviterConnection<Initial> {
     }
 
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> InviterConnection<Invited> {
-        let invite: PairwiseInvitation = PairwiseInvitation::create()
+        let invite = PairwiseInvitation::create()
             .set_id(&uuid::uuid())
             .set_label(&self.source_id)
             .set_recipient_keys(vec![self.pairwise_info.pw_vk.clone()])
             .set_routing_keys(routing_keys)
             .set_service_endpoint(service_endpoint);
 
+        let invitation = Invitation::Pairwise(invite);
+
+        Connection {
+            source_id: self.source_id,
+            pairwise_info: self.pairwise_info,
+            initiation_type: self.initiation_type,
+            state: Invited::new(invitation),
+        }
+    }
+
+    /// This is implemented for retro-fitting the previous implementation
+    /// where a [`Request`] could get processed directly from the initial state.
+    /// 
+    /// If you want to generate a new inviter and not create an invitation through 
+    /// [`InviterConnection<Initial>::create_invitation`] then you can call this
+    /// to transition to the [`InviterConnection<Initial>`] directly by passing the
+    /// expected thread_id (external's [`Invitation`] id).
+    //
+    // This is a workaround and it's not necessarily pretty, but is implemented
+    // for backwards compatibility.
+    pub fn into_invited(self, thread_id: &str) -> InviterConnection<Invited> {
+        let invite = PairwiseInvitation::create().set_id(thread_id);
         let invitation = Invitation::Pairwise(invite);
 
         Connection {

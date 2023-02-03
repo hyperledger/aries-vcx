@@ -148,6 +148,7 @@ impl GenericConnection {
     pub fn invitation(&self) -> Option<&Invitation> {
         match &self.state {
             GenericState::Inviter(InviterState::Invited(s)) => Some(&s.invitation),
+            GenericState::Invitee(InviteeState::Invited(s)) => Some(&s.invitation),
             _ => None,
         }
     }
