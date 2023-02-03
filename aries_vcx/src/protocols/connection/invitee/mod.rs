@@ -34,6 +34,7 @@ use crate::{
 pub type InviteeConnection<S> = Connection<Invitee, S>;
 
 impl InviteeConnection<Initial> {
+    /// Creates a new [`InviteeConnection<Initial>`].
     pub fn new_invitee(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
@@ -43,6 +44,11 @@ impl InviteeConnection<Initial> {
         }
     }
 
+    /// Accepts an [`Invitation`] and transitions to [`InviteeConnection<Invited>`].
+    ///
+    /// # Errors
+    ///
+    /// Will error out if a DidDoc could not be resolved from the [`Invitation`].
     pub async fn accept_invitation(
         self,
         profile: &Arc<dyn Profile>,
@@ -64,6 +70,11 @@ impl InviteeConnection<Initial> {
 }
 
 impl InviteeConnection<Invited> {
+    /// Sends a [`Request`] to the inviter and transitions to [`InviteeConnection<Requested>`].
+    ///
+    /// # Errors
+    ///
+    /// Will error out if sending the request fails.
     pub async fn send_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
@@ -80,8 +91,23 @@ impl InviteeConnection<Invited> {
 
         let request = Request::create()
             .set_label(self.source_id.to_string())
-            .set_did(self.pairwise_info.pw_did.to_string());
+            .set_did(self.pairwise_info.pw_did.to_string())
+            .set_service_endpoint(service_endpoint)
+            .set_keys(recipient_keys, routing_keys)
+            .set_out_time();
 
+        // Depending on the invitation type, we set the connection's thread ID
+        // and the request parent and thread ID differently.
+        //
+        // When using a Public or OOB invitation, the invitation's ID (current thread ID)
+        // is used as the parent thread ID, while the request ID is set as thread ID.
+        //
+        // Multiple invitees can use the same invitation in these cases, hence the common
+        // parent thread ID and different thread IDs (request IDs are unique).
+        //
+        // When the invitation is Pairwise, it is designed to be sent to a single invitee.
+        // In this case, we reuse the invitation ID (current thread ID) as the thread ID
+        // in both the connection and the request.
         let (thread_id, request) = match &self.state.invitation {
             Invitation::Public(_) | Invitation::OutOfBand(_) => (
                 request.id.0.clone(),
@@ -89,16 +115,11 @@ impl InviteeConnection<Invited> {
                     .set_parent_thread_id(self.state.thread_id())
                     .set_thread_id_matching_id(),
             ),
-            _ => (
+            Invitation::Pairwise(_) => (
                 self.state.thread_id().to_owned(),
                 request.set_thread_id(self.state.thread_id()),
             ),
         };
-
-        let request = request
-            .set_service_endpoint(service_endpoint)
-            .set_keys(recipient_keys, routing_keys)
-            .set_out_time();
 
         self.send_message(wallet, &request.to_a2a_message(), transport).await?;
 
@@ -112,6 +133,14 @@ impl InviteeConnection<Invited> {
 }
 
 impl InviteeConnection<Requested> {
+    /// Processes a [`SignedResponse`] from the inviter and transitions to [`InviteeConnection<Responded>`].
+    /// 
+    /// # Errors
+    /// 
+    /// Will error out if:
+    ///     * the thread ID of the response does not match the connection thread ID
+    ///     * no recipient verkeys are provided in the response.
+    ///     * decoding the signed response fails
     pub async fn handle_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
@@ -156,6 +185,11 @@ impl InviteeConnection<Requested> {
 }
 
 impl InviteeConnection<Responded> {
+    /// Sends an acknolwedgement message to the inviter and transitions to [`InviteeConnection<Complete>`].
+    /// 
+    /// # Errors
+    /// 
+    /// Will error out if sending the message fails.
     pub async fn send_ack<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,

@@ -33,6 +33,7 @@ use self::{
 
 pub use self::generic::{GenericConnection, State, ThinState};
 
+/// A state machine for progressing through the (connection protocol)[https://github.com/hyperledger/aries-rfcs/blob/main/features/0160-connection-protocol/README.md].
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "GenericConnection")]
 #[serde(bound = "(I, S): TryFrom<GenericState, Error = AriesVcxError>")]

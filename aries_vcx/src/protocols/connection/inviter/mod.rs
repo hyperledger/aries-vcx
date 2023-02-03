@@ -26,6 +26,10 @@ use messages::protocols::connection::{
 pub type InviterConnection<S> = Connection<Inviter, S>;
 
 impl InviterConnection<Initial> {
+    /// Creates a new [`InviterConnection<Initial>`].
+    /// 
+    /// The connection can transition to [`InviterConnection<Invited>`] by
+    /// either `create_invitation` or `into_invited`.
     pub fn new_inviter(source_id: String, pairwise_info: PairwiseInfo) -> Self {
         Self {
             source_id,
@@ -35,6 +39,7 @@ impl InviterConnection<Initial> {
         }
     }
 
+    /// Generates a pairwise [`Invitation`] and transitions to [`InviterConnection<Invited>`].
     pub fn create_invitation(self, routing_keys: Vec<String>, service_endpoint: String) -> InviterConnection<Invited> {
         let invite = PairwiseInvitation::create()
             .set_id(&uuid::uuid())
@@ -58,7 +63,7 @@ impl InviterConnection<Initial> {
     /// 
     /// If you want to generate a new inviter and not create an invitation through 
     /// [`InviterConnection<Initial>::create_invitation`] then you can call this
-    /// to transition to the [`InviterConnection<Initial>`] directly by passing the
+    /// to transition to the [`InviterConnection<Invited>`] directly by passing the
     /// expected thread_id (external's [`Invitation`] id).
     //
     // This is a workaround and it's not necessarily pretty, but is implemented
@@ -77,7 +82,7 @@ impl InviterConnection<Initial> {
 }
 
 impl InviterConnection<Invited> {
-    // This should ideally belong in the Connection<Inviter,RequestedState>
+    // This should ideally belong in the Connection<Inviter, RequestedState>
     // but was placed here to retro-fit the previous API.
     async fn build_response(
         &self,
@@ -99,6 +104,14 @@ impl InviterConnection<Invited> {
         sign_connection_response(wallet, &self.pairwise_info.pw_vk, response).await
     }
 
+    /// Processes a [`Request`] and transitions to [`InviterConnection<Requested>`].
+    /// 
+    /// # Errors
+    /// 
+    /// Will return an error if either:
+    ///     * the [`Request`]'s thread ID does not match with the expected thread ID from an invitation
+    ///     * the [`Request`]'s DidDoc is not valid
+    ///     * generating new [`PairwiseInfo`] fails
     pub async fn handle_request<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
@@ -137,6 +150,8 @@ impl InviterConnection<Invited> {
             Err(err)?;
         }
 
+        // Generate new pairwise info that will be used from this point on
+        // and incorporate that into the response.
         let new_pairwise_info = PairwiseInfo::create(wallet).await?;
         let signed_response = self
             .build_response(
@@ -165,6 +180,11 @@ impl InviterConnection<Invited> {
 }
 
 impl InviterConnection<Requested> {
+    /// Sends a [`Response`] to the invitee and transitions to [`InviterConnection<Responded>`].
+    /// 
+    /// # Errors
+    /// 
+    /// Will return an error if sending the repsonse fails.
     pub async fn send_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
@@ -195,6 +215,13 @@ impl InviterConnection<Requested> {
 }
 
 impl InviterConnection<Responded> {
+    /// Acknowledges an invitee's connection by processing their first message
+    /// and transitions to [`InviterConnection<Complete>`].
+    /// 
+    /// # Errors
+    /// 
+    /// Will error out if the message's thread ID does not match 
+    /// the ID of the thread context used in this connection.
     pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Complete>> {
         verify_thread_id(self.state.thread_id(), msg)?;
         let state = Complete::new(self.state.did_doc, self.state.thread_id, None);

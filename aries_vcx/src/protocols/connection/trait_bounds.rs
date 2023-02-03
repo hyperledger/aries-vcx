@@ -1,13 +1,11 @@
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-/// Trait used for implementing common [`super::Connection`] behavior based
-/// on states implementing it.
+/// Trait implemented for [`super::Connection`] states that store an [`AriesDidDoc`].
 pub trait TheirDidDoc {
     fn their_did_doc(&self) -> &AriesDidDoc;
 }
 
-/// Trait used for implementing common [`super::Connection`] behavior based
-/// on states implementing it.
+/// Trait implemented for [`super::Connection`] states that keep track of a thread ID.
 pub trait ThreadId {
     fn thread_id(&self) -> &str;
 }

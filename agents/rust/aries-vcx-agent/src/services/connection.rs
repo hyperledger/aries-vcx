@@ -72,10 +72,10 @@ impl ServiceConnections {
         let inviter = self.connections.get(thread_id)?;
 
         let inviter = match inviter.state() {
-            State::Inviter(ThinState::Initial) => Connection::try_from(inviter)
+            ThinState::Inviter(State::Initial) => Connection::try_from(inviter)
                 .map_err(From::from)
                 .map(|c| c.into_invited(&request.id.0)),
-            State::Inviter(ThinState::Invited) => Connection::try_from(inviter).map_err(From::from),
+                ThinState::Inviter(State::Invited) => Connection::try_from(inviter).map_err(From::from),
             s => Err(AgentError::from_msg(
                 AgentErrorKind::GenericAriesVcxError,
                 &format!(
@@ -140,7 +140,7 @@ impl ServiceConnections {
         Ok(())
     }
 
-    pub fn get_state(&self, thread_id: &str) -> AgentResult<State> {
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<ThinState> {
         Ok(self.connections.get(thread_id)?.state())
     }
 

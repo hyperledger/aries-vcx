@@ -54,9 +54,9 @@ use super::{basic_send_message, common::states::initial::Initial};
 /// ```
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GenericConnection {
-    pub(super) source_id: String,
-    pub(super) pairwise_info: PairwiseInfo,
-    pub(super) state: GenericState,
+    source_id: String,
+    pairwise_info: PairwiseInfo,
+    state: GenericState,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -84,10 +84,10 @@ pub enum InviteeState {
 }
 
 impl GenericConnection {
-    /// Returns the underlying [`super::Connection`]'s state as a thin [`State`].
+    /// Returns the underlying [`super::Connection`]'s state as a [`ThinState`].
     /// Used for pattern matching when there's no hint as to what connection type
     /// is expected from or stored into the [`GenericConnection`].
-    pub fn state(&self) -> State {
+    pub fn state(&self) -> ThinState {
         (&self.state).into()
     }
 
@@ -172,8 +172,8 @@ impl GenericConnection {
     }
 }
 
-/// Compile-time assurance that the deserialization type
-/// of the [`Connection`], if modified, will be modified along the serialization type.
+/// Compile-time assurance that the [`GenericConnection`] and the hidden serialization type
+/// of the [`crate::protocols::connection::Connection`], if modified, will be modified together.
 #[cfg(test)]
 mod tests {
     use crate::protocols::connection::serializable::*;

@@ -216,8 +216,8 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     })?;
 
     let state_id = match con.state() {
-        State::Invitee(s) => s as u32,
-        State::Inviter(s) => s as u32,
+        ThinState::Invitee(s) => s as u32,
+        ThinState::Inviter(s) => s as u32,
     };
 
     Ok(state_id)
@@ -270,10 +270,10 @@ pub async fn process_request(
     let request: Request = deserialize(request)?;
 
     let con = match con.state() {
-        State::Inviter(ThinState::Initial) => Connection::try_from(con)
+        ThinState::Inviter(State::Initial) => Connection::try_from(con)
             .map_err(From::from)
             .map(|c| c.into_invited(&request.get_thread_id())),
-        State::Inviter(ThinState::Invited) => Connection::try_from(con).map_err(From::from),
+        ThinState::Inviter(State::Invited) => Connection::try_from(con).map_err(From::from),
         s => Err(LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
             format!(

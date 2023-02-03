@@ -3,15 +3,15 @@ use super::{GenericState, InviteeState, InviterState};
 /// Small sized enum used for determining
 /// a connection's state in terms of initiation type.
 #[derive(Clone, Copy, Debug)]
-pub enum State {
-    Invitee(ThinState),
-    Inviter(ThinState),
+pub enum ThinState {
+    Invitee(State),
+    Inviter(State),
 }
 
 /// Small sized enum used for determining
 /// a connection's state in terms of connection stage.
 #[derive(Clone, Copy, Debug)]
-pub enum ThinState {
+pub enum State {
     Initial,
     Invited,
     Requested,
@@ -19,7 +19,7 @@ pub enum ThinState {
     Complete,
 }
 
-impl From<&GenericState> for State {
+impl From<&GenericState> for ThinState {
     fn from(value: &GenericState) -> Self {
         match value {
             GenericState::Invitee(v) => Self::Invitee(v.into()),
@@ -28,7 +28,7 @@ impl From<&GenericState> for State {
     }
 }
 
-impl From<&InviterState> for ThinState {
+impl From<&InviterState> for State {
     fn from(value: &InviterState) -> Self {
         match value {
             InviterState::Initial(_) => Self::Initial,
@@ -40,7 +40,7 @@ impl From<&InviterState> for ThinState {
     }
 }
 
-impl From<&InviteeState> for ThinState {
+impl From<&InviteeState> for State {
     fn from(value: &InviteeState) -> Self {
         match value {
             InviteeState::Initial(_) => Self::Initial,
