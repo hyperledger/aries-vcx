@@ -1,3 +1,4 @@
+use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::common::proofs::proof_request::PresentationRequestData;
@@ -5,8 +6,9 @@ use aries_vcx::handlers::proof_presentation::verifier::Verifier;
 use aries_vcx::messages::a2a::A2AMessage;
 
 use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_handle::mediated_connection;
+use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
+use crate::api_vcx::api_handle::{connection, mediated_connection};
 
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
@@ -85,6 +87,43 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
     Ok(state)
 }
 
+pub async fn update_state_nonmediated(handle: u32, connection_handle: u32, message: &str) -> LibvcxResult<u32> {
+    let mut proof = PROOF_MAP.get_cloned(handle)?;
+    trace!(
+        "proof::update_state_nonmediated >>> handle: {}, message: {:?}, connection_handle: {}",
+        handle,
+        message,
+        connection_handle
+    );
+    if !proof.progressable_by_message() {
+        return Ok(proof.get_state().into());
+    }
+
+    let profile = get_main_profile()?;
+    let con = connection::get_cloned_generic_connection(&connection_handle)?;
+    let wallet = profile.inject_wallet();
+
+    let send_message: SendClosure =
+        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+
+    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidOption,
+            format!(
+                "Cannot updated state with message: Message deserialization failed: {:?}",
+                err
+            ),
+        )
+    })?;
+    proof
+        .handle_message(&profile, message.into(), Some(send_message))
+        .await?;
+
+    let state: u32 = proof.get_state().into();
+    PROOF_MAP.insert(handle, proof)?;
+    Ok(state)
+}
+
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
 }
@@ -136,6 +175,20 @@ pub async fn send_proof_request(handle: u32, connection_handle: u32) -> LibvcxRe
     proof
         .send_presentation_request(mediated_connection::send_message_closure(connection_handle).await?)
         .await?;
+    PROOF_MAP.insert(handle, proof)
+}
+
+pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+    let mut proof = PROOF_MAP.get_cloned(handle)?;
+
+    let profile = get_main_profile()?;
+    let con = connection::get_cloned_generic_connection(&connection_handle)?;
+    let wallet = profile.inject_wallet();
+
+    let send_message: SendClosure =
+        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+
+    proof.send_presentation_request(send_message).await?;
     PROOF_MAP.insert(handle, proof)
 }
 

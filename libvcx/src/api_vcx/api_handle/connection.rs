@@ -22,10 +22,10 @@ type Map = HashMap<u32, GenericConnection>;
 type Cache = RwLock<Map>;
 
 lazy_static! {
-    static ref CONNECTION_MAP: Cache = RwLock::new(HashMap::new());
+    pub static ref CONNECTION_MAP: Cache = RwLock::new(HashMap::new());
 }
 
-struct HttpClient;
+pub struct HttpClient;
 
 #[async_trait]
 impl Transport for HttpClient {
@@ -44,7 +44,7 @@ fn new_handle() -> LibvcxResult<u32> {
     }
 }
 
-fn get_cloned_generic_connection(handle: &u32) -> LibvcxResult<GenericConnection> {
+pub fn get_cloned_generic_connection(handle: &u32) -> LibvcxResult<GenericConnection> {
     CONNECTION_MAP.write()?.get(handle).cloned().ok_or_else(|| {
         LibvcxError::from_msg(
             LibvcxErrorKind::ObjectAccessError,
@@ -311,6 +311,25 @@ pub async fn process_ack(handle: u32, message: &str) -> LibvcxResult<()> {
     insert_connection(handle, con)
 }
 
+// In the old implementation this only consumed the ProblemReport without doing
+// anything with it and returned the connection in the initial state.
+//
+// We'll emulate that for backwards compatibility.
+pub fn process_problem_report(handle: u32, _problem_report: &str) -> LibvcxResult<()> {
+    trace!("process_problem_report >>>");
+    let con = get_cloned_generic_connection(&handle)?;
+    match con.state() {
+        ThinState::Invitee(_) => insert_connection(
+            handle,
+            Connection::new_invitee("".to_owned(), con.pairwise_info().to_owned()),
+        ),
+        ThinState::Inviter(_) => insert_connection(
+            handle,
+            Connection::new_inviter("".to_owned(), con.pairwise_info().to_owned()),
+        ),
+    }
+}
+
 pub async fn send_response(handle: u32) -> LibvcxResult<()> {
     trace!("send_response >>>");
 
@@ -393,7 +412,7 @@ pub fn from_string(connection_data: &str) -> LibvcxResult<u32> {
     Ok(handle)
 }
 
-// ------------------------------ CLEANUP ---------------------------------------
+// --------------------------------------- CLEANUP ---------------------------------------
 pub fn release(handle: u32) -> LibvcxResult<()> {
     trace!("release >>>");
 
