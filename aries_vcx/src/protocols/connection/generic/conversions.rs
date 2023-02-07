@@ -2,10 +2,17 @@ use super::{GenericConnection, GenericState, InviteeState, InviterState};
 use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind},
     protocols::connection::{
-        common::states::{complete::Complete, initial::Initial, responded::Responded},
         initiation_type::{Invitee, Inviter},
-        invitee::states::{invited::Invited as InviteeInvited, requested::Requested as InviteeRequested},
-        inviter::states::{invited::Invited as InviterInvited, requested::Requested as InviterRequested},
+        invitee::states::{
+            complete::Complete as InviteeComplete, initial::Initial as InviteeInitial,
+            invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
+            responded::Responded as InviteeResponded,
+        },
+        inviter::states::{
+            complete::Complete as InviterComplete, initial::Initial as InviterInitial,
+            invited::Invited as InviterInvited, requested::Requested as InviterRequested,
+            responded::Responded as InviterResponded,
+        },
         Connection,
     },
 };
@@ -97,17 +104,17 @@ where
 from_concrete_to_vague!(Inviter, InviterState, Inviter, GenericState);
 from_concrete_to_vague!(Invitee, InviteeState, Invitee, GenericState);
 
-from_concrete_to_vague!(Initial, Initial, InviterState);
+from_concrete_to_vague!(InviterInitial, Initial, InviterState);
 from_concrete_to_vague!(InviterInvited, Invited, InviterState);
 from_concrete_to_vague!(InviterRequested, Requested, InviterState);
-from_concrete_to_vague!(Responded, Responded, InviterState);
-from_concrete_to_vague!(Complete, Complete, InviterState);
+from_concrete_to_vague!(InviterResponded, Responded, InviterState);
+from_concrete_to_vague!(InviterComplete, Complete, InviterState);
 
-from_concrete_to_vague!(Initial, Initial, InviteeState);
+from_concrete_to_vague!(InviteeInitial, Initial, InviteeState);
 from_concrete_to_vague!(InviteeInvited, Invited, InviteeState);
 from_concrete_to_vague!(InviteeRequested, Requested, InviteeState);
-from_concrete_to_vague!(Responded, Responded, InviteeState);
-from_concrete_to_vague!(Complete, Complete, InviteeState);
+from_concrete_to_vague!(InviteeResponded, Responded, InviteeState);
+from_concrete_to_vague!(InviteeComplete, Complete, InviteeState);
 
 // ---------------------------- Try From Vague State to Concrete State implementations ----------------------------
 impl<I, S> TryFrom<GenericConnection> for Connection<I, S>
@@ -126,14 +133,14 @@ where
 try_from_vague_to_concrete!(InviterState, Inviter, Invitee, Inviter);
 try_from_vague_to_concrete!(InviteeState, Invitee, Inviter, Invitee);
 
-try_from_vague_to_concrete!(InviterState, Initial, Initial);
+try_from_vague_to_concrete!(InviterState, Initial, InviterInitial);
 try_from_vague_to_concrete!(InviterState, Invited, InviterInvited);
 try_from_vague_to_concrete!(InviterState, Requested, InviterRequested);
-try_from_vague_to_concrete!(InviterState, Responded, Responded);
-try_from_vague_to_concrete!(InviterState, Complete, Complete);
+try_from_vague_to_concrete!(InviterState, Responded, InviterResponded);
+try_from_vague_to_concrete!(InviterState, Complete, InviterComplete);
 
-try_from_vague_to_concrete!(InviteeState, Initial, Initial);
+try_from_vague_to_concrete!(InviteeState, Initial, InviteeInitial);
 try_from_vague_to_concrete!(InviteeState, Invited, InviteeInvited);
 try_from_vague_to_concrete!(InviteeState, Requested, InviteeRequested);
-try_from_vague_to_concrete!(InviteeState, Responded, Responded);
-try_from_vague_to_concrete!(InviteeState, Complete, Complete);
+try_from_vague_to_concrete!(InviteeState, Responded, InviteeResponded);
+try_from_vague_to_concrete!(InviteeState, Complete, InviteeComplete);

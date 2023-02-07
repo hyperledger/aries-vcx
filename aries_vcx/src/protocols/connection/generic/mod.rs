@@ -11,16 +11,23 @@ use crate::{
     errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult},
     plugins::wallet::base_wallet::BaseWallet,
     protocols::connection::{
-        common::states::{complete::Complete, responded::Responded},
-        invitee::states::{invited::Invited as InviteeInvited, requested::Requested as InviteeRequested},
-        inviter::states::{invited::Invited as InviterInvited, requested::Requested as InviterRequested},
+        invitee::states::{
+            complete::Complete as InviteeComplete, initial::Initial as InviteeInitial,
+            invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
+            responded::Responded as InviteeResponded,
+        },
+        inviter::states::{
+            complete::Complete as InviterComplete, initial::Initial as InviterInitial,
+            invited::Invited as InviterInvited, requested::Requested as InviterRequested,
+            responded::Responded as InviterResponded,
+        },
         pairwise_info::PairwiseInfo,
         trait_bounds::{TheirDidDoc, ThreadId},
     },
     transport::Transport,
 };
 
-use super::{basic_send_message, common::states::initial::Initial};
+use super::basic_send_message;
 
 /// A type that can encapsulate a [`Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
@@ -67,20 +74,20 @@ pub enum GenericState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InviterState {
-    Initial(Initial),
+    Initial(InviterInitial),
     Invited(InviterInvited),
     Requested(InviterRequested),
-    Responded(Responded),
-    Complete(Complete),
+    Responded(InviterResponded),
+    Complete(InviterComplete),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InviteeState {
-    Initial(Initial),
+    Initial(InviteeInitial),
     Invited(InviteeInvited),
     Requested(InviteeRequested),
-    Responded(Responded),
-    Complete(Complete),
+    Responded(InviteeResponded),
+    Complete(InviteeComplete),
 }
 
 impl GenericConnection {
@@ -343,7 +350,7 @@ mod connection_serde_tests {
         (source_id, pairwise_info)
     }
 
-    async fn make_invitee_initial() -> InviteeConnection<Initial> {
+    async fn make_invitee_initial() -> InviteeConnection<InviteeInitial> {
         let (source_id, pairwise_info) = make_initial_parts().await;
         Connection::new_invitee(source_id, pairwise_info)
     }
@@ -372,7 +379,7 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_invitee_responded() -> InviteeConnection<Responded> {
+    async fn make_invitee_responded() -> InviteeConnection<InviteeResponded> {
         let wallet = make_mock_profile().inject_wallet();
         let con = make_invitee_requested().await;
         let response = Response::create()
@@ -386,7 +393,7 @@ mod connection_serde_tests {
         con.handle_response(&wallet, response, &MockTransport).await.unwrap()
     }
 
-    async fn make_invitee_complete() -> InviteeConnection<Complete> {
+    async fn make_invitee_complete() -> InviteeConnection<InviteeComplete> {
         let wallet = make_mock_profile().inject_wallet();
 
         make_invitee_responded()
@@ -396,7 +403,7 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_initial() -> InviterConnection<Initial> {
+    async fn make_inviter_initial() -> InviterConnection<InviterInitial> {
         let (source_id, pairwise_info) = make_initial_parts().await;
         Connection::new_inviter(source_id, pairwise_info)
     }
@@ -423,7 +430,7 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_responded() -> InviterConnection<Responded> {
+    async fn make_inviter_responded() -> InviterConnection<InviterResponded> {
         let wallet = make_mock_profile().inject_wallet();
 
         make_inviter_requested()
@@ -433,7 +440,7 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_complete() -> InviterConnection<Complete> {
+    async fn make_inviter_complete() -> InviterConnection<InviterComplete> {
         let msg = Request::create().to_a2a_message();
 
         make_inviter_responded().await.acknowledge_connection(&msg).unwrap()

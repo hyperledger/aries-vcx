@@ -1,4 +1,3 @@
-pub mod common;
 mod generic;
 pub mod initiation_type;
 pub mod invitee;
@@ -25,10 +24,9 @@ use crate::{
 };
 
 use self::{
-    common::states::complete::Complete,
     generic::GenericState,
     pairwise_info::PairwiseInfo,
-    trait_bounds::{HandleProblem, TheirDidDoc, ThreadId},
+    trait_bounds::{CompleteState, HandleProblem, TheirDidDoc, ThreadId},
 };
 
 pub use self::generic::{GenericConnection, State, ThinState};
@@ -159,7 +157,10 @@ where
     }
 }
 
-impl<I> Connection<I, Complete> {
+impl<I, S> Connection<I, S>
+where
+    S: CompleteState,
+{
     pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         self.state.remote_protocols()
     }

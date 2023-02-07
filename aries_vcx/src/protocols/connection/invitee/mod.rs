@@ -9,7 +9,9 @@ use crate::{
     protocols::connection::trait_bounds::ThreadId, transport::Transport,
 };
 
-use self::states::{invited::Invited, requested::Requested};
+use self::states::{
+    complete::Complete, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
+};
 
 use messages::{
     a2a::A2AMessage,
@@ -17,12 +19,7 @@ use messages::{
     protocols::connection::{request::Request, response::SignedResponse},
 };
 
-use super::{
-    common::states::{complete::Complete, initial::Initial, responded::Responded},
-    initiation_type::Invitee,
-    pairwise_info::PairwiseInfo,
-    Connection,
-};
+use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, Connection};
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},

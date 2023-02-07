@@ -10,10 +10,9 @@ use crate::{
     common::signing::sign_connection_response, errors::error::VcxResult, plugins::wallet::base_wallet::BaseWallet,
 };
 
-use self::states::{invited::Invited, requested::Requested};
-use super::common::states::complete::Complete;
-use super::common::states::initial::Initial;
-use super::common::states::responded::Responded;
+use self::states::{
+    complete::Complete, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
+};
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use messages::a2a::A2AMessage;
 use messages::protocols::connection::invite::PairwiseInvitation;

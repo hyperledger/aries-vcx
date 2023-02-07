@@ -3,7 +3,7 @@ use std::clone::Clone;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{CompleteState, TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Complete {
@@ -20,14 +20,6 @@ impl Complete {
             protocols,
         }
     }
-
-    pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
-        self.protocols.as_deref()
-    }
-
-    pub fn handle_disclose(&mut self, disclose: Disclose) {
-        self.protocols = Some(disclose.protocols)
-    }
 }
 
 impl TheirDidDoc for Complete {
@@ -39,5 +31,15 @@ impl TheirDidDoc for Complete {
 impl ThreadId for Complete {
     fn thread_id(&self) -> &str {
         &self.thread_id
+    }
+}
+
+impl CompleteState for Complete {
+    fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
+        self.protocols.as_deref()
+    }
+
+    fn handle_disclose(&mut self, disclose: Disclose) {
+        self.protocols = Some(disclose.protocols)
     }
 }
