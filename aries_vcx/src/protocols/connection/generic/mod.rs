@@ -29,34 +29,43 @@ use crate::{
 
 use super::{basic_send_message, trait_bounds::BootstrapDidDoc};
 
-/// A type that can encapsulate a [`Connection`] of any state.
+/// A type that can encapsulate a [`super::Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
 /// connection information.
 ///
-/// However, using methods directly from [`Connection`], if possible, comes with certain
+/// However, using methods directly from [`super::Connection`], if possible, comes with certain
 /// benefits such as being able to obtain an [`AriesDidDoc`] directly (if the state contains it)
 /// and not an [`Option<AriesDidDoc>`] (which is what [`GenericConnection`] provides).
 ///
-/// [`GenericConnection`] implements [`From`] for all [`Connection`] states and
-/// [`Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion failing
+/// [`GenericConnection`] implements [`From`] for all [`super::Connection`] states and
+/// [`super::Connection`] implements [`TryFrom`] from [`GenericConnection`], with the conversion failing
 /// if the [`GenericConnection`] is in a different state than the requested one.
-/// This is also the mechanism used for direct deserialization of a [`Connection`].
+/// This is also the mechanism used for direct deserialization of a [`super::Connection`].
 ///
-/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a thin [`State`]
+/// Because a [`TryFrom`] conversion is fallible and consumes the [`GenericConnection`], a [`ThinState`]
 /// can be retrieved through [`GenericConnection::state`] method at runtime. In that case, a more dynamic conversion
 /// could be done this way:
 ///
-/// ``` ignore
-/// // Assume the `con` variable stores a `GenericConnection`:
+/// ```
+/// # use aries_vcx::protocols::connection::invitee::states::{complete::Complete, initial::Initial};
+/// # use aries_vcx::protocols::connection::initiation_type::Invitee;
+/// # use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+/// # use aries_vcx::protocols::connection::{GenericConnection, ThinState, State, Connection};
+/// #
+/// # let con_inviter = Connection::new_invitee(String::new(), PairwiseInfo::default());
 ///
-/// let initial_connections = Vec::new();
-/// let completed_connections = Vec::new();
+/// // We get a GenericConnection somehow
+/// let con: GenericConnection = con_inviter.into();
+///
+/// let mut initial_connections: Vec<Connection<Invitee, Initial>> = Vec::new();
+/// let mut completed_connections: Vec<Connection<Invitee, Complete>> = Vec::new();
 ///
 /// // Unwrapping after the match is sound
 /// // because we can guarantee the conversion will work
 /// match con.state() {
-///     State::Invitee(Stage::Initial) => initial_connections.push(con.try_into().unwrap()),
-///     State::Invitee(Stage::Complete) => completed_connections.push(con.try_into().unwrap())
+///     ThinState::Invitee(State::Initial) => initial_connections.push(con.try_into().unwrap()),
+///     ThinState::Invitee(State::Complete) => completed_connections.push(con.try_into().unwrap()),
+///     _ => todo!()
 /// }
 /// ```
 #[derive(Clone, Debug, Serialize, Deserialize)]
