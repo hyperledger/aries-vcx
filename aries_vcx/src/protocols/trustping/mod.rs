@@ -1,5 +1,5 @@
 use crate::utils::uuid;
-use messages::a2a::MessageId;
+use messages::a2a::{A2AMessage, MessageId};
 use messages::protocols::trust_ping::ping::Ping;
 use messages::protocols::trust_ping::ping_response::PingResponse;
 
@@ -17,6 +17,10 @@ pub fn build_ping_response(ping: &Ping) -> PingResponse {
         .and_then(|thread| thread.thid.clone())
         .unwrap_or(ping.id.0.clone());
     PingResponse::create().set_thread_id(&thread_id).set_out_time()
+}
+
+pub fn build_ping_response_msg(ping: &Ping) -> A2AMessage {
+    build_ping_response(ping).to_a2a_message()
 }
 
 #[cfg(test)]

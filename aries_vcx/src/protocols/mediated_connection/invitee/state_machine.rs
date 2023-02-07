@@ -120,7 +120,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
             InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),

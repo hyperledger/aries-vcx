@@ -7,6 +7,7 @@ use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::protocols::connection::GenericConnection;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -48,7 +49,33 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
-                match connection.bootstrap_did_doc().await {
+                match connection.bootstrap_did_doc() {
+                    Some(did_doc) => {
+                        if let ServiceOob::Did(did) = service {
+                            if did.to_string() == did_doc.id {
+                                return Ok(Some(connection));
+                            }
+                        };
+                        if did_doc.get_service()? == resolve_service(profile, service).await? {
+                            return Ok(Some(connection));
+                        };
+                    }
+                    None => break,
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    pub async fn nonmediated_connection_exists<'a>(
+        &self,
+        profile: &Arc<dyn Profile>,
+        connections: &'a Vec<&'a GenericConnection>,
+    ) -> VcxResult<Option<&'a GenericConnection>> {
+        trace!("OutOfBandReceiver::connection_exists >>>");
+        for service in &self.oob.services {
+            for connection in connections {
+                match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let ServiceOob::Did(did) = service {
                             if did.to_string() == did_doc.id {
