@@ -66,9 +66,9 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
-  public processInvite(invite: string): void {
+  public async processInvite(invite: string): Promise<void> {
     try {
-      ffiNapi.connectionProcessInvite(this.handle, invite);
+      await ffiNapi.connectionProcessInvite(this.handle, invite);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
