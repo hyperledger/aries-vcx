@@ -2,7 +2,7 @@ pub mod states;
 
 use std::sync::Arc;
 
-use messages::protocols::connection::invite::Invitation;
+use messages::{protocols::connection::invite::Invitation, diddoc::aries::diddoc::AriesDidDoc};
 
 use crate::{
     common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult,
@@ -19,7 +19,7 @@ use messages::{
     protocols::connection::{request::Request, response::SignedResponse},
 };
 
-use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, Connection};
+use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, Connection, trait_bounds::BootstrapDidDoc};
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -170,7 +170,7 @@ impl InviteeConnection<Requested> {
             }
         }?;
 
-        let state = Responded::new(did_doc, self.state.thread_id);
+        let state = Responded::new(did_doc, self.state.did_doc, self.state.thread_id);
 
         Ok(Connection {
             state,
@@ -202,7 +202,12 @@ impl InviteeConnection<Responded> {
 
         self.send_message(wallet, &msg, transport).await?;
 
-        let state = Complete::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Complete::new(
+            self.state.did_doc,
+            self.state.bootstrap_did_doc,
+            self.state.thread_id,
+            None,
+        );
 
         Ok(Connection {
             state,
@@ -210,5 +215,12 @@ impl InviteeConnection<Responded> {
             pairwise_info: self.pairwise_info,
             initiation_type: Invitee,
         })
+    }
+}
+
+impl<S> InviteeConnection<S>
+where S: BootstrapDidDoc {
+    pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+        self.state.bootstrap_did_doc()
     }
 }

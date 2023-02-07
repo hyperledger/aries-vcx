@@ -1,8 +1,21 @@
-use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::discovery::disclose::{ProtocolDescriptor, Disclose}};
+use messages::{
+    diddoc::aries::diddoc::AriesDidDoc,
+    protocols::discovery::disclose::{Disclose, ProtocolDescriptor},
+};
 
 /// Trait implemented for [`super::Connection`] states that store an [`AriesDidDoc`].
 pub trait TheirDidDoc {
+    /// Returns the [`AriesDidDoc`] currently being used by a [`super::Connection`].
     fn their_did_doc(&self) -> &AriesDidDoc;
+}
+
+pub trait BootstrapDidDoc: TheirDidDoc {
+    /// Returns the [`AriesDidDoc`] used to bootstrap the connection.
+    /// By default, this will be the same as the [`AriesDidDoc`] currently being used
+    /// by the connection.
+    fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+        self.their_did_doc()
+    }
 }
 
 /// Trait implemented for [`super::Connection`] states that keep track of a thread ID.

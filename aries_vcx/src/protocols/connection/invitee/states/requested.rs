@@ -1,6 +1,6 @@
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 
-use crate::protocols::connection::trait_bounds::{HandleProblem, TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, HandleProblem, TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Requested {
@@ -19,6 +19,8 @@ impl TheirDidDoc for Requested {
         &self.did_doc
     }
 }
+
+impl BootstrapDidDoc for Requested {}
 
 impl ThreadId for Requested {
     fn thread_id(&self) -> &str {

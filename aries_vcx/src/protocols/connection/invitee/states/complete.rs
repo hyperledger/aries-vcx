@@ -3,19 +3,26 @@ use std::clone::Clone;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-use crate::protocols::connection::trait_bounds::{CompleteState, TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{CompleteState, TheirDidDoc, ThreadId, BootstrapDidDoc};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Complete {
     pub(crate) did_doc: AriesDidDoc,
+    pub(crate) bootstrap_did_doc: AriesDidDoc,
     pub(crate) thread_id: String,
     pub(crate) protocols: Option<Vec<ProtocolDescriptor>>,
 }
 
 impl Complete {
-    pub fn new(did_doc: AriesDidDoc, thread_id: String, protocols: Option<Vec<ProtocolDescriptor>>) -> Self {
+    pub fn new(
+        did_doc: AriesDidDoc,
+        bootstrap_did_doc: AriesDidDoc,
+        thread_id: String,
+        protocols: Option<Vec<ProtocolDescriptor>>,
+    ) -> Self {
         Self {
             did_doc,
+            bootstrap_did_doc,
             thread_id,
             protocols,
         }
@@ -25,6 +32,12 @@ impl Complete {
 impl TheirDidDoc for Complete {
     fn their_did_doc(&self) -> &AriesDidDoc {
         &self.did_doc
+    }
+}
+
+impl BootstrapDidDoc for Complete {
+    fn bootstrap_did_doc(&self) -> &AriesDidDoc {
+        &self.bootstrap_did_doc
     }
 }
 

@@ -27,7 +27,7 @@ use crate::{
     transport::Transport,
 };
 
-use super::basic_send_message;
+use super::{basic_send_message, trait_bounds::BootstrapDidDoc};
 
 /// A type that can encapsulate a [`Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
@@ -129,6 +129,17 @@ impl GenericConnection {
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Responded(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Complete(s)) => Some(s.their_did_doc()),
+        }
+    }
+
+    pub fn bootstrap_did_doc(&self) -> Option<&AriesDidDoc> {
+        match &self.state {
+            GenericState::Inviter(_) => None,
+            GenericState::Invitee(InviteeState::Initial(_)) => None,
+            GenericState::Invitee(InviteeState::Invited(s)) => Some(s.bootstrap_did_doc()),
+            GenericState::Invitee(InviteeState::Requested(s)) => Some(s.bootstrap_did_doc()),
+            GenericState::Invitee(InviteeState::Responded(s)) => Some(s.bootstrap_did_doc()),
+            GenericState::Invitee(InviteeState::Complete(s)) => Some(s.bootstrap_did_doc()),
         }
     }
 

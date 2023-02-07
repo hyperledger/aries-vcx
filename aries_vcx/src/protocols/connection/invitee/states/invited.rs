@@ -1,6 +1,6 @@
 use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
-use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId};
+use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId, BootstrapDidDoc};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {
@@ -19,6 +19,8 @@ impl TheirDidDoc for Invited {
         &self.did_doc
     }
 }
+
+impl BootstrapDidDoc for Invited {}
 
 impl ThreadId for Invited {
     fn thread_id(&self) -> &str {
