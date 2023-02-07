@@ -11,7 +11,7 @@ use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_handle::connection::CONNECTION_MAP;
+use crate::api_vcx::api_handle::connection;
 use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
@@ -186,14 +186,10 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
     let profile = get_main_profile()?;
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
 
-    // Obtain read lock for the duration of the search
-    let locked_map = CONNECTION_MAP.read()?;
+    let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
+    let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
 
-    // Filter through the map for references to connections that match the given handles
-    // and store them along their handles to be used in the search agains the OOB message.
-    let con_iter = conn_handles.iter().filter_map(|h| locked_map.get(h).map(|c| (h, c)));
-
-    match oob.nonmediated_connection_exists::<_, &u32>(&profile, con_iter).await {
+    match oob.nonmediated_connection_exists::<_, &u32>(&profile, &connections).await {
         None => Ok((0, false)),
         Some(h) => Ok((*h, true)),
     }

@@ -52,6 +52,12 @@ pub fn connection_get_remote_did(handle: u32) -> napi::Result<String> {
 }
 
 #[napi]
+pub fn connection_get_remote_vk(handle: u32) -> napi::Result<String> {
+    trace!("connection_get_remote_vk >>> handle: {:?}", handle);
+    connection::get_remote_vk(handle).map_err(to_napi_err)
+}
+
+#[napi]
 pub fn connection_get_state(handle: u32) -> napi::Result<u32> {
     trace!("connection_get_state >>> handle: {:?}", handle);
     connection::get_state(handle).map_err(to_napi_err)
@@ -96,6 +102,12 @@ pub async fn connection_process_response(handle: u32, response: String) -> napi:
 pub async fn connection_process_ack(handle: u32, message: String) -> napi::Result<()> {
     trace!("connection_process_ack >>> handle: {:?}", handle);
     connection::process_ack(handle, &message).await.map_err(to_napi_err)
+}
+
+#[napi]
+pub fn connection_process_problem_report(handle: u32, problem_report: String) -> napi::Result<()> {
+    trace!("connection_process_problem_report >>> handle: {:?}", handle);
+    connection::process_problem_report(handle, &problem_report).map_err(to_napi_err)
 }
 
 #[napi]

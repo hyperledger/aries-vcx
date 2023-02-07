@@ -33,6 +33,17 @@ async fn issuer_credential_update_state_with_message_v2(
 }
 
 #[napi]
+async fn issuer_credential_update_state_with_message_nonmediated(
+    handle_credential: u32,
+    connection_handle: u32,
+    message: String,
+) -> napi::Result<u32> {
+    issuer_credential::update_state_with_message_nonmediated(handle_credential, connection_handle, &message)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
 fn issuer_credential_get_state(handle_credential: u32) -> napi::Result<u32> {
     issuer_credential::get_state(handle_credential).map_err(to_napi_err)
 }
@@ -67,8 +78,26 @@ async fn issuer_credential_send_credential(handle_credential: u32, handle_connec
 }
 
 #[napi]
+async fn issuer_credential_send_credential_nonmediated(
+    handle_credential: u32,
+    handle_connection: u32,
+) -> napi::Result<u32> {
+    issuer_credential::send_credential_nonmediated(handle_credential, handle_connection)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
 async fn issuer_credential_send_offer_v2(handle_credential: u32, handle_connection: u32) -> napi::Result<()> {
     issuer_credential::send_credential_offer_v2(handle_credential, handle_connection)
+        .await
+        .map_err(to_napi_err)?;
+    Ok(())
+}
+
+#[napi]
+async fn issuer_credential_send_offer_nonmediated(handle_credential: u32, handle_connection: u32) -> napi::Result<()> {
+    issuer_credential::send_credential_offer_nonmediated(handle_credential, handle_connection)
         .await
         .map_err(to_napi_err)?;
     Ok(())

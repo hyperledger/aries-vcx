@@ -58,9 +58,17 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
-  public async processInvite(invite: string): Promise<void> {
+  public getRemoteVerkey(): string {
     try {
-      await ffiNapi.connectionProcessInvite(this.handle, invite);
+      return ffiNapi.connectionGetRemoteVk(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public processInvite(invite: string): void {
+    try {
+      ffiNapi.connectionProcessInvite(this.handle, invite);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -86,6 +94,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   public async processAck(message: string): Promise<void> {
     try {
       await ffiNapi.connectionProcessAck(this.handle, message);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public processProblemReport(problemReport: string): void {
+    try {
+      ffiNapi.connectionProcessProblemReport(this.handle, problemReport);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
