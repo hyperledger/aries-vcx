@@ -3,7 +3,7 @@ use std::clone::Clone;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::discovery::disclose::{Disclose, ProtocolDescriptor};
 
-use crate::protocols::connection::trait_bounds::{CompleteState, TheirDidDoc, ThreadId, BootstrapDidDoc};
+use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, CompleteState, TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Complete {

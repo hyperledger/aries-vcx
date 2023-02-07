@@ -1,6 +1,6 @@
 use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
-use crate::protocols::connection::trait_bounds::{TheirDidDoc, ThreadId, BootstrapDidDoc};
+use crate::protocols::connection::trait_bounds::{BootstrapDidDoc, TheirDidDoc, ThreadId};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Invited {

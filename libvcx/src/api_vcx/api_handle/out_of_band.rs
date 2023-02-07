@@ -189,7 +189,10 @@ pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) ->
     let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
     let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
 
-    match oob.nonmediated_connection_exists::<_, &u32>(&profile, &connections).await {
+    match oob
+        .nonmediated_connection_exists::<_, &u32>(&profile, &connections)
+        .await
+    {
         None => Ok((0, false)),
         Some(h) => Ok((*h, true)),
     }

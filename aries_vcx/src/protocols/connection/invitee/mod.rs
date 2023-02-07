@@ -2,7 +2,7 @@ pub mod states;
 
 use std::sync::Arc;
 
-use messages::{protocols::connection::invite::Invitation, diddoc::aries::diddoc::AriesDidDoc};
+use messages::{diddoc::aries::diddoc::AriesDidDoc, protocols::connection::invite::Invitation};
 
 use crate::{
     common::ledger::transactions::into_did_doc, core::profile::profile::Profile, errors::error::VcxResult,
@@ -19,7 +19,7 @@ use messages::{
     protocols::connection::{request::Request, response::SignedResponse},
 };
 
-use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, Connection, trait_bounds::BootstrapDidDoc};
+use super::{initiation_type::Invitee, pairwise_info::PairwiseInfo, trait_bounds::BootstrapDidDoc, Connection};
 use crate::{
     common::signing::decode_signed_connection_response,
     errors::error::{AriesVcxError, AriesVcxErrorKind},
@@ -219,7 +219,9 @@ impl InviteeConnection<Responded> {
 }
 
 impl<S> InviteeConnection<S>
-where S: BootstrapDidDoc {
+where
+    S: BootstrapDidDoc,
+{
     pub fn bootstrap_did_doc(&self) -> &AriesDidDoc {
         self.state.bootstrap_did_doc()
     }
