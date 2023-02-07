@@ -84,7 +84,7 @@ impl OutOfBandReceiver {
         None
     }
 
-    pub async fn connection_matches_service(
+    async fn connection_matches_service(
         profile: &Arc<dyn Profile>,
         connection: &GenericConnection,
         service: &ServiceOob,
