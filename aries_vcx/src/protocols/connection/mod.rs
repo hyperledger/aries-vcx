@@ -108,7 +108,7 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let did_doc = self.their_did_doc();
-        basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
+        wrap_and_send_msg(wallet, message, sender_verkey, did_doc, transport).await
     }
 }
 
@@ -140,7 +140,7 @@ where
     {
         let sender_verkey = &self.pairwise_info().pw_vk;
         let problem_report = self.create_problem_report(err, thread_id);
-        let res = basic_send_message(
+        let res = wrap_and_send_msg(
             wallet,
             &problem_report.to_a2a_message(),
             sender_verkey,
@@ -170,7 +170,7 @@ where
     }
 }
 
-pub(crate) async fn basic_send_message<T>(
+pub(crate) async fn wrap_and_send_msg<T>(
     wallet: &Arc<dyn BaseWallet>,
     message: &A2AMessage,
     sender_verkey: &str,

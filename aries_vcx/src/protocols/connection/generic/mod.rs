@@ -27,7 +27,7 @@ use crate::{
     transport::Transport,
 };
 
-use super::{basic_send_message, trait_bounds::BootstrapDidDoc};
+use super::{trait_bounds::BootstrapDidDoc, wrap_and_send_msg};
 
 /// A type that can encapsulate a [`super::Connection`] of any state.
 /// While mainly used for deserialization, it exposes some methods for retrieving
@@ -195,7 +195,7 @@ impl GenericConnection {
             "No DidDoc present",
         ))?;
 
-        basic_send_message(wallet, message, sender_verkey, did_doc, transport).await
+        wrap_and_send_msg(wallet, message, sender_verkey, did_doc, transport).await
     }
 }
 

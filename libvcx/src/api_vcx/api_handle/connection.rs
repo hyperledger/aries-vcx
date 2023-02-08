@@ -3,7 +3,7 @@ use std::{any::type_name, collections::HashMap, sync::RwLock};
 use agency_client::httpclient::post_message;
 use aries_vcx::{
     errors::error::{AriesVcxError, VcxResult},
-    messages::protocols::{basic_message::message::BasicMessage, connection::request::Request},
+    messages::protocols::connection::request::Request,
     protocols::connection::{
         invitee::InviteeConnection, inviter::InviterConnection, pairwise_info::PairwiseInfo, Connection,
         GenericConnection, State, ThinState,
@@ -366,12 +366,7 @@ pub async fn send_generic_message(handle: u32, content: String) -> LibvcxResult<
     trace!("send_generic_message >>>");
 
     let wallet = get_main_profile()?.inject_wallet();
-    let message = BasicMessage::create()
-        .set_content(content)
-        .set_time()
-        .set_out_time()
-        .to_a2a_message();
-
+    let message = serde_json::from_str(&content)?;
     let con = get_cloned_generic_connection(&handle)?;
     con.send_message(&wallet, &message, &HttpClient).await?;
     Ok(())
