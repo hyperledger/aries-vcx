@@ -17,8 +17,8 @@ test_utils = [ "libvcx/test_utils" ]
 [dependencies]
 libvcx = { path = "../../libvcx", default-features = false }
 log = "0.4.16"
-napi = { version = "=2.9.1", default-features = false, features = [ "async" ] }
-napi-derive = { version = "=2.9.3" }
+napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
+napi-derive = { version = "2.10.1" }
 
 [build-dependencies]
 napi-build = "2.0.1"
