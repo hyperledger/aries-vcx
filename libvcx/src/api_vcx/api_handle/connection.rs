@@ -53,6 +53,21 @@ pub fn get_cloned_generic_connection(handle: &u32) -> LibvcxResult<GenericConnec
     })
 }
 
+fn get_con_attribute_with_closure<F, T>(handle: &u32, closure: F) -> LibvcxResult<T>
+where
+    F: Fn(&GenericConnection) -> LibvcxResult<T>,
+{
+    let lock = CONNECTION_MAP.read()?;
+    let con = lock.get(handle).ok_or_else(|| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::ObjectAccessError,
+            format!("No connection found for handle: {}", handle),
+        )
+    })?;
+
+    closure(con)
+}
+
 fn get_cloned_connection<I, S>(handle: &u32) -> LibvcxResult<Connection<I, S>>
 where
     Connection<I, S>: TryFrom<GenericConnection, Error = AriesVcxError>,
@@ -141,81 +156,58 @@ pub async fn create_invitee(_invitation: &str) -> LibvcxResult<u32> {
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     trace!("get_thread_id >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| {
+        GenericConnection::thread_id(con).map(ToOwned::to_owned).ok_or_else(|| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::ObjectAccessError,
+                format!("No thread ID for connection with handle: {}", &handle),
+            )
+        })
+    };
 
-    con.thread_id().map(ToOwned::to_owned).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No thread ID for connection with handle: {}", handle),
-        )
-    })
+    get_con_attribute_with_closure(&handle, closure)
 }
 
 pub fn get_pairwise_info(handle: u32) -> LibvcxResult<String> {
     trace!("get_pairwise_info >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| serialize(GenericConnection::pairwise_info(con));
 
-    serialize(con.pairwise_info())
+    get_con_attribute_with_closure(&handle, closure)
 }
 
 pub fn get_remote_did(handle: u32) -> LibvcxResult<String> {
     trace!("get_remote_did >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| {
+        GenericConnection::remote_did(con)
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| {
+                LibvcxError::from_msg(
+                    LibvcxErrorKind::ObjectAccessError,
+                    format!("No remote DID for connection with handle: {}", handle),
+                )
+            })
+    };
 
-    con.remote_did().map(ToOwned::to_owned).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No remote DID for connection with handle: {}", handle),
-        )
-    })
+    get_con_attribute_with_closure(&handle, closure)
 }
 
 pub fn get_remote_vk(handle: u32) -> LibvcxResult<String> {
     trace!("get_remote_vk >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| GenericConnection::remote_vk(con).map_err(From::from);
 
-    con.remote_vk().map_err(From::from)
+    get_con_attribute_with_closure(&handle, closure)
 }
 
 pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     trace!("get_state >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| Ok(GenericConnection::state(con));
+    let state = get_con_attribute_with_closure(&handle, closure)?;
 
-    let state_id = match con.state() {
+    let state_id = match state {
         ThinState::Invitee(s) => s as u32,
         ThinState::Inviter(s) => s as u32,
     };
@@ -226,22 +218,18 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
 pub fn get_invitation(handle: u32) -> LibvcxResult<String> {
     trace!("get_invitation >>> handle: {}", handle);
 
-    let lock = CONNECTION_MAP.read()?;
-    let con = lock.get(&handle).ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No connection found for handle: {}", handle),
-        )
-    })?;
+    let closure = |con: &GenericConnection| {
+        let invitation = GenericConnection::invitation(con).ok_or_else(|| {
+            LibvcxError::from_msg(
+                LibvcxErrorKind::ObjectAccessError,
+                format!("No invitation for connection with handle: {}", handle),
+            )
+        })?;
 
-    let invitation = con.invitation().ok_or_else(|| {
-        LibvcxError::from_msg(
-            LibvcxErrorKind::ObjectAccessError,
-            format!("No invitation for connection with handle: {}", handle),
-        )
-    })?;
+        serialize(invitation)
+    };
 
-    serialize(invitation)
+    get_con_attribute_with_closure(&handle, closure)
 }
 
 // ----------------------------- MSG PROCESSING ------------------------------------
