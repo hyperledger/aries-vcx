@@ -1,7 +1,8 @@
-use super::super::anoncreds::schema::SchemaId;
-use super::super::crypto::did::ShortDidValue;
-use super::constants::{GET_SCHEMA, SCHEMA};
-use super::response::{GetReplyResultV1, ReplyType};
+use super::{
+    super::{anoncreds::schema::SchemaId, crypto::did::ShortDidValue},
+    constants::{GET_SCHEMA, SCHEMA},
+    response::{GetReplyResultV1, ReplyType},
+};
 
 use std::collections::HashSet;
 

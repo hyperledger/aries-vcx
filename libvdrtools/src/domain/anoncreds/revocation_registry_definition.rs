@@ -6,8 +6,10 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use ursa::cl::{RevocationKeyPrivate, RevocationKeyPublic};
 
-use super::super::crypto::did::DidValue;
-use super::{credential_definition::CredentialDefinitionId, indy_identifiers, DELIMITER};
+use super::{
+    super::crypto::did::DidValue, credential_definition::CredentialDefinitionId, indy_identifiers,
+    DELIMITER,
+};
 
 use crate::utils::qualifier;
 

@@ -543,9 +543,7 @@ pub mod tests {
 
     use futures::executor::block_on;
 
-    use crate::domain::ledger::request::ProtocolVersion;
-    use crate::services::pool::types::*;
-    use crate::utils::test;
+    use crate::{domain::ledger::request::ProtocolVersion, services::pool::types::*, utils::test};
 
     use super::*;
 

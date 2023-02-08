@@ -10,16 +10,12 @@ use ursa::cl::{
 use crate::domain::{
     anoncreds::{
         credential::AttributeValues,
-        credential_definition::CredentialDefinition,
-        credential_definition::CredentialDefinitionId,
+        credential_definition::{CredentialDefinition, CredentialDefinitionId},
         credential_offer::CredentialOffer,
         credential_request::CredentialRequest,
-        proof_request::ProofRequest,
-        proof_request::{AttributeInfo, NonRevocedInterval, PredicateInfo},
-        revocation_registry_definition::RevocationRegistryDefinition,
-        revocation_registry_definition::RevocationRegistryId,
-        schema::Schema,
-        schema::SchemaId,
+        proof_request::{AttributeInfo, NonRevocedInterval, PredicateInfo, ProofRequest},
+        revocation_registry_definition::{RevocationRegistryDefinition, RevocationRegistryId},
+        schema::{Schema, SchemaId},
     },
     crypto::did::DidValue,
 };

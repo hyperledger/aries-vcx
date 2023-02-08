@@ -1,13 +1,12 @@
 extern crate sodiumoxide;
 
-use self::sodiumoxide::crypto::aead::chacha20poly1305_ietf;
-use self::sodiumoxide::utils;
+use self::sodiumoxide::{crypto::aead::chacha20poly1305_ietf, utils};
 use super::pwhash_argon2i13;
-use indy_api_types::domain::wallet::KeyDerivationMethod;
-use indy_api_types::errors::prelude::*;
-use std::cmp;
-use std::io;
-use std::io::{Read, Write};
+use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
+use std::{
+    cmp, io,
+    io::{Read, Write},
+};
 
 pub const KEYBYTES: usize = chacha20poly1305_ietf::KEYBYTES;
 pub const NONCEBYTES: usize = chacha20poly1305_ietf::NONCEBYTES;

@@ -148,8 +148,7 @@ pub type TrieDB<'a> = HashMap<NodeHash, &'a Node>;
 impl Node {
     pub fn get_hash(&self) -> NodeHash {
         use rlp::encode as rlp_encode;
-        use sha3::digest::FixedOutput;
-        use sha3::Digest;
+        use sha3::{digest::FixedOutput, Digest};
         let encoded = rlp_encode(self);
         let mut hasher = sha3::Sha3_256::default();
         hasher.update(encoded.to_vec().as_slice());

@@ -1,6 +1,6 @@
-use crate::services::ledger::merkletree::proof::{Lemma, Proof};
-use crate::services::ledger::merkletree::tree::{
-    LeavesIntoIterator, LeavesIterator, Tree, TreeLeafData,
+use crate::services::ledger::merkletree::{
+    proof::{Lemma, Proof},
+    tree::{LeavesIntoIterator, LeavesIterator, Tree, TreeLeafData},
 };
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::{Hash, EMPTY_HASH_BYTES};

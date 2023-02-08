@@ -2,8 +2,10 @@ use super::DELIMITER;
 
 use super::super::crypto::did::DidValue;
 
-use indy_api_types::errors::{IndyErrorKind, IndyResult};
-use indy_api_types::IndyError;
+use indy_api_types::{
+    errors::{IndyErrorKind, IndyResult},
+    IndyError,
+};
 use std::collections::{HashMap, HashSet};
 
 use super::indy_identifiers;

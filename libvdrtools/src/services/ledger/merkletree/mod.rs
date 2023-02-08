@@ -2,8 +2,7 @@ pub mod merkletree;
 pub mod proof;
 pub mod tree;
 
-use self::merkletree::*;
-use self::tree::*;
+use self::{merkletree::*, tree::*};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::Hash;
 

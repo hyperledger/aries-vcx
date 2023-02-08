@@ -1,7 +1,6 @@
 use ursa::cl::{CredentialKeyCorrectnessProof, Nonce};
 
-use super::credential_definition::CredentialDefinitionId;
-use super::schema::SchemaId;
+use super::{credential_definition::CredentialDefinitionId, schema::SchemaId};
 
 use indy_api_types::validation::Validatable;
 

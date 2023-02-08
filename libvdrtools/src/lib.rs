@@ -59,8 +59,7 @@ pub use domain::{
             RevocationRegistryId,
         },
         revocation_state::RevocationStates,
-        schema::AttributeNames,
-        schema::{Schema, SchemaId},
+        schema::{AttributeNames, Schema, SchemaId},
     },
     crypto::{
         did::{DidMethod, DidValue, MyDidInfo},

@@ -25,8 +25,10 @@ pub fn decrypt(
 mod tests {
     use self::sodiumoxide::crypto::box_;
     use super::*;
-    use crate::crypto::ed25519_box::{PublicKey, SecretKey};
-    use crate::crypto::randombytes::randombytes;
+    use crate::crypto::{
+        ed25519_box::{PublicKey, SecretKey},
+        randombytes::randombytes,
+    };
 
     #[test]
     fn encrypt_decrypt_works() {

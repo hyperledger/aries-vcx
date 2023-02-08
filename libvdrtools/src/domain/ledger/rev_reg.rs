@@ -2,10 +2,14 @@ use super::constants::{GET_REVOC_REG, GET_REVOC_REG_DELTA, REVOC_REG_ENTRY};
 
 use ursa::cl::{RevocationRegistry, RevocationRegistryDelta};
 
-use super::super::anoncreds::revocation_registry::RevocationRegistryV1;
-use super::super::anoncreds::revocation_registry_definition::RevocationRegistryId;
-use super::super::anoncreds::revocation_registry_delta::RevocationRegistryDeltaV1;
-use super::response::{GetReplyResultV1, ReplyType};
+use super::{
+    super::anoncreds::{
+        revocation_registry::RevocationRegistryV1,
+        revocation_registry_definition::RevocationRegistryId,
+        revocation_registry_delta::RevocationRegistryDeltaV1,
+    },
+    response::{GetReplyResultV1, ReplyType},
+};
 
 use std::collections::HashSet;
 

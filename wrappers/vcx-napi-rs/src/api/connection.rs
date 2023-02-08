@@ -145,7 +145,9 @@ pub async fn connection_send_generic_message(handle: u32, content: String) -> na
         .set_out_time()
         .to_a2a_message();
 
-    let basic_message = serde_json::to_string(&message).map_err(From::from).map_err(to_napi_err)?;
+    let basic_message = serde_json::to_string(&message)
+        .map_err(From::from)
+        .map_err(to_napi_err)?;
     connection::send_generic_message(handle, basic_message)
         .await
         .map_err(to_napi_err)

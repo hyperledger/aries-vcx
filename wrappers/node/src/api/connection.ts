@@ -139,6 +139,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
       throw new VCXInternalError(err);
     }
   }
+  
+  public async sendAriesMessage(content: string): Promise<void> {
+    try {
+      return await ffiNapi.connectionSendAriesMessage(this.handle, content);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
 
   public async createInvite(endpointInfo: IEndpointInfo): Promise<void> {
     try {

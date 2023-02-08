@@ -1,11 +1,9 @@
 use indy_api_types::errors::prelude::*;
 
 use libc::c_int;
-use sodiumoxide::crypto::box_;
-use sodiumoxide::crypto::sign;
+use sodiumoxide::crypto::{box_, sign};
 
-use super::ed25519_box;
-use super::randombytes::randombytes;
+use super::{ed25519_box, randombytes::randombytes};
 
 pub const SEEDBYTES: usize = sign::SEEDBYTES;
 pub const SIG_PUBLICKEYBYTES: usize = sign::PUBLICKEYBYTES;

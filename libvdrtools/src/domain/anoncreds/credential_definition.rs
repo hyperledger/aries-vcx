@@ -1,5 +1,7 @@
-use indy_api_types::errors::{IndyErrorKind, IndyResult};
-use indy_api_types::IndyError;
+use indy_api_types::{
+    errors::{IndyErrorKind, IndyResult},
+    IndyError,
+};
 use std::collections::HashMap;
 
 use indy_api_types::validation::Validatable;

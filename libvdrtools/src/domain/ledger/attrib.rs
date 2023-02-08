@@ -1,6 +1,8 @@
-use super::super::crypto::did::ShortDidValue;
-use super::constants::{ATTRIB, GET_ATTR};
-use super::response::GetReplyResultV1;
+use super::{
+    super::crypto::did::ShortDidValue,
+    constants::{ATTRIB, GET_ATTR},
+    response::GetReplyResultV1,
+};
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct AttribOperation {

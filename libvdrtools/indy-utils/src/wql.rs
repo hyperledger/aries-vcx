@@ -1,9 +1,11 @@
 use std::string;
 
-use serde::ser::{Serialize, Serializer};
-use serde::{de, Deserialize, Deserializer};
-use serde_json;
-use serde_json::Value;
+use serde::{
+    de,
+    ser::{Serialize, Serializer},
+    Deserialize, Deserializer,
+};
+use serde_json::{self, Value};
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum Query {
@@ -266,8 +268,7 @@ fn parse_single_operator(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::distributions::Alphanumeric;
-    use rand::{thread_rng, Rng};
+    use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
     fn _random_string(len: usize) -> String {
         thread_rng()
