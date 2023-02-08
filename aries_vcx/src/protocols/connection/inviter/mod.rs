@@ -64,6 +64,11 @@ impl InviterConnection<Initial> {
     /// [`InviterConnection<Initial>::create_invitation`] then you can call this
     /// to transition to the [`InviterConnection<Invited>`] directly by passing the
     /// expected thread_id (external's [`Invitation`] id).
+    /// 
+    /// However, the advised method of handling connection requests is to clone
+    /// the [`InviterConnection<Invited>`] and continue the protocol for every
+    /// [`Request`] received for the generated invitation, assuming more than one
+    /// invitees are expected.
     //
     // This is a workaround and it's not necessarily pretty, but is implemented
     // for backwards compatibility.
