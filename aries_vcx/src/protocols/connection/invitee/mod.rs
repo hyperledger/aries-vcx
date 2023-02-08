@@ -182,7 +182,7 @@ impl InviteeConnection<Requested> {
 }
 
 impl InviteeConnection<Responded> {
-    /// Sends an acknolwedgement message to the inviter and transitions to [`InviteeConnection<Complete>`].
+    /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Complete>`].
     ///
     /// # Errors
     ///

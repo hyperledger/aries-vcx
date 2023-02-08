@@ -183,7 +183,7 @@ impl InviterConnection<Requested> {
     ///
     /// # Errors
     ///
-    /// Will return an error if sending the repsonse fails.
+    /// Will return an error if sending the response fails.
     pub async fn send_response<T>(
         self,
         wallet: &Arc<dyn BaseWallet>,
