@@ -139,7 +139,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
       throw new VCXInternalError(err);
     }
   }
-  
+
   public async sendAriesMessage(content: string): Promise<void> {
     try {
       return await ffiNapi.connectionSendAriesMessage(this.handle, content);
@@ -190,7 +190,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   };
   protected _getStFn = ffiNapi.connectionGetState;
   protected _serializeFn = (handle: number): string => {
-    const data = ffiNapi.connectionSerialize(handle);
+    const data = JSON.parse(ffiNapi.connectionSerialize(handle));
     return JSON.stringify({ data, source_id: this.sourceId, version: '1.0' });
   }
   protected _deserializeFn = ffiNapi.connectionDeserialize;
