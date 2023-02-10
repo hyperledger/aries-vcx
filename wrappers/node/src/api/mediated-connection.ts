@@ -138,7 +138,7 @@ export function generatePublicInvite(public_did: string, label: string): string 
 export class Connection extends VcxBaseWithState<IConnectionData, ConnectionStateType> {
   public static async create({ id }: IConnectionCreateData): Promise<Connection> {
     try {
-      const connection = new Connection(id);
+      const connection = new Connection();
       connection._setHandle(await ffiNapi.mediatedConnectionCreate(id));
       return connection;
     } catch (err: any) {
@@ -148,7 +148,7 @@ export class Connection extends VcxBaseWithState<IConnectionData, ConnectionStat
 
   public static async createWithInvite({ id, invite }: IRecipientInviteInfo): Promise<Connection> {
     try {
-      const connection = new Connection(id);
+      const connection = new Connection();
       connection._setHandle(await ffiNapi.mediatedConnectionCreateWithInvite(id, invite));
       return connection;
     } catch (err: any) {
@@ -170,7 +170,7 @@ export class Connection extends VcxBaseWithState<IConnectionData, ConnectionStat
     request,
   }: IFromRequestInfoV2): Promise<Connection> {
     try {
-      const connection = new Connection(id);
+      const connection = new Connection();
       connection._setHandle(
         await ffiNapi.mediatedConnectionCreateWithConnectionRequestV2(
           request,
@@ -185,7 +185,7 @@ export class Connection extends VcxBaseWithState<IConnectionData, ConnectionStat
 
   public static deserialize(connectionData: ISerializedData<IConnectionData>): Connection {
     try {
-      return super._deserialize(Connection, connectionData);
+      return super._deserialize(Connection, connectionData as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

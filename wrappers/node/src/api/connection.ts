@@ -9,15 +9,20 @@ export type INonmediatedConnectionInvite = string;
 export type INonmeditatedConnectionData = string;
 
 export interface IEndpointInfo {
-  serviceEndpoint: string,
-  routingKeys: string[],
+  serviceEndpoint: string;
+  routingKeys: string[];
 }
 
-export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnectionData, ConnectionStateType> {
+export class NonmediatedConnection extends VcxBaseWithState<
+  INonmeditatedConnectionData,
+  ConnectionStateType
+> {
   public static async createInviter(pwInfo?: IPwInfo): Promise<NonmediatedConnection> {
     try {
-      const connection = new NonmediatedConnection("");
-      connection._setHandle(await ffiNapi.connectionCreateInviter(pwInfo ? JSON.stringify(pwInfo) : null));
+      const connection = new NonmediatedConnection();
+      connection._setHandle(
+        await ffiNapi.connectionCreateInviter(pwInfo ? JSON.stringify(pwInfo) : null),
+      );
       return connection;
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -26,7 +31,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
 
   public static async createInvitee(invite: string): Promise<NonmediatedConnection> {
     try {
-      const connection = new NonmediatedConnection("");
+      const connection = new NonmediatedConnection();
       connection._setHandle(await ffiNapi.connectionCreateInvitee(invite));
       return connection;
     } catch (err: any) {
@@ -175,9 +180,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
 
   public static deserialize(connectionData: ISerializedData<string>): NonmediatedConnection {
     try {
-      const connection = new NonmediatedConnection("");
-      connection._setHandle(ffiNapi.connectionDeserialize(connectionData.data));
-      return connection;
+      return super._deserialize(NonmediatedConnection, connectionData as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

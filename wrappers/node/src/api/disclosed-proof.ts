@@ -55,7 +55,7 @@ export interface IDeclinePresentationRequestData {
 export class DisclosedProof extends VcxBaseWithState<IDisclosedProofData, ProverStateType> {
   public static create({ sourceId, request }: IDisclosedProofCreateData): DisclosedProof {
     try {
-      const disclosedProof = new DisclosedProof(sourceId);
+      const disclosedProof = new DisclosedProof();
       disclosedProof._setHandle(ffi.disclosedProofCreateWithRequest(sourceId, request));
       return disclosedProof;
     } catch (err: any) {
@@ -65,7 +65,7 @@ export class DisclosedProof extends VcxBaseWithState<IDisclosedProofData, Prover
 
   public static deserialize(data: ISerializedData<IDisclosedProofData>): DisclosedProof {
     try {
-      return super._deserialize(DisclosedProof, data);
+      return super._deserialize(DisclosedProof, data as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

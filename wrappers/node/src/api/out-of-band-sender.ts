@@ -36,7 +36,7 @@ export enum HandshakeProtocol {
 
 export class OutOfBandSender extends VcxBase<IOOBSerializedData> {
   public static create(config: IOOBCreateData): OutOfBandSender {
-    const oob = new OutOfBandSender(config.source_id);
+    const oob = new OutOfBandSender();
     try {
       oob._setHandle(ffi.outOfBandSenderCreate(JSON.stringify(config)));
       return oob;

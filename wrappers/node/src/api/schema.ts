@@ -77,9 +77,9 @@ export class Schema extends VcxBase<ISchemaSerializedData> {
 
   public static async create({ data, sourceId }: ISchemaCreateData): Promise<Schema> {
     try {
-      const schema = new Schema(sourceId, { name: data.name, schemaId: '', schemaAttrs: data });
+      const schema = new Schema({ name: data.name, schemaId: '', schemaAttrs: data });
       const handle = await ffi.schemaCreate(
-        schema.sourceId,
+        sourceId,
         schema._name,
         data.version,
         JSON.stringify(data.attrNames),
@@ -101,7 +101,7 @@ export class Schema extends VcxBase<ISchemaSerializedData> {
       schemaAttrs: { name, version, attrNames: data },
       schemaId: schema_id,
     };
-    return super._deserialize(Schema, schema, jsConstructorParams);
+    return super._deserialize(Schema, schema as any, jsConstructorParams);
   }
 
   protected _serializeFn = ffi.schemaSerialize;
@@ -111,8 +111,8 @@ export class Schema extends VcxBase<ISchemaSerializedData> {
   protected _schemaId: string;
   protected _schemaAttrs: ISchemaAttrs;
 
-  constructor(sourceId: string, { name, schemaId, schemaAttrs }: ISchemaParams) {
-    super(sourceId);
+  constructor({ name, schemaId, schemaAttrs }: ISchemaParams) {
+    super();
     this._name = name;
     this._schemaId = schemaId;
     this._schemaAttrs = schemaAttrs;

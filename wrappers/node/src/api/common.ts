@@ -165,10 +165,6 @@ export enum VerifierStateType {
   Failed = 5
 }
 
-export interface IInitVCXOptions {
-  libVCXPath?: string;
-}
-
 export interface ISerializedData<T> {
   version: string;
   data: T;
