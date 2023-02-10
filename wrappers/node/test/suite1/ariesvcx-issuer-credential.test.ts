@@ -32,7 +32,7 @@ describe('IssuerCredential:', () => {
     });
 
     it('throws: not initialized', async () => {
-      const issuerCredential = new IssuerCredential('foo');
+      const issuerCredential = new IssuerCredential();
       const error = await shouldThrow(() => issuerCredential.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });
@@ -103,7 +103,7 @@ describe('IssuerCredential:', () => {
 
     it('throws: not initialized', async () => {
       const [, data] = await issuerCredentialCreate();
-      const issuerCredential = new IssuerCredential('');
+      const issuerCredential = new IssuerCredential();
       const error = await shouldThrow(() => issuerCredential.buildCredentialOfferMsgV2(data));
       assert.equal(error.napiCode, 'NumberExpected');
     });

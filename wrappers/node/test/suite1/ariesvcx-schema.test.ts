@@ -83,7 +83,7 @@ describe('Schema:', () => {
     });
 
     it('throws: not initialized', async () => {
-      const schema = new Schema(null as any, {} as any);
+      const schema = new Schema({} as any);
       const error = await shouldThrow(() => schema.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });

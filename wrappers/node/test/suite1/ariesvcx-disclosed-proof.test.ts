@@ -2,13 +2,11 @@ import '../module-resolver-helper';
 
 import { assert } from 'chai';
 import {
-  createConnectionInviterFinished,
   createConnectionInviterRequested,
   dataDisclosedProofCreateWithRequest,
   disclosedProofCreateWithRequest,
 } from 'helpers/entities';
 import { initVcxTestMode, shouldThrow } from 'helpers/utils';
-import { mapValues } from 'lodash';
 import { DisclosedProof, ProverStateType, VCXCode } from 'src';
 
 describe('DisclosedProof', () => {

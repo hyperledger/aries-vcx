@@ -27,7 +27,7 @@ describe('CredentialDef:', () => {
     });
 
     it('throws: not initialized', async () => {
-      const credentialDef = new CredentialDef(null as any, {} as any);
+      const credentialDef = new CredentialDef({} as any);
       const error = await shouldThrow(() => credentialDef.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });

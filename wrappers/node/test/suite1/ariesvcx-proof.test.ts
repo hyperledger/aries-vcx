@@ -78,7 +78,7 @@ describe('Proof:', () => {
   describe('updateState:', () => {
     it(`throws error when not initialized`, async () => {
       let caught_error;
-      const proof = new Proof(null as any);
+      const proof = new Proof();
       const connection = await createConnectionInviterRequested();
       try {
         await proof.updateStateV2(connection);
@@ -112,7 +112,7 @@ describe('Proof:', () => {
 
     it('throws: not initialized', async () => {
       const connection = await createConnectionInviterRequested();
-      const proof = new Proof(null as any);
+      const proof = new Proof();
       const error = await shouldThrow(() => proof.requestProof(connection));
       assert.equal(error.napiCode, 'NumberExpected');
     });
