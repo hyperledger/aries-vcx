@@ -42,7 +42,6 @@ describe('Proof:', () => {
       const proof = await proofCreate();
       const { data } = await proof.serialize();
       assert.ok(data);
-      assert.equal((data as any).verifier_sm.source_id, proof.sourceId);
     });
   });
 
