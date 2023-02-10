@@ -189,10 +189,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     throw new Error('_updateStFnV2 cannot be called for a Connection object');
   };
   protected _getStFn = ffiNapi.connectionGetState;
-  protected _serializeFn = (handle: number): string => {
-    const data = JSON.parse(ffiNapi.connectionSerialize(handle));
-    return JSON.stringify({ data, source_id: this.sourceId, version: '1.0' });
-  }
+  protected _serializeFn = ffiNapi.connectionSerialize;
   protected _deserializeFn = ffiNapi.connectionDeserialize;
   protected _inviteDetailFn = ffiNapi.connectionGetInvitation;
 }
