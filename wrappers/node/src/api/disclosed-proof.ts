@@ -17,12 +17,6 @@ export interface IDisclosedProofCreateData {
   request: string;
 }
 
-export interface IDisclosedProofCreateWithMsgIdData {
-  connection: Connection;
-  msgId: string;
-  sourceId: string;
-}
-
 export interface IRetrievedCreds {
   attrs: {
     [index: string]: ICredData[];

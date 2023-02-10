@@ -44,15 +44,6 @@ export interface IFromRequestInfoV2 extends IConnectionCreateData {
 }
 
 /**
- * @description Interface that represents the parameters for `Connection.connect` function.
- * @interface
- */
-export interface IConnectOptions {
-  // Provides details indicating if the connection will be established by text or QR Code
-  data: string;
-}
-
-/**
  * @description Interface that represents the parameters for `Connection.sendMessage` function.
  * @interface
  */
@@ -108,10 +99,6 @@ export interface IDownloadMessagesConfigsV2 {
 export interface IConnectionDownloadMessages {
   status: string;
   uids: string;
-}
-
-export interface IConnectionDownloadAllMessages extends IConnectionDownloadMessages {
-  pwdids: string;
 }
 
 export async function downloadMessagesV2({

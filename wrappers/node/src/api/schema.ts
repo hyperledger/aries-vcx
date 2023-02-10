@@ -52,11 +52,6 @@ export interface ISchemaParams {
   schemaAttrs: ISchemaAttrs;
 }
 
-export interface ISchemaLookupData {
-  sourceId: string;
-  schemaId: string;
-}
-
 export enum SchemaState {
   Built = 0,
   Published = 1,
