@@ -11,7 +11,7 @@ USER root
 RUN mv /home/indy/target/release/libvcx.so .
 
 
-FROM alpine:3.17.1
+FROM alpine:3.15.4
 ARG UID=1000
 ARG GID=1000
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node

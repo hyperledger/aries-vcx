@@ -1,4 +1,4 @@
-FROM alpine:3.17.1 AS builder
+FROM alpine:3.15.4 AS builder
 
 ARG UID=1000
 ARG GID=1000
