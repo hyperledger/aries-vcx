@@ -67,3 +67,4 @@ cargo test  --features "pool_tests" -- --test-threads=1
 ## Architecture 
 
 <img alt="AriesVCX architecture diagram" src="../docs/architecture/ariesvcx_architecture_040123.png"/>
+
