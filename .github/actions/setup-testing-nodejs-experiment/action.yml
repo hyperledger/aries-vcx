@@ -16,7 +16,7 @@ runs:
     - name: Use Node.js ${{ inputs.node-version }}
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ inputs.node-version }}
+        node-version: 18
     - name: "Print versions after node installation"
       shell: bash
       run: |
