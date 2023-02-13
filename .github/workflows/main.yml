@@ -373,7 +373,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [18]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -390,7 +390,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [18]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
