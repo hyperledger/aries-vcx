@@ -378,10 +378,10 @@ jobs:
 
   test-node-wrapper:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [12.x, 18.x]
+        node-version: [18.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
@@ -395,10 +395,10 @@ jobs:
 
   test-integration-node-wrapper:
     needs: workflow-setup
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [12.x, 18.x]
+        node-version: [18.x]
     steps:
       - name: "Git checkout"
         uses: actions/checkout@v3
