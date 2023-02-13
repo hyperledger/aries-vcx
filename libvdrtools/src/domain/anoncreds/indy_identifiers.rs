@@ -1,7 +1,7 @@
-use super::super::crypto::did::DidValue;
-use super::credential_definition::CredentialDefinitionId;
-use super::revocation_registry_definition::CL_ACCUM;
-use super::schema::SchemaId;
+use super::{
+    super::crypto::did::DidValue, credential_definition::CredentialDefinitionId,
+    revocation_registry_definition::CL_ACCUM, schema::SchemaId,
+};
 use lazy_static::lazy_static;
 use regex::Regex;
 

@@ -1,6 +1,8 @@
+use napi::Error;
 use napi_derive::napi;
 
 use vcx::api_vcx::api_handle::connection;
+use vcx::aries_vcx::messages::protocols::basic_message::message::BasicMessage;
 use vcx::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
 use vcx::errors::error::{LibvcxError, LibvcxErrorKind};
 use vcx::serde_json;
@@ -52,6 +54,12 @@ pub fn connection_get_remote_did(handle: u32) -> napi::Result<String> {
 }
 
 #[napi]
+pub fn connection_get_remote_vk(handle: u32) -> napi::Result<String> {
+    trace!("connection_get_remote_vk >>> handle: {:?}", handle);
+    connection::get_remote_vk(handle).map_err(to_napi_err)
+}
+
+#[napi]
 pub fn connection_get_state(handle: u32) -> napi::Result<u32> {
     trace!("connection_get_state >>> handle: {:?}", handle);
     connection::get_state(handle).map_err(to_napi_err)
@@ -64,9 +72,11 @@ pub fn connection_get_invitation(handle: u32) -> napi::Result<String> {
 }
 
 #[napi]
-pub fn connection_process_invite(handle: u32, invitation: String) -> napi::Result<()> {
+pub async fn connection_process_invite(handle: u32, invitation: String) -> napi::Result<()> {
     trace!("connection_process_invite >>> handle: {:?}", handle);
-    connection::process_invite(handle, &invitation).map_err(to_napi_err)
+    connection::process_invite(handle, &invitation)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]
@@ -97,6 +107,12 @@ pub async fn connection_process_ack(handle: u32, message: String) -> napi::Resul
 }
 
 #[napi]
+pub fn connection_process_problem_report(handle: u32, problem_report: String) -> napi::Result<()> {
+    trace!("connection_process_problem_report >>> handle: {:?}", handle);
+    connection::process_problem_report(handle, &problem_report).map_err(to_napi_err)
+}
+
+#[napi]
 pub async fn connection_send_response(handle: u32) -> napi::Result<()> {
     trace!("connection_send_response >>> handle: {:?}", handle);
     connection::send_response(handle).await.map_err(to_napi_err)
@@ -122,6 +138,23 @@ pub async fn connection_send_ack(handle: u32) -> napi::Result<()> {
 
 #[napi]
 pub async fn connection_send_generic_message(handle: u32, content: String) -> napi::Result<()> {
+    trace!("connection_send_generic_message >>> handle: {:?}", handle);
+    let message = BasicMessage::create()
+        .set_content(content)
+        .set_time()
+        .set_out_time()
+        .to_a2a_message();
+
+    let basic_message = serde_json::to_string(&message)
+        .map_err(From::from)
+        .map_err(to_napi_err)?;
+    connection::send_generic_message(handle, basic_message)
+        .await
+        .map_err(to_napi_err)
+}
+
+#[napi]
+pub async fn connection_send_aries_message(handle: u32, content: String) -> napi::Result<()> {
     trace!("connection_send_generic_message >>> handle: {:?}", handle);
     connection::send_generic_message(handle, content)
         .await

@@ -909,8 +909,7 @@ impl WalletStorageType for MySqlStorageType {
 mod tests {
     use indy_utils::{assert_kind, environment};
 
-    use super::super::Tag;
-    use super::*;
+    use super::{super::Tag, *};
 
     // docker run --name indy-mysql -e MYSQL_ROOT_PASSWORD=pass@word1 -p 3306:3306 -d mysql:latest
 

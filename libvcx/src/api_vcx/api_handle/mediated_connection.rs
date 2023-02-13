@@ -10,7 +10,7 @@ use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::connection::invite::Invitation as InvitationV3;
 use aries_vcx::messages::protocols::connection::invite::PublicInvitation;
 use aries_vcx::messages::protocols::connection::request::Request;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::protocols::SendClosure;
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;

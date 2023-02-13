@@ -1,15 +1,20 @@
-use std::collections::HashMap;
-use std::io::{BufRead, Read, Write};
-use std::path::PathBuf;
-use std::{fs, io};
+use std::{
+    collections::HashMap,
+    fs, io,
+    io::{BufRead, Read, Write},
+    path::PathBuf,
+};
 
-use serde_json;
-use serde_json::Value as SJsonValue;
+use serde_json::{self, Value as SJsonValue};
 
-use crate::domain::ledger::request::ProtocolVersion;
-use crate::services::ledger::merkletree::merkletree::MerkleTree;
-use crate::services::pool::types::{NodeTransaction, NodeTransactionV0, NodeTransactionV1};
-use crate::utils::environment;
+use crate::{
+    domain::ledger::request::ProtocolVersion,
+    services::{
+        ledger::merkletree::merkletree::MerkleTree,
+        pool::types::{NodeTransaction, NodeTransactionV0, NodeTransactionV1},
+    },
+    utils::environment,
+};
 use indy_api_types::errors::prelude::*;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -316,8 +321,7 @@ mod tests {
 
     use byteorder::LittleEndian;
 
-    use crate::domain::ledger::request::ProtocolVersion;
-    use crate::utils::test;
+    use crate::{domain::ledger::request::ProtocolVersion, utils::test};
 
     use super::*;
 

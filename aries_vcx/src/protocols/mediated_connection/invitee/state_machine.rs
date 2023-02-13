@@ -6,12 +6,12 @@ use crate::common::signing::decode_signed_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::protocols::connection::invitee::states::complete::CompleteState;
-use crate::protocols::connection::invitee::states::initial::InitialState;
-use crate::protocols::connection::invitee::states::invited::InvitedState;
-use crate::protocols::connection::invitee::states::requested::RequestedState;
-use crate::protocols::connection::invitee::states::responded::RespondedState;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::mediated_connection::invitee::states::complete::CompleteState;
+use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
+use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
+use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
+use crate::protocols::mediated_connection::invitee::states::responded::RespondedState;
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 use messages::a2a::protocol_registry::ProtocolRegistry;
 use messages::a2a::A2AMessage;
@@ -120,7 +120,7 @@ impl SmConnectionInvitee {
         }
     }
 
-    pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match self.state {
             InviteeFullState::Initial(ref state) => state.did_doc.clone(),
             InviteeFullState::Invited(ref state) => Some(state.did_doc.clone()),
@@ -240,7 +240,7 @@ impl SmConnectionInvitee {
 
     pub fn handle_invitation(self, invitation: Invitation) -> VcxResult<Self> {
         let Self { state, .. } = self;
-        let thread_id = invitation.get_id()?;
+        let thread_id = invitation.get_id().to_owned();
         let state = match state {
             InviteeFullState::Initial(state) => InviteeFullState::Invited(
                 (

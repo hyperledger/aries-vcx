@@ -11,7 +11,8 @@ use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
 
 use crate::api_vcx::api_global::agency_client::get_main_agency_client;
 use crate::api_vcx::api_global::profile::get_main_profile;
-use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP;
+use crate::api_vcx::api_handle::connection;
+use crate::api_vcx::api_handle::mediated_connection::CONNECTION_MAP as MEDIATED_CONS_MAP;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
 use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
@@ -155,7 +156,7 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
     let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
     let mut conn_map = HashMap::new();
     for conn_handle in conn_handles {
-        let connection = CONNECTION_MAP.get_cloned(*conn_handle)?;
+        let connection = MEDIATED_CONS_MAP.get_cloned(*conn_handle)?;
         conn_map.insert(*conn_handle, connection);
     }
     let connections = conn_map.values().collect();
@@ -172,6 +173,28 @@ pub async fn connection_exists(handle: u32, conn_handles: &Vec<u32>) -> LibvcxRe
         }
     } else {
         Ok((0, false))
+    }
+}
+
+// todo: remove this
+pub async fn nonmediated_connection_exists(handle: u32, conn_handles: &[u32]) -> LibvcxResult<(u32, bool)> {
+    trace!(
+        "nonmediated_connection_exists >>> handle: {}, conn_handles: {:?}",
+        handle,
+        conn_handles
+    );
+    let profile = get_main_profile()?;
+    let oob = OUT_OF_BAND_RECEIVER_MAP.get_cloned(handle)?;
+
+    let filter_closure = |h: &u32| connection::get_cloned_generic_connection(h).ok().map(|c| (*h, c));
+    let connections: HashMap<_, _> = conn_handles.iter().filter_map(filter_closure).collect();
+
+    match oob
+        .nonmediated_connection_exists::<_, &u32>(&profile, &connections)
+        .await
+    {
+        None => Ok((0, false)),
+        Some(h) => Ok((*h, true)),
     }
 }
 

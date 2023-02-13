@@ -4,7 +4,7 @@ use futures::future::BoxFuture;
 use libc::c_char;
 
 use crate::api_c::cutils;
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 
 use crate::api_c::types::CommandHandle;
 use crate::api_vcx::api_handle::mediated_connection;

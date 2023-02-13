@@ -7,7 +7,8 @@ use std::{
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 use indy_api_types::{
-    domain::wallet::KeyDerivationMethod, domain::wallet::Record, errors::prelude::*,
+    domain::wallet::{KeyDerivationMethod, Record},
+    errors::prelude::*,
 };
 
 use indy_utils::crypto::{

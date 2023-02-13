@@ -47,7 +47,7 @@ module.exports.createServiceNonmediatedConnections = function createServiceNonme
     logger.info(`inviteeConnectionCreateFromInvite >> connectionId=${connectionId}, invite: ${invite}`)
     const connection = await NonmediatedConnection.createInvitee(invite)
     logger.debug(`InviteeConnectionSM after created from invitation:\n${JSON.stringify(connection.serialize())}`)
-    connection.processInvite(invite)
+    await connection.processInvite(invite)
     await connection.sendRequest(endpointInfo)
     logger.debug(`InviteeConnectionSM after sending request:\n${JSON.stringify(connection.serialize())}`)
     await saveNonmediatedConnection(connectionId, connection)

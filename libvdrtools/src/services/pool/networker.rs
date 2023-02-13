@@ -1,20 +1,18 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::sync::Mutex;
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    sync::Mutex,
+};
 
-use rand::prelude::SliceRandom;
-use rand::thread_rng;
+use rand::{prelude::SliceRandom, thread_rng};
 use time::Tm;
 
-use crate::services::pool::events::*;
-use crate::services::pool::types::*;
+use crate::services::pool::{events::*, types::*};
 use indy_api_types::errors::prelude::*;
-use indy_utils::crypto::base64;
-use indy_utils::sequence;
+use indy_utils::{crypto::base64, sequence};
 
 use time::Duration;
 
-use zmq::PollItem;
-use zmq::Socket as ZSocket;
+use zmq::{PollItem, Socket as ZSocket};
 
 pub trait Networker {
     fn new(active_timeout: i64, conn_limit: usize, preordered_nodes: Vec<String>) -> Self;
@@ -458,13 +456,14 @@ impl Networker for MockNetworker {
 
 #[cfg(test)]
 pub mod networker_tests {
-    use std;
-    use std::thread;
+    use std::{self, thread};
 
-    use crate::domain::pool::{
-        MAX_REQ_PER_POOL_CON, POOL_ACK_TIMEOUT, POOL_CON_ACTIVE_TO, POOL_REPLY_TIMEOUT,
+    use crate::{
+        domain::pool::{
+            MAX_REQ_PER_POOL_CON, POOL_ACK_TIMEOUT, POOL_CON_ACTIVE_TO, POOL_REPLY_TIMEOUT,
+        },
+        services::pool::tests::nodes_emulator,
     };
-    use crate::services::pool::tests::nodes_emulator;
     use indy_utils::crypto::ed25519_sign;
 
     use super::*;

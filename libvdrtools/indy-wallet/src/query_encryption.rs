@@ -1,8 +1,10 @@
 use indy_api_types::errors::prelude::*;
 
-use super::encryption::encrypt_as_searchable;
-use super::language::{Operator, TagName, TargetValue};
-use super::wallet::Keys;
+use super::{
+    encryption::encrypt_as_searchable,
+    language::{Operator, TagName, TargetValue},
+    wallet::Keys,
+};
 use indy_utils::wql::Query;
 
 // Performs encryption of WQL query

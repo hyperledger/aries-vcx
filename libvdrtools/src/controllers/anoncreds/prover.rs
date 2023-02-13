@@ -22,6 +22,12 @@ use crate::{
                 CredentialDefinitionV1, CredentialDefinitions,
             },
             credential_for_proof_request::{CredentialsForProofRequest, RequestedCredential},
+            credential_offer::CredentialOffer,
+            credential_request::{CredentialRequest, CredentialRequestMetadata},
+            master_secret::MasterSecret,
+            proof_request::{
+                NonRevocedInterval, PredicateInfo, ProofRequest, ProofRequestExtraQuery,
+            },
             requested_credential::RequestedCredentials,
             revocation_registry_definition::{
                 RevocationRegistryDefinition, RevocationRegistryDefinitionV1,
@@ -29,14 +35,6 @@ use crate::{
             revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
             revocation_state::{RevocationState, RevocationStates},
             schema::{schemas_map_to_schemas_v1_map, Schemas},
-        },
-        anoncreds::{
-            credential_offer::CredentialOffer,
-            credential_request::{CredentialRequest, CredentialRequestMetadata},
-            master_secret::MasterSecret,
-            proof_request::{
-                NonRevocedInterval, PredicateInfo, ProofRequest, ProofRequestExtraQuery,
-            },
         },
         crypto::did::DidValue,
     },

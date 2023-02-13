@@ -1,23 +1,33 @@
-use std::collections::HashMap;
-use std::collections::VecDeque;
-use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::thread::JoinHandle;
+use std::{
+    collections::{HashMap, VecDeque},
+    marker::PhantomData,
+    sync::{Arc, Mutex},
+    thread,
+    thread::JoinHandle,
+};
 
 use failure::Context;
 
-use crate::domain::ledger::request::ProtocolVersion;
-use crate::domain::pool::{PoolMode, PoolOpenConfig};
-use crate::services::ledger::merkletree::merkletree::MerkleTree;
-use crate::services::pool::commander::Commander;
-use crate::services::pool::events::*;
-use crate::services::pool::merkle_tree_factory::dump_to_json_string;
-use crate::services::pool::networker::{Networker, ZMQNetworker};
-use crate::services::pool::request_handler::{RequestHandler, RequestHandlerImpl};
-use crate::services::pool::types::{LedgerStatus, RemoteNode};
-use crate::services::pool::{merkle_tree_factory, Nodes, PoolService};
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
+use crate::{
+    domain::{
+        ledger::request::ProtocolVersion,
+        pool::{PoolMode, PoolOpenConfig},
+    },
+    services::{
+        ledger::merkletree::merkletree::MerkleTree,
+        pool::{
+            commander::Commander,
+            events::*,
+            merkle_tree_factory,
+            merkle_tree_factory::dump_to_json_string,
+            networker::{Networker, ZMQNetworker},
+            request_handler::{RequestHandler, RequestHandlerImpl},
+            types::{LedgerStatus, RemoteNode},
+            Nodes, PoolService,
+        },
+    },
+    utils::crypto::base58::{FromBase58, ToBase58},
+};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::ed25519_sign;
 
@@ -1115,13 +1125,14 @@ impl Drop for ZMQPool {
 
 #[cfg(test)]
 mod tests {
-    use crate::services::pool::networker::MockNetworker;
-    use crate::services::pool::request_handler::tests::MockRequestHandler;
-    use crate::services::pool::types::{
-        Message, Reply, ReplyResultV1, ReplyTxnV1, ReplyV1, ResponseMetadata,
+    use crate::{
+        services::pool::{
+            networker::MockNetworker,
+            request_handler::tests::MockRequestHandler,
+            types::{Message, Reply, ReplyResultV1, ReplyTxnV1, ReplyV1, ResponseMetadata},
+        },
+        utils::{test, test::test_pool_create_poolfile},
     };
-    use crate::utils::test;
-    use crate::utils::test::test_pool_create_poolfile;
 
     use indy_utils::next_command_handle;
 
@@ -1164,9 +1175,11 @@ mod tests {
         use serde_json;
 
         use super::*;
-        use crate::domain::pool::NUMBER_READ_NODES;
-        use crate::services::pool::test_utils::{
-            fake_cmd_id, fake_pool_handle_for_close_cmd, fake_pool_handle_for_poolsm,
+        use crate::{
+            domain::pool::NUMBER_READ_NODES,
+            services::pool::test_utils::{
+                fake_cmd_id, fake_pool_handle_for_close_cmd, fake_pool_handle_for_poolsm,
+            },
         };
         use futures::executor::block_on;
         use indy_utils::next_pool_handle;
@@ -1910,8 +1923,10 @@ mod tests {
     mod pool_sm_in_memory {
 
         use super::*;
-        use crate::domain::pool::NUMBER_READ_NODES;
-        use crate::services::pool::test_utils::fake_pool_handle_for_poolsm;
+        use crate::{
+            domain::pool::NUMBER_READ_NODES,
+            services::pool::test_utils::fake_pool_handle_for_poolsm,
+        };
         use indy_utils::next_pool_handle;
 
         const IN_MEMORY_MODE: PoolMode = PoolMode::InMemory;

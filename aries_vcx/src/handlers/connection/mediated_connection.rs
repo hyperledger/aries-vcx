@@ -19,9 +19,13 @@ use crate::handlers::connection::cloud_agent::CloudAgentInfo;
 use crate::handlers::connection::legacy_agent_info::LegacyAgentInfo;
 use crate::handlers::discovery::{respond_discovery_query, send_discovery_query};
 use crate::handlers::trust_ping::TrustPingSender;
-use crate::protocols::connection::invitee::state_machine::{InviteeFullState, InviteeState, SmConnectionInvitee};
-use crate::protocols::connection::inviter::state_machine::{InviterFullState, InviterState, SmConnectionInviter};
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::mediated_connection::invitee::state_machine::{
+    InviteeFullState, InviteeState, SmConnectionInvitee,
+};
+use crate::protocols::mediated_connection::inviter::state_machine::{
+    InviterFullState, InviterState, SmConnectionInviter,
+};
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::oob::{build_handshake_reuse_accepted_msg, build_handshake_reuse_msg};
 use crate::protocols::trustping::build_ping_response;
 use crate::protocols::{SendClosure, SendClosureConnection};
@@ -259,10 +263,10 @@ impl MediatedConnection {
         }
     }
 
-    pub async fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
+    pub fn bootstrap_did_doc(&self) -> Option<AriesDidDoc> {
         match &self.connection_sm {
             SmConnection::Inviter(_sm_inviter) => None, // TODO: Inviter can remember bootstrap agent too, but we don't need it
-            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc().await,
+            SmConnection::Invitee(sm_invitee) => sm_invitee.bootstrap_did_doc(),
         }
     }
 

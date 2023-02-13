@@ -7,6 +7,7 @@ use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
+use crate::protocols::connection::GenericConnection;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -48,7 +49,7 @@ impl OutOfBandReceiver {
         trace!("OutOfBandReceiver::connection_exists >>>");
         for service in &self.oob.services {
             for connection in connections {
-                match connection.bootstrap_did_doc().await {
+                match connection.bootstrap_did_doc() {
                     Some(did_doc) => {
                         if let ServiceOob::Did(did) = service {
                             if did.to_string() == did_doc.id {
@@ -64,6 +65,60 @@ impl OutOfBandReceiver {
             }
         }
         Ok(None)
+    }
+
+    pub async fn nonmediated_connection_exists<'a, I, T>(&self, profile: &Arc<dyn Profile>, connections: I) -> Option<T>
+    where
+        I: IntoIterator<Item = (T, &'a GenericConnection)> + Clone,
+    {
+        trace!("OutOfBandReceiver::connection_exists >>>");
+
+        for service in &self.oob.services {
+            for (idx, connection) in connections.clone() {
+                if Self::connection_matches_service(profile, connection, service).await {
+                    return Some(idx);
+                }
+            }
+        }
+
+        None
+    }
+
+    async fn connection_matches_service(
+        profile: &Arc<dyn Profile>,
+        connection: &GenericConnection,
+        service: &ServiceOob,
+    ) -> bool {
+        match connection.bootstrap_did_doc() {
+            None => false,
+            Some(did_doc) => Self::did_doc_matches_service(profile, service, did_doc).await,
+        }
+    }
+
+    async fn did_doc_matches_service(profile: &Arc<dyn Profile>, service: &ServiceOob, did_doc: &AriesDidDoc) -> bool {
+        // Ugly, but it's best to short-circuit.
+        Self::did_doc_matches_service_did(service, did_doc)
+            || Self::did_doc_matches_resolved_service(profile, service, did_doc)
+                .await
+                .unwrap_or(false)
+    }
+
+    fn did_doc_matches_service_did(service: &ServiceOob, did_doc: &AriesDidDoc) -> bool {
+        match service {
+            ServiceOob::Did(did) => did.to_string() == did_doc.id,
+            _ => false,
+        }
+    }
+
+    async fn did_doc_matches_resolved_service(
+        profile: &Arc<dyn Profile>,
+        service: &ServiceOob,
+        did_doc: &AriesDidDoc,
+    ) -> VcxResult<bool> {
+        let did_doc_service = did_doc.get_service()?;
+        let oob_service = resolve_service(profile, service).await?;
+
+        Ok(did_doc_service == oob_service)
     }
 
     // TODO: There may be multiple A2AMessages in a single OoB msg

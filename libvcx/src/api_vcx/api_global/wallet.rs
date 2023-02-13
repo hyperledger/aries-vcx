@@ -5,7 +5,7 @@ use aries_vcx::indy::wallet::{
     close_search_wallet, fetch_next_records_wallet, import, open_search_wallet, IssuerConfig, RestoreWalletConfigs,
     WalletConfig,
 };
-use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use aries_vcx::vdrtools::{SearchHandle, WalletHandle, INVALID_WALLET_HANDLE};
 
 use crate::api_vcx::api_global::profile::{get_main_profile, get_main_wallet, indy_handles_to_profile};

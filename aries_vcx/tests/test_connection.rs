@@ -16,7 +16,7 @@ mod integration_tests {
     use aries_vcx::handlers::out_of_band::sender::OutOfBandSender;
     use aries_vcx::messages::a2a::A2AMessage;
     use aries_vcx::messages::protocols::out_of_band::{GoalCode, HandshakeProtocol};
-    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mockdata_proof::REQUESTED_ATTRIBUTES;
     use async_channel::bounded;

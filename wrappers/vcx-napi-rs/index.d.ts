@@ -13,16 +13,19 @@ export function connectionCreateInvitee(invitation: string): Promise<number>
 export function connectionGetThreadId(handle: number): string
 export function connectionGetPairwiseInfo(handle: number): string
 export function connectionGetRemoteDid(handle: number): string
+export function connectionGetRemoteVk(handle: number): string
 export function connectionGetState(handle: number): number
 export function connectionGetInvitation(handle: number): string
-export function connectionProcessInvite(handle: number, invitation: string): void
+export function connectionProcessInvite(handle: number, invitation: string): Promise<void>
 export function connectionProcessRequest(handle: number, request: string, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionProcessResponse(handle: number, response: string): Promise<void>
 export function connectionProcessAck(handle: number, message: string): Promise<void>
+export function connectionProcessProblemReport(handle: number, problemReport: string): void
 export function connectionSendResponse(handle: number): Promise<void>
 export function connectionSendRequest(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionSendAck(handle: number): Promise<void>
 export function connectionSendGenericMessage(handle: number, content: string): Promise<void>
+export function connectionSendAriesMessage(handle: number, content: string): Promise<void>
 export function connectionCreateInvite(handle: number, serviceEndpoint: string, routingKeys: Array<string>): Promise<void>
 export function connectionSerialize(handle: number): string
 export function connectionDeserialize(connectionData: string): number
@@ -71,13 +74,16 @@ export function issuerCredentialDeserialize(credentialData: string): number
 export function issuerCredentialSerialize(handleCredential: number): string
 export function issuerCredentialUpdateStateV2(handleCredential: number, connectionHandle: number): Promise<number>
 export function issuerCredentialUpdateStateWithMessageV2(handleCredential: number, connectionHandle: number, message: string): Promise<number>
+export function issuerCredentialUpdateStateWithMessageNonmediated(handleCredential: number, connectionHandle: number, message: string): Promise<number>
 export function issuerCredentialGetState(handleCredential: number): number
 export function issuerCredentialGetRevRegId(handleCredential: number): string
 export function issuerCredentialCreate(sourceId: string): number
 export function issuerCredentialRevokeLocal(handleCredential: number): Promise<void>
 export function issuerCredentialIsRevokable(handleCredential: number): boolean
 export function issuerCredentialSendCredential(handleCredential: number, handleConnection: number): Promise<number>
+export function issuerCredentialSendCredentialNonmediated(handleCredential: number, handleConnection: number): Promise<number>
 export function issuerCredentialSendOfferV2(handleCredential: number, handleConnection: number): Promise<void>
+export function issuerCredentialSendOfferNonmediated(handleCredential: number, handleConnection: number): Promise<void>
 export function issuerCredentialMarkOfferMsgSent(handleCredential: number): void
 export function issuerCredentialBuildOfferMsgV2(credentialHandle: number, credDefHandle: number, revRegHandle: number, credentialJson: string, comment?: string | undefined | null): Promise<void>
 export function issuerCredentialGetOfferMsg(credentialHandle: number): string
@@ -116,9 +122,11 @@ export function mediatedConnectionInfo(handle: number): Promise<string>
 export function mediatedConnectionMessagesDownload(connHandles: Array<number>, statusCodes?: string | undefined | null, uids?: string | undefined | null): Promise<string>
 export function mediatedConnectionSignData(handle: number, data: Buffer): Promise<Buffer>
 export function mediatedConnectionVerifySignature(handle: number, data: Buffer, signature: Buffer): Promise<boolean>
+export function outOfBandBuildHandshakeReuseAcceptedMsg(handshakeReuse: string): string
 export function outOfBandReceiverCreate(msg: string): number
 export function outOfBandReceiverExtractMessage(handle: number): string
 export function outOfBandReceiverConnectionExists(handle: number, connHandles: Array<number>): Promise<number>
+export function outOfBandReceiverNonmediatedConnectionExists(handle: number, connHandles: Array<number>): Promise<number>
 export function outOfBandReceiverBuildConnection(handle: number): Promise<string>
 export function outOfBandReceiverGetThreadId(handle: number): string
 export function outOfBandReceiverSerialize(handle: number): string
@@ -139,11 +147,13 @@ export function proofCreate(sourceId: string, requestedAttrs: string, requestedP
 export function proofGetProofMsg(handle: number): string
 export function proofRelease(handle: number): void
 export function proofSendRequest(handleProof: number, handleConnection: number): Promise<void>
+export function proofSendRequestNonmediated(handleProof: number, handleConnection: number): Promise<void>
 export function proofGetRequestMsg(handle: number): string
 export function proofSerialize(handle: number): string
 export function proofDeserialize(data: string): number
 export function v2ProofUpdateState(handleProof: number, connectionHandle: number): Promise<number>
 export function v2ProofUpdateStateWithMessage(handleProof: number, message: string, connectionHandle: number): Promise<number>
+export function proofUpdateStateWithMessageNonmediated(handleProof: number, connectionHandle: number, message: string): Promise<number>
 export function proofGetState(handle: number): number
 export function proofGetProofState(handle: number): number
 export function proofGetThreadId(handle: number): string
@@ -166,6 +176,8 @@ export function schemaRelease(handleSchema: number): void
 export function schemaUpdateState(handleSchema: number): Promise<number>
 export function schemaGetState(handleSchema: number): number
 export function enableMocks(): void
+export function trustpingBuildResponseMsg(ping: string): string
+export function trustpingBuildPing(requestResponse: boolean, comment?: string | undefined | null): string
 export function shutdown(deleteAll?: boolean | undefined | null): void
 export function getVersion(): string
 export function walletOpenAsMain(walletConfig: string): Promise<number>

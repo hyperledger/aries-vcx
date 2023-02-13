@@ -10,11 +10,13 @@ use crate::{
     RecordOptions,
 };
 use indy_api_types::domain::wallet::{CacheConfig, CachingAlgorithm};
-use std::sync::{Mutex, RwLock};
 use std::{
     collections::{HashMap, HashSet},
     iter::FromIterator,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Mutex, RwLock,
+    },
 };
 
 #[derive(PartialEq, Eq, Hash)]

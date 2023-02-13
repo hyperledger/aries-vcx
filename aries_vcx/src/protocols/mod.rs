@@ -7,6 +7,7 @@ use crate::errors::error::VcxResult;
 pub mod common;
 pub mod connection;
 pub mod issuance;
+pub mod mediated_connection;
 pub mod oob;
 pub mod proof_presentation;
 pub mod revocation_notification;

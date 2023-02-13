@@ -1,15 +1,18 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::http_client::HttpClient;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::holder::Holder;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential::Credential;
 use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
 use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposalData;
 use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
+use aries_vcx::protocols::SendClosure;
 
 #[derive(Clone)]
 struct HolderWrapper {
@@ -57,13 +60,15 @@ impl ServiceCredentialsHolder {
         proposal_data: CredentialProposalData,
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
         let mut holder = Holder::create("")?;
-        holder
-            .send_proposal(
-                proposal_data,
-                connection.send_message_closure(&self.profile, None).await?,
-            )
-            .await?;
+        holder.send_proposal(proposal_data, send_closure).await?;
+
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, connection_id))
     }
@@ -87,13 +92,14 @@ impl ServiceCredentialsHolder {
             (None, None) => return Err(AgentError::from_kind(AgentErrorKind::InvalidArguments)),
         };
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        holder
-            .send_request(
-                &self.profile,
-                connection.pairwise_info().pw_did.to_string(),
-                connection.send_message_closure(&self.profile, None).await?,
-            )
-            .await?;
+        let wallet = self.profile.inject_wallet();
+        let pw_did = connection.pairwise_info().pw_did.to_string();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        holder.send_request(&self.profile, pw_did, send_closure).await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))
     }
@@ -102,12 +108,14 @@ impl ServiceCredentialsHolder {
         let mut holder = self.get_holder(thread_id)?;
         let connection_id = self.get_connection_id(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
         holder
-            .process_credential(
-                &self.profile,
-                credential,
-                connection.send_message_closure(&self.profile, None).await?,
-            )
+            .process_credential(&self.profile, credential, send_closure)
             .await?;
         self.creds_holder
             .insert(&holder.get_thread_id()?, HolderWrapper::new(holder, &connection_id))

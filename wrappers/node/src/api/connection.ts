@@ -58,9 +58,17 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
     }
   }
 
-  public processInvite(invite: string): void {
+  public getRemoteVerkey(): string {
     try {
-      ffiNapi.connectionProcessInvite(this.handle, invite);
+      return ffiNapi.connectionGetRemoteVk(this.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async processInvite(invite: string): Promise<void> {
+    try {
+      await ffiNapi.connectionProcessInvite(this.handle, invite);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -86,6 +94,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   public async processAck(message: string): Promise<void> {
     try {
       await ffiNapi.connectionProcessAck(this.handle, message);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public processProblemReport(problemReport: string): void {
+    try {
+      ffiNapi.connectionProcessProblemReport(this.handle, problemReport);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -119,6 +135,14 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   public async sendMessage(content: string): Promise<void> {
     try {
       return await ffiNapi.connectionSendGenericMessage(this.handle, content);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async sendAriesMessage(content: string): Promise<void> {
+    try {
+      return await ffiNapi.connectionSendAriesMessage(this.handle, content);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -166,7 +190,7 @@ export class NonmediatedConnection extends VcxBaseWithState<INonmeditatedConnect
   };
   protected _getStFn = ffiNapi.connectionGetState;
   protected _serializeFn = (handle: number): string => {
-    const data = ffiNapi.connectionSerialize(handle);
+    const data = JSON.parse(ffiNapi.connectionSerialize(handle));
     return JSON.stringify({ data, source_id: this.sourceId, version: '1.0' });
   }
   protected _deserializeFn = ffiNapi.connectionDeserialize;

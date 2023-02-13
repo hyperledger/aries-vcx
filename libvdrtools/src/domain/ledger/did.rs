@@ -1,6 +1,8 @@
-use super::super::crypto::did::{DidValue, ShortDidValue};
-use super::constants::{GET_NYM, NYM};
-use super::response::{GetReplyResultV0, GetReplyResultV1, ReplyType};
+use super::{
+    super::crypto::did::{DidValue, ShortDidValue},
+    constants::{GET_NYM, NYM},
+    response::{GetReplyResultV0, GetReplyResultV1, ReplyType},
+};
 
 #[derive(Serialize, PartialEq, Debug)]
 pub struct NymOperation {

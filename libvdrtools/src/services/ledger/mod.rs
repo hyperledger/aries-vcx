@@ -8,48 +8,50 @@ use serde::de::DeserializeOwned;
 use serde_json::{self, Value};
 use ursa::cl::RevocationRegistryDelta as CryproRevocationRegistryDelta;
 
-use crate::domain::{
-    anoncreds::{
-        credential_definition::{
-            CredentialDefinition, CredentialDefinitionId, CredentialDefinitionV1,
+use crate::{
+    domain::{
+        anoncreds::{
+            credential_definition::{
+                CredentialDefinition, CredentialDefinitionId, CredentialDefinitionV1,
+            },
+            revocation_registry::RevocationRegistry,
+            revocation_registry_definition::{
+                RevocationRegistryDefinition, RevocationRegistryDefinitionV1, RevocationRegistryId,
+            },
+            revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
+            schema::{Schema, SchemaId, SchemaV1},
         },
-        revocation_registry::RevocationRegistry,
-        revocation_registry_definition::{
-            RevocationRegistryDefinition, RevocationRegistryDefinitionV1, RevocationRegistryId,
+        crypto::did::{DidValue, ShortDidValue},
+        ledger::{
+            attrib::{AttribOperation, GetAttribOperation},
+            auth_rule::*,
+            author_agreement::*,
+            constants::{
+                txn_name_to_code, ENDORSER, GET_VALIDATOR_INFO, NETWORK_MONITOR, POOL_RESTART,
+                ROLES, ROLE_REMOVE, STEWARD, TRUSTEE,
+            },
+            cred_def::{CredDefOperation, GetCredDefOperation, GetCredDefReplyResult},
+            ddo::GetDdoOperation,
+            did::{GetNymOperation, GetNymReplyResult, GetNymResultDataV0, NymData, NymOperation},
+            node::{NodeOperation, NodeOperationData},
+            pool::{PoolConfigOperation, PoolRestartOperation, PoolUpgradeOperation, Schedule},
+            request::{Request, TxnAuthrAgrmtAcceptanceData},
+            response::{Message, Reply, ReplyType},
+            rev_reg::{
+                GetRevRegDeltaOperation, GetRevRegOperation, GetRevocRegDeltaReplyResult,
+                GetRevocRegReplyResult, RevRegEntryOperation,
+            },
+            rev_reg_def::{GetRevRegDefOperation, GetRevocRegDefReplyResult, RevRegDefOperation},
+            schema::{
+                GetSchemaOperation, GetSchemaOperationData, GetSchemaReplyResult, SchemaOperation,
+                SchemaOperationData,
+            },
+            txn::{GetTxnOperation, LedgerType},
+            validator_info::GetValidatorInfoOperation,
         },
-        revocation_registry_delta::{RevocationRegistryDelta, RevocationRegistryDeltaV1},
-        schema::{Schema, SchemaId, SchemaV1},
     },
-    crypto::did::{DidValue, ShortDidValue},
-    ledger::{
-        attrib::{AttribOperation, GetAttribOperation},
-        auth_rule::*,
-        author_agreement::*,
-        constants::{
-            txn_name_to_code, ENDORSER, GET_VALIDATOR_INFO, NETWORK_MONITOR, POOL_RESTART, ROLES,
-            ROLE_REMOVE, STEWARD, TRUSTEE,
-        },
-        cred_def::{CredDefOperation, GetCredDefOperation, GetCredDefReplyResult},
-        ddo::GetDdoOperation,
-        did::{GetNymOperation, GetNymReplyResult, GetNymResultDataV0, NymData, NymOperation},
-        node::{NodeOperation, NodeOperationData},
-        pool::{PoolConfigOperation, PoolRestartOperation, PoolUpgradeOperation, Schedule},
-        request::{Request, TxnAuthrAgrmtAcceptanceData},
-        response::{Message, Reply, ReplyType},
-        rev_reg::{
-            GetRevRegDeltaOperation, GetRevRegOperation, GetRevocRegDeltaReplyResult,
-            GetRevocRegReplyResult, RevRegEntryOperation,
-        },
-        rev_reg_def::{GetRevRegDefOperation, GetRevocRegDefReplyResult, RevRegDefOperation},
-        schema::{
-            GetSchemaOperation, GetSchemaOperationData, GetSchemaReplyResult, SchemaOperation,
-            SchemaOperationData,
-        },
-        txn::{GetTxnOperation, LedgerType},
-        validator_info::GetValidatorInfoOperation,
-    },
+    utils::crypto::signature_serializer::serialize_signature,
 };
-use crate::utils::crypto::signature_serializer::serialize_signature;
 
 macro_rules! build_result {
         ($operation:ident, $submitter_did:expr) => ({

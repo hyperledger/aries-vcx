@@ -2,14 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::http_client::HttpClient;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::proof_presentation::prover::Prover;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::proof_presentation::presentation_ack::PresentationAck;
 use aries_vcx::messages::protocols::proof_presentation::presentation_proposal::PresentationProposalData;
 use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
 use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
+use aries_vcx::protocols::SendClosure;
 use serde_json::Value;
 
 use super::connection::ServiceConnections;
@@ -87,9 +90,14 @@ impl ServiceProver {
     ) -> AgentResult<String> {
         let connection = self.service_connections.get_by_id(connection_id)?;
         let mut prover = Prover::create("")?;
-        prover
-            .send_proposal(proposal, connection.send_message_closure(&self.profile, None).await?)
-            .await?;
+
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        prover.send_proposal(proposal, send_closure).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, connection_id))
     }
@@ -111,9 +119,14 @@ impl ServiceProver {
         prover
             .generate_presentation(&self.profile, credentials, "{}".to_string())
             .await?;
-        prover
-            .send_presentation(connection.send_message_closure(&self.profile, None).await?)
-            .await?;
+
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        prover.send_presentation(send_closure).await?;
         self.provers
             .insert(&prover.get_thread_id()?, ProverWrapper::new(prover, &connection_id))?;
         Ok(())

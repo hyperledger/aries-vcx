@@ -1,5 +1,7 @@
-use crate::cache::cache::Cache;
-use crate::cache::wallet_cache::{WalletCacheKey, WalletCacheValue};
+use crate::cache::{
+    cache::Cache,
+    wallet_cache::{WalletCacheKey, WalletCacheValue},
+};
 use lru::LruCache as InnerCache;
 
 pub struct LruCache {

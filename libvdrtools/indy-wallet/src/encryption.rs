@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::str;
+use std::{collections::HashMap, str};
 
 use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use indy_utils::crypto::{chacha20poly1305_ietf, hmacsha256, pwhash_argon2i13};

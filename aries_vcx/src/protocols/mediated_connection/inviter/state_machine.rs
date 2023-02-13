@@ -15,12 +15,12 @@ use crate::common::signing::sign_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::protocols::connection::inviter::states::complete::CompleteState;
-use crate::protocols::connection::inviter::states::initial::InitialState;
-use crate::protocols::connection::inviter::states::invited::InvitedState;
-use crate::protocols::connection::inviter::states::requested::RequestedState;
-use crate::protocols::connection::inviter::states::responded::RespondedState;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::mediated_connection::inviter::states::complete::CompleteState;
+use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
+use crate::protocols::mediated_connection::inviter::states::invited::InvitedState;
+use crate::protocols::mediated_connection::inviter::states::requested::RequestedState;
+use crate::protocols::mediated_connection::inviter::states::responded::RespondedState;
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::protocols::SendClosureConnection;
 
 #[derive(Clone, Serialize, Deserialize)]

@@ -5,15 +5,19 @@ use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, SearchOptions, WalletService};
 
 use crate::{
-    domain::crypto::did::{
-        Did, DidMetadata, DidMethod, DidValue, DidWithMeta, MyDidInfo, TemporaryDid, TheirDid,
-        TheirDidInfo,
-    },
-    domain::crypto::key::KeyInfo,
     domain::{
-        ledger::attrib::{AttribData, Endpoint, GetAttrReplyResult},
-        ledger::did::{GetNymReplyResult, GetNymResultDataV0},
-        ledger::response::Reply,
+        crypto::{
+            did::{
+                Did, DidMetadata, DidMethod, DidValue, DidWithMeta, MyDidInfo, TemporaryDid,
+                TheirDid, TheirDidInfo,
+            },
+            key::KeyInfo,
+        },
+        ledger::{
+            attrib::{AttribData, Endpoint, GetAttrReplyResult},
+            did::{GetNymReplyResult, GetNymResultDataV0},
+            response::Reply,
+        },
         pairwise::Pairwise,
     },
     services::{CryptoService, LedgerService, PoolService},

@@ -1,9 +1,13 @@
-use super::super::anoncreds::credential_definition::CredentialDefinitionId;
-use super::super::anoncreds::revocation_registry_definition::{
-    RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValue, RevocationRegistryId,
+use super::{
+    super::anoncreds::{
+        credential_definition::CredentialDefinitionId,
+        revocation_registry_definition::{
+            RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValue, RevocationRegistryId,
+        },
+    },
+    constants::{GET_REVOC_REG_DEF, REVOC_REG_DEF},
+    response::{GetReplyResultV1, ReplyType},
 };
-use super::constants::{GET_REVOC_REG_DEF, REVOC_REG_DEF};
-use super::response::{GetReplyResultV1, ReplyType};
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]

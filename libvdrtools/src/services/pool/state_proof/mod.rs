@@ -7,20 +7,22 @@ use std::collections::HashMap;
 
 use indy_utils::crypto::base64;
 use rlp::UntrustedRlp;
-use serde_json;
-use serde_json::Value as SJsonValue;
+use serde_json::{self, Value as SJsonValue};
 
-use crate::domain::ledger::{constants, request::ProtocolVersion};
-use crate::services::pool::events::{REQUESTS_FOR_MULTI_STATE_PROOFS, REQUESTS_FOR_STATE_PROOFS};
+use crate::{
+    domain::ledger::{constants, request::ProtocolVersion},
+    services::pool::events::{REQUESTS_FOR_MULTI_STATE_PROOFS, REQUESTS_FOR_STATE_PROOFS},
+};
 use indy_api_types::errors::prelude::*;
 use indy_utils::crypto::hash::hash as openssl_hash;
 
 use super::types::*;
 
-use self::log_derive::logfn;
-use self::node::{Node, TrieDB};
-use crate::services::pool::Nodes;
-use crate::utils::crypto::base58::FromBase58;
+use self::{
+    log_derive::logfn,
+    node::{Node, TrieDB},
+};
+use crate::{services::pool::Nodes, utils::crypto::base58::FromBase58};
 use ursa::bls::{Bls, Generator, MultiSignature, VerKey};
 
 mod node;
