@@ -23,8 +23,8 @@ runs:
         set -x
         npm --version
         node --version
-        rustc --version ||;
-        cargo --version ||;
+        rustc --version || true
+        cargo --version || true
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: 1.64.1
