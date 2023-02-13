@@ -1,0 +1,33 @@
+name: CI-test
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+env:
+  DOCKER_BUILDKIT: 1
+  MAIN_BRANCH: main
+  URL_DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_AGENCY: ghcr.io/absaoss/vcxagencynode/vcxagency-node:2.2.0
+  DOCKER_IMAGE_POOL: pstas/indypool-localhost:1.15.0-localhost
+
+  DOCKER_REPO_LOCAL_ALPINE_CORE: alpine-core
+  DOCKER_REPO_LOCAL_LIBVCX: libvcx
+  DOCKER_REPO_LOCAL_ANDROID: android-test
+
+  RUST_TOOLCHAIN_VERSON: 1.64.0
+  NODE_VERSION: 18
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Git checkout"
+        uses: actions/checkout@v3
+      - name: "check versions"
+        uses: ./.github/actions/setup-testing-nodejs-experiment
+
