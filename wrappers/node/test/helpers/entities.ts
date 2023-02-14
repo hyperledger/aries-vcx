@@ -32,7 +32,6 @@ export const connectionCreateInviterNull = async (
 ): Promise<Connection> => {
   const connection = await Connection.create(data);
   assert.notEqual(connection.handle, undefined);
-  assert.equal(connection.sourceId, data.id);
   return connection;
 };
 
@@ -73,7 +72,6 @@ export const credentialDefCreate = async (
   const credentialDef = await CredentialDef.create(data);
   await credentialDef.publish();
   assert.notEqual(credentialDef.handle, undefined);
-  assert.equal(credentialDef.sourceId, data.sourceId);
   assert.equal(credentialDef.schemaId, data.schemaId);
   return credentialDef;
 };
@@ -106,7 +104,6 @@ export const credentialCreateWithOffer = async (
   }
   const credential = await Credential.create(data);
   assert.notEqual(credential.handle, undefined);
-  assert.equal(credential.sourceId, data.sourceId);
   return credential;
 };
 
@@ -127,7 +124,6 @@ export const disclosedProofCreateWithRequest = async (
   }
   const disclosedProof = DisclosedProof.create(data);
   assert.notEqual(disclosedProof.handle, undefined);
-  assert.equal(disclosedProof.sourceId, data.sourceId);
   return disclosedProof;
 };
 
@@ -165,7 +161,6 @@ export const dataProofCreate = (): IProofCreateData => ({
 export const proofCreate = async (data = dataProofCreate()): Promise<Proof> => {
   const proof = await Proof.create(data);
   assert.notEqual(proof.handle, undefined);
-  assert.equal(proof.sourceId, data.sourceId);
   return proof;
 };
 
@@ -181,7 +176,6 @@ export const dataSchemaCreate = (): ISchemaCreateData => ({
 export const schemaCreate = async (data = dataSchemaCreate()): Promise<Schema> => {
   const schema = await Schema.create(data);
   assert.notEqual(schema.handle, undefined);
-  assert.equal(schema.sourceId, data.sourceId);
   assert.equal(schema.name, data.data.name);
   assert.deepEqual(schema.schemaAttrs, data.data);
   assert.ok(schema.schemaId);

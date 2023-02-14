@@ -91,7 +91,6 @@ describe('Connection:', () => {
       assert.ok(data);
       assert.ok(version);
       assert.ok(source_id);
-      assert.equal(source_id, connection.sourceId);
     });
   });
 
@@ -100,7 +99,6 @@ describe('Connection:', () => {
       const connection1 = await connectionCreateInviterNull();
       const data1 = connection1.serialize();
       const connection2 = Connection.deserialize(data1);
-      assert.equal(connection2.sourceId, connection1.sourceId);
       const data2 = connection2.serialize();
       assert.deepEqual(data1, data2);
     });

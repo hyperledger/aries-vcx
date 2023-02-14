@@ -50,7 +50,7 @@ export class CredentialDef extends VcxBase<ICredentialDefData> {
     tag,
   }: ICredentialDefCreateDataV2): Promise<CredentialDef> {
     try {
-      const credentialDef = new CredentialDef(sourceId, { schemaId });
+      const credentialDef = new CredentialDef({ schemaId });
       const handle = await ffi.credentialdefCreateV2(sourceId, schemaId, tag, supportRevocation);
       credentialDef._setHandle(handle);
       return credentialDef;
@@ -69,7 +69,7 @@ export class CredentialDef extends VcxBase<ICredentialDefData> {
       name,
       schemaId: null,
     };
-    return super._deserialize(CredentialDef, credentialDef, credentialDefParams);
+    return super._deserialize(CredentialDef, credentialDef as any, credentialDefParams);
   }
 
   protected _serializeFn = ffi.credentialdefSerialize;
@@ -80,8 +80,8 @@ export class CredentialDef extends VcxBase<ICredentialDefData> {
   private _credDefId: string | undefined;
   private _tailsDir: string | undefined;
 
-  constructor(sourceId: string, { name, schemaId, credDefId, tailsDir }: ICredentialDefParams) {
-    super(sourceId);
+  constructor({ name, schemaId, credDefId, tailsDir }: ICredentialDefParams) {
+    super();
     this._name = name;
     this._schemaId = schemaId;
     this._credDefId = credDefId;

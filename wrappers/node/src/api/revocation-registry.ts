@@ -28,7 +28,7 @@ export interface IRevocationRegistryConfig {
 export class RevocationRegistry extends VcxBase<IRevocationRegistryData> {
   public static async create(config: IRevocationRegistryConfig): Promise<RevocationRegistry> {
     try {
-      const revReg = new RevocationRegistry('');
+      const revReg = new RevocationRegistry();
       const _config = {
         issuer_did: config.issuerDid,
         cred_def_id: config.credDefId,

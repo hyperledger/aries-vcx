@@ -32,8 +32,8 @@ export interface IIssuerCredentialData {
 export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, IssuerStateType> {
   public static async create(sourceId: string): Promise<IssuerCredential> {
     try {
-      const connection = new IssuerCredential(sourceId);
-      connection._setHandle(await ffi.issuerCredentialCreate(sourceId));
+      const connection = new IssuerCredential();
+      connection._setHandle(ffi.issuerCredentialCreate(sourceId));
       return connection;
     } catch (err: any) {
       throw new VCXInternalError(err);
@@ -44,7 +44,7 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
     serializedData: ISerializedData<IIssuerCredentialData>,
   ): IssuerCredential {
     try {
-      return super._deserialize(IssuerCredential, serializedData);
+      return super._deserialize(IssuerCredential, serializedData as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -55,10 +55,6 @@ export class IssuerCredential extends VcxBaseWithState<IIssuerCredentialData, Is
   protected _getStFn = ffi.issuerCredentialGetState;
   protected _serializeFn = ffi.issuerCredentialSerialize;
   protected _deserializeFn = ffi.issuerCredentialDeserialize;
-
-  constructor(sourceId: string) {
-    super(sourceId);
-  }
 
   public async updateStateWithMessage(connection: Connection, message: string): Promise<number> {
     try {
