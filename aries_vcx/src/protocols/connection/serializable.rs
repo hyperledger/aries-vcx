@@ -3,12 +3,14 @@ use serde::Serialize;
 use crate::protocols::connection::{
     initiation_type::{Invitee, Inviter},
     invitee::states::{
-        completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial, invited::Invited as InviteeInvited,
-        requested::Requested as InviteeRequested, responded::Responded as InviteeResponded,
+        completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
+        invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
+        responded::Responded as InviteeResponded,
     },
     inviter::states::{
-        completed::Completed as InviterCompleted, initial::Initial as InviterInitial, invited::Invited as InviterInvited,
-        requested::Requested as InviterRequested, responded::Responded as InviterResponded,
+        completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
+        invited::Invited as InviterInvited, requested::Requested as InviterRequested,
+        responded::Responded as InviterResponded,
     },
     pairwise_info::PairwiseInfo,
     Connection,
