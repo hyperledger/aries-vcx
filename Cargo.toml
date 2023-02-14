@@ -6,6 +6,7 @@ members = [
     "agency_client",
     "libvdrtools",
     "messages",
+    "messages2",
     "shared_vcx",
     "diddoc",
     "agents/rust/aries-vcx-agent",

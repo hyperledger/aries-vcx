@@ -1,0 +1,65 @@
+use derive_more::From;
+use serde::{Deserialize, Serialize};
+
+use crate::message_type::message_family::{
+    traits::{ConcreteMessage, DelayedSerde},
+    trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
+};
+
+#[derive(From)]
+pub enum TrustPing {
+    Ping(Ping),
+    PingResponse(PingResponse),
+}
+
+impl DelayedSerde for TrustPing {
+    type Seg = TrustPingKind;
+
+    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let TrustPingKind::V1(major) = seg;
+        let TrustPingV1::V1_0(minor) = major;
+
+        match minor {
+            TrustPingV1_0::Ping => Ping::deserialize(deserializer).map(From::from),
+            TrustPingV1_0::PingResponse => PingResponse::deserialize(deserializer).map(From::from),
+        }
+    }
+
+    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    where
+        M: serde::ser::SerializeMap,
+        F: FnMut(&'a mut M) -> S,
+        S: serde::Serializer,
+        S::Error: From<M::Error>,
+    {
+        match self {
+            Self::Ping(v) => v.delayed_serialize(state, closure),
+            Self::PingResponse(v) => v.delayed_serialize(state, closure),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Ping;
+
+impl ConcreteMessage for Ping {
+    type Kind = TrustPingV1_0;
+
+    fn kind() -> Self::Kind {
+        Self::Kind::Ping
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct PingResponse;
+
+impl ConcreteMessage for PingResponse {
+    type Kind = TrustPingV1_0;
+
+    fn kind() -> Self::Kind {
+        Self::Kind::PingResponse
+    }
+}
