@@ -10,7 +10,7 @@ use crate::{
 };
 
 use self::states::{
-    complete::Complete, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
+    completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
 };
 
 use messages::{
@@ -182,7 +182,7 @@ impl InviteeConnection<Requested> {
 }
 
 impl InviteeConnection<Responded> {
-    /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Complete>`].
+    /// Sends an acknowledgement message to the inviter and transitions to [`InviteeConnection<Completed>`].
     ///
     /// # Errors
     ///
@@ -191,7 +191,7 @@ impl InviteeConnection<Responded> {
         self,
         wallet: &Arc<dyn BaseWallet>,
         transport: &T,
-    ) -> VcxResult<InviteeConnection<Complete>>
+    ) -> VcxResult<InviteeConnection<Completed>>
     where
         T: Transport,
     {
@@ -202,7 +202,7 @@ impl InviteeConnection<Responded> {
 
         self.send_message(wallet, &msg, transport).await?;
 
-        let state = Complete::new(
+        let state = Completed::new(
             self.state.did_doc,
             self.state.bootstrap_did_doc,
             self.state.thread_id,

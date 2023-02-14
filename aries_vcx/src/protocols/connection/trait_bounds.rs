@@ -23,8 +23,8 @@ pub trait ThreadId {
     fn thread_id(&self) -> &str;
 }
 
-/// Trait impletement for [`super::Connection`] in complete states.
-pub trait CompleteState {
+/// Trait impletement for [`super::Connection`] in completed states.
+pub trait CompletedState {
     fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]>;
 
     fn handle_disclose(&mut self, disclose: Disclose);

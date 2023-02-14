@@ -26,7 +26,7 @@ use crate::{
 use self::{
     generic::GenericState,
     pairwise_info::PairwiseInfo,
-    trait_bounds::{CompleteState, HandleProblem, TheirDidDoc, ThreadId},
+    trait_bounds::{CompletedState, HandleProblem, TheirDidDoc, ThreadId},
 };
 
 pub use self::generic::{GenericConnection, State, ThinState};
@@ -169,7 +169,7 @@ where
 
 impl<I, S> Connection<I, S>
 where
-    S: CompleteState,
+    S: CompletedState,
 {
     pub fn remote_protocols(&self) -> Option<&[ProtocolDescriptor]> {
         self.state.remote_protocols()

@@ -6,7 +6,7 @@ use crate::common::signing::decode_signed_connection_response;
 use crate::errors::error::prelude::*;
 use crate::handlers::util::verify_thread_id;
 use crate::plugins::wallet::base_wallet::BaseWallet;
-use crate::protocols::mediated_connection::invitee::states::complete::CompleteState;
+use crate::protocols::mediated_connection::invitee::states::completed::CompletedState;
 use crate::protocols::mediated_connection::invitee::states::initial::InitialState;
 use crate::protocols::mediated_connection::invitee::states::invited::InvitedState;
 use crate::protocols::mediated_connection::invitee::states::requested::RequestedState;
@@ -37,7 +37,7 @@ pub enum InviteeFullState {
     Invited(InvitedState),
     Requested(RequestedState),
     Responded(RespondedState),
-    Completed(CompleteState),
+    Completed(CompletedState),
 }
 
 #[derive(Debug, PartialEq, Eq)]

@@ -5,7 +5,7 @@ use messages::diddoc::aries::diddoc::AriesDidDoc;
 use messages::protocols::connection::problem_report::ProblemReport;
 use messages::protocols::connection::response::SignedResponse;
 
-use crate::protocols::mediated_connection::inviter::states::complete::CompleteState;
+use crate::protocols::mediated_connection::inviter::states::completed::CompletedState;
 use crate::protocols::mediated_connection::inviter::states::initial::InitialState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -24,10 +24,10 @@ impl From<(RespondedState, ProblemReport)> for InitialState {
     }
 }
 
-impl From<RespondedState> for CompleteState {
-    fn from(state: RespondedState) -> CompleteState {
+impl From<RespondedState> for CompletedState {
+    fn from(state: RespondedState) -> CompletedState {
         trace!("ConnectionInviter: transit state from RespondedState to CompleteState");
-        CompleteState {
+        CompletedState {
             did_doc: state.did_doc,
             thread_id: Some(state.signed_response.get_thread_id()),
             protocols: None,
