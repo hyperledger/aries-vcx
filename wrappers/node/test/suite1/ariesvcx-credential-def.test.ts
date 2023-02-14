@@ -24,11 +24,10 @@ describe('CredentialDef:', () => {
       const { data, version } = serialized;
       assert.ok(data);
       assert.ok(version);
-      assert.equal(data.source_id, credentialDef.sourceId);
     });
 
     it('throws: not initialized', async () => {
-      const credentialDef = new CredentialDef(null as any, {} as any);
+      const credentialDef = new CredentialDef({} as any);
       const error = await shouldThrow(() => credentialDef.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });
@@ -39,7 +38,6 @@ describe('CredentialDef:', () => {
       const credentialDef1 = await credentialDefCreate();
       const data1 = await credentialDef1.serialize();
       const credentialDef2 = await CredentialDef.deserialize(data1);
-      assert.equal(credentialDef2.sourceId, credentialDef1.sourceId);
       const data2 = await credentialDef2.serialize();
       assert.deepEqual(data1, data2);
     });

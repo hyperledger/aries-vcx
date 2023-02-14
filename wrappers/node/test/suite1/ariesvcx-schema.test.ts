@@ -80,11 +80,10 @@ describe('Schema:', () => {
       const { data, version } = serialized;
       assert.ok(data);
       assert.ok(version);
-      assert.equal(data.source_id, schema.sourceId);
     });
 
     it('throws: not initialized', async () => {
-      const schema = new Schema(null as any, {} as any);
+      const schema = new Schema({} as any);
       const error = await shouldThrow(() => schema.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });
@@ -95,7 +94,6 @@ describe('Schema:', () => {
       const schema1 = await schemaCreate();
       const data1 = await schema1.serialize();
       const schema2 = await Schema.deserialize(data1);
-      assert.equal(schema2.sourceId, schema1.sourceId);
       const data2 = await schema2.serialize();
       assert.deepEqual(data1, data2);
     });

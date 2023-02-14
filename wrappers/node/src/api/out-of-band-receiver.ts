@@ -8,7 +8,7 @@ import { ISerializedData } from './common';
 
 export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
   public static createWithMessage(msg: string): OutOfBandReceiver {
-    const oob = new OutOfBandReceiver('');
+    const oob = new OutOfBandReceiver();
     try {
       oob._setHandle(ffi.outOfBandReceiverCreate(msg));
       return oob;

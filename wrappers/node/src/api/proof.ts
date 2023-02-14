@@ -88,9 +88,9 @@ export interface IRevocationInterval {
 export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
   public static async create({ sourceId, ...createDataRest }: IProofCreateData): Promise<Proof> {
     try {
-      const proof = new Proof(sourceId);
+      const proof = new Proof();
       const handle = await ffi.proofCreate(
-        proof.sourceId,
+        sourceId,
         JSON.stringify(createDataRest.attrs),
         JSON.stringify(createDataRest.preds || []),
         JSON.stringify(createDataRest.revocationInterval),
@@ -105,7 +105,7 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
 
   public static deserialize(proofData: ISerializedData<IProofData>): Proof {
     try {
-      return super._deserialize<Proof, IProofConstructorData>(Proof, proofData);
+      return super._deserialize<Proof, IProofConstructorData>(Proof, proofData as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
