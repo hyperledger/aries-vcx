@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum DiscoverFeatures {
     Query(Query),
     Disclose(Disclose),
@@ -19,7 +19,7 @@ impl DelayedSerde for DiscoverFeatures {
     where
         D: serde::Deserializer<'de>,
     {
-                let DiscoverFeaturesKind::V1(major) = seg;
+        let DiscoverFeaturesKind::V1(major) = seg;
         let DiscoverFeaturesV1::V1_0(minor) = major;
 
         match minor {
@@ -42,7 +42,7 @@ impl DelayedSerde for DiscoverFeatures {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Query;
 
 impl ConcreteMessage for Query {
@@ -53,7 +53,7 @@ impl ConcreteMessage for Query {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Disclose;
 
 impl ConcreteMessage for Disclose {

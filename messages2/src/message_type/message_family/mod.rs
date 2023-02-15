@@ -3,9 +3,10 @@ use derive_more::From;
 use crate::error::{MsgTypeError, MsgTypeResult};
 
 use self::{
-    basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance, out_of_band::OutOfBand,
-    present_proof::PresentProof, report_problem::ReportProblem, revocation::Revocation, routing::Routing,
-    traits::ResolveMajorVersion, trust_ping::TrustPing, discover_features::DiscoverFeatures,
+    basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
+    discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
+    report_problem::ReportProblem, revocation::Revocation, routing::Routing, traits::ResolveMajorVersion,
+    trust_ping::TrustPing,
 };
 
 pub mod basic_message;
@@ -20,7 +21,7 @@ pub mod routing;
 pub mod traits;
 pub mod trust_ping;
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum MessageFamily {
     Routing(Routing),
     Connection(Connection),

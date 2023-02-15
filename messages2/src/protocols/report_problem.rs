@@ -5,7 +5,7 @@ use crate::message_type::message_family::{
     traits::ConcreteMessage,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProblemReport;
 
 impl ConcreteMessage for ProblemReport {

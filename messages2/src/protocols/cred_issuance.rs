@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum CredentialIssuance {
     OfferCredential(OfferCredential),
     ProposeCredential(ProposeCredential),
@@ -51,7 +51,7 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OfferCredential;
 
 impl ConcreteMessage for OfferCredential {
@@ -62,7 +62,7 @@ impl ConcreteMessage for OfferCredential {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProposeCredential;
 
 impl ConcreteMessage for ProposeCredential {
@@ -73,7 +73,7 @@ impl ConcreteMessage for ProposeCredential {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RequestCredential;
 
 impl ConcreteMessage for RequestCredential {
@@ -84,7 +84,7 @@ impl ConcreteMessage for RequestCredential {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IssueCredential;
 
 impl ConcreteMessage for IssueCredential {
@@ -95,7 +95,7 @@ impl ConcreteMessage for IssueCredential {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Ack;
 
 impl ConcreteMessage for Ack {

@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum A2AMessage {
     Routing(Forward),
     Connection(Connection),
