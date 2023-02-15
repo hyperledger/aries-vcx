@@ -29,7 +29,7 @@ impl DelayedSerde for A2AMessage {
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         match seg {
             Self::Seg::Routing(seg) => Forward::delayed_deserialize(seg, deserializer).map(From::from),

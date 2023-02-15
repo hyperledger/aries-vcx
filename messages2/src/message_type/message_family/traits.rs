@@ -66,7 +66,7 @@ where
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         if seg == Self::kind() {
             Self::deserialize(deserializer)

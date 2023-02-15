@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 use crate::message_type::message_family::{
     out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
@@ -18,7 +18,7 @@ impl DelayedSerde for OutOfBand {
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let OutOfBandKind::V1(major) = seg;
         let OutOfBandV1::V1_1(minor) = major;

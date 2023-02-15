@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 use crate::message_type::message_family::{
     present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
@@ -19,7 +19,7 @@ impl DelayedSerde for PresentProof {
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let PresentProofKind::V1(major) = seg;
         let PresentProofV1::V1_0(minor) = major;
