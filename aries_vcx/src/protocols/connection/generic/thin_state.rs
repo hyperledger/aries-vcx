@@ -16,7 +16,7 @@ pub enum State {
     Invited,
     Requested,
     Responded,
-    Complete,
+    Completed,
 }
 
 impl From<&GenericState> for ThinState {
@@ -35,7 +35,7 @@ impl From<&InviterState> for State {
             InviterState::Invited(_) => Self::Invited,
             InviterState::Requested(_) => Self::Requested,
             InviterState::Responded(_) => Self::Responded,
-            InviterState::Complete(_) => Self::Complete,
+            InviterState::Completed(_) => Self::Completed,
         }
     }
 }
@@ -47,7 +47,7 @@ impl From<&InviteeState> for State {
             InviteeState::Invited(_) => Self::Invited,
             InviteeState::Requested(_) => Self::Requested,
             InviteeState::Responded(_) => Self::Responded,
-            InviteeState::Complete(_) => Self::Complete,
+            InviteeState::Completed(_) => Self::Completed,
         }
     }
 }

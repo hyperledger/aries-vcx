@@ -11,7 +11,7 @@ use crate::{
 };
 
 use self::states::{
-    complete::Complete, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
+    completed::Completed, initial::Initial, invited::Invited, requested::Requested, responded::Responded,
 };
 use super::{initiation_type::Inviter, pairwise_info::PairwiseInfo, Connection};
 use messages::a2a::A2AMessage;
@@ -228,15 +228,15 @@ impl InviterConnection<Requested> {
 
 impl InviterConnection<Responded> {
     /// Acknowledges an invitee's connection by processing their first message
-    /// and transitions to [`InviterConnection<Complete>`].
+    /// and transitions to [`InviterConnection<Completed>`].
     ///
     /// # Errors
     ///
     /// Will error out if the message's thread ID does not match
     /// the ID of the thread context used in this connection.
-    pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Complete>> {
+    pub fn acknowledge_connection(self, msg: &A2AMessage) -> VcxResult<InviterConnection<Completed>> {
         verify_thread_id(self.state.thread_id(), msg)?;
-        let state = Complete::new(self.state.did_doc, self.state.thread_id, None);
+        let state = Completed::new(self.state.did_doc, self.state.thread_id, None);
 
         Ok(Connection {
             source_id: self.source_id,

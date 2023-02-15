@@ -12,12 +12,12 @@ use crate::{
     plugins::wallet::base_wallet::BaseWallet,
     protocols::connection::{
         invitee::states::{
-            complete::Complete as InviteeComplete, initial::Initial as InviteeInitial,
+            completed::Completed as InviteeCompleted, initial::Initial as InviteeInitial,
             invited::Invited as InviteeInvited, requested::Requested as InviteeRequested,
             responded::Responded as InviteeResponded,
         },
         inviter::states::{
-            complete::Complete as InviterComplete, initial::Initial as InviterInitial,
+            completed::Completed as InviterCompleted, initial::Initial as InviterInitial,
             invited::Invited as InviterInvited, requested::Requested as InviterRequested,
             responded::Responded as InviterResponded,
         },
@@ -87,7 +87,7 @@ pub enum InviterState {
     Invited(InviterInvited),
     Requested(InviterRequested),
     Responded(InviterResponded),
-    Complete(InviterComplete),
+    Completed(InviterCompleted),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -96,7 +96,7 @@ pub enum InviteeState {
     Invited(InviteeInvited),
     Requested(InviteeRequested),
     Responded(InviteeResponded),
-    Complete(InviteeComplete),
+    Completed(InviteeCompleted),
 }
 
 impl GenericConnection {
@@ -113,12 +113,12 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.thread_id()),
             GenericState::Invitee(InviteeState::Responded(s)) => Some(s.thread_id()),
-            GenericState::Invitee(InviteeState::Complete(s)) => Some(s.thread_id()),
+            GenericState::Invitee(InviteeState::Completed(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.thread_id()),
             GenericState::Inviter(InviterState::Responded(s)) => Some(s.thread_id()),
-            GenericState::Inviter(InviterState::Complete(s)) => Some(s.thread_id()),
+            GenericState::Inviter(InviterState::Completed(s)) => Some(s.thread_id()),
         }
     }
 
@@ -132,12 +132,12 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.their_did_doc()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.their_did_doc()),
             GenericState::Invitee(InviteeState::Responded(s)) => Some(s.their_did_doc()),
-            GenericState::Invitee(InviteeState::Complete(s)) => Some(s.their_did_doc()),
+            GenericState::Invitee(InviteeState::Completed(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Initial(_)) => None,
             GenericState::Inviter(InviterState::Invited(_)) => None,
             GenericState::Inviter(InviterState::Requested(s)) => Some(s.their_did_doc()),
             GenericState::Inviter(InviterState::Responded(s)) => Some(s.their_did_doc()),
-            GenericState::Inviter(InviterState::Complete(s)) => Some(s.their_did_doc()),
+            GenericState::Inviter(InviterState::Completed(s)) => Some(s.their_did_doc()),
         }
     }
 
@@ -148,7 +148,7 @@ impl GenericConnection {
             GenericState::Invitee(InviteeState::Invited(s)) => Some(s.bootstrap_did_doc()),
             GenericState::Invitee(InviteeState::Requested(s)) => Some(s.bootstrap_did_doc()),
             GenericState::Invitee(InviteeState::Responded(s)) => Some(s.bootstrap_did_doc()),
-            GenericState::Invitee(InviteeState::Complete(s)) => Some(s.bootstrap_did_doc()),
+            GenericState::Invitee(InviteeState::Completed(s)) => Some(s.bootstrap_did_doc()),
         }
     }
 
@@ -225,7 +225,7 @@ mod connection_serde_tests {
                 RefInviteeState::Invited(s) => Self::Invited(s.to_owned()),
                 RefInviteeState::Requested(s) => Self::Requested(s.to_owned()),
                 RefInviteeState::Responded(s) => Self::Responded(s.to_owned()),
-                RefInviteeState::Complete(s) => Self::Complete(s.to_owned()),
+                RefInviteeState::Completed(s) => Self::Completed(s.to_owned()),
             }
         }
     }
@@ -237,7 +237,7 @@ mod connection_serde_tests {
                 RefInviterState::Invited(s) => Self::Invited(s.to_owned()),
                 RefInviterState::Requested(s) => Self::Requested(s.to_owned()),
                 RefInviterState::Responded(s) => Self::Responded(s.to_owned()),
-                RefInviterState::Complete(s) => Self::Complete(s.to_owned()),
+                RefInviterState::Completed(s) => Self::Completed(s.to_owned()),
             }
         }
     }
@@ -274,7 +274,7 @@ mod connection_serde_tests {
                 InviteeState::Invited(s) => Self::Invited(s),
                 InviteeState::Requested(s) => Self::Requested(s),
                 InviteeState::Responded(s) => Self::Responded(s),
-                InviteeState::Complete(s) => Self::Complete(s),
+                InviteeState::Completed(s) => Self::Completed(s),
             }
         }
     }
@@ -286,7 +286,7 @@ mod connection_serde_tests {
                 InviterState::Invited(s) => Self::Invited(s),
                 InviterState::Requested(s) => Self::Requested(s),
                 InviterState::Responded(s) => Self::Responded(s),
-                InviterState::Complete(s) => Self::Complete(s),
+                InviterState::Completed(s) => Self::Completed(s),
             }
         }
     }
@@ -413,7 +413,7 @@ mod connection_serde_tests {
         con.handle_response(&wallet, response, &MockTransport).await.unwrap()
     }
 
-    async fn make_invitee_complete() -> InviteeConnection<InviteeComplete> {
+    async fn make_invitee_completed() -> InviteeConnection<InviteeCompleted> {
         let wallet = make_mock_profile().inject_wallet();
 
         make_invitee_responded()
@@ -460,7 +460,7 @@ mod connection_serde_tests {
             .unwrap()
     }
 
-    async fn make_inviter_complete() -> InviterConnection<InviterComplete> {
+    async fn make_inviter_completed() -> InviterConnection<InviterCompleted> {
         let msg = Request::create().to_a2a_message();
 
         make_inviter_responded().await.acknowledge_connection(&msg).unwrap()
@@ -480,11 +480,11 @@ mod connection_serde_tests {
     generate_test!(invitee_connection_invited, make_invitee_invited);
     generate_test!(invitee_connection_requested, make_invitee_requested);
     generate_test!(invitee_connection_responded, make_invitee_responded);
-    generate_test!(invitee_connection_complete, make_invitee_complete);
+    generate_test!(invitee_connection_complete, make_invitee_completed);
 
     generate_test!(inviter_connection_initial, make_inviter_initial);
     generate_test!(inviter_connection_invited, make_inviter_invited);
     generate_test!(inviter_connection_requested, make_inviter_requested);
     generate_test!(inviter_connection_responded, make_inviter_responded);
-    generate_test!(inviter_connection_complete, make_inviter_complete);
+    generate_test!(inviter_connection_complete, make_inviter_completed);
 }
