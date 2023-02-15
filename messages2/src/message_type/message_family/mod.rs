@@ -21,7 +21,7 @@ pub mod routing;
 pub mod traits;
 pub mod trust_ping;
 
-#[derive(Clone, Debug, From)]
+#[derive(Clone, Debug, From, PartialEq)]
 pub enum MessageFamily {
     Routing(Routing),
     Connection(Connection),

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::error::MsgTypeError;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Prefix {
     DidCommOrg,
     DidSov,
