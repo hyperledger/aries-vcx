@@ -73,6 +73,8 @@ impl DelayedSerde for A2AMessage {
 
 /// Custom [`Deserialize`] impl for [`A2AMessage`] to use the `@type` as internal tag,
 /// but deserialize it to a [`MessageType`].
+/// 
+/// For readability, the [`MessageType`] matching is done in the [`DelayedSerde::delayed_deserialize`] method.
 //
 // Yes, we're using some private serde constructs. Here's why I think this is okay:
 //  1) This emulates the derived implementation with the #[serde(tag = "@type")] attribute,
@@ -90,6 +92,19 @@ impl DelayedSerde for A2AMessage {
 //  4) Reimplementing this on breaking semver changes is as easy as expanding the derived [`Deserialize`] impl and altering it a bit.
 //     And if that fails, the 2nd argument will still be viable.
 //
+//
+// In the event of a `serde` version bump and this breaking, the fix is a matter of
+// implementing a struct such as:
+// ```
+// #[derive(Deserialize)]
+// #[serde(tag = "@type")]
+// enum MyStruct {
+//     Var(u8),
+//     Var2(u8)    
+// }
+// ```
+//
+// Then analyze the expanded [`Deserialize`] impl and adapt the actual implementation below.
 impl<'de> Deserialize<'de> for A2AMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -106,8 +121,38 @@ impl<'de> Deserialize<'de> for A2AMessage {
     }
 }
 
+/// Custom [`Serialize`] impl for [`A2AMessage`] to use the 
+/// correspondent [`MessageType`] as internal tag `@type`.
+/// 
+/// For readability, we rely on [`DelayedSerde::delayed_serialize`] to do the actual serialization.
+/// We need to construct the serializer after serializing [`MessageType`], hence we pass a constructor closure.
+/// 
+/// This allows to do a single pattern match and serialize both the correspondent message type of a concrete
+/// message as well as the message itself in one go.
+//
 // Same rationale as with the [`Deserialize`] impl on [`A2AMessage`].
-// We add the message type and flatten the actual message while serializing.
+// The state gets created and ended through public API, but to flatten the concrete
+// message we use serde's serializer exposed when deriving [`Serialize`].
+//
+//
+// In the event of a `serde` version bump and this breaking, the fix is a matter of
+// implementing a struct such as:
+// ```
+// #[derive(Serialize)]
+// struct A {
+//    field: u8
+// }
+//
+// #[derive(Serialize)]
+// struct MyStruct {
+//     #[serde(rename = "@type")]
+//     msg_type: MessageType,
+//     #[serde(flatten)]
+//     stuff: A
+// }
+// ```
+//
+// Then analyze the expanded [`Serialize`] impl and adapt the actual implementation below.
 impl Serialize for A2AMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
