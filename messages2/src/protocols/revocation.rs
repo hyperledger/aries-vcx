@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum Revocation {
     Revoke(Revoke),
     Ack(Ack),
@@ -42,7 +42,7 @@ impl DelayedSerde for Revocation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Revoke;
 
 impl ConcreteMessage for Revoke {
@@ -53,7 +53,7 @@ impl ConcreteMessage for Revoke {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Ack;
 
 impl ConcreteMessage for Ack {

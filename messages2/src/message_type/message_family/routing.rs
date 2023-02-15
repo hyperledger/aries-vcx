@@ -1,21 +1,27 @@
 use derive_more::From;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{error::{MsgTypeError, MsgTypeResult}, macros::transient_from};
+use crate::{
+    error::{MsgTypeError, MsgTypeResult},
+    macros::transient_from,
+};
 
-use super::{traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind}, MessageFamily};
+use super::{
+    traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
+    MessageFamily,
+};
 
-#[derive(From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum Routing {
     V1(RoutingV1),
 }
 
-#[derive(From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
 
-#[derive(AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RoutingV1_0 {
     Forward,

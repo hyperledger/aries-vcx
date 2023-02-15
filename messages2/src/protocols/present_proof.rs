@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum PresentProof {
     ProposePresentation(ProposePresentation),
     RequestPresentation(RequestPresentation),
@@ -48,7 +48,7 @@ impl DelayedSerde for PresentProof {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProposePresentation;
 
 impl ConcreteMessage for ProposePresentation {
@@ -59,7 +59,7 @@ impl ConcreteMessage for ProposePresentation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RequestPresentation;
 
 impl ConcreteMessage for RequestPresentation {
@@ -70,7 +70,7 @@ impl ConcreteMessage for RequestPresentation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Presentation;
 
 impl ConcreteMessage for Presentation {
@@ -81,7 +81,7 @@ impl ConcreteMessage for Presentation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Ack;
 
 impl ConcreteMessage for Ack {

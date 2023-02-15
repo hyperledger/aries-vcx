@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum OutOfBand {
     Invitation(Invitation),
     HandshakeReuse(HandshakeReuse),
@@ -45,7 +45,7 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Invitation;
 
 impl ConcreteMessage for Invitation {
@@ -56,7 +56,7 @@ impl ConcreteMessage for Invitation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HandshakeReuse;
 
 impl ConcreteMessage for HandshakeReuse {
@@ -67,7 +67,7 @@ impl ConcreteMessage for HandshakeReuse {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HandshakeReuseAccepted;
 
 impl ConcreteMessage for HandshakeReuseAccepted {

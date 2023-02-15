@@ -5,17 +5,17 @@ use crate::{error::{MsgTypeError, MsgTypeResult}, macros::transient_from};
 
 use super::{traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind}, MessageFamily};
 
-#[derive(From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum Connection {
     V1(ConnectionV1),
 }
 
-#[derive(From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum ConnectionV1 {
     V1_0(ConnectionV1_0),
 }
 
-#[derive(AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 pub enum ConnectionV1_0 {
     Invitation,

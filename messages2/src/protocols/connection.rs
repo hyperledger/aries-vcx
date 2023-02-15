@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum Connection {
     Invitation(Invitation),
     Request(Request),
@@ -48,7 +48,7 @@ impl DelayedSerde for Connection {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Invitation;
 
 impl ConcreteMessage for Invitation {
@@ -59,7 +59,7 @@ impl ConcreteMessage for Invitation {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Request;
 
 impl ConcreteMessage for Request {
@@ -70,7 +70,7 @@ impl ConcreteMessage for Request {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Response;
 
 impl ConcreteMessage for Response {
@@ -81,7 +81,7 @@ impl ConcreteMessage for Response {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProblemReport;
 
 impl ConcreteMessage for ProblemReport {

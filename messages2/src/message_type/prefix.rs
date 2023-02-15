@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::error::MsgTypeError;
 
+#[derive(Copy, Clone, Debug)]
 pub enum Prefix {
     DidCommOrg,
     DidSov,
@@ -9,7 +10,7 @@ pub enum Prefix {
 
 impl Prefix {
     pub const DID_COM_ORG_PREFIX: &'static str = "https://didcomm.org";
-    pub const DID_SOV_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg";
+    pub const DID_SOV_PREFIX: &'static str = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec";
 }
 
 impl Default for Prefix {
@@ -18,6 +19,7 @@ impl Default for Prefix {
     }
 }
 
+// Manual impl so we can reuse the constants.
 impl AsRef<str> for Prefix {
     fn as_ref(&self) -> &str {
         match self {
@@ -27,6 +29,7 @@ impl AsRef<str> for Prefix {
     }
 }
 
+// Manual impl so we can reuse the constants.
 impl FromStr for Prefix {
     type Err = MsgTypeError;
 
@@ -38,22 +41,3 @@ impl FromStr for Prefix {
         }
     }
 }
-
-// impl Serialize for Prefix {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         serializer.serialize_str(self.as_ref())
-//     }
-// }
-
-// impl<'de> Deserialize<'de> for Prefix {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let s = <&str>::deserialize(deserializer)?;
-//         Self::from_str(s).map_err(D::Error::custom)
-//     }
-// }

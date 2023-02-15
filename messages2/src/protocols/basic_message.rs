@@ -5,8 +5,10 @@ use crate::message_type::message_family::{
     traits::ConcreteMessage,
 };
 
-#[derive(Deserialize, Serialize)]
-pub struct BasicMessage;
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct BasicMessage {
+    pub field: String
+}
 
 impl ConcreteMessage for BasicMessage {
     type Kind = BasicMessageKind;

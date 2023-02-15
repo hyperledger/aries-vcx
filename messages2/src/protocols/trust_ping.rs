@@ -6,7 +6,7 @@ use crate::message_type::message_family::{
     trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
 };
 
-#[derive(From)]
+#[derive(Clone, Debug, From)]
 pub enum TrustPing {
     Ping(Ping),
     PingResponse(PingResponse),
@@ -42,7 +42,7 @@ impl DelayedSerde for TrustPing {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Ping;
 
 impl ConcreteMessage for Ping {
@@ -53,7 +53,7 @@ impl ConcreteMessage for Ping {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PingResponse;
 
 impl ConcreteMessage for PingResponse {
