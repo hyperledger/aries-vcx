@@ -16,13 +16,11 @@ pub enum ConnectionV1 {
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
-#[strum(serialize_all = "kebab-case")]
+#[strum(serialize_all = "snake_case")]
 pub enum ConnectionV1_0 {
     Invitation,
     Request,
     Response,
-    // Note that the underscore is on purpose!
-    #[strum(serialize = "problem_report")]
     ProblemReport,
 }
 

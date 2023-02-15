@@ -11,6 +11,7 @@ use self::{message_family::traits::ResolveMajorVersion, prefix::Prefix};
 
 pub use self::message_family::MessageFamily;
 
+#[derive(PartialEq)]
 pub struct MessageType {
     prefix: Prefix,
     pub family: MessageFamily,
@@ -101,5 +102,38 @@ impl Serialize for MessageType {
         };
 
         serializer.serialize_str(&format!("{prefix}/{family}/{major}.{minor}/{kind}"))
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::message_type::message_family::basic_message::{BasicMessage, BasicMessageV1_0};
+    use crate::message_type::message_family::connection::ConnectionV1_0;
+    use super::*;
+
+    #[test]
+    fn from_string_basicmessage() {
+        let msg_type = MessageType::from_str("https://didcomm.org/basicmessage/1.0/message").unwrap();
+        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
+        // This From conversion is generated using transient_from! macro
+        let family: MessageFamily = BasicMessageV1_0::Message.into();
+        assert_eq!(msg_type.family, family);
+    }
+
+    #[test]
+    fn from_string_connections() {
+        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/invitation").unwrap();
+        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
+        assert_eq!(msg_type.family, ConnectionV1_0::Invitation.into());
+        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/request").unwrap();
+        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
+        assert_eq!(msg_type.family, ConnectionV1_0::Request.into());
+        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/response").unwrap();
+        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
+        assert_eq!(msg_type.family, ConnectionV1_0::Response.into());
+        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/problem_report").unwrap();
+        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
+        assert_eq!(msg_type.family, ConnectionV1_0::ProblemReport.into());
     }
 }
