@@ -165,3 +165,26 @@ impl Serialize for A2AMessage {
         state.end()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ser() {
+        let msg = A2AMessage::BasicMessage(BasicMessage { field: "stuff".to_owned() });
+        println!("{}", serde_json::to_string(&msg).unwrap());
+    }
+
+    #[test]
+    fn test_de() {
+        let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
+        let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
+        println!("{:?}", msg);
+
+        let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
+        let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
+        println!("{:?}", msg);
+    }
+
+}

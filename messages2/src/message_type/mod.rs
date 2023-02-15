@@ -7,7 +7,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::error::MsgTypeError;
 
-use self::{message_family::traits::{ResolveMajorVersion}, prefix::Prefix};
+use self::{message_family::traits::ResolveMajorVersion, prefix::Prefix};
 
 pub use self::message_family::MessageFamily;
 
@@ -74,7 +74,10 @@ impl<'de> Deserialize<'de> for MessageType {
     where
         D: Deserializer<'de>,
     {
-        <&str>::deserialize(deserializer)?.parse().map_err(D::Error::custom)
+        let type_str = <&str>::deserialize(deserializer)?;
+        type_str
+            .parse()
+            .map_err(|e| D::Error::custom(format!("Message type {type_str}; {e}")))
     }
 }
 
