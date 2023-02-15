@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 use crate::message_type::message_family::{
     discover_features::{DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0},
@@ -17,7 +17,7 @@ impl DelayedSerde for DiscoverFeatures {
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let DiscoverFeaturesKind::V1(major) = seg;
         let DiscoverFeaturesV1::V1_0(minor) = major;
