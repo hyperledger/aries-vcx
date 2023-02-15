@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::{any::type_name, fmt::Debug, str::FromStr};
 
-use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -38,7 +38,7 @@ pub trait ResolveMajorVersion: Sized {
 }
 
 pub trait ConcreteMessage {
-    type Kind: Into<MessageType> + PartialEq;
+    type Kind: Into<MessageType> + PartialEq + Debug;
 
     fn kind() -> Self::Kind;
 }
@@ -68,10 +68,17 @@ where
     where
         D: Deserializer<'de>,
     {
-        if seg == Self::kind() {
+        let expected = Self::kind();
+        if seg == expected {
             Self::deserialize(deserializer)
         } else {
-            todo!()
+            let msg = format!(
+                "Failed deserializing {}; Expected kind: {:?}, found: {:?}",
+                type_name::<T>(),
+                expected,
+                seg
+            );
+            Err(D::Error::custom(msg))
         }
     }
 
