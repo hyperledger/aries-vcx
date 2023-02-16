@@ -1,13 +1,13 @@
 pub mod message_family;
 mod prefix;
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::error::MsgTypeError;
 
-use self::{message_family::traits::ResolveMajorVersion, prefix::Prefix};
+use self::prefix::Prefix;
 
 pub use self::message_family::MessageFamily;
 
@@ -20,6 +20,14 @@ pub struct MessageType {
 impl MessageType {
     pub fn new(prefix: Prefix, family: MessageFamily) -> Self {
         Self { prefix, family }
+    }
+}
+
+impl Display for MessageType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let prefix_str = self.prefix.as_ref();
+        let (family, major, minor, kind) = self.family.as_parts();
+        write!(f, "{prefix_str}/{family}/{major}.{minor}/{kind}")
     }
 }
 
@@ -87,21 +95,7 @@ impl Serialize for MessageType {
     where
         S: Serializer,
     {
-        let prefix = self.prefix.as_ref();
-        let (family, major, minor, kind) = match &self.family {
-            MessageFamily::Routing(v) => v.as_msg_type_parts(),
-            MessageFamily::Connection(v) => v.as_msg_type_parts(),
-            MessageFamily::Revocation(v) => v.as_msg_type_parts(),
-            MessageFamily::CredentialIssuance(v) => v.as_msg_type_parts(),
-            MessageFamily::ReportProblem(v) => v.as_msg_type_parts(),
-            MessageFamily::PresentProof(v) => v.as_msg_type_parts(),
-            MessageFamily::TrustPing(v) => v.as_msg_type_parts(),
-            MessageFamily::DiscoverFeatures(v) => v.as_msg_type_parts(),
-            MessageFamily::BasicMessage(v) => v.as_msg_type_parts(),
-            MessageFamily::OutOfBand(v) => v.as_msg_type_parts(),
-        };
-
-        serializer.serialize_str(&format!("{prefix}/{family}/{major}.{minor}/{kind}"))
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -114,26 +108,20 @@ mod tests {
 
     #[test]
     fn from_string_basicmessage() {
-        let msg_type = MessageType::from_str("https://didcomm.org/basicmessage/1.0/message").unwrap();
-        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
         // This From conversion is generated using transient_from! macro
-        let family: MessageFamily = BasicMessageV1_0::Message.into();
-        assert_eq!(msg_type.family, family);
+        let msg_type: MessageType = MessageFamily::into(BasicMessageV1_0::Message.into());
+        assert_eq!(msg_type.to_string(), "https://didcomm.org/basicmessage/1.0/message");
     }
 
     #[test]
     fn from_string_connections() {
-        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/invitation").unwrap();
-        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
-        assert_eq!(msg_type.family, ConnectionV1_0::Invitation.into());
-        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/request").unwrap();
-        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
-        assert_eq!(msg_type.family, ConnectionV1_0::Request.into());
-        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/response").unwrap();
-        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
-        assert_eq!(msg_type.family, ConnectionV1_0::Response.into());
-        let msg_type = MessageType::from_str("https://didcomm.org/connections/1.0/problem_report").unwrap();
-        assert_eq!(msg_type.prefix, Prefix::DidCommOrg);
-        assert_eq!(msg_type.family, ConnectionV1_0::ProblemReport.into());
+        let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::Invitation.into());
+        assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/invitation");
+        let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::Request.into());
+        assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/request");
+        let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::Response.into());
+        assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/response");
+        let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::ProblemReport.into());
+        assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/problem_report");
     }
 }

@@ -58,6 +58,21 @@ impl MessageFamily {
         }
     }
 
+    pub fn as_parts(&self) -> (&str, u8, u8, &str) {
+        match &self {
+            Self::Routing(v) => v.as_msg_type_parts(),
+            Self::Connection(v) => v.as_msg_type_parts(),
+            Self::Revocation(v) => v.as_msg_type_parts(),
+            Self::CredentialIssuance(v) => v.as_msg_type_parts(),
+            Self::ReportProblem(v) => v.as_msg_type_parts(),
+            Self::PresentProof(v) => v.as_msg_type_parts(),
+            Self::TrustPing(v) => v.as_msg_type_parts(),
+            Self::DiscoverFeatures(v) => v.as_msg_type_parts(),
+            Self::BasicMessage(v) => v.as_msg_type_parts(),
+            Self::OutOfBand(v) => v.as_msg_type_parts(),
+        }
+    }
+
     /// Steps the provided iterator of parts and returns the string slice element.
     ///
     /// # Errors:
