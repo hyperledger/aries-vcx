@@ -105,12 +105,12 @@ impl Serialize for MessageType {
     }
 }
 
-
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::message_type::message_family::basic_message::{BasicMessage, BasicMessageV1_0};
-    use crate::message_type::message_family::connection::ConnectionV1_0;
     use super::*;
+    use crate::message_type::message_family::basic_message::BasicMessageV1_0;
+    use crate::message_type::message_family::connection::ConnectionV1_0;
 
     #[test]
     fn from_string_basicmessage() {

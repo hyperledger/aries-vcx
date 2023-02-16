@@ -8,3 +8,4 @@ pub mod report_problem;
 pub mod revocation;
 pub mod routing;
 pub mod trust_ping;
+pub mod common;

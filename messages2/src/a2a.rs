@@ -127,13 +127,15 @@ impl<'de> Deserialize<'de> for A2AMessage {
 /// For readability, we rely on [`DelayedSerde::delayed_serialize`] to do the actual serialization.
 /// We need to construct the serializer after serializing [`MessageType`], hence we pass a constructor closure.
 /// 
-/// This allows to do a single pattern match and serialize both the correspondent message type of a concrete
-/// message as well as the message itself in one go.
+/// This design allows us to do a single pattern match and serialize both the correspondent message type 
+/// of a concrete message as well as the message itself in one go.
 //
 // Same rationale as with the [`Deserialize`] impl on [`A2AMessage`].
 // The state gets created and ended through public API, but to flatten the concrete
 // message we use serde's serializer exposed when deriving [`Serialize`].
 //
+// Using the closure to create the serializer has the benefit of keeping the
+// "private" import only here, not throughout the crate.
 //
 // In the event of a `serde` version bump and this breaking, the fix is a matter of
 // implementing a struct such as:
@@ -167,6 +169,7 @@ impl Serialize for A2AMessage {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -180,11 +183,11 @@ mod tests {
     fn test_de() {
         let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
         let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
-        println!("{:?}", msg);
+        println!("{msg:?}");
 
         let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
         let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
-        println!("{:?}", msg);
+        println!("{msg:?}");
     }
 
 }
