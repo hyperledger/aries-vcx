@@ -18,7 +18,7 @@ pub enum BasicMessageV1 {
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(target = "MessageFamily", parent = "BasicMessageV1", grandparent = "BasicMessage")]
+#[transient_from(target = "MessageFamily", grandparent = "BasicMessage", parent = "BasicMessageV1")]
 #[strum(serialize_all = "kebab-case")]
 pub enum BasicMessageV1_0 {
     Message,
