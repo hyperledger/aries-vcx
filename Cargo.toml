@@ -6,6 +6,7 @@ members = [
     "agency_client",
     "libvdrtools",
     "messages",
+    "messages_macros",
     "messages2",
     "shared_vcx",
     "diddoc",
