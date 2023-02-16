@@ -7,7 +7,7 @@ use crate::{
     message_type::MessageType,
 };
 
-const MSG_TYPE: &str = "@type";
+pub const MSG_TYPE: &str = "@type";
 
 pub trait ResolveMsgKind: Sized + FromStr + AsRef<str> {
     const MINOR: u8;

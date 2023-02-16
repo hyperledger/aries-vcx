@@ -2,7 +2,7 @@ use derive_more::From;
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    message_type::{message_family::traits::DelayedSerde, MessageFamily, MessageType},
+    message_type::{message_family::traits::{DelayedSerde, MSG_TYPE}, MessageFamily, MessageType},
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
@@ -112,11 +112,22 @@ impl<'de> Deserialize<'de> for A2AMessage {
     {
         use serde::__private::de::{ContentDeserializer, TaggedContentVisitor};
 
-        let tag_visitor = TaggedContentVisitor::<MessageType>::new("@type", "internally tagged enum A2AMessage");
+        // TaggedContentVisitor is a visitor used in serde_derive for internally tagged enums.
+        // As it visits data, it looks for a certain field (MSG_TYPE here), deserializes it and stores it separately.
+        // The rest of the data is stored as [`Content`], a thin deserialization format that practically acts as a buffer
+        // so the other fields besides the tag are cached.
+        let tag_visitor = TaggedContentVisitor::<MessageType>::new(MSG_TYPE, "internally tagged enum A2AMessage");
         let tagged = deserializer.deserialize_any(tag_visitor)?;
 
+        // As the TaggedContent struct has two fields, tag and content, where in our case the tag is `MessageType`,
+        // the content is [`Content`], the cached remaining fields of the serialized data.
+        // Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
 
+        // Instead of matching to oblivion and beyond on the [`MessageType`] family,
+        // we make use of [`DelayedSerde`] so the matching happens incrementally.
+        // This makes use of the provided deserializer and matches on the [`MessageType`]
+        // to determine the type the content must be deserialized to.
         Self::delayed_deserialize(tagged.tag.family, content_deser)
     }
 }
@@ -161,9 +172,20 @@ impl Serialize for A2AMessage {
         S: Serializer,
     {
         use serde::__private::ser::FlatMapSerializer;
-
+        
+        // Serializing a struct to serde's internal data model happens in three steps,
+        // as described (here)[https://serde.rs/impl-serialize.html#serializing-a-sequence-or-map].
+        //
+        // We initialize the serialization state.
         let mut state = serializer.serialize_map(None)?;
+        // We populate the state with the serialized fields.
+        // The [`FlatMapSerializer`] is what serde_derive uses to flatten a structure during serialization.
+        // We need to accomplish the following:
+        // 1) Normally serialize the '@type' field which will contain a [`MessageType`] that's determined by
+        // the [`DelayedSerde`] impl on generic [`ConcreteMessage`] impls.
+        // 2) Flatten `self` (the actual message) so that it's placed adjacently to the '@type' field.
         self.delayed_serialize(&mut state, &mut FlatMapSerializer)?;
+        // We end the serialization state, returning the data in it's serialized format.
         state.end()
     }
 }
