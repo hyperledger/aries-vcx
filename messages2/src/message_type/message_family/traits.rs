@@ -44,9 +44,9 @@ pub trait ConcreteMessage {
 }
 
 pub trait DelayedSerde: Sized {
-    type Seg: Into<MessageType>;
+    type MsgType: Into<MessageType>;
 
-    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>;
 
@@ -62,9 +62,9 @@ impl<T> DelayedSerde for T
 where
     for<'d> T: ConcreteMessage + Serialize + Deserialize<'d>,
 {
-    type Seg = <Self as ConcreteMessage>::Kind;
+    type MsgType = <Self as ConcreteMessage>::Kind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {

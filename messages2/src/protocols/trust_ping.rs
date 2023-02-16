@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::message_type::message_family::{
     traits::{ConcreteMessage, DelayedSerde},
@@ -13,9 +13,9 @@ pub enum TrustPing {
 }
 
 impl DelayedSerde for TrustPing {
-    type Seg = TrustPingKind;
+    type MsgType = TrustPingKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {

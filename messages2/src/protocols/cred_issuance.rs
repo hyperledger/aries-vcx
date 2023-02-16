@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Serialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::message_type::message_family::{
     cred_issuance::{CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0},
@@ -16,9 +16,9 @@ pub enum CredentialIssuance {
 }
 
 impl DelayedSerde for CredentialIssuance {
-    type Seg = CredentialIssuanceKind;
+    type MsgType = CredentialIssuanceKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {

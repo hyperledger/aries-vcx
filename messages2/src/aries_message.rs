@@ -2,7 +2,10 @@ use derive_more::From;
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    message_type::{message_family::traits::{DelayedSerde, MSG_TYPE}, MessageFamily, MessageType},
+    message_type::{
+        message_family::traits::{DelayedSerde, MSG_TYPE},
+        MessageFamily, MessageType,
+    },
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
@@ -25,27 +28,27 @@ pub enum AriesMessage {
 }
 
 impl DelayedSerde for AriesMessage {
-    type Seg = MessageFamily;
+    type MsgType = MessageFamily;
 
-    fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         match seg {
-            Self::Seg::Routing(seg) => Forward::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::Connection(seg) => Connection::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::Revocation(seg) => Revocation::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::CredentialIssuance(seg) => {
+            Self::MsgType::Routing(seg) => Forward::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::Connection(seg) => Connection::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::Revocation(seg) => Revocation::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::CredentialIssuance(seg) => {
                 CredentialIssuance::delayed_deserialize(seg, deserializer).map(From::from)
             }
-            Self::Seg::ReportProblem(seg) => ProblemReport::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::PresentProof(seg) => PresentProof::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::TrustPing(seg) => TrustPing::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::DiscoverFeatures(seg) => {
+            Self::MsgType::ReportProblem(seg) => ProblemReport::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::PresentProof(seg) => PresentProof::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::TrustPing(seg) => TrustPing::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::DiscoverFeatures(seg) => {
                 DiscoverFeatures::delayed_deserialize(seg, deserializer).map(From::from)
             }
-            Self::Seg::BasicMessage(seg) => BasicMessage::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::Seg::OutOfBand(seg) => OutOfBand::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::BasicMessage(seg) => BasicMessage::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::OutOfBand(seg) => OutOfBand::delayed_deserialize(seg, deserializer).map(From::from),
         }
     }
 
@@ -73,7 +76,7 @@ impl DelayedSerde for AriesMessage {
 
 /// Custom [`Deserialize`] impl for [`A2AMessage`] to use the `@type` as internal tag,
 /// but deserialize it to a [`MessageType`].
-/// 
+///
 /// For readability, the [`MessageType`] matching is done in the [`DelayedSerde::delayed_deserialize`] method.
 //
 // Yes, we're using some private serde constructs. Here's why I think this is okay:
@@ -100,7 +103,7 @@ impl DelayedSerde for AriesMessage {
 // #[serde(tag = "@type")]
 // enum MyStruct {
 //     Var(u8),
-//     Var2(u8)    
+//     Var2(u8)
 // }
 // ```
 //
@@ -132,13 +135,13 @@ impl<'de> Deserialize<'de> for AriesMessage {
     }
 }
 
-/// Custom [`Serialize`] impl for [`A2AMessage`] to use the 
+/// Custom [`Serialize`] impl for [`A2AMessage`] to use the
 /// correspondent [`MessageType`] as internal tag `@type`.
-/// 
+///
 /// For readability, we rely on [`DelayedSerde::delayed_serialize`] to do the actual serialization.
 /// We need to construct the serializer after serializing [`MessageType`], hence we pass a constructor closure.
-/// 
-/// This design allows us to do a single pattern match and serialize both the correspondent message type 
+///
+/// This design allows us to do a single pattern match and serialize both the correspondent message type
 /// of a concrete message as well as the message itself in one go.
 //
 // Same rationale as with the [`Deserialize`] impl on [`A2AMessage`].
@@ -172,7 +175,7 @@ impl Serialize for AriesMessage {
         S: Serializer,
     {
         use serde::__private::ser::FlatMapSerializer;
-        
+
         // Serializing a struct to serde's internal data model happens in three steps,
         // as described (here)[https://serde.rs/impl-serialize.html#serializing-a-sequence-or-map].
         //
@@ -197,7 +200,9 @@ mod tests {
 
     #[test]
     fn test_ser() {
-        let msg = AriesMessage::BasicMessage(BasicMessage { field: "stuff".to_owned() });
+        let msg = AriesMessage::BasicMessage(BasicMessage {
+            field: "stuff".to_owned(),
+        });
         println!("{}", serde_json::to_string(&msg).unwrap());
     }
 
@@ -211,5 +216,4 @@ mod tests {
         let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
         println!("{msg:?}");
     }
-
 }
