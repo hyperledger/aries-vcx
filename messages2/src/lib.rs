@@ -10,5 +10,5 @@ mod message_type;
 mod decorators;
 mod error;
 mod protocols;
-mod a2a;
+mod aries_message;
 mod macros;

@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug, From)]
-pub enum A2AMessage {
+pub enum AriesMessage {
     Routing(Forward),
     Connection(Connection),
     Revocation(Revocation),
@@ -24,7 +24,7 @@ pub enum A2AMessage {
     OutOfBand(OutOfBand),
 }
 
-impl DelayedSerde for A2AMessage {
+impl DelayedSerde for AriesMessage {
     type Seg = MessageFamily;
 
     fn delayed_deserialize<'de, D>(seg: Self::Seg, deserializer: D) -> Result<Self, D::Error>
@@ -105,7 +105,7 @@ impl DelayedSerde for A2AMessage {
 // ```
 //
 // Then analyze the expanded [`Deserialize`] impl and adapt the actual implementation below.
-impl<'de> Deserialize<'de> for A2AMessage {
+impl<'de> Deserialize<'de> for AriesMessage {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -166,7 +166,7 @@ impl<'de> Deserialize<'de> for A2AMessage {
 // ```
 //
 // Then analyze the expanded [`Serialize`] impl and adapt the actual implementation below.
-impl Serialize for A2AMessage {
+impl Serialize for AriesMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -197,18 +197,18 @@ mod tests {
 
     #[test]
     fn test_ser() {
-        let msg = A2AMessage::BasicMessage(BasicMessage { field: "stuff".to_owned() });
+        let msg = AriesMessage::BasicMessage(BasicMessage { field: "stuff".to_owned() });
         println!("{}", serde_json::to_string(&msg).unwrap());
     }
 
     #[test]
     fn test_de() {
         let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
-        let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
+        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
         println!("{msg:?}");
 
         let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
-        let msg: A2AMessage = serde_json::from_str(json_str).unwrap();
+        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
         println!("{msg:?}");
     }
 
