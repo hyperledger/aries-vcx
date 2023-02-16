@@ -1,9 +1,9 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
+    error::{MsgTypeError, MsgTypeResult}
 };
 
 use super::{
@@ -16,19 +16,19 @@ pub enum Revocation {
     V1(RevocationV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "Revocation", target = "MessageFamily")]
 pub enum RevocationV1 {
     V1_0(RevocationV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "RevocationV1", grandparent = "Revocation", target = "MessageFamily")]
 #[strum(serialize_all = "kebab-case")]
 pub enum RevocationV1_0 {
     Revoke,
     Ack,
 }
-
-transient_from!(RevocationV1_0, RevocationV1, Revocation, MessageFamily);
 
 impl ResolveMsgKind for RevocationV1_0 {
     const MINOR: u8 = 0;

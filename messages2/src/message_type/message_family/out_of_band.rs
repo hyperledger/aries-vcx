@@ -1,10 +1,8 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,20 +14,20 @@ pub enum OutOfBand {
     V1(OutOfBandV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "OutOfBand", target = "MessageFamily")]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "OutOfBandV1", grandparent = "OutOfBand", target = "MessageFamily")]
 #[strum(serialize_all = "kebab-case")]
 pub enum OutOfBandV1_1 {
     Invitation,
     HandshakeReuse,
     HandshakeReuseAccepted,
 }
-
-transient_from!(OutOfBandV1_1, OutOfBandV1, OutOfBand, MessageFamily);
 
 impl ResolveMsgKind for OutOfBandV1_1 {
     const MINOR: u8 = 1;

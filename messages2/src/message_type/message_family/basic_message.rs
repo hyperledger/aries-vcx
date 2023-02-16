@@ -2,9 +2,12 @@ use derive_more::From;
 use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{error::{MsgTypeError, MsgTypeResult}, macros::transient_from};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
-use super::{traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind}, MessageFamily};
+use super::{
+    traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
+    MessageFamily,
+};
 
 #[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum BasicMessage {
@@ -23,8 +26,6 @@ pub enum BasicMessageV1 {
 pub enum BasicMessageV1_0 {
     Message,
 }
-
-// transient_from!(BasicMessageV1_0, BasicMessageV1, BasicMessage, MessageFamily);
 
 impl ResolveMsgKind for BasicMessageV1_0 {
     const MINOR: u8 = 0;

@@ -1,21 +1,27 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{error::{MsgTypeError, MsgTypeResult}, macros::transient_from};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
-use super::{traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind}, MessageFamily};
+use super::{
+    traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
+    MessageFamily,
+};
 
 #[derive(Copy, Clone, Debug, From, PartialEq)]
 pub enum Connection {
     V1(ConnectionV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "Connection", target = "MessageFamily")]
 pub enum ConnectionV1 {
     V1_0(ConnectionV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "ConnectionV1", grandparent = "Connection", target = "MessageFamily")]
 #[strum(serialize_all = "snake_case")]
 pub enum ConnectionV1_0 {
     Invitation,
@@ -23,8 +29,6 @@ pub enum ConnectionV1_0 {
     Response,
     ProblemReport,
 }
-
-transient_from!(ConnectionV1_0, ConnectionV1, Connection, MessageFamily);
 
 impl ResolveMsgKind for ConnectionV1_0 {
     const MINOR: u8 = 0;

@@ -1,10 +1,8 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,20 +14,20 @@ pub enum TrustPing {
     V1(TrustPingV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "TrustPing", target = "MessageFamily")]
 pub enum TrustPingV1 {
     V1_0(TrustPingV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "TrustPingV1", grandparent = "TrustPing", target = "MessageFamily")]
 #[strum(serialize_all = "kebab-case")]
 pub enum TrustPingV1_0 {
     Ping,
     #[strum(serialize = "ping_response")]
     PingResponse,
 }
-
-transient_from!(TrustPingV1_0, TrustPingV1, TrustPing, MessageFamily);
 
 impl ResolveMsgKind for TrustPingV1_0 {
     const MINOR: u8 = 0;

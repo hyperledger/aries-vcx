@@ -1,10 +1,8 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,18 +14,18 @@ pub enum Routing {
     V1(RoutingV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "Routing", target = "MessageFamily")]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "RoutingV1", grandparent = "Routing", target = "MessageFamily")]
 #[strum(serialize_all = "kebab-case")]
 pub enum RoutingV1_0 {
     Forward,
 }
-
-transient_from!(RoutingV1_0, RoutingV1, Routing, MessageFamily);
 
 impl ResolveMsgKind for RoutingV1_0 {
     const MINOR: u8 = 0;

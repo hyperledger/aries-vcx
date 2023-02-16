@@ -1,10 +1,8 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,24 +14,23 @@ pub enum DiscoverFeatures {
     V1(DiscoverFeaturesV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "DiscoverFeatures", target = "MessageFamily")]
 pub enum DiscoverFeaturesV1 {
     V1_0(DiscoverFeaturesV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(
+    parent = "DiscoverFeaturesV1",
+    grandparent = "DiscoverFeatures",
+    target = "MessageFamily"
+)]
 #[strum(serialize_all = "kebab-case")]
 pub enum DiscoverFeaturesV1_0 {
     Query,
     Disclose,
 }
-
-transient_from!(
-    DiscoverFeaturesV1_0,
-    DiscoverFeaturesV1,
-    DiscoverFeatures,
-    MessageFamily
-);
 
 impl ResolveMsgKind for DiscoverFeaturesV1_0 {
     const MINOR: u8 = 0;

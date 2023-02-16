@@ -1,10 +1,8 @@
 use derive_more::From;
+use messages_macros::TransientFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-    macros::transient_from,
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,12 +14,14 @@ pub enum PresentProof {
     V1(PresentProofV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
+#[transient_from(parent = "PresentProof", target = "MessageFamily")]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
+#[transient_from(parent = "PresentProofV1", grandparent = "PresentProof", target = "MessageFamily")]
 #[strum(serialize_all = "kebab-case")]
 pub enum PresentProofV1_0 {
     ProposePresentation,
@@ -29,8 +29,6 @@ pub enum PresentProofV1_0 {
     Presentation,
     Ack,
 }
-
-transient_from!(PresentProofV1_0, PresentProofV1, PresentProof, MessageFamily);
 
 impl ResolveMsgKind for PresentProofV1_0 {
     const MINOR: u8 = 0;
