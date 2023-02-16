@@ -31,20 +31,6 @@ pub enum MimeType {
     Blank,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AttachmentId {
-    #[serde(rename = "libindy-cred-offer-0")]
-    CredentialOffer,
-    #[serde(rename = "libindy-cred-request-0")]
-    CredentialRequest,
-    #[serde(rename = "libindy-cred-0")]
-    Credential,
-    #[serde(rename = "libindy-request-presentation-0")]
-    PresentationRequest,
-    #[serde(rename = "libindy-presentation-0")]
-    Presentation,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AttachmentData {
     // There probably is a better type for this???
