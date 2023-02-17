@@ -37,6 +37,14 @@ async fn create_service(
 }
 
 #[napi]
+async fn create_service_v2(target_did: String, routing_keys: Vec<String>, endpoint: String) -> napi::Result<String> {
+    let res = ledger::ledger_write_endpoint(&target_did, routing_keys, endpoint)
+        .await
+        .map_err(to_napi_err)?;
+    Ok(json!(res).to_string())
+}
+
+#[napi]
 async fn get_service_from_ledger(target_did: String) -> napi::Result<String> {
     let res = ledger::ledger_get_service(&target_did).await.map_err(to_napi_err)?;
     Ok(json!(res).to_string())

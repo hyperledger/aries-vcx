@@ -20,6 +20,12 @@ export interface IAriesService {
   serviceEndpoint: string;
 }
 
+export interface IAriesServiceV2 {
+  endpoint: string;
+  routingKeys?: string[];
+  types?: string[];
+}
+
 export async function provisionCloudAgent(configAgent: object): Promise<string> {
   try {
     return await ffi.provisionCloudAgent(JSON.stringify(configAgent));
@@ -160,6 +166,18 @@ export async function createService(
 ): Promise<IAriesService> {
   try {
     return JSON.parse(await ffi.createService(target_did, recipientKeys, routingKeys, endpoint));
+  } catch (err: any) {
+    throw new VCXInternalError(err);
+  }
+}
+
+export async function createServiceV2(
+  target_did: string,
+  endpoint: string,
+  routingKeys: string[],
+): Promise<IAriesServiceV2> {
+  try {
+    return JSON.parse(await ffi.createServiceV2(target_did, routingKeys, endpoint));
   } catch (err: any) {
     throw new VCXInternalError(err);
   }
