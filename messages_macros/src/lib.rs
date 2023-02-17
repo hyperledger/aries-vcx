@@ -1,9 +1,11 @@
 #![allow(clippy::expect_fun_call)]
 
 mod message;
+mod message_type;
 mod transitive;
 
 use message::message_impl;
+use message_type::message_type_impl;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
 use transitive::{transitive_impl, transitive_try_from_impl};
@@ -12,6 +14,14 @@ use transitive::{transitive_impl, transitive_try_from_impl};
 pub fn message(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     message_impl(input).unwrap_or_else(Error::into_compile_error).into()
+}
+
+#[proc_macro_derive(MessageType, attributes(semver))]
+pub fn message_type(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    message_type_impl(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
 }
 
 /// Derive macro that implements [From] for A -> C by converting A -> B -> C.

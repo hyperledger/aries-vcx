@@ -1,7 +1,9 @@
 mod transitive_from;
 mod transitive_try_from;
 
-use syn::{spanned::Spanned, Attribute, Error, Meta, NestedMeta, Path, Result as SynResult, punctuated::Punctuated, Token};
+use syn::{
+    punctuated::Punctuated, spanned::Spanned, Attribute, Error, Meta, NestedMeta, Path, Result as SynResult, Token,
+};
 pub use transitive_from::transitive_impl;
 pub use transitive_try_from::transitive_try_from_impl;
 
@@ -24,7 +26,6 @@ enum TransitiveAttr {
     Transitive(Attribute),
     TransitiveAll(Attribute),
 }
-
 
 /// Checks that the attribute was given the minimum needed arguments
 /// and returns the arguments as a [`MinimalAttrArgs`] type.

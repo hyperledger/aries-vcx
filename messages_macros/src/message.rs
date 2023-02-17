@@ -2,7 +2,7 @@
 
 use std::str::FromStr;
 
-use proc_macro2::{TokenStream, Ident};
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{spanned::Spanned, DeriveInput, Error, Lit, Meta, Result as SynResult};
 
@@ -49,7 +49,7 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     // Make the string a Rust comprehensible type
     let kind = Ident::new(kind, s.span());
 
-    let expected = quote! {
+    let expanded = quote! {
         impl ConcreteMessage for #name {
             type Kind = #kind;
 
@@ -59,5 +59,5 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
         }
     };
 
-    Ok(expected)
+    Ok(expanded)
 }

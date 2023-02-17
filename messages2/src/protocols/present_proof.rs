@@ -2,9 +2,10 @@ use derive_more::From;
 use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{message_type::message_family::{
-    present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
-}, delayed_serde::DelayedSerde};
+use crate::{
+    delayed_serde::DelayedSerde,
+    message_type::message_family::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
+};
 
 use super::traits::ConcreteMessage;
 

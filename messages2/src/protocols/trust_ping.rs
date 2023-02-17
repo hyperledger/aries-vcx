@@ -1,10 +1,11 @@
 use derive_more::From;
 use messages_macros::Message;
-use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap};
+use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{message_type::message_family::{
-    trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
-}, delayed_serde::DelayedSerde};
+use crate::{
+    delayed_serde::DelayedSerde,
+    message_type::message_family::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
+};
 
 use super::traits::ConcreteMessage;
 

@@ -6,9 +6,9 @@
 #![allow(clippy::large_enum_variant)]
 #![deny(clippy::unwrap_used)]
 
-mod message_type;
-mod decorators;
-mod error;
-mod protocols;
 mod aries_message;
+mod decorators;
 mod delayed_serde;
+mod error;
+mod message_type;
+mod protocols;

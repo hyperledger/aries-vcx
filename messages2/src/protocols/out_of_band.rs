@@ -2,9 +2,10 @@ use derive_more::From;
 use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{message_type::message_family::{
-    out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
-}, delayed_serde::DelayedSerde};
+use crate::{
+    delayed_serde::DelayedSerde,
+    message_type::message_family::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
+};
 
 use super::traits::ConcreteMessage;
 

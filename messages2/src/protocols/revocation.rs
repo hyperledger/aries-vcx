@@ -2,9 +2,10 @@ use derive_more::From;
 use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{message_type::message_family::{
-    revocation::{Revocation as RevocationKind, RevocationV1, RevocationV1_0},
-}, delayed_serde::DelayedSerde};
+use crate::{
+    delayed_serde::DelayedSerde,
+    message_type::message_family::revocation::{Revocation as RevocationKind, RevocationV1, RevocationV1_0},
+};
 
 use super::traits::ConcreteMessage;
 
