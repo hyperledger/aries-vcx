@@ -3,7 +3,7 @@
 use messages_macros::TransitiveFrom;
 
 #[test]
-fn basic() {
+fn try_from() {
     #[derive(TransitiveFrom)]
     #[transitive(B, C, D, E, F)] // impl From<A> for F
     struct A;
