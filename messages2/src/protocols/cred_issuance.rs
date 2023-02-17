@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -52,57 +53,22 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "CredentialIssuanceV1_0::OfferCredential")]
 pub struct OfferCredential;
 
-impl ConcreteMessage for OfferCredential {
-    type Kind = CredentialIssuanceV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::OfferCredential
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
 pub struct ProposeCredential;
 
-impl ConcreteMessage for ProposeCredential {
-    type Kind = CredentialIssuanceV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::ProposeCredential
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "CredentialIssuanceV1_0::RequestCredential")]
 pub struct RequestCredential;
 
-impl ConcreteMessage for RequestCredential {
-    type Kind = CredentialIssuanceV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::RequestCredential
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "CredentialIssuanceV1_0::IssueCredential")]
 pub struct IssueCredential;
 
-impl ConcreteMessage for IssueCredential {
-    type Kind = CredentialIssuanceV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::IssueCredential
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "CredentialIssuanceV1_0::Ack")]
 pub struct Ack;
-
-impl ConcreteMessage for Ack {
-    type Kind = CredentialIssuanceV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Ack
-    }
-}

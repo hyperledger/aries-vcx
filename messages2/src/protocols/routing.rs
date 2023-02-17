@@ -1,3 +1,4 @@
+use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_family::{
@@ -6,13 +7,6 @@ use crate::message_type::message_family::{
 
 use super::traits::ConcreteMessage;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "Routing::V1(RoutingV1::V1_0(RoutingV1_0::Forward))")]
 pub struct Forward;
-
-impl ConcreteMessage for Forward {
-    type Kind = Routing;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::V1(RoutingV1::V1_0(RoutingV1_0::Forward))
-    }
-}

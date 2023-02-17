@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -43,24 +44,10 @@ impl DelayedSerde for DiscoverFeatures {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "DiscoverFeaturesV1_0::Query")]
 pub struct Query;
 
-impl ConcreteMessage for Query {
-    type Kind = DiscoverFeaturesV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Query
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "DiscoverFeaturesV1_0::Disclose")]
 pub struct Disclose;
-
-impl ConcreteMessage for Disclose {
-    type Kind = DiscoverFeaturesV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Disclose
-    }
-}

@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -46,35 +47,14 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "OutOfBandV1_1::Invitation")]
 pub struct Invitation;
 
-impl ConcreteMessage for Invitation {
-    type Kind = OutOfBandV1_1;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Invitation
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "OutOfBandV1_1::HandshakeReuse")]
 pub struct HandshakeReuse;
 
-impl ConcreteMessage for HandshakeReuse {
-    type Kind = OutOfBandV1_1;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::HandshakeReuse
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]
 pub struct HandshakeReuseAccepted;
-
-impl ConcreteMessage for HandshakeReuseAccepted {
-    type Kind = OutOfBandV1_1;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::HandshakeReuseAccepted
-    }
-}

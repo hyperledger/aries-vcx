@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -49,46 +50,18 @@ impl DelayedSerde for PresentProof {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "PresentProofV1_0::ProposePresentation")]
 pub struct ProposePresentation;
 
-impl ConcreteMessage for ProposePresentation {
-    type Kind = PresentProofV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::ProposePresentation
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "PresentProofV1_0::RequestPresentation")]
 pub struct RequestPresentation;
 
-impl ConcreteMessage for RequestPresentation {
-    type Kind = PresentProofV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::RequestPresentation
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "PresentProofV1_0::Presentation")]
 pub struct Presentation;
 
-impl ConcreteMessage for Presentation {
-    type Kind = PresentProofV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Presentation
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "PresentProofV1_0::Ack")]
 pub struct Ack;
-
-impl ConcreteMessage for Ack {
-    type Kind = PresentProofV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Ack
-    }
-}

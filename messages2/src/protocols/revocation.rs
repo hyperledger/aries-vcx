@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -43,24 +44,10 @@ impl DelayedSerde for Revocation {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "RevocationV1_0::Revoke")]
 pub struct Revoke;
 
-impl ConcreteMessage for Revoke {
-    type Kind = RevocationV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Revoke
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "RevocationV1_0::Ack")]
 pub struct Ack;
-
-impl ConcreteMessage for Ack {
-    type Kind = RevocationV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Ack
-    }
-}

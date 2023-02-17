@@ -1,3 +1,4 @@
+use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_family::{
@@ -6,15 +7,8 @@ use crate::message_type::message_family::{
 
 use super::traits::ConcreteMessage;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "BasicMessageKind::V1(BasicMessageV1::V1_0(BasicMessageV1_0::Message))")]
 pub struct BasicMessage {
     pub field: String
-}
-
-impl ConcreteMessage for BasicMessage {
-    type Kind = BasicMessageKind;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::V1(BasicMessageV1::V1_0(BasicMessageV1_0::Message))
-    }
 }

@@ -3,16 +3,15 @@
 mod message;
 mod transitive;
 
+use message::message_impl;
 use proc_macro::TokenStream;
-use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Error};
 use transitive::{transitive_impl, transitive_try_from_impl};
 
-#[proc_macro_derive(Message)]
-pub fn message(_input: TokenStream) -> TokenStream {
-    let expanded = quote! {};
-
-    TokenStream::from(expanded)
+#[proc_macro_derive(Message, attributes(message))]
+pub fn message(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    message_impl(input).unwrap_or_else(Error::into_compile_error).into()
 }
 
 /// Derive macro that implements [From] for A -> C by converting A -> B -> C.

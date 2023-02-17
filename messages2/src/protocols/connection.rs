@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{message_type::message_family::{
@@ -49,46 +50,18 @@ impl DelayedSerde for Connection {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "ConnectionV1_0::Invitation")]
 pub struct Invitation;
 
-impl ConcreteMessage for Invitation {
-    type Kind = ConnectionV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Invitation
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "ConnectionV1_0::Request")]
 pub struct Request;
 
-impl ConcreteMessage for Request {
-    type Kind = ConnectionV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Request
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "ConnectionV1_0::Response")]
 pub struct Response;
 
-impl ConcreteMessage for Response {
-    type Kind = ConnectionV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Response
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "ConnectionV1_0::ProblemReport")]
 pub struct ProblemReport;
-
-impl ConcreteMessage for ProblemReport {
-    type Kind = ConnectionV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::ProblemReport
-    }
-}

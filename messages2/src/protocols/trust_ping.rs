@@ -1,4 +1,5 @@
 use derive_more::From;
+use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap};
 
 use crate::{message_type::message_family::{
@@ -43,24 +44,10 @@ impl DelayedSerde for TrustPing {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "TrustPingV1_0::PingResponse")]
 pub struct Ping;
 
-impl ConcreteMessage for Ping {
-    type Kind = TrustPingV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::Ping
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[message(kind = "TrustPingV1_0::PingResponse")]
 pub struct PingResponse;
-
-impl ConcreteMessage for PingResponse {
-    type Kind = TrustPingV1_0;
-
-    fn kind() -> Self::Kind {
-        Self::Kind::PingResponse
-    }
-}
