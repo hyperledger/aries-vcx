@@ -15,13 +15,13 @@ pub enum Revocation {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(Revocation, MessageFamily)]
+#[transitive(Revocation, MessageFamily)]
 pub enum RevocationV1 {
     V1_0(RevocationV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(RevocationV1, Revocation, MessageFamily)]
+#[transitive(RevocationV1, Revocation, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RevocationV1_0 {
     Revoke,

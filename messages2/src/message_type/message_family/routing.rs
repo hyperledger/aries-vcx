@@ -15,13 +15,13 @@ pub enum Routing {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(Routing, MessageFamily)]
+#[transitive(Routing, MessageFamily)]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(RoutingV1, Routing, MessageFamily)]
+#[transitive(RoutingV1, Routing, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RoutingV1_0 {
     Forward,

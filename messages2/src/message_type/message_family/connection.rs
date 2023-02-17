@@ -15,13 +15,13 @@ pub enum Connection {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(Connection, MessageFamily)]
+#[transitive(Connection, MessageFamily)]
 pub enum ConnectionV1 {
     V1_0(ConnectionV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(ConnectionV1, Connection, MessageFamily)]
+#[transitive(ConnectionV1, Connection, MessageFamily)]
 #[strum(serialize_all = "snake_case")]
 pub enum ConnectionV1_0 {
     Invitation,

@@ -2,14 +2,13 @@ use derive_more::From;
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    message_type::{
-        MessageFamily, MessageType,
-    },
+    delayed_serde::DelayedSerde,
+    message_type::{MessageFamily, MessageType},
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
         report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
-    }, delayed_serde::DelayedSerde,
+    },
 };
 
 pub const MSG_TYPE: &str = "@type";
@@ -31,25 +30,39 @@ pub enum AriesMessage {
 impl DelayedSerde for AriesMessage {
     type MsgType = MessageFamily;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        match seg {
-            Self::MsgType::Routing(seg) => Forward::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::Connection(seg) => Connection::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::Revocation(seg) => Revocation::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::CredentialIssuance(seg) => {
-                CredentialIssuance::delayed_deserialize(seg, deserializer).map(From::from)
+        match msg_type {
+            Self::MsgType::Routing(msg_type) => Forward::delayed_deserialize(msg_type, deserializer).map(From::from),
+            Self::MsgType::Connection(msg_type) => {
+                Connection::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::ReportProblem(seg) => ProblemReport::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::PresentProof(seg) => PresentProof::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::TrustPing(seg) => TrustPing::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::DiscoverFeatures(seg) => {
-                DiscoverFeatures::delayed_deserialize(seg, deserializer).map(From::from)
+            Self::MsgType::Revocation(msg_type) => {
+                Revocation::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::BasicMessage(seg) => BasicMessage::delayed_deserialize(seg, deserializer).map(From::from),
-            Self::MsgType::OutOfBand(seg) => OutOfBand::delayed_deserialize(seg, deserializer).map(From::from),
+            Self::MsgType::CredentialIssuance(msg_type) => {
+                CredentialIssuance::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::ReportProblem(msg_type) => {
+                ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::PresentProof(msg_type) => {
+                PresentProof::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::TrustPing(msg_type) => {
+                TrustPing::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::DiscoverFeatures(msg_type) => {
+                DiscoverFeatures::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::BasicMessage(msg_type) => {
+                BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::OutOfBand(msg_type) => {
+                OutOfBand::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
         }
     }
 

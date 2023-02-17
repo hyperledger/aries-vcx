@@ -15,13 +15,13 @@ pub enum BasicMessage {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(BasicMessage, MessageFamily)]
+#[transitive(BasicMessage, MessageFamily)]
 pub enum BasicMessageV1 {
     V1_0(BasicMessageV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(BasicMessageV1, BasicMessage, MessageFamily)]
+#[transitive(BasicMessageV1, BasicMessage, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum BasicMessageV1_0 {
     Message,

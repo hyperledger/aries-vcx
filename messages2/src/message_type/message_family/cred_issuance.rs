@@ -15,13 +15,13 @@ pub enum CredentialIssuance {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(CredentialIssuance, MessageFamily)]
+#[transitive(CredentialIssuance, MessageFamily)]
 pub enum CredentialIssuanceV1 {
     V1_0(CredentialIssuanceV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(CredentialIssuanceV1, CredentialIssuance, MessageFamily)]
+#[transitive(CredentialIssuanceV1, CredentialIssuance, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CredentialIssuanceV1_0 {
     OfferCredential,

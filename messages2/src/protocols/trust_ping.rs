@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap};
 
 use crate::{message_type::message_family::{
     trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
@@ -31,9 +31,9 @@ impl DelayedSerde for TrustPing {
 
     fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
     where
-        M: serde::ser::SerializeMap,
+        M: SerializeMap,
         F: FnMut(&'a mut M) -> S,
-        S: serde::Serializer,
+        S: Serializer,
         S::Error: From<M::Error>,
     {
         match self {

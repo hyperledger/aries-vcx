@@ -15,13 +15,13 @@ pub enum TrustPing {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(TrustPing, MessageFamily)]
+#[transitive(TrustPing, MessageFamily)]
 pub enum TrustPingV1 {
     V1_0(TrustPingV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(TrustPingV1, TrustPing, MessageFamily)]
+#[transitive(TrustPingV1, TrustPing, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum TrustPingV1_0 {
     Ping,

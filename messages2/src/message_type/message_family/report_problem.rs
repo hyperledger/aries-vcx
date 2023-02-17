@@ -15,13 +15,13 @@ pub enum ReportProblem {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(ReportProblem, MessageFamily)]
+#[transitive(ReportProblem, MessageFamily)]
 pub enum ReportProblemV1 {
     V1_0(ReportProblemV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(ReportProblemV1, ReportProblem, MessageFamily)]
+#[transitive(ReportProblemV1, ReportProblem, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum ReportProblemV1_0 {
     ProblemReport,

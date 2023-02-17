@@ -15,13 +15,13 @@ pub enum OutOfBand {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(OutOfBand, MessageFamily)]
+#[transitive(OutOfBand, MessageFamily)]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(OutOfBandV1, OutOfBand, MessageFamily)]
+#[transitive(OutOfBandV1, OutOfBand, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum OutOfBandV1_1 {
     Invitation,

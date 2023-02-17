@@ -7,7 +7,7 @@ use crate::{aries_message::MSG_TYPE, message_type::MessageType, protocols::trait
 pub trait DelayedSerde: Sized {
     type MsgType: Into<MessageType>;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>;
 
@@ -25,19 +25,19 @@ where
 {
     type MsgType = <Self as ConcreteMessage>::Kind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let expected = Self::kind();
-        if seg == expected {
+        if msg_type == expected {
             Self::deserialize(deserializer)
         } else {
             let msg = format!(
                 "Failed deserializing {}; Expected kind: {:?}, found: {:?}",
                 type_name::<T>(),
                 expected,
-                seg
+                msg_type
             );
             Err(D::Error::custom(msg))
         }

@@ -1,12 +1,12 @@
 #![allow(clippy::expect_fun_call)]
 
 mod message;
-mod transitive_from;
+mod transitive;
 
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Error};
-use transitive_from::transitive_from_impl;
+use transitive::{transitive_impl, transitive_try_from_impl};
 
 #[proc_macro_derive(Message)]
 pub fn message(_input: TokenStream) -> TokenStream {
@@ -25,11 +25,11 @@ pub fn message(_input: TokenStream) -> TokenStream {
 /// use messages_macros::TransitiveFrom;
 ///
 /// #[derive(TransitiveFrom)]
-/// #[transitive_from(B, C, D, E, F)] // impl From<A> for F
+/// #[transitive(B, C, D, E, F)] // impl From<A> for F
 /// struct A;
 /// #[derive(TransitiveFrom)]
-/// #[transitive_from(C, D, E)] // impl From<B> for E
-/// #[transitive_from(E, F)] // impl From<B> for F => Since we already implement B -> E above, this works!
+/// #[transitive(C, D, E)] // impl From<B> for E
+/// #[transitive(E, F)] // impl From<B> for F => Since we already implement B -> E above, this works!
 /// struct B;
 /// struct C;
 /// struct D;
@@ -59,26 +59,32 @@ pub fn message(_input: TokenStream) -> TokenStream {
 ///         E
 ///     }
 /// }
-/// 
+///
 /// impl From<E> for F {
 ///     fn from(val: E) -> F {
 ///         F
 ///     }
 /// }
-/// 
-/// 
+///
+///
 /// let a = A;
 /// let f = F::from(a);
-/// 
+///
 /// let b = B;
 /// let e = E::from(b);
 /// let f = F::from(b);
-/// 
+///
 /// ```
-#[proc_macro_derive(TransitiveFrom, attributes(transitive_from))]
+#[proc_macro_derive(TransitiveFrom, attributes(transitive, transitive_all))]
 pub fn transitive_from(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    transitive_from_impl(input)
+    transitive_impl(input).unwrap_or_else(Error::into_compile_error).into()
+}
+
+#[proc_macro_derive(TransitiveTryFrom, attributes(transitive, transitive_all))]
+pub fn transitive_try_from(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    transitive_try_from_impl(input)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

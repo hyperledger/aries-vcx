@@ -5,11 +5,11 @@ use messages_macros::TransitiveFrom;
 #[test]
 fn basic() {
     #[derive(TransitiveFrom)]
-    #[transitive_from(B, C, D, E, F)] // impl From<A> for F
+    #[transitive(B, C, D, E, F)] // impl From<A> for F
     struct A;
     #[derive(TransitiveFrom)]
-    #[transitive_from(C, D, E)] // impl From<B> for E
-    #[transitive_from(E, F)] // impl From<B> for F => Since we already implement B -> E above, this works!
+    #[transitive(C, D, E)] // impl From<B> for E
+    #[transitive(E, F)] // impl From<B> for F => Since we already implement B -> E above, this works!
     struct B;
     struct C;
     struct D;

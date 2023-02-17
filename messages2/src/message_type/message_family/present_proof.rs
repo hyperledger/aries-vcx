@@ -15,13 +15,13 @@ pub enum PresentProof {
 }
 
 #[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
-#[transitive_from(PresentProof, MessageFamily)]
+#[transitive(PresentProof, MessageFamily)]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
 
 #[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
-#[transitive_from(PresentProofV1, PresentProof, MessageFamily)]
+#[transitive(PresentProofV1, PresentProof, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PresentProofV1_0 {
     ProposePresentation,
