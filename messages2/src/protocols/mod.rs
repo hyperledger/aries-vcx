@@ -9,3 +9,4 @@ pub mod revocation;
 pub mod routing;
 pub mod trust_ping;
 pub mod common;
+pub mod traits;

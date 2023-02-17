@@ -1,10 +1,11 @@
 use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::message_type::message_family::{
-    traits::{ConcreteMessage, DelayedSerde},
+use crate::{message_type::message_family::{
     trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
-};
+}, delayed_serde::DelayedSerde};
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, From)]
 pub enum TrustPing {

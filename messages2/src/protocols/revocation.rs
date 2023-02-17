@@ -1,10 +1,11 @@
 use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::message_type::message_family::{
+use crate::{message_type::message_family::{
     revocation::{Revocation as RevocationKind, RevocationV1, RevocationV1_0},
-    traits::{ConcreteMessage, DelayedSerde},
-};
+}, delayed_serde::DelayedSerde};
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, From)]
 pub enum Revocation {

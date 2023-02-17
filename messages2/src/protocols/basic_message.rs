@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_family::{
     basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
-    traits::ConcreteMessage,
 };
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BasicMessage {

@@ -1,10 +1,11 @@
 use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::message_type::message_family::{
+use crate::{message_type::message_family::{
     out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
-    traits::{ConcreteMessage, DelayedSerde},
-};
+}, delayed_serde::DelayedSerde};
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, From)]
 pub enum OutOfBand {

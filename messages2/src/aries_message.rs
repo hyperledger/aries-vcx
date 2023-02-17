@@ -3,15 +3,16 @@ use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer}
 
 use crate::{
     message_type::{
-        message_family::traits::{DelayedSerde, MSG_TYPE},
         MessageFamily, MessageType,
     },
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
         report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
-    },
+    }, delayed_serde::DelayedSerde,
 };
+
+pub const MSG_TYPE: &str = "@type";
 
 #[derive(Clone, Debug, From)]
 pub enum AriesMessage {

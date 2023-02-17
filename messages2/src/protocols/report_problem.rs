@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::message_type::message_family::{
     report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
-    traits::ConcreteMessage,
 };
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ProblemReport;

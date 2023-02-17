@@ -11,3 +11,4 @@ mod decorators;
 mod error;
 mod protocols;
 mod aries_message;
+mod delayed_serde;

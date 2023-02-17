@@ -1,10 +1,11 @@
 use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::message_type::message_family::{
+use crate::{message_type::message_family::{
     connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
-    traits::{ConcreteMessage, DelayedSerde},
-};
+}, delayed_serde::DelayedSerde};
+
+use super::traits::ConcreteMessage;
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {
