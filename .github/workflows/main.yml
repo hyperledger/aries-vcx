@@ -613,6 +613,7 @@ jobs:
           brew install openssl
           brew install zeromq
           brew install libsodium
+          brew install pkg-config
       - name: "Build libvcx.dylib"
         run: cargo build --release
       - name: "Publish artifact libvcx.dylib"
@@ -709,7 +710,7 @@ jobs:
           - host: macos-latest
             target: x86_64-apple-darwin
             build: |
-              brew install openssl zmq
+              brew install openssl zmq pkg-config
               npm run build:napi
               strip -x *.node
           - host: macos-latest
