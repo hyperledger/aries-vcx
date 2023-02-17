@@ -1,10 +1,8 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult}
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,14 +14,14 @@ pub enum Revocation {
     V1(RevocationV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "Revocation", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(Revocation, MessageFamily)]
 pub enum RevocationV1 {
     V1_0(RevocationV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "RevocationV1", grandparent = "Revocation", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(RevocationV1, Revocation, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RevocationV1_0 {
     Revoke,

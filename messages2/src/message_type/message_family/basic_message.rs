@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,14 +14,14 @@ pub enum BasicMessage {
     V1(BasicMessageV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(target = "MessageFamily", parent = "BasicMessage")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(BasicMessage, MessageFamily)]
 pub enum BasicMessageV1 {
     V1_0(BasicMessageV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(target = "MessageFamily", grandparent = "BasicMessage", parent = "BasicMessageV1")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(BasicMessageV1, BasicMessage, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum BasicMessageV1_0 {
     Message,

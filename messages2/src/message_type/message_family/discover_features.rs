@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,18 +14,14 @@ pub enum DiscoverFeatures {
     V1(DiscoverFeaturesV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "DiscoverFeatures", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(DiscoverFeatures, MessageFamily)]
 pub enum DiscoverFeaturesV1 {
     V1_0(DiscoverFeaturesV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(
-    parent = "DiscoverFeaturesV1",
-    grandparent = "DiscoverFeatures",
-    target = "MessageFamily"
-)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(DiscoverFeaturesV1, DiscoverFeatures, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum DiscoverFeaturesV1_0 {
     Query,

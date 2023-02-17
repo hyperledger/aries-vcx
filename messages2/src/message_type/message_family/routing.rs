@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,14 +14,14 @@ pub enum Routing {
     V1(RoutingV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "Routing", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(Routing, MessageFamily)]
 pub enum RoutingV1 {
     V1_0(RoutingV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "RoutingV1", grandparent = "Routing", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(RoutingV1, Routing, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RoutingV1_0 {
     Forward,

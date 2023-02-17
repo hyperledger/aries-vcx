@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,14 +14,14 @@ pub enum TrustPing {
     V1(TrustPingV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "TrustPing", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(TrustPing, MessageFamily)]
 pub enum TrustPingV1 {
     V1_0(TrustPingV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "TrustPingV1", grandparent = "TrustPing", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(TrustPingV1, TrustPing, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum TrustPingV1_0 {
     Ping,

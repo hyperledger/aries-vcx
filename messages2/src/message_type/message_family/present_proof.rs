@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,14 +14,14 @@ pub enum PresentProof {
     V1(PresentProofV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "PresentProof", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(PresentProof, MessageFamily)]
 pub enum PresentProofV1 {
     V1_0(PresentProofV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "PresentProofV1", grandparent = "PresentProof", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(PresentProofV1, PresentProof, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PresentProofV1_0 {
     ProposePresentation,

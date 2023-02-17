@@ -1,10 +1,8 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::{
-    error::{MsgTypeError, MsgTypeResult},
-};
+use crate::error::{MsgTypeError, MsgTypeResult};
 
 use super::{
     traits::{ResolveMajorVersion, ResolveMinorVersion, ResolveMsgKind},
@@ -16,14 +14,14 @@ pub enum ReportProblem {
     V1(ReportProblemV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "ReportProblem", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(ReportProblem, MessageFamily)]
 pub enum ReportProblemV1 {
     V1_0(ReportProblemV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "ReportProblemV1", grandparent = "ReportProblem", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(ReportProblemV1, ReportProblem, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum ReportProblemV1_0 {
     ProblemReport,

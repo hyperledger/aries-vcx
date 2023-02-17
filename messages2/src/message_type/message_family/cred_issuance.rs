@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,18 +14,14 @@ pub enum CredentialIssuance {
     V1(CredentialIssuanceV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "CredentialIssuance", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(CredentialIssuance, MessageFamily)]
 pub enum CredentialIssuanceV1 {
     V1_0(CredentialIssuanceV1_0),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(
-    parent = "CredentialIssuanceV1",
-    grandparent = "CredentialIssuance",
-    target = "MessageFamily"
-)]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(CredentialIssuanceV1, CredentialIssuance, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CredentialIssuanceV1_0 {
     OfferCredential,

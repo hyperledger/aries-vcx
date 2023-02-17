@@ -1,5 +1,5 @@
 use derive_more::From;
-use messages_macros::TransientFrom;
+use messages_macros::TransitiveFrom;
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
@@ -14,14 +14,14 @@ pub enum OutOfBand {
     V1(OutOfBandV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransientFrom)]
-#[transient_from(parent = "OutOfBand", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom)]
+#[transitive_from(OutOfBand, MessageFamily)]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransientFrom)]
-#[transient_from(parent = "OutOfBandV1", grandparent = "OutOfBand", target = "MessageFamily")]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom)]
+#[transitive_from(OutOfBandV1, OutOfBand, MessageFamily)]
 #[strum(serialize_all = "kebab-case")]
 pub enum OutOfBandV1_1 {
     Invitation,

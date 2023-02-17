@@ -108,7 +108,7 @@ mod tests {
 
     #[test]
     fn from_string_basicmessage() {
-        // This From conversion is generated using transient_from! macro
+        // This From conversion is generated using transitive_from! macro
         let msg_type: MessageType = MessageFamily::into(BasicMessageV1_0::Message.into());
         assert_eq!(msg_type.to_string(), "https://didcomm.org/basicmessage/1.0/message");
     }
@@ -122,6 +122,9 @@ mod tests {
         let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::Response.into());
         assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/response");
         let msg_type: MessageType = MessageFamily::into(ConnectionV1_0::ProblemReport.into());
-        assert_eq!(msg_type.to_string(), "https://didcomm.org/connections/1.0/problem_report");
+        assert_eq!(
+            msg_type.to_string(),
+            "https://didcomm.org/connections/1.0/problem_report"
+        );
     }
 }
