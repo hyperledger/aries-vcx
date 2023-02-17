@@ -22,7 +22,7 @@ pub fn message(_input: TokenStream) -> TokenStream {
 /// Multiple attributes can be used on a single type for multiple transitive [`From`] impls
 /// and the trasitions chain is virtually unlimited.
 /// ``` ignore
-/// use crate::TransitiveFrom;
+/// use messages_macros::TransitiveFrom;
 ///
 /// #[derive(TransitiveFrom)]
 /// #[transitive_from(B, C, D, E, F)] // impl From<A> for F
