@@ -2,8 +2,7 @@ extern crate serde;
 extern crate sodiumoxide;
 
 use self::sodiumoxide::crypto::pwhash;
-use indy_api_types::domain::wallet::KeyDerivationMethod;
-use indy_api_types::errors::prelude::*;
+use indy_api_types::{domain::wallet::KeyDerivationMethod, errors::prelude::*};
 use libc::{c_int, c_ulonglong, size_t};
 
 pub const SALTBYTES: usize = pwhash::SALTBYTES;

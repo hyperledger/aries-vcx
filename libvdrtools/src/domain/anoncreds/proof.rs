@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use ursa::cl::Proof as CryptoProof;
 
-use super::credential_definition::CredentialDefinitionId;
-use super::revocation_registry_definition::RevocationRegistryId;
-use super::schema::SchemaId;
+use super::{
+    credential_definition::CredentialDefinitionId,
+    revocation_registry_definition::RevocationRegistryId, schema::SchemaId,
+};
 use indy_api_types::validation::Validatable;
 
 #[derive(Debug, Serialize, Deserialize)]

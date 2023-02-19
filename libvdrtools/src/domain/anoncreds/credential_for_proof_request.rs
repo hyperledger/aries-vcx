@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use super::credential::CredentialInfo;
-use super::proof_request::NonRevocedInterval;
+use super::{credential::CredentialInfo, proof_request::NonRevocedInterval};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CredentialsForProofRequest {

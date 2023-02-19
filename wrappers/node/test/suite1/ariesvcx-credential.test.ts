@@ -46,7 +46,7 @@ describe('Credential:', () => {
     });
 
     it('throws: not initialized', async () => {
-      const credential = new Credential(null as any);
+      const credential = new Credential();
       const error = await shouldThrow(() => credential.serialize());
       assert.equal(error.napiCode, 'NumberExpected');
     });

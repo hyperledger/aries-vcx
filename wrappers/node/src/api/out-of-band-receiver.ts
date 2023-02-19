@@ -2,12 +2,13 @@ import * as ffi from '@hyperledger/vcx-napi-rs';
 import { VCXInternalError } from '../errors';
 import { IOOBSerializedData } from './out-of-band-sender';
 import { Connection } from './mediated-connection';
+import { NonmediatedConnection } from './connection';
 import { VcxBase } from './vcx-base';
 import { ISerializedData } from './common';
 
 export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
   public static createWithMessage(msg: string): OutOfBandReceiver {
-    const oob = new OutOfBandReceiver('');
+    const oob = new OutOfBandReceiver();
     try {
       oob._setHandle(ffi.outOfBandReceiverCreate(msg));
       return oob;
@@ -37,6 +38,16 @@ export class OutOfBandReceiver extends VcxBase<IOOBSerializedData> {
     try {
       const connHandles = connections.map((conn) => conn.handle);
       const connHandle = await ffi.outOfBandReceiverConnectionExists(this.handle, connHandles);
+      return connections.find((conn) => conn.handle === connHandle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async nonmediatedConnectionExists(connections: [NonmediatedConnection]): Promise<void | NonmediatedConnection> {
+    try {
+      const connHandles = connections.map((conn) => conn.handle);
+      const connHandle = await ffi.outOfBandReceiverNonmediatedConnectionExists(this.handle, connHandles);
       return connections.find((conn) => conn.handle === connHandle);
     } catch (err: any) {
       throw new VCXInternalError(err);

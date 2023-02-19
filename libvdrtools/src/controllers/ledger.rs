@@ -5,9 +5,6 @@ use indy_api_types::{errors::prelude::*, PoolHandle, WalletHandle};
 use indy_wallet::{RecordOptions, WalletService};
 use serde_json::{self, Value};
 
-#[cfg(feature = "ffi_api")]
-use crate::api::ledger::{CustomFree, CustomTransactionParser};
-
 use crate::{
     domain::{
         anoncreds::{
@@ -60,25 +57,27 @@ impl LedgerController {
         }
     }
 
-    #[cfg(feature = "ffi_api")]
-    #[allow(dead_code)] // FIXME [async] TODO implement external SP parsers
-    pub(crate) fn register_sp_parser(
-        &self,
-        txn_type: String,
-        parser: CustomTransactionParser,
-        free: CustomFree,
-    ) -> IndyResult<()> {
-        debug!(
-            "register_sp_parser > txn_type {:?} parser {:?} free {:?}",
-            txn_type, parser, free
-        );
+    /// Signs and submits request message to validator pool.
+    ///
+    /// Adds submitter information to passed request json, signs it with submitter
+    /// sign key (see wallet_sign), and sends signed request message
+    /// to validator pool (see write_request).
+    ///
+    /// #Params
 
-        unimplemented!();
-        // FIXME: !!!
-        // PoolService::register_sp_parser(txn_type, parser, free)
-        //     .map_err(IndyError::from)
-    }
-
+    /// pool_handle: pool handle (created by open_pool_ledger).
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// submitter_did: Id of Identity stored in secured Wallet.
+    /// request_json: Request data json.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     pub async fn sign_and_submit_request(
         &self,
         pool_handle: PoolHandle,
@@ -110,6 +109,21 @@ impl LedgerController {
         res
     }
 
+    /// Publishes request message to validator pool (no signing, unlike sign_and_submit_request).
+    ///
+    /// The request is sent to the validator pool as is. It's assumed that it's already prepared.
+    ///
+    /// #Params
+
+    /// pool_handle: pool handle (created by open_pool_ledger).
+    /// request_json: Request data json.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
+    /// Ledger*
     pub async fn submit_request(
         &self,
         handle: PoolHandle,
@@ -127,6 +141,29 @@ impl LedgerController {
         res
     }
 
+    /// Send action to particular nodes of validator pool.
+    ///
+    /// The list of requests can be send:
+    ///     POOL_RESTART
+    ///     GET_VALIDATOR_INFO
+    ///
+    /// The request is sent to the nodes as is. It's assumed that it's already prepared.
+    ///
+    /// #Params
+
+    /// pool_handle: pool handle (created by open_pool_ledger).
+    /// request_json: Request data json.
+    /// nodes: (Optional) List of node names to send the request.
+    ///        ["Node1", "Node2",...."NodeN"]
+    /// timeout: (Optional) Time to wait respond from nodes (override the default timeout) (in sec).
+    ///                     Pass -1 to use default timeout
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
+    /// Ledger*
     pub async fn submit_action(
         &self,
         handle: PoolHandle,
@@ -151,6 +188,25 @@ impl LedgerController {
         res
     }
 
+    /// Signs request message.
+    ///
+    /// Adds submitter information to passed request json, signs it with submitter
+    /// sign key (see wallet_sign).
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// submitter_did: Id of Identity stored in secured Wallet.
+    /// request_json: Request data json.
+    ///
+    /// #Returns
+    /// Signed request json.
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     pub async fn sign_request(
         &self,
         wallet_handle: WalletHandle,
@@ -176,6 +232,25 @@ impl LedgerController {
         res
     }
 
+    /// Multi signs request message.
+    ///
+    /// Adds submitter information to passed request json, signs it with submitter
+    /// sign key (see wallet_sign).
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// submitter_did: Id of Identity stored in secured Wallet.
+    /// request_json: Request data json.
+    ///
+    /// #Returns
+    /// Signed request json.
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     pub async fn multi_sign_request(
         &self,
         wallet_handle: WalletHandle,
@@ -201,6 +276,18 @@ impl LedgerController {
         res
     }
 
+    /// Builds a request to get a DDO.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_ddo_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -220,6 +307,29 @@ impl LedgerController {
         res
     }
 
+    /// Builds a NYM request to write simplified DID Doc. Request to create a new DID record for a specific user.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
+    /// verkey: Target identity verification key as base58-encoded string.
+    /// alias: DID's alias.
+    /// role: Role of a user DID record:
+    ///                             null (common USER)
+    ///                             TRUSTEE
+    ///                             STEWARD
+    ///                             TRUST_ANCHOR
+    ///                             ENDORSER - equal to TRUST_ANCHOR that will be removed soon
+    ///                             NETWORK_MONITOR
+    ///                             empty string to reset role
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub async fn build_nym_request(
         &self,
         submitter_did: DidValue,
@@ -254,6 +364,24 @@ impl LedgerController {
         res
     }
 
+    /// Builds an ATTRIB request. Request to add attribute to a NYM (DID) record.
+    ///
+    /// Note: one of the fields `hash`, `raw`, `enc` must be specified.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
+    /// hash: (Optional) Hash of attribute data.
+    /// raw: (Optional) Json, where key is attribute name and value is attribute value.
+    /// enc: (Optional) Encrypted value attribute data.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_attrib_request(
         &self,
         submitter_did: DidValue,
@@ -284,6 +412,23 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_ATTRIB request. Request to get information about an Attribute for the specified DID.
+    ///
+    /// Note: one of the fields `hash`, `raw`, `enc` must be specified.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
+    /// raw: (Optional) Requested attribute name.
+    /// hash: (Optional) Requested attribute hash.
+    /// enc: (Optional) Requested attribute encrypted value.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_attrib_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -314,6 +459,18 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_NYM request. Request to get information about a DID (NYM).
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// target_did: Target DID as base58-encoded string for 16 or 32 bit DID value.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_nym_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -336,6 +493,29 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_NYM response to get DID (NYM) data.
+    ///
+    /// #Params
+
+    /// get_nym_response: response on GET_NYM request.
+    ///
+    /// #Returns
+    /// DID (NYM) data
+    /// {
+    ///     did: DID as base58-encoded string for 16 or 32 bit DID value.
+    ///     verkey: verification key as base58-encoded string.
+    ///     role: Role associated number
+    ///                             null (common USER)
+    ///                             0 - TRUSTEE
+    ///                             2 - STEWARD
+    ///                             101 - TRUST_ANCHOR
+    ///                             101 - ENDORSER - equal to TRUST_ANCHOR that will be removed soon
+    ///                             201 - NETWORK_MONITOR
+    /// }
+    ///
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_get_nym_response(&self, get_nym_response: String) -> IndyResult<String> {
         debug!(
             "parse_get_nym_response > get_nym_response {:?}",
@@ -351,6 +531,26 @@ impl LedgerController {
         res
     }
 
+    /// Builds a SCHEMA request. Request to add Credential's schema.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// data: Credential schema.
+    /// {
+    ///     id: identifier of schema
+    ///     attrNames: array of attribute name strings (the number of attributes should be less or equal than 125)
+    ///     name: Schema's name string
+    ///     version: Schema's version string,
+    ///     ver: Version of the Schema json
+    /// }
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_schema_request(
         &self,
         submitter_did: DidValue,
@@ -372,6 +572,18 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_SCHEMA request. Request to get Credential's Schema.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// id: Schema ID in ledger
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_schema_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -393,6 +605,24 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_SCHEMA response to get Schema in the format compatible with Anoncreds API.
+    ///
+    /// #Params
+
+    /// get_schema_response: response of GET_SCHEMA request.
+    ///
+    /// #Returns
+    /// Schema Id and Schema json.
+    /// {
+    ///     id: identifier of schema
+    ///     attrNames: array of attribute name strings
+    ///     name: Schema's name string
+    ///     version: Schema's version string
+    ///     ver: Version of the Schema json
+    /// }
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_get_schema_response(
         &self,
         get_schema_response: String,
@@ -411,6 +641,31 @@ impl LedgerController {
         res
     }
 
+    /// Builds an CRED_DEF request. Request to add a Credential Definition (in particular, public key),
+    /// that Issuer creates for a particular Credential Schema.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// data: credential definition json
+    /// {
+    ///     id: string - identifier of credential definition
+    ///     schemaId: string - identifier of stored in ledger schema
+    ///     type: string - type of the credential definition. CL is the only supported type now.
+    ///     tag: string - allows to distinct between credential definitions for the same issuer and schema
+    ///     value: Dictionary with Credential Definition's data: {
+    ///         primary: primary credential public key,
+    ///         Optional<revocation>: revocation credential public key
+    ///     },
+    ///     ver: Version of the CredDef json
+    /// }
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_cred_def_request(
         &self,
         submitter_did: DidValue,
@@ -432,6 +687,19 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_CRED_DEF request. Request to get a Credential Definition (in particular, public key),
+    /// that Issuer creates for a particular Credential Schema.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// id: Credential Definition ID in ledger.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_cred_def_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -453,6 +721,28 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_CRED_DEF response to get Credential Definition in the format compatible with Anoncreds API.
+    ///
+    /// #Params
+
+    /// get_cred_def_response: response of GET_CRED_DEF request.
+    ///
+    /// #Returns
+    /// Credential Definition Id and Credential Definition json.
+    /// {
+    ///     id: string - identifier of credential definition
+    ///     schemaId: string - identifier of stored in ledger schema
+    ///     type: string - type of the credential definition. CL is the only supported type now.
+    ///     tag: string - allows to distinct between credential definitions for the same issuer and schema
+    ///     value: Dictionary with Credential Definition's data: {
+    ///         primary: primary credential public key,
+    ///         Optional<revocation>: revocation credential public key
+    ///     },
+    ///     ver: Version of the Credential Definition json
+    /// }
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_get_cred_def_response(
         &self,
         get_cred_def_response: String,
@@ -471,6 +761,29 @@ impl LedgerController {
         res
     }
 
+    /// Builds a NODE request. Request to add a new node to the pool, or updates existing in the pool.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// target_did: Target Node's DID.  It differs from submitter_did field.
+    /// data: Data associated with the Node: {
+    ///     alias: string - Node's alias
+    ///     blskey: string - (Optional) BLS multi-signature key as base58-encoded string.
+    ///     blskey_pop: string - (Optional) BLS key proof of possession as base58-encoded string.
+    ///     client_ip: string - (Optional) Node's client listener IP address.
+    ///     client_port: string - (Optional) Node's client listener port.
+    ///     node_ip: string - (Optional) The IP address other Nodes use to communicate with this Node.
+    ///     node_port: string - (Optional) The port other Nodes use to communicate with this Node.
+    ///     services: array<string> - (Optional) The service of the Node. VALIDATOR is the only supported one now.
+    /// }
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_node_request(
         &self,
         submitter_did: DidValue,
@@ -493,6 +806,17 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_VALIDATOR_INFO request.
+    ///
+    /// #Params
+
+    /// submitter_did: DID of the read request sender.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_validator_info_request(&self, submitter_did: DidValue) -> IndyResult<String> {
         info!(
             "build_get_validator_info_request > submitter_did {:?}",
@@ -510,6 +834,23 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_TXN request. Request to get any transaction by its seq_no.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// ledger_type: (Optional) type of the ledger the requested transaction belongs to:
+    ///     DOMAIN - used default,
+    ///     POOL,
+    ///     CONFIG
+    ///     any number
+    /// seq_no: requested transaction sequence number as it's stored on Ledger.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_txn_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -534,6 +875,22 @@ impl LedgerController {
         res
     }
 
+    /// Builds a POOL_CONFIG request. Request to change Pool's configuration.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// writes: Whether any write requests can be processed by the pool
+    ///         (if false, then pool goes to read-only state). True by default.
+    /// force: Whether we should apply transaction (for example, move pool to read-only state)
+    ///        without waiting for consensus of this transaction.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_pool_config_request(
         &self,
         submitter_did: DidValue,
@@ -556,6 +913,19 @@ impl LedgerController {
         res
     }
 
+    /// Builds a POOL_RESTART request.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    /// action:        Action that pool has to do after received transaction. Either `start` or `cancel`.
+    /// datetime:      <Optional> Restart time in datetime format. Skip to restart as early as possible.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_pool_restart_request(
         &self,
         submitter_did: DidValue,
@@ -578,6 +948,31 @@ impl LedgerController {
         res
     }
 
+    /// Builds a POOL_UPGRADE request. Request to upgrade the Pool (sent by Trustee).
+    /// It upgrades the specified Nodes (either all nodes in the Pool, or some specific ones).
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// name: Human-readable name for the upgrade.
+    /// version: The version of indy-node package we perform upgrade to.
+    ///          Must be greater than existing one (or equal if reinstall flag is True).
+    /// action: Either start or cancel.
+    /// sha256: sha256 hash of the package.
+    /// timeout: (Optional) Limits upgrade time on each Node.
+    /// schedule: (Optional) Schedule of when to perform upgrade on each node. Map Node DIDs to upgrade time.
+    /// justification: (Optional) justification string for this particular Upgrade.
+    /// reinstall: Whether it's allowed to re-install the same version. False by default.
+    /// force: Whether we should apply transaction (schedule Upgrade) without waiting
+    ///        for consensus of this transaction.
+    /// package: (Optional) Package to be upgraded.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_pool_upgrade_request(
         &self,
         submitter_did: DidValue,
@@ -631,6 +1026,34 @@ impl LedgerController {
         res
     }
 
+    /// Builds a REVOC_REG_DEF request. Request to add the definition of revocation registry
+    /// to an exists credential definition.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// data: Revocation Registry data:
+    ///     {
+    ///         "id": string - ID of the Revocation Registry,
+    ///         "revocDefType": string - Revocation Registry type (only CL_ACCUM is supported for now),
+    ///         "tag": string - Unique descriptive ID of the Registry,
+    ///         "credDefId": string - ID of the corresponding CredentialDefinition,
+    ///         "value": Registry-specific data {
+    ///             "issuanceType": string - Type of Issuance(ISSUANCE_BY_DEFAULT or ISSUANCE_ON_DEMAND),
+    ///             "maxCredNum": number - Maximum number of credentials the Registry can serve.
+    ///             "tailsHash": string - Hash of tails.
+    ///             "tailsLocation": string - Location of tails file.
+    ///             "publicKeys": <public_keys> - Registry's public key.
+    ///         },
+    ///         "ver": string - version of revocation registry definition json.
+    ///     }
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_revoc_reg_def_request(
         &self,
         submitter_did: DidValue,
@@ -654,6 +1077,19 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_REVOC_REG_DEF request. Request to get a revocation registry definition,
+    /// that Issuer creates for a particular Credential Definition.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// id:  ID of Revocation Registry Definition in ledger.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_revoc_reg_def_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -675,6 +1111,32 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_REVOC_REG_DEF response to get Revocation Registry Definition in the format
+    /// compatible with Anoncreds API.
+    ///
+    /// #Params
+
+    /// get_revoc_reg_def_response: response of GET_REVOC_REG_DEF request.
+    ///
+    /// #Returns
+    /// Revocation Registry Definition Id and Revocation Registry Definition json.
+    /// {
+    ///     "id": string - ID of the Revocation Registry,
+    ///     "revocDefType": string - Revocation Registry type (only CL_ACCUM is supported for now),
+    ///     "tag": string - Unique descriptive ID of the Registry,
+    ///     "credDefId": string - ID of the corresponding CredentialDefinition,
+    ///     "value": Registry-specific data {
+    ///         "issuanceType": string - Type of Issuance(ISSUANCE_BY_DEFAULT or ISSUANCE_ON_DEMAND),
+    ///         "maxCredNum": number - Maximum number of credentials the Registry can serve.
+    ///         "tailsHash": string - Hash of tails.
+    ///         "tailsLocation": string - Location of tails file.
+    ///         "publicKeys": <public_keys> - Registry's public key.
+    ///     },
+    ///     "ver": string - version of revocation registry definition json.
+    /// }
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_revoc_reg_def_response(
         &self,
         get_revoc_reg_def_response: String,
@@ -693,6 +1155,32 @@ impl LedgerController {
         res
     }
 
+    /// Builds a REVOC_REG_ENTRY request.  Request to add the RevocReg entry containing
+    /// the new accumulator value and issued/revoked indices.
+    /// This is just a delta of indices, not the whole list.
+    /// So, it can be sent each time a new credential is issued/revoked.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// revoc_reg_def_id: ID of the corresponding RevocRegDef.
+    /// rev_def_type: Revocation Registry type (only CL_ACCUM is supported for now).
+    /// value: Registry-specific data: {
+    ///     value: {
+    ///         prevAccum: string - previous accumulator value.
+    ///         accum: string - current accumulator value.
+    ///         issued: array<number> - an array of issued indices.
+    ///         revoked: array<number> an array of revoked indices.
+    ///     },
+    ///     ver: string - version revocation registry entry json
+    /// }
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_revoc_reg_entry_request(
         &self,
         submitter_did: DidValue,
@@ -719,6 +1207,20 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_REVOC_REG request. Request to get the accumulated state of the Revocation Registry
+    /// by ID. The state is defined by the given timestamp.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
+    /// timestamp: Requested time represented as a total number of seconds from Unix Epoch
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_revoc_reg_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -743,6 +1245,23 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_REVOC_REG response to get Revocation Registry in the format compatible with Anoncreds API.
+    ///
+    /// #Params
+
+    /// get_revoc_reg_response: response of GET_REVOC_REG request.
+    ///
+    /// #Returns
+    /// Revocation Registry Definition Id, Revocation Registry json and Timestamp.
+    /// {
+    ///     "value": Registry-specific data {
+    ///         "accum": string - current accumulator value.
+    ///     },
+    ///     "ver": string - version revocation registry json
+    /// }
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_revoc_reg_response(
         &self,
         get_revoc_reg_response: String,
@@ -761,6 +1280,22 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_REVOC_REG_DELTA request. Request to get the delta of the accumulated state of the Revocation Registry.
+    /// The Delta is defined by from and to timestamp fields.
+    /// If from is not specified, then the whole state till to will be returned.
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// revoc_reg_def_id:  ID of the corresponding Revocation Registry Definition in ledger.
+    /// from: Requested time represented as a total number of seconds from Unix Epoch
+    /// to: Requested time represented as a total number of seconds from Unix Epoch
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_revoc_reg_delta_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -788,6 +1323,26 @@ impl LedgerController {
         res
     }
 
+    /// Parse a GET_REVOC_REG_DELTA response to get Revocation Registry Delta in the format compatible with Anoncreds API.
+    ///
+    /// #Params
+
+    /// get_revoc_reg_response: response of GET_REVOC_REG_DELTA request.
+    ///
+    /// #Returns
+    /// Revocation Registry Definition Id, Revocation Registry Delta json and Timestamp.
+    /// {
+    ///     "value": Registry-specific data {
+    ///         prevAccum: string - previous accumulator value.
+    ///         accum: string - current accumulator value.
+    ///         issued: array<number> - an array of issued indices.
+    ///         revoked: array<number> an array of revoked indices.
+    ///     },
+    ///     "ver": string - version revocation registry delta json
+    /// }
+    ///
+    /// #Errors
+    /// Common*
     pub fn parse_revoc_reg_delta_response(
         &self,
         get_revoc_reg_delta_response: String,
@@ -806,6 +1361,39 @@ impl LedgerController {
         res
     }
 
+    /// Parse transaction response to fetch metadata.
+    /// The important use case for this method is validation of Node's response freshens.
+    ///
+    /// Distributed Ledgers can reply with outdated information for consequence read request after write.
+    /// To reduce pool load libvdrtools sends read requests to one random node in the pool.
+    /// Consensus validation is performed based on validation of nodes multi signature for current ledger Merkle Trie root.
+    /// This multi signature contains information about the latest ldeger's transaction ordering time and sequence number that this method returns.
+    ///
+    /// If node that returned response for some reason is out of consensus and has outdated ledger
+    /// it can be caught by analysis of the returned latest ledger's transaction ordering time and sequence number.
+    ///
+    /// There are two ways to filter outdated responses:
+    ///     1) based on "seqNo" - sender knows the sequence number of transaction that he consider as a fresh enough.
+    ///     2) based on "txnTime" - sender knows the timestamp that he consider as a fresh enough.
+    ///
+    /// Note: response of GET_VALIDATOR_INFO request isn't supported
+    ///
+    /// #Params
+
+    /// response: response of write or get request.
+    ///
+    /// #Returns
+    /// response metadata.
+    /// {
+    ///     "seqNo": Option<u64> - transaction sequence number,
+    ///     "txnTime": Option<u64> - transaction ordering time,
+    ///     "lastSeqNo": Option<u64> - the latest transaction seqNo for particular Node,
+    ///     "lastTxnTime": Option<u64> - the latest transaction ordering time for particular Node
+    /// }
+    ///
+    /// #Errors
+    /// Common*
+    /// Ledger*
     pub fn get_response_metadata(&self, response: String) -> IndyResult<String> {
         debug!("get_response_metadata > response {:?}", response);
 
@@ -821,6 +1409,44 @@ impl LedgerController {
         res
     }
 
+    /// Builds a AUTH_RULE request. Request to change authentication rules for a ledger transaction.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// txn_type: ledger transaction alias or associated value.
+    /// action: type of an action.
+    ///     Can be either "ADD" (to add a new rule) or "EDIT" (to edit an existing one).
+    /// field: transaction field.
+    /// old_value: (Optional) old value of a field, which can be changed to a new_value (mandatory for EDIT action).
+    /// new_value: (Optional) new value that can be used to fill the field.
+    /// constraint: set of constraints required for execution of an action in the following format:
+    ///     {
+    ///         constraint_id - <string> type of a constraint.
+    ///             Can be either "ROLE" to specify final constraint or  "AND"/"OR" to combine constraints.
+    ///         role - <string> (optional) role of a user which satisfy to constrain.
+    ///         sig_count - <u32> the number of signatures required to execution action.
+    ///         need_to_be_owner - <bool> (optional) if user must be an owner of transaction (false by default).
+    ///         off_ledger_signature - <bool> (optional) allow signature of unknow for ledger did (false by default).
+    ///         metadata - <object> (optional) additional parameters of the constraint.
+    ///     }
+    /// can be combined by
+    ///     {
+    ///         'constraint_id': <"AND" or "OR">
+    ///         'auth_constraints': [<constraint_1>, <constraint_2>]
+    ///     }
+    ///
+    /// Default ledger auth rules: https://github.com/hyperledger/indy-node/blob/master/docs/source/auth_rules.md
+    ///
+    /// More about AUTH_RULE request: https://github.com/hyperledger/indy-node/blob/master/docs/source/requests.md#auth_rule
+    ///
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_auth_rule_request(
         &self,
         submitter_did: DidValue,
@@ -855,6 +1481,34 @@ impl LedgerController {
         res
     }
 
+    /// Builds a AUTH_RULES request. Request to change multiple authentication rules for a ledger transaction.
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// rules: a list of auth rules: [
+    ///     {
+    ///         "auth_type": ledger transaction alias or associated value,
+    ///         "auth_action": type of an action,
+    ///         "field": transaction field,
+    ///         "old_value": (Optional) old value of a field, which can be changed to a new_value (mandatory for EDIT action),
+    ///         "new_value": (Optional) new value that can be used to fill the field,
+    ///         "constraint": set of constraints required for execution of an action in the format described above for `indy_build_auth_rule_request` function.
+    ///     },
+    ///     ...
+    /// ]
+    ///
+    /// Default ledger auth rules: https://github.com/hyperledger/indy-node/blob/master/docs/source/auth_rules.md
+    ///
+    /// More about AUTH_RULES request: https://github.com/hyperledger/indy-node/blob/master/docs/source/requests.md#auth_rules
+    ///
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_auth_rules_request(
         &self,
         submitter_did: DidValue,
@@ -876,6 +1530,27 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_AUTH_RULE request. Request to get authentication rules for ledger transactions.
+    ///
+    /// NOTE: Either none or all transaction related parameters must be specified (`old_value` can be skipped for `ADD` action).
+    ///     * none - to get all authentication rules for all ledger transactions
+    ///     * all - to get authentication rules for specific action (`old_value` can be skipped for `ADD` action)
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// txn_type: (Optional) target ledger transaction alias or associated value.
+    /// action: (Optional) target action type. Can be either "ADD" or "EDIT".
+    /// field: (Optional) target transaction field.
+    /// old_value: (Optional) old value of field, which can be changed to a new_value (mandatory for EDIT action).
+    /// new_value: (Optional) new value that can be used to fill the field.
+    ///
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_auth_rule_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -908,6 +1583,42 @@ impl LedgerController {
         res
     }
 
+    /// Builds a TXN_AUTHR_AGRMT request. Request to add a new version of Transaction Author Agreement to the ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// text: (Optional) a content of the TTA.
+    ///             Mandatory in case of adding a new TAA. An existing TAA text can not be changed.
+    ///             for Indy Node version <= 1.12.0:
+    ///                 Use empty string to reset TAA on the ledger
+    ///             for Indy Node version > 1.12.0
+    ///                 Should be omitted in case of updating an existing TAA (setting `retirement_ts`)
+    /// version: a version of the TTA (unique UTF-8 string).
+    /// ratification_ts: (Optional) the date (timestamp) of TAA ratification by network government. (-1 to omit)
+    ///              for Indy Node version <= 1.12.0:
+    ///                 Must be omitted
+    ///              for Indy Node version > 1.12.0:
+    ///                 Must be specified in case of adding a new TAA
+    ///                 Can be omitted in case of updating an existing TAA
+    /// retirement_ts: (Optional) the date (timestamp) of TAA retirement. (-1 to omit)
+    ///              for Indy Node version <= 1.12.0:
+    ///                 Must be omitted
+    ///              for Indy Node version > 1.12.0:
+    ///                 Must be omitted in case of adding a new (latest) TAA.
+    ///                 Should be used for updating (deactivating) non-latest TAA on the ledger.
+    ///
+    /// Note: Use `indy_build_disable_all_txn_author_agreements_request` to disable all TAA's on the ledger.
+    ///
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_txn_author_agreement_request(
         &self,
         submitter_did: DidValue,
@@ -938,6 +1649,20 @@ impl LedgerController {
         res
     }
 
+    /// Builds a DISABLE_ALL_TXN_AUTHR_AGRMTS request. Request to disable all Transaction Author Agreement on the ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_disable_all_txn_author_agreements_request(
         &self,
         submitter_did: DidValue,
@@ -963,6 +1688,27 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_TXN_AUTHR_AGRMT request. Request to get a specific Transaction Author Agreement from the ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// data: (Optional) specifies a condition for getting specific TAA.
+    /// Contains 3 mutually exclusive optional fields:
+    /// {
+    ///     hash: Optional<str> - hash of requested TAA,
+    ///     version: Optional<str> - version of requested TAA.
+    ///     timestamp: Optional<u64> - ledger will return TAA valid at requested timestamp.
+    /// }
+    /// Null data or empty JSON are acceptable here. In this case, ledger will return the latest version of TAA.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_txn_author_agreement_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -984,6 +1730,29 @@ impl LedgerController {
         res
     }
 
+    /// Builds a SET_TXN_AUTHR_AGRMT_AML request. Request to add a new list of acceptance mechanisms for transaction author agreement.
+    /// Acceptance Mechanism is a description of the ways how the user may accept a transaction author agreement.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// submitter_did: Identifier (DID) of the transaction author as base58-encoded string.
+    ///                Actual request sender may differ if Endorser is used (look at `indy_append_request_endorser`)
+    /// aml: a set of new acceptance mechanisms:
+    /// {
+    ///     “<acceptance mechanism label 1>”: { acceptance mechanism description 1},
+    ///     “<acceptance mechanism label 2>”: { acceptance mechanism description 2},
+    ///     ...
+    /// }
+    /// version: a version of new acceptance mechanisms. (Note: unique on the Ledger)
+    /// aml_context: (Optional) common context information about acceptance mechanisms (may be a URL to external resource).
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_acceptance_mechanisms_request(
         &self,
         submitter_did: DidValue,
@@ -1011,6 +1780,24 @@ impl LedgerController {
         res
     }
 
+    /// Builds a GET_TXN_AUTHR_AGRMT_AML request. Request to get a list of  acceptance mechanisms from the ledger
+    /// valid for specified time or the latest one.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// submitter_did: (Optional) DID of the read request sender (if not provided then default Libindy DID will be used).
+    /// timestamp: i64 - time to get an active acceptance mechanisms. Pass -1 to get the latest one.
+    /// version: (Optional) version of acceptance mechanisms.
+    ///
+    /// NOTE: timestamp and version cannot be specified together.
+    ///
+    /// #Returns
+    /// Request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn build_get_acceptance_mechanisms_request(
         &self,
         submitter_did: Option<DidValue>,
@@ -1038,6 +1825,32 @@ impl LedgerController {
         res
     }
 
+    /// Append transaction author agreement acceptance data to a request.
+    /// This function should be called before signing and sending a request
+    /// if there is any transaction author agreement set on the Ledger.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// This function may calculate digest by itself or consume it as a parameter.
+    /// If all text, version and taa_digest parameters are specified, a check integrity of them will be done.
+    ///
+    /// #Params
+
+    /// request_json: original request data json.
+    /// text and version - (optional) raw data about TAA from ledger.
+    ///     These parameters should be passed together.
+    ///     These parameters are required if taa_digest parameter is omitted.
+    /// taa_digest - (optional) digest on text and version.
+    ///     Digest is sha256 hash calculated on concatenated strings: version || text.
+    ///     This parameter is required if text and version parameters are omitted.
+    /// mechanism - mechanism how user has accepted the TAA
+    /// time - UTC timestamp when user has accepted the TAA. Note that the time portion will be discarded to avoid a privacy risk.
+    ///
+    /// #Returns
+    /// Updated request result as json.
+    ///
+    /// #Errors
+    /// Common*
     pub fn append_txn_author_agreement_acceptance_to_request(
         &self,
         request_json: String,
@@ -1081,6 +1894,25 @@ impl LedgerController {
         res
     }
 
+    /// Append Endorser to an existing request.
+    ///
+    /// An author of request still is a `DID` used as a `submitter_did` parameter for the building of the request.
+    /// But it is expecting that the transaction will be sent by the specified Endorser.
+    ///
+    /// Note: Both Transaction Author and Endorser must sign output request after that.
+    ///
+    /// More about Transaction Endorser: https://github.com/hyperledger/indy-node/blob/master/design/transaction_endorser.md
+    ///                                  https://github.com/hyperledger/indy-sdk/blob/master/docs/configuration.md
+    ///
+    /// #Params
+    /// request_json: original request
+    /// endorser_did: DID of the Endorser that will submit the transaction.
+    ///               The Endorser's DID must be present on the ledger.
+    /// #Returns
+    /// The command result is a request JSON with Endorser field appended.
+    ///
+    /// #Errors
+    /// Common*
     pub fn append_request_endorser(
         &self,
         request_json: String,

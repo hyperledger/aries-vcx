@@ -4,9 +4,6 @@ use indy_api_types::{errors::prelude::*, WalletHandle};
 use indy_utils::crypto::{base64, chacha20poly1305_ietf};
 use indy_wallet::RecordOptions;
 
-#[cfg(feature = "ffi_api")]
-use crate::domain::crypto::{combo_box::ComboBox, key::KeyMetadata};
-
 use crate::{
     domain::crypto::{
         key::{Key, KeyInfo},
@@ -36,6 +33,25 @@ impl CryptoController {
         }
     }
 
+    /// Creates keys pair and stores in the wallet.
+    ///
+    /// #Params
+
+    /// wallet_handle: Wallet handle (created by open_wallet).
+    /// key_json: Key information as json. Example:
+    /// {
+    ///     "seed": string, (optional) Seed that allows deterministic key creation (if not set random one will be created).
+    ///                                Can be UTF-8, base64 or hex string.
+    ///     "crypto_type": string, // Optional (if not set then ed25519 curve is used); Currently only 'ed25519' value is supported for this field.
+    /// }
+    ///
+    /// #Returns
+    /// verkey: Ver key of generated key pair, also used as key identifier
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn create_key(
         &self,
         wallet_handle: WalletHandle,
@@ -58,6 +74,25 @@ impl CryptoController {
         Ok(res)
     }
 
+    /// Signs a message with a key.
+    ///
+    /// Note to use DID keys with this function you can call indy_key_for_did to get key id (verkey)
+    /// for specific DID.
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handler (created by open_wallet).
+    /// signer_vk: id (verkey) of message signer. The key must be created by calling indy_create_key or indy_create_and_store_my_did
+    /// message_raw: a pointer to first byte of message to be signed
+    /// message_len: a message length
+    ///
+    /// #Returns
+    /// a signature string
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Crypto*
     pub async fn crypto_sign(
         &self,
         wallet_handle: WalletHandle,
@@ -85,6 +120,27 @@ impl CryptoController {
         Ok(res)
     }
 
+    /// Verify a signature with a verkey.
+    ///
+    /// Note to use DID keys with this function you can call indy_key_for_did to get key id (verkey)
+    /// for specific DID.
+    ///
+    /// #Params
+
+    /// signer_vk: verkey of the message signer
+    /// message_raw: a pointer to first byte of message that has been signed
+    /// message_len: a message length
+    /// signature_raw: a pointer to first byte of signature to be verified
+    /// signature_len: a signature length
+    ///
+    /// #Returns
+    /// valid: true - if signature is valid, false - otherwise
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     pub async fn crypto_verify(
         &self,
         their_vk: &str,
@@ -107,214 +163,71 @@ impl CryptoController {
         Ok(res)
     }
 
-    //TODO begin deprecation process this function. It will be replaced by pack
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn authenticated_encrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        their_vk: &str,
-        msg: &[u8],
-    ) -> IndyResult<Vec<u8>> {
-        trace!(
-            "authenticated_encrypt >>> wallet_handle: {:?}, my_vk: {:?}, their_vk: {:?}, msg: {:?}",
-            wallet_handle,
-            my_vk,
-            their_vk,
-            msg
-        );
+    /// Packs a message by encrypting the message and serializes it in a JWE-like format (Experimental)
+    ///
+    /// Note to use DID keys with this function you can call indy_key_for_did to get key id (verkey)
+    /// for specific DID.
+    ///
+    /// #Params
 
-        self.crypto_service.validate_key(my_vk).await?;
-        self.crypto_service.validate_key(their_vk).await?;
-
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
-            .await?;
-
-        let msg = self
-            .crypto_service
-            .create_combo_box(&my_key, &their_vk, msg)
-            .await?;
-
-        let msg = msg.to_msg_pack().map_err(|e| {
-            err_msg(
-                IndyErrorKind::InvalidState,
-                format!("Can't serialize ComboBox: {:?}", e),
-            )
-        })?;
-
-        let res = self.crypto_service.crypto_box_seal(&their_vk, &msg).await?;
-
-        trace!("authenticated_encrypt <<< res: {:?}", res);
-
-        Ok(res)
-    }
-
-    //TODO begin deprecation process this function. It will be replaced by unpack
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn authenticated_decrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        msg: &[u8],
-    ) -> IndyResult<(String, Vec<u8>)> {
-        trace!(
-            "authenticated_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, msg: {:?}",
-            wallet_handle,
-            my_vk,
-            msg
-        );
-
-        self.crypto_service.validate_key(my_vk).await?;
-
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, my_vk, &RecordOptions::id_value())
-            .await?;
-
-        let decrypted_msg = self
-            .crypto_service
-            .crypto_box_seal_open(&my_key, &msg)
-            .await?;
-
-        let parsed_msg = ComboBox::from_msg_pack(decrypted_msg.as_slice()).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't deserialize ComboBox: {:?}", err),
-            )
-        })?;
-
-        let doc: Vec<u8> = base64::decode(&parsed_msg.msg).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't decode internal msg filed from base64 {}", err),
-            )
-        })?;
-
-        let nonce: Vec<u8> = base64::decode(&parsed_msg.nonce).map_err(|err| {
-            err_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Can't decode nonce from base64 {}", err),
-            )
-        })?;
-
-        let decrypted_msg = self
-            .crypto_service
-            .crypto_box_open(&my_key, &parsed_msg.sender, &doc, &nonce)
-            .await?;
-
-        let res = (parsed_msg.sender, decrypted_msg);
-
-        trace!("authenticated_decrypt <<< res: {:?}", res);
-
-        Ok(res)
-    }
-
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn anonymous_encrypt(
-        &self,
-        their_vk: &str,
-        msg: &[u8],
-    ) -> IndyResult<Vec<u8>> {
-        trace!(
-            "anonymous_encrypt >>> their_vk: {:?}, msg: {:?}",
-            their_vk,
-            msg
-        );
-
-        self.crypto_service.validate_key(their_vk).await?;
-
-        let res = self.crypto_service.crypto_box_seal(their_vk, &msg).await?;
-
-        trace!("anonymous_encrypt <<< res: {:?}", res);
-
-        Ok(res)
-    }
-
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn anonymous_decrypt(
-        &self,
-        wallet_handle: WalletHandle,
-        my_vk: &str,
-        encrypted_msg: &[u8],
-    ) -> IndyResult<Vec<u8>> {
-        trace!(
-            "anonymous_decrypt >>> wallet_handle: {:?}, my_vk: {:?}, encrypted_msg: {:?}",
-            wallet_handle,
-            my_vk,
-            encrypted_msg
-        );
-
-        self.crypto_service.validate_key(&my_vk).await?;
-
-        let my_key: Key = self
-            .wallet_service
-            .get_indy_object(wallet_handle, &my_vk, &RecordOptions::id_value())
-            .await?;
-
-        let res = self
-            .crypto_service
-            .crypto_box_seal_open(&my_key, &encrypted_msg)
-            .await?;
-
-        trace!("anonymous_decrypt <<< res: {:?}", res);
-
-        Ok(res)
-    }
-
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn set_key_metadata(
-        &self,
-        wallet_handle: WalletHandle,
-        verkey: &str,
-        metadata: &str,
-    ) -> IndyResult<()> {
-        debug!(
-            "set_key_metadata >>> wallet_handle: {:?}, verkey: {:?}, metadata: {:?}",
-            wallet_handle, verkey, metadata
-        );
-
-        self.crypto_service.validate_key(verkey).await?;
-
-        let metadata = KeyMetadata {
-            value: metadata.to_string(),
-        };
-
-        self.wallet_service
-            .upsert_indy_object(wallet_handle, &verkey, &metadata)
-            .await?;
-
-        debug!("set_key_metadata <<<");
-
-        Ok(())
-    }
-
-    #[cfg(feature = "ffi_api")]
-    pub(crate) async fn get_key_metadata(
-        &self,
-        wallet_handle: WalletHandle,
-        verkey: &str,
-    ) -> IndyResult<String> {
-        debug!(
-            "get_key_metadata >>> wallet_handle: {:?}, verkey: {:?}",
-            wallet_handle, verkey
-        );
-
-        self.crypto_service.validate_key(verkey).await?;
-
-        let metadata = self
-            .wallet_service
-            .get_indy_object::<KeyMetadata>(wallet_handle, &verkey, &RecordOptions::id_value())
-            .await?;
-
-        let res = metadata.value;
-
-        debug!("get_key_metadata <<< res: {:?}", res);
-
-        Ok(res)
-    }
-
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// message: a pointer to the first byte of the message to be packed
+    /// message_len: the length of the message
+    /// receivers: a string in the format of a json list which will contain the list of receiver's keys
+    ///                the message is being encrypted for.
+    ///                Example:
+    ///                "[<receiver edge_agent_1 verkey>, <receiver edge_agent_2 verkey>]"
+    /// sender: the sender's verkey as a string When null pointer is used in this parameter, anoncrypt is used
+    ///
+    /// #Returns
+    /// a JWE using authcrypt alg is defined below:
+    /// {
+    ///     "protected": "b64URLencoded({
+    ///        "enc": "xsalsa20poly1305",
+    ///        "typ": "JWM/1.0",
+    ///        "alg": "Authcrypt",
+    ///        "recipients": [
+    ///            {
+    ///                "encrypted_key": base64URLencode(libsodium.crypto_box(my_key, their_vk, cek, cek_iv))
+    ///                "header": {
+    ///                     "kid": "base58encode(recipient_verkey)",
+    ///                     "sender" : base64URLencode(libsodium.crypto_box_seal(their_vk, base58encode(sender_vk)),
+    ///                     "iv" : base64URLencode(cek_iv)
+    ///                }
+    ///            },
+    ///        ],
+    ///     })",
+    ///     "iv": <b64URLencode(iv)>,
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
+    ///     "tag": <b64URLencode(tag)>
+    /// }
+    ///
+    /// Alternative example in using anoncrypt alg is defined below:
+    /// {
+    ///     "protected": "b64URLencoded({
+    ///        "enc": "xsalsa20poly1305",
+    ///        "typ": "JWM/1.0",
+    ///        "alg": "Anoncrypt",
+    ///        "recipients": [
+    ///            {
+    ///                "encrypted_key": base64URLencode(libsodium.crypto_box_seal(their_vk, cek)),
+    ///                "header": {
+    ///                    "kid": base58encode(recipient_verkey),
+    ///                }
+    ///            },
+    ///        ],
+    ///     })",
+    ///     "iv": b64URLencode(iv),
+    ///     "ciphertext": b64URLencode(encrypt_detached({'@type'...}, protected_value_encoded, iv, cek),
+    ///     "tag": b64URLencode(tag)
+    /// }
+    ///
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     // TODO: Refactor pack to be more modular to version changes or crypto_scheme changes
     // this match statement is super messy, but the easiest way to comply with current architecture
     pub async fn pack_msg(
@@ -476,6 +389,36 @@ impl CryptoController {
         })
     }
 
+    /// Unpacks a JWE-like formatted message outputted by indy_pack_message (Experimental)
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// jwe_data: a pointer to the first byte of the JWE to be unpacked
+    /// jwe_len: the length of the JWE message in bytes
+    ///
+    /// #Returns
+    /// if authcrypt was used to pack the message returns this json structure:
+    /// {
+    ///     message: <decrypted message>,
+    ///     sender_verkey: <sender_verkey>,
+    ///     recipient_verkey: <recipient_verkey>
+    /// }
+    ///
+    /// OR
+    ///
+    /// if anoncrypt was used to pack the message returns this json structure:
+    /// {
+    ///     message: <decrypted message>,
+    ///     recipient_verkey: <recipient_verkey>
+    /// }
+    ///
+    ///
+    /// #Errors
+    /// Common*
+    /// Wallet*
+    /// Ledger*
+    /// Crypto*
     pub async fn unpack_msg(
         &self,
         jwe_struct: JWE,

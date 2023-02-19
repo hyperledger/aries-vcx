@@ -24,7 +24,7 @@ export interface ICredentialSendData {
 export class Credential extends VcxBaseWithState<ICredentialStructData, HolderStateType> {
   public static create({ sourceId, offer }: ICredentialCreateWithOffer): Credential {
     try {
-      const credential = new Credential(sourceId);
+      const credential = new Credential();
       const handle = ffi.credentialCreateWithOffer(sourceId, offer);
       credential._setHandle(handle);
       return credential;
@@ -36,7 +36,8 @@ export class Credential extends VcxBaseWithState<ICredentialStructData, HolderSt
   public static deserialize(
     credentialData: ISerializedData<ICredentialStructData>,
   ): Credential {
-    const credential = super._deserialize<Credential>(Credential, credentialData);
+    // running into issue https://github.com/microsoft/TypeScript/issues/15300 without using "as any"
+    const credential = super._deserialize<Credential>(Credential, credentialData as any);
     return credential;
   }
 

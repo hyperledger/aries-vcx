@@ -1,34 +1,34 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::iter::FromIterator;
-use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::u64;
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+    sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
+    u64,
+};
 
 use self::super::THRESHOLD;
 use rmp_serde;
-use serde_json;
-use serde_json::Value as SJsonValue;
+use serde_json::{self, Value as SJsonValue};
 
-use crate::services::ledger::merkletree::merkletree::MerkleTree;
-use crate::services::pool::catchup::{
-    build_catchup_req, check_cons_proofs, check_nodes_responses_on_status, CatchupProgress,
+use crate::services::{
+    ledger::merkletree::merkletree::MerkleTree,
+    pool::{
+        catchup::{
+            build_catchup_req, check_cons_proofs, check_nodes_responses_on_status, CatchupProgress,
+        },
+        events::{NetworkerEvent, PoolEvent, RequestEvent},
+        merkle_tree_factory,
+        networker::Networker,
+        state_proof,
+        types::{CatchupRep, HashableValue},
+        Nodes, PoolService,
+    },
 };
-use crate::services::pool::events::NetworkerEvent;
-use crate::services::pool::events::PoolEvent;
-use crate::services::pool::events::RequestEvent;
-use crate::services::pool::merkle_tree_factory;
-use crate::services::pool::networker::Networker;
-use crate::services::pool::state_proof;
-use crate::services::pool::types::CatchupRep;
-use crate::services::pool::types::HashableValue;
-use crate::services::pool::{Nodes, PoolService};
 use indy_api_types::errors::prelude::*;
 
 use ursa::bls::Generator;
 
-use crate::domain::pool::PoolMode;
-use crate::utils::crypto::base58::FromBase58;
+use crate::{domain::pool::PoolMode, utils::crypto::base58::FromBase58};
 use indy_api_types::CommandHandle;
 use log_derive::logfn;
 use std::hash::{Hash, Hasher};
@@ -1271,15 +1271,20 @@ fn _get_cur_time() -> u64 {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::domain::pool::NUMBER_READ_NODES;
-    use crate::services::ledger::merkletree::tree::Tree;
-    use crate::services::pool::networker::MockNetworker;
-    use crate::services::pool::types::{
-        ConsistencyProof, LedgerStatus, Reply, ReplyResultV1, ReplyTxnV1, ReplyV1, Response,
-        ResponseMetadata, ResponseV1,
+    use crate::{
+        domain::pool::NUMBER_READ_NODES,
+        services::{
+            ledger::merkletree::tree::Tree,
+            pool::{
+                networker::MockNetworker,
+                types::{
+                    ConsistencyProof, LedgerStatus, Reply, ReplyResultV1, ReplyTxnV1, ReplyV1,
+                    Response, ResponseMetadata, ResponseV1,
+                },
+            },
+        },
+        utils::{test, test::test_pool_create_poolfile},
     };
-    use crate::utils::test;
-    use crate::utils::test::test_pool_create_poolfile;
 
     use super::*;
     use std::io::Write;

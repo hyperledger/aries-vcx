@@ -1,9 +1,5 @@
 pub use indy_utils::environment;
 
-#[cfg(feature = "ffi_api")]
-#[macro_use]
-pub mod ccallback;
-
 pub mod crypto;
 
 #[macro_use]
@@ -39,22 +35,3 @@ macro_rules! map (
         }
      };
 );
-
-#[cfg(feature = "ffi_api")]
-macro_rules! json_string {
-    ($value:ident) => {
-        serde_json::to_string(&$value).map_err(|err| {
-            IndyError::from_msg(
-                IndyErrorKind::InvalidStructure,
-                format!("Cannot serialize Object into JSON String. Err: {:?}", err),
-            )
-        })?
-    };
-}
-
-#[cfg(feature = "ffi_api")]
-macro_rules! json_string_result {
-    ($value:ident) => {
-        Ok(json_string!($value))
-    };
-}

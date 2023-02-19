@@ -1766,12 +1766,12 @@ void checkErrorAndComplete(vcx_error_t ret, vcx_command_handle_t cmdHandle, void
     });
 }
 
-- (void)credentialGetOffers:(VcxHandle)connectionHandle
+- (void)credentialGetOffers:(NSNumber *)connectionHandle
                  completion:(void (^)(NSError *, NSString *))completion {
 
     vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
-    vcx_error_t ret = vcx_credential_get_offers(handle, connectionHandle, &VcxWrapperCbResponseString);
+    vcx_error_t ret = vcx_credential_get_offers(handle, connectionHandle.unsignedIntValue, &VcxWrapperCbResponseString);
 
     checkErrorAndComplete(ret, handle, ^{
         completion([NSError errorFromVcxError:ret], ERROR_RESPONSE_STRING);

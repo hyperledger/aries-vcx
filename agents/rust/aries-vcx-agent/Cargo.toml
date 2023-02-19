@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 serde = "1.0.145"
 aries-vcx = { path = "../../../aries_vcx" }
+async-trait = "0.1.64"
 derive_builder = "0.11.2"
 serde_json = "1.0.85"
 log = "0.4.17"

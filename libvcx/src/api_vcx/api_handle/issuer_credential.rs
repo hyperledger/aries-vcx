@@ -1,10 +1,14 @@
+use aries_vcx::protocols::SendClosure;
 use serde_json;
 
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
 
+use crate::api_vcx::api_global::profile::get_main_profile;
 use crate::api_vcx::api_global::profile::get_main_profile_optional_pool;
+use crate::api_vcx::api_handle::connection;
+use crate::api_vcx::api_handle::connection::HttpClient;
 use crate::api_vcx::api_handle::credential_def;
 use crate::api_vcx::api_handle::mediated_connection;
 use crate::api_vcx::api_handle::object_cache::ObjectCache;
@@ -52,6 +56,38 @@ pub async fn update_state(handle: u32, message: Option<&str>, connection_handle:
             mediated_connection::update_message_status(connection_handle, &uid).await?;
         }
     }
+    let res: u32 = credential.get_state().into();
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
+    Ok(res)
+}
+
+pub async fn update_state_with_message_nonmediated(
+    handle: u32,
+    connection_handle: u32,
+    message: &str,
+) -> LibvcxResult<u32> {
+    trace!("issuer_credential::update_state_nonmediated >>> ");
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    if credential.is_terminal_state() {
+        return Ok(credential.get_state().into());
+    }
+
+    let con = connection::get_cloned_generic_connection(&connection_handle)?;
+    let wallet = get_main_profile_optional_pool().inject_wallet();
+
+    let send_message: SendClosure =
+        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+
+    let message: A2AMessage = serde_json::from_str(message).map_err(|err| {
+        LibvcxError::from_msg(
+            LibvcxErrorKind::InvalidOption,
+            format!("Cannot update state: Message deserialization failed: {:?}", err),
+        )
+    })?;
+    credential.step(&profile, message.into(), Some(send_message)).await?;
+
     let res: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(res)
@@ -162,6 +198,20 @@ pub async fn send_credential_offer_v2(credential_handle: u32, connection_handle:
     Ok(())
 }
 
+pub async fn send_credential_offer_nonmediated(credential_handle: u32, connection_handle: u32) -> LibvcxResult<()> {
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(credential_handle)?;
+
+    let con = connection::get_cloned_generic_connection(&connection_handle)?;
+    let wallet = get_main_profile_optional_pool().inject_wallet();
+
+    let send_message: SendClosure =
+        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+
+    credential.send_credential_offer(send_message).await?;
+    ISSUER_CREDENTIAL_MAP.insert(credential_handle, credential)?;
+    Ok(())
+}
+
 pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
     let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
     let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
@@ -171,6 +221,22 @@ pub async fn send_credential(handle: u32, connection_handle: u32) -> LibvcxResul
             mediated_connection::send_message_closure(connection_handle).await?,
         )
         .await?;
+    let state: u32 = credential.get_state().into();
+    ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
+    Ok(state)
+}
+
+pub async fn send_credential_nonmediated(handle: u32, connection_handle: u32) -> LibvcxResult<u32> {
+    let mut credential = ISSUER_CREDENTIAL_MAP.get_cloned(handle)?;
+    let profile = get_main_profile_optional_pool(); // do not throw if pool is not open
+
+    let con = connection::get_cloned_generic_connection(&connection_handle)?;
+    let wallet = profile.inject_wallet();
+
+    let send_message: SendClosure =
+        Box::new(|msg: A2AMessage| Box::pin(async move { con.send_message(&wallet, &msg, &HttpClient).await }));
+
+    credential.send_credential(&profile, send_message).await?;
     let state: u32 = credential.get_state().into();
     ISSUER_CREDENTIAL_MAP.insert(handle, credential)?;
     Ok(state)

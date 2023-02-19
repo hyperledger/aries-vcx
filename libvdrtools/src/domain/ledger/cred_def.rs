@@ -1,11 +1,18 @@
-use super::super::anoncreds::credential_definition::{
-    CredentialDefinitionData, CredentialDefinitionId, CredentialDefinitionV1, SignatureType,
+use super::{
+    super::{
+        anoncreds::{
+            credential_definition::{
+                CredentialDefinitionData, CredentialDefinitionId, CredentialDefinitionV1,
+                SignatureType,
+            },
+            schema::SchemaId,
+        },
+        crypto::did::ShortDidValue,
+        ledger::request::ProtocolVersion,
+    },
+    constants::{CRED_DEF, GET_CRED_DEF},
+    response::{GetReplyResultV1, ReplyType},
 };
-use super::super::anoncreds::schema::SchemaId;
-use super::super::crypto::did::ShortDidValue;
-use super::super::ledger::request::ProtocolVersion;
-use super::constants::{CRED_DEF, GET_CRED_DEF};
-use super::response::{GetReplyResultV1, ReplyType};
 
 #[derive(Serialize, Debug)]
 pub struct CredDefOperation {

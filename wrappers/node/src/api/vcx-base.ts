@@ -1,19 +1,18 @@
 import { VCXInternalError } from '../errors';
 import { ISerializedData } from './common';
-import {GCWatcher} from "../utils/gc-watcher";
+import { GCWatcher } from '../utils/gc-watcher';
 
 export abstract class VcxBase<SerializedData> extends GCWatcher {
-
-  protected static _deserialize<T extends VcxBase<unknown>, P = unknown> (
+  protected static _deserialize<T extends VcxBase<unknown>, P = unknown>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    VCXClass: new (sourceId: string, args?: any) => T,
-    objData: ISerializedData<{ source_id: string }>,
+    VCXClass: new (args?: any) => T,
+    serializedData: Record<string, unknown>, // this represents "any JSON object"
     constructorParams?: P,
   ): T {
     try {
-      const obj = new VCXClass(objData.source_id || objData.data.source_id, constructorParams);
-      obj._initFromData(objData);
-      return obj;
+      const instance = new VCXClass(constructorParams);
+      instance._initFromData(serializedData);
+      return instance;
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -21,12 +20,6 @@ export abstract class VcxBase<SerializedData> extends GCWatcher {
 
   protected abstract _serializeFn: (handle: number) => string;
   protected abstract _deserializeFn: (data: string) => number;
-  protected _sourceId: string;
-
-  constructor(sourceId: string) {
-    super();
-    this._sourceId = sourceId;
-  }
 
   public serialize(): ISerializedData<SerializedData> {
     try {
@@ -36,12 +29,8 @@ export abstract class VcxBase<SerializedData> extends GCWatcher {
     }
   }
 
-  get sourceId(): string {
-    return this._sourceId;
-  }
-
-  private _initFromData(objData: ISerializedData<{ source_id: string }>): void {
-    const objHandle = this._deserializeFn(JSON.stringify(objData))
+  private _initFromData(serializedData: Record<string, unknown>): void {
+    const objHandle = this._deserializeFn(JSON.stringify(serializedData));
     this._setHandle(objHandle);
   }
 }

@@ -1,23 +1,24 @@
 use std::sync::{Arc, Mutex};
 
 use crate::error::*;
+use crate::http_client::HttpClient;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
-use aries_vcx::common::ledger::transactions::into_did_doc;
 use aries_vcx::core::profile::profile::Profile;
-use aries_vcx::handlers::connection::connection::{Connection, ConnectionState};
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::concepts::ack::Ack;
 use aries_vcx::messages::protocols::connection::invite::Invitation;
 use aries_vcx::messages::protocols::connection::request::Request;
 use aries_vcx::messages::protocols::connection::response::SignedResponse;
+use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use aries_vcx::protocols::connection::{Connection, GenericConnection, State, ThinState};
 
 pub type ServiceEndpoint = String;
 
 pub struct ServiceConnections {
     profile: Arc<dyn Profile>,
     service_endpoint: ServiceEndpoint,
-    connections: Arc<ObjectCache<Connection>>,
+    connections: Arc<ObjectCache<GenericConnection>>,
 }
 
 impl ServiceConnections {
@@ -29,94 +30,127 @@ impl ServiceConnections {
         }
     }
 
-    pub async fn create_invitation(&self) -> AgentResult<Invitation> {
-        let inviter = Connection::create_inviter(&self.profile)
-            .await?
-            .create_invite(self.service_endpoint.clone(), vec![])
-            .await?;
-        let invite = inviter
-            .get_invite_details()
-            .ok_or_else(|| AgentError::from_kind(AgentErrorKind::InviteDetails))?
-            .clone();
-        self.connections.insert(&inviter.get_thread_id(), inviter)?;
+    pub async fn create_invitation(&self, pw_info: Option<PairwiseInfo>) -> AgentResult<Invitation> {
+        let pw_info = pw_info.unwrap_or(PairwiseInfo::create(&self.profile.inject_wallet()).await?);
+        let inviter =
+            Connection::new_inviter("".to_owned(), pw_info).create_invitation(vec![], self.service_endpoint.clone());
+        let invite = inviter.get_invitation().clone();
+        let thread_id = inviter.thread_id().to_owned();
+
+        self.connections.insert(&thread_id, inviter.into())?;
+
         Ok(invite)
     }
 
     pub async fn receive_invitation(&self, invite: Invitation) -> AgentResult<String> {
-        let did_doc = into_did_doc(&self.profile, &invite).await?;
-        let invitee = Connection::create_invitee(&self.profile, did_doc)
-            .await?
-            .process_invite(invite)?;
-        self.connections.insert(&invitee.get_thread_id(), invitee)
+        let pairwise_info = PairwiseInfo::create(&self.profile.inject_wallet()).await?;
+        let invitee = Connection::new_invitee("".to_owned(), pairwise_info)
+            .accept_invitation(&self.profile, invite)
+            .await?;
+
+        let thread_id = invitee.thread_id().to_owned();
+
+        self.connections.insert(&thread_id, invitee.into())
     }
 
     pub async fn send_request(&self, thread_id: &str) -> AgentResult<()> {
-        let invitee = self
-            .connections
-            .get(thread_id)?
-            .send_request(&self.profile, self.service_endpoint.clone(), vec![], None)
+        let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let invitee = invitee
+            .send_request(
+                &self.profile.inject_wallet(),
+                self.service_endpoint.clone(),
+                vec![],
+                &HttpClient,
+            )
             .await?;
-        self.connections.insert(thread_id, invitee)?;
+
+        self.connections.insert(thread_id, invitee.into())?;
         Ok(())
     }
 
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
-        let inviter = self
-            .connections
-            .get(thread_id)?
-            .process_request(&self.profile, request, self.service_endpoint.clone(), vec![], None)
+        let inviter = self.connections.get(thread_id)?;
+
+        let inviter = match inviter.state() {
+            ThinState::Inviter(State::Initial) => Connection::try_from(inviter)
+                .map_err(From::from)
+                .map(|c| c.into_invited(&request.id.0)),
+            ThinState::Inviter(State::Invited) => Connection::try_from(inviter).map_err(From::from),
+            s => Err(AgentError::from_msg(
+                AgentErrorKind::GenericAriesVcxError,
+                &format!(
+                    "Connection with handle {} cannot process a request; State: {:?}",
+                    thread_id, s
+                ),
+            )),
+        }?;
+
+        let inviter = inviter
+            .handle_request(
+                &self.profile.inject_wallet(),
+                request,
+                self.service_endpoint.clone(),
+                vec![],
+                &HttpClient,
+            )
             .await?;
-        self.connections.insert(thread_id, inviter)?;
+
+        self.connections.insert(thread_id, inviter.into())?;
+
         Ok(())
     }
 
     pub async fn send_response(&self, thread_id: &str) -> AgentResult<()> {
-        let inviter = self
-            .connections
-            .get(thread_id)?
-            .send_response(&self.profile, None)
+        let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let inviter = inviter
+            .send_response(&self.profile.inject_wallet(), &HttpClient)
             .await?;
-        self.connections.insert(thread_id, inviter)?;
+
+        self.connections.insert(thread_id, inviter.into())?;
+
         Ok(())
     }
 
     pub async fn accept_response(&self, thread_id: &str, response: SignedResponse) -> AgentResult<()> {
-        let invitee = self
-            .connections
-            .get(thread_id)?
-            .process_response(&self.profile, response, None)
+        let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let invitee = invitee
+            .handle_response(&self.profile.inject_wallet(), response, &HttpClient)
             .await?;
-        self.connections.insert(thread_id, invitee)?;
+
+        self.connections.insert(thread_id, invitee.into())?;
+
         Ok(())
     }
 
     pub async fn send_ack(&self, thread_id: &str) -> AgentResult<()> {
-        let invitee = self.connections.get(thread_id)?.send_ack(&self.profile, None).await?;
-        self.connections.insert(thread_id, invitee)?;
+        let invitee: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let invitee = invitee.send_ack(&self.profile.inject_wallet(), &HttpClient).await?;
+
+        self.connections.insert(thread_id, invitee.into())?;
+
         Ok(())
     }
 
     pub async fn process_ack(&self, thread_id: &str, ack: Ack) -> AgentResult<()> {
-        let inviter = self
-            .connections
-            .get(thread_id)?
-            .process_ack(A2AMessage::Ack(ack))
-            .await?;
-        self.connections.insert(thread_id, inviter)?;
+        let inviter: Connection<_, _> = self.connections.get(thread_id)?.try_into()?;
+        let inviter = inviter.acknowledge_connection(&A2AMessage::Ack(ack))?;
+
+        self.connections.insert(thread_id, inviter.into())?;
+
         Ok(())
     }
 
-    pub fn get_state(&self, thread_id: &str) -> AgentResult<ConnectionState> {
-        Ok(self.connections.get(thread_id)?.get_state())
+    pub fn get_state(&self, thread_id: &str) -> AgentResult<ThinState> {
+        Ok(self.connections.get(thread_id)?.state())
     }
 
-    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<Connection> {
+    pub(in crate::services) fn get_by_id(&self, thread_id: &str) -> AgentResult<GenericConnection> {
         self.connections.get(thread_id)
     }
 
     pub fn get_by_their_vk(&self, their_vk: &str) -> AgentResult<Vec<String>> {
         let their_vk = their_vk.to_string();
-        let f = |(id, m): (&String, &Mutex<Connection>)| -> Option<String> {
+        let f = |(id, m): (&String, &Mutex<GenericConnection>)| -> Option<String> {
             let connection = m.lock().unwrap();
             match connection.remote_vk() {
                 Ok(remote_vk) if remote_vk == their_vk => Some(id.to_string()),

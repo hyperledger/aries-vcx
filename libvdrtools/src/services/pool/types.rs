@@ -1,10 +1,11 @@
-use std::cmp::Eq;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::{
+    cmp::Eq,
+    collections::HashMap,
+    hash::{Hash, Hasher},
+};
 
 use crate::utils::crypto::verkey_builder::build_full_verkey;
-use indy_api_types::errors::prelude::*;
-use indy_api_types::CommandHandle;
+use indy_api_types::{errors::prelude::*, CommandHandle};
 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct NodeData {

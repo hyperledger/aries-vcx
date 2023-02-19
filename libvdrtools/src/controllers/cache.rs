@@ -71,6 +71,25 @@ impl CacheController {
         }
     }
 
+    /// Gets schema json data for specified schema id.
+    /// If data is present inside of cache, cached data is returned.
+    /// Otherwise data is fetched from the ledger and stored inside of cache for future use.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// pool_handle: pool handle (created by open_pool_ledger).
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// submitter_did: DID of the submitter stored in secured Wallet.
+    /// id: identifier of schema.
+    /// options_json:
+    ///  {
+    ///    noCache: (bool, optional, false by default) Skip usage of cache,
+    ///    noUpdate: (bool, optional, false by default) Use only cached data, do not try to update.
+    ///    noStore: (bool, optional, false by default) Skip storing fresh data if updated,
+    ///    minFresh: (int, optional, -1 by default) Return cached data if not older than this many seconds. -1 means do not check age.
+    ///  }
     pub async fn get_schema(
         &self,
         pool_handle: PoolHandle,
@@ -135,6 +154,22 @@ impl CacheController {
         res
     }
 
+    /// Gets credential definition json data for specified credential definition id.
+    /// If data is present inside of cache, cached data is returned.
+    /// Otherwise data is fetched from the ledger and stored inside of cache for future use.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// pool_handle: pool handle (created by open_pool_ledger).
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// submitter_did: DID of the submitter stored in secured Wallet.
+    /// id: identifier of credential definition.
+    /// options_json:
+    ///  {
+    ///    forceUpdate: (optional, false by default) Force update of record in cache from the ledger,
+    ///  }
     pub async fn get_cred_def(
         &self,
         pool_handle: PoolHandle,
@@ -184,6 +219,17 @@ impl CacheController {
         return res;
     }
 
+    /// Purge schema cache.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// options_json:
+    ///  {
+    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
+    ///  }
     pub async fn purge_schema_cache(
         &self,
         wallet_handle: WalletHandle,
@@ -223,6 +269,17 @@ impl CacheController {
         res
     }
 
+    /// Purge credential definition cache.
+    ///
+    /// EXPERIMENTAL
+    ///
+    /// #Params
+
+    /// wallet_handle: wallet handle (created by open_wallet).
+    /// options_json:
+    ///  {
+    ///    minFresh: (int, optional, -1 by default) Purge cached data if older than this many seconds. -1 means purge all.
+    ///  }
     pub async fn purge_cred_def_cache(
         &self,
         wallet_handle: WalletHandle,

@@ -1,6 +1,7 @@
 import * as ffi from '@hyperledger/vcx-napi-rs';
 import { ISerializedData, VerifierStateType } from './common';
 import { Connection } from './mediated-connection';
+import { NonmediatedConnection } from './connection';
 import { VcxBaseWithState } from './vcx-base-with-state';
 import { VCXInternalError } from '../errors';
 
@@ -87,9 +88,9 @@ export interface IRevocationInterval {
 export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
   public static async create({ sourceId, ...createDataRest }: IProofCreateData): Promise<Proof> {
     try {
-      const proof = new Proof(sourceId);
+      const proof = new Proof();
       const handle = await ffi.proofCreate(
-        proof.sourceId,
+        sourceId,
         JSON.stringify(createDataRest.attrs),
         JSON.stringify(createDataRest.preds || []),
         JSON.stringify(createDataRest.revocationInterval),
@@ -104,7 +105,7 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
 
   public static deserialize(proofData: ISerializedData<IProofData>): Proof {
     try {
-      return super._deserialize<Proof, IProofConstructorData>(Proof, proofData);
+      return super._deserialize<Proof, IProofConstructorData>(Proof, proofData as any);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }
@@ -137,9 +138,29 @@ export class Proof extends VcxBaseWithState<IProofData, VerifierStateType> {
     }
   }
 
+  public async updateStateWithMessageNonmediated(connection: NonmediatedConnection, message: string): Promise<number> {
+    try {
+      return await ffi.proofUpdateStateWithMessageNonmediated(
+        this.handle,
+        connection.handle,
+        message,
+      );
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
   public async requestProof(connection: Connection): Promise<void> {
     try {
       return await ffi.proofSendRequest(this.handle, connection.handle);
+    } catch (err: any) {
+      throw new VCXInternalError(err);
+    }
+  }
+
+  public async requestProofNonmediated(connection: NonmediatedConnection): Promise<void> {
+    try {
+      return await ffi.proofSendRequestNonmediated(this.handle, connection.handle);
     } catch (err: any) {
       throw new VCXInternalError(err);
     }

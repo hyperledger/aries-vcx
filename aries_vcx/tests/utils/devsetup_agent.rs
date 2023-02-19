@@ -10,7 +10,7 @@ pub mod test_utils {
     use aries_vcx::handlers::revocation_notification::sender::RevocationNotificationSender;
     use aries_vcx::plugins::wallet::base_wallet::BaseWallet;
     use aries_vcx::plugins::wallet::indy_wallet::IndySdkWallet;
-    use aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+    use aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
     use aries_vcx::protocols::revocation_notification::sender::state_machine::SenderConfigBuilder;
     use futures::future::BoxFuture;
     use messages::concepts::ack::please_ack::AckOn;
@@ -48,10 +48,10 @@ pub mod test_utils {
     use aries_vcx::messages::protocols::issuance::credential_offer::CredentialOffer;
     use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
     use aries_vcx::messages::protocols::proof_presentation::presentation_request::PresentationRequest;
-    use aries_vcx::protocols::connection::invitee::state_machine::InviteeState;
-    use aries_vcx::protocols::connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
     use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+    use aries_vcx::protocols::mediated_connection::invitee::state_machine::InviteeState;
+    use aries_vcx::protocols::mediated_connection::inviter::state_machine::InviterState;
     use aries_vcx::protocols::proof_presentation::prover::state_machine::ProverState;
     use aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use aries_vcx::utils::devsetup::*;

@@ -1,14 +1,19 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use failure::Context;
 use serde_json;
 
-use crate::domain::pool::PoolMode;
-use crate::services::ledger::merkletree::merkletree::MerkleTree;
-use crate::services::pool::merkle_tree_factory;
-use crate::services::pool::types::{CatchupReq, Message};
-use crate::utils::crypto::base58::{FromBase58, ToBase58};
+use crate::{
+    domain::pool::PoolMode,
+    services::{
+        ledger::merkletree::merkletree::MerkleTree,
+        pool::{
+            merkle_tree_factory,
+            types::{CatchupReq, Message},
+        },
+    },
+    utils::crypto::base58::{FromBase58, ToBase58},
+};
 use indy_api_types::errors::prelude::*;
 
 pub enum CatchupProgress {

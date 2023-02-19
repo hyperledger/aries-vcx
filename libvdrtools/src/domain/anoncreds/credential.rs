@@ -4,9 +4,10 @@ use ursa::cl::{CredentialSignature, RevocationRegistry, SignatureCorrectnessProo
 
 use indy_api_types::validation::Validatable;
 
-use super::credential_definition::CredentialDefinitionId;
-use super::revocation_registry_definition::RevocationRegistryId;
-use super::schema::SchemaId;
+use super::{
+    credential_definition::CredentialDefinitionId,
+    revocation_registry_definition::RevocationRegistryId, schema::SchemaId,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Credential {

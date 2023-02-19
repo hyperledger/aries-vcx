@@ -9,7 +9,7 @@ use agency_client::wallet::base_agency_client_wallet::BaseAgencyClientWallet;
 use crate::agency_client::MessageStatusCode;
 use crate::errors::error::prelude::*;
 use crate::plugins::wallet::agency_client_wallet::ToBaseWallet;
-use crate::protocols::connection::pairwise_info::PairwiseInfo;
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use crate::utils::encryption_envelope::EncryptionEnvelope;
 use messages::a2a::A2AMessage;
 

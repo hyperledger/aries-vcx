@@ -1,16 +1,19 @@
 use std::sync::Arc;
 
 use crate::error::*;
+use crate::http_client::HttpClient;
 use crate::services::connection::ServiceConnections;
 use crate::storage::object_cache::ObjectCache;
 use crate::storage::Storage;
 use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
+use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
 use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
 use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::protocols::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
+use aries_vcx::protocols::SendClosure;
 
 #[derive(Clone)]
 struct IssuerWrapper {
@@ -74,9 +77,14 @@ impl ServiceCredentialsIssuer {
         issuer
             .build_credential_offer_msg(&self.profile, offer_info, None)
             .await?;
-        issuer
-            .send_credential_offer(connection.send_message_closure(&self.profile, None).await?)
-            .await?;
+
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        issuer.send_credential_offer(send_closure).await?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
@@ -109,12 +117,14 @@ impl ServiceCredentialsIssuer {
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         let connection = self.service_connections.get_by_id(&connection_id)?;
-        issuer
-            .send_credential(
-                &self.profile,
-                connection.send_message_closure(&self.profile, None).await?,
-            )
-            .await?;
+
+        let wallet = self.profile.inject_wallet();
+
+        let send_closure: SendClosure = Box::new(|msg: A2AMessage| {
+            Box::pin(async move { connection.send_message(&wallet, &msg, &HttpClient).await })
+        });
+
+        issuer.send_credential(&self.profile, send_closure).await?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
         Ok(())

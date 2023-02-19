@@ -8,18 +8,20 @@ use ursa::cl::{
 };
 
 use crate::{
-    domain::anoncreds::{
-        credential::CredentialValues,
-        credential_definition::{
-            CredentialDefinitionData, CredentialDefinitionV1 as CredentialDefinition,
+    domain::{
+        anoncreds::{
+            credential::CredentialValues,
+            credential_definition::{
+                CredentialDefinitionData, CredentialDefinitionV1 as CredentialDefinition,
+            },
+            credential_request::CredentialRequest,
+            revocation_registry_definition::{
+                RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValuePublicKeys,
+            },
+            schema::AttributeNames,
         },
-        credential_request::CredentialRequest,
-        revocation_registry_definition::{
-            RevocationRegistryDefinitionV1, RevocationRegistryDefinitionValuePublicKeys,
-        },
-        schema::AttributeNames,
+        crypto::did::DidValue,
     },
-    domain::crypto::did::DidValue,
     services::AnoncredsHelpers,
 };
 
