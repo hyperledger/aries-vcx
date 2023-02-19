@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "agency_client"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "android_logger",
  "async-trait",
@@ -177,7 +177,7 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "aries-vcx-agent"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "aries-vcx",
  "async-trait",
@@ -1171,7 +1171,7 @@ dependencies = [
 
 [[package]]
 name = "diddoc"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2230,7 +2230,7 @@ dependencies = [
 
 [[package]]
 name = "libvcx"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "agency_client",
  "android_logger",
@@ -2376,7 +2376,7 @@ dependencies = [
 
 [[package]]
 name = "messages"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "base64 0.10.1",
  "chrono",
@@ -3554,7 +3554,7 @@ dependencies = [
 
 [[package]]
 name = "shared_vcx"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "bs58 0.4.0",
  "lazy_static",
@@ -4281,7 +4281,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vcx-napi-rs"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "libvcx",
  "log",
