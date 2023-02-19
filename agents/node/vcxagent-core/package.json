@@ -70,7 +70,7 @@
     "winston": "^3.3.3"
   },
   "peerDependencies": {
-    "@hyperledger/node-vcx-wrapper": "^0.50.0-featurenapi-rs-separate-crate-4226",
-    "@hyperledger/vcx-napi-rs": "^0.50.0-featurenapi-rs-separate-crate-4226"
+    "@hyperledger/node-vcx-wrapper": "^0.52.0",
+    "@hyperledger/vcx-napi-rs": "^0.52.0"
   }
 }
