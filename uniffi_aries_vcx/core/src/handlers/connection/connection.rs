@@ -12,6 +12,8 @@ use crate::{
     errors::error::VcxUniFFIResult,
     runtime::block_on,
 };
+
+use super::ConnectionState;
 pub struct Connection {
     handler: Mutex<VcxGenericConnection>,
 }
@@ -38,9 +40,9 @@ pub fn create_invitee(profile: Arc<ProfileHolder>, did_doc: AriesDidDoc) -> VcxU
 }
 
 impl Connection {
-    pub fn get_state(&self) -> VcxUniFFIResult<ThinState> {
+    pub fn get_state(&self) -> VcxUniFFIResult<ConnectionState> {
         let handler = self.handler.lock()?;
-        Ok(handler.state())
+        Ok(ConnectionState::from(handler.state()))
     }
 
     pub fn pairwise_info(&self) -> VcxUniFFIResult<PairwiseInfo> {
