@@ -16,5 +16,3 @@ use aries_vcx::{
     protocols::connection::pairwise_info::PairwiseInfo,
 };
 use handlers::connection::{connection::*, *};
-
-// fn remove_me() {}
