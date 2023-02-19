@@ -50,7 +50,7 @@ impl Connection {
         let mut handler = self.handler.lock()?;
         let invitation = serde_json::from_str(&invitation)?;
         // TODO - do *really* we have to clone...
-        *handler = handler.clone().process_invite(invitation).unwrap();
+        *handler = handler.clone().process_invite(invitation)?;
 
         Ok(())
     }
