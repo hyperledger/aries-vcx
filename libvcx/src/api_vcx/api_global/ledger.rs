@@ -1,4 +1,5 @@
-use aries_vcx::common::ledger::transactions::{get_service, write_endpoint_legacy};
+use aries_vcx::common::ledger::service_didsov::{DidSovServiceType, EndpointDidSov};
+use aries_vcx::common::ledger::transactions::{get_service, write_endpoint, write_endpoint_legacy};
 use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
 use aries_vcx::messages::diddoc::aries::service::AriesService;
 use aries_vcx::messages::protocols::connection::did::Did;
@@ -44,6 +45,23 @@ pub async fn ledger_write_endpoint_legacy(
         .set_routing_keys(routing_keys);
     let profile = get_main_profile()?;
     write_endpoint_legacy(&profile, target_did, &service).await?;
+    Ok(service)
+}
+
+pub async fn ledger_write_endpoint(
+    target_did: &str,
+    routing_keys: Vec<String>,
+    endpoint: String,
+) -> LibvcxResult<EndpointDidSov> {
+    let service = EndpointDidSov::create()
+        .set_service_endpoint(endpoint)
+        .set_types(Some(vec![
+            DidSovServiceType::Endpoint,
+            DidSovServiceType::DidCommunication,
+        ]))
+        .set_routing_keys(Some(routing_keys));
+    let profile = get_main_profile()?;
+    write_endpoint(&profile, target_did, &service).await?;
     Ok(service)
 }
 
