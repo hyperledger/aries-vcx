@@ -13,7 +13,17 @@ dictionary WalletConfig {
     string? rekey_derivation_method;
 };
 
-enum ConnectionState {
+dictionary ConnectionState {
+    ConnectionRole role;
+    ConnectionProtocolState protocol_state;
+};
+
+enum ConnectionRole {
+    "Invitee",
+    "Inviter",
+};
+
+enum ConnectionProtocolState {
     "Initial",
     "Invited",
     "Requested",
@@ -61,13 +71,13 @@ interface Connection {
     PairwiseInfo pairwise_info();
 
     [Throws=VcxUniFFIError]
-    void process_invite(string invitation);
+    void accept_invitation(ProfileHolder profile, string invitation);
 
     [Throws=VcxUniFFIError]
-    void process_request(ProfileHolder profile, string request, string service_endpoint, sequence<string> routing_keys);
+    void handle_request(ProfileHolder profile, string request, string service_endpoint, sequence<string> routing_keys);
 
     [Throws=VcxUniFFIError]
-    void process_response(ProfileHolder profile, string response);
+    void handle_response(ProfileHolder profile, string response);
 
     [Throws=VcxUniFFIError]
     void send_request(ProfileHolder profile, string service_endpoint, sequence<string> routing_keys);

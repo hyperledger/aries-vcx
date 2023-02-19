@@ -9,7 +9,7 @@ members = [
     "diddoc",
     "agents/rust/aries-vcx-agent",
     "wrappers/vcx-napi-rs",
-    "wrappers/vcx-uniffi"
+    "uniffi_aries_vcx/core"
 ]
 
 [workspace.package]

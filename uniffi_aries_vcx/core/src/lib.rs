@@ -1,4 +1,4 @@
-uniffi_macros::include_scaffolding!("vcx");
+uniffi::include_scaffolding!("vcx");
 
 pub mod core;
 pub mod errors;
