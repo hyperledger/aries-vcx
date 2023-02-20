@@ -37,6 +37,6 @@ Read more info about the transition and deprecation.
 ## Versioning & releases
 - We are currently not following semantic versioning. Version are releasing `0.x.x` versions. 
 - We bump minor version for releases with new features, significant refactors, breaking changes. 
-We bum patch version if release only contain fixes or smaller refactoring. 
+We bump patch version if release only contain fixes or smaller refactoring. 
 - See more info on [releases](https://github.com/orgs/hyperledger/projects/14)
 - See [releases](https://github.com/hyperledger/aries-vcx/releases) page.
