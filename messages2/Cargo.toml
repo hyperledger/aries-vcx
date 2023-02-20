@@ -27,5 +27,6 @@ strum = "0.24.1"
 strum_macros = "0.24.3"
 thiserror = "1.0.37"
 derive_more = "0.99.17"
+transitive = "0.1.0"
 messages_macros = { path = "../messages_macros" }
 diddoc = { path = "../diddoc" }

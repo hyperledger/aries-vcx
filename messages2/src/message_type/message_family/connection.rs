@@ -1,6 +1,7 @@
 use derive_more::From;
-use messages_macros::{MessageType, TransitiveFrom};
+use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
+use transitive::TransitiveFrom;
 
 use crate::error::{MsgTypeError, MsgTypeResult};
 
