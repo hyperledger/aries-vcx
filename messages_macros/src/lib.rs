@@ -10,12 +10,62 @@ use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
 use transitive::{transitive_from_process_attr, transitive_impl, transitive_try_from_process_attr};
 
+/// Derive macro to be used on actual message that can be received.
+/// The macro simplifies mapping the message to its respective message type.
+///
+/// It accepts a single instance of the `message` attribute, followed by
+/// a string literal that maps to a *value* of the message type.
+///
+/// ``` ignore
+/// use messages_macros::Message;
+///
+/// enum A {
+///   Variant1,
+///   Variant2,
+///   Variant3
+/// }
+///
+/// #[derive(Message)]
+/// #[message("A::Variant2")]
+/// struct B;
+/// ```
 #[proc_macro_derive(Message, attributes(message))]
 pub fn message(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     message_impl(input).unwrap_or_else(Error::into_compile_error).into()
 }
 
+/// Derive macro to be used for easier implementation of message type components.
+/// The macro serves as implementation for semver reasoning and parsing of the `@type` field
+/// componenets (major, minor versions, message kind, etc.) in a message.
+///
+/// The macro supports the a single instance of the `semver` attribute,
+/// with a single name-value pair.
+///
+/// The attribute's argument can be *ONLY ONE* of the following are:
+/// * family -> literal string representing the message family
+/// * major -> u8 representing the protocol's major version
+/// * minor -> u8 representing the protocol's minor version
+///
+/// ``` ignore
+/// use messages_macros::MessageType;
+///
+/// #[derive(MessageType)]
+/// #[semver(family = "some_protocol")]
+/// enum A {
+///    B(B)
+/// };
+///
+/// #[derive(MessageType)]
+/// #[semver(major = 1)]
+/// enum B {
+///    C(C)
+/// };
+///
+/// #[derive(MessageType)]
+/// #[semver(minor = 1)]
+/// struct C;
+/// ```
 #[proc_macro_derive(MessageType, attributes(semver))]
 pub fn message_type(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -30,10 +80,11 @@ pub fn message_type(input: TokenStream) -> TokenStream {
 ///
 /// Multiple attributes can be used on a single type for multiple transitive [`From`] impls
 /// and the trasitions chain is virtually unlimited.
-/// 
+///
 /// The macro supports two attributes, with slightly different behavior:
 /// * `transitive` -> For A, B, C, D it derives `impl From<A> for D`, skipping `impl From<A> for C`
 /// * `transitive_all` -> For A, B, C, D it derives `impl From<A> for D` *AND* `impl From<A> for C`
+///
 /// ``` ignore
 /// use messages_macros::TransitiveFrom;
 ///
@@ -107,22 +158,23 @@ pub fn transitive_from(input: TokenStream) -> TokenStream {
 }
 
 /// Derive macro that implements [TryFrom] for C -> A by converting C -> B -> A.
-/// 
+///
 /// This works similarly with the [`TransitiveFrom`] derive macro, but for the purpose
 /// of reusing the same attributes and type lists, it parses them *in reverse*.
-/// 
+///
 /// Just like with [`TransitiveFrom`], [`TryFrom`] B to A and [`TryFrom`] C to B impls must exist.
 /// The attribute is where the list of types to transit through is provided, in *reverse* order.
 ///
 /// Multiple attributes can be used on a single type for multiple transitive [`TryFrom`] impls
 /// and the trasitions chain is virtually unlimited.
-/// 
+///
 /// The macro supports two attributes, with slightly different behavior:
 /// * `transitive` -> For A, B, C, D it derives `impl TryFrom<D> for A`, skipping `impl TryFrom<C> for A`
 /// * `transitive_all` -> For A, B, C, D it derives `impl TryFrom<D> for A` *AND* `impl TryFrom<C> for A`
+///
 /// ``` ignore
 /// use messages_macros::TransitiveTryFrom;
-/// 
+///
 /// #[derive(TransitiveTryFrom)]
 /// #[transitive(B, C, D, E, F, G)] // impl TryFrom<G> for A
 /// struct A;
