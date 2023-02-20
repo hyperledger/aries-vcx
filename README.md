@@ -20,12 +20,12 @@ Additionally, Aries-vcx implementation is built on top of smaller Rust crates:
 ## If you are mobile 📱 developer
 Aries-vcx is well positioned for native Rust applications, however we are currently transitioning 
 the recommended approach:
-- deprecated, but battle-tested: `libvcx` and its Java and ObjectiveC wrappers is battle-tested but now deprecated approach.
-- encouraged, but in stage of POC: `uniffi_vcx` is next generation approach to enable `aries-vcx` on mobile, providing Swift
+- deprecated, but battle-tested: [`libvcx`](./libvcx) and its Java and ObjectiveC wrappers is battle-tested but now deprecated approach.
+- encouraged, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach to enable `aries-vcx` on mobile, providing Swift
 and Kotlin wrappers. However, this is yet in POC stage and new adopters `aries-vcx` for mobile
-are highly encourage to contribute to its development. 
+are highly encourage to contribute to its development.
 
-Read more info about the transition and deprecation.
+Read more about `libvcx` deprecation and `unifii` benefits [here](https://github.com/hyperledger/libvcx#deprecation-notice)
 
 # Reach out 👋
 - Ask question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
