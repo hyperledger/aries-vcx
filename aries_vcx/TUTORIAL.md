@@ -22,7 +22,7 @@ Next up you will need integration tests running. These tests must pointed again 
 You'll get best result by running a pool of Indy nodes on your machine. You can start a pool of 4 nodes
 in docker container like this
 ```sh
-docker run --name indylocalhost -p 9701-9708:9701-9708 -d pstas/indypool-localhost:1.15.0-localhost
+docker run --name indylocalhost -p 9701-9708:9701-9708 -d ghcr.io/hyperledger/aries-vcx/indy_pool_localhost:1.15.0
 ```
 If you are running on arm64, you can specify option `--platform linux/amd64`, as the image above was
 originally built for `x86_64` architecture.
