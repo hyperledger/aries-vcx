@@ -1,5 +1,5 @@
 # aries-vcx
-`aries-vcx` is crate which is rather  "library" than "framework". We strive to be not too 
+`aries-vcx` is more of a "library" rather than "framework". We strive to be not too 
 opinionated and simply provide building blocks for whatever you want to build. 
 
 You can use `aries-vcx` to build both end-user products (mobile wallets in role of credential 
