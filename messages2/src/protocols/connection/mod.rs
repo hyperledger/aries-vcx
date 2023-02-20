@@ -1,5 +1,10 @@
+mod invitation;
+mod problem_report;
+mod request;
+mod response;
+
 use derive_more::From;
-use messages_macros::Message;
+use diddoc::aries::diddoc::AriesDidDoc;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
@@ -7,7 +12,7 @@ use crate::{
     message_type::message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
 };
 
-use super::traits::ConcreteMessage;
+use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::Response};
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {
@@ -51,18 +56,10 @@ impl DelayedSerde for Connection {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "ConnectionV1_0::Invitation")]
-pub struct Invitation;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "ConnectionV1_0::Request")]
-pub struct Request;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "ConnectionV1_0::Response")]
-pub struct Response;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "ConnectionV1_0::ProblemReport")]
-pub struct ProblemReport;
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
+pub struct ConnectionData {
+    #[serde(rename = "DID")]
+    pub did: String,
+    #[serde(rename = "DIDDoc")]
+    pub did_doc: AriesDidDoc,
+}

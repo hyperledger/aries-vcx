@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::decorators::{thread::Thread, timing::Timing};
+use crate::decorators::{Thread, Timing};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProblemReport {

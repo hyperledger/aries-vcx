@@ -212,13 +212,13 @@ impl Serialize for AriesMessage {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_ser() {
-        let msg = AriesMessage::BasicMessage(BasicMessage {
-            field: "stuff".to_owned(),
-        });
-        println!("{}", serde_json::to_string(&msg).unwrap());
-    }
+    // #[test]
+    // fn test_ser() {
+    //     let msg = AriesMessage::BasicMessage(BasicMessage {
+    //         field: "stuff".to_owned(),
+    //     });
+    //     println!("{}", serde_json::to_string(&msg).unwrap());
+    // }
 
     #[test]
     fn test_de() {

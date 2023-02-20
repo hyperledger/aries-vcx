@@ -11,7 +11,7 @@ use self::prefix::Prefix;
 
 pub use self::message_family::MessageFamily;
 
-#[derive(PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MessageType {
     prefix: Prefix,
     pub family: MessageFamily,

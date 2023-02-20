@@ -28,7 +28,16 @@ pub struct Attachment {
 pub enum MimeType {
     #[serde(rename = "application/json")]
     Json,
-    Blank,
+    #[serde(rename = "image/jpg")]
+    Jpg,
+    #[serde(rename = "image/jpeg")]
+    Jpeg,
+    #[serde(rename = "image/png")]
+    Png,
+    #[serde(rename = "application/pdf")]
+    Pdf,
+    #[serde(rename = "text/plain")]
+    Plain,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
