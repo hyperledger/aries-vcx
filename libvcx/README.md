@@ -1,14 +1,15 @@
 # Deprecation notice
-This is now deprecated and receives limited maitenance support. 
+This is now deprecated and receives limited maintenance support. 
 
 This project provided solution to create bindings and wrappers for other languages, 
-primarily Java, iOS. However this was started many years ago (circa 2018) and better approaches
+primarily Java, iOS. However, this was started many years ago (circa 2018) and better approaches
 to FFI has emerged since then. One of apparent leaders is `uniffi` developed by Firefox which
 handles lots of complexity which had to be done manually in this project.
 
 We encourage new developers to adopt this technology in favor of libvcx - we currently have new 
-wrapper for `aries-vcx` in POC stage [uniffi_vcx](https://example.org/___TBD___) therefore you 
-will have slower start, perhaps more frequent changes, but much more promising long-term future.
+wrapper for `aries-vcx` in POC stage [uniffi_aries_vcx](../uniffi_aries_vcx), therefore you 
+will have slower start, perhaps more frequent changes to sync up with, but much more promising 
+long-term future.
 
 # Libvcx
 - Libvcx is library built on top of `aries-vcx`, which provides a particular approach how to 
@@ -20,8 +21,8 @@ Layer on top of `aries-vcx` which provides `u32` "handle" reference API. When yo
 create a new object, this layer gives you back `u32` reference to that object, which is how you
 work with it. 
 
-This was historically feasibly approach for building FFI interfaces. Arguably, nowadays
-there's more modern approaches to FFI, for example via [uniffi](https://mozilla.github.io/uniffi-rs/).
+This was historically feasibly approach for building FFI interfaces - was used to build 
+Objective C and Java libvcx wrappers (deprecated), as well as libvcx NodeJS wrapper.
 
 ### DEPRECATED:`api_c` module & ObjectiveC / Java wrappers
 Built on top of `api_vcx`, provides runtime executor (tokio) and FFI interface. Libvcx based Java and 
@@ -33,7 +34,7 @@ If you wish to use iOS or Android wrapper, you may find it useful to have look a
 
 # Testing
 Before you try to build/test `libvcx` crate on your machine, make sure yu can buil `aries-vcx` - see 
-[aries-vcx README](../aries_vcx/README.md#verify-on-your-machine).
+[aries-vcx README](../aries_vcx).
 
 - Run unit tests:
 ```

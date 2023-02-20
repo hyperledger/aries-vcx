@@ -14,9 +14,8 @@ You can build your Rust project on top of
 issuer/verifier side or credential holder/prover.
 
 Additionally, Aries-vcx implementation is built on top of smaller Rust crates:
-- `messages` - crate for building and parsing Aries messages
-- `diddoc` - crate to work with DIDDocs
-- `agency-client` - client to communicate with [vcx mediator](https://github.com/AbsaOSS/vcxagencynode)
+- [`messages`](messages) - crate for building and parsing Aries messages
+- [`diddoc`](diddoc) - crate to work with DIDDocs
 
 ## If you are mobile 📱 developer
 Aries-vcx is well positioned for native Rust applications, however we are currently transitioning 
