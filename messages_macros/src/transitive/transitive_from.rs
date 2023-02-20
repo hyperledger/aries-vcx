@@ -2,32 +2,18 @@
 
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
-use syn::{Attribute, DeriveInput, Path, Result as SynResult};
+use syn::{Attribute, Path, Result as SynResult};
 
-use super::{map_attr, validate_attr_args, MinimalAttrArgs, TransitiveAttr};
-
-pub fn transitive_impl(input: DeriveInput) -> SynResult<TokenStream> {
-    let name = input.ident;
-    let attr_iter = input.attrs.into_iter().filter_map(map_attr);
-    generate_token_stream(name, attr_iter)
-}
-
-fn generate_token_stream(name: Ident, attr_iter: impl Iterator<Item = TransitiveAttr>) -> SynResult<TokenStream> {
-    let mut expanded = TokenStream::new();
-    let iter = attr_iter.map(|attr| process_attr(&name, attr));
-
-    for token_stream in iter {
-        expanded.extend(token_stream?);
-    }
-
-    Ok(expanded)
-}
+use super::{validate_attr_args, MinimalAttrArgs, TRANSITIVE, TRANSITIVE_ALL};
 
 /// Processes an attribute based on its kind
-fn process_attr(name: &Ident, attr: TransitiveAttr) -> SynResult<TokenStream> {
-    match attr {
-        TransitiveAttr::Transitive(a) => process_transitive_attr(name, a),
-        TransitiveAttr::TransitiveAll(a) => process_transitive_all_attr(name, a),
+pub fn transitive_from_process_attr(name: &Ident, attr: Attribute) -> Option<SynResult<TokenStream>> {
+    if attr.path.is_ident(TRANSITIVE) {
+        Some(process_transitive_attr(name, attr))
+    } else if attr.path.is_ident(TRANSITIVE_ALL) {
+        Some(process_transitive_all_attr(name, attr))
+    } else {
+        None
     }
 }
 

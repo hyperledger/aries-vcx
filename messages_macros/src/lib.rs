@@ -8,7 +8,7 @@ use message::message_impl;
 use message_type::message_type_impl;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, Error};
-use transitive::{transitive_impl, transitive_try_from_impl};
+use transitive::{transitive_impl, transitive_from_process_attr, transitive_try_from_process_attr};
 
 #[proc_macro_derive(Message, attributes(message))]
 pub fn message(input: TokenStream) -> TokenStream {
@@ -87,13 +87,13 @@ pub fn message_type(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(TransitiveFrom, attributes(transitive, transitive_all))]
 pub fn transitive_from(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    transitive_impl(input).unwrap_or_else(Error::into_compile_error).into()
+    transitive_impl(input, transitive_from_process_attr).unwrap_or_else(Error::into_compile_error).into()
 }
 
 #[proc_macro_derive(TransitiveTryFrom, attributes(transitive, transitive_all))]
 pub fn transitive_try_from(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
-    transitive_try_from_impl(input)
+    transitive_impl(input, transitive_try_from_process_attr)
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
