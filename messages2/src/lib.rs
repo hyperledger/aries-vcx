@@ -12,4 +12,4 @@ mod delayed_serde;
 mod error;
 mod message_type;
 mod protocols;
-mod did;
+mod mime_type;

@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use url::Url;
 
+use crate::mime_type::MimeType;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Attachment {
@@ -21,23 +23,6 @@ pub struct Attachment {
     #[serde(skip_serializing_if = "Option::is_none")]
     byte_count: Option<u64>,
     data: AttachmentData,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "mime-type")]
-pub enum MimeType {
-    #[serde(rename = "application/json")]
-    Json,
-    #[serde(rename = "image/jpg")]
-    Jpg,
-    #[serde(rename = "image/jpeg")]
-    Jpeg,
-    #[serde(rename = "image/png")]
-    Png,
-    #[serde(rename = "application/pdf")]
-    Pdf,
-    #[serde(rename = "text/plain")]
-    Plain,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

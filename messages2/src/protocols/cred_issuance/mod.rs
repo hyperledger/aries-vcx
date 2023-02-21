@@ -1,5 +1,10 @@
+mod ack;
+mod issue_credential;
+mod offer_credential;
+mod propose_credential;
+mod request_credential;
+
 use derive_more::From;
-use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
@@ -7,9 +12,13 @@ use crate::{
     message_type::message_family::cred_issuance::{
         CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
     },
+    mime_type::MimeType,
 };
 
-use super::traits::ConcreteMessage;
+use self::{
+    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
+    propose_credential::ProposeCredential, request_credential::RequestCredential,
+};
 
 #[derive(Clone, Debug, From)]
 pub enum CredentialIssuance {
@@ -17,7 +26,7 @@ pub enum CredentialIssuance {
     ProposeCredential(ProposeCredential),
     RequestCredential(RequestCredential),
     IssueCredential(IssueCredential),
-    Ack(Ack),
+    Ack(AckCredential),
 }
 
 impl DelayedSerde for CredentialIssuance {
@@ -35,7 +44,7 @@ impl DelayedSerde for CredentialIssuance {
             CredentialIssuanceV1_0::ProposeCredential => ProposeCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::RequestCredential => RequestCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
+            CredentialIssuanceV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
         }
     }
 
@@ -56,22 +65,18 @@ impl DelayedSerde for CredentialIssuance {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "CredentialIssuanceV1_0::OfferCredential")]
-pub struct OfferCredential;
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CredentialPreviewData {
+    #[serde(rename = "@type")]
+    pub _type: String,
+    pub attributes: Vec<CredentialValue>,
+}
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
-pub struct ProposeCredential;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "CredentialIssuanceV1_0::RequestCredential")]
-pub struct RequestCredential;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "CredentialIssuanceV1_0::IssueCredential")]
-pub struct IssueCredential;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "CredentialIssuanceV1_0::Ack")]
-pub struct Ack;
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CredentialValue {
+    pub name: String,
+    pub value: String,
+    #[serde(rename = "mime-type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub _type: Option<MimeType>,
+}
