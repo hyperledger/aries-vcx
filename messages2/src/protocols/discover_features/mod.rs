@@ -1,6 +1,8 @@
+mod disclose;
+mod query;
+
 use derive_more::From;
-use messages_macros::Message;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -9,7 +11,7 @@ use crate::{
     },
 };
 
-use super::traits::ConcreteMessage;
+use self::{disclose::Disclose, query::Query};
 
 #[derive(Clone, Debug, From)]
 pub enum DiscoverFeatures {
@@ -46,11 +48,3 @@ impl DelayedSerde for DiscoverFeatures {
         }
     }
 }
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "DiscoverFeaturesV1_0::Query")]
-pub struct Query;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "DiscoverFeaturesV1_0::Disclose")]
-pub struct Disclose;
