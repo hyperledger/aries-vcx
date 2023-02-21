@@ -66,7 +66,7 @@ pub extern "C" fn vcx_credentialdef_publish(
             LibvcxErrorKind::InvalidCredDefHandle,
             format!("Invalid creddef handle {}", credentialdef_handle),
         )
-            .into();
+        .into();
     };
 
     let source_id = credential_def::get_source_id(credentialdef_handle).unwrap_or_default();
@@ -129,7 +129,7 @@ pub extern "C" fn vcx_credentialdef_serialize(
             LibvcxErrorKind::InvalidCredDefHandle,
             format!("Invalid creddef handle {}", credentialdef_handle),
         )
-            .into();
+        .into();
     };
 
     execute(move || {
@@ -240,7 +240,7 @@ pub extern "C" fn vcx_credentialdef_get_cred_def_id(
             LibvcxErrorKind::InvalidCredDefHandle,
             format!("Invalid creddef handle {}", cred_def_handle),
         )
-            .into();
+        .into();
     }
 
     execute(move || {
@@ -334,7 +334,7 @@ pub extern "C" fn vcx_credentialdef_update_state(
             LibvcxErrorKind::InvalidCredDefHandle,
             format!("Invalid creddef handle {}", credentialdef_handle),
         )
-            .into();
+        .into();
     }
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
@@ -401,7 +401,7 @@ pub extern "C" fn vcx_credentialdef_get_state(
             LibvcxErrorKind::InvalidCredDefHandle,
             format!("Invalid creddef handle {}", credentialdef_handle),
         )
-            .into();
+        .into();
     }
 
     execute(move || {
@@ -483,7 +483,7 @@ mod tests {
             );
             assert!(cb.receive(TimeoutUtils::some_medium()).is_err());
         })
-            .await;
+        .await;
     }
 
     #[test]

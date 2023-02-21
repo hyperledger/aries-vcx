@@ -1,7 +1,7 @@
-use napi::bindgen_prelude::Buffer;
-use napi_derive::napi;
 use libvcx_core::api_vcx::api_handle::mediated_connection;
 use libvcx_core::api_vcx::api_handle::mediated_connection::parse_status_codes;
+use napi::bindgen_prelude::Buffer;
+use napi_derive::napi;
 
 use libvcx_core::aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};

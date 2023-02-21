@@ -119,8 +119,7 @@ pub extern "C" fn vcx_create_agency_client_for_main_wallet(
             Ok(()) => {
                 info!(
                     "vcx_create_agency_client_for_main_wallet_cb >>> command_handle: {}, rc {}",
-                    command_handle,
-                    SUCCESS_ERR_CODE
+                    command_handle, SUCCESS_ERR_CODE
                 );
                 cb(command_handle, SUCCESS_ERR_CODE)
             }
@@ -182,8 +181,7 @@ pub extern "C" fn vcx_init_issuer_config(
             Ok(()) => {
                 info!(
                     "vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}",
-                    command_handle,
-                    SUCCESS_ERR_CODE
+                    command_handle, SUCCESS_ERR_CODE
                 );
                 cb(command_handle, SUCCESS_ERR_CODE)
             }
@@ -361,7 +359,7 @@ pub extern "C" fn vcx_update_webhook_url(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -404,7 +402,7 @@ pub extern "C" fn vcx_get_ledger_author_agreement(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -601,14 +599,14 @@ mod tests {
     use std::ptr;
 
     use aries_vcx::global::settings::{
-        CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT, DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY,
-        set_config_value, set_test_configs, WALLET_KDF_RAW,
+        set_config_value, set_test_configs, CONFIG_GENESIS_PATH, CONFIG_TXN_AUTHOR_AGREEMENT,
+        DEFAULT_WALLET_BACKUP_KEY, DEFAULT_WALLET_KEY, WALLET_KDF_RAW,
     };
     use aries_vcx::indy;
     #[cfg(feature = "pool_tests")]
     use aries_vcx::indy::ledger::pool::{
-        PoolConfig,
         test_utils::{create_tmp_genesis_txn_file, delete_named_test_pool, delete_test_pool},
+        PoolConfig,
     };
     use aries_vcx::indy::wallet::{import, RestoreWalletConfigs, WalletConfig};
     use aries_vcx::utils::constants::GENESIS_PATH;
@@ -623,9 +621,9 @@ mod tests {
     use libvcx_core::api_vcx::api_global::pool::get_main_pool_handle;
     use libvcx_core::api_vcx::api_global::pool::reset_main_pool_handle;
     use libvcx_core::api_vcx::api_global::settings;
-    use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, get_main_wallet_handle};
     use libvcx_core::api_vcx::api_global::wallet::test_utils::_create_main_wallet_and_its_backup;
     use libvcx_core::api_vcx::api_global::wallet::wallet_import;
+    use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, get_main_wallet_handle};
     use libvcx_core::api_vcx::api_handle::{
         credential, credential_def, disclosed_proof, issuer_credential, mediated_connection, proof, schema,
     };
@@ -666,7 +664,7 @@ mod tests {
 
                 return true; // skip_cleanup in TestSetupCreateWallet
             })
-                .await;
+            .await;
         }
     }
 

@@ -56,6 +56,7 @@ pub fn state_vcx_shutdown(delete: bool) {
 
 #[cfg(test)]
 pub mod tests {
+    use crate::api_vcx::api_global::state::state_vcx_shutdown;
     use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
     use crate::api_vcx::api_handle::credential::credential_create_with_offer;
     use crate::api_vcx::api_handle::disclosed_proof::create_with_proof_request;
@@ -67,7 +68,6 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_OFFER;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use aries_vcx::vdrtools::INVALID_WALLET_HANDLE;
-    use crate::api_vcx::api_global::state::state_vcx_shutdown;
 
     #[tokio::test]
     #[cfg(feature = "general_test")]

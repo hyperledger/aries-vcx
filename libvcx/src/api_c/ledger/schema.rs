@@ -186,7 +186,7 @@ pub extern "C" fn vcx_schema_serialize(
             LibvcxErrorKind::InvalidSchemaHandle,
             format!("Invalid schema handle {}", schema_handle),
         )
-            .into();
+        .into();
     };
 
     execute(move || {
@@ -336,7 +336,7 @@ pub extern "C" fn vcx_schema_get_schema_id(
             LibvcxErrorKind::InvalidSchemaHandle,
             format!("Invalid schema handle {}", schema_handle),
         )
-            .into();
+        .into();
     }
 
     execute(move || {
@@ -718,8 +718,8 @@ mod tests {
             "[\"name\",\"gender\"]".to_string(),
             "V4SGRU86Z58d6TV7PBUe6f".to_string(),
         )
-            .await
-            .unwrap();
+        .await
+        .unwrap();
         {
             let cb = return_types_u32::Return_U32_U32::new().unwrap();
             let _rc = vcx_schema_get_state(cb.command_handle, handle, Some(cb.get_callback()));

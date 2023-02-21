@@ -145,7 +145,7 @@ pub extern "C" fn vcx_proof_create(
             revocation_interval,
             name,
         )
-            .await
+        .await
         {
             Ok(err) => {
                 trace!(

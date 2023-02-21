@@ -242,7 +242,7 @@ pub extern "C" fn vcx_issuer_build_credential_offer_msg_v2(
             &credential_data,
             comment.as_deref(),
         )
-            .await
+        .await
         {
             Ok(offer_msg) => {
                 let offer_msg = json!(offer_msg).to_string();

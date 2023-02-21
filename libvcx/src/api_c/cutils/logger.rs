@@ -1,10 +1,10 @@
-use std::{env, ptr};
 use std::ffi::{c_void, CString};
 use std::io::Write;
+use std::{env, ptr};
 
 use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
-use env_logger::{Builder as EnvLoggerBuilder, fmt::Formatter};
+use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 use libc::c_char;
 use log::{Level, LevelFilter, Metadata, Record};
 
@@ -357,7 +357,7 @@ mod tests {
                 custom_log,
                 Some(custom_flush),
             )
-                .unwrap();
+            .unwrap();
         }
         error!("error level message"); // first call of log function
         unsafe {

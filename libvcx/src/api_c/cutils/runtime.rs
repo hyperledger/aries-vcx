@@ -48,8 +48,8 @@ fn init_runtime(_config: ThreadpoolConfig) {
 }
 
 pub fn execute<F>(closure: F)
-    where
-        F: FnOnce() -> Result<(), ()> + Send + 'static,
+where
+    F: FnOnce() -> Result<(), ()> + Send + 'static,
 {
     execute_on_tokio(async move { closure() });
 }
@@ -59,9 +59,9 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
 }
 
 fn execute_on_tokio<F>(future: F)
-    where
-        F: Future + Send + 'static,
-        F::Output: Send + 'static,
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
 {
     RT.spawn(future);
 }

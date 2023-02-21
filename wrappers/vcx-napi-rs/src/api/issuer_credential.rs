@@ -1,8 +1,8 @@
 use crate::error::to_napi_err;
-use napi_derive::napi;
 use libvcx_core::api_vcx::api_handle::issuer_credential;
 use libvcx_core::aries_vcx::messages::a2a::A2AMessage;
 use libvcx_core::serde_json::json;
+use napi_derive::napi;
 
 #[napi]
 fn issuer_credential_deserialize(credential_data: String) -> napi::Result<u32> {

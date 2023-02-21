@@ -1,5 +1,5 @@
-use napi_derive::napi;
 use libvcx_core::api_vcx::api_global::agency_client;
+use napi_derive::napi;
 
 use libvcx_core::aries_vcx::agency_client::configuration::{AgencyClientConfig, AgentProvisionConfig};
 use libvcx_core::aries_vcx::agency_client::messages::update_message::UIDsByConn;

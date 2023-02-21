@@ -1,5 +1,5 @@
-use napi_derive::napi;
 use libvcx_core::api_vcx::api_handle::out_of_band;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 

@@ -1513,7 +1513,7 @@ pub extern "C" fn vcx_connection_messages_download(
                 LibvcxErrorKind::InvalidConnectionHandle,
                 format!("Invalid connection handle {}", connection_handle),
             )
-                .into();
+            .into();
         }
     };
 

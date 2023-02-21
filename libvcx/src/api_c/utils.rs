@@ -6,8 +6,8 @@ use serde_json;
 
 use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
-use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
+use aries_vcx::agency_client::MessageStatusCode;
 use aries_vcx::utils::constants::*;
 use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;
 use libvcx_core::api_vcx::api_global::agency_client::provision_cloud_agent;
@@ -113,7 +113,7 @@ pub extern "C" fn vcx_provision_cloud_agent(
             }
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -269,7 +269,7 @@ pub extern "C" fn vcx_v2_messages_download(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -364,7 +364,7 @@ pub extern "C" fn vcx_messages_update_status(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -731,7 +731,7 @@ pub extern "C" fn vcx_unpack(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -772,7 +772,7 @@ pub extern "C" fn vcx_create_pairwise_info(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -836,7 +836,7 @@ pub extern "C" fn vcx_create_service(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE
@@ -879,7 +879,7 @@ pub extern "C" fn vcx_get_service_from_ledger(
 
             Ok(())
         }
-            .boxed(),
+        .boxed(),
     );
 
     SUCCESS_ERR_CODE

@@ -13,14 +13,16 @@ use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_c::cutils::runtime::execute_async;
-use libvcx_core::api_vcx::api_global::wallet::{close_main_wallet, create_main_wallet, open_as_main_wallet, set_main_wallet_handle};
+use crate::error::SUCCESS_ERR_CODE;
+use libvcx_core::api_vcx::api_global::wallet::{
+    close_main_wallet, create_main_wallet, open_as_main_wallet, set_main_wallet_handle,
+};
 use libvcx_core::api_vcx::api_global::wallet::{
     export_main_wallet, wallet_add_wallet_record, wallet_add_wallet_record_tags, wallet_close_search_wallet,
     wallet_configure_issuer, wallet_delete_wallet_record, wallet_delete_wallet_record_tags,
     wallet_fetch_next_records_wallet, wallet_get_wallet_record, wallet_import, wallet_open_search_wallet,
     wallet_update_wallet_record_tags, wallet_update_wallet_record_value,
 };
-use crate::error::SUCCESS_ERR_CODE;
 
 /// Creates new wallet and master secret using provided config. Keeps wallet closed.
 ///

@@ -1,8 +1,8 @@
-use napi_derive::napi;
 use libvcx_core::aries_vcx::messages::protocols::out_of_band::handshake_reuse::OutOfBandHandshakeReuse;
 use libvcx_core::aries_vcx::protocols::oob::build_handshake_reuse_accepted_msg;
 use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 use libvcx_core::serde_json;
+use napi_derive::napi;
 
 use crate::error::to_napi_err;
 

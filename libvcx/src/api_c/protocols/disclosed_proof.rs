@@ -454,9 +454,7 @@ pub extern "C" fn vcx_disclosed_proof_get_requests(
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_disclosed_proof_get_requests_cb(command_handle: {}, rc: {}, msg: {})",
-                    command_handle,
-                    SUCCESS_ERR_CODE,
-                    err
+                    command_handle, SUCCESS_ERR_CODE, err
                 );
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -563,10 +561,7 @@ pub extern "C" fn vcx_disclosed_proof_get_proof_request_attachment(
                 set_current_error_vcx(&err);
                 error!(
                     "vcx_disclosed_proof_get_attachment_cb(command_handle: {}, rc: {}, attachment: {}) source_id: {}",
-                    command_handle,
-                    SUCCESS_ERR_CODE,
-                    err,
-                    source_id
+                    command_handle, SUCCESS_ERR_CODE, err, source_id
                 );
                 cb(command_handle, err.into(), ptr::null_mut());
             }
@@ -1027,7 +1022,7 @@ pub extern "C" fn vcx_disclosed_proof_decline_presentation_request(
             reason.as_deref(),
             proposal.as_deref(),
         )
-            .await
+        .await
         {
             Ok(()) => {
                 trace!(
