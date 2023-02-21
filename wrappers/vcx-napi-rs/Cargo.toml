@@ -11,11 +11,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 doctest = false
 
-[features]
-test_utils = [ "libvcx/test_utils" ]
-
 [dependencies]
-libvcx = { path = "../../libvcx", default-features = false }
+libvcx_core = { path = "../../libvcx_core"  }
 log = "0.4.16"
 napi = { version = "2.10.14", default-features = false, features = [ "async" ] }
 napi-derive = { version = "2.10.1" }

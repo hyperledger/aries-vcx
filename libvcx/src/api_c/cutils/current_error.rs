@@ -5,8 +5,9 @@ use std::ptr;
 
 use libc::c_char;
 
+use libvcx_core::errors::error::LibvcxError;
+
 use crate::api_c::cutils::cstring::CStringUtils;
-use crate::errors::error::LibvcxError;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);
@@ -28,7 +29,7 @@ pub fn set_current_error_vcx(err: &LibvcxError) {
                 // TODO: Put back once https://github.com/rust-lang/rust/issues/99301 is stabilized
                 // "backtrace": err.backtrace()
             })
-            .to_string();
+                .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));
         })
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err))
@@ -41,7 +42,7 @@ pub fn set_current_error(err: &dyn Error) {
             let error_json = json!({
                 "message": err.to_string()
             })
-            .to_string();
+                .to_string();
             error.replace(Some(CStringUtils::string_to_cstring(error_json)));
         })
         .map_err(|err| error!("Thread local variable access failed with: {:?}", err))

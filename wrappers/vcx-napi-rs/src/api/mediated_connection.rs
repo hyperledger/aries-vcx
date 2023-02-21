@@ -1,11 +1,11 @@
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
-use vcx::api_vcx::api_handle::mediated_connection;
-use vcx::api_vcx::api_handle::mediated_connection::parse_status_codes;
+use libvcx_core::api_vcx::api_handle::mediated_connection;
+use libvcx_core::api_vcx::api_handle::mediated_connection::parse_status_codes;
 
-use vcx::aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
-use vcx::errors::error::{LibvcxError, LibvcxErrorKind};
-use vcx::serde_json;
+use libvcx_core::aries_vcx::protocols::mediated_connection::pairwise_info::PairwiseInfo;
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
+use libvcx_core::serde_json;
 
 use crate::error::to_napi_err;
 

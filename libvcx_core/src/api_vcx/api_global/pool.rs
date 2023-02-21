@@ -41,7 +41,7 @@ pub fn reset_main_pool_handle() {
 
 pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
     if is_main_pool_open() {
-        error!("vcx_open_main_pool :: Pool connection is already open.");
+        error!("open_main_pool >> Pool connection is already open.");
         return Err(LibvcxError::from_msg(
             LibvcxErrorKind::AlreadyInitialized,
             "Pool connection is already open.",
@@ -50,7 +50,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
 
     let pool_name = config.pool_name.clone().unwrap_or(DEFAULT_POOL_NAME.to_string());
     trace!(
-        "open_pool >>> pool_name: {}, path: {}, pool_config: {:?}",
+        "open_pool >> pool_name: {}, path: {}, pool_config: {:?}",
         pool_name,
         config.genesis_path,
         config.pool_config
@@ -59,7 +59,7 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
     create_pool_ledger_config(&pool_name, &config.genesis_path)
         .map_err(|err| err.extend("Can not create Pool Ledger Config"))?;
 
-    debug!("open_pool ::: Pool Config Created Successfully");
+    debug!("open_pool >> Pool Config Created Successfully");
 
     let handle = open_pool_ledger(&pool_name, Some(config.clone()))
         .await
@@ -67,20 +67,19 @@ pub async fn open_main_pool(config: &PoolConfig) -> LibvcxResult<()> {
 
     set_main_pool_handle(Some(handle));
 
-    info!("open_pool ::: Pool Opened Successfully");
+    info!("open_pool >> Pool Opened Successfully");
 
     Ok(())
 }
 
 pub async fn close_main_pool() -> LibvcxResult<()> {
-    info!("close_main_pool ::: Closing main pool");
+    info!("close_main_pool >> Closing main pool");
     close(get_main_pool_handle()?).await?;
     Ok(())
 }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api_c::vcx::vcx_open_main_pool;
     use crate::api_vcx::api_global::pool::{get_main_pool_handle, open_main_pool, reset_main_pool_handle};
     use crate::errors::error::LibvcxErrorKind;
     use aries_vcx::global::settings::{set_config_value, CONFIG_GENESIS_PATH};
@@ -123,7 +122,6 @@ pub mod tests {
             pool_name: Some(pool_name.clone()),
             pool_config: None,
         };
-        // let err = _vcx_open_main_pool_c_closure(&json!(pool_config).to_string()).unwrap_err();
         assert_eq!(
             open_main_pool(&pool_config).await.unwrap_err().kind(),
             LibvcxErrorKind::PoolLedgerConnect

@@ -95,7 +95,6 @@ pub fn ledger_set_txn_author_agreement(
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api_c::vcx::{vcx_get_ledger_author_agreement, vcx_set_active_txn_author_agreement_meta};
     use crate::api_vcx::api_global::ledger::{ledger_get_txn_author_agreement, ledger_set_txn_author_agreement};
     use crate::api_vcx::api_global::settings::get_config_value;
     use aries_vcx::global::settings::{set_test_configs, CONFIG_TXN_AUTHOR_AGREEMENT};

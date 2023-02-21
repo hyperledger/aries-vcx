@@ -1,9 +1,11 @@
 use libc::c_char;
 
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
+
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::set_current_error_vcx;
 use crate::api_c::cutils::logger::{CVoid, EnabledCB, FlushCB, LibvcxDefaultLogger, LibvcxLogger, LogCB, LOGGER_STATE};
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, SUCCESS_ERR_CODE};
+use crate::error::SUCCESS_ERR_CODE;
 
 /// Set default logger implementation.
 ///

@@ -11,12 +11,11 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![deny(clippy::unwrap_used)]
 #![cfg_attr(feature = "fatal_warnings", deny(warnings))]
-#![crate_name = "vcx"]
+// todo: is this recursion_limit still needed and justified?
 //this is needed for some large json macro invocations
 #![recursion_limit = "128"]
 #[macro_use]
 pub extern crate aries_vcx;
-extern crate libvcx_core;
 
 extern crate num_traits;
 
@@ -33,7 +32,6 @@ extern crate serde_derive;
 pub extern crate serde_json;
 
 #[macro_use]
-extern crate cfg_if;
+pub mod api_vcx;
 
-pub mod api_c;
-mod error;
+pub mod errors;

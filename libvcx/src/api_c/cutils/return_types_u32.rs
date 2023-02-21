@@ -9,10 +9,11 @@ use std::time::Duration;
 
 use libc::c_char;
 
-use crate::errors::error;
-use crate::errors::mapping_ffi_tests::map_indy_error;
 use aries_vcx::indy::utils::next_command_handle;
 use aries_vcx::vdrtools::CommandHandle;
+use libvcx_core::errors;
+use libvcx_core::errors::error::TIMEOUT_LIBINDY_ERROR;
+use libvcx_core::errors::mapping_ffi_tests::map_indy_error;
 
 use crate::api_c::cutils::callback::POISON_MSG;
 use crate::api_c::cutils::callback_u32 as callback;
@@ -39,11 +40,11 @@ pub fn receive<T>(receiver: &Receiver<T>, timeout: Option<Duration>) -> Result<T
         Err(e) => match e {
             RecvTimeoutError::Timeout => {
                 warn!("Timed out waiting for callback");
-                Err(error::TIMEOUT_LIBINDY_ERROR)
+                Err(TIMEOUT_LIBINDY_ERROR)
             }
             RecvTimeoutError::Disconnected => {
                 warn!("Channel to libindy was disconnected unexpectedly");
-                Err(error::TIMEOUT_LIBINDY_ERROR)
+                Err(TIMEOUT_LIBINDY_ERROR)
             }
         },
     }

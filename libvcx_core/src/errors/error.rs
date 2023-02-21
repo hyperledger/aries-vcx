@@ -1,7 +1,6 @@
 use std::error::Error;
 use std::fmt;
 
-pub static SUCCESS_ERR_CODE: u32 = 0;
 pub static TIMEOUT_LIBINDY_ERROR: u32 = 5555;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, thiserror::Error)]

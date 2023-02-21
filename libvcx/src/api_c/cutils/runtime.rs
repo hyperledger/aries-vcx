@@ -1,12 +1,13 @@
 extern crate futures;
 
-use once_cell::sync::Lazy;
 use std::future::Future;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 use futures::future::BoxFuture;
+use once_cell::sync::Lazy;
 use tokio::runtime::Runtime;
+
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
 
 static RT: Lazy<Runtime> = Lazy::new(|| {
     match tokio::runtime::Builder::new_multi_thread()
@@ -47,8 +48,8 @@ fn init_runtime(_config: ThreadpoolConfig) {
 }
 
 pub fn execute<F>(closure: F)
-where
-    F: FnOnce() -> Result<(), ()> + Send + 'static,
+    where
+        F: FnOnce() -> Result<(), ()> + Send + 'static,
 {
     execute_on_tokio(async move { closure() });
 }
@@ -58,9 +59,9 @@ pub fn execute_async<F>(future: BoxFuture<'static, Result<(), ()>>) {
 }
 
 fn execute_on_tokio<F>(future: F)
-where
-    F: Future + Send + 'static,
-    F::Output: Send + 'static,
+    where
+        F: Future + Send + 'static,
+        F::Output: Send + 'static,
 {
     RT.spawn(future);
 }

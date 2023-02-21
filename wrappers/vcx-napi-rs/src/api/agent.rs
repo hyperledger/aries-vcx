@@ -1,6 +1,6 @@
 use crate::error::to_napi_err;
 use napi_derive::napi;
-use vcx::api_vcx::api_handle::mediated_connection;
+use libvcx_core::api_vcx::api_handle::mediated_connection;
 
 #[napi]
 pub fn generate_public_invitation(public_did: String, label: String) -> napi::Result<String> {

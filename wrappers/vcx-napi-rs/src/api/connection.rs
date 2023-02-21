@@ -1,11 +1,11 @@
 use napi::Error;
 use napi_derive::napi;
 
-use vcx::api_vcx::api_handle::connection;
-use vcx::aries_vcx::messages::protocols::basic_message::message::BasicMessage;
-use vcx::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
-use vcx::errors::error::{LibvcxError, LibvcxErrorKind};
-use vcx::serde_json;
+use libvcx_core::api_vcx::api_handle::connection;
+use libvcx_core::aries_vcx::messages::protocols::basic_message::message::BasicMessage;
+use libvcx_core::aries_vcx::protocols::connection::pairwise_info::PairwiseInfo;
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
+use libvcx_core::serde_json;
 
 use crate::error::to_napi_err;
 
