@@ -487,6 +487,7 @@ pub mod tests {
     };
 
     use crate::api_vcx::api_handle::mediated_connection;
+    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_invited;
     use crate::api_vcx::VcxStateType;
 
     use super::*;
@@ -717,7 +718,7 @@ pub mod tests {
     async fn test_send_generic_message_fails_with_invalid_connection() {
         let _setup = SetupMocks::init();
 
-        let handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
+        let handle = build_test_connection_inviter_invited().await;
 
         let err = send_generic_message(handle, "this is the message").await.unwrap_err();
         assert_eq!(err.kind(), LibvcxErrorKind::NotReady);

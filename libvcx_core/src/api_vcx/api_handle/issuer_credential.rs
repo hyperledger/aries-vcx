@@ -283,7 +283,7 @@ pub mod tests {
 
     use crate::api_vcx::api_handle::credential_def::tests::create_and_publish_nonrevocable_creddef;
     use crate::api_vcx::api_handle::issuer_credential;
-    use crate::api_vcx::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
+    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
     use crate::errors::error;
 

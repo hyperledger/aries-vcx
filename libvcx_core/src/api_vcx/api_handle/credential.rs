@@ -352,10 +352,14 @@ pub mod tests {
         ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_OFFER_JSON_FORMAT, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
 
+    use crate::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use crate::api_vcx::api_handle::credential::{
         credential_create_with_offer, get_attributes, get_credential, send_credential_request,
     };
     use crate::api_vcx::api_handle::mediated_connection;
+    use crate::api_vcx::api_handle::mediated_connection::test_utils::{
+        build_test_connection_invitee_completed, build_test_connection_inviter_requested,
+    };
     use crate::aries_vcx::messages::protocols::issuance::credential::Credential;
 
     use super::*;
@@ -431,7 +435,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         info!("full_credential_test:: going to build_test_connection");
-        let handle_conn = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         info!("full_credential_test:: going to _get_offer");
         let offer = _get_offer(handle_conn).await;
@@ -499,7 +503,7 @@ pub mod tests {
     async fn test_get_credential_offer() {
         let _setup = SetupMocks::init();
 
-        let connection_h = mediated_connection::tests::build_test_connection_invitee_completed();
+        let connection_h = build_test_connection_invitee_completed();
 
         let offer = get_credential_offer_messages_with_conn_handle(connection_h)
             .await

@@ -197,7 +197,7 @@ pub mod test_utils {
             .unwrap()
     }
 
-    fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
+    pub fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
         let schema: Schema = Schema::from_string_versioned(schema_json).unwrap();
         assert_eq!(schema.schema_id, schema_id.to_string());
         assert_eq!(schema.data.clone().sort(), vec!(data).sort());
@@ -233,7 +233,7 @@ pub mod tests {
     use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::api_handle::schema;
-    use crate::api_vcx::api_handle::schema::test_utils::{create_schema_real, prepare_schema_data};
+    use crate::api_vcx::api_handle::schema::test_utils::{check_schema, create_schema_real, prepare_schema_data};
     #[cfg(feature = "pool_tests")]
     use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 

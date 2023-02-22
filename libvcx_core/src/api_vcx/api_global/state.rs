@@ -75,7 +75,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
-        let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
+        let connection = mediated_connection::test_utils::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create("SID".to_string(), "id".to_string(), "tag".to_string(), false)
             .await
             .unwrap();
