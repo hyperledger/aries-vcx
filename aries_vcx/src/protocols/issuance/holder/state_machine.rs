@@ -93,7 +93,7 @@ impl HolderSM {
 
     pub fn from_offer(offer: CredentialOffer, source_id: String) -> Self {
         HolderSM {
-            thread_id: offer.id.0.clone(),
+            thread_id: offer.get_thread_id(),
             state: HolderFullState::OfferReceived(OfferReceivedState::new(offer)),
             source_id,
         }
