@@ -82,8 +82,8 @@ pub struct CredentialPreview {
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
 #[serde(into = "MessageType", try_from = "MessageType")]
-#[transitive(into(all(CredentialIssuanceV1_0, CredentialIssuanceV1, MessageFamily, MessageType)))]
 #[transitive(try_from(MessageFamily, CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0))]
+#[transitive(into(CredentialIssuanceV1_0, MessageType))]
 struct CredentialPreviewMsgType;
 
 impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0 {

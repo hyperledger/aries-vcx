@@ -5,7 +5,7 @@ mod response;
 
 use derive_more::From;
 use diddoc::aries::diddoc::AriesDidDoc;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -37,7 +37,10 @@ impl DelayedSerde for Connection {
             ConnectionV1_0::Request => Request::deserialize(deserializer).map(From::from),
             ConnectionV1_0::Response => Response::deserialize(deserializer).map(From::from),
             ConnectionV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::Ed25519Sha512Single => ProblemReport::deserialize(deserializer).map(From::from),
+            ConnectionV1_0::Ed25519Sha512Single => Err(D::Error::custom(concat!(
+                stringify!(ConnectionV1_0::Ed25519Sha512Single),
+                " is not a standalone message"
+            ))),
         }
     }
 
