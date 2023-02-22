@@ -9,9 +9,9 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
     delayed_serde::DelayedSerde,
-    message_type::message_family::cred_issuance::{
+    message_type::{message_family::cred_issuance::{
         CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
-    },
+    }, MessageType},
     mime_type::MimeType,
 };
 
@@ -68,15 +68,15 @@ impl DelayedSerde for CredentialIssuance {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CredentialPreviewData {
     #[serde(rename = "@type")]
-    pub _type: String,
+    pub msg_type: MessageType, // FIX: need to accommodate this
     pub attributes: Vec<CredentialValue>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
 pub struct CredentialValue {
     pub name: String,
     pub value: String,
-    #[serde(rename = "mime-type")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub _type: Option<MimeType>,
+    pub mime_type: Option<MimeType>,
 }

@@ -45,7 +45,7 @@ pub struct SignedResponse {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConnectionSignature {
     #[serde(rename = "@type")]
-    pub msg_type: MessageType, // FIX: We need to provide a different message type here
+    pub msg_type: MessageType, // FIX: Need to accommodate this
     pub signature: String,
     pub sig_data: String,
     pub signer: String,
