@@ -13,3 +13,4 @@ mod error;
 mod message_type;
 mod protocols;
 mod mime_type;
+mod utils;

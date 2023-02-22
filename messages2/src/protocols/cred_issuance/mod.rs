@@ -5,7 +5,7 @@ mod propose_credential;
 mod request_credential;
 
 use derive_more::From;
-use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
@@ -17,6 +17,7 @@ use crate::{
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
+    utils,
 };
 
 use self::{
@@ -49,10 +50,7 @@ impl DelayedSerde for CredentialIssuance {
             CredentialIssuanceV1_0::RequestCredential => RequestCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::CredentialPreview => Err(D::Error::custom(concat!(
-                stringify!(CredentialIssuanceV1_0::CredentialPreview),
-                " is not a standalone message"
-            ))),
+            CredentialIssuanceV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }
 

@@ -47,11 +47,3 @@ impl MsgTypeError {
         Self::PartNotFound(part)
     }
 }
-
-#[derive(Debug, ThisError)]
-pub enum DidError {
-    #[error("Missing DID component {0}")]
-    MissingComponent(&'static str),
-    #[error("Invalid DID prefix")]
-    InvalidPrefix
-}
