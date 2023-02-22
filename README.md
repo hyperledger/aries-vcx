@@ -18,7 +18,7 @@ Additionally, `aries-vcx` is built on top of smaller Rust crates which are part 
 - [`diddoc`](diddoc) - crate to work with DIDDocs
 
 ## If you are mobile 📱 developer
-Aries-vcx can be used to build native mobile applications. There's 2 approaches:
+Aries-vcx can be used to build native mobile applications. There are 2 approaches:
 - **deprecated**: [`libvcx`](./libvcx) and its Java and Objective-C wrappers is complete, but deprecated
 - **encouraged**, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach 
   to enable `aries-vcx` on mobile, providing Swift and Kotlin wrappers. However, this is yet in POC stage 
@@ -33,7 +33,7 @@ Read more about `libvcx` deprecation and `unifii` benefits [here](https://github
 - We welcome new contributors! Connect with us via the channels above and take a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Versioning & releases
-- We are currently not strictly following semantic versioning and all releases are `0.x.x`. 
+- All releases have currently major version `0` 
   - We bump minor version on releases containing new features, significant refactors or breaking changes. 
   - We bump patch version if release only contains fixes or smaller refactoring. 
 - See more info on [releases](./docs/RELEASES.md)
