@@ -1,6 +1,6 @@
 
 ## CI artifacts
-Following artifacts are build with every CI run and release:
+The following artifacts are built on every CI run and every release:
 
 ### Github Actions artifacts
 - *(these are to be found at bottom of Summary page for each CI run)*
@@ -8,7 +8,7 @@ Following artifacts are build with every CI run and release:
 - ios and java wrapper built on top of `libvcx`
 
 ### Images in Github Container Registry
-- Alpine based Docker image with prebuilt `libvcx`; [ghcr.io/hyperledger/aries-vcx/libvcx:version](https://github.com/orgs/hyperledger/packages?repo_name=aries-vcx)
+- Alpine-based Docker image with prebuilt `libvcx`; [ghcr.io/hyperledger/aries-vcx/libvcx:version](https://github.com/orgs/hyperledger/packages?repo_name=aries-vcx)
 
 ### Packages on npmjs
 - NodeJS wrapper - bindings for libvcx; [node-vcx-wrapper](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper)

@@ -5,35 +5,34 @@ opinionated and simply provide building blocks for whatever you want to build.
 You can use `aries-vcx` to build both end-user products (mobile wallets in role of credential 
 holder and prover) or server (typically in role of issuer, verifier). 
 
-`aries-vcx` provides support to:
+Generally, the crate allows you to:
 - create encrypted wallet, 
 - read/write from/to Indy ledger,
 - establish didcomm connections and exchange messages,
 - create and process Aries messages to drive Aries protocols.
 
 ## `aries-vcx` components
-If you don't want to use `aries-vcx` directly, you might still find useful smaller components it's
-built upon:
+Additionally, the following crates may be consumed independently of `aries-vcx`:
 - [messages](../messages) - crate for building and parsing Aries messages
 - [diddoc](../diddoc) - crate to work with DIDDocs
 
 ### Deprecation notice: Message mediation
-Aries-vcx contains built in support for message mediation which is useful for mobile use-cases. However,
+Aries-vcx contains built-in support for message mediation which is useful for mobile use cases. However,
 this feature (implemented via `MediatedConnection`) is now deprecated as it's tied to mediator 
 implementation [vcxagency-node](https://github.com/AbsaOSS/vcxagencynode) which does not implement
-Aries pick-up protocol.
+Aries [pick-up protocol](https://github.com/hyperledger/aries-rfcs/tree/main/features/0685-pickup-v2).
 
 # Getting started
-To start aries-vcx in your project, you need to add github dependency to your `Cargo.toml`:
+To use `aries-vcx` in your project, you need to add github dependency to your `Cargo.toml`:
 ```toml
 aries-vcx = { path = "https://github.com/hyperledger/aries-vcx" }
 ```
-It's advise to follow through [tutorial](TUTORIAL.md) to check your environment is properly configured.
+It's also advisable to follow these [instructions](TUTORIAL.md) to check your environment is properly configured.
 
 # Projects built with aries-vcx
 - [aries-vcx-agent](../agents/rust/aries-vcx-agent) - sample agent with local persistence. Used for cross-compatibility testing with other aries implementations. 
 - [unifii_aries_vcx](../uniffi_aries_vcx) - wrapper around `aries-vcx` to generate Swift and Kotlin wrappers for mobile use-cases
-- [libcx](../libvcx) (**deprecated**) - wrapper around `aries-vcx` to build Java, ObjectiveC, NodeJS wrappers. 
+- [libcx](../libvcx) (**deprecated**) - wrapper around `aries-vcx` to build Java, Objective-C, NodeJS wrappers. 
 
 ## Implemented Aries protocols
 * ✅ Connection Protocol 1.0: [`https://didcomm.org/connections/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol)

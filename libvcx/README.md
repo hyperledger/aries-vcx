@@ -1,10 +1,10 @@
 # Deprecation notice
 This is now deprecated and receives limited maintenance support. 
 
-This project provided solution to create bindings and wrappers for other languages, 
-primarily Java, iOS. However, this was started many years ago (circa 2018) and better approaches
-to FFI has emerged since then. One of apparent leaders is `uniffi` developed by Firefox which
-handles lots of complexity which had to be done manually in this project.
+This project used to provide C-API for creating bindings for languages other than Rust, primarily 
+Java, iOS. However, this was started many years ago (circa 2018) and better approaches
+to FFI has emerged since then. One of apparent leaders is `uniffi` developed by Mozilla which
+handles lots of complexity which used to have to be done manually in this project.
 
 We encourage new developers to adopt this technology in favor of libvcx - we currently have new 
 wrapper for `aries-vcx` in POC stage [uniffi_aries_vcx](../uniffi_aries_vcx), therefore you 
@@ -19,12 +19,9 @@ long-term future.
 ### `api_vcx` module
 Layer on top of `aries-vcx` which provides `u32` "handle" reference API. When you
 create a new object, this layer gives you back `u32` reference to that object, which is how you
-work with it. 
+work with it. This is shared layer for legacy approach of building wrappers.
 
-This was historically feasibly approach for building FFI interfaces - was used to build 
-Objective C and Java libvcx wrappers (deprecated), as well as libvcx NodeJS wrapper.
-
-### DEPRECATED:`api_c` module & ObjectiveC / Java wrappers
+### DEPRECATED:`api_c` module & Objective-C / Java wrappers
 Built on top of `api_vcx`, provides runtime executor (tokio) and FFI interface. Libvcx based Java and 
 iOS wrapper are linked to this interface.
 If you wish to use iOS or Android wrapper, you may find it useful to have look at this 3rd party demos

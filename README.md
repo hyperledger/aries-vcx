@@ -18,10 +18,9 @@ Additionally, Aries-vcx implementation is built on top of smaller Rust crates:
 - [`diddoc`](diddoc) - crate to work with DIDDocs
 
 ## If you are mobile 📱 developer
-Aries-vcx is well positioned for native Rust applications, however we are currently transitioning 
-the recommended approach:
-- deprecated, but battle-tested: [`libvcx`](./libvcx) and its Java and ObjectiveC wrappers is battle-tested but now deprecated approach.
-- encouraged, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach to enable `aries-vcx` on mobile, providing Swift
+Aries-vcx is well positioned for native mobile applications. There's to approaches one can take:
+- **deprecated**: [`libvcx`](./libvcx) and its Java and Objective-C wrappers is complete but deprecated. It is not actively maintained and will be removed in the future.
+- **encouraged**, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach to enable `aries-vcx` on mobile, providing Swift
 and Kotlin wrappers. However, this is yet in POC stage and new adopters `aries-vcx` for mobile
 are highly encourage to contribute to its development.
 
@@ -34,8 +33,8 @@ Read more about `libvcx` deprecation and `unifii` benefits [here](https://github
 - We welcome new contributors! Connect with us via the channels above and take a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Versioning & releases
-- We are currently not following semantic versioning. Version are releasing `0.x.x` versions. 
+- We are currently not strictly following semantic versioning and all releases are `0.x.x`. 
 - We bump minor version for releases with new features, significant refactors, breaking changes. 
-We bump patch version if release only contain fixes or smaller refactoring. 
+We bump patch version if release only contains fixes or smaller refactoring. 
 - See more info on [releases](https://github.com/orgs/hyperledger/projects/14)
 - See [releases](https://github.com/hyperledger/aries-vcx/releases) page.

@@ -1,12 +1,12 @@
 
 # Run
 ### Stage 1 - unit tests
-- First we need to get unit tests working on your machine. These don't require any external services to run.
+- First we need to get unit tests passing on your machine. These don't require any external services to run.
 ```
 cargo test --features "general_test" -- --test-threads=1
 ```
-If you run into an errors
-- On OSX, try to install following packages with:
+If you run into errors
+- On OSX, you need to install zmq and pkg-config
   ```sh
   brew install zmq
   brew install pkg-config
