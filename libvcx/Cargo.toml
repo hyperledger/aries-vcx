@@ -12,7 +12,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 doctest = false
 
 [features]
-test_utils = [ "aries-vcx/test_utils" ]
+test_utils = [ "aries-vcx/test_utils", "libvcx_core/test_utils" ]
 pool_tests = [ "test_utils" ]
 general_test = [ "test_utils" ]
 fatal_warnings = []

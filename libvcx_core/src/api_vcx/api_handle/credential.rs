@@ -338,6 +338,11 @@ pub async fn decline_offer(handle: u32, connection_handle: u32, comment: Option<
     HANDLE_MAP.insert(handle, credential)
 }
 
+#[cfg(feature = "test_utils")]
+pub mod tests_utils {
+    pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
+}
+
 #[cfg(test)]
 pub mod tests {
     use aries_vcx::protocols::issuance::holder::state_machine::HolderState;
@@ -354,8 +359,6 @@ pub mod tests {
     use crate::aries_vcx::messages::protocols::issuance::credential::Credential;
 
     use super::*;
-
-    pub const BAD_CREDENTIAL_OFFER: &str = r#"{"version": "0.1","to_did": "LtMgSjtFcyPwenK9SHCyb8","from_did": "LtMgSjtFcyPwenK9SHCyb8","claim": {"account_num": ["8BEaoLf8TBmK4BUyX8WWnA"],"name_on_account": ["Alice"]},"schema_seq_no": 48,"issuer_did": "Pd4fnFtRBcMKRVC2go5w3j","claim_name": "Account Certificate","claim_id": "3675417066","msg_ref_id": "ymy5nth"}"#;
 
     async fn _get_offer(handle: u32) -> String {
         let offers = get_credential_offer_messages_with_conn_handle(handle).await.unwrap();

@@ -433,6 +433,44 @@ pub async fn download_messages(
     Ok(res)
 }
 
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
+    use serde_json::Value;
+
+    use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
+        ARIES_CONNECTION_ACK, ARIES_CONNECTION_INVITATION, ARIES_CONNECTION_REQUEST, CONNECTION_SM_INVITEE_COMPLETED,
+    };
+
+    use super::*;
+
+    pub async fn mock_connection() -> u32 {
+        build_test_connection_inviter_requested().await
+    }
+
+    pub async fn build_test_connection_inviter_null() -> u32 {
+        let handle = create_connection("faber_to_alice").await.unwrap();
+        handle
+    }
+
+    pub async fn build_test_connection_inviter_invited() -> u32 {
+        let handle = create_connection("faber_to_alice").await.unwrap();
+        connect(handle).await.unwrap();
+        handle
+    }
+
+    pub fn build_test_connection_invitee_completed() -> u32 {
+        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
+    }
+
+    pub async fn build_test_connection_inviter_requested() -> u32 {
+        let handle = build_test_connection_inviter_invited().await;
+        update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
+            .await
+            .unwrap();
+        handle
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use serde_json::Value;
@@ -452,10 +490,6 @@ pub mod tests {
     use crate::api_vcx::VcxStateType;
 
     use super::*;
-
-    pub async fn mock_connection() -> u32 {
-        build_test_connection_inviter_requested().await
-    }
 
     fn _setup() {
         let _setup = SetupEmpty::init();
@@ -526,29 +560,6 @@ pub mod tests {
 
         mediated_connection::release(connection_handle).unwrap();
         assert!(!mediated_connection::is_valid_handle(connection_handle));
-    }
-
-    pub async fn build_test_connection_inviter_null() -> u32 {
-        let handle = create_connection("faber_to_alice").await.unwrap();
-        handle
-    }
-
-    pub async fn build_test_connection_inviter_invited() -> u32 {
-        let handle = create_connection("faber_to_alice").await.unwrap();
-        connect(handle).await.unwrap();
-        handle
-    }
-
-    pub fn build_test_connection_invitee_completed() -> u32 {
-        from_string(CONNECTION_SM_INVITEE_COMPLETED).unwrap()
-    }
-
-    pub async fn build_test_connection_inviter_requested() -> u32 {
-        let handle = build_test_connection_inviter_invited().await;
-        update_state_with_message(handle, ARIES_CONNECTION_REQUEST)
-            .await
-            .unwrap();
-        handle
     }
 
     #[tokio::test]

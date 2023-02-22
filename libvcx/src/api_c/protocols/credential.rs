@@ -1202,8 +1202,11 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::{
         ARIES_CREDENTIAL_OFFER, ARIES_CREDENTIAL_RESPONSE, CREDENTIAL_SM_FINISHED,
     };
-    use libvcx_core::api_vcx::api_handle::credential::tests::BAD_CREDENTIAL_OFFER;
+    use libvcx_core::api_vcx::api_handle::credential::tests_utils::BAD_CREDENTIAL_OFFER;
     use libvcx_core::api_vcx::api_handle::mediated_connection;
+    use libvcx_core::api_vcx::api_handle::mediated_connection::test_utils::{
+        build_test_connection_invitee_completed, build_test_connection_inviter_requested,
+    };
     use libvcx_core::errors;
 
     use crate::api_c::cutils::return_types_u32;
@@ -1281,7 +1284,7 @@ mod tests {
     async fn test_vcx_credential_get_new_offers() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = mediated_connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
@@ -1296,7 +1299,7 @@ mod tests {
     async fn test_vcx_credential_create() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = mediated_connection::tests::build_test_connection_invitee_completed();
+        let handle_conn = build_test_connection_invitee_completed();
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(
@@ -1335,7 +1338,7 @@ mod tests {
     async fn test_vcx_credential_update_state() {
         let _setup = SetupMocks::init();
 
-        let handle_conn = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         let handle_cred = _vcx_credential_create_with_offer_c_closure(ARIES_CREDENTIAL_OFFER).unwrap();
         assert_eq!(

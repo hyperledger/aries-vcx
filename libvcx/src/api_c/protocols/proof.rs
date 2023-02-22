@@ -801,10 +801,9 @@ mod tests {
     use aries_vcx::utils::devsetup::*;
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
-    use libvcx_core::api_vcx::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
+    use libvcx_core::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use libvcx_core::api_vcx::api_handle::proof;
     use libvcx_core::errors;
-    use libvcx_core::ProofStateType;
 
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;

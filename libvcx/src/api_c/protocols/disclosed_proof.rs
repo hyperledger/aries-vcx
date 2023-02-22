@@ -1144,6 +1144,7 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_credex::ARIES_CREDENTIAL_REQUEST;
     use aries_vcx::utils::mockdata::mockdata_proof::ARIES_PROOF_REQUEST_PRESENTATION;
     use libvcx_core::api_vcx::api_handle::mediated_connection;
+    use libvcx_core::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use libvcx_core::errors;
 
     use crate::api_c::cutils::return_types_u32;
@@ -1191,7 +1192,7 @@ mod tests {
     async fn test_create_with_msgid() {
         let _setup = SetupMocks::init();
 
-        let cxn = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let cxn = build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_U32_STR::new().unwrap();
         assert_eq!(
@@ -1278,7 +1279,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let handle_conn = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let handle_conn = build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
@@ -1299,7 +1300,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32::new().unwrap();
         assert_eq!(
@@ -1322,7 +1323,7 @@ mod tests {
             ProverState::PresentationRequestReceived as u32
         );
 
-        let _connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let _connection_handle = build_test_connection_inviter_requested().await;
 
         let cb = return_types_u32::Return_U32_STR::new().unwrap();
         assert_eq!(
@@ -1337,7 +1338,7 @@ mod tests {
     async fn test_vcx_proof_get_requests() {
         let _setup = SetupMocks::init();
 
-        let cxn = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let cxn = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_CREDENTIAL_REQUEST);

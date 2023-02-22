@@ -1594,12 +1594,12 @@ mod tests {
     use aries_vcx::utils::mockdata::mockdata_mediated_connection::{
         ARIES_CONNECTION_ACK, ARIES_CONNECTION_REQUEST, DEFAULT_SERIALIZED_CONNECTION,
     };
-    use libvcx_core::api_vcx::api_handle::mediated_connection::tests::{
+    use libvcx_core::api_vcx::api_handle::mediated_connection::test_utils::{
         build_test_connection_inviter_invited, build_test_connection_inviter_null,
         build_test_connection_inviter_requested,
     };
-    use libvcx_core::errors::error::{LibvcxErrorKind, SUCCESS_ERR_CODE};
-    use libvcx_core::VcxStateType;
+    use libvcx_core::api_vcx::VcxStateType;
+    use libvcx_core::errors::error::LibvcxErrorKind;
 
     use crate::api_c::cutils::return_types_u32;
     use crate::api_c::cutils::timeout::TimeoutUtils;
@@ -1866,7 +1866,7 @@ mod tests {
     async fn test_sign() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = mediated_connection::tests::build_test_connection_inviter_invited().await;
+        let connection_handle = build_test_connection_inviter_invited().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();
@@ -1891,7 +1891,7 @@ mod tests {
     async fn test_verify_signature() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         let msg = format!("My message");
         let msg_len = msg.len();
