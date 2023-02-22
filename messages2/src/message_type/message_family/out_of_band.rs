@@ -1,7 +1,7 @@
 use derive_more::From;
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
-use transitive::TransitiveInto;
+use transitive::TransitiveFrom;
 
 use crate::{
     error::{MsgTypeError, MsgTypeResult},
@@ -13,22 +13,22 @@ use super::{
     MessageFamily,
 };
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveInto, MessageType)]
-#[transitive(MessageFamily, MessageType)]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
+#[transitive(into(MessageFamily, MessageType))]
 #[semver(family = "out-of-band")]
 pub enum OutOfBand {
     V1(OutOfBandV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveInto, MessageType)]
-#[transitive(all(OutOfBand, MessageFamily, MessageType))]
+#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
+#[transitive(into(all(OutOfBand, MessageFamily, MessageType)))]
 #[semver(major = 1)]
 pub enum OutOfBandV1 {
     V1_1(OutOfBandV1_1),
 }
 
-#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveInto, MessageType)]
-#[transitive(all(OutOfBandV1, OutOfBand, MessageFamily, MessageType))]
+#[derive(Copy, Clone, Debug, AsRefStr, EnumString, PartialEq, TransitiveFrom, MessageType)]
+#[transitive(into(all(OutOfBandV1, OutOfBand, MessageFamily, MessageType)))]
 #[strum(serialize_all = "kebab-case")]
 #[semver(minor = 1)]
 pub enum OutOfBandV1_1 {

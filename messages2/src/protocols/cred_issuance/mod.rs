@@ -6,7 +6,7 @@ mod request_credential;
 
 use derive_more::From;
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
-use transitive::TransitiveInto;
+use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -80,9 +80,10 @@ pub struct CredentialPreview {
     pub attributes: Vec<CredentialAttr>,
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveInto)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveFrom, TransitiveTryFrom)]
 #[serde(into = "MessageType", try_from = "MessageType")]
-#[transitive(all(CredentialIssuanceV1_0, CredentialIssuanceV1, MessageFamily, MessageType))]
+#[transitive(into(all(CredentialIssuanceV1_0, CredentialIssuanceV1, MessageFamily, MessageType)))]
+#[transitive(try_from(MessageFamily, CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0))]
 struct CredentialPreviewMsgType;
 
 impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0 {
@@ -107,11 +108,7 @@ impl TryFrom<MessageType> for CredentialPreviewMsgType {
 
     fn try_from(value: MessageType) -> Result<Self, Self::Error> {
         let interm = MessageFamily::from(value);
-        let interm = CredentialIssuanceKind::try_from(interm)?;
-        let interm = CredentialIssuanceV1::try_from(interm)?;
-        let interm = CredentialIssuanceV1_0::try_from(interm)?;
-        let interm = CredentialPreviewMsgType::try_from(interm)?;
-        Ok(interm)
+        CredentialPreviewMsgType::try_from(interm)
     }
 }
 
