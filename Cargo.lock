@@ -4470,9 +4470,9 @@ dependencies = [
 
 [[package]]
 name = "transitive"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe651a78d8c39141d77ecdd5639935466e7d1d180bb03922e0f5b52f49c12483"
+checksum = "873fe9155dba010c021d3e0846d066feb21f44c0f6eda750691ea6ce3407b5c7"
 dependencies = [
  "proc-macro2",
  "quote",

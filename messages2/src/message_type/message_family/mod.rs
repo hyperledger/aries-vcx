@@ -1,4 +1,4 @@
-use derive_more::From;
+use derive_more::{From, TryInto};
 
 use crate::error::{MsgTypeError, MsgTypeResult};
 
@@ -8,6 +8,8 @@ use self::{
     report_problem::ReportProblem, revocation::Revocation, routing::Routing, traits::ResolveMajorVersion,
     trust_ping::TrustPing,
 };
+
+use super::MessageType;
 
 pub mod basic_message;
 pub mod connection;
@@ -21,7 +23,7 @@ pub mod routing;
 pub mod traits;
 pub mod trust_ping;
 
-#[derive(Clone, Debug, From, PartialEq)]
+#[derive(Clone, Debug, From, TryInto, PartialEq)]
 pub enum MessageFamily {
     Routing(Routing),
     Connection(Connection),
@@ -83,5 +85,12 @@ impl MessageFamily {
         I: Iterator<Item = &'a str>,
     {
         iter.next().ok_or_else(|| MsgTypeError::not_found(name))
+    }
+}
+
+
+impl From<MessageType> for MessageFamily {
+    fn from(value: MessageType) -> Self {
+        value.family
     }
 }

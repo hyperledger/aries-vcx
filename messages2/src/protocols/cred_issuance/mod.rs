@@ -5,13 +5,17 @@ mod propose_credential;
 mod request_credential;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use transitive::TransitiveInto;
 
 use crate::{
     delayed_serde::DelayedSerde,
-    message_type::{message_family::cred_issuance::{
-        CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
-    }, MessageType},
+    message_type::{
+        message_family::cred_issuance::{
+            CredentialIssuance as CredentialIssuanceKind, CredentialIssuanceV1, CredentialIssuanceV1_0,
+        },
+        MessageFamily, MessageType,
+    },
     mime_type::MimeType,
 };
 
@@ -45,6 +49,10 @@ impl DelayedSerde for CredentialIssuance {
             CredentialIssuanceV1_0::RequestCredential => RequestCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
             CredentialIssuanceV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
+            CredentialIssuanceV1_0::CredentialPreview => Err(D::Error::custom(concat!(
+                stringify!(CredentialIssuanceV1_0::CredentialPreview),
+                " is not a standalone message"
+            ))),
         }
     }
 
@@ -66,15 +74,50 @@ impl DelayedSerde for CredentialIssuance {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CredentialPreviewData {
+pub struct CredentialPreview {
     #[serde(rename = "@type")]
-    pub msg_type: MessageType, // FIX: need to accommodate this
-    pub attributes: Vec<CredentialValue>,
+    msg_type: CredentialPreviewMsgType,
+    pub attributes: Vec<CredentialAttr>,
+}
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, TransitiveInto)]
+#[serde(into = "MessageType", try_from = "MessageType")]
+#[transitive(all(CredentialIssuanceV1_0, CredentialIssuanceV1, MessageFamily, MessageType))]
+struct CredentialPreviewMsgType;
+
+impl From<CredentialPreviewMsgType> for CredentialIssuanceV1_0 {
+    fn from(_value: CredentialPreviewMsgType) -> Self {
+        CredentialIssuanceV1_0::CredentialPreview
+    }
+}
+
+impl TryFrom<CredentialIssuanceV1_0> for CredentialPreviewMsgType {
+    type Error = &'static str;
+
+    fn try_from(value: CredentialIssuanceV1_0) -> Result<Self, Self::Error> {
+        match value {
+            CredentialIssuanceV1_0::CredentialPreview => Ok(Self),
+            _ => Err("message kind is not \"credential_preview\""),
+        }
+    }
+}
+
+impl TryFrom<MessageType> for CredentialPreviewMsgType {
+    type Error = &'static str;
+
+    fn try_from(value: MessageType) -> Result<Self, Self::Error> {
+        let interm = MessageFamily::from(value);
+        let interm = CredentialIssuanceKind::try_from(interm)?;
+        let interm = CredentialIssuanceV1::try_from(interm)?;
+        let interm = CredentialIssuanceV1_0::try_from(interm)?;
+        let interm = CredentialPreviewMsgType::try_from(interm)?;
+        Ok(interm)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
-pub struct CredentialValue {
+pub struct CredentialAttr {
     pub name: String,
     pub value: String,
     #[serde(skip_serializing_if = "Option::is_none")]

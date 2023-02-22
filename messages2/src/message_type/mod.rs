@@ -31,13 +31,9 @@ impl Display for MessageType {
     }
 }
 
-impl<T> From<T> for MessageType
-where
-    MessageFamily: From<T>,
-{
-    fn from(value: T) -> Self {
-        let family = MessageFamily::from(value);
-        Self::new(Prefix::default(), family)
+impl From<MessageFamily> for MessageType {
+    fn from(value: MessageFamily) -> Self {
+        Self::new(Prefix::default(), value)
     }
 }
 
