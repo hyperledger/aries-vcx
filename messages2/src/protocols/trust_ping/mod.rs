@@ -1,13 +1,15 @@
+mod ping;
+mod ping_response;
+
 use derive_more::From;
-use messages_macros::Message;
-use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{ser::SerializeMap, Deserialize, Deserializer, Serializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
     message_type::message_family::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
 };
 
-use super::traits::ConcreteMessage;
+use self::{ping::Ping, ping_response::PingResponse};
 
 #[derive(Clone, Debug, From)]
 pub enum TrustPing {
@@ -44,11 +46,3 @@ impl DelayedSerde for TrustPing {
         }
     }
 }
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "TrustPingV1_0::PingResponse")]
-pub struct Ping;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "TrustPingV1_0::PingResponse")]
-pub struct PingResponse;
