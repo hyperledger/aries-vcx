@@ -18,12 +18,12 @@ Additionally, the following crates may be consumed independently of `aries-vcx`:
 
 ### Deprecation notice: Message mediation
 Aries-vcx contains built-in support for message mediation which is useful for mobile use cases. However,
-this feature (implemented via `MediatedConnection`) is now deprecated as it's tied to mediator 
+this feature (implemented via `MediatedConnection`) is now deprecated as it is tied to mediator 
 implementation [vcxagency-node](https://github.com/AbsaOSS/vcxagencynode) which does not implement
 Aries [pick-up protocol](https://github.com/hyperledger/aries-rfcs/tree/main/features/0685-pickup-v2).
 
 # Getting started
-To use `aries-vcx` in your project, you need to add github dependency to your `Cargo.toml`:
+To use `aries-vcx` in your project, you need to add GitHub dependency to your `Cargo.toml`:
 ```toml
 aries-vcx = { path = "https://github.com/hyperledger/aries-vcx" }
 ```

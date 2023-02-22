@@ -1,5 +1,7 @@
+# Releases
+List of releases and respective changelogs can be found [here](https://github.com/hyperledger/aries-vcx/releases)
 
-## CI artifacts
+# Artifacts
 The following artifacts are built on every CI run and every release:
 
 ### Github Actions artifacts
