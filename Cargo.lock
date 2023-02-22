@@ -4425,7 +4425,7 @@ dependencies = [
 
 [[package]]
 name = "uniffi_aries_vcx"
-version = "0.51.1"
+version = "0.52.0"
 dependencies = [
  "aries-vcx",
  "async-trait",
