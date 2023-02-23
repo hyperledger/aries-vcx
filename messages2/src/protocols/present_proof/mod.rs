@@ -1,20 +1,25 @@
+mod ack;
+mod present;
+mod propose;
+mod request;
+
 use derive_more::From;
-use messages_macros::Message;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
     message_type::message_family::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
+    utils,
 };
 
-use super::traits::ConcreteMessage;
+use self::{ack::AckPresentation, present::Presentation, propose::ProposePresentation, request::RequestPresentation};
 
 #[derive(Clone, Debug, From)]
 pub enum PresentProof {
     ProposePresentation(ProposePresentation),
     RequestPresentation(RequestPresentation),
     Presentation(Presentation),
-    Ack(Ack),
+    Ack(AckPresentation),
 }
 
 impl DelayedSerde for PresentProof {
@@ -31,7 +36,8 @@ impl DelayedSerde for PresentProof {
             PresentProofV1_0::ProposePresentation => ProposePresentation::deserialize(deserializer).map(From::from),
             PresentProofV1_0::RequestPresentation => RequestPresentation::deserialize(deserializer).map(From::from),
             PresentProofV1_0::Presentation => Presentation::deserialize(deserializer).map(From::from),
-            PresentProofV1_0::Ack => Ack::deserialize(deserializer).map(From::from),
+            PresentProofV1_0::Ack => AckPresentation::deserialize(deserializer).map(From::from),
+            PresentProofV1_0::PresentationPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }
 
@@ -50,19 +56,3 @@ impl DelayedSerde for PresentProof {
         }
     }
 }
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "PresentProofV1_0::ProposePresentation")]
-pub struct ProposePresentation;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "PresentProofV1_0::RequestPresentation")]
-pub struct RequestPresentation;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "PresentProofV1_0::Presentation")]
-pub struct Presentation;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "PresentProofV1_0::Ack")]
-pub struct Ack;

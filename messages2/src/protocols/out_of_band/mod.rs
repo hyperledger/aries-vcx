@@ -1,5 +1,8 @@
+mod invitation;
+mod reuse;
+mod reuse_accepted;
+
 use derive_more::From;
-use messages_macros::Message;
 use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::{
@@ -7,7 +10,7 @@ use crate::{
     message_type::message_family::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
 };
 
-use super::traits::ConcreteMessage;
+use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
 
 #[derive(Clone, Debug, From)]
 pub enum OutOfBand {
@@ -48,14 +51,20 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "OutOfBandV1_1::Invitation")]
-pub struct Invitation;
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum GoalCode {
+    #[serde(rename = "issue-vc")]
+    IssueVC,
+    #[serde(rename = "request-proof")]
+    RequestProof,
+    #[serde(rename = "create-account")]
+    CreateAccount,
+    #[serde(rename = "p2p-messaging")]
+    P2PMessaging,
+}
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "OutOfBandV1_1::HandshakeReuse")]
-pub struct HandshakeReuse;
-
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]
-pub struct HandshakeReuseAccepted;
+#[derive(Deserialize, Debug, PartialEq)]
+pub enum HandshakeProtocol {
+    ConnectionV1,
+    DidExchangeV1,
+}

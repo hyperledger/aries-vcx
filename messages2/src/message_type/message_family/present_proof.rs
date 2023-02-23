@@ -1,4 +1,4 @@
-use derive_more::From;
+use derive_more::{From, TryInto};
 use messages_macros::MessageType;
 use strum_macros::{AsRefStr, EnumString};
 use transitive::TransitiveFrom;
@@ -13,14 +13,14 @@ use super::{
     MessageFamily,
 };
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
+#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(MessageFamily, MessageType))]
 #[semver(family = "present-proof")]
 pub enum PresentProof {
     V1(PresentProofV1),
 }
 
-#[derive(Copy, Clone, Debug, From, PartialEq, TransitiveFrom, MessageType)]
+#[derive(Copy, Clone, Debug, From, TryInto, PartialEq, TransitiveFrom, MessageType)]
 #[transitive(into(all(PresentProof, MessageFamily, MessageType)))]
 #[semver(major = 1)]
 pub enum PresentProofV1 {
@@ -35,5 +35,6 @@ pub enum PresentProofV1_0 {
     ProposePresentation,
     RequestPresentation,
     Presentation,
+    PresentationPreview,
     Ack,
 }
