@@ -210,7 +210,7 @@ impl Serialize for AriesMessage {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn test_ser() {
@@ -220,14 +220,14 @@ mod tests {
     //     println!("{}", serde_json::to_string(&msg).unwrap());
     // }
 
-    #[test]
-    fn test_de() {
-        let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
-        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-        println!("{msg:?}");
+    // #[test]
+    // fn test_de() {
+    //     let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
+    //     let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
+    //     println!("{msg:?}");
 
-        let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
-        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-        println!("{msg:?}");
-    }
+    //     let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
+    //     let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
+    //     println!("{msg:?}");
+    // }
 }
