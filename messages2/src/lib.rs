@@ -6,11 +6,11 @@
 #![allow(clippy::large_enum_variant)]
 #![deny(clippy::unwrap_used)]
 
-mod aries_message;
-mod decorators;
-mod delayed_serde;
+pub mod aries_message;
+pub mod decorators;
+pub mod delayed_serde;
 mod error;
-mod message_type;
-mod protocols;
-mod mime_type;
+pub mod message_type;
+pub mod mime_type;
+pub mod protocols;
 mod utils;

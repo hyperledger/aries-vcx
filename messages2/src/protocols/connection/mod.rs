@@ -15,6 +15,8 @@ use crate::{
 
 use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::Response};
 
+pub use invitation::CompleteInvitation;
+
 #[derive(Clone, Debug, From)]
 pub enum Connection {
     Invitation(Invitation),

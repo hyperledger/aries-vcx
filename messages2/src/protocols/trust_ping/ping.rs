@@ -1,7 +1,11 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
-use crate::{message_type::message_family::trust_ping::TrustPingV1_0, decorators::{Thread, Timing}, protocols::traits::ConcreteMessage};
+use crate::{
+    decorators::{Thread, Timing},
+    message_type::message_family::trust_ping::TrustPingV1_0,
+    protocols::traits::ConcreteMessage,
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message)]
 #[message(kind = "TrustPingV1_0::PingResponse")]

@@ -1,7 +1,11 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
-use crate::{decorators::{Thread, Timing}, message_type::message_family::out_of_band::OutOfBandV1_1, protocols::traits::ConcreteMessage};
+use crate::{
+    decorators::{Thread, Timing},
+    message_type::message_family::out_of_band::OutOfBandV1_1,
+    protocols::traits::ConcreteMessage,
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message)]
 #[message(kind = "OutOfBandV1_1::HandshakeReuseAccepted")]

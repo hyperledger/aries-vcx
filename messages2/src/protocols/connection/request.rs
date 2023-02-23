@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{Thread, Timing},
-    message_type::{message_family::connection::ConnectionV1_0},
+    message_type::message_family::connection::ConnectionV1_0,
 };
 
 use crate::protocols::traits::ConcreteMessage;

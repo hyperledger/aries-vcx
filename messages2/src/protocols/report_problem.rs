@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
-use crate::{message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0}, decorators::{Timing, Thread}};
+use crate::{
+    decorators::{Thread, Timing},
+    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
+};
 
 use super::traits::ConcreteMessage;
 

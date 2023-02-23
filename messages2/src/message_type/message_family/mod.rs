@@ -88,7 +88,6 @@ impl MessageFamily {
     }
 }
 
-
 impl From<MessageType> for MessageFamily {
     fn from(value: MessageType) -> Self {
         value.family
