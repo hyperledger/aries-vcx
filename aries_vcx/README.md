@@ -46,5 +46,5 @@ It's also advisable to follow these [instructions](TUTORIAL.md) to check your en
 
 ## Architecture 
 
-<img alt="AriesVCX architecture diagram" src="../docs/architecture/ariesvcx_architecture_040123.png"/>
+<img alt="AriesVCX architecture diagram" src="../docs/architecture/architecture_230104_ariesvcx.png"/>
 
