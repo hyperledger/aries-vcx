@@ -10,7 +10,7 @@ use crate::{
     protocols::{common::service::Service, traits::ConcreteMessage},
 };
 
-use super::{GoalCode, OutOfBand};
+use super::{OobGoalCode, OutOfBand};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "OutOfBandV1_1::Invitation")]
@@ -21,7 +21,7 @@ pub struct Invitation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub goal_code: Option<GoalCode>,
+    pub goal_code: Option<OobGoalCode>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

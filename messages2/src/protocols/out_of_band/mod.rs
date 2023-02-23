@@ -51,8 +51,8 @@ impl DelayedSerde for OutOfBand {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum GoalCode {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum OobGoalCode {
     #[serde(rename = "issue-vc")]
     IssueVC,
     #[serde(rename = "request-proof")]

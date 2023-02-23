@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PleaseAck {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     on: Vec<AckOn>,
 }
 

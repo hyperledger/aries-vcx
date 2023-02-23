@@ -96,7 +96,6 @@ pub struct Referent {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(untagged)]
 pub enum PredicateOperator {
     #[serde(rename = ">=")]
     GreaterOrEqual,
