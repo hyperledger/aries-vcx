@@ -1,30 +1,40 @@
+# <span style="color:red;background:white">Deprecation notice</span>
+This is now deprecated and receives limited maintenance support. 
+
+This project used to provide C-API for creating bindings for languages other than Rust, primarily 
+Java, iOS. However, this was started many years ago (circa 2018) and better approaches
+to FFI has emerged since then. One of apparent leaders is `uniffi` which was developed by Mozilla and
+handles many of the complexities that used to have to be managed manually in this project.
+
+We encourage new developers to adopt this technology in favor of libvcx - we currently have new 
+wrapper for `aries-vcx` in POC stage [uniffi_aries_vcx](../uniffi_aries_vcx), therefore you 
+will have slower start, perhaps more frequent changes to sync up with, but much more promising 
+long-term future.
+
 # Libvcx
-- Libvcx is library built on top of `aries-vcx`, which provides a particular approach how to 
-  build bindings for other languages.
-- The library is split in 2 modules:
+Libvcx is library built on top of `aries-vcx`, which provides a particular approach how to build bindings for 
+other languages.
+
+The library is split in 2 modules:
 
 ### `api_vcx` module
-Layer on top of `aries-vcx` which provides `u32` "handle" reference API. When you
-create a new object, this layer gives you back `u32` reference to that object, which is how you
-work with it. 
+Layer on top of `aries-vcx` which provides `u32` "handle" reference API. When you create a new object, this layer 
+instead gives you `u32` reference. This is then required to further interact with the object.
 
-This was historically feasibly approach for building FFI interfaces. Arguably, nowadays
-there's more modern approaches to FFI, for example via [uniffi](https://mozilla.github.io/uniffi-rs/).
+### DEPRECATED:`api_c` module & Objective-C / Java wrappers
+- Built on top of `api_vcx`, provides runtime executor (tokio) and FFI interface. Libvcx based Java and 
+iOS wrapper are linked to this interface.
 
-### `api_c` module
-Built on top of `api_vcx`, provides runtime executor (tokio) and FFI interface. Java and iOS wrapper
-are linked to this interface.
+- Android and iOS packages are built with every [release](../docs/RELEASES.md).
 
-# Get started
-If you wish to use iOS or Android wrapper, you may find it useful to have look at this 3rd party demos
-* Android [demo](https://github.com/sktston/vcx-demo-android) 
-* iOS [demo](https://github.com/sktston/vcx-demo-ios)
-* iOS [skeleton project](https://github.com/sktston/vcx-skeleton-ios)
-These might be somewhat outdated at the moment, nevertheless they may be a good starting point.
+- 3rd party demos (possibly outdated)
+  * Android [demo](https://github.com/sktston/vcx-demo-android) 
+  * iOS [demo](https://github.com/sktston/vcx-demo-ios)
+  * iOS [skeleton project](https://github.com/sktston/vcx-skeleton-ios)
 
 # Testing
-Before you try to build/test `libvcx` crate on your machine, make sure yu can buil `aries-vcx` - see 
-[aries-vcx README](../aries_vcx/README.md#verify-on-your-machine).
+Before you try to build/test `libvcx` crate on your machine, make sure you can build `aries-vcx` - see 
+[aries-vcx README](../aries_vcx).
 
 - Run unit tests:
 ```

@@ -1,46 +1,40 @@
-# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> AriesVCX
+# <img alt="Hyperledger Aries logo" src="docs/aries-logo.png" width="45px" /> aries-vcx
 
 ![CI build](https://github.com/hyperledger/aries-vcx/workflows/CI/badge.svg)
-[![codecov](https://codecov.io/gh/hyperledger/aries-vcx/branch/main/graph/badge.svg)](https://codecov.io/gh/hyperledger/aries-vcx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Join the chat at https://chat.hyperledger.org/channel/aries](https://img.shields.io/badge/Chat%20on-Hyperledger%20Chat-blue)](https://chat.hyperledger.org/channel/aries)
 
-## Core crates:
-- [`aries-vcx`](aries_vcx) - **implementation of Hyperledger Aries protocols**
-- `messages` - crate encapsulating Aries message models and builders
-- `diddoc` - crate for working with DIDDocs
-- `agency-client` - client to communicate with [vcx mediator](https://github.com/AbsaOSS/vcxagencynode)   
+The repository contains
+- Rust library `aries-vcx` implementing Aries protocols,
+- collection of supporting projects.
 
-## Additional crates:
-Additionally, you can find here project built on **top of `aries-vcx`**:
-- `agents/rust/aries-vcx-agent` - simple agent implementation in rust on top of `aries-vcx` crate
-- [`libvcx`](libvcx) - built on top of `aries-vcx`, is a particular approach how to use `aries-vcx` on
-  mobile or from other languages.
+## If you are Rust 🦀 developer
+You can build your Rust project on top of
+- [`aries-vcx`](aries_vcx) - ready to go Rust library to work with Aries protocols, both from
+issuer/verifier's side or as a credential holder/prover.
 
-## Getting started
-- Ask question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
-- Talk to us on community call starting every Thursday 09:00am UTC via [zoom](https://zoom.us/j/97759680284?pwd=VytRRlJSd3c5NXJ1V25XbUxNU0Jndz09)
-- See high level 2023 roadmap at [ROADMAP_2023.md](ROADMAP_2023.md)
-- Find out what's planned in [issues](https://github.com/hyperledger/aries-vcx/issues) 
-  and project [board](https://github.com/orgs/hyperledger/projects/14)
+Additionally, `aries-vcx` is built on top of smaller Rust crates which are part of this repo:
+- [`messages`](messages) - crate for building and parsing Aries messages
+- [`diddoc`](diddoc) - crate to work with DIDDocs
+
+## If you are mobile 📱 developer
+Aries-vcx can be used to build native mobile applications. There are 2 approaches:
+- **deprecated**: [`libvcx`](./libvcx) and its Java and Objective-C wrappers is complete, but deprecated
+- **encouraged**, but in stage of POC: [`uniffi_aries_vcx`](./uniffi_aries_vcx) is next generation approach 
+  to enable `aries-vcx` on mobile, providing Swift and Kotlin wrappers. However, this is yet in POC stage 
+  and new adopters of `aries-vcx` on mobile are highly encouraged to contribute to its development.
+
+Read more about `libvcx` deprecation and `unifii` benefits [here](https://github.com/hyperledger/libvcx#deprecation-notice)
+
+# Reach out 👋
+- Ask a question on [discord](https://discord.com/channels/905194001349627914/955480822675308604)
+- Talk to us on public community call every Thursday @ 09:00 am UTC via Zoom, see [details](https://wiki.hyperledger.org/display/ARIES/Community+calls)
+- See high level 2023 roadmap at [ROADMAP_2023.md](docs/ROADMAP_2023.md)
 - We welcome new contributors! Connect with us via the channels above and take a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## Versioning
-- We are currently not following semantic versioning. Version are releasing `0.x.x` versions. 
-- Breaking changes to APIs happen occasionally. See full changelogs records at 
-  [releases](https://github.com/hyperledger/aries-vcx/releases) page.
-
-## CI artifacts
-Following artifacts are build with every CI run and release:
-
-### Github Actions artifacts
-  - *(these are to be found at bottom of Summary page for each CI run)*
-  - `libvcx.so`, `libvcx.dylib` - dynamic library for x86_64 ubuntu, x86_64 darwin)
-  - ios and java wrapper built on top of `libvcx`
-
-### Images in Github Container Registry
-  - Alpine based Docker image with prebuilt `libvcx`; [ghcr.io/hyperledger/aries-vcx/libvcx:version](https://github.com/orgs/hyperledger/packages?repo_name=aries-vcx)
-
-### Packages on npmjs 
-  - NodeJS wrapper - bindings for libvcx; [node-vcx-wrapper](https://www.npmjs.com/package/@hyperledger/node-vcx-wrapper) 
-  - Simple NodeJS aries agent for testing; [vcxagent-core](https://www.npmjs.com/package/@hyperledger/vcxagent-core)
+## Versioning & releases
+- All releases have currently major version `0` 
+  - We bump minor version on releases containing new features, significant refactors or breaking changes. 
+  - We bump patch version if release only contains fixes or smaller refactoring. 
+- See more info on [releases](./docs/RELEASES.md)
+- See [releases](https://github.com/hyperledger/aries-vcx/releases) page.

@@ -1,62 +1,42 @@
-# Aries-vcx
-Crate implementing Hyperledger Aries protocols and building blocks for building Aries agents for
-both mobile (typically in role of holder, prover) and server use-cases (issuer and verifier).
+# aries-vcx
+`aries-vcx` is more of a "library" rather than "framework". We strive to be not too 
+opinionated and simply provide building blocks for whatever you want to build. 
 
-# Getting started
-Aries-vcx is library, not a framework. We strive to be not too opinionated and simply provide building block for whatever
-you want to build. 
+You can use `aries-vcx` to build both end-user products (mobile wallets in role of credential 
+holder and prover) or server (typically in role of issuer, verifier). 
 
-Generally, the crate allows you to 
+Generally, the crate allows you to:
 - create encrypted wallet, 
 - read/write from/to Indy ledger,
 - establish didcomm connections and exchange messages,
-- create and process Aries messages to drive Aries protocols. 
+- create and process Aries messages to drive Aries protocols.
 
-Have look at [aries-vcx-agent](../agents/rust/aries-vcx-agent) for inspiration how aries-vcx can be used.
+## `aries-vcx` components
+Additionally, the following crates may be consumed independently of `aries-vcx`:
+- [messages](../messages) - crate for building and parsing Aries messages
+- [diddoc](../diddoc) - crate to work with DIDDocs
 
-# Message mediation
-If you are building mobile agent, you will generally require mediator service, which will receive
-messages on device's behalf - sort of like a mail server.
+### Deprecation notice: Message mediation
+Aries-vcx contains built-in support for message mediation which is useful for mobile use cases. However,
+this feature (implemented via `MediatedConnection`) is now deprecated as it is tied to mediator 
+implementation [vcxagency-node](https://github.com/AbsaOSS/vcxagencynode) which does not implement
+Aries [pick-up protocol](https://github.com/hyperledger/aries-rfcs/tree/main/features/0685-pickup-v2).
 
-It's possible to opt into integrated message mediator using `MediatedConnection` `impl`, which
-speaks the language of [vcxagency-node](https://github.com/AbsaOSS/vcxagencynode) mediator service.
-
-# Verify on your machine
-### Stage 1 - unit tests
-- First we need to get unit tests working on your machine. These don't require any external services to run. 
+# Getting started
+To use `aries-vcx` in your project, you need to add GitHub dependency to your `Cargo.toml`:
+```toml
+aries-vcx = { path = "https://github.com/hyperledger/aries-vcx" }
 ```
-cargo test --features "general_test" -- --test-threads=1
-```
-If you run into an errors 
-- On OSX, try to install following packages with:
-  ```sh
-  brew install zmq
-  brew install pkg-config
-  ```
-- On ubuntu, you will likely need following packages:
-  ```sh
-  sudo apt-get update -y
-  sudo apt-get install -y libsodium-dev libssl-dev libzmq3-dev
-  ```
+It's also advisable to follow these [instructions](TUTORIAL.md) to check your environment is properly configured.
 
-### Stage 2 - integration tests
-Next up you will need integration tests running. These tests must pointed again some Indy ledger.
-You'll get best result by running a pool of Indy nodes on your machine. You can start a pool of 4 nodes
-in docker container like this
-```sh
-docker run --name indylocalhost -p 9701-9708:9701-9708 -d pstas/indypool-localhost:1.15.0-localhost
-```
-If you are running on arm64, you can specify option `--platform linux/amd64`, as the image above was
-originally built for `x86_64` architecture.
-
-Now you should be ready to run integration tests:
-```
-cargo test  --features "pool_tests" -- --test-threads=1
-```
+# Projects built with aries-vcx
+- [aries-vcx-agent](../agents/rust/aries-vcx-agent) - sample agent with local persistence. Used for cross-compatibility testing with other aries implementations. 
+- [unifii_aries_vcx](../uniffi_aries_vcx) - wrapper around `aries-vcx` to generate Swift and Kotlin wrappers for mobile use-cases
+- [libcx](../libvcx) (**deprecated**) - wrapper around `aries-vcx` to build Java, Objective-C, NodeJS wrappers. 
 
 ## Implemented Aries protocols
 * ✅ Connection Protocol 1.0: [`https://didcomm.org/connections/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0160-connection-protocol)
-* ✅ Out of Band 1.0: [`https://didcomm.org/out-of-band/1.1/*`](https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband)
+* ✅ Out of Band 1.1: [`https://didcomm.org/out-of-band/1.1/*`](https://github.com/hyperledger/aries-rfcs/blob/main/features/0434-outofband)
 * ✅ Basic Message 1.0: [`https://didcomm.org/basicmessage/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0095-basic-message)
 * ✅ Credential Issuance 1.0 [`https://didcomm.org/issue-credential/1.0/*`](https://github.com/hyperledger/aries-rfcs/blob/master/features/0036-issue-credential)
 * ✅ Credential Presentation 1.0: [`https://didcomm.org/present-proof/1.0/*`](https://github.com/hyperledger/aries-rfcs/tree/master/features/0037-present-proof)
