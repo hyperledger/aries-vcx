@@ -1,15 +1,18 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
     decorators::{Thread, Timing},
     message_type::message_family::trust_ping::TrustPingV1_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
-#[message(kind = "TrustPingV1_0::PingResponse")]
+use super::TrustPing;
 
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[message(kind = "TrustPingV1_0::PingResponse")]
+#[transitive(into(TrustPing, AriesMessage))]
 pub struct Ping {
     #[serde(rename = "@id")]
     pub id: String,

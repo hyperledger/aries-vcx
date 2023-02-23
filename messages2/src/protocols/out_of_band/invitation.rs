@@ -1,17 +1,20 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Attachment, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     mime_type::MimeType,
     protocols::{common::service::Service, traits::ConcreteMessage},
 };
 
-use super::GoalCode;
+use super::{GoalCode, OutOfBand};
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "OutOfBandV1_1::Invitation")]
+#[transitive(into(OutOfBand, AriesMessage))]
 pub struct Invitation {
     #[serde(rename = "@id")]
     pub id: String,

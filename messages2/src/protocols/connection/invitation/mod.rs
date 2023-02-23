@@ -1,6 +1,7 @@
 pub mod pairwise;
 pub mod public;
 
+use derive_more::From;
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -19,7 +20,7 @@ use self::public::PublicInvitation;
 /// Other invitation types would get resolved to this.
 pub type CompleteInvitation = InvitationImpl<Url>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, From, Deserialize, Serialize, Message)]
 #[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {

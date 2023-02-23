@@ -7,30 +7,16 @@ use crate::{
     message_type::{
         message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
         MessageFamily, MessageType,
-    },
+    }, aries_message::AriesMessage,
 };
 
 use crate::protocols::traits::ConcreteMessage;
 
-use super::ConnectionData;
+use super::Connection;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "ConnectionV1_0::Response")]
-pub struct Response {
-    #[serde(rename = "@id")]
-    pub id: String,
-    pub connection: ConnectionData,
-    #[serde(rename = "~please_ack")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub please_ack: Option<PleaseAck>,
-    #[serde(rename = "~thread")]
-    pub thread: Thread,
-    #[serde(rename = "~timing")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub timing: Option<Timing>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[transitive(into(Connection, AriesMessage))]
 pub struct SignedResponse {
     #[serde(rename = "@id")]
     pub id: String,

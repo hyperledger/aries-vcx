@@ -1,17 +1,20 @@
+use diddoc::aries::diddoc::AriesDidDoc;
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
     decorators::{Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0,
+    message_type::message_family::connection::ConnectionV1_0, aries_message::AriesMessage,
 };
 
 use crate::protocols::traits::ConcreteMessage;
 
-use super::ConnectionData;
+use super::Connection;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "ConnectionV1_0::Request")]
+#[transitive(into(Connection, AriesMessage))]
 pub struct Request {
     #[serde(rename = "@id")]
     pub id: String,
@@ -23,4 +26,12 @@ pub struct Request {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ConnectionData {
+    #[serde(rename = "DID")]
+    pub did: String,
+    #[serde(rename = "DIDDoc")]
+    pub did_doc: AriesDidDoc,
 }

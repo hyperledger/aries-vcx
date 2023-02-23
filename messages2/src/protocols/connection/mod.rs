@@ -4,8 +4,7 @@ mod request;
 mod response;
 
 use derive_more::From;
-use diddoc::aries::diddoc::AriesDidDoc;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -13,7 +12,7 @@ use crate::{
     utils,
 };
 
-use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::Response};
+use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::SignedResponse};
 
 pub use invitation::CompleteInvitation;
 
@@ -21,7 +20,7 @@ pub use invitation::CompleteInvitation;
 pub enum Connection {
     Invitation(Invitation),
     Request(Request),
-    Response(Response),
+    Response(SignedResponse),
     ProblemReport(ProblemReport),
 }
 
@@ -38,7 +37,7 @@ impl DelayedSerde for Connection {
         match minor {
             ConnectionV1_0::Invitation => Invitation::deserialize(deserializer).map(From::from),
             ConnectionV1_0::Request => Request::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::Response => Response::deserialize(deserializer).map(From::from),
+            ConnectionV1_0::Response => SignedResponse::deserialize(deserializer).map(From::from),
             ConnectionV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
             ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
@@ -58,12 +57,4 @@ impl DelayedSerde for Connection {
             Self::ProblemReport(v) => v.delayed_serialize(state, closure),
         }
     }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
-pub struct ConnectionData {
-    #[serde(rename = "DID")]
-    pub did: String,
-    #[serde(rename = "DIDDoc")]
-    pub did_doc: AriesDidDoc,
 }

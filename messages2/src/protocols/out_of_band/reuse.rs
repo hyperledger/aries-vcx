@@ -1,14 +1,19 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Thread, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     protocols::traits::ConcreteMessage,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+use super::OutOfBand;
+
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "OutOfBandV1_1::HandshakeReuse")]
+#[transitive(into(OutOfBand, AriesMessage))]
 pub struct HandshakeReuse {
     #[serde(rename = "@id")]
     pub id: String,

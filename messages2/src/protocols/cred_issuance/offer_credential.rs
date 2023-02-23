@@ -1,16 +1,19 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
+use crate::aries_message::AriesMessage;
 use crate::protocols::traits::ConcreteMessage;
 use crate::{
     decorators::{Attachment, Thread, Timing},
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
 };
 
-use super::CredentialPreview;
+use super::{CredentialPreview, CredentialIssuance};
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "CredentialIssuanceV1_0::OfferCredential")]
+#[transitive(into(CredentialIssuance, AriesMessage))]
 pub struct OfferCredential {
     #[serde(rename = "@id")]
     pub id: String,

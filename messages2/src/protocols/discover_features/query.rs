@@ -1,13 +1,17 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
     decorators::Timing, message_type::message_family::discover_features::DiscoverFeaturesV1_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+use super::DiscoverFeatures;
+
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "DiscoverFeaturesV1_0::Query")]
+#[transitive(into(DiscoverFeatures, AriesMessage))]
 pub struct Query {
     #[serde(rename = "@id")]
     pub id: String,

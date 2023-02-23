@@ -1,14 +1,18 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
     decorators::{Attachment, PleaseAck, Thread, Timing},
     message_type::message_family::present_proof::PresentProofV1_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+use super::PresentProof;
+
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "PresentProofV1_0::Presentation")]
+#[transitive(into(PresentProof, AriesMessage))]
 pub struct Presentation {
     #[serde(rename = "@id")]
     pub id: String,

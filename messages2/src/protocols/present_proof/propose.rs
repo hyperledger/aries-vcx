@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Thread, Timing},
     message_type::{
         message_family::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
@@ -12,8 +13,9 @@ use crate::{
     protocols::traits::ConcreteMessage,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "PresentProofV1_0::ProposePresentation")]
+#[transitive(into(super::PresentProof, AriesMessage))]
 pub struct ProposePresentation {
     #[serde(rename = "@id")]
     pub id: String,

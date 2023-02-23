@@ -1,15 +1,20 @@
 use messages_macros::Message;
 use serde::{Deserialize, Serialize};
+use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Localization, Thread, Timing},
     message_type::message_family::connection::ConnectionV1_0,
 };
 
 use crate::protocols::traits::ConcreteMessage;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+use super::Connection;
+
+#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "ConnectionV1_0::ProblemReport")]
+#[transitive(into(Connection, AriesMessage))]
 pub struct ProblemReport {
     #[serde(rename = "@id")]
     pub id: String,
