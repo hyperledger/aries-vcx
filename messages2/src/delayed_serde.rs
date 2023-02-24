@@ -1,8 +1,8 @@
 use std::any::type_name;
 
-use serde::{de::Error, ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{aries_message::MSG_TYPE, message_type::MessageType, protocols::traits::ConcreteMessage};
+use crate::{aries_message::MsgWithType, message_type::MessageType, protocols::traits::ConcreteMessage};
 
 pub trait DelayedSerde: Sized {
     type MsgType: Into<MessageType>;
@@ -11,17 +11,17 @@ pub trait DelayedSerde: Sized {
     where
         D: Deserializer<'de>;
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: SerializeMap,
-        F: FnMut(&'a mut M) -> S,
-        S: Serializer,
-        S::Error: From<M::Error>;
+        S: Serializer;
 }
 
 impl<T> DelayedSerde for T
 where
-    for<'d> T: ConcreteMessage + Serialize + Deserialize<'d>,
+    T: ConcreteMessage + Serialize,
+    MessageType: From<<T as ConcreteMessage>::Kind>,
+    for<'a> MsgWithType<'a, T>: From<&'a T>,
+    for<'d> T: Deserialize<'d>,
 {
     type MsgType = <Self as ConcreteMessage>::Kind;
 
@@ -43,16 +43,10 @@ where
         }
     }
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: SerializeMap,
-        F: FnMut(&'a mut M) -> S,
         S: Serializer,
-        S::Error: From<M::Error>,
     {
-        let msg_type: MessageType = Self::kind().into();
-        state.serialize_entry(MSG_TYPE, &msg_type)?;
-        let serializer = closure(state);
-        self.serialize(serializer)
+        MsgWithType::from(self).serialize(serializer)
     }
 }

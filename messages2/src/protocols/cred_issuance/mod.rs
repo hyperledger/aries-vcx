@@ -5,7 +5,7 @@ mod propose_credential;
 mod request_credential;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
@@ -54,19 +54,16 @@ impl DelayedSerde for CredentialIssuance {
         }
     }
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: serde::ser::SerializeMap,
-        F: FnMut(&'a mut M) -> S,
-        S: serde::Serializer,
-        S::Error: From<M::Error>,
+        S: Serializer,
     {
         match self {
-            Self::OfferCredential(v) => v.delayed_serialize(state, closure),
-            Self::ProposeCredential(v) => v.delayed_serialize(state, closure),
-            Self::RequestCredential(v) => v.delayed_serialize(state, closure),
-            Self::IssueCredential(v) => v.delayed_serialize(state, closure),
-            Self::Ack(v) => v.delayed_serialize(state, closure),
+            Self::OfferCredential(v) => v.delayed_serialize(serializer),
+            Self::ProposeCredential(v) => v.delayed_serialize(serializer),
+            Self::RequestCredential(v) => v.delayed_serialize(serializer),
+            Self::IssueCredential(v) => v.delayed_serialize(serializer),
+            Self::Ack(v) => v.delayed_serialize(serializer),
         }
     }
 }

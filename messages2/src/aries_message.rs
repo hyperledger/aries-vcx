@@ -1,5 +1,5 @@
 use derive_more::From;
-use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -7,7 +7,8 @@ use crate::{
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, routing::Forward, trust_ping::TrustPing,
+        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::ConcreteMessage,
+        trust_ping::TrustPing,
     },
 };
 
@@ -66,24 +67,21 @@ impl DelayedSerde for AriesMessage {
         }
     }
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: SerializeMap,
-        F: FnMut(&'a mut M) -> S,
         S: Serializer,
-        S::Error: From<M::Error>,
     {
         match self {
-            Self::Routing(v) => v.delayed_serialize(state, closure),
-            Self::Connection(v) => v.delayed_serialize(state, closure),
-            Self::Revocation(v) => v.delayed_serialize(state, closure),
-            Self::CredentialIssuance(v) => v.delayed_serialize(state, closure),
-            Self::ReportProblem(v) => v.delayed_serialize(state, closure),
-            Self::PresentProof(v) => v.delayed_serialize(state, closure),
-            Self::TrustPing(v) => v.delayed_serialize(state, closure),
-            Self::DiscoverFeatures(v) => v.delayed_serialize(state, closure),
-            Self::BasicMessage(v) => v.delayed_serialize(state, closure),
-            Self::OutOfBand(v) => v.delayed_serialize(state, closure),
+            Self::Routing(v) => v.delayed_serialize(serializer),
+            Self::Connection(v) => v.delayed_serialize(serializer),
+            Self::Revocation(v) => v.delayed_serialize(serializer),
+            Self::CredentialIssuance(v) => v.delayed_serialize(serializer),
+            Self::ReportProblem(v) => v.delayed_serialize(serializer),
+            Self::PresentProof(v) => v.delayed_serialize(serializer),
+            Self::TrustPing(v) => v.delayed_serialize(serializer),
+            Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
+            Self::BasicMessage(v) => v.delayed_serialize(serializer),
+            Self::OutOfBand(v) => v.delayed_serialize(serializer),
         }
     }
 }
@@ -100,7 +98,9 @@ impl DelayedSerde for AriesMessage {
 //  2) Without this, the implementation would either rely on something inefficient such as [`Value`] as an intermediary,
 //     use some custom map which fails on duplicate entries as intermediary or basically use [`serde_value`]
 //     which seems to be an old replica of [`Content`] and [`ContentDeserializer`] and require a pretty much
-//     copy paste of [`TaggedContentVisitor`].
+//     copy paste of [`TaggedContentVisitor`]. Also, [`serde_value::Value`] seems to always alocate.
+//     Using something like `HashMap::<&str, &RawValue>` wouldn't work either, as there are issues flattening
+//     `serde_json::RawValue`. It would also require some custom deserialization afterwards.
 //
 //  3) Exposing these parts as public is in progress from serde. When that will happen is still unknown.
 //     See: https://github.com/serde-rs/serde/issues/741
@@ -151,83 +151,69 @@ impl<'de> Deserialize<'de> for AriesMessage {
 
 /// Custom [`Serialize`] impl for [`A2AMessage`] to use the
 /// correspondent [`MessageType`] as internal tag `@type`.
-///
-/// For readability, we rely on [`DelayedSerde::delayed_serialize`] to do the actual serialization.
-/// We need to construct the serializer after serializing [`MessageType`], hence we pass a constructor closure.
-///
-/// This design allows us to do a single pattern match and serialize both the correspondent message type
-/// of a concrete message as well as the message itself in one go.
-//
-// Same rationale as with the [`Deserialize`] impl on [`A2AMessage`].
-// The state gets created and ended through public API, but to flatten the concrete
-// message we use serde's serializer exposed when deriving [`Serialize`].
-//
-// Using the closure to create the serializer has the benefit of keeping the
-// "private" import only here, not throughout the crate.
-//
-// In the event of a `serde` version bump and this breaking, the fix is a matter of
-// implementing a struct such as:
-// ```
-// #[derive(Serialize)]
-// struct A {
-//    field: u8
-// }
-//
-// #[derive(Serialize)]
-// struct MyStruct {
-//     #[serde(rename = "@type")]
-//     msg_type: MessageType,
-//     #[serde(flatten)]
-//     stuff: A
-// }
-// ```
-//
-// Then analyze the expanded [`Serialize`] impl and adapt the actual implementation below.
+// We rely on [`MsgWithType`] to attach the [`MessageType`]
+// to the final output.
 impl Serialize for AriesMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        use serde::__private::ser::FlatMapSerializer;
+        self.delayed_serialize(serializer)
+    }
+}
 
-        // Serializing a struct to serde's internal data model happens in three steps,
-        // as described (here)[https://serde.rs/impl-serialize.html#serializing-a-sequence-or-map].
-        //
-        // We initialize the serialization state.
-        let mut state = serializer.serialize_map(None)?;
-        // We populate the state with the serialized fields.
-        // The [`FlatMapSerializer`] is what serde_derive uses to flatten a structure during serialization.
-        // We need to accomplish the following:
-        // 1) Normally serialize the '@type' field which will contain a [`MessageType`] that's determined by
-        // the [`DelayedSerde`] impl on generic [`ConcreteMessage`] impls.
-        // 2) Flatten `self` (the actual message) so that it's placed adjacently to the '@type' field.
-        self.delayed_serialize(&mut state, &mut FlatMapSerializer)?;
-        // We end the serialization state, returning the data in it's serialized format.
-        state.end()
+/// Struct used for serializing an [`AriesMessage`]
+/// by also attaching the [`MessageType`] to the output.
+#[derive(Serialize)]
+pub(crate) struct MsgWithType<'a, T>
+where
+    T: ConcreteMessage,
+    MessageType: From<<T as ConcreteMessage>::Kind>,
+{
+    #[serde(rename = "@type")]
+    msg_type: MessageType,
+    #[serde(flatten)]
+    content: &'a T,
+}
+
+impl<'a, T> From<&'a T> for MsgWithType<'a, T>
+where
+    T: ConcreteMessage,
+    MessageType: From<<T as ConcreteMessage>::Kind>,
+{
+    fn from(content: &'a T) -> Self {
+        let msg_type = T::kind().into();
+        Self { msg_type, content }
     }
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    // use super::*;
+    use super::*;
 
-    // #[test]
-    // fn test_ser() {
-    //     let msg = AriesMessage::BasicMessage(BasicMessage {
-    //         field: "stuff".to_owned(),
-    //     });
-    //     println!("{}", serde_json::to_string(&msg).unwrap());
-    // }
+    #[test]
+    fn test_ser() {
+        let msg = AriesMessage::BasicMessage(BasicMessage {
+            id: "test".to_owned(),
+            sent_time: "test".to_owned(),
+            content: "test".to_owned(),
+            l10n: None,
+            thread: None,
+            timing: None,
+        });
 
-    // #[test]
-    // fn test_de() {
-    //     let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","field":"stuff"}"#;
-    //     let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-    //     println!("{msg:?}");
+        println!("{}", serde_json::to_string(&msg).unwrap());
+    }
 
-    //     let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","field":"stuff"}"#;
-    //     let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
-    //     println!("{msg:?}");
-    // }
+    #[test]
+    fn test_de() {
+        let json_str = r#"{"@type":"https://didcomm.org/basicmessage/1.0/message","@id":"test","sent_time":"test","content":"test"}"#;
+        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
+        println!("{msg:?}");
+
+        let json_str = r#"{"@type":"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message","@id":"test","sent_time":"test","content":"test"}"#;
+        let msg: AriesMessage = serde_json::from_str(json_str).unwrap();
+        println!("{msg:?}");
+    }
 }

@@ -3,7 +3,7 @@ mod reuse;
 mod reuse_accepted;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -36,17 +36,14 @@ impl DelayedSerde for OutOfBand {
         }
     }
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: serde::ser::SerializeMap,
-        F: FnMut(&'a mut M) -> S,
-        S: serde::Serializer,
-        S::Error: From<M::Error>,
+        S: Serializer,
     {
         match self {
-            Self::Invitation(v) => v.delayed_serialize(state, closure),
-            Self::HandshakeReuse(v) => v.delayed_serialize(state, closure),
-            Self::HandshakeReuseAccepted(v) => v.delayed_serialize(state, closure),
+            Self::Invitation(v) => v.delayed_serialize(serializer),
+            Self::HandshakeReuse(v) => v.delayed_serialize(serializer),
+            Self::HandshakeReuseAccepted(v) => v.delayed_serialize(serializer),
         }
     }
 }

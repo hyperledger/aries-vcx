@@ -2,7 +2,7 @@ mod ping;
 mod ping_response;
 
 use derive_more::From;
-use serde::{ser::SerializeMap, Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serializer};
 
 use crate::{
     delayed_serde::DelayedSerde,
@@ -33,16 +33,13 @@ impl DelayedSerde for TrustPing {
         }
     }
 
-    fn delayed_serialize<'a, M, F, S>(&self, state: &'a mut M, closure: &mut F) -> Result<S::Ok, S::Error>
+    fn delayed_serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        M: SerializeMap,
-        F: FnMut(&'a mut M) -> S,
         S: Serializer,
-        S::Error: From<M::Error>,
     {
         match self {
-            Self::Ping(v) => v.delayed_serialize(state, closure),
-            Self::PingResponse(v) => v.delayed_serialize(state, closure),
+            Self::Ping(v) => v.delayed_serialize(serializer),
+            Self::PingResponse(v) => v.delayed_serialize(serializer),
         }
     }
 }

@@ -19,6 +19,7 @@ pub struct BasicMessage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub l10n: Option<Localization>,
     #[serde(rename = "~thread")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
