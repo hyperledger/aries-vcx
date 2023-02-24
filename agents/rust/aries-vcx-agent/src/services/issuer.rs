@@ -9,7 +9,7 @@ use aries_vcx::core::profile::profile::Profile;
 use aries_vcx::handlers::issuance::issuer::Issuer;
 use aries_vcx::messages::a2a::A2AMessage;
 use aries_vcx::messages::protocols::issuance::credential_ack::CredentialAck;
-use aries_vcx::messages::protocols::issuance::credential_offer::OfferInfo;
+use aries_vcx::messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use aries_vcx::messages::protocols::issuance::credential_proposal::CredentialProposal;
 use aries_vcx::messages::protocols::issuance::credential_request::CredentialRequest;
 use aries_vcx::protocols::issuance::issuer::state_machine::IssuerState;
@@ -59,6 +59,15 @@ impl ServiceCredentialsIssuer {
         let issuer = Issuer::create_from_proposal("", proposal)?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, connection_id))
+    }
+
+    pub async fn create_cred_offer(&self, offer_info: OfferInfo) -> AgentResult<String> {
+        let mut issuer = Issuer::create("")?;
+        issuer
+            .build_credential_offer_msg(&self.profile, offer_info, None)
+            .await?;
+        self.creds_issuer
+            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, "")) // TODO
     }
 
     pub async fn send_credential_offer(
@@ -147,6 +156,11 @@ impl ServiceCredentialsIssuer {
     pub fn get_proposal(&self, thread_id: &str) -> AgentResult<CredentialProposal> {
         let issuer = self.get_issuer(thread_id)?;
         issuer.get_proposal().map_err(|err| err.into())
+    }
+
+    pub fn get_cred_offer(&self, thread_id: &str) -> AgentResult<CredentialOffer> {
+        let issuer = self.get_issuer(thread_id)?;
+        issuer.get_credential_offer().map_err(|err| err.into())
     }
 
     pub fn exists_by_id(&self, thread_id: &str) -> bool {
