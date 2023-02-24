@@ -39,7 +39,8 @@ impl<'de> Deserialize<'de> for Locale {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct MsgLocalization {
     catalogs: Option<Vec<Url>>,
-    #[serde(alias = "details")] // Might just be obsolete, but appears in https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md
+    #[serde(alias = "details")]
+    // Might just be obsolete, but appears in https://github.com/hyperledger/aries-rfcs/blob/main/features/0043-l10n/README.md
     locales: Option<HashMap<Locale, Vec<String>>>,
 }
 

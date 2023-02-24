@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{Thread, Timing},
-    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0}, macros::threadlike_opt_impl,
+    macros::threadlike_opt_impl,
+    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
 };
 
 use super::traits::ConcreteMessage;

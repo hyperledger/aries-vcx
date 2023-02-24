@@ -5,12 +5,13 @@ use transitive::{TransitiveFrom, TransitiveTryFrom};
 use crate::{
     aries_message::AriesMessage,
     decorators::{Thread, Timing},
+    macros::threadlike_opt_impl,
     message_type::{
         message_family::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
-    protocols::traits::ConcreteMessage, macros::threadlike_opt_impl,
+    protocols::traits::ConcreteMessage,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]

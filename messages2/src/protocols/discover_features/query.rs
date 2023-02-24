@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::{
-    decorators::Timing, message_type::message_family::discover_features::DiscoverFeaturesV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    aries_message::AriesMessage, decorators::Timing,
+    message_type::message_family::discover_features::DiscoverFeaturesV1_0, protocols::traits::ConcreteMessage,
 };
 
 use super::DiscoverFeatures;

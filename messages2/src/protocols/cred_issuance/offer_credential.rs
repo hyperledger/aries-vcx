@@ -10,7 +10,7 @@ use crate::{
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
 };
 
-use super::{CredentialPreview, CredentialIssuance};
+use super::{CredentialIssuance, CredentialPreview};
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "CredentialIssuanceV1_0::OfferCredential")]

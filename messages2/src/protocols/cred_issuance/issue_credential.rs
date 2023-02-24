@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Attachment, PleaseAck, Thread, Timing},
+    macros::threadlike_impl,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_impl,
+    protocols::traits::ConcreteMessage,
 };
 
 use super::CredentialIssuance;

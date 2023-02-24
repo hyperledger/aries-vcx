@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{PleaseAck, Thread, Timing},
+    macros::threadlike_opt_impl,
     message_type::message_family::revocation::RevocationV2_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_opt_impl,
+    protocols::traits::ConcreteMessage,
 };
 
 use super::Revocation;

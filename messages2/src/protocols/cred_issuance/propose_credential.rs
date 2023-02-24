@@ -5,8 +5,9 @@ use transitive::TransitiveFrom;
 use crate::{
     aries_message::AriesMessage,
     decorators::{Thread, Timing},
+    macros::threadlike_opt_impl,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::ConcreteMessage, macros::threadlike_opt_impl,
+    protocols::traits::ConcreteMessage,
 };
 
 use super::{CredentialIssuance, CredentialPreview};

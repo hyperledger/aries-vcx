@@ -4,8 +4,9 @@ use transitive::TransitiveFrom;
 
 use crate::{
     aries_message::AriesMessage,
+    macros::threadlike_ack,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::{common::ack::Ack, traits::ConcreteMessage}, macros::threadlike_ack,
+    protocols::{common::ack::Ack, traits::ConcreteMessage},
 };
 
 use super::CredentialIssuance;

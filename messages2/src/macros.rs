@@ -17,7 +17,7 @@ macro_rules! threadlike_ack {
                 Some(&self.0.thread)
             }
         }
-    }
+    };
 }
 
 macro_rules! threadlike_impl {
@@ -44,7 +44,7 @@ macro_rules! threadlike_opt_impl {
     };
 }
 
-pub(crate) use threadlike_impl;
-pub(crate) use threadlike_opt_impl;
 pub(crate) use msg_id;
 pub(crate) use threadlike_ack;
+pub(crate) use threadlike_impl;
+pub(crate) use threadlike_opt_impl;

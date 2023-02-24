@@ -4,8 +4,10 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0, aries_message::AriesMessage, macros::threadlike_opt_impl,
+    macros::threadlike_opt_impl,
+    message_type::message_family::connection::ConnectionV1_0,
 };
 
 use crate::protocols::traits::ConcreteMessage;
