@@ -8,4 +8,5 @@ pub struct AgentConfig {
     pub config_wallet: WalletConfig,
     pub config_agency_client: Option<AgencyClientConfig>,
     pub config_issuer: IssuerConfig,
+    pub service_endpoint: String,
 }
