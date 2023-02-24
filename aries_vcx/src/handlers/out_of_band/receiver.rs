@@ -131,7 +131,7 @@ impl OutOfBandReceiver {
             let attach_json = self.oob.requests_attach.content()?;
             match attach.id() {
                 Some(id) => match id {
-                    AttachmentId::CredentialOffer => {
+                    AttachmentId::CredentialOffer | AttachmentId::Request => {
                         let offer: CredentialOffer = serde_json::from_str(&attach_json).map_err(|_| {
                             AriesVcxError::from_msg(
                                 AriesVcxErrorKind::SerializationError,
