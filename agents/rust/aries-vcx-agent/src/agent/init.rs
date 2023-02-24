@@ -114,7 +114,7 @@ impl Agent {
 
         let connections = Arc::new(ServiceConnections::new(
             Arc::clone(&profile),
-            init_config.service_endpoint,
+            init_config.service_endpoint.clone(),
         ));
         let schemas = Arc::new(ServiceSchemas::new(
             Arc::clone(&profile),
@@ -145,6 +145,7 @@ impl Agent {
                 config_wallet,
                 config_issuer,
                 config_agency_client,
+                service_endpoint: init_config.service_endpoint,
             },
         })
     }
