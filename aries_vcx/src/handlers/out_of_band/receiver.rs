@@ -190,7 +190,7 @@ impl OutOfBandReceiver {
         Ok(None)
     }
 
-    pub async fn build_connection(
+    pub async fn build_mediated_connection(
         &self,
         profile: &Arc<dyn Profile>,
         agency_client: &AgencyClient,
@@ -198,7 +198,7 @@ impl OutOfBandReceiver {
         autohop_enabled: bool,
     ) -> VcxResult<MediatedConnection> {
         trace!(
-            "OutOfBandReceiver::build_connection >>> autohop_enabled: {}",
+            "OutOfBandReceiver::build_mediated_connection >>> autohop_enabled: {}",
             autohop_enabled
         );
         MediatedConnection::create_with_invite(

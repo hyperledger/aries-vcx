@@ -34,7 +34,9 @@ pub async fn out_of_band_receiver_nonmediated_connection_exists(
 
 #[napi]
 pub async fn out_of_band_receiver_build_connection(handle: u32) -> napi::Result<String> {
-    out_of_band::build_connection(handle).await.map_err(to_napi_err)
+    out_of_band::build_mediated_connection(handle)
+        .await
+        .map_err(to_napi_err)
 }
 
 #[napi]

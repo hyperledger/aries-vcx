@@ -467,7 +467,7 @@ pub extern "C" fn vcx_out_of_band_receiver_build_connection(
     );
 
     execute_async::<BoxFuture<'static, Result<(), ()>>>(Box::pin(async move {
-        match out_of_band::build_connection(handle).await {
+        match out_of_band::build_mediated_connection(handle).await {
             Ok(connection) => {
                 trace!(
                     "vcx_out_of_band_receiver_build_connection_cb(command_handle: {}, rc: {}, connection: {})",

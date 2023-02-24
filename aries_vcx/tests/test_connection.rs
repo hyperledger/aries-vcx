@@ -84,7 +84,7 @@ mod integration_tests {
             let conn = oob_receiver.connection_exists(&consumer.profile, &conns).await.unwrap();
             assert!(conn.is_none());
             let mut conn_receiver = oob_receiver
-                .build_connection(&consumer.profile, &consumer.agency_client, ddo, true)
+                .build_mediated_connection(&consumer.profile, &consumer.agency_client, ddo, true)
                 .await
                 .unwrap();
             conn_receiver
