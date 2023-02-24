@@ -2,8 +2,9 @@ use messages_macros::Message;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    decorators::{Localization, Thread, Timing},
-    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0}, macros::threadlike_opt_impl,
+    decorators::{MsgLocalization, Thread, Timing},
+    macros::threadlike_opt_impl,
+    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
 };
 
 use super::traits::ConcreteMessage;
@@ -17,7 +18,7 @@ pub struct BasicMessage {
     pub content: String,
     #[serde(rename = "~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub l10n: Option<Localization>,
+    pub l10n: Option<MsgLocalization>,
     #[serde(rename = "~thread")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread: Option<Thread>,

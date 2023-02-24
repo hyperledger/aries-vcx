@@ -15,7 +15,7 @@ pub trait Threadlike {
 
     fn thread_id(&self) -> &str {
         self.opt_thread()
-            .map(|t| t.thid.as_str())
+            .and_then(|t| t.thid.as_deref())
             .unwrap_or_else(|| self.msg_id())
     }
 

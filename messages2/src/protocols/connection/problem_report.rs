@@ -4,8 +4,9 @@ use transitive::TransitiveFrom;
 
 use crate::{
     aries_message::AriesMessage,
-    decorators::{Localization, Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0, macros::threadlike_impl,
+    decorators::{MsgLocalization, Thread, Timing},
+    macros::threadlike_impl,
+    message_type::message_family::connection::ConnectionV1_0,
 };
 
 use crate::protocols::traits::ConcreteMessage;
@@ -25,7 +26,7 @@ pub struct ProblemReport {
     pub explain: Option<String>,
     #[serde(rename = "~l10n")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub localization: Option<Localization>,
+    pub localization: Option<MsgLocalization>,
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[serde(rename = "~timing")]
