@@ -17,7 +17,7 @@ use crate::protocols::revocation_notification::sender::state_machine::SenderConf
 use crate::protocols::SendClosure;
 use messages::a2a::A2AMessage;
 use messages::concepts::mime_type::MimeType;
-use messages::protocols::issuance::credential_offer::OfferInfo;
+use messages::protocols::issuance::credential_offer::{CredentialOffer, OfferInfo};
 use messages::protocols::issuance::credential_proposal::CredentialProposal;
 use messages::protocols::issuance::CredentialPreviewData;
 
@@ -136,6 +136,10 @@ impl Issuer {
     pub fn get_credential_offer_msg(&self) -> VcxResult<A2AMessage> {
         let offer = self.issuer_sm.get_credential_offer_msg()?;
         Ok(offer.to_a2a_message())
+    }
+
+    pub fn get_credential_offer(&self) -> VcxResult<CredentialOffer> {
+        self.issuer_sm.get_credential_offer_msg()
     }
 
     pub fn mark_credential_offer_msg_sent(&mut self) -> VcxResult<()> {
