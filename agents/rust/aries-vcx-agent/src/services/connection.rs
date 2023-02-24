@@ -68,6 +68,23 @@ impl ServiceConnections {
         Ok(())
     }
 
+    pub async fn create_from_request(&self, request: Request) -> AgentResult<String> {
+        let inviter = Connection::new_inviter(
+            "".to_owned(),
+            PairwiseInfo::create(&self.profile.inject_wallet()).await?,
+        )
+        .into_invited(&request.get_thread_id())
+        .handle_request(
+            &self.profile.inject_wallet(),
+            request,
+            self.service_endpoint.clone(),
+            vec![],
+            &HttpClient,
+        )
+        .await?;
+        self.connections.insert(&inviter.thread_id().to_owned(), inviter.into())
+    }
+
     pub async fn accept_request(&self, thread_id: &str, request: Request) -> AgentResult<()> {
         let inviter = self.connections.get(thread_id)?;
 
