@@ -66,6 +66,7 @@ impl ServiceCredentialsIssuer {
         issuer
             .build_credential_offer_msg(&self.profile, offer_info, None)
             .await?;
+        issuer.mark_credential_offer_msg_sent()?;
         self.creds_issuer
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, "")) // TODO
     }
@@ -98,14 +99,21 @@ impl ServiceCredentialsIssuer {
             .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))
     }
 
-    pub fn process_credential_request(&self, thread_id: &str, request: CredentialRequest) -> AgentResult<()> {
+    pub fn process_credential_request(
+        &self,
+        thread_id: &str,
+        connection_id_: Option<&str>,
+        request: CredentialRequest,
+    ) -> AgentResult<()> {
         let IssuerWrapper {
             mut issuer,
             connection_id,
         } = self.creds_issuer.get(thread_id)?;
         issuer.process_credential_request(request)?;
-        self.creds_issuer
-            .insert(&issuer.get_thread_id()?, IssuerWrapper::new(issuer, &connection_id))?;
+        self.creds_issuer.insert(
+            &issuer.get_thread_id()?,
+            IssuerWrapper::new(issuer, &connection_id_.unwrap_or(&connection_id)),
+        )?;
         Ok(())
     }
 
