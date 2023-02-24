@@ -90,6 +90,8 @@ pub enum AttachmentId {
     PresentationRequest,
     #[serde(rename = "libindy-presentation-0")]
     Presentation,
+    #[serde(rename = "request-0")]
+    Request,
 }
 
 impl Json {
