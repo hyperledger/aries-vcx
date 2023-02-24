@@ -7,7 +7,10 @@ use crate::common::ledger::transactions::resolve_service;
 use crate::core::profile::profile::Profile;
 use crate::errors::error::prelude::*;
 use crate::handlers::connection::mediated_connection::MediatedConnection;
-use crate::protocols::connection::GenericConnection;
+use crate::protocols::connection::invitee::states::invited::Invited;
+use crate::protocols::connection::invitee::InviteeConnection;
+use crate::protocols::connection::{Connection, GenericConnection};
+use crate::protocols::mediated_connection::pairwise_info::PairwiseInfo;
 use messages::a2a::A2AMessage;
 use messages::concepts::attachment::AttachmentId;
 use messages::diddoc::aries::diddoc::AriesDidDoc;
@@ -210,6 +213,17 @@ impl OutOfBandReceiver {
             autohop_enabled,
         )
         .await
+    }
+
+    pub async fn build_connection(
+        &self,
+        profile: &Arc<dyn Profile>,
+        did_doc: AriesDidDoc,
+    ) -> VcxResult<InviteeConnection<Invited>> {
+        trace!("OutOfBandReceiver::build_connection >>>");
+        Connection::new_invitee(String::from(""), PairwiseInfo::create(&profile.inject_wallet()).await?)
+            .accept_invitation(profile, Invitation::OutOfBand(self.oob.clone()))
+            .await
     }
 
     pub fn to_a2a_message(&self) -> A2AMessage {
