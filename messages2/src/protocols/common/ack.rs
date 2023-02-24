@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::decorators::{Thread, Timing};
+use crate::{
+    decorators::{Thread, Timing},
+    macros::threadlike_impl,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Ack {
@@ -13,6 +16,8 @@ pub struct Ack {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(Ack);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AckStatus {

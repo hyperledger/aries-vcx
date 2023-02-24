@@ -3,11 +3,13 @@ use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{PleaseAck, Thread, Timing},
+    macros::threadlike_impl,
     message_type::{
         message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
         MessageFamily, MessageType,
-    }, aries_message::AriesMessage,
+    },
 };
 
 use crate::protocols::traits::ConcreteMessage;
@@ -17,7 +19,7 @@ use super::Connection;
 #[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
 #[message(kind = "ConnectionV1_0::Response")]
 #[transitive(into(Connection, AriesMessage))]
-pub struct SignedResponse {
+pub struct Response {
     #[serde(rename = "@id")]
     pub id: String,
     #[serde(rename = "~thread")]
@@ -31,6 +33,8 @@ pub struct SignedResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(Response);
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ConnectionSignature {

@@ -10,7 +10,7 @@ use crate::{
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, macros::threadlike_opt_impl,
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
@@ -29,6 +29,8 @@ pub struct ProposePresentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(ProposePresentation);
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PresentationPreview {
@@ -86,7 +88,7 @@ pub struct Predicate {
     pub predicate: PredicateOperator,
     pub threshold: i64,
     #[serde(flatten)]
-    pub referent: Option<Referent>, // not sure if a default has to be set here in case only one field is missing
+    pub referent: Option<Referent>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

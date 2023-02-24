@@ -14,3 +14,4 @@ pub mod message_type;
 pub mod mime_type;
 pub mod protocols;
 mod utils;
+mod macros;

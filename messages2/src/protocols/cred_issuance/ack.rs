@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     aries_message::AriesMessage,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::{common::ack::Ack, traits::ConcreteMessage},
+    protocols::{common::ack::Ack, traits::ConcreteMessage}, macros::threadlike_ack,
 };
 
 use super::CredentialIssuance;
@@ -14,4 +14,6 @@ use super::CredentialIssuance;
 #[message(kind = "CredentialIssuanceV1_0::Ack")]
 #[transitive(into(CredentialIssuance, AriesMessage))]
 #[serde(transparent)]
-pub struct AckCredential(Ack);
+pub struct AckCredential(pub Ack);
+
+threadlike_ack!(AckCredential);

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::aries_message::AriesMessage;
+use crate::macros::threadlike_opt_impl;
 use crate::protocols::traits::ConcreteMessage;
 use crate::{
     decorators::{Attachment, Thread, Timing},
@@ -29,3 +30,5 @@ pub struct OfferCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(OfferCredential);

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{Thread, Timing},
-    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
+    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0}, macros::threadlike_opt_impl,
 };
 
 use super::traits::ConcreteMessage;
@@ -46,6 +46,8 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(ProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Description {

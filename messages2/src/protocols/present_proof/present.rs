@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     decorators::{Attachment, PleaseAck, Thread, Timing},
     message_type::message_family::present_proof::PresentProofV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_impl,
 };
 
 use super::PresentProof;
@@ -29,3 +29,5 @@ pub struct Presentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(Presentation);

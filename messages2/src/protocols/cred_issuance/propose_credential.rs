@@ -6,7 +6,7 @@ use crate::{
     aries_message::AriesMessage,
     decorators::{Thread, Timing},
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, macros::threadlike_opt_impl,
 };
 
 use super::{CredentialIssuance, CredentialPreview};
@@ -29,3 +29,5 @@ pub struct ProposeCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(ProposeCredential);

@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 
 use crate::{
     decorators::{Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0, aries_message::AriesMessage,
+    message_type::message_family::connection::ConnectionV1_0, aries_message::AriesMessage, macros::threadlike_opt_impl,
 };
 
 use crate::protocols::traits::ConcreteMessage;
@@ -27,6 +27,8 @@ pub struct Request {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(Request);
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ConnectionData {

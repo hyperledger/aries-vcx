@@ -3,9 +3,11 @@ use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::{
+    aries_message::AriesMessage,
     decorators::{Attachment, Thread, Timing},
+    macros::threadlike_opt_impl,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage,
 };
 
 use super::CredentialIssuance;
@@ -26,3 +28,5 @@ pub struct RequestCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(RequestCredential);

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::decorators::{Thread, Timing};
+use crate::{decorators::{Thread, Timing}, macros::threadlike_opt_impl};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProblemReport {
@@ -39,6 +39,8 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(ProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Description {

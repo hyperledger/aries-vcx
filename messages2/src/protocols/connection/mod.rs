@@ -12,7 +12,7 @@ use crate::{
     utils,
 };
 
-use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::SignedResponse};
+use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::Response};
 
 pub use invitation::CompleteInvitation;
 
@@ -20,7 +20,7 @@ pub use invitation::CompleteInvitation;
 pub enum Connection {
     Invitation(Invitation),
     Request(Request),
-    Response(SignedResponse),
+    Response(Response),
     ProblemReport(ProblemReport),
 }
 
@@ -37,7 +37,7 @@ impl DelayedSerde for Connection {
         match minor {
             ConnectionV1_0::Invitation => Invitation::deserialize(deserializer).map(From::from),
             ConnectionV1_0::Request => Request::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::Response => SignedResponse::deserialize(deserializer).map(From::from),
+            ConnectionV1_0::Response => Response::deserialize(deserializer).map(From::from),
             ConnectionV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
             ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }

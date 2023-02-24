@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     aries_message::AriesMessage,
     decorators::{Localization, Thread, Timing},
-    message_type::message_family::connection::ConnectionV1_0,
+    message_type::message_family::connection::ConnectionV1_0, macros::threadlike_impl,
 };
 
 use crate::protocols::traits::ConcreteMessage;
@@ -32,6 +32,8 @@ pub struct ProblemReport {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(ProblemReport);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]

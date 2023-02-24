@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     decorators::{Thread, Timing},
     message_type::message_family::trust_ping::TrustPingV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_opt_impl,
 };
 
 use super::TrustPing;
@@ -27,3 +27,5 @@ pub struct Ping {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(Ping);

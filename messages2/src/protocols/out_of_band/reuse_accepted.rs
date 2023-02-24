@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     decorators::{Thread, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_impl,
 };
 
 use super::OutOfBand;
@@ -22,3 +22,5 @@ pub struct HandshakeReuseAccepted {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(HandshakeReuseAccepted);

@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::{message_type::MessageType, decorators::Thread};
+use crate::{decorators::Thread, message_type::MessageType};
 
 pub trait ConcreteMessage {
     type Kind: Into<MessageType> + PartialEq + Debug;
@@ -9,19 +9,20 @@ pub trait ConcreteMessage {
 }
 
 pub trait Threadlike {
-    fn thread(&self) -> &Thread;
+    fn msg_id(&self) -> &str;
 
-    fn thread_id(&self) -> &str {
-        &self.thread().thid
-    }
-
-    fn matches_thread(&self) -> bool;
-}
-
-pub trait ThreadlikeOptional {
     fn opt_thread(&self) -> Option<&Thread>;
 
-    fn opt_thread_id(&self) -> Option<&str> {
-        self.opt_thread().map(|t| t.thid.as_str())
+    fn thread_id(&self) -> &str {
+        self.opt_thread()
+            .map(|t| t.thid.as_str())
+            .unwrap_or_else(|| self.msg_id())
+    }
+
+    fn matches_thread<T>(&self, thread_id: T) -> bool
+    where
+        T: AsRef<str>,
+    {
+        self.thread_id() == thread_id.as_ref()
     }
 }

@@ -10,7 +10,7 @@ pub struct Thread {
     #[serde(default)]
     pub sender_order: u32,
     #[serde(default)]
-    pub received_orders: HashMap<String, u32>,
+    pub received_orders: HashMap<String, u32>, // should get replaced with DID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<ThreadGoalCode>,
 }

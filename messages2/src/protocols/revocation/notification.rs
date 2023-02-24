@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     decorators::{PleaseAck, Thread, Timing},
     message_type::message_family::revocation::RevocationV2_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_opt_impl,
 };
 
 use super::Revocation;
@@ -30,6 +30,8 @@ pub struct Revoke {
     #[serde(skip_serializing_if = "Option::is_none")]
     thread: Option<Thread>,
 }
+
+threadlike_opt_impl!(Revoke);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
 #[serde(rename_all = "kebab-case")]

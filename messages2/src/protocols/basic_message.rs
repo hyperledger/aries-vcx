@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{Localization, Thread, Timing},
-    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
+    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0}, macros::threadlike_opt_impl,
 };
 
 use super::traits::ConcreteMessage;
@@ -25,3 +25,5 @@ pub struct BasicMessage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_opt_impl!(BasicMessage);

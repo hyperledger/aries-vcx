@@ -6,7 +6,7 @@ use crate::{
     aries_message::AriesMessage,
     decorators::{Thread, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::ConcreteMessage, macros::threadlike_impl,
 };
 
 use super::OutOfBand;
@@ -23,3 +23,5 @@ pub struct HandshakeReuse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(HandshakeReuse);

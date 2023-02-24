@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     decorators::{Attachment, PleaseAck, Thread, Timing},
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
-    protocols::traits::ConcreteMessage, aries_message::AriesMessage,
+    protocols::traits::ConcreteMessage, aries_message::AriesMessage, macros::threadlike_impl,
 };
 
 use super::CredentialIssuance;
@@ -29,3 +29,5 @@ pub struct IssueCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
+
+threadlike_impl!(IssueCredential);

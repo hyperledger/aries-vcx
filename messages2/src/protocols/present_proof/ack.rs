@@ -5,7 +5,7 @@ use transitive::TransitiveFrom;
 use crate::{
     aries_message::AriesMessage,
     message_type::message_family::present_proof::PresentProofV1_0,
-    protocols::{common::ack::Ack, traits::ConcreteMessage},
+    protocols::{common::ack::Ack, traits::ConcreteMessage}, macros::threadlike_ack,
 };
 
 use super::PresentProof;
@@ -15,3 +15,5 @@ use super::PresentProof;
 #[transitive(into(PresentProof, AriesMessage))]
 #[serde(transparent)]
 pub struct AckPresentation(Ack);
+
+threadlike_ack!(AckPresentation);
