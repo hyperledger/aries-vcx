@@ -608,9 +608,9 @@ mod tests {
     fn test_vcx_create_schema_success() {
         let _setup = SetupMocks::init();
 
-        let foo = prepare_schema_data();
-        // let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
-        // assert!(handle > 0)
+        let (_, schema_name, schema_version, data) = prepare_schema_data();
+        let handle = vcx_schema_create_c_closure(&schema_name, &schema_version, &data).unwrap();
+        assert!(handle > 0)
     }
 
     #[test]
