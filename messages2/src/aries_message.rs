@@ -136,8 +136,8 @@ impl<'de> Deserialize<'de> for AriesMessage {
         let tag_visitor = TaggedContentVisitor::<MessageType>::new(MSG_TYPE, "internally tagged enum A2AMessage");
         let tagged = deserializer.deserialize_any(tag_visitor)?;
 
-        // As the TaggedContent struct has two fields, tag and content, where in our case the tag is `MessageType`,
-        // the content is [`Content`], the cached remaining fields of the serialized data.
+        // The TaggedContent struct has two fields, tag and content, where in our case the tag is `MessageType`
+        // and the content is [`Content`], the cached remaining fields of the serialized data.
         // Serde uses this [`ContentDeserializer`] to deserialize from that format.
         let content_deser = ContentDeserializer::<D::Error>::new(tagged.content);
 
