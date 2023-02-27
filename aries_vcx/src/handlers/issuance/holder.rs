@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use messages::protocols::issuance::credential::Credential;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 use messages::protocols::revocation_notification::revocation_notification::RevocationNotification;
 use std::sync::Arc;
 
@@ -63,6 +64,21 @@ impl Holder {
             .holder_sm
             .clone()
             .send_request(profile, my_pw_did, send_message)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn send_request_1(
+        &mut self,
+        profile: &Arc<dyn Profile>,
+        my_pw_did: String,
+        service: ServiceOob,
+        send_message: SendClosure,
+    ) -> VcxResult<()> {
+        self.holder_sm = self
+            .holder_sm
+            .clone()
+            .send_request_1(profile, my_pw_did, service, send_message)
             .await?;
         Ok(())
     }

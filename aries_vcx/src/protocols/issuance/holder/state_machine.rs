@@ -5,11 +5,13 @@ use std::sync::Arc;
 use messages::a2a::{A2AMessage, MessageId};
 use messages::concepts::ack::Ack;
 use messages::concepts::problem_report::ProblemReport;
+use messages::diddoc::aries::service::AriesService;
 use messages::protocols::issuance::credential::Credential;
 use messages::protocols::issuance::credential_ack::CredentialAck;
 use messages::protocols::issuance::credential_offer::CredentialOffer;
 use messages::protocols::issuance::credential_proposal::{CredentialProposal, CredentialProposalData};
 use messages::protocols::issuance::credential_request::CredentialRequest;
+use messages::protocols::out_of_band::service_oob::ServiceOob;
 use messages::status::Status;
 
 use crate::common::credentials::{get_cred_rev_id, is_cred_revoked};
@@ -258,6 +260,41 @@ impl HolderSM {
         let state = match self.state {
             HolderFullState::OfferReceived(state_data) => {
                 match _make_credential_request(profile, self.thread_id.clone(), my_pw_did, &state_data.offer).await {
+                    Ok((cred_request, req_meta, cred_def_json)) => {
+                        send_message(cred_request.to_a2a_message()).await?;
+                        HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
+                    }
+                    Err(err) => {
+                        let problem_report = build_problem_report_msg(Some(err.to_string()), &self.thread_id);
+                        error!(
+                            "Failed to create credential request, sending problem report: {:?}",
+                            problem_report
+                        );
+                        send_message(problem_report.to_a2a_message()).await?;
+                        HolderFullState::Finished(problem_report.into())
+                    }
+                }
+            }
+            s => {
+                warn!("Unable to send credential request in state {}", s);
+                s
+            }
+        };
+        Ok(Self { state, ..self })
+    }
+
+    pub async fn send_request_1(
+        self,
+        profile: &Arc<dyn Profile>,
+        my_pw_did: String,
+        service: ServiceOob,
+        send_message: SendClosure,
+    ) -> VcxResult<Self> {
+        let state = match self.state {
+            HolderFullState::OfferReceived(state_data) => {
+                match _make_credential_request_1(profile, self.thread_id.clone(), my_pw_did, service, &state_data.offer)
+                    .await
+                {
                     Ok((cred_request, req_meta, cred_def_json)) => {
                         send_message(cred_request.to_a2a_message()).await?;
                         HolderFullState::RequestSent((state_data, req_meta, cred_def_json).into())
@@ -614,6 +651,38 @@ async fn _make_credential_request(
         create_credential_request(profile, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
     let mut credential_request_msg = build_credential_request_msg(req, &thread_id)?;
+    if let Some(thread) = &offer.thread {
+        if let Some(pthid) = &thread.pthid {
+            credential_request_msg = credential_request_msg.set_parent_thread_id(pthid);
+        }
+    };
+    Ok((credential_request_msg, req_meta, cred_def_json))
+}
+
+async fn _make_credential_request_1(
+    profile: &Arc<dyn Profile>,
+    thread_id: String,
+    my_pw_did: String,
+    service: ServiceOob,
+    offer: &CredentialOffer,
+) -> VcxResult<(CredentialRequest, String, String)> {
+    trace!(
+        "Holder::_make_credential_request_1 >>> my_pw_did: {:?}, offer: {:?}",
+        my_pw_did,
+        offer
+    );
+
+    let cred_offer = offer.offers_attach.content()?;
+    trace!("Parsed cred offer attachment: {}", cred_offer);
+    let cred_def_id = parse_cred_def_id_from_cred_offer(&cred_offer)?;
+    let (req, req_meta, _cred_def_id, cred_def_json) =
+        create_credential_request(profile, &cred_def_id, &my_pw_did, &cred_offer).await?;
+    trace!("Created cred def json: {}", cred_def_json);
+    let mut credential_request_msg = CredentialRequest::create()
+        .set_thread_id(&thread_id)
+        .set_out_time()
+        .set_service(service)
+        .set_requests_attach(req)?;
     if let Some(thread) = &offer.thread {
         if let Some(pthid) = &thread.pthid {
             credential_request_msg = credential_request_msg.set_parent_thread_id(pthid);

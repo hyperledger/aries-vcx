@@ -3,6 +3,7 @@ use crate::concepts::attachment::{AttachmentId, Attachments};
 use crate::concepts::thread::Thread;
 use crate::concepts::timing::Timing;
 use crate::errors::error::MessagesResult;
+use crate::protocols::out_of_band::service_oob::ServiceOob;
 use crate::timing_optional;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Default)]
@@ -18,6 +19,9 @@ pub struct CredentialRequest {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
+    #[serde(rename = "~service")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service: Option<ServiceOob>,
 }
 
 threadlike_optional!(CredentialRequest);
@@ -40,6 +44,11 @@ impl CredentialRequest {
             serde_json::Value::String(credential_request),
         )?;
         Ok(self)
+    }
+
+    pub fn set_service(mut self, service: ServiceOob) -> Self {
+        self.service = Some(service);
+        self
     }
 }
 
