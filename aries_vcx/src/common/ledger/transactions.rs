@@ -127,7 +127,7 @@ pub async fn into_did_doc(profile: &Arc<dyn Profile>, invitation: &Invitation) -
     Ok(did_doc)
 }
 
-fn _ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
+pub fn ed25519_public_key_to_did_key(public_key_base58: &str) -> VcxResult<String> {
     let public_key_bytes = bs58::decode(public_key_base58).into_vec().map_err(|_| {
         AriesVcxError::from_msg(
             AriesVcxErrorKind::InvalidDid,
@@ -360,7 +360,7 @@ mod test {
     async fn test_public_key_to_did_naked_with_previously_known_keys_suggested() {
         let did_pub_with_key = "did:key:z6MkwHgArrRJq3tTdhQZKVAa1sdFgSAs5P5N1C4RJcD11Ycv".to_string();
         let did_pub = "HqR8GcAsVWPzXCZrdvCjAn5Frru1fVq1KB9VULEz6KqY".to_string();
-        let did_raw = _ed25519_public_key_to_did_key(&did_pub).unwrap();
+        let did_raw = ed25519_public_key_to_did_key(&did_pub).unwrap();
         let recipient_keys = vec![did_raw];
         let expected_output = vec![did_pub_with_key];
         assert_eq!(recipient_keys, expected_output);
@@ -370,7 +370,7 @@ mod test {
     async fn test_public_key_to_did_naked_with_previously_known_keys_rfc_0360() {
         let did_pub_with_key_rfc_0360 = "did:key:z6MkmjY8GnV5i9YTDtPETC2uUAW6ejw3nk5mXF5yci5ab7th".to_string();
         let did_pub_rfc_0360 = "8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K".to_string();
-        let did_raw = _ed25519_public_key_to_did_key(&did_pub_rfc_0360).unwrap();
+        let did_raw = ed25519_public_key_to_did_key(&did_pub_rfc_0360).unwrap();
         let recipient_keys = vec![did_raw];
         let expected_output = vec![did_pub_with_key_rfc_0360];
         assert_eq!(recipient_keys, expected_output);
