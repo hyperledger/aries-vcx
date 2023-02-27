@@ -613,7 +613,12 @@ async fn _make_credential_request(
     let (req, req_meta, _cred_def_id, cred_def_json) =
         create_credential_request(profile, &cred_def_id, &my_pw_did, &cred_offer).await?;
     trace!("Created cred def json: {}", cred_def_json);
-    let credential_request_msg = build_credential_request_msg(req, &thread_id)?;
+    let mut credential_request_msg = build_credential_request_msg(req, &thread_id)?;
+    if let Some(thread) = &offer.thread {
+        if let Some(pthid) = &thread.pthid {
+            credential_request_msg = credential_request_msg.set_parent_thread_id(pthid);
+        }
+    };
     Ok((credential_request_msg, req_meta, cred_def_json))
 }
 
