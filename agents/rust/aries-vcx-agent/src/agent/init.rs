@@ -2,10 +2,6 @@ use std::sync::Arc;
 
 use aries_vcx::{
     agency_client::{agency_client::AgencyClient, configuration::AgentProvisionConfig},
-    common::ledger::{
-        service_didsov::{DidSovServiceType, EndpointDidSov},
-        transactions::write_endpoint,
-    },
     core::profile::{indy_profile::IndySdkProfile, profile::Profile},
     global::settings::init_issuer_config,
     indy::{
@@ -94,16 +90,6 @@ impl Agent {
         let profile: Arc<dyn Profile> = Arc::new(indy_profile);
         let wallet = profile.inject_wallet();
 
-        let service = EndpointDidSov::create()
-            .set_service_endpoint(init_config.service_endpoint.clone())
-            .set_routing_keys(Some(vec![]))
-            .set_types(Some(vec![
-                DidSovServiceType::Endpoint,
-                DidSovServiceType::DidCommunication,
-            ]));
-        write_endpoint(&profile, &config_issuer.institution_did, &service)
-            .await
-            .unwrap();
         let (mediated_connections, config_agency_client) = if let Some(agency_config) = init_config.agency_config {
             let config_provision_agent = AgentProvisionConfig {
                 agency_did: agency_config.agency_did,
