@@ -224,7 +224,7 @@ pub mod tests {
     use aries_vcx::utils::mockdata::mock_settings::MockBuilder;
     use aries_vcx::utils::mockdata::mockdata_proof;
 
-    use crate::api_vcx::api_handle::mediated_connection::tests::build_test_connection_inviter_requested;
+    use crate::api_vcx::api_handle::mediated_connection::test_utils::build_test_connection_inviter_requested;
     use crate::api_vcx::api_handle::proof;
     use crate::aries_vcx::protocols::proof_presentation::verifier::state_machine::VerifierState;
     use crate::errors::error;

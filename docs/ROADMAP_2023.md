@@ -29,7 +29,7 @@ contributors by improving documentation, lowering barriers starting an aries-vcx
 project off the ground.
 
 ### And more
-widening aries protocol support (didexchange, newer version of issuance and presentation protocols);
+Widening aries protocol support (didexchange, newer version of issuance and presentation protocols);
 increasing AATH coverage, enhancing code quality, testing speed, coverage; exploring didcomm 2.0; 
 starting of new projects on top of aries-vcx (pickup protocol compliant mediator, 
 cli tools) - are also on the list.

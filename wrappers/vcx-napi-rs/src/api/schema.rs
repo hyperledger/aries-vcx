@@ -1,7 +1,7 @@
 use napi_derive::napi;
 
 use crate::error::to_napi_err;
-use vcx::api_vcx::api_handle::schema;
+use libvcx_core::api_vcx::api_handle::schema;
 
 #[napi]
 fn schema_get_attributes(_source_id: String, _schema_id: String) -> napi::Result<()> {

@@ -56,7 +56,7 @@ pub fn state_vcx_shutdown(delete: bool) {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::api_c::vcx::vcx_shutdown;
+    use crate::api_vcx::api_global::state::state_vcx_shutdown;
     use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
     use crate::api_vcx::api_handle::credential::credential_create_with_offer;
     use crate::api_vcx::api_handle::disclosed_proof::create_with_proof_request;
@@ -75,7 +75,7 @@ pub mod tests {
         let _setup = SetupMocks::init();
 
         let data = r#"["name","male"]"#;
-        let connection = mediated_connection::tests::build_test_connection_inviter_invited().await;
+        let connection = mediated_connection::test_utils::build_test_connection_inviter_invited().await;
         let credentialdef = credential_def::create("SID".to_string(), "id".to_string(), "tag".to_string(), false)
             .await
             .unwrap();
@@ -95,7 +95,7 @@ pub mod tests {
         let disclosed_proof = create_with_proof_request("id", ARIES_PROOF_REQUEST_PRESENTATION).unwrap();
         let credential = credential_create_with_offer("name", ARIES_CREDENTIAL_OFFER).unwrap();
 
-        vcx_shutdown(true);
+        state_vcx_shutdown(true);
         assert_eq!(mediated_connection::is_valid_handle(connection), false);
         assert_eq!(issuer_credential::is_valid_handle(issuer_credential), false);
         assert_eq!(schema::is_valid_handle(schema), false);

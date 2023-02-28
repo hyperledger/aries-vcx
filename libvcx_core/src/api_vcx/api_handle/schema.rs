@@ -165,38 +165,17 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     SCHEMA_MAP.get(handle, |s| Ok(s.get_state()))
 }
 
-#[cfg(test)]
-pub mod tests {
+#[cfg(feature = "test_utils")]
+pub mod test_utils {
     use rand::Rng;
 
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::common::ledger::transactions::add_new_did;
-    #[cfg(feature = "pool_tests")]
-    use aries_vcx::common::test_utils::create_and_write_test_schema;
-    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
-    #[cfg(feature = "pool_tests")]
     use aries_vcx::utils::constants;
     use aries_vcx::utils::constants::SCHEMA_ID;
-    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks};
 
     use crate::api_vcx::api_global::settings::get_config_value;
     use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
-    #[cfg(feature = "pool_tests")]
-    use crate::api_vcx::api_handle::schema;
-    #[cfg(feature = "pool_tests")]
-    use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
 
     use super::*;
-
-    fn data() -> Vec<String> {
-        vec![
-            "address1".to_string(),
-            "address2".to_string(),
-            "zip".to_string(),
-            "city".to_string(),
-            "state".to_string(),
-        ]
-    }
 
     pub fn prepare_schema_data() -> (String, String, String, String) {
         let data = json!(data()).to_string();
@@ -218,12 +197,47 @@ pub mod tests {
             .unwrap()
     }
 
-    fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
+    pub fn check_schema(schema_handle: u32, schema_json: &str, schema_id: &str, data: &str) {
         let schema: Schema = Schema::from_string_versioned(schema_json).unwrap();
         assert_eq!(schema.schema_id, schema_id.to_string());
         assert_eq!(schema.data.clone().sort(), vec!(data).sort());
         assert!(schema_handle > 0);
     }
+
+    fn data() -> Vec<String> {
+        vec![
+            "address1".to_string(),
+            "address2".to_string(),
+            "zip".to_string(),
+            "city".to_string(),
+            "state".to_string(),
+        ]
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use rand::Rng;
+
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::common::ledger::transactions::add_new_did;
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::common::test_utils::create_and_write_test_schema;
+    use aries_vcx::global::settings::CONFIG_INSTITUTION_DID;
+    #[cfg(feature = "pool_tests")]
+    use aries_vcx::utils::constants;
+    use aries_vcx::utils::constants::SCHEMA_ID;
+    use aries_vcx::utils::devsetup::{SetupDefaults, SetupEmpty, SetupMocks};
+
+    use crate::api_vcx::api_global::settings::get_config_value;
+    use crate::api_vcx::api_global::wallet::get_main_wallet_handle;
+    #[cfg(feature = "pool_tests")]
+    use crate::api_vcx::api_handle::schema;
+    use crate::api_vcx::api_handle::schema::test_utils::{check_schema, create_schema_real, prepare_schema_data};
+    #[cfg(feature = "pool_tests")]
+    use crate::api_vcx::utils::devsetup::SetupGlobalsWalletPoolAgency;
+
+    use super::*;
 
     #[tokio::test]
     #[cfg(feature = "general_test")]

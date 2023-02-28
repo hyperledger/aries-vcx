@@ -1,7 +1,7 @@
 use napi_derive::napi;
 
-use vcx::api_vcx::api_global::state::state_vcx_shutdown;
-use vcx::api_vcx::api_global::VERSION_STRING;
+use libvcx_core::api_vcx::api_global::state::state_vcx_shutdown;
+use libvcx_core::api_vcx::api_global::VERSION_STRING;
 
 #[napi]
 pub fn shutdown(delete_all: Option<bool>) -> ::napi::Result<()> {

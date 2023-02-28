@@ -8,29 +8,27 @@ use aries_vcx::agency_client::configuration::AgentProvisionConfig;
 use aries_vcx::agency_client::messages::update_message::UIDsByConn;
 use aries_vcx::agency_client::testing::mocking::AgencyMock;
 use aries_vcx::agency_client::MessageStatusCode;
-
 use aries_vcx::utils::constants::*;
-
-use crate::api_c::types::CommandHandle;
-use crate::api_vcx::api_global::agency_client::agency_update_messages;
-use crate::api_vcx::api_global::agency_client::provision_cloud_agent;
-use crate::api_vcx::api_global::ledger::{
+use libvcx_core::api_vcx::api_global::agency_client::agency_update_messages;
+use libvcx_core::api_vcx::api_global::agency_client::provision_cloud_agent;
+use libvcx_core::api_vcx::api_global::ledger::{
     endorse_transaction, get_ledger_txn, get_verkey_from_ledger, ledger_get_service, ledger_write_endpoint_legacy,
     rotate_verkey,
 };
-use crate::api_vcx::api_handle::mediated_connection;
-use crate::api_vcx::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
-use crate::errors::error;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind};
-
-use crate::api_vcx::api_global::wallet::{
+use libvcx_core::api_vcx::api_global::wallet::{
     key_for_local_did, replace_did_keys_start, rotate_verkey_apply, wallet_create_pairwise_did,
     wallet_unpack_message_to_string,
 };
+use libvcx_core::api_vcx::api_handle::mediated_connection;
+use libvcx_core::api_vcx::api_handle::mediated_connection::{parse_connection_handles, parse_status_codes};
+use libvcx_core::errors;
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
 
 use crate::api_c::cutils::cstring::CStringUtils;
 use crate::api_c::cutils::current_error::{set_current_error, set_current_error_vcx};
 use crate::api_c::cutils::runtime::execute_async;
+use crate::api_c::types::CommandHandle;
+use crate::error::SUCCESS_ERR_CODE;
 
 /// Provision an agent in the agency.
 ///
@@ -106,7 +104,7 @@ pub extern "C" fn vcx_provision_cloud_agent(
                     trace!(
                         "vcx_provision_cloud_agent_cb(command_handle: {}, rc: {}, config: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE,
+                        SUCCESS_ERR_CODE,
                         agency_config
                     );
                     let msg = CStringUtils::string_to_cstring(agency_config);
@@ -118,7 +116,7 @@ pub extern "C" fn vcx_provision_cloud_agent(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -208,7 +206,7 @@ pub extern "C" fn vcx_v2_messages_download(
     let message_statuses = match parse_status_codes(message_statuses) {
         Ok(statuses) => statuses,
         Err(_err) => {
-            return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, "Invalid connection handle").into()
+            return LibvcxError::from_msg(LibvcxErrorKind::InvalidConnectionHandle, "Invalid connection handle").into();
         }
     };
 
@@ -237,12 +235,12 @@ pub extern "C" fn vcx_v2_messages_download(
                             trace!(
                                 "vcx_v2_messages_download_cb(command_handle: {}, rc: {}, messages: {})",
                                 command_handle,
-                                error::SUCCESS_ERR_CODE,
+                                SUCCESS_ERR_CODE,
                                 err
                             );
 
                             let msg = CStringUtils::string_to_cstring(err);
-                            cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
+                            cb(command_handle, SUCCESS_ERR_CODE, msg.as_ptr());
                         }
                         Err(err) => {
                             let err = LibvcxError::from_msg(
@@ -274,7 +272,7 @@ pub extern "C" fn vcx_v2_messages_download(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 /// Update the status of messages from the specified connection
@@ -349,10 +347,10 @@ pub extern "C" fn vcx_messages_update_status(
                     trace!(
                         "vcx_messages_set_status_cb(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE
+                        SUCCESS_ERR_CODE
                     );
 
-                    cb(command_handle, error::SUCCESS_ERR_CODE);
+                    cb(command_handle, SUCCESS_ERR_CODE);
                 }
                 Err(err) => {
                     error!(
@@ -369,7 +367,7 @@ pub extern "C" fn vcx_messages_update_status(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 /// Set the pool handle before calling vcx_init_minimal
@@ -383,9 +381,9 @@ pub extern "C" fn vcx_messages_update_status(
 #[no_mangle]
 pub extern "C" fn vcx_pool_set_handle(handle: i32) -> i32 {
     if handle <= 0 {
-        crate::api_vcx::api_global::pool::set_main_pool_handle(None);
+        libvcx_core::api_vcx::api_global::pool::set_main_pool_handle(None);
     } else {
-        crate::api_vcx::api_global::pool::set_main_pool_handle(Some(handle));
+        libvcx_core::api_vcx::api_global::pool::set_main_pool_handle(Some(handle));
     }
 
     handle
@@ -423,10 +421,10 @@ pub extern "C" fn vcx_endorse_transaction(
                 trace!(
                     "vcx_endorse_transaction(command_handle: {}, rc: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE
+                    SUCCESS_ERR_CODE
                 );
 
-                cb(command_handle, error::SUCCESS_ERR_CODE);
+                cb(command_handle, SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -441,7 +439,7 @@ pub extern "C" fn vcx_endorse_transaction(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -462,9 +460,9 @@ pub extern "C" fn vcx_rotate_verkey(
                 trace!(
                     "vcx_rotate_verkey_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE
+                    SUCCESS_ERR_CODE
                 );
-                cb(command_handle, error::SUCCESS_ERR_CODE);
+                cb(command_handle, SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!("vcx_rotate_verkey_cb(command_handle: {}, rc: {})", command_handle, err);
@@ -476,7 +474,7 @@ pub extern "C" fn vcx_rotate_verkey(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -501,11 +499,11 @@ pub extern "C" fn vcx_rotate_verkey_start(
                 trace!(
                     "vcx_rotate_verkey_start_cb(command_handle: {}, rc: {}, temp_vk: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE,
+                    SUCCESS_ERR_CODE,
                     temp_vk
                 );
                 let temp_vk = CStringUtils::string_to_cstring(temp_vk);
-                cb(command_handle, error::SUCCESS_ERR_CODE, temp_vk.as_ptr());
+                cb(command_handle, SUCCESS_ERR_CODE, temp_vk.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -520,7 +518,7 @@ pub extern "C" fn vcx_rotate_verkey_start(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -548,9 +546,9 @@ pub extern "C" fn vcx_rotate_verkey_apply(
                 trace!(
                     "vcx_rotate_verkey_apply_cb(command_handle: {}, rc: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE
+                    SUCCESS_ERR_CODE
                 );
-                cb(command_handle, error::SUCCESS_ERR_CODE);
+                cb(command_handle, SUCCESS_ERR_CODE);
             }
             Err(err) => {
                 error!(
@@ -565,7 +563,7 @@ pub extern "C" fn vcx_rotate_verkey_apply(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -590,11 +588,11 @@ pub extern "C" fn vcx_get_verkey_from_wallet(
                 trace!(
                     "vcx_get_verkey_from_wallet_cb(command_handle: {}, rc: {}, verkey: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE,
+                    SUCCESS_ERR_CODE,
                     verkey
                 );
                 let verkey = CStringUtils::string_to_cstring(verkey);
-                cb(command_handle, error::SUCCESS_ERR_CODE, verkey.as_ptr());
+                cb(command_handle, SUCCESS_ERR_CODE, verkey.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -608,7 +606,7 @@ pub extern "C" fn vcx_get_verkey_from_wallet(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -633,11 +631,11 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
                 trace!(
                     "vcx_get_verkey_from_ledger_cb(command_handle: {}, rc: {}, verkey: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE,
+                    SUCCESS_ERR_CODE,
                     verkey
                 );
                 let verkey = CStringUtils::string_to_cstring(verkey);
-                cb(command_handle, error::SUCCESS_ERR_CODE, verkey.as_ptr());
+                cb(command_handle, SUCCESS_ERR_CODE, verkey.as_ptr());
             }
             Err(err) => {
                 error!(
@@ -650,7 +648,7 @@ pub extern "C" fn vcx_get_verkey_from_ledger(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -676,11 +674,11 @@ pub extern "C" fn vcx_get_ledger_txn(
                 trace!(
                     "vcx_get_ledger_txn_cb(command_handle: {}, rc: {}, txn: {})",
                     command_handle,
-                    error::SUCCESS_ERR_CODE,
+                    SUCCESS_ERR_CODE,
                     txn
                 );
                 let txn = CStringUtils::string_to_cstring(txn);
-                cb(command_handle, error::SUCCESS_ERR_CODE, txn.as_ptr());
+                cb(command_handle, SUCCESS_ERR_CODE, txn.as_ptr());
             }
             Err(err) => {
                 error!("vcx_get_ledger_txn_cb(command_handle: {}, rc: {})", command_handle, err);
@@ -690,7 +688,7 @@ pub extern "C" fn vcx_get_ledger_txn(
         Ok(())
     }));
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -719,10 +717,10 @@ pub extern "C" fn vcx_unpack(
                     trace!(
                         "vcx_unpack(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE
+                        SUCCESS_ERR_CODE
                     );
                     let msg = CStringUtils::string_to_cstring(msg);
-                    cb(command_handle, error::SUCCESS_ERR_CODE, msg.as_ptr());
+                    cb(command_handle, SUCCESS_ERR_CODE, msg.as_ptr());
                 }
                 Err(err) => {
                     error!("vcx_unpack(command_handle: {}, rc: {})", command_handle, err);
@@ -736,7 +734,7 @@ pub extern "C" fn vcx_unpack(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -757,10 +755,10 @@ pub extern "C" fn vcx_create_pairwise_info(
                     trace!(
                         "vcx_create_pairwise_info(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE
+                        SUCCESS_ERR_CODE
                     );
                     let pw_info = CStringUtils::string_to_cstring(json!(pw_info).to_string());
-                    cb(command_handle, error::SUCCESS_ERR_CODE, pw_info.as_ptr());
+                    cb(command_handle, SUCCESS_ERR_CODE, pw_info.as_ptr());
                 }
                 Err(err) => {
                     error!(
@@ -777,7 +775,7 @@ pub extern "C" fn vcx_create_pairwise_info(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -824,10 +822,10 @@ pub extern "C" fn vcx_create_service(
                     trace!(
                         "vcx_create_service(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE
+                        SUCCESS_ERR_CODE
                     );
                     let service = CStringUtils::string_to_cstring(json!(service).to_string());
-                    cb(command_handle, error::SUCCESS_ERR_CODE, service.as_ptr());
+                    cb(command_handle, SUCCESS_ERR_CODE, service.as_ptr());
                 }
                 Err(err) => {
                     error!("vcx_create_service(command_handle: {}, rc: {})", command_handle, err);
@@ -841,7 +839,7 @@ pub extern "C" fn vcx_create_service(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }
 
 #[no_mangle]
@@ -864,10 +862,10 @@ pub extern "C" fn vcx_get_service_from_ledger(
                     trace!(
                         "vcx_get_service_from_ledger_cb(command_handle: {}, rc: {})",
                         command_handle,
-                        error::SUCCESS_ERR_CODE
+                        SUCCESS_ERR_CODE
                     );
                     let service = CStringUtils::string_to_cstring(json!(service).to_string());
-                    cb(command_handle, error::SUCCESS_ERR_CODE, service.as_ptr());
+                    cb(command_handle, SUCCESS_ERR_CODE, service.as_ptr());
                 }
                 Err(err) => {
                     error!(
@@ -884,5 +882,5 @@ pub extern "C" fn vcx_get_service_from_ledger(
         .boxed(),
     );
 
-    error::SUCCESS_ERR_CODE
+    SUCCESS_ERR_CODE
 }

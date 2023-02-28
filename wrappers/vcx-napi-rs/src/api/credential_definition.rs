@@ -1,7 +1,7 @@
 use napi_derive::napi;
 
 use crate::error::to_napi_err;
-use vcx::api_vcx::api_handle::credential_def;
+use libvcx_core::api_vcx::api_handle::credential_def;
 
 #[napi]
 async fn credentialdef_create_v2_(

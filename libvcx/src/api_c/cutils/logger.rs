@@ -1,13 +1,16 @@
-use crate::api_c::cutils::cstring::CStringUtils;
-use crate::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+use std::ffi::{c_void, CString};
+use std::io::Write;
+use std::{env, ptr};
+
 use chrono::format::{DelayedFormat, StrftimeItems};
 use chrono::Local;
 use env_logger::{fmt::Formatter, Builder as EnvLoggerBuilder};
 use libc::c_char;
 use log::{Level, LevelFilter, Metadata, Record};
-use std::ffi::{c_void, CString};
-use std::io::Write;
-use std::{env, ptr};
+
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind, LibvcxResult};
+
+use crate::api_c::cutils::cstring::CStringUtils;
 
 pub type CVoid = c_void;
 
@@ -296,9 +299,11 @@ fn get_level(level: u32) -> Level {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::api_c::cutils::logger::{CVoid, LibvcxLogger};
     use std::ptr;
+
+    use crate::api_c::cutils::logger::{CVoid, LibvcxLogger};
+
+    use super::*;
 
     fn get_custom_context() -> *const CVoid {
         ptr::null()

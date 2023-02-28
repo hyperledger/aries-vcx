@@ -1,8 +1,8 @@
+use libvcx_core::api_vcx::api_global::pool;
+use libvcx_core::aries_vcx::indy::ledger::pool::PoolConfig;
+use libvcx_core::errors::error::{LibvcxError, LibvcxErrorKind};
+use libvcx_core::serde_json;
 use napi_derive::napi;
-use vcx::api_vcx::api_global::pool;
-use vcx::aries_vcx::indy::ledger::pool::PoolConfig;
-use vcx::errors::error::{LibvcxError, LibvcxErrorKind};
-use vcx::serde_json;
 
 use crate::error::to_napi_err;
 

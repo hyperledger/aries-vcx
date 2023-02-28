@@ -5,8 +5,9 @@ use std::ptr;
 
 use libc::c_char;
 
+use libvcx_core::errors::error::LibvcxError;
+
 use crate::api_c::cutils::cstring::CStringUtils;
-use crate::errors::error::LibvcxError;
 
 thread_local! {
     pub static CURRENT_ERROR_C_JSON: RefCell<Option<CString>> = RefCell::new(None);

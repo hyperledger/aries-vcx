@@ -1,8 +1,9 @@
 use napi_derive::napi;
 
+use libvcx_core::api_vcx::api_global::ledger;
+use libvcx_core::serde_json::json;
+
 use crate::error::to_napi_err;
-use vcx::api_vcx::api_global::ledger;
-use vcx::serde_json::json;
 
 #[napi]
 async fn get_ledger_author_agreement() -> napi::Result<String> {

@@ -292,6 +292,9 @@ mod tests {
 
     use serde_json::Value;
 
+    use crate::api_vcx::api_handle::mediated_connection::test_utils::{
+        build_test_connection_invitee_completed, build_test_connection_inviter_requested,
+    };
     use aries_vcx::utils;
     use aries_vcx::utils::constants::{
         ARIES_PROVER_CREDENTIALS, ARIES_PROVER_SELF_ATTESTED_ATTRS, GET_MESSAGES_DECRYPTED_RESPONSE,
@@ -346,7 +349,7 @@ mod tests {
     async fn test_proof_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -378,7 +381,7 @@ mod tests {
     async fn test_proof_update_state_v2() {
         let _setup = SetupMocks::init();
 
-        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PRESENTATION_REQUEST);
@@ -400,7 +403,7 @@ mod tests {
         assert_eq!(ProverState::PresentationSent as u32, get_state(handle).unwrap());
 
         mediated_connection::release(connection_handle).unwrap();
-        let connection_handle = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_handle = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(mockdata_proof::ARIES_PROOF_PRESENTATION_ACK);
@@ -414,7 +417,7 @@ mod tests {
     async fn test_proof_reject_cycle() {
         let _setup = SetupMocks::init();
 
-        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);
@@ -471,7 +474,7 @@ mod tests {
     async fn test_get_proof_request() {
         let _setup = SetupMocks::init();
 
-        let connection_h = mediated_connection::tests::build_test_connection_invitee_completed();
+        let connection_h = build_test_connection_invitee_completed();
 
         let request = get_proof_request(connection_h, "123").await.unwrap();
         let _request: PresentationRequest = serde_json::from_str(&request).unwrap();
@@ -493,7 +496,7 @@ mod tests {
     async fn test_get_proof_request_attachment() {
         let _setup = SetupMocks::init();
 
-        let connection_h = mediated_connection::tests::build_test_connection_inviter_requested().await;
+        let connection_h = build_test_connection_inviter_requested().await;
 
         AgencyMockDecrypted::set_next_decrypted_response(GET_MESSAGES_DECRYPTED_RESPONSE);
         AgencyMockDecrypted::set_next_decrypted_message(ARIES_PROOF_REQUEST_PRESENTATION);

@@ -122,7 +122,7 @@ pub mod tests {
     #[cfg(feature = "general_test")]
     async fn test_vcx_credentialdef_release() {
         let _setup = SetupMocks::init();
-        let schema_handle = schema::tests::create_schema_real().await;
+        let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();
@@ -138,7 +138,7 @@ pub mod tests {
     }
 
     pub async fn create_and_publish_nonrevocable_creddef() -> (u32, u32) {
-        let schema_handle = schema::tests::create_schema_real().await;
+        let schema_handle = schema::test_utils::create_schema_real().await;
         sleep(Duration::from_secs(1));
 
         let schema_id = schema::get_schema_id(schema_handle).unwrap();

@@ -1,4 +1,4 @@
-# <span style="color:red;background:white">Deprecation notice</span>
+# <span style="color:red;background:white">Deprecation notice: libvcx</span>
 This is now deprecated and receives limited maintenance support. 
 
 This project used to provide C-API for creating bindings for languages other than Rust, primarily 
@@ -15,18 +15,9 @@ long-term future.
 Libvcx is library built on top of `aries-vcx`, which provides a particular approach how to build bindings for 
 other languages.
 
-The library is split in 2 modules:
-
-### `api_vcx` module
-Layer on top of `aries-vcx` which provides `u32` "handle" reference API. When you create a new object, this layer 
-instead gives you `u32` reference. This is then required to further interact with the object.
-
-### DEPRECATED:`api_c` module & Objective-C / Java wrappers
-- Built on top of `api_vcx`, provides runtime executor (tokio) and FFI interface. Libvcx based Java and 
-iOS wrapper are linked to this interface.
-
+### Objective-C & Java wrappers
 - Android and iOS packages are built with every [release](../docs/RELEASES.md).
-
+- 
 - 3rd party demos (possibly outdated)
   * Android [demo](https://github.com/sktston/vcx-demo-android) 
   * iOS [demo](https://github.com/sktston/vcx-demo-ios)
@@ -47,4 +38,4 @@ TEST_POOL_IP=127.0.0.1 cargo test  --features "pool_tests" -- --test-threads=1
 
 ## Architecture
 
-<img alt="Libvcx architecture diagram" src="../docs/architecture/libvcx_architecture_040123.png"/>
+<img alt="Libvcx architecture diagram" src="../docs/architecture/architecture_230223_libvcx.png"/>
