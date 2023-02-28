@@ -6,8 +6,10 @@ pub const SERVICE_TYPE: &str = "IndyAgent";
 // Note that is divergence from w3c spec https://w3c.github.io/did-core/#service-properties
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AriesService {
+    #[serde(default)]
     pub id: String,
     #[serde(rename = "type")]
+    #[serde(default)]
     pub type_: String,
     #[serde(default)]
     pub priority: u32,
