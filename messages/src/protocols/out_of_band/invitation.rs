@@ -23,7 +23,7 @@ pub struct OutOfBandInvitation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<MessageType>>, // TODO: Make a separate type
     pub services: Vec<ServiceOob>,
-    #[serde(rename = "requests~attach")]
+    #[serde(default, skip_serializing_if = "Attachments::is_empty", rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,5 +44,34 @@ impl OutOfBandInvitation {
                 format!("Cannot deserialize out of band message: {:?}", err),
             )
         })
+    }
+}
+
+#[cfg(test)]
+pub mod unit_tests {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "general_test")]
+    fn test_serde_no_attach() {
+        let msg = r#"
+            {
+                "@id": "cd0f8ab1-6bb3-4de6-8d14-15e2dd2f463f",
+                "@type": "https://didcomm.org/out-of-band/1.1/invitation",
+                "handshake_protocols": [
+                    "https://didcomm.org/connections/1.0"
+                ],
+                "services": [
+                    "did:sov:V4SGRU86Z58d6TV7PBUe6f"
+                ]
+            }
+        "#;
+
+        let invite: OutOfBandInvitation = serde_json::from_str(msg).unwrap();
+
+        assert!(!invite.to_string().contains("attach"));
+        assert_eq!(invite.id.0, "cd0f8ab1-6bb3-4de6-8d14-15e2dd2f463f");
+        assert_eq!(invite.handshake_protocols.unwrap().len(), 1);
+        assert_eq!(invite.services.len(), 1);
     }
 }
