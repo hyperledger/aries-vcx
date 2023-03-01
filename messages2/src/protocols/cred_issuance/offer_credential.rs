@@ -1,10 +1,10 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
 use crate::aries_message::AriesMessage;
 use crate::macros::threadlike_opt_impl;
-use crate::protocols::traits::ConcreteMessage;
+use crate::protocols::traits::MessageKind;
 use crate::{
     decorators::{Attachment, Thread, Timing},
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
@@ -12,7 +12,7 @@ use crate::{
 
 use super::{CredentialIssuance, CredentialPreview};
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "CredentialIssuanceV1_0::OfferCredential")]
 #[transitive(into(CredentialIssuance, AriesMessage))]
 pub struct OfferCredential {

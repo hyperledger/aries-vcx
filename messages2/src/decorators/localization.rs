@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use isolang::Language;
-use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
+
+use super::EmptyDecorator;
 
 /// We need to wrap this as the default serde
 /// behavior is to use ISO 639-3 codes and we need ISO 639-2;
@@ -19,7 +21,7 @@ impl Default for Locale {
 impl Serialize for Locale {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         self.0.to_639_1().serialize(serializer)
     }
@@ -44,6 +46,12 @@ pub struct MsgLocalization {
     locales: Option<HashMap<Locale, Vec<String>>>,
 }
 
+impl EmptyDecorator for MsgLocalization {
+    fn is_empty(&self) -> bool {
+        self.catalogs.is_none() && self.locales.as_ref().map(|h| h.is_empty()).unwrap_or(true)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FieldLocalization {
     code: Option<String>,
@@ -51,4 +59,10 @@ pub struct FieldLocalization {
     catalogs: Option<Vec<Url>>,
     #[serde(flatten)]
     translations: HashMap<Locale, String>,
+}
+
+impl EmptyDecorator for FieldLocalization {
+    fn is_empty(&self) -> bool {
+        self.code.is_none() && self.locale.is_none() && self.catalogs.is_none() && self.translations.is_empty()
+    }
 }

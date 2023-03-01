@@ -50,7 +50,7 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let kind = Ident::new(kind, s.span());
 
     let expanded = quote! {
-        impl ConcreteMessage for #name {
+        impl MessageKind for #name {
             type Kind = #kind;
 
             fn kind() -> Self::Kind {

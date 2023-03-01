@@ -2,14 +2,14 @@ pub mod pairwise;
 pub mod public;
 
 use derive_more::From;
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::decorators::Timing;
 use crate::message_type::message_family::connection::ConnectionV1_0;
 
-use crate::protocols::traits::ConcreteMessage;
+use crate::protocols::traits::MessageKind;
 
 use self::pairwise::PairwiseInvitation;
 use self::public::PublicInvitation;
@@ -20,7 +20,7 @@ use self::public::PublicInvitation;
 /// Other invitation types would get resolved to this.
 pub type CompleteInvitation = InvitationImpl<Url>;
 
-#[derive(Clone, Debug, From, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, From, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(untagged)]
 pub enum Invitation {

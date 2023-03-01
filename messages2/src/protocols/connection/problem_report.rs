@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
@@ -9,11 +9,11 @@ use crate::{
     message_type::message_family::connection::ConnectionV1_0,
 };
 
-use crate::protocols::traits::ConcreteMessage;
+use crate::protocols::traits::MessageKind;
 
 use super::Connection;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "ConnectionV1_0::ProblemReport")]
 #[transitive(into(Connection, AriesMessage))]
 pub struct ProblemReport {

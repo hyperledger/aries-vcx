@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
@@ -7,12 +7,12 @@ use crate::{
     decorators::{Attachment, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     mime_type::MimeType,
-    protocols::{common::service::Service, traits::ConcreteMessage},
+    protocols::{common::service::Service, traits::MessageKind},
 };
 
 use super::{OobGoalCode, OutOfBand};
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "OutOfBandV1_1::Invitation")]
 #[transitive(into(OutOfBand, AriesMessage))]
 pub struct Invitation {

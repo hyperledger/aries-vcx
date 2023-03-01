@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
@@ -7,12 +7,12 @@ use crate::{
     decorators::{Thread, Timing},
     macros::threadlike_impl,
     message_type::message_family::trust_ping::TrustPingV1_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::MessageKind,
 };
 
 use super::TrustPing;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "TrustPingV1_0::PingResponse")]
 #[transitive(into(TrustPing, AriesMessage))]
 pub struct PingResponse {

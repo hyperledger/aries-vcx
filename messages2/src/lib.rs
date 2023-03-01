@@ -15,3 +15,4 @@ pub mod message_type;
 pub mod mime_type;
 pub mod protocols;
 mod utils;
+pub mod composite_message;

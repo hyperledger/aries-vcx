@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -7,9 +7,9 @@ use crate::{
     message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
 };
 
-use super::traits::ConcreteMessage;
+use super::traits::MessageKind;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "BasicMessageKind::V1(BasicMessageV1::V1_0(BasicMessageV1_0::Message))")]
 pub struct BasicMessage {
     #[serde(rename = "@id")]

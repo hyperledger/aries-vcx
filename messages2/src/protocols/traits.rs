@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{decorators::Thread, message_type::MessageType};
 
-pub trait ConcreteMessage {
+pub trait MessageKind {
     type Kind: Into<MessageType> + PartialEq + Debug;
 
     fn kind() -> Self::Kind;
@@ -15,7 +15,7 @@ pub trait Threadlike {
 
     fn thread_id(&self) -> &str {
         self.opt_thread()
-            .and_then(|t| t.thid.as_deref())
+            .map(|t| t.thid.as_str())
             .unwrap_or_else(|| self.msg_id())
     }
 

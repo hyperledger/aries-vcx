@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -9,9 +9,9 @@ use crate::{
     message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
 };
 
-use super::traits::ConcreteMessage;
+use super::traits::MessageKind;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ReportProblem::V1(ReportProblemV1::V1_0(ReportProblemV1_0::ProblemReport))")]
 pub struct ProblemReport {
     #[serde(rename = "@id")]
@@ -77,7 +77,7 @@ pub struct FixHint {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Impact {
     #[serde(rename = "message")]
-    Message,
+    MessageContent,
     #[serde(rename = "thread")]
     Thread,
     #[serde(rename = "connection")]

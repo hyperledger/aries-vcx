@@ -4,13 +4,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Thread {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thid: Option<String>,
+    pub thid: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pthid: Option<String>,
-    #[serde(default)]
-    pub sender_order: u32,
-    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sender_order: Option<u32>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub received_orders: HashMap<String, u32>, // should get replaced with DID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goal_code: Option<ThreadGoalCode>,

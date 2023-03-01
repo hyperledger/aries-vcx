@@ -62,7 +62,7 @@ pub enum WhoRetries {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Impact {
-    Message,
+    MessageContent,
     Thread,
     Connection,
 }

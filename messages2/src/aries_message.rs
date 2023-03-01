@@ -2,12 +2,13 @@ use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::{MessageFamily, MessageType},
     protocols::{
         basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::ConcreteMessage,
+        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::MessageKind,
         trust_ping::TrustPing,
     },
 };
@@ -166,9 +167,9 @@ impl Serialize for AriesMessage {
 /// by also attaching the [`MessageType`] to the output.
 #[derive(Serialize)]
 pub(crate) struct MsgWithType<'a, T>
-where
-    T: ConcreteMessage,
-    MessageType: From<<T as ConcreteMessage>::Kind>,
+// where
+//     T: MessageKind,
+//     MessageType: From<<T as MessageKind>::Kind>,
 {
     #[serde(rename = "@type")]
     msg_type: MessageType,
@@ -178,11 +179,22 @@ where
 
 impl<'a, T> From<&'a T> for MsgWithType<'a, T>
 where
-    T: ConcreteMessage,
-    MessageType: From<<T as ConcreteMessage>::Kind>,
+    T: MessageKind,
+    MessageType: From<<T as MessageKind>::Kind>,
 {
     fn from(content: &'a T) -> Self {
         let msg_type = T::kind().into();
+        Self { msg_type, content }
+    }
+}
+
+impl<'a, C, MD, FD> From<&'a Message<C, MD, FD>> for MsgWithType<'a, Message<C, MD, FD>>
+where
+    C: MessageKind,
+    MessageType: From<<C as MessageKind>::Kind>,
+{
+    fn from(content: &'a Message<C, MD, FD>) -> Self {
+        let msg_type = C::kind().into();
         Self { msg_type, content }
     }
 }

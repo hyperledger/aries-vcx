@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
@@ -11,10 +11,10 @@ use crate::{
         MessageFamily, MessageType,
     },
     mime_type::MimeType,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::MessageKind,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "PresentProofV1_0::ProposePresentation")]
 #[transitive(into(super::PresentProof, AriesMessage))]
 pub struct ProposePresentation {

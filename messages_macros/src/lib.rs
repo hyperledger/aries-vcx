@@ -27,15 +27,15 @@ use syn::{parse_macro_input, DeriveInput, Error};
 /// #[message("A::Variant2")]
 /// struct B;
 /// ```
-#[proc_macro_derive(Message, attributes(message))]
-pub fn message(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(MessageContent, attributes(message))]
+pub fn message_content(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     message_impl(input).unwrap_or_else(Error::into_compile_error).into()
 }
 
 /// Derive macro to be used for easier implementation of message type components.
 /// The macro serves as implementation for semver reasoning and parsing of the `@type` field
-/// componenets (major, minor versions, message kind, etc.) in a message.
+/// components (major, minor versions, message kind, etc.) in a message.
 ///
 /// The macro supports the a single instance of the `semver` attribute,
 /// with a single name-value pair.

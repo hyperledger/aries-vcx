@@ -1,4 +1,4 @@
-use messages_macros::Message;
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 use transitive::TransitiveFrom;
 
@@ -7,12 +7,12 @@ use crate::{
     decorators::{PleaseAck, Thread, Timing},
     macros::threadlike_opt_impl,
     message_type::message_family::revocation::RevocationV2_0,
-    protocols::traits::ConcreteMessage,
+    protocols::traits::MessageKind,
 };
 
 use super::Revocation;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Message, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
 #[message(kind = "RevocationV2_0::Revoke")]
 #[transitive(into(Revocation, AriesMessage))]
 pub struct Revoke {
