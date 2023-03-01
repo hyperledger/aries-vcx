@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
 use crate::{
     common::primitives::revocation_registry::RevocationRegistryDefinition,
-    indy::utils::LibindyMock,
     plugins::ledger::base_ledger::BaseLedger,
     utils::{
         self,
@@ -12,6 +11,8 @@ use crate::{
         },
     },
 };
+#[cfg(feature = "vdrtools")]
+use crate::indy::utils::LibindyMock;
 
 #[derive(Debug)]
 pub(crate) struct MockLedger;
@@ -71,8 +72,8 @@ impl BaseLedger for MockLedger {
     async fn get_cred_def(&self, cred_def_id: &str, submitter_did: Option<&str>) -> VcxResult<String> {
         // TODO - FUTURE - below error is required for tests to pass which require a cred def to not exist (libvcx)
         // ideally we can migrate away from it
-        let rc = LibindyMock::get_result();
-        if rc == 309 {
+        #[cfg(feature = "vdrtools")]
+        if  LibindyMock::get_result() == 309 {
             return Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::LedgerItemNotFound,
                 "Mocked error".to_string(),

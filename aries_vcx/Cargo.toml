@@ -11,6 +11,8 @@ path = "src/lib.rs"
 doctest = false
 
 [features]
+default = ["vdrtools"]
+vdrtools = ["dep:libvdrtools"]
 test_utils = [ "messages/test_utils" ]
 pool_tests = [ "test_utils" ]
 agency_pool_tests = [ "test_utils" ]
@@ -35,7 +37,7 @@ serde_derive = "1.0.97"
 regex = "1.1.0"
 base64 = "0.10"
 openssl = { version = "0.10.35" }
-libvdrtools = { path = "../libvdrtools" }
+libvdrtools = { path = "../libvdrtools", optional = true }
 # vdrtools alternatives ----
 indy-vdr = { version = "0.3.4", default-features = false, features = ["ffi", "log"] }
 # PATCH (TO MONITOR IN FUTURE): The following patch changes the `indy-data-types` (within indy-shared-rs) to depend on

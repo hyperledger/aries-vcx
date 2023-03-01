@@ -13,6 +13,7 @@
 pub extern crate agency_client;
 
 // TODO: remove reexports
+#[cfg(feature = "vdrtools")]
 pub extern crate vdrtools;
 
 #[macro_use]
@@ -42,6 +43,7 @@ pub mod utils;
 pub mod handlers;
 
 pub mod global;
+#[cfg(feature = "vdrtools")]
 pub mod indy;
 pub mod protocols;
 
