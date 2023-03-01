@@ -475,14 +475,14 @@ impl ProverSM {
         }
     }
 
-    pub fn presentation_status(&self) -> u32 {
+    pub fn get_presentation_status(&self) -> u32 {
         match self.state {
             ProverFullState::Finished(ref state) => state.status.code(),
             _ => Status::Undefined.code(),
         }
     }
 
-    pub fn presentation_request(&self) -> VcxResult<&PresentationRequest> {
+    pub fn get_presentation_request(&self) -> VcxResult<&PresentationRequest> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -502,7 +502,7 @@ impl ProverSM {
         }
     }
 
-    pub fn presentation(&self) -> VcxResult<&Presentation> {
+    pub fn get_presentation(&self) -> VcxResult<&Presentation> {
         match self.state {
             ProverFullState::Initial(_) => Err(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
@@ -524,7 +524,7 @@ impl ProverSM {
             ProverFullState::PresentationSent(ref state) => Ok(&state.presentation),
             ProverFullState::Finished(ref state) => Ok(state.presentation.as_ref().ok_or(AriesVcxError::from_msg(
                 AriesVcxErrorKind::NotReady,
-                "Presentation is not available",
+                "Presentation is not available in Finished state",
             ))?),
         }
     }
@@ -781,7 +781,7 @@ pub mod unit_tests {
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(
                 Status::Declined(ProblemReport::default()).code(),
-                prover_sm.presentation_status()
+                prover_sm.get_presentation_status()
             );
         }
 
@@ -1013,7 +1013,7 @@ pub mod unit_tests {
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(
                 Status::Failed(ProblemReport::default()).code(),
-                prover_sm.presentation_status()
+                prover_sm.get_presentation_status()
             );
         }
 
@@ -1082,7 +1082,7 @@ pub mod unit_tests {
                 .unwrap();
 
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
-            assert_eq!(Status::Success.code(), prover_sm.presentation_status());
+            assert_eq!(Status::Success.code(), prover_sm.get_presentation_status());
         }
 
         #[tokio::test]
@@ -1132,7 +1132,7 @@ pub mod unit_tests {
             assert_match!(ProverFullState::Finished(_), prover_sm.state);
             assert_eq!(
                 Status::Failed(ProblemReport::create()).code(),
-                prover_sm.presentation_status()
+                prover_sm.get_presentation_status()
             );
         }
 

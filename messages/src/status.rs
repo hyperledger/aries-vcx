@@ -1,5 +1,6 @@
 use crate::concepts::problem_report::ProblemReport;
 
+// todo: this is shared by multiple protocols to express different things - needs to be split
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Status {
     Undefined,

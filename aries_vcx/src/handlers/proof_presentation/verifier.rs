@@ -85,6 +85,7 @@ impl Verifier {
         Ok(())
     }
 
+    // todo: verification and sending ack should be separate apis
     pub async fn verify_presentation(
         &mut self,
         profile: &Arc<dyn Profile>,
