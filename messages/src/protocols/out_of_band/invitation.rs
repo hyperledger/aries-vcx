@@ -23,11 +23,7 @@ pub struct OutOfBandInvitation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub handshake_protocols: Option<Vec<MessageType>>, // TODO: Make a separate type
     pub services: Vec<ServiceOob>,
-    #[serde(
-        default = "Attachments::new",
-        skip_serializing_if = "Attachments::is_empty",
-        rename = "requests~attach"
-    )]
+    #[serde(default, skip_serializing_if = "Attachments::is_empty", rename = "requests~attach")]
     pub requests_attach: Attachments,
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
