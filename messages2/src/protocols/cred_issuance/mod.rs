@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::{
         message_family::cred_issuance::{
@@ -21,17 +22,22 @@ use crate::{
 };
 
 use self::{
-    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
-    propose_credential::ProposeCredential, request_credential::RequestCredential,
+    ack::AckCredential,
+    issue_credential::{IssueCredential, IssueCredentialDecorators},
+    offer_credential::{OfferCredential, OfferCredentialDecorators},
+    propose_credential::{ProposeCredential, ProposeCredentialDecorators},
+    request_credential::{RequestCredential, RequestCredentialDecorators},
 };
+
+use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum CredentialIssuance {
-    OfferCredential(OfferCredential),
-    ProposeCredential(ProposeCredential),
-    RequestCredential(RequestCredential),
-    IssueCredential(IssueCredential),
-    Ack(AckCredential),
+    OfferCredential(Message<OfferCredential, OfferCredentialDecorators>),
+    ProposeCredential(Message<ProposeCredential, ProposeCredentialDecorators>),
+    RequestCredential(Message<RequestCredential, RequestCredentialDecorators>),
+    IssueCredential(Message<IssueCredential, IssueCredentialDecorators>),
+    Ack(Message<AckCredential, AckDecorators>),
 }
 
 impl DelayedSerde for CredentialIssuance {
@@ -45,11 +51,25 @@ impl DelayedSerde for CredentialIssuance {
         let CredentialIssuanceV1::V1_0(minor) = major;
 
         match minor {
-            CredentialIssuanceV1_0::OfferCredential => OfferCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::ProposeCredential => ProposeCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::RequestCredential => RequestCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::IssueCredential => IssueCredential::deserialize(deserializer).map(From::from),
-            CredentialIssuanceV1_0::Ack => AckCredential::deserialize(deserializer).map(From::from),
+            CredentialIssuanceV1_0::OfferCredential => {
+                Message::<OfferCredential, OfferCredentialDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            CredentialIssuanceV1_0::ProposeCredential => {
+                Message::<ProposeCredential, ProposeCredentialDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            CredentialIssuanceV1_0::RequestCredential => {
+                Message::<RequestCredential, RequestCredentialDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            CredentialIssuanceV1_0::IssueCredential => {
+                Message::<IssueCredential, IssueCredentialDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            CredentialIssuanceV1_0::Ack => {
+                Message::<AckCredential, AckDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
             CredentialIssuanceV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }

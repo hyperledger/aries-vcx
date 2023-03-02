@@ -2,19 +2,23 @@ mod ping;
 mod ping_response;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
 };
 
-use self::{ping::Ping, ping_response::PingResponse};
+use self::{
+    ping::{Ping, PingDecorators},
+    ping_response::{PingResponse, PingResponseDecorators},
+};
 
 #[derive(Clone, Debug, From)]
 pub enum TrustPing {
-    Ping(Ping),
-    PingResponse(PingResponse),
+    Ping(Message<Ping, PingDecorators>),
+    PingResponse(Message<PingResponse, PingResponseDecorators>),
 }
 
 impl DelayedSerde for TrustPing {
@@ -28,8 +32,13 @@ impl DelayedSerde for TrustPing {
         let TrustPingV1::V1_0(minor) = major;
 
         match minor {
-            TrustPingV1_0::Ping => Ping::deserialize(deserializer).map(From::from),
-            TrustPingV1_0::PingResponse => PingResponse::deserialize(deserializer).map(From::from),
+            TrustPingV1_0::Ping => {
+                Message::<Ping, PingDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            TrustPingV1_0::PingResponse => {
+                Message::<PingResponse, PingResponseDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
         }
     }
 

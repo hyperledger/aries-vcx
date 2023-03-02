@@ -9,8 +9,6 @@ use super::traits::MessageKind;
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "Routing::V1(RoutingV1::V1_0(RoutingV1_0::Forward))")]
 pub struct Forward {
-    #[serde(rename = "@id")]
-    pub id: String,
     pub to: String,
     #[serde(rename = "msg")]
     pub msg: Box<RawValue>,

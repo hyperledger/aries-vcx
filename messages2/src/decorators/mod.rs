@@ -12,7 +12,7 @@ pub use timing::Timing;
 
 /// Trait used for easy and consistent conditional serialization
 /// of data structures where all fields can be somehow empty (None, length 0, etc).
-/// 
+///
 /// E.g:
 /// ```
 /// #[serde(skip_serializing_if = "EmptyDecorator::is_empty")]

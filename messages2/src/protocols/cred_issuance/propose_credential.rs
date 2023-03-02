@@ -1,28 +1,26 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use transitive::TransitiveFrom;
 
 use crate::{
-    aries_message::AriesMessage,
     decorators::{Thread, Timing},
-    macros::threadlike_opt_impl,
     message_type::message_family::cred_issuance::CredentialIssuanceV1_0,
     protocols::traits::MessageKind,
 };
 
-use super::{CredentialIssuance, CredentialPreview};
+use super::CredentialPreview;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "CredentialIssuanceV1_0::ProposeCredential")]
-#[transitive(into(CredentialIssuance, AriesMessage))]
 pub struct ProposeCredential {
-    #[serde(rename = "@id")]
-    pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub credential_proposal: CredentialPreview,
     pub schema_id: String,
     pub cred_def_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ProposeCredentialDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
@@ -30,5 +28,3 @@ pub struct ProposeCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
-
-threadlike_opt_impl!(ProposeCredential);

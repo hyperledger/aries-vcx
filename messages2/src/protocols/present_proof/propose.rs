@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
-    aries_message::AriesMessage,
     decorators::{Thread, Timing},
-    macros::threadlike_opt_impl,
     message_type::{
         message_family::present_proof::{PresentProof, PresentProofV1, PresentProofV1_0},
         MessageFamily, MessageType,
@@ -14,15 +12,16 @@ use crate::{
     protocols::traits::MessageKind,
 };
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "PresentProofV1_0::ProposePresentation")]
-#[transitive(into(super::PresentProof, AriesMessage))]
 pub struct ProposePresentation {
-    #[serde(rename = "@id")]
-    pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub presentation_proposal: PresentationPreview,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ProposePresentationDecorators {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "~thread")]
     pub thread: Option<Thread>,
@@ -30,8 +29,6 @@ pub struct ProposePresentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
-
-threadlike_opt_impl!(ProposePresentation);
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PresentationPreview {

@@ -4,22 +4,30 @@ mod propose;
 mod request;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
     utils,
 };
 
-use self::{ack::AckPresentation, present::Presentation, propose::ProposePresentation, request::RequestPresentation};
+use self::{
+    ack::AckPresentation,
+    present::{Presentation, PresentationDecorators},
+    propose::{ProposePresentation, ProposePresentationDecorators},
+    request::{RequestPresentation, RequestPresentationDecorators},
+};
+
+use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum PresentProof {
-    ProposePresentation(ProposePresentation),
-    RequestPresentation(RequestPresentation),
-    Presentation(Presentation),
-    Ack(AckPresentation),
+    ProposePresentation(Message<ProposePresentation, ProposePresentationDecorators>),
+    RequestPresentation(Message<RequestPresentation, RequestPresentationDecorators>),
+    Presentation(Message<Presentation, PresentationDecorators>),
+    Ack(Message<AckPresentation, AckDecorators>),
 }
 
 impl DelayedSerde for PresentProof {
@@ -33,10 +41,21 @@ impl DelayedSerde for PresentProof {
         let PresentProofV1::V1_0(minor) = major;
 
         match minor {
-            PresentProofV1_0::ProposePresentation => ProposePresentation::deserialize(deserializer).map(From::from),
-            PresentProofV1_0::RequestPresentation => RequestPresentation::deserialize(deserializer).map(From::from),
-            PresentProofV1_0::Presentation => Presentation::deserialize(deserializer).map(From::from),
-            PresentProofV1_0::Ack => AckPresentation::deserialize(deserializer).map(From::from),
+            PresentProofV1_0::ProposePresentation => {
+                Message::<ProposePresentation, ProposePresentationDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            PresentProofV1_0::RequestPresentation => {
+                Message::<RequestPresentation, RequestPresentationDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            PresentProofV1_0::Presentation => {
+                Message::<Presentation, PresentationDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            PresentProofV1_0::Ack => {
+                Message::<AckPresentation, AckDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
             PresentProofV1_0::PresentationPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }

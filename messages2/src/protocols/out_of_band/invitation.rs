@@ -1,23 +1,18 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use transitive::TransitiveFrom;
 
 use crate::{
-    aries_message::AriesMessage,
     decorators::{Attachment, Timing},
     message_type::message_family::out_of_band::OutOfBandV1_1,
     mime_type::MimeType,
     protocols::{common::service::Service, traits::MessageKind},
 };
 
-use super::{OobGoalCode, OutOfBand};
+use super::OobGoalCode;
 
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "OutOfBandV1_1::Invitation")]
-#[transitive(into(OutOfBand, AriesMessage))]
 pub struct Invitation {
-    #[serde(rename = "@id")]
-    pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -31,6 +26,10 @@ pub struct Invitation {
     pub services: Vec<Service>,
     #[serde(rename = "requests~attach")]
     pub requests_attach: Vec<Attachment>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct InvitationDecorators {
     #[serde(rename = "~timing")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,

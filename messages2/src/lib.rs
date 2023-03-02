@@ -7,12 +7,11 @@
 #![deny(clippy::unwrap_used)]
 
 pub mod aries_message;
+pub mod composite_message;
 pub mod decorators;
 pub mod delayed_serde;
 mod error;
-mod macros;
 pub mod message_type;
 pub mod mime_type;
 pub mod protocols;
 mod utils;
-pub mod composite_message;

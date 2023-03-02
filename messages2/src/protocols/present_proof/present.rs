@@ -1,27 +1,23 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use transitive::TransitiveFrom;
 
 use crate::{
-    aries_message::AriesMessage,
     decorators::{Attachment, PleaseAck, Thread, Timing},
-    macros::threadlike_impl,
     message_type::message_family::present_proof::PresentProofV1_0,
     protocols::traits::MessageKind,
 };
 
-use super::PresentProof;
-
-#[derive(Clone, Debug, Deserialize, Serialize, MessageContent, TransitiveFrom)]
+#[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "PresentProofV1_0::Presentation")]
-#[transitive(into(PresentProof, AriesMessage))]
 pub struct Presentation {
-    #[serde(rename = "@id")]
-    pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     #[serde(rename = "presentations~attach")]
     pub presentations_attach: Vec<Attachment>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PresentationDecorators {
     #[serde(rename = "~thread")]
     pub thread: Thread,
     #[serde(rename = "~please_ack")]
@@ -31,5 +27,3 @@ pub struct Presentation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timing: Option<Timing>,
 }
-
-threadlike_impl!(Presentation);

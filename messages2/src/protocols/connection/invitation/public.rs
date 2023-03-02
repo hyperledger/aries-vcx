@@ -1,16 +1,13 @@
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use transitive::TransitiveFrom;
 
-use crate::{aries_message::AriesMessage, protocols::connection::Connection};
-
-use super::Invitation;
+use crate::message_type::message_family::connection::ConnectionV1_0;
+use crate::protocols::traits::MessageKind;
 
 /// Represents a public invitation.
-#[derive(Clone, Debug, Deserialize, Serialize, TransitiveFrom)]
-#[transitive(into(Invitation, Connection, AriesMessage))]
+#[derive(Debug, Clone, Deserialize, Serialize, MessageContent)]
+#[message(kind = "ConnectionV1_0::Invitation")]
 pub struct PublicInvitation {
-    #[serde(rename = "@id")]
-    pub id: String,
     pub label: String,
     pub did: String,
 }

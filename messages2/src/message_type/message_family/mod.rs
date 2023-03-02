@@ -4,9 +4,9 @@ use crate::error::{MsgTypeError, MsgTypeResult};
 
 use self::{
     basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-    discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
-    report_problem::ReportProblem, revocation::Revocation, routing::Routing, traits::ResolveMajorVersion,
-    trust_ping::TrustPing,
+    discover_features::DiscoverFeatures, notification::Notification, out_of_band::OutOfBand,
+    present_proof::PresentProof, report_problem::ReportProblem, revocation::Revocation, routing::Routing,
+    traits::ResolveMajorVersion, trust_ping::TrustPing,
 };
 
 use super::MessageType;
@@ -15,6 +15,7 @@ pub mod basic_message;
 pub mod connection;
 pub mod cred_issuance;
 pub mod discover_features;
+pub mod notification;
 pub mod out_of_band;
 pub mod present_proof;
 pub mod report_problem;
@@ -35,6 +36,7 @@ pub enum MessageFamily {
     DiscoverFeatures(DiscoverFeatures),
     BasicMessage(BasicMessage),
     OutOfBand(OutOfBand),
+    Notification(Notification),
 }
 
 impl MessageFamily {
@@ -56,6 +58,7 @@ impl MessageFamily {
             )?)),
             BasicMessage::FAMILY => Ok(Self::BasicMessage(BasicMessage::resolve_major_ver(major, minor, kind)?)),
             OutOfBand::FAMILY => Ok(Self::OutOfBand(OutOfBand::resolve_major_ver(major, minor, kind)?)),
+            Notification::FAMILY => Ok(Self::Notification(Notification::resolve_major_ver(major, minor, kind)?)),
             _ => Err(MsgTypeError::unknown_family(family.to_owned())),
         }
     }
@@ -72,6 +75,7 @@ impl MessageFamily {
             Self::DiscoverFeatures(v) => v.as_msg_type_parts(),
             Self::BasicMessage(v) => v.as_msg_type_parts(),
             Self::OutOfBand(v) => v.as_msg_type_parts(),
+            Self::Notification(v) => v.as_msg_type_parts(),
         }
     }
 

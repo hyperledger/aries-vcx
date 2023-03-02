@@ -1,29 +1,14 @@
+use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
-use url::Url;
 
-use crate::{aries_message::AriesMessage, protocols::connection::Connection};
-
-use super::{Invitation, InvitationImpl};
+use super::InvitationImpl;
+use crate::message_type::message_family::connection::ConnectionV1_0;
+use crate::protocols::traits::MessageKind;
 
 /// Wrapper that represents a pairwise invitation.
-// The wrapping is used so that we expose certain types in a certain way
-// and prevent people
-#[derive(Debug, Clone, Deserialize, Serialize)]
+// The wrapping is used so that we expose certain types as an abstraction
+// over our internal types.
+#[derive(Debug, Clone, Deserialize, Serialize, MessageContent)]
+#[message(kind = "ConnectionV1_0::Invitation")]
 #[serde(transparent)]
 pub struct PairwiseInvitation<T>(pub InvitationImpl<T>);
-
-impl From<PairwiseInvitation<Url>> for AriesMessage {
-    fn from(value: PairwiseInvitation<Url>) -> Self {
-        let interm = Invitation::from(value);
-        let interm = Connection::from(interm);
-        AriesMessage::from(interm)
-    }
-}
-
-impl From<PairwiseInvitation<String>> for AriesMessage {
-    fn from(value: PairwiseInvitation<String>) -> Self {
-        let interm = Invitation::from(value);
-        let interm = Connection::from(interm);
-        AriesMessage::from(interm)
-    }
-}

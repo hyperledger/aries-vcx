@@ -2,19 +2,25 @@ mod ack;
 mod notification;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0},
 };
 
-use self::{ack::AckRevoke, notification::Revoke};
+use self::{
+    ack::AckRevoke,
+    notification::{Revoke, RevokeDecorators},
+};
+
+use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum Revocation {
-    Revoke(Revoke),
-    Ack(AckRevoke),
+    Revoke(Message<Revoke, RevokeDecorators>),
+    Ack(Message<AckRevoke, AckDecorators>),
 }
 
 impl DelayedSerde for Revocation {
@@ -28,8 +34,12 @@ impl DelayedSerde for Revocation {
         let RevocationV2::V2_0(minor) = major;
 
         match minor {
-            RevocationV2_0::Revoke => Revoke::deserialize(deserializer).map(From::from),
-            RevocationV2_0::Ack => AckRevoke::deserialize(deserializer).map(From::from),
+            RevocationV2_0::Revoke => {
+                Message::<Revoke, RevokeDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            RevocationV2_0::Ack => {
+                Message::<AckRevoke, AckDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
         }
     }
 

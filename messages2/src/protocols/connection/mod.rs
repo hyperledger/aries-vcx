@@ -4,24 +4,30 @@ mod request;
 mod response;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
     utils,
 };
 
-use self::{invitation::Invitation, problem_report::ProblemReport, request::Request, response::Response};
+use self::{
+    invitation::Invitation,
+    problem_report::{ProblemReport, ProblemReportDecorators},
+    request::{Request, RequestDecorators},
+    response::{Response, ResponseDecorators},
+};
 
 pub use invitation::CompleteInvitation;
 
 #[derive(Clone, Debug, From)]
 pub enum Connection {
     Invitation(Invitation),
-    Request(Request),
-    Response(Response),
-    ProblemReport(ProblemReport),
+    Request(Message<Request, RequestDecorators>),
+    Response(Message<Response, ResponseDecorators>),
+    ProblemReport(Message<ProblemReport, ProblemReportDecorators>),
 }
 
 impl DelayedSerde for Connection {
@@ -35,10 +41,17 @@ impl DelayedSerde for Connection {
         let ConnectionV1::V1_0(minor) = major;
 
         match minor {
-            ConnectionV1_0::Invitation => Invitation::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::Request => Request::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::Response => Response::deserialize(deserializer).map(From::from),
-            ConnectionV1_0::ProblemReport => ProblemReport::deserialize(deserializer).map(From::from),
+            ConnectionV1_0::Invitation => Invitation::delayed_deserialize(minor, deserializer).map(From::from),
+            ConnectionV1_0::Request => {
+                Message::<Request, RequestDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            ConnectionV1_0::Response => {
+                Message::<Response, ResponseDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            ConnectionV1_0::ProblemReport => {
+                Message::<ProblemReport, ProblemReportDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
             ConnectionV1_0::Ed25519Sha512Single => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }

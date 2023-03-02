@@ -6,9 +6,17 @@ use crate::{
     delayed_serde::DelayedSerde,
     message_type::{MessageFamily, MessageType},
     protocols::{
-        basic_message::BasicMessage, connection::Connection, cred_issuance::CredentialIssuance,
-        discover_features::DiscoverFeatures, out_of_band::OutOfBand, present_proof::PresentProof,
-        report_problem::ProblemReport, revocation::Revocation, routing::Forward, traits::MessageKind,
+        basic_message::{BasicMessage, BasicMessageDecorators},
+        connection::Connection,
+        cred_issuance::CredentialIssuance,
+        discover_features::DiscoverFeatures,
+        notification::{Ack, AckDecorators},
+        out_of_band::OutOfBand,
+        present_proof::PresentProof,
+        report_problem::{ProblemReport, ProblemReportDecorators},
+        revocation::Revocation,
+        routing::Forward,
+        traits::MessageKind,
         trust_ping::TrustPing,
     },
 };
@@ -17,16 +25,17 @@ pub const MSG_TYPE: &str = "@type";
 
 #[derive(Clone, Debug, From)]
 pub enum AriesMessage {
-    Routing(Forward),
+    Routing(Message<Forward>),
     Connection(Connection),
     Revocation(Revocation),
     CredentialIssuance(CredentialIssuance),
-    ReportProblem(ProblemReport),
+    ReportProblem(Message<ProblemReport, ProblemReportDecorators>),
     PresentProof(PresentProof),
     TrustPing(TrustPing),
     DiscoverFeatures(DiscoverFeatures),
-    BasicMessage(BasicMessage),
+    BasicMessage(Message<BasicMessage, BasicMessageDecorators>),
     OutOfBand(OutOfBand),
+    Notification(Message<Ack, AckDecorators>),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -37,7 +46,9 @@ impl DelayedSerde for AriesMessage {
         D: Deserializer<'de>,
     {
         match msg_type {
-            Self::MsgType::Routing(msg_type) => Forward::delayed_deserialize(msg_type, deserializer).map(From::from),
+            Self::MsgType::Routing(msg_type) => {
+                Message::<Forward>::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
             Self::MsgType::Connection(msg_type) => {
                 Connection::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
@@ -48,7 +59,8 @@ impl DelayedSerde for AriesMessage {
                 CredentialIssuance::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::ReportProblem(msg_type) => {
-                ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
+                Message::<ProblemReport, ProblemReportDecorators>::delayed_deserialize(msg_type, deserializer)
+                    .map(From::from)
             }
             Self::MsgType::PresentProof(msg_type) => {
                 PresentProof::delayed_deserialize(msg_type, deserializer).map(From::from)
@@ -60,10 +72,14 @@ impl DelayedSerde for AriesMessage {
                 DiscoverFeatures::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::BasicMessage(msg_type) => {
-                BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
+                Message::<BasicMessage, BasicMessageDecorators>::delayed_deserialize(msg_type, deserializer)
+                    .map(From::from)
             }
             Self::MsgType::OutOfBand(msg_type) => {
                 OutOfBand::delayed_deserialize(msg_type, deserializer).map(From::from)
+            }
+            Self::MsgType::Notification(msg_type) => {
+                Message::<Ack, AckDecorators>::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
         }
     }
@@ -83,6 +99,7 @@ impl DelayedSerde for AriesMessage {
             Self::DiscoverFeatures(v) => v.delayed_serialize(serializer),
             Self::BasicMessage(v) => v.delayed_serialize(serializer),
             Self::OutOfBand(v) => v.delayed_serialize(serializer),
+            Self::Notification(v) => v.delayed_serialize(serializer),
         }
     }
 }
@@ -166,36 +183,24 @@ impl Serialize for AriesMessage {
 /// Struct used for serializing an [`AriesMessage`]
 /// by also attaching the [`MessageType`] to the output.
 #[derive(Serialize)]
-pub(crate) struct MsgWithType<'a, T>
-// where
-//     T: MessageKind,
-//     MessageType: From<<T as MessageKind>::Kind>,
-{
+pub(crate) struct MsgWithType<'a, T> {
     #[serde(rename = "@type")]
     msg_type: MessageType,
     #[serde(flatten)]
-    content: &'a T,
+    message: &'a T,
 }
 
-impl<'a, T> From<&'a T> for MsgWithType<'a, T>
-where
-    T: MessageKind,
-    MessageType: From<<T as MessageKind>::Kind>,
-{
-    fn from(content: &'a T) -> Self {
-        let msg_type = T::kind().into();
-        Self { msg_type, content }
-    }
-}
-
-impl<'a, C, MD, FD> From<&'a Message<C, MD, FD>> for MsgWithType<'a, Message<C, MD, FD>>
+impl<'a, C, MD> From<&'a Message<C, MD>> for MsgWithType<'a, Message<C, MD>>
 where
     C: MessageKind,
     MessageType: From<<C as MessageKind>::Kind>,
 {
-    fn from(content: &'a Message<C, MD, FD>) -> Self {
+    fn from(content: &'a Message<C, MD>) -> Self {
         let msg_type = C::kind().into();
-        Self { msg_type, content }
+        Self {
+            msg_type,
+            message: content,
+        }
     }
 }
 
@@ -204,19 +209,19 @@ where
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_ser() {
-        let msg = AriesMessage::BasicMessage(BasicMessage {
-            id: "test".to_owned(),
-            sent_time: "test".to_owned(),
-            content: "test".to_owned(),
-            l10n: None,
-            thread: None,
-            timing: None,
-        });
+    // #[test]
+    // fn test_ser() {
+    //     let msg = AriesMessage::BasicMessage(BasicMessage {
+    //         id: "test".to_owned(),
+    //         sent_time: "test".to_owned(),
+    //         content: "test".to_owned(),
+    //         l10n: None,
+    //         thread: None,
+    //         timing: None,
+    //     });
 
-        println!("{}", serde_json::to_string(&msg).unwrap());
-    }
+    //     println!("{}", serde_json::to_string(&msg).unwrap());
+    // }
 
     #[test]
     fn test_de() {

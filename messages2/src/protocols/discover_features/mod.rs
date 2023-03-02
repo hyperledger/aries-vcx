@@ -2,21 +2,25 @@ mod disclose;
 mod query;
 
 use derive_more::From;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserializer, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::discover_features::{
         DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
     },
 };
 
-use self::{disclose::Disclose, query::Query};
+use self::{
+    disclose::{Disclose, DiscloseDecorators},
+    query::{Query, QueryDecorators},
+};
 
 #[derive(Clone, Debug, From)]
 pub enum DiscoverFeatures {
-    Query(Query),
-    Disclose(Disclose),
+    Query(Message<Query, QueryDecorators>),
+    Disclose(Message<Disclose, DiscloseDecorators>),
 }
 
 impl DelayedSerde for DiscoverFeatures {
@@ -30,8 +34,12 @@ impl DelayedSerde for DiscoverFeatures {
         let DiscoverFeaturesV1::V1_0(minor) = major;
 
         match minor {
-            DiscoverFeaturesV1_0::Query => Query::deserialize(deserializer).map(From::from),
-            DiscoverFeaturesV1_0::Disclose => Disclose::deserialize(deserializer).map(From::from),
+            DiscoverFeaturesV1_0::Query => {
+                Message::<Query, QueryDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            DiscoverFeaturesV1_0::Disclose => {
+                Message::<Disclose, DiscloseDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
         }
     }
 

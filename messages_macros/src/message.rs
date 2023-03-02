@@ -11,6 +11,9 @@ const KIND: &str = "kind";
 
 pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let name = input.ident;
+    let generics = input.generics;
+    let params = generics.params;
+    let where_clause = generics.where_clause;
 
     let mut attr_iter = input.attrs.into_iter().filter(|a| a.path.is_ident(MESSAGE));
     // Look for our attribute
@@ -50,7 +53,9 @@ pub fn message_impl(input: DeriveInput) -> SynResult<TokenStream> {
     let kind = Ident::new(kind, s.span());
 
     let expanded = quote! {
-        impl MessageKind for #name {
+        impl<#params> MessageKind for #name<#params>
+        #where_clause
+        {
             type Kind = #kind;
 
             fn kind() -> Self::Kind {

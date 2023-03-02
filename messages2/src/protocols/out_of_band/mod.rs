@@ -6,17 +6,22 @@ use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
+    composite_message::Message,
     delayed_serde::DelayedSerde,
     message_type::message_family::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
 };
 
-use self::{invitation::Invitation, reuse::HandshakeReuse, reuse_accepted::HandshakeReuseAccepted};
+use self::{
+    invitation::{Invitation, InvitationDecorators},
+    reuse::{HandshakeReuse, HandshakeReuseDecorators},
+    reuse_accepted::{HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators},
+};
 
 #[derive(Clone, Debug, From)]
 pub enum OutOfBand {
-    Invitation(Invitation),
-    HandshakeReuse(HandshakeReuse),
-    HandshakeReuseAccepted(HandshakeReuseAccepted),
+    Invitation(Message<Invitation, InvitationDecorators>),
+    HandshakeReuse(Message<HandshakeReuse, HandshakeReuseDecorators>),
+    HandshakeReuseAccepted(Message<HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators>),
 }
 
 impl DelayedSerde for OutOfBand {
@@ -30,9 +35,20 @@ impl DelayedSerde for OutOfBand {
         let OutOfBandV1::V1_1(minor) = major;
 
         match minor {
-            OutOfBandV1_1::Invitation => Invitation::deserialize(deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuse => HandshakeReuse::deserialize(deserializer).map(From::from),
-            OutOfBandV1_1::HandshakeReuseAccepted => HandshakeReuseAccepted::deserialize(deserializer).map(From::from),
+            OutOfBandV1_1::Invitation => {
+                Message::<Invitation, InvitationDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
+            }
+            OutOfBandV1_1::HandshakeReuse => {
+                Message::<HandshakeReuse, HandshakeReuseDecorators>::delayed_deserialize(minor, deserializer)
+                    .map(From::from)
+            }
+            OutOfBandV1_1::HandshakeReuseAccepted => {
+                Message::<HandshakeReuseAccepted, HandshakeReuseAcceptedDecorators>::delayed_deserialize(
+                    minor,
+                    deserializer,
+                )
+                .map(From::from)
+            }
         }
     }
 
