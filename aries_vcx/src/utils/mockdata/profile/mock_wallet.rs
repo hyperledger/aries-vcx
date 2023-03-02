@@ -1,12 +1,12 @@
 use async_trait::async_trait;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+#[cfg(feature = "vdrtools")]
+use crate::indy::utils::mocks::did_mocks::DidMocks;
 use crate::{
     plugins::wallet::base_wallet::BaseWallet,
     utils::{self, async_fn_iterator::AsyncFnIterator},
 };
-#[cfg(feature = "vdrtools")]
-use crate::indy::utils::mocks::did_mocks::DidMocks;
 
 #[derive(Debug)]
 pub(crate) struct MockWallet;
@@ -98,7 +98,7 @@ fn get_next_mock_did_response_or_fail() -> VcxResult<String> {
     #[cfg(feature = "vdrtools")]
     if DidMocks::has_did_mock_responses() {
         warn!("key_for_local_did >> retrieving did mock response");
-        return Ok(DidMocks::get_next_did_response())
+        return Ok(DidMocks::get_next_did_response());
     };
     Err(AriesVcxError::from_msg(
         AriesVcxErrorKind::UnimplementedFeature,

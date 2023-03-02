@@ -1,10 +1,10 @@
 use crate::core::profile::profile::Profile;
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+#[cfg(feature = "vdrtools")]
+use crate::indy::utils::LibindyMock;
 use crate::plugins::ledger::base_ledger::BaseLedger;
 use crate::utils::constants::{CRED_DEF_ID, CRED_DEF_JSON, DEFAULT_SERIALIZE_VERSION};
 use crate::utils::serialization::ObjectWithVersion;
-#[cfg(feature = "vdrtools")]
-use crate::indy::utils::LibindyMock;
 
 use crate::global::settings::{self, indy_mocks_enabled};
 use std::fmt;

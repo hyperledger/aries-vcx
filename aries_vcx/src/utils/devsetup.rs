@@ -568,7 +568,7 @@ pub async fn setup_issuer_wallet_and_agency_client() -> (String, WalletHandle, A
     create_wallet_with_master_secret(&config_wallet).await.unwrap();
     let wallet_handle = open_wallet(&config_wallet).await.unwrap();
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-    init_issuer_config(&config_issuer).unwrap();
+    init_issuer_config(&config_issuer.institution_did).unwrap();
     let mut agency_client = AgencyClient::new();
 
     let wallet: Arc<dyn BaseWallet> = Arc::new(IndySdkWallet::new(wallet_handle));
@@ -595,7 +595,7 @@ pub async fn setup_issuer_wallet() -> (String, WalletHandle) {
     create_wallet_with_master_secret(&config_wallet).await.unwrap();
     let wallet_handle = open_wallet(&config_wallet).await.unwrap();
     let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-    init_issuer_config(&config_issuer).unwrap();
+    init_issuer_config(&config_issuer.institution_did).unwrap();
     (config_issuer.institution_did, wallet_handle)
 }
 

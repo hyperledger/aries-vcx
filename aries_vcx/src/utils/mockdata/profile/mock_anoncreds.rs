@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 
 use crate::errors::error::{AriesVcxError, AriesVcxErrorKind, VcxResult};
+#[cfg(feature = "vdrtools")]
+use crate::indy::utils::LibindyMock;
 use crate::{
     global::settings,
     plugins::anoncreds::base_anoncreds::BaseAnonCreds,
@@ -10,8 +12,6 @@ use crate::{
         mockdata::mock_settings::get_mock_creds_retrieved_for_proof_request,
     },
 };
-#[cfg(feature = "vdrtools")]
-use crate::indy::utils::LibindyMock;
 
 #[derive(Debug)]
 pub(crate) struct MockAnoncreds;
