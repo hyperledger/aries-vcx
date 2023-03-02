@@ -177,7 +177,7 @@ pub extern "C" fn vcx_init_issuer_config(
     };
 
     execute(move || {
-        match settings_init_issuer_config(&issuer_config.institution_did) {
+        match settings_init_issuer_config(&issuer_config) {
             Ok(()) => {
                 info!(
                     "vcx_init_issuer_config_cb >>> command_handle: {}, rc: {}",
