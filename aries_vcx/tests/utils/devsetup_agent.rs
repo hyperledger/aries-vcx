@@ -161,7 +161,7 @@ pub mod test_utils {
             let profile: Arc<dyn Profile> = Arc::new(indy_profile);
 
             let config_issuer = wallet_configure_issuer(wallet_handle, enterprise_seed).await.unwrap();
-            init_issuer_config(&config_issuer).unwrap();
+            init_issuer_config(&config_issuer.institution_did).unwrap();
             let mut agency_client = AgencyClient::new();
             let config_agency =
                 provision_cloud_agent(&mut agency_client, profile.inject_wallet(), &config_provision_agent)
