@@ -100,7 +100,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
   }
 
   async function handleMessage (ariesMsg) {
-    logger.info(`Alice is going to try handle incoming messages`)
+    logger.info('Alice is going to try handle incoming messages')
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
@@ -122,7 +122,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     logger.info('acceptOobCredentialOffer >>> Alice going to accept oob cred offer.')
 
     const oobReceiver = await OutOfBandReceiver.createWithMessage(oobCredOfferMsg)
-    const credOffer = await oobReceiver.extractMessage()
+    const credOffer = oobReceiver.extractMessage()
     logger.info('acceptOobCredentialOffer >>> Extracted attached message')
     logger.debug(`acceptOobCredentialOffer >>> attached message: ${credOffer}`)
     await vcxAgent.serviceCredHolder.createCredentialFromOfferAndSendRequest(connectionId, holderCredentialId, credOffer)
@@ -132,14 +132,22 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function sendHolderProof (proofRequest, _mapRevRegId) {
+  async function sendHolderProof (proofRequest, _mapRevRegId, selfAttestedAttrs) {
     await vcxAgent.agentInitVcx()
 
     const mapRevRegId = _mapRevRegId || ((_revRegId) => { throw Error('Tails file should not be needed') })
     await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
     const { selectedCreds } = await vcxAgent.serviceProver.selectCredentials(disclosedProofId, mapRevRegId)
-    const selfAttestedAttrs = { attribute_3: 'Smith' }
     await vcxAgent.serviceProver.generateProof(disclosedProofId, selectedCreds, selfAttestedAttrs)
+    expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(ProverStateType.PresentationSent)
+
+    await vcxAgent.agentShutdownVcx()
+  }
+
+  async function sendHolderProofSelfAttested (proofRequest, selfAttestedAttrs) {
+    await vcxAgent.agentInitVcx()
+    await vcxAgent.serviceProver.buildDisclosedProof(disclosedProofId, proofRequest)
+    await vcxAgent.serviceProver.generateProof(disclosedProofId, { }, selfAttestedAttrs)
     expect(await vcxAgent.serviceProver.sendDisclosedProof(disclosedProofId, connectionId)).toBe(ProverStateType.PresentationSent)
 
     await vcxAgent.agentShutdownVcx()
@@ -273,6 +281,7 @@ module.exports.createAlice = async function createAlice (serviceEndpoint = 'http
     acceptCredentialOffer,
     updateStateCredential,
     sendHolderProof,
+    sendHolderProofSelfAttested,
     updateStateHolderProof,
     getTailsLocation,
     getTailsHash,

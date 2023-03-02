@@ -1,9 +1,10 @@
 /* eslint-env jest */
 const { createVcxAgent, getSampleSchemaData } = require('../../src')
-const { ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
+const {
+  ConnectionStateType, IssuerStateType, VerifierStateType, generatePublicInvite,
   createPwInfo, createService, getServiceFromLedger, unpack
 } = require('@hyperledger/node-vcx-wrapper')
-const { getAliceSchemaAttrs, getFaberCredDefName, getFaberProofData } = require('./data')
+const { getAliceSchemaAttrs, getFaberCredDefName } = require('./data')
 const sleep = require('sleep-promise')
 const assert = require('assert')
 
@@ -65,8 +66,8 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     logger.info('Faber is going to write nonmediated service on the ledger')
     await vcxAgent.agentInitVcx()
 
-    logger.info(`Faber creating pairwise info`)
-    const pwInfo = await createPwInfo();
+    logger.info('Faber creating pairwise info')
+    const pwInfo = await createPwInfo()
     logger.info(`Faber creating service for endpoint ${endpoint} and recipient key ${pwInfo.pw_vk}`)
     await createService(institutionDid, endpoint, [pwInfo.pw_vk], [])
 
@@ -119,11 +120,14 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     return await createOobMessageWithDid(credOfferMsg)
   }
 
-  async function createOobProofRequest () {
+  function getFaberDid () {
+    return vcxAgent.getInstitutionDid()
+  }
+
+  async function createOobProofRequest (proofData) {
     await vcxAgent.agentInitVcx()
 
-    const issuerDid = vcxAgent.getInstitutionDid()
-    const proofData = getFaberProofData(issuerDid, proofId)
+    // todo: address
     logger.info(`Faber is sending proof request to connection ${connectionId}`)
     const presentationRequestMsg = await vcxAgent.serviceVerifier.buildProofReqAndMarkAsSent(proofId, proofData)
 
@@ -150,7 +154,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   }
 
   async function handleMessage (ariesMsg) {
-    logger.info(`Faber is going to try handle incoming messages`)
+    logger.info('Faber is going to try handle incoming messages')
     await vcxAgent.agentInitVcx()
 
     await vcxAgent.serviceConnections.handleMessage(connectionId, ariesMsg)
@@ -185,7 +189,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   async function rotateRevReg (tailsDir, maxCreds) {
     await vcxAgent.agentInitVcx()
 
-    logger.info('Faber rotating revocation registry');
+    logger.info('Faber rotating revocation registry')
     const credDefLedgerId = await vcxAgent.serviceLedgerCredDef.getCredDefId(credDefId);
     ({ revRegId } = await vcxAgent.serviceLedgerRevReg.createRevocationRegistry(institutionDid, credDefLedgerId, revRegTagNo + 1, tailsDir, maxCreds))
     revRegTagNo += 1
@@ -232,11 +236,9 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
-  async function requestProofFromAlice () {
+  async function requestProofFromAlice (proofData) {
     logger.info('Faber going to request proof from Alice')
     await vcxAgent.agentInitVcx()
-    const issuerDid = vcxAgent.getInstitutionDid()
-    const proofData = getFaberProofData(issuerDid, proofId)
     logger.info(`Faber is creating proof ${proofId}`)
     await vcxAgent.serviceVerifier.createProof(proofId, proofData)
     logger.info(`Faber is sending proof request to connection ${connectionId}`)
@@ -274,7 +276,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   }
 
   async function createNonmediatedConnectionWithInvite () {
-    logger.info(`Faber is going to create a connection with invite`)
+    logger.info('Faber is going to create a connection with invite')
 
     await vcxAgent.agentInitVcx()
     const invite = await vcxAgent.serviceNonmediatedConnections.inviterConnectionCreatePwInvite(connectionId)
@@ -285,7 +287,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
   }
 
   async function nonmediatedConnectionProcessRequest (request) {
-    logger.info(`Faber is going to process a connection request`)
+    logger.info('Faber is going to process a connection request')
 
     await vcxAgent.agentInitVcx()
     expect(await vcxAgent.serviceNonmediatedConnections.getState(connectionId)).toBe(ConnectionStateType.Invited)
@@ -388,6 +390,23 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     await vcxAgent.agentShutdownVcx()
   }
 
+  async function getPresentationInfo () {
+    logger.info('Faber is gather info about received presentation')
+    await vcxAgent.agentInitVcx()
+    const presentationMsg = JSON.parse(await vcxAgent.serviceVerifier.getPresentationMsg(proofId))
+    const presentationVerificationState = JSON.parse(await vcxAgent.serviceVerifier.getPresentationVerificationStatus(proofId))
+    const presentationAttachment = JSON.parse(await vcxAgent.serviceVerifier.getPresentationAttachment(proofId))
+    const presentationRequestAttachment = JSON.parse(await vcxAgent.serviceVerifier.getPresentationRequestAttachment(proofId))
+
+    await vcxAgent.agentShutdownVcx()
+    return {
+      presentationMsg,
+      presentationVerificationState,
+      presentationAttachment,
+      presentationRequestAttachment
+    }
+  }
+
   return {
     buildLedgerPrimitives,
     rotateRevReg,
@@ -407,6 +426,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     createConnectionFromReceivedRequestV2,
     updateConnection,
     handleMessage,
+    getPresentationInfo,
     sendConnectionResponse,
     sendCredentialOffer,
     createOobCredOffer,
@@ -422,6 +442,7 @@ module.exports.createFaber = async function createFaber (serviceEndpoint = 'http
     updateAllReceivedMessages,
     publishService,
     readServiceFromLedger,
-    unpackMsg
+    unpackMsg,
+    getFaberDid
   }
 }

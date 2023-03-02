@@ -72,7 +72,7 @@ impl Verifier {
 
     pub async fn send_presentation_request(&mut self, send_message: SendClosure) -> VcxResult<()> {
         if self.verifier_sm.get_state() == VerifierState::PresentationRequestSet {
-            let offer = self.verifier_sm.presentation_request()?.to_a2a_message();
+            let offer = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
             send_message(offer).await?;
             self.verifier_sm = self.verifier_sm.clone().mark_presentation_request_msg_sent()?;
         }
@@ -125,17 +125,25 @@ impl Verifier {
     }
 
     pub fn get_presentation_request_msg(&self) -> VcxResult<String> {
-        let msg = self.verifier_sm.presentation_request()?.to_a2a_message();
+        let msg = self.verifier_sm.presentation_request_msg()?.to_a2a_message();
         Ok(json!(msg).to_string())
     }
 
+    pub fn get_presentation_request_attachment(&self) -> VcxResult<String> {
+        self.verifier_sm
+            .presentation_request_msg()?
+            .request_presentations_attach
+            .content()
+            .map_err(|err| err.into())
+    }
+
     pub fn get_presentation_request(&self) -> VcxResult<PresentationRequest> {
-        self.verifier_sm.presentation_request()
+        self.verifier_sm.presentation_request_msg()
     }
 
     pub fn get_presentation_msg(&self) -> VcxResult<String> {
         trace!("Verifier::get_presentation >>>");
-        let msg = self.verifier_sm.presentation()?.to_a2a_message();
+        let msg = self.verifier_sm.get_presentation_msg()?.to_a2a_message();
         Ok(json!(msg).to_string())
     }
 
@@ -146,7 +154,7 @@ impl Verifier {
 
     pub fn get_presentation_attachment(&self) -> VcxResult<String> {
         self.verifier_sm
-            .presentation()?
+            .get_presentation_msg()?
             .presentations_attach
             .content()
             .map_err(|err| err.into())

@@ -111,22 +111,23 @@ async function runFaber (options) {
     }
 
     logger.info('#27 Process the proof provided by alice.')
-    const { proofState, proof } = await vcxProof.getProof()
-    logger.info(`#27 Proof: proofState=${proofState}, proof=${proof}`)
-    assert(proofState)
-    assert(proof)
+    const presentation = vcxProof.getPresentationMsg()
+    const verificationState = vcxProof.getPresentationVerificationStatus()
+    logger.info(`#27 Proof: proofState=${verificationState}, proof=${presentation}`)
+    assert(verificationState)
+    assert(presentation)
     logger.info(`Proof protocol state = ${JSON.stringify(proofProtocolState)}`)
-    logger.info(`Proof verification state =${proofState}`)
-    logger.debug(`Proof presentation = ${JSON.stringify(proof, null, 2)}`)
+    logger.info(`Proof verification state =${verificationState}`)
+    logger.debug(`Proof presentation = ${JSON.stringify(presentation, null, 2)}`)
     logger.debug(`Serialized Proof state machine ${JSON.stringify(await vcxProof.serialize())}`)
 
-    if (proofState === ProofState.Verified) {
+    if (verificationState === ProofState.Verified) {
       if (options.revocation) {
         throw Error('Proof was verified, but was expected to be invalid, because revocation was enabled.')
       } else {
         logger.info('Proof was verified.')
       }
-    } else if (proofState === ProofState.Invalid) {
+    } else if (verificationState === ProofState.Invalid) {
       if (options.revocation) {
         logger.info('Proof was determined as invalid, which was expected because the used credential was revoked.')
       } else {
@@ -134,7 +135,7 @@ async function runFaber (options) {
       }
       await sleepPromise(1000)
     } else {
-      logger.error(`Unexpected proof state '${proofState}'.`)
+      logger.error(`Unexpected proof state '${verificationState}'.`)
       process.exit(-1)
     }
 

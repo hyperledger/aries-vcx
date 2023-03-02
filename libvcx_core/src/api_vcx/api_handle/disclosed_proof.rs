@@ -137,7 +137,7 @@ pub fn release_all() {
 
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     HANDLE_MAP.get(handle, |proof| {
-        let presentation = proof.get_presentation_msg().map_err(|err| err.into())?;
+        let presentation = proof.get_presentation_msg()?;
         Ok(json!(presentation).to_string())
     })
 }

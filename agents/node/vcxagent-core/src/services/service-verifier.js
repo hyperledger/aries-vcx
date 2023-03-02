@@ -52,10 +52,24 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     return await proof.getState()
   }
 
-  async function getProofState (proofId) {
+  async function getPresentationMsg (proofId) {
     const proof = await loadProof(proofId)
-    const { proofState } = await proof.getProof()
-    return proofState
+    return proof.getPresentationMsg()
+  }
+
+  async function getPresentationAttachment (proofId) {
+    const proof = await loadProof(proofId)
+    return proof.getPresentationAttachment()
+  }
+
+  async function getPresentationRequestAttachment (proofId) {
+    const proof = await loadProof(proofId)
+    return proof.getPresentationRequestAttachment()
+  }
+
+  async function getPresentationVerificationStatus (proofId) {
+    const proof = await loadProof(proofId)
+    return proof.getPresentationVerificationStatus()
   }
 
   async function listIds () {
@@ -84,6 +98,10 @@ module.exports.createServiceVerifier = function createServiceVerifier ({ logger,
     listIds,
     printInfo,
     getState,
-    getProofState
+
+    getPresentationMsg,
+    getPresentationAttachment,
+    getPresentationRequestAttachment,
+    getPresentationVerificationStatus
   }
 }

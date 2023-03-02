@@ -128,10 +128,6 @@ pub fn get_state(handle: u32) -> LibvcxResult<u32> {
     PROOF_MAP.get(handle, |proof| Ok(proof.get_state().into()))
 }
 
-pub fn get_proof_state(handle: u32) -> LibvcxResult<u32> {
-    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
-}
-
 pub fn release(handle: u32) -> LibvcxResult<()> {
     PROOF_MAP
         .release(handle)
@@ -192,10 +188,17 @@ pub async fn send_proof_request_nonmediated(handle: u32, connection_handle: u32)
     PROOF_MAP.insert(handle, proof)
 }
 
+// --- Presentation request ---
 pub fn mark_presentation_request_msg_sent(handle: u32) -> LibvcxResult<()> {
     let mut proof = PROOF_MAP.get_cloned(handle)?;
     proof.mark_presentation_request_msg_sent()?;
     PROOF_MAP.insert(handle, proof)
+}
+
+pub fn get_presentation_request_attachment(handle: u32) -> LibvcxResult<String> {
+    PROOF_MAP.get(handle, |proof| {
+        proof.get_presentation_request_attachment().map_err(|err| err.into())
+    })
 }
 
 pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
@@ -203,11 +206,22 @@ pub fn get_presentation_request_msg(handle: u32) -> LibvcxResult<String> {
         proof.get_presentation_request_msg().map_err(|err| err.into())
     })
 }
-
+// --- Presentation ---
 pub fn get_presentation_msg(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_presentation_msg().map_err(|err| err.into()))
 }
 
+pub fn get_presentation_attachment(handle: u32) -> LibvcxResult<String> {
+    PROOF_MAP.get(handle, |proof| {
+        proof.get_presentation_attachment().map_err(|err| err.into())
+    })
+}
+
+pub fn proof_get_presentation_verification_status(handle: u32) -> LibvcxResult<u32> {
+    PROOF_MAP.get(handle, |proof| Ok(proof.get_presentation_status().code()))
+}
+
+// --- General ---
 pub fn get_thread_id(handle: u32) -> LibvcxResult<String> {
     PROOF_MAP.get(handle, |proof| proof.get_thread_id().map_err(|err| err.into()))
 }
@@ -590,7 +604,7 @@ pub mod tests {
             send_proof_request(bad_handle, handle_conn).await.unwrap_err().kind(),
             LibvcxErrorKind::InvalidHandle
         );
-        assert_eq!(get_proof_state(handle_proof).unwrap(), 0);
+        assert_eq!(proof_get_presentation_verification_status(handle_proof).unwrap(), 0);
         assert_eq!(
             create_proof(
                 "my source id".to_string(),

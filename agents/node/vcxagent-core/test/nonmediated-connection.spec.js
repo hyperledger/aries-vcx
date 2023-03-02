@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 describe('test establishing and exchanging messages via nonmediated connections', () => {
   it('Establish nonmediated connection via public endpoint using public invite, exchange messages', async () => {
-    let faberServer
+    let faberServer, aliceServer
     try {
       const path = '/msg'
       const faberPort = 5400
@@ -65,7 +65,6 @@ describe('test establishing and exchanging messages via nonmediated connections'
       await faber.nonmediatedConnectionSendMessage('Hello Alice')
       const { message: msgAlice } = await alice.unpackMsg(aliceEncryptedMsg)
       expect(JSON.parse(msgAlice).content).toBe('Hello Alice')
-
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
@@ -81,7 +80,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
   })
 
   it('Establish nonmediated connection via public endpoint using pairwise invite, exchange messages', async () => {
-    let faberServer
+    let faberServer, aliceServer
     try {
       const path = '/msg'
       const faberPort = 5402
@@ -129,7 +128,6 @@ describe('test establishing and exchanging messages via nonmediated connections'
       await faber.nonmediatedConnectionSendMessage('Hello Alice')
       const { message: msgAlice } = await alice.unpackMsg(aliceEncryptedMsg)
       expect(JSON.parse(msgAlice).content).toBe('Hello Alice')
-
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
@@ -145,7 +143,7 @@ describe('test establishing and exchanging messages via nonmediated connections'
   })
 
   it('Establish nonmediated connection via public endpoint using OOB invite, exchange messages', async () => {
-    let faberServer
+    let faberServer, aliceServer
     try {
       const path = '/msg'
       const faberPort = 5404
@@ -194,7 +192,6 @@ describe('test establishing and exchanging messages via nonmediated connections'
       await faber.nonmediatedConnectionSendMessage('Hello Alice')
       const { message: msgAlice } = await alice.unpackMsg(aliceEncryptedMsg)
       expect(JSON.parse(msgAlice).content).toBe('Hello Alice')
-
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
@@ -252,7 +249,6 @@ describe('test establishing and exchanging messages via nonmediated connections'
       expect(payloadAlice['@id']).toBeDefined()
       expect(payloadAlice['@type']).toBeDefined()
       expect(payloadAlice.content).toBe('Hello Alice')
-
     } catch (err) {
       console.error(`err = ${err.message} stack = ${err.stack}`)
       throw Error(err)
