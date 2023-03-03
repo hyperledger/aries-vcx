@@ -52,6 +52,16 @@ async fn get_service_from_ledger(target_did: String) -> napi::Result<String> {
 }
 
 #[napi]
+async fn get_attr_from_ledger(target_did: String, attr: String) -> napi::Result<String> {
+    ledger::ledger_get_attr(&target_did, &attr).await.map_err(to_napi_err)
+}
+
+#[napi]
+async fn clear_attr_from_ledger(did: String, attrib: String) -> napi::Result<String> {
+    ledger::ledger_clear_attr(&did, &attrib).await.map_err(to_napi_err)
+}
+
+#[napi]
 async fn get_verkey_from_ledger(did: String) -> napi::Result<String> {
     ledger::get_verkey_from_ledger(&did).await.map_err(to_napi_err)
 }
