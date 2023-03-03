@@ -42,6 +42,29 @@ where
     }
 }
 
+macro_rules! transit_to_aries_msg {
+    ($content:ident, $decorators:ident, $($interm:ident),+) => {
+        impl From<Message<$content, $decorators>> for $crate::aries_message::AriesMessage {
+            fn from(value: Message<$content, $decorators>) -> Self {
+                Self::from($crate::composite_message::generate_from_stmt!(value, $($interm),+))
+            }
+        }
+    };
+}
+
+macro_rules! generate_from_stmt {
+    ($val:expr, $interm:ident) => {
+        $interm::from($val)
+    };
+    ($val:expr, $interm:ident, $($i:ident),+) => {{
+        generate_from_stmt!($val, $interm)
+        generate_from_stmt!($val, $($i),+)
+    }};
+}
+
+pub(crate) use generate_from_stmt;
+pub(crate) use transit_to_aries_msg;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Nothing;
 

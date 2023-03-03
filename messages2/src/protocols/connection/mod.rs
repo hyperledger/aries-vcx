@@ -7,7 +7,7 @@ use derive_more::From;
 use serde::{Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{Message, transit_to_aries_msg},
     delayed_serde::DelayedSerde,
     message_type::message_family::connection::{Connection as ConnectionKind, ConnectionV1, ConnectionV1_0},
     utils,
@@ -68,3 +68,6 @@ impl DelayedSerde for Connection {
         }
     }
 }
+
+
+transit_to_aries_msg!(Request, RequestDecorators, Connection);
