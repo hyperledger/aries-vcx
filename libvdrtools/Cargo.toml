@@ -59,7 +59,7 @@ num-derive = "0.3"
 convert_case = "0.3.2"
 futures = { version = "0.3", default-features = false, features = [ "executor", "alloc" ] }
 uuid = { version = "0.8", default-features = false, features = ["v4"] }
-ursa = { version = "0.3.7", optional = true}
+ursa = { git = "https://github.com/Patrik-Stas/ursa", rev = "50f02ebf9af897527b9b7718bb0e46c476bac685", optional = true}
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.5"

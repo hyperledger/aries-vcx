@@ -24,5 +24,5 @@ serde_derive = "1.0.99"
 sqlx = { version = "0.6.2", features = [ "sqlite" ], optional = true  }
 zeroize = "~1.5.0"
 zmq = {version = "0.9.1", optional = true}
-ursa = { version = "0.3.7", optional = true}
+ursa = { git = "https://github.com/Patrik-Stas/ursa", rev = "50f02ebf9af897527b9b7718bb0e46c476bac685", optional = true}
 aes = "0.7.4"

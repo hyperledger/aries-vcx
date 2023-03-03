@@ -12,8 +12,12 @@ use log;
 #[cfg(feature = "casting_errors")]
 use sqlx;
 
+// #[cfg(feature = "casting_errors")]
+// use ursa::errors::{UrsaCryptoError, SharingError};
+
 #[cfg(feature = "casting_errors")]
-use ursa::errors::{UrsaCryptoError, UrsaCryptoErrorKind};
+use ursa::prelude::sharing::error::SharingError;
+
 
 use libc::c_char;
 
@@ -257,43 +261,43 @@ impl From<log::SetLoggerError> for IndyError {
         err.context(IndyErrorKind::InvalidState).into()
     }
 }
-
-#[cfg(feature = "casting_errors")]
-impl From<UrsaCryptoError> for IndyError {
-    fn from(err: UrsaCryptoError) -> Self {
-        let message = format!(
-            "UrsaCryptoError: {}",
-            <dyn Fail>::iter_causes(&err)
-                .map(|e| e.to_string())
-                .collect::<String>()
-        );
-
-        match err.kind() {
-            UrsaCryptoErrorKind::InvalidState => {
-                IndyError::from_msg(IndyErrorKind::InvalidState, message)
-            }
-            UrsaCryptoErrorKind::InvalidStructure => {
-                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
-            }
-            UrsaCryptoErrorKind::IOError => IndyError::from_msg(IndyErrorKind::IOError, message),
-            UrsaCryptoErrorKind::InvalidRevocationAccumulatorIndex => {
-                IndyError::from_msg(IndyErrorKind::InvalidUserRevocId, message)
-            }
-            UrsaCryptoErrorKind::RevocationAccumulatorIsFull => {
-                IndyError::from_msg(IndyErrorKind::RevocationRegistryFull, message)
-            }
-            UrsaCryptoErrorKind::ProofRejected => {
-                IndyError::from_msg(IndyErrorKind::ProofRejected, message)
-            }
-            UrsaCryptoErrorKind::CredentialRevoked => {
-                IndyError::from_msg(IndyErrorKind::CredentialRevoked, message)
-            }
-            UrsaCryptoErrorKind::InvalidParam(_) => {
-                IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
-            }
-        }
-    }
-}
+//
+// #[cfg(feature = "casting_errors")]
+// impl From<Ursa> for IndyError {
+//     fn from(err: UrsaCryptoError) -> Self {
+//         let message = format!(
+//             "UrsaCryptoError: {}",
+//             <dyn Fail>::iter_causes(&err)
+//                 .map(|e| e.to_string())
+//                 .collect::<String>()
+//         );
+//
+//         match err.kind() {
+//             SharingError::ShareDuplicateIdentifier => {
+//                 IndyError::from_msg(IndyErrorKind::InvalidState, message)
+//             }
+//             SharingError::ShareInvalidIdentifier => {
+//                 IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+//             }
+//             SharingError::ShareI => IndyError::from_msg(IndyErrorKind::IOError, message),
+//             SharingError::InvalidRevocationAccumulatorIndex => {
+//                 IndyError::from_msg(IndyErrorKind::InvalidUserRevocId, message)
+//             }
+//             SharingError::RevocationAccumulatorIsFull => {
+//                 IndyError::from_msg(IndyErrorKind::RevocationRegistryFull, message)
+//             }
+//             SharingError::ProofRejected => {
+//                 IndyError::from_msg(IndyErrorKind::ProofRejected, message)
+//             }
+//             SharingError::CredentialRevoked => {
+//                 IndyError::from_msg(IndyErrorKind::CredentialRevoked, message)
+//             }
+//             SharingError::InvalidParam(_) => {
+//                 IndyError::from_msg(IndyErrorKind::InvalidStructure, message)
+//             }
+//         }
+//     }
+// }
 
 #[cfg(feature = "casting_errors")]
 impl From<bs58::decode::Error> for IndyError {
