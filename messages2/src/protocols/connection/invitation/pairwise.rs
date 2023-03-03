@@ -1,14 +1,18 @@
-use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use super::InvitationImpl;
-use crate::message_type::message_family::connection::ConnectionV1_0;
-use crate::protocols::traits::MessageKind;
+use crate::decorators::Timing;
 
 /// Wrapper that represents a pairwise invitation.
 // The wrapping is used so that we expose certain types as an abstraction
 // over our internal types.
-#[derive(Debug, Clone, Deserialize, Serialize, MessageContent)]
-#[message(kind = "ConnectionV1_0::Invitation")]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(transparent)]
 pub struct PairwiseInvitation<T>(pub InvitationImpl<T>);
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct PwInvitationDecorators {
+    #[serde(rename = "~timing")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<Timing>,
+}

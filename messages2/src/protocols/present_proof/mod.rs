@@ -33,11 +33,11 @@ pub enum PresentProof {
 impl DelayedSerde for PresentProof {
     type MsgType = PresentProofKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let PresentProofKind::V1(major) = seg;
+        let PresentProofKind::V1(major) = msg_type;
         let PresentProofV1::V1_0(minor) = major;
 
         match minor {

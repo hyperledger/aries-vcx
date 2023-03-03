@@ -24,11 +24,11 @@ pub enum TrustPing {
 impl DelayedSerde for TrustPing {
     type MsgType = TrustPingKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let TrustPingKind::V1(major) = seg;
+        let TrustPingKind::V1(major) = msg_type;
         let TrustPingV1::V1_0(minor) = major;
 
         match minor {

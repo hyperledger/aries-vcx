@@ -1,7 +1,7 @@
-mod invitation;
-mod problem_report;
-mod request;
-mod response;
+pub mod invitation;
+pub mod problem_report;
+pub mod request;
+pub mod response;
 
 use derive_more::From;
 use serde::{Deserializer, Serializer};
@@ -33,11 +33,11 @@ pub enum Connection {
 impl DelayedSerde for Connection {
     type MsgType = ConnectionKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let ConnectionKind::V1(major) = seg;
+        let ConnectionKind::V1(major) = msg_type;
         let ConnectionV1::V1_0(minor) = major;
 
         match minor {

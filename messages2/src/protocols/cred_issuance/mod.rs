@@ -43,11 +43,11 @@ pub enum CredentialIssuance {
 impl DelayedSerde for CredentialIssuance {
     type MsgType = CredentialIssuanceKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let CredentialIssuanceKind::V1(major) = seg;
+        let CredentialIssuanceKind::V1(major) = msg_type;
         let CredentialIssuanceV1::V1_0(minor) = major;
 
         match minor {

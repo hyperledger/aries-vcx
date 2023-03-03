@@ -26,11 +26,11 @@ pub enum Revocation {
 impl DelayedSerde for Revocation {
     type MsgType = RevocationKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let RevocationKind::V2(major) = seg;
+        let RevocationKind::V2(major) = msg_type;
         let RevocationV2::V2_0(minor) = major;
 
         match minor {

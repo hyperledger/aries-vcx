@@ -7,7 +7,7 @@ use crate::{
     message_type::{MessageFamily, MessageType},
     protocols::{
         basic_message::{BasicMessage, BasicMessageDecorators},
-        connection::Connection,
+        connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
         notification::{Ack, AckDecorators},
@@ -197,6 +197,16 @@ where
 {
     fn from(content: &'a Message<C, MD>) -> Self {
         let msg_type = C::kind().into();
+        Self {
+            msg_type,
+            message: content,
+        }
+    }
+}
+
+impl<'a> From<&'a Invitation> for MsgWithType<'a, Invitation> {
+    fn from(content: &'a Invitation) -> Self {
+        let msg_type = Invitation::kind().into();
         Self {
             msg_type,
             message: content,

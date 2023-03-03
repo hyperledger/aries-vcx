@@ -27,11 +27,11 @@ pub enum OutOfBand {
 impl DelayedSerde for OutOfBand {
     type MsgType = OutOfBandKind;
 
-    fn delayed_deserialize<'de, D>(seg: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let OutOfBandKind::V1(major) = seg;
+        let OutOfBandKind::V1(major) = msg_type;
         let OutOfBandV1::V1_1(minor) = major;
 
         match minor {
