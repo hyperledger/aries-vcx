@@ -4,13 +4,13 @@ use uuid::Uuid;
 use crate::protocols::traits::MessageKind;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Message<C, MD = Nothing> {
+pub struct Message<C, D = Nothing> {
     #[serde(rename = "@id")]
     id: String,
     #[serde(flatten)]
     content: C,
     #[serde(flatten)]
-    decorators: MD,
+    decorators: D,
 }
 
 impl<C> Message<C> {
@@ -23,8 +23,8 @@ impl<C> Message<C> {
     }
 }
 
-impl<C, MD> Message<C, MD> {
-    pub fn with_decorators(content: C, decorators: MD) -> Self {
+impl<C, D> Message<C, D> {
+    pub fn with_decorators(content: C, decorators: D) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             content,
@@ -33,7 +33,7 @@ impl<C, MD> Message<C, MD> {
     }
 }
 
-impl<C, MD> Message<C, MD>
+impl<C, D> Message<C, D>
 where
     C: MessageKind,
 {

@@ -190,12 +190,12 @@ pub(crate) struct MsgWithType<'a, T> {
     message: &'a T,
 }
 
-impl<'a, C, MD> From<&'a Message<C, MD>> for MsgWithType<'a, Message<C, MD>>
+impl<'a, C, D> From<&'a Message<C, D>> for MsgWithType<'a, Message<C, D>>
 where
     C: MessageKind,
     MessageType: From<<C as MessageKind>::Kind>,
 {
-    fn from(content: &'a Message<C, MD>) -> Self {
+    fn from(content: &'a Message<C, D>) -> Self {
         let msg_type = C::kind().into();
         Self {
             msg_type,

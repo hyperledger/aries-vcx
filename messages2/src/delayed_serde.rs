@@ -18,19 +18,19 @@ pub trait DelayedSerde: Sized {
         S: Serializer;
 }
 
-impl<C, MD> DelayedSerde for Message<C, MD>
+impl<C, D> DelayedSerde for Message<C, D>
 where
     C: MessageKind,
     MessageType: From<<C as MessageKind>::Kind>,
-    for<'a> MsgWithType<'a, Message<C, MD>>: From<&'a Message<C, MD>>,
-    for<'d> Message<C, MD>: Deserialize<'d>,
-    Message<C, MD>: Serialize,
+    for<'a> MsgWithType<'a, Message<C, D>>: From<&'a Message<C, D>>,
+    for<'d> Message<C, D>: Deserialize<'d>,
+    Message<C, D>: Serialize,
 {
     type MsgType = <C as MessageKind>::Kind;
 
-    fn delayed_deserialize<'de, D>(msg_type: Self::MsgType, deserializer: D) -> Result<Self, D::Error>
+    fn delayed_deserialize<'de, DE>(msg_type: Self::MsgType, deserializer: DE) -> Result<Self, DE::Error>
     where
-        D: Deserializer<'de>,
+        DE: Deserializer<'de>,
     {
         let expected = Self::kind();
         if msg_type == expected {
@@ -42,7 +42,7 @@ where
                 expected,
                 msg_type
             );
-            Err(D::Error::custom(msg))
+            Err(DE::Error::custom(msg))
         }
     }
 
