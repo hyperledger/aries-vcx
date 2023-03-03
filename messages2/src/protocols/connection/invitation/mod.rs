@@ -6,8 +6,9 @@ use messages_macros::MessageContent;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
+use super::Connection;
 use crate::aries_message::MsgWithType;
-use crate::composite_message::Message;
+use crate::composite_message::{transit_to_aries_msg, Message};
 use crate::delayed_serde::DelayedSerde;
 use crate::message_type::message_family::connection::ConnectionV1_0;
 use crate::protocols::traits::MessageKind;
@@ -37,7 +38,7 @@ pub enum Invitation {
     PairwiseDID(Message<PairwiseInvitation<String>, PwInvitationDecorators>),
 }
 
-/// We need a custom [`DelayedSerde`] impl to take advantage of 
+/// We need a custom [`DelayedSerde`] impl to take advantage of
 /// serde's untagged deserialization.
 impl DelayedSerde for Invitation {
     type MsgType = ConnectionV1_0;
@@ -75,3 +76,7 @@ pub struct InvitationImpl<T> {
     pub routing_keys: Vec<String>,
     pub service_endpoint: T,
 }
+
+transit_to_aries_msg!(PublicInvitation, Invitation, Connection);
+transit_to_aries_msg!(PairwiseInvitation<Url>:PwInvitationDecorators, Invitation, Connection);
+transit_to_aries_msg!(PairwiseInvitation<String>:PwInvitationDecorators, Invitation, Connection);

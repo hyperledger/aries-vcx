@@ -5,7 +5,7 @@ use derive_more::From;
 use serde::{Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_family::revocation::{Revocation as RevocationKind, RevocationV2, RevocationV2_0},
 };
@@ -53,3 +53,6 @@ impl DelayedSerde for Revocation {
         }
     }
 }
+
+transit_to_aries_msg!(Revoke: RevokeDecorators, Revocation);
+transit_to_aries_msg!(AckRevoke: AckDecorators, Revocation);

@@ -7,7 +7,7 @@ use derive_more::From;
 use serde::{Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_family::present_proof::{PresentProof as PresentProofKind, PresentProofV1, PresentProofV1_0},
     utils,
@@ -72,3 +72,8 @@ impl DelayedSerde for PresentProof {
         }
     }
 }
+
+transit_to_aries_msg!(ProposePresentation: ProposePresentationDecorators, PresentProof);
+transit_to_aries_msg!(RequestPresentation: RequestPresentationDecorators, PresentProof);
+transit_to_aries_msg!(Presentation: PresentationDecorators, PresentProof);
+transit_to_aries_msg!(AckPresentation: AckDecorators, PresentProof);

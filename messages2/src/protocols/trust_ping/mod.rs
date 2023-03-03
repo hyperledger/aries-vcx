@@ -5,7 +5,7 @@ use derive_more::From;
 use serde::{Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_family::trust_ping::{TrustPing as TrustPingKind, TrustPingV1, TrustPingV1_0},
 };
@@ -52,3 +52,6 @@ impl DelayedSerde for TrustPing {
         }
     }
 }
+
+transit_to_aries_msg!(Ping: PingDecorators, TrustPing);
+transit_to_aries_msg!(PingResponse: PingResponseDecorators, TrustPing);

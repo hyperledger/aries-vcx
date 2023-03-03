@@ -43,7 +43,11 @@ where
 }
 
 macro_rules! transit_to_aries_msg {
-    ($content:ident, $decorators:ident, $($interm:ident),+) => {
+    ($content:ty, $($interm:ty),+) => {
+        transit_to_aries_msg!($content:$crate::composite_message::Nothing, $($interm),+);
+    };
+
+    ($content:ty: $decorators:ty, $($interm:ty),+) => {
         impl From<Message<$content, $decorators>> for $crate::aries_message::AriesMessage {
             fn from(value: Message<$content, $decorators>) -> Self {
                 Self::from($crate::composite_message::generate_from_stmt!(value, $($interm),+))
@@ -53,13 +57,12 @@ macro_rules! transit_to_aries_msg {
 }
 
 macro_rules! generate_from_stmt {
-    ($val:expr, $interm:ident) => {
-        $interm::from($val)
+    ($val:expr, $interm:ty) => {
+        <$interm>::from($val)
     };
-    ($val:expr, $interm:ident, $($i:ident),+) => {{
-        generate_from_stmt!($val, $interm)
-        generate_from_stmt!($val, $($i),+)
-    }};
+    ($val:expr, $interm:ty, $($i:ty),+) => {
+        $crate::composite_message::generate_from_stmt!($crate::composite_message::generate_from_stmt!($val, $interm), $($i),+)
+    };
 }
 
 pub(crate) use generate_from_stmt;

@@ -9,7 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use transitive::{TransitiveFrom, TransitiveTryFrom};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::{
         message_family::cred_issuance::{
@@ -135,3 +135,9 @@ pub struct CredentialAttr {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mime_type: Option<MimeType>,
 }
+
+transit_to_aries_msg!(OfferCredential: OfferCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(ProposeCredential: ProposeCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(RequestCredential: RequestCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(IssueCredential: IssueCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(AckCredential: AckDecorators, CredentialIssuance);

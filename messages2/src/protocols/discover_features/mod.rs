@@ -5,7 +5,7 @@ use derive_more::From;
 use serde::{Deserializer, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_family::discover_features::{
         DiscoverFeatures as DiscoverFeaturesKind, DiscoverFeaturesV1, DiscoverFeaturesV1_0,
@@ -53,3 +53,6 @@ impl DelayedSerde for DiscoverFeatures {
         }
     }
 }
+
+transit_to_aries_msg!(Query: QueryDecorators, DiscoverFeatures);
+transit_to_aries_msg!(Disclose: DiscloseDecorators, DiscoverFeatures);

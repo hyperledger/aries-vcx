@@ -6,7 +6,7 @@ use derive_more::From;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{
-    composite_message::Message,
+    composite_message::{transit_to_aries_msg, Message},
     delayed_serde::DelayedSerde,
     message_type::message_family::out_of_band::{OutOfBand as OutOfBandKind, OutOfBandV1, OutOfBandV1_1},
 };
@@ -81,3 +81,7 @@ pub enum HandshakeProtocol {
     ConnectionV1,
     DidExchangeV1,
 }
+
+transit_to_aries_msg!(Invitation: InvitationDecorators, OutOfBand);
+transit_to_aries_msg!(HandshakeReuse: HandshakeReuseDecorators, OutOfBand);
+transit_to_aries_msg!(HandshakeReuseAccepted: HandshakeReuseAcceptedDecorators, OutOfBand);
