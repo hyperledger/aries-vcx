@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Thread, Timing},
     message_type::message_family::discover_features::DiscoverFeaturesV1_0,
-    protocols::traits::MessageKind,
+    protocols::traits::MessageKind, composite_message::Message,
 };
+
+pub type Disclose = Message<DiscloseContent, DiscloseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "DiscoverFeaturesV1_0::Disclose")]
-pub struct Disclose {
+pub struct DiscloseContent {
     pub protocols: Vec<ProtocolDescriptor>,
 }
 

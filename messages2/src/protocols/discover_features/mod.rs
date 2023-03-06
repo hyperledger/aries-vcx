@@ -13,14 +13,16 @@ use crate::{
 };
 
 use self::{
-    disclose::{Disclose, DiscloseDecorators},
-    query::{Query, QueryDecorators},
+    disclose::{DiscloseContent, DiscloseDecorators},
+    query::{QueryContent, QueryDecorators},
 };
+
+pub use self::{disclose::Disclose, query::Query};
 
 #[derive(Clone, Debug, From)]
 pub enum DiscoverFeatures {
-    Query(Message<Query, QueryDecorators>),
-    Disclose(Message<Disclose, DiscloseDecorators>),
+    Query(Query),
+    Disclose(Disclose),
 }
 
 impl DelayedSerde for DiscoverFeatures {
@@ -34,12 +36,8 @@ impl DelayedSerde for DiscoverFeatures {
         let DiscoverFeaturesV1::V1_0(minor) = major;
 
         match minor {
-            DiscoverFeaturesV1_0::Query => {
-                Message::<Query, QueryDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            DiscoverFeaturesV1_0::Disclose => {
-                Message::<Disclose, DiscloseDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
+            DiscoverFeaturesV1_0::Query => Query::delayed_deserialize(minor, deserializer).map(From::from),
+            DiscoverFeaturesV1_0::Disclose => Disclose::delayed_deserialize(minor, deserializer).map(From::from),
         }
     }
 
@@ -54,5 +52,5 @@ impl DelayedSerde for DiscoverFeatures {
     }
 }
 
-transit_to_aries_msg!(Query: QueryDecorators, DiscoverFeatures);
-transit_to_aries_msg!(Disclose: DiscloseDecorators, DiscoverFeatures);
+transit_to_aries_msg!(QueryContent: QueryDecorators, DiscoverFeatures);
+transit_to_aries_msg!(DiscloseContent: DiscloseDecorators, DiscoverFeatures);
