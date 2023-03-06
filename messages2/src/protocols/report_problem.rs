@@ -7,14 +7,16 @@ use url::Url;
 
 use crate::{
     decorators::{FieldLocalization, Thread, Timing},
-    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0},
+    message_type::message_family::report_problem::{ReportProblem, ReportProblemV1, ReportProblemV1_0}, composite_message::Message,
 };
 
 use super::traits::MessageKind;
 
+pub type ProblemReport = Message<ProblemReportContent, ProblemReportDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "ReportProblem::V1(ReportProblemV1::V1_0(ReportProblemV1_0::ProblemReport))")]
-pub struct ProblemReport {
+pub struct ProblemReportContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

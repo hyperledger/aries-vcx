@@ -2,11 +2,14 @@ use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    composite_message::Message,
     decorators::{Thread, Timing},
     message_type::message_family::notification::{Notification, NotificationV1, NotificationV1_0},
 };
 
 use super::traits::MessageKind;
+
+pub type Ack = Message<AckContent, AckDecorators>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, MessageContent)]
 #[message(kind = "Notification::V1(NotificationV1::V1_0(NotificationV1_0::Ack))")]

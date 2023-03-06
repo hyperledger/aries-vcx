@@ -6,14 +6,14 @@ use crate::{
     delayed_serde::DelayedSerde,
     message_type::{MessageFamily, MessageType},
     protocols::{
-        basic_message::{BasicMessage, BasicMessageDecorators},
+        basic_message::BasicMessage,
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
-        notification::{AckContent, AckDecorators},
+        notification::Ack,
         out_of_band::OutOfBand,
         present_proof::PresentProof,
-        report_problem::{ProblemReport, ProblemReportDecorators},
+        report_problem::ProblemReport,
         revocation::Revocation,
         routing::Forward,
         traits::MessageKind,
@@ -29,13 +29,13 @@ pub enum AriesMessage {
     Connection(Connection),
     Revocation(Revocation),
     CredentialIssuance(CredentialIssuance),
-    ReportProblem(Message<ProblemReport, ProblemReportDecorators>),
+    ReportProblem(ProblemReport),
     PresentProof(PresentProof),
     TrustPing(TrustPing),
     DiscoverFeatures(DiscoverFeatures),
-    BasicMessage(Message<BasicMessage, BasicMessageDecorators>),
+    BasicMessage(BasicMessage),
     OutOfBand(OutOfBand),
-    Notification(Message<AckContent, AckDecorators>),
+    Notification(Ack),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -59,8 +59,7 @@ impl DelayedSerde for AriesMessage {
                 CredentialIssuance::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::ReportProblem(msg_type) => {
-                Message::<ProblemReport, ProblemReportDecorators>::delayed_deserialize(msg_type, deserializer)
-                    .map(From::from)
+                ProblemReport::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::PresentProof(msg_type) => {
                 PresentProof::delayed_deserialize(msg_type, deserializer).map(From::from)
@@ -72,15 +71,12 @@ impl DelayedSerde for AriesMessage {
                 DiscoverFeatures::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::BasicMessage(msg_type) => {
-                Message::<BasicMessage, BasicMessageDecorators>::delayed_deserialize(msg_type, deserializer)
-                    .map(From::from)
+                BasicMessage::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::OutOfBand(msg_type) => {
                 OutOfBand::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
-            Self::MsgType::Notification(msg_type) => {
-                Message::<AckContent, AckDecorators>::delayed_deserialize(msg_type, deserializer).map(From::from)
-            }
+            Self::MsgType::Notification(msg_type) => Ack::delayed_deserialize(msg_type, deserializer).map(From::from),
         }
     }
 

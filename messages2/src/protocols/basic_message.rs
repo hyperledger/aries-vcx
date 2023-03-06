@@ -3,14 +3,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     decorators::{MsgLocalization, Thread, Timing},
-    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0},
+    message_type::message_family::basic_message::{BasicMessage as BasicMessageKind, BasicMessageV1, BasicMessageV1_0}, composite_message::Message,
 };
 
 use super::traits::MessageKind;
 
+pub type BasicMessage = Message<BasicMessageContent, BasicMessageDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "BasicMessageKind::V1(BasicMessageV1::V1_0(BasicMessageV1_0::Message))")]
-pub struct BasicMessage {
+pub struct BasicMessageContent {
     pub sent_time: String,
     pub content: String,
 }
