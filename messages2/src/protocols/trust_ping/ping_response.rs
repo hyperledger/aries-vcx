@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     decorators::{Thread, Timing},
     message_type::message_family::trust_ping::TrustPingV1_0,
-    protocols::traits::MessageKind,
+    protocols::traits::MessageKind, composite_message::Message,
 };
+
+pub type PingResponse = Message<PingResponseContent, PingResponseDecorators>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "TrustPingV1_0::PingResponse")]
-pub struct PingResponse {
+pub struct PingResponseContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     comment: Option<String>,
 }

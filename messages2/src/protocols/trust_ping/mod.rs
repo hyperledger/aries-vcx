@@ -11,14 +11,16 @@ use crate::{
 };
 
 use self::{
-    ping::{Ping, PingDecorators},
-    ping_response::{PingResponse, PingResponseDecorators},
+    ping::{PingContent, PingDecorators},
+    ping_response::{PingResponseContent, PingResponseDecorators},
 };
+
+pub use self::{ping::Ping, ping_response::PingResponse};
 
 #[derive(Clone, Debug, From)]
 pub enum TrustPing {
-    Ping(Message<Ping, PingDecorators>),
-    PingResponse(Message<PingResponse, PingResponseDecorators>),
+    Ping(Ping),
+    PingResponse(PingResponse),
 }
 
 impl DelayedSerde for TrustPing {
@@ -32,13 +34,8 @@ impl DelayedSerde for TrustPing {
         let TrustPingV1::V1_0(minor) = major;
 
         match minor {
-            TrustPingV1_0::Ping => {
-                Message::<Ping, PingDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            TrustPingV1_0::PingResponse => {
-                Message::<PingResponse, PingResponseDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
-            }
+            TrustPingV1_0::Ping => Ping::delayed_deserialize(minor, deserializer).map(From::from),
+            TrustPingV1_0::PingResponse => PingResponse::delayed_deserialize(minor, deserializer).map(From::from),
         }
     }
 
@@ -53,5 +50,5 @@ impl DelayedSerde for TrustPing {
     }
 }
 
-transit_to_aries_msg!(Ping: PingDecorators, TrustPing);
-transit_to_aries_msg!(PingResponse: PingResponseDecorators, TrustPing);
+transit_to_aries_msg!(PingContent: PingDecorators, TrustPing);
+transit_to_aries_msg!(PingResponseContent: PingResponseDecorators, TrustPing);
