@@ -11,16 +11,18 @@ use crate::{
 };
 
 use self::{
-    ack::AckRevoke,
-    notification::{Revoke, RevokeDecorators},
+    ack::AckRevokeContent,
+    notification::{RevokeContent, RevokeDecorators},
 };
+
+pub use self::{ack::AckRevoke, notification::Revoke};
 
 use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum Revocation {
-    Revoke(Message<Revoke, RevokeDecorators>),
-    Ack(Message<AckRevoke, AckDecorators>),
+    Revoke(Revoke),
+    Ack(AckRevoke),
 }
 
 impl DelayedSerde for Revocation {
@@ -34,12 +36,8 @@ impl DelayedSerde for Revocation {
         let RevocationV2::V2_0(minor) = major;
 
         match minor {
-            RevocationV2_0::Revoke => {
-                Message::<Revoke, RevokeDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
-            RevocationV2_0::Ack => {
-                Message::<AckRevoke, AckDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
+            RevocationV2_0::Revoke => Revoke::delayed_deserialize(minor, deserializer).map(From::from),
+            RevocationV2_0::Ack => AckRevoke::delayed_deserialize(minor, deserializer).map(From::from),
         }
     }
 
@@ -54,5 +52,5 @@ impl DelayedSerde for Revocation {
     }
 }
 
-transit_to_aries_msg!(Revoke: RevokeDecorators, Revocation);
-transit_to_aries_msg!(AckRevoke: AckDecorators, Revocation);
+transit_to_aries_msg!(RevokeContent: RevokeDecorators, Revocation);
+transit_to_aries_msg!(AckRevokeContent: AckDecorators, Revocation);
