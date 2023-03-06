@@ -1,6 +1,7 @@
 use messages_macros::MessageContent;
 use serde::{Deserialize, Serialize};
 
+use crate::composite_message::Message;
 use crate::protocols::traits::MessageKind;
 use crate::{
     decorators::{Attachment, Thread, Timing},
@@ -9,9 +10,11 @@ use crate::{
 
 use super::CredentialPreview;
 
+pub type OfferCredential = Message<OfferCredentialContent, OfferCredentialDecorators>;
+
 #[derive(Clone, Debug, Deserialize, Serialize, MessageContent)]
 #[message(kind = "CredentialIssuanceV1_0::OfferCredential")]
-pub struct OfferCredential {
+pub struct OfferCredentialContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
     pub credential_preview: CredentialPreview,

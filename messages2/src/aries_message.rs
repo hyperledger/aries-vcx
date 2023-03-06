@@ -10,7 +10,7 @@ use crate::{
         connection::{invitation::Invitation, Connection},
         cred_issuance::CredentialIssuance,
         discover_features::DiscoverFeatures,
-        notification::{Ack, AckDecorators},
+        notification::{AckContent, AckDecorators},
         out_of_band::OutOfBand,
         present_proof::PresentProof,
         report_problem::{ProblemReport, ProblemReportDecorators},
@@ -35,7 +35,7 @@ pub enum AriesMessage {
     DiscoverFeatures(DiscoverFeatures),
     BasicMessage(Message<BasicMessage, BasicMessageDecorators>),
     OutOfBand(OutOfBand),
-    Notification(Message<Ack, AckDecorators>),
+    Notification(Message<AckContent, AckDecorators>),
 }
 
 impl DelayedSerde for AriesMessage {
@@ -79,7 +79,7 @@ impl DelayedSerde for AriesMessage {
                 OutOfBand::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
             Self::MsgType::Notification(msg_type) => {
-                Message::<Ack, AckDecorators>::delayed_deserialize(msg_type, deserializer).map(From::from)
+                Message::<AckContent, AckDecorators>::delayed_deserialize(msg_type, deserializer).map(From::from)
             }
         }
     }

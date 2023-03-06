@@ -10,7 +10,7 @@ use super::traits::MessageKind;
 
 #[derive(Debug, Clone, Serialize, Deserialize, MessageContent)]
 #[message(kind = "Notification::V1(NotificationV1::V1_0(NotificationV1_0::Ack))")]
-pub struct Ack {
+pub struct AckContent {
     pub status: AckStatus,
 }
 

@@ -22,22 +22,27 @@ use crate::{
 };
 
 use self::{
-    ack::AckCredential,
-    issue_credential::{IssueCredential, IssueCredentialDecorators},
-    offer_credential::{OfferCredential, OfferCredentialDecorators},
-    propose_credential::{ProposeCredential, ProposeCredentialDecorators},
-    request_credential::{RequestCredential, RequestCredentialDecorators},
+    ack::AckCredentialContent,
+    issue_credential::{IssueCredentialContent, IssueCredentialDecorators},
+    offer_credential::{OfferCredentialContent, OfferCredentialDecorators},
+    propose_credential::{ProposeCredentialContent, ProposeCredentialDecorators},
+    request_credential::{RequestCredentialContent, RequestCredentialDecorators},
+};
+
+pub use self::{
+    ack::AckCredential, issue_credential::IssueCredential, offer_credential::OfferCredential,
+    propose_credential::ProposeCredential, request_credential::RequestCredential,
 };
 
 use super::notification::AckDecorators;
 
 #[derive(Clone, Debug, From)]
 pub enum CredentialIssuance {
-    OfferCredential(Message<OfferCredential, OfferCredentialDecorators>),
-    ProposeCredential(Message<ProposeCredential, ProposeCredentialDecorators>),
-    RequestCredential(Message<RequestCredential, RequestCredentialDecorators>),
-    IssueCredential(Message<IssueCredential, IssueCredentialDecorators>),
-    Ack(Message<AckCredential, AckDecorators>),
+    OfferCredential(OfferCredential),
+    ProposeCredential(ProposeCredential),
+    RequestCredential(RequestCredential),
+    IssueCredential(IssueCredential),
+    Ack(AckCredential),
 }
 
 impl DelayedSerde for CredentialIssuance {
@@ -52,24 +57,18 @@ impl DelayedSerde for CredentialIssuance {
 
         match minor {
             CredentialIssuanceV1_0::OfferCredential => {
-                Message::<OfferCredential, OfferCredentialDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
+                OfferCredential::delayed_deserialize(minor, deserializer).map(From::from)
             }
             CredentialIssuanceV1_0::ProposeCredential => {
-                Message::<ProposeCredential, ProposeCredentialDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
+                ProposeCredential::delayed_deserialize(minor, deserializer).map(From::from)
             }
             CredentialIssuanceV1_0::RequestCredential => {
-                Message::<RequestCredential, RequestCredentialDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
+                RequestCredential::delayed_deserialize(minor, deserializer).map(From::from)
             }
             CredentialIssuanceV1_0::IssueCredential => {
-                Message::<IssueCredential, IssueCredentialDecorators>::delayed_deserialize(minor, deserializer)
-                    .map(From::from)
+                IssueCredential::delayed_deserialize(minor, deserializer).map(From::from)
             }
-            CredentialIssuanceV1_0::Ack => {
-                Message::<AckCredential, AckDecorators>::delayed_deserialize(minor, deserializer).map(From::from)
-            }
+            CredentialIssuanceV1_0::Ack => AckCredential::delayed_deserialize(minor, deserializer).map(From::from),
             CredentialIssuanceV1_0::CredentialPreview => Err(utils::not_standalone_msg::<D>(minor.as_ref())),
         }
     }
@@ -136,8 +135,14 @@ pub struct CredentialAttr {
     pub mime_type: Option<MimeType>,
 }
 
-transit_to_aries_msg!(OfferCredential: OfferCredentialDecorators, CredentialIssuance);
-transit_to_aries_msg!(ProposeCredential: ProposeCredentialDecorators, CredentialIssuance);
-transit_to_aries_msg!(RequestCredential: RequestCredentialDecorators, CredentialIssuance);
-transit_to_aries_msg!(IssueCredential: IssueCredentialDecorators, CredentialIssuance);
-transit_to_aries_msg!(AckCredential: AckDecorators, CredentialIssuance);
+transit_to_aries_msg!(OfferCredentialContent: OfferCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(
+    ProposeCredentialContent: ProposeCredentialDecorators,
+    CredentialIssuance
+);
+transit_to_aries_msg!(
+    RequestCredentialContent: RequestCredentialDecorators,
+    CredentialIssuance
+);
+transit_to_aries_msg!(IssueCredentialContent: IssueCredentialDecorators, CredentialIssuance);
+transit_to_aries_msg!(AckCredentialContent: AckDecorators, CredentialIssuance);
